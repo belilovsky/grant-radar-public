@@ -29,8 +29,8 @@ Use `make ci` if you want the docker-based validation pass too.
 
 - Never commit `.env`, `.env.dev`, `.env.staging`, or `.env.prod`.
 - Use `.env.example` as the tracked template.
-- Keep deployment inventory, hostnames, backups, and operator-only notes out of
-  the public repository.
+- Keep deployment inventory, hostnames, backups, and maintainer-only notes out
+  of the public repository.
 
 ## Scope
 

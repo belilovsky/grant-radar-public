@@ -2,7 +2,7 @@
 
 This checklist is safe to keep in a public repository. It is intentionally
 limited to repeatable validation steps and excludes live host inventory,
-historic backup filenames, and operator-only evidence.
+historic backup filenames, and maintainer-only evidence.
 
 ## Secrets and environment
 
@@ -46,4 +46,4 @@ curl -fsS 'https://example.org/digest?limit=5&tag=ai'
 - Keep database backups outside the repository and verify restore regularly.
 - Monitor freshness in `/coverage`, especially zero-item and stale sources.
 - Keep deploy hosts, paths, backup archives, and incident history in a private
-  operator runbook.
+  maintainer runbook.

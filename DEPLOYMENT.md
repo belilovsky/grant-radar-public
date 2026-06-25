@@ -1,8 +1,8 @@
 # Deployment Guide
 
-This repository keeps a public-safe deployment guide. Private server inventory,
+This repository keeps a public-safe deployment guide. Server inventory,
 hostnames, SSH targets, backup paths, and incident history should live in a
-separate operator runbook.
+separate maintainer runbook.
 
 ## Prerequisites
 

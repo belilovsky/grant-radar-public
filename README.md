@@ -10,6 +10,9 @@ support programs relevant to Kazakhstan and Central Asia.
 - serves a public FastAPI dashboard and JSON endpoints;
 - supports localized Russian detail pages and public shareable permalinks.
 
+The repository is structured for clean local development, reproducible
+validation, and public-safe deployment documentation.
+
 The main public endpoints are:
 
 - `GET /health`
@@ -30,8 +33,8 @@ cp .env.example .env.dev
 make ci-fast
 ```
 
-For a lightweight local repository, keep `GRANT_RADAR_DB_URL=sqlite:///./data/grants.db`
-in `.env.dev`.
+For a lightweight local setup, keep
+`GRANT_RADAR_DB_URL=sqlite:///./data/grants.db` in `.env.dev`.
 
 ### Docker-based setup
 
@@ -93,7 +96,7 @@ grant-radar/
 ├── api/         FastAPI app and server-rendered public pages
 ├── core/        ingestion, scoring, scheduling, repositories
 ├── sources/     source adapters and parsers
-├── scripts/     operator and audit utilities
+├── scripts/     maintenance and audit utilities
 ├── tests/       local verification suite
 ├── alembic/     database migrations
 └── docs/        product, persistence, deploy, and release notes
@@ -117,19 +120,16 @@ make ci-fast
 `alembic upgrade head` before starting uvicorn. Real `.env.dev`,
 `.env.staging`, and `.env.prod` files must stay local to the machine or server.
 
-Public-safe deployment guidance lives in
-[DEPLOYMENT.md](DEPLOYMENT.md)
-and
+Deployment guidance lives in [DEPLOYMENT.md](DEPLOYMENT.md) and
 [docs/PRODUCTION_CHECKLIST.md](docs/PRODUCTION_CHECKLIST.md).
-Private host inventory, incident history, and operator credentials should stay
-outside this repository.
 
 ## Docs
 
 - [CONTRIBUTING.md](CONTRIBUTING.md)
+- [SECURITY.md](SECURITY.md)
+- [SUPPORT.md](SUPPORT.md)
 - [docs/README.md](docs/README.md)
 - [docs/PERSISTENCE.md](docs/PERSISTENCE.md)
-- [docs/OPEN_SOURCE_RELEASE.md](docs/OPEN_SOURCE_RELEASE.md)
 
 ## License
 

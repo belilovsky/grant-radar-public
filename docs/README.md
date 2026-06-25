@@ -3,7 +3,6 @@
 ## Start here
 
 - [README.md](../README.md)
-- [OPEN_SOURCE_RELEASE.md](OPEN_SOURCE_RELEASE.md)
 - [PRODUCTION_CHECKLIST.md](PRODUCTION_CHECKLIST.md)
 - [PERSISTENCE.md](PERSISTENCE.md)
 
@@ -18,7 +17,3 @@
 ## UI and integration
 
 - [AVDS_INTEGRATION.md](AVDS_INTEGRATION.md)
-
-## Historical folders
-
-- [archive/README.md](archive/README.md)
