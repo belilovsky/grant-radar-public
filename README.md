@@ -15,6 +15,18 @@ validation, and public-safe deployment documentation.
 
 This is the primary development repository for the project.
 
+## Repository map
+
+- `grant-radar-public`
+  - primary development repository
+  - source of truth for code, tests, migrations, and contributor docs
+- `grant-radar-ops`
+  - private maintainer and operations context only
+  - not a parallel product-code repository
+- `grant-radar`
+  - legacy transition checkout
+  - kept only as historical local context after the repo split
+
 The main public endpoints are:
 
 - `GET /health`
