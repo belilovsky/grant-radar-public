@@ -13,6 +13,8 @@ support programs relevant to Kazakhstan and Central Asia.
 The repository is structured for clean local development, reproducible
 validation, and public-safe deployment documentation.
 
+This is the primary development repository for the project.
+
 The main public endpoints are:
 
 - `GET /health`
@@ -126,6 +128,7 @@ Deployment guidance lives in [DEPLOYMENT.md](DEPLOYMENT.md) and
 ## Docs
 
 - [CONTRIBUTING.md](CONTRIBUTING.md)
+- [docs/DEVELOPMENT_MODEL.md](docs/DEVELOPMENT_MODEL.md)
 - [SECURITY.md](SECURITY.md)
 - [SUPPORT.md](SUPPORT.md)
 - [docs/README.md](docs/README.md)
