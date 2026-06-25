@@ -1,0 +1,11 @@
+[tool.isort]
+profile = "black"
+
+[tool.black]
+line-length = 88
+
+[tool.pytest.ini_options]
+asyncio_default_fixture_loop_scope = "function"
+filterwarnings = [
+  "ignore:The 'strip_cdata' option of HTMLParser\\(\\) has never done anything and will eventually be removed\\.:DeprecationWarning:bs4\\.builder\\._lxml",
+]

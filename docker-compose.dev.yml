@@ -1,0 +1,35 @@
+services:
+  api:
+    env_file:
+      - .env.dev
+    environment:
+      DATABASE_URL: postgresql+psycopg://grantradar:${POSTGRES_PASSWORD:-changeme}@db:5432/grantradar
+      GRANT_RADAR_DB_URL: postgresql+psycopg://grantradar:${POSTGRES_PASSWORD:-changeme}@db:5432/grantradar
+      REDIS_URL: redis://redis:6379/0
+    volumes:
+      - .:/app
+    ports:
+      - "127.0.0.1:8000:8000"
+    command: ["uvicorn", "api.main:app", "--host", "0.0.0.0", "--port", "8000", "--reload"]
+
+  worker:
+    env_file:
+      - .env.dev
+    environment:
+      DATABASE_URL: postgresql+psycopg://grantradar:${POSTGRES_PASSWORD:-changeme}@db:5432/grantradar
+      GRANT_RADAR_DB_URL: postgresql+psycopg://grantradar:${POSTGRES_PASSWORD:-changeme}@db:5432/grantradar
+      REDIS_URL: redis://redis:6379/0
+    volumes:
+      - .:/app
+
+  db:
+    env_file:
+      - .env.dev
+    ports:
+      - "127.0.0.1:5434:5432"
+
+  redis:
+    env_file:
+      - .env.dev
+    ports:
+      - "127.0.0.1:6380:6379"

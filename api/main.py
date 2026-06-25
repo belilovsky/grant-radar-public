@@ -1,0 +1,1188 @@
+"""FastAPI app for grant-radar."""
+
+from __future__ import annotations
+
+import os
+import re
+import unicodedata
+from collections import Counter
+from collections.abc import Awaitable, Callable, Iterable
+from datetime import date, datetime, timedelta, timezone
+from functools import lru_cache
+from hmac import compare_digest
+from html import escape, unescape
+from typing import Any, cast
+from uuid import NAMESPACE_URL, UUID, uuid5
+
+from fastapi import Depends, FastAPI, Header, HTTPException, Query, Request, status
+from fastapi.responses import HTMLResponse, Response
+from starlette.middleware.trustedhost import TrustedHostMiddleware
+
+from api.dashboard import (
+    GOOGLE_SITE_VERIFICATION_CONTENT,
+    GOOGLE_SITE_VERIFICATION_FILENAME,
+    render_dashboard,
+)
+from api.funder_page import render_funder_page
+from api.opportunity_detail import build_opportunity_detail
+from api.opportunity_page import render_opportunity_page
+from api.public_meta import OG_IMAGE_SVG
+from core.geofit import (
+    is_excluded_for_kazakhstan_focus,
+    is_relevant_for_kazakhstan_focus,
+)
+from core.localization import (
+    _localized_value,
+    localize_opportunity,
+    normalize_content_lang,
+)
+from core.models import Digest, Opportunity, OpportunityDetail, OpportunityType
+from core.nlp import clean_source_summary
+from core.opportunity_intelligence import (
+    normalized_opportunity_status,
+    public_lifecycle,
+)
+from core.persistence import Repository
+from core.pipeline import run_all
+from core.repository_factory import make_repository
+from core.scoring import score as score_opportunity
+from sources import PARSERS
+from sources.kazakhstan_domestic import (
+    ACTIVE_DOMESTIC_URLS,
+    DOMESTIC_PROGRAM_BY_URL,
+    DOMESTIC_PROGRAM_TAGS,
+)
+from sources.kazakhstan_watch import (
+    ACTIVE_WATCH_URLS,
+    WATCH_PAGE_BY_URL,
+    WATCH_PAGE_TAGS,
+)
+from sources.unesco_iite import UNESCO_IITE_ANNOUNCEMENTS_URL
+
+try:
+    from datetime import UTC
+except ImportError:  # pragma: no cover - Python < 3.11 compatibility
+    UTC = timezone.utc
+
+app = FastAPI(
+    title="QAZ.FUND",
+    description=(
+        "Public funding navigator for grants, subsidies, accelerators, and "
+        "support programs in Kazakhstan"
+    ),
+    version="0.1.0",
+    root_path=os.environ.get("ROOT_PATH", ""),
+)
+
+# in-memory cache на M0
+_cache: list[Opportunity] = []
+
+_FAVICON_SVG = """\
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64">
+  <rect width="64" height="64" rx="14" fill="#0f172a"/>
+  <path d="M18 38 29 17h7L25 38h13l-3 6H15l3-6Z" fill="#f8fafc"/>
+  <path d="M39 17h7L36 47h-7l10-30Z" fill="#22c55e"/>
+</svg>
+"""
+
+
+@app.middleware("http")
+async def add_security_headers(
+    request: Request,
+    call_next: Callable[[Request], Awaitable[Response]],
+) -> Response:
+    response = await call_next(request)
+    response.headers.setdefault("X-Content-Type-Options", "nosniff")
+    response.headers.setdefault("X-Frame-Options", "SAMEORIGIN")
+    response.headers.setdefault("Referrer-Policy", "strict-origin-when-cross-origin")
+    response.headers.setdefault(
+        "Permissions-Policy",
+        "camera=(), microphone=(), geolocation=(), payment=()",
+    )
+    return response
+
+
+def _database_url() -> str:
+    return (
+        os.environ.get("GRANT_RADAR_DB_URL") or os.environ.get("DATABASE_URL") or ""
+    ).strip()
+
+
+def _public_base_url() -> str:
+    return os.environ.get("PUBLIC_BASE_URL", "").strip().rstrip("/")
+
+
+def _allowed_hosts() -> list[str]:
+    from urllib.parse import urlparse
+
+    hosts = {
+        "localhost",
+        "127.0.0.1",
+        "::1",
+        "testserver",
+        "qaz.fund",
+    }
+    configured = os.environ.get("GRANT_RADAR_ALLOWED_HOSTS", "")
+    for raw in configured.split(","):
+        host = raw.strip().lower()
+        if host:
+            hosts.add(host)
+    public_base = _public_base_url()
+    if public_base:
+        host = (urlparse(public_base).hostname or "").strip().lower()
+        if host:
+            hosts.add(host)
+    return sorted(hosts)
+
+
+app.add_middleware(TrustedHostMiddleware, allowed_hosts=_allowed_hosts())
+
+
+def _admin_token() -> str:
+    return os.environ.get("GRANT_RADAR_ADMIN_TOKEN", "").strip()
+
+
+def _bearer_token(authorization: str | None) -> str:
+    if not authorization:
+        return ""
+    scheme, _, token = authorization.partition(" ")
+    if scheme.lower() != "bearer":
+        return ""
+    return token.strip()
+
+
+async def require_admin_token(
+    authorization: str | None = Header(default=None),
+    x_grant_radar_admin_token: str | None = Header(default=None),
+) -> None:
+    expected = _admin_token()
+    if not expected:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND)
+
+    provided = (x_grant_radar_admin_token or "").strip() or _bearer_token(authorization)
+    if not provided or not compare_digest(provided, expected):
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED)
+
+
+@lru_cache(maxsize=8)
+def _repository_for_url(url: str) -> Repository:
+    return make_repository(url)
+
+
+def _configured_repository() -> Repository | None:
+    url = _database_url()
+    if url in ("", "memory", ":memory:"):
+        return None
+    return _repository_for_url(url)
+
+
+def _list_value(value: Any) -> list[str]:
+    if value is None:
+        return []
+    if isinstance(value, str):
+        return [value]
+    if isinstance(value, Iterable):
+        return [str(item) for item in value]
+    return [str(value)]
+
+
+def _display_text(value: Any) -> str:
+    return re.sub(r"\s+", " ", unescape(str(value or ""))).strip()
+
+
+def _display_summary(value: Any) -> str:
+    return clean_source_summary(_display_text(value))
+
+
+def _opportunity_type(raw: dict[str, Any]) -> OpportunityType:
+    try:
+        return OpportunityType(str(raw.get("type") or OpportunityType.GRANT))
+    except ValueError:
+        return OpportunityType.GRANT
+
+
+def _fallback_summary(raw: dict[str, Any], content_lang: str = "en") -> str:
+    raw_payload = raw.get("raw")
+    source_raw = raw_payload if isinstance(raw_payload, dict) else raw
+    agency = (
+        source_raw.get("agencyName")
+        or source_raw.get("agency")
+        or source_raw.get("agencyCode")
+    )
+    close_date = source_raw.get("closeDate") or source_raw.get("deadline")
+    language_candidates = _list_value(
+        source_raw.get("language") or source_raw.get("languages")
+    )
+    normalized_lang = (
+        normalize_content_lang(language_candidates[0])
+        if language_candidates
+        else normalize_content_lang(content_lang)
+    )
+    if agency or close_date:
+        if normalized_lang == "en":
+            parts = ["Opportunity notice"]
+            if agency:
+                parts.append(f"from {agency}")
+            if close_date:
+                parts.append(f"closing {close_date}")
+        else:
+            parts = ["Уведомление о возможности"]
+            if agency:
+                parts.append(f"от {agency}")
+            if close_date:
+                parts.append(f"сроком до {close_date}")
+        return " ".join(parts) + "."
+    return ""
+
+
+def _public_raw(raw: dict[str, Any]) -> dict[str, Any]:
+    nested_raw = raw.get("raw")
+    if isinstance(nested_raw, dict) and "source_url" in raw and "discovered_at" in raw:
+        return nested_raw
+    if isinstance(nested_raw, dict) and {"type", "tags", "languages"}.issubset(
+        raw.keys()
+    ):
+        return nested_raw
+    return raw
+
+
+def _stored_opportunity(row: Any, *, content_lang: str = "en") -> Opportunity:
+    raw = getattr(row, "raw", None)
+    if not isinstance(raw, dict):
+        raw = {}
+
+    dedup_key = str(getattr(row, "dedup_key", None) or getattr(row, "id", ""))
+    source_url: Any = str(getattr(row, "source_url", None) or raw.get("url") or "")
+    discovered_at = getattr(row, "discovered_at", None)
+    if not isinstance(discovered_at, datetime):
+        discovered_at = datetime.now(UTC)
+    existing_id = getattr(row, "id", None)
+    stable_id = existing_id if isinstance(existing_id, UUID) else None
+
+    opportunity = Opportunity(
+        id=stable_id or uuid5(NAMESPACE_URL, dedup_key or source_url),
+        source=str(getattr(row, "source", None) or raw.get("source") or "unknown"),
+        source_url=source_url,
+        type=getattr(row, "type", None) or _opportunity_type(raw),
+        title=_display_text(getattr(row, "title", None) or raw.get("title")),
+        summary=_display_summary(
+            getattr(row, "summary", None)
+            or raw.get("summary")
+            or raw.get("description")
+            or _fallback_summary(raw, content_lang=content_lang)
+        ),
+        funder=_display_text(getattr(row, "funder", None) or raw.get("funder")) or None,
+        funder_slug=getattr(row, "funder_slug", None),
+        amount_min=getattr(row, "amount_min", None) or raw.get("amount_min"),
+        amount_max=getattr(row, "amount_max", None) or raw.get("amount_max"),
+        currency=str(getattr(row, "currency", None) or raw.get("currency") or "USD"),
+        deadline=getattr(row, "deadline", None) or raw.get("deadline"),
+        eligibility=_list_value(
+            getattr(row, "eligibility", None) or raw.get("eligibility")
+        ),
+        tags=_list_value(getattr(row, "tags", None) or raw.get("tags")),
+        languages=_list_value(getattr(row, "languages", None) or raw.get("languages")),
+        score=float(getattr(row, "score", None) or raw.get("score") or 0.0),
+        opportunity_status=getattr(row, "opportunity_status", None),
+        lifecycle=getattr(row, "lifecycle", None),
+        discovered_at=discovered_at,
+        raw=_public_raw(raw),
+    )
+    if opportunity.source == "kazakhstan_watch":
+        page = WATCH_PAGE_BY_URL.get(str(opportunity.source_url))
+        if page is not None:
+            opportunity.type = page.type
+            opportunity.title = page.title
+            opportunity.summary = page.summary
+            opportunity.tags = list(WATCH_PAGE_TAGS.get(page.url, opportunity.tags))
+            if page.rolling:
+                opportunity.raw = {
+                    **opportunity.raw,
+                    "deadline_policy": "rolling",
+                }
+    if opportunity.source == "kazakhstan_domestic_support":
+        program = DOMESTIC_PROGRAM_BY_URL.get(str(opportunity.source_url))
+        if program is not None:
+            opportunity.type = program.type
+            opportunity.title = program.title
+            opportunity.summary = program.summary
+            opportunity.tags = list(
+                DOMESTIC_PROGRAM_TAGS.get(program.url, opportunity.tags)
+            )
+            opportunity.amount_min = opportunity.amount_min or program.amount_min
+            opportunity.amount_max = opportunity.amount_max or program.amount_max
+            if program.amount_min is not None or program.amount_max is not None:
+                opportunity.currency = program.currency
+            if program.rolling:
+                domestic_raw = {
+                    **opportunity.raw,
+                    "deadline_policy": "rolling",
+                }
+                if program.amount_raw:
+                    domestic_raw["amount_raw"] = program.amount_raw
+                if program.amount_min is not None:
+                    domestic_raw["amount_min"] = str(program.amount_min)
+                if program.amount_max is not None:
+                    domestic_raw["amount_max"] = str(program.amount_max)
+                if program.amount_min is not None or program.amount_max is not None:
+                    domestic_raw["currency"] = program.currency
+                opportunity.raw = {
+                    key: value
+                    for key, value in domestic_raw.items()
+                    if value not in (None, "")
+                }
+    normalized_status = normalized_opportunity_status(opportunity)
+    opportunity.funder_slug = opportunity.funder_slug or _slugify_funder(
+        _funder_name(opportunity)
+    )
+    opportunity.opportunity_status = opportunity.opportunity_status or normalized_status
+    opportunity.lifecycle = opportunity.lifecycle or public_lifecycle(opportunity)
+    opportunity.score = max(opportunity.score, score_opportunity(opportunity))
+    return opportunity
+
+
+def _public_dedup_key(item: Opportunity) -> str:
+    raw = item.raw if isinstance(item.raw, dict) else {}
+    external_id = str(raw.get("external_id") or raw.get("reference") or "").strip()
+    if external_id:
+        return f"{item.source}:{external_id.lower()}"
+    return f"{item.source}:{str(item.source_url).rstrip('/').lower()}"
+
+
+def _public_dedup_rank(
+    item: Opportunity, *, content_lang: str
+) -> tuple[float, int, int]:
+    raw = item.raw if isinstance(item.raw, dict) else {}
+    localized_title = _display_text(_localized_value(raw, content_lang, "title"))
+    has_matching_localized_title = int(
+        bool(localized_title) and localized_title == item.title
+    )
+    summary_length = len(str(item.summary or "").strip())
+    return (
+        float(item.score or 0.0),
+        has_matching_localized_title,
+        summary_length,
+    )
+
+
+def _dedupe_public_items(
+    items: list[Opportunity], *, content_lang: str
+) -> list[Opportunity]:
+    best_by_key: dict[str, Opportunity] = {}
+    for item in items:
+        key = _public_dedup_key(item)
+        current = best_by_key.get(key)
+        if current is None or _public_dedup_rank(
+            item, content_lang=content_lang
+        ) > _public_dedup_rank(current, content_lang=content_lang):
+            best_by_key[key] = item
+    return list(best_by_key.values())
+
+
+def _public_scope_items(
+    items: list[Opportunity], *, include_irrelevant: bool
+) -> list[Opportunity]:
+    if include_irrelevant:
+        return [item for item in items if not is_excluded_for_kazakhstan_focus(item)]
+    return [item for item in items if is_relevant_for_kazakhstan_focus(item)]
+
+
+def _stored_items(content_lang: str = "en") -> list[Opportunity]:
+    repository = _configured_repository()
+    if repository is None:
+        return _dedupe_public_items(
+            [
+                item
+                for item in (
+                    _stored_opportunity(row, content_lang=content_lang)
+                    for row in _cache
+                )
+                if _is_active_item(item)
+            ],
+            content_lang=content_lang,
+        )
+    return _dedupe_public_items(
+        [
+            item
+            for item in (
+                _stored_opportunity(row, content_lang=content_lang)
+                for row in repository.all()
+            )
+            if _is_active_item(item)
+        ],
+        content_lang=content_lang,
+    )
+
+
+def _find_opportunity(
+    opportunity_id: UUID,
+    content_lang: str = "en",
+) -> Opportunity | None:
+    return next(
+        (
+            item
+            for item in _stored_items(content_lang=content_lang)
+            if item.id == opportunity_id
+        ),
+        None,
+    )
+
+
+def _is_active_item(item: Opportunity) -> bool:
+    if item.source == "kazakhstan_watch":
+        return str(item.source_url) in ACTIVE_WATCH_URLS
+    if item.source == "kazakhstan_domestic_support":
+        return str(item.source_url) in ACTIVE_DOMESTIC_URLS
+    if item.source == "unesco_iite":
+        return str(item.source_url).rstrip("/") != UNESCO_IITE_ANNOUNCEMENTS_URL.rstrip(
+            "/"
+        )
+    return True
+
+
+def _is_open(item: Opportunity, today: date) -> bool:
+    return item.deadline is None or item.deadline >= today
+
+
+def _normalized_token(value: Any) -> str:
+    return re.sub(r"\s+", " ", str(value or "").strip().lower())
+
+
+def _source_name(source_slug: str) -> str:
+    source_cls = PARSERS.get(source_slug)
+    if source_cls is not None:
+        return str(source_cls.name)
+    return source_slug.replace("_", " ").strip() or "Unknown source"
+
+
+def _funder_name(item: Opportunity) -> str:
+    name = str(item.funder or "").strip()
+    return name or _source_name(item.source)
+
+
+def _slugify_funder(value: str) -> str:
+    normalized = _normalized_token(value)
+    ascii_value = (
+        unicodedata.normalize("NFKD", normalized).encode("ascii", "ignore").decode()
+    )
+    slug = re.sub(r"[^a-z0-9]+", "-", ascii_value).strip("-")
+    if slug:
+        return slug
+    return f"funder-{uuid5(NAMESPACE_URL, normalized or value).hex[:10]}"
+
+
+def _funder_region_tokens(item: Opportunity) -> set[str]:
+    tags = {_normalized_token(tag) for tag in item.tags if _normalized_token(tag)}
+    raw = item.raw if isinstance(item.raw, dict) else {}
+    blob = " ".join(
+        [
+            str(raw.get("country") or ""),
+            str(raw.get("region") or ""),
+            str(raw.get("borrower") or ""),
+            str(item.summary or ""),
+            str(item.title or ""),
+        ]
+    ).lower()
+    regions: set[str] = set()
+    if (
+        "kazakhstan" in tags
+        or "kazakhstan" in blob
+        or "казахстан" in blob
+        or "қазақстан" in blob
+    ):
+        regions.add("kazakhstan")
+    if (
+        "central_asia" in tags
+        or "central_asia_eligible" in tags
+        or "central asia" in blob
+        or "центральн" in blob
+    ):
+        regions.add("central_asia")
+    if "global" in tags and not regions:
+        regions.add("global")
+    if not regions:
+        regions.add("global")
+    return regions
+
+
+def _funder_tag_tokens(item: Opportunity) -> list[str]:
+    ignored = {
+        "rolling",
+        "closed",
+        "watchlist",
+        "global",
+        "kazakhstan",
+        "central_asia",
+        "central_asia_eligible",
+    }
+    return [
+        _normalized_token(tag)
+        for tag in item.tags
+        if _normalized_token(tag) and _normalized_token(tag) not in ignored
+    ]
+
+
+def _funder_index(content_lang: str = "en") -> dict[str, dict[str, Any]]:
+    today = date.today()
+    groups: dict[str, dict[str, Any]] = {}
+    for item in _stored_items(content_lang=content_lang):
+        name = _funder_name(item)
+        slug = _slugify_funder(name)
+        group = groups.setdefault(
+            slug,
+            {
+                "slug": slug,
+                "name": name,
+                "items": [],
+                "types": Counter(),
+                "tags": Counter(),
+                "regions": Counter(),
+                "sources": {},
+                "open_items": 0,
+                "closing_soon_items": 0,
+                "rolling_items": 0,
+                "forecast_items": 0,
+                "closed_items": 0,
+                "awarded_items": 0,
+                "current_items": 0,
+                "score_sum": 0.0,
+                "next_deadline": None,
+            },
+        )
+        group["items"].append(item)
+        group["score_sum"] += float(item.score or 0.0)
+        group["types"].update([item.type.value])
+        group["tags"].update(_funder_tag_tokens(item))
+        group["regions"].update(_funder_region_tokens(item))
+        source_slug = str(item.source)
+        if source_slug not in group["sources"]:
+            group["sources"][source_slug] = {
+                "slug": source_slug,
+                "name": _source_name(source_slug),
+                "base_url": getattr(PARSERS.get(source_slug), "base_url", ""),
+            }
+        lifecycle = public_lifecycle(item, today=today)
+        count_key = f"{lifecycle}_items"
+        group[count_key] = int(group.get(count_key, 0)) + 1
+        if lifecycle in {"open", "closing_soon", "rolling"}:
+            group["current_items"] += 1
+        if item.deadline and item.deadline >= today:
+            current_next_deadline = group["next_deadline"]
+            if current_next_deadline is None or item.deadline < current_next_deadline:
+                group["next_deadline"] = item.deadline
+
+    for group in groups.values():
+        items = cast(list[Opportunity], group["items"])
+        items.sort(key=lambda row: (row.score, row.discovered_at), reverse=True)
+        total_items = len(items)
+        group["total_items"] = total_items
+        group["avg_score"] = (
+            round(group["score_sum"] / total_items, 3) if total_items else 0
+        )
+        group["top_tags"] = [
+            tag for tag, _ in cast(Counter[str], group["tags"]).most_common(4)
+        ]
+        group["top_regions"] = [
+            region for region, _ in cast(Counter[str], group["regions"]).most_common(3)
+        ]
+        group["top_types"] = [
+            kind for kind, _ in cast(Counter[str], group["types"]).most_common(3)
+        ]
+        group["sources"] = sorted(
+            cast(dict[str, dict[str, str]], group["sources"]).values(),
+            key=lambda row: (row["name"], row["slug"]),
+        )
+    return groups
+
+
+def _funder_payload(group: dict[str, Any]) -> dict[str, Any]:
+    return {
+        "slug": group["slug"],
+        "name": group["name"],
+        "total_items": group["total_items"],
+        "current_items": group["current_items"],
+        "open_items": group["open_items"],
+        "closing_soon_items": group["closing_soon_items"],
+        "rolling_items": group["rolling_items"],
+        "forecast_items": group["forecast_items"],
+        "closed_items": group["closed_items"],
+        "awarded_items": group["awarded_items"],
+        "avg_score": group["avg_score"],
+        "next_deadline": group["next_deadline"],
+        "top_tags": group["top_tags"],
+        "top_regions": group["top_regions"],
+        "top_types": group["top_types"],
+        "sources": group["sources"],
+    }
+
+
+def _similarity_tokens(item: Opportunity) -> set[str]:
+    raw = item.raw if isinstance(item.raw, dict) else {}
+    tokens = {
+        f"tag:{_normalized_token(tag)}" for tag in item.tags if _normalized_token(tag)
+    }
+    for key in ("country", "region", "borrower", "notice_type", "deadline_policy"):
+        normalized = _normalized_token(raw.get(key))
+        if normalized:
+            tokens.add(f"{key}:{normalized}")
+    return tokens
+
+
+def _related_reason_key(target: Opportunity, candidate: Opportunity) -> str:
+    if candidate.source == target.source:
+        return "related_reason_source"
+    if _normalized_token(candidate.funder) and _normalized_token(
+        candidate.funder
+    ) == _normalized_token(target.funder):
+        return "related_reason_funder"
+    if _similarity_tokens(target) & _similarity_tokens(candidate):
+        return "related_reason_theme"
+    return "related_reason_format"
+
+
+def _related_opportunities(
+    target: Opportunity,
+    *,
+    lang: str,
+    limit: int = 3,
+) -> list[tuple[Opportunity, str]]:
+    today = date.today()
+    target_tokens = _similarity_tokens(target)
+    target_funder = _normalized_token(target.funder)
+    rows: list[tuple[float, Opportunity]] = []
+    for candidate in _stored_items(content_lang=lang):
+        if candidate.id == target.id or not _is_open(candidate, today):
+            continue
+        candidate_tokens = _similarity_tokens(candidate)
+        overlap = len(target_tokens & candidate_tokens)
+        same_source = candidate.source == target.source
+        same_type = candidate.type == target.type
+        same_funder = (
+            target_funder and _normalized_token(candidate.funder) == target_funder
+        )
+        score = float(candidate.score)
+        if same_source:
+            score += 4.0
+        if same_funder:
+            score += 2.5
+        if same_type:
+            score += 1.4
+        score += min(overlap, 4) * 0.85
+        if not same_source and not same_funder and overlap == 0 and not same_type:
+            continue
+        if score < 1.4:
+            continue
+        rows.append((score, candidate))
+    rows.sort(
+        key=lambda row: (row[0], row[1].score, row[1].discovered_at),
+        reverse=True,
+    )
+
+    related: list[tuple[Opportunity, str]] = []
+    seen: set[UUID] = set()
+    for _, candidate in rows:
+        if candidate.id in seen:
+            continue
+        seen.add(candidate.id)
+        related.append(
+            (
+                localize_opportunity(candidate, lang),
+                _related_reason_key(target, candidate),
+            )
+        )
+        if len(related) >= limit:
+            break
+    return related
+
+
+def _source_coverage(items: list[Opportunity]) -> list[dict[str, Any]]:
+    today = date.today()
+    by_source: dict[str, list[Opportunity]] = {}
+    for item in items:
+        by_source.setdefault(item.source, []).append(item)
+
+    rows: list[dict[str, Any]] = []
+    for slug, source_cls in PARSERS.items():
+        source_items = by_source.pop(slug, [])
+        open_items = [item for item in source_items if _is_open(item, today)]
+        relevant_open_items = [
+            item
+            for item in open_items
+            if is_relevant_for_kazakhstan_focus(item) and item.score >= 0.3
+        ]
+        last_seen = max(
+            (item.discovered_at for item in source_items),
+            default=None,
+        )
+        rows.append(
+            {
+                "slug": slug,
+                "name": source_cls.name,
+                "base_url": source_cls.base_url,
+                "tags": list(source_cls.default_tags),
+                "enabled": True,
+                "items": len(source_items),
+                "open_items": len(open_items),
+                "relevant_open_items": len(relevant_open_items),
+                "last_discovered_at": last_seen.isoformat() if last_seen else None,
+            }
+        )
+
+    for slug, source_items in sorted(by_source.items()):
+        open_items = [item for item in source_items if _is_open(item, today)]
+        relevant_open_items = [
+            item
+            for item in open_items
+            if is_relevant_for_kazakhstan_focus(item) and item.score >= 0.3
+        ]
+        last_seen = max((item.discovered_at for item in source_items), default=None)
+        rows.append(
+            {
+                "slug": slug,
+                "name": slug.replace("_", " ").title(),
+                "base_url": "",
+                "tags": [],
+                "enabled": False,
+                "items": len(source_items),
+                "open_items": len(open_items),
+                "relevant_open_items": len(relevant_open_items),
+                "last_discovered_at": last_seen.isoformat() if last_seen else None,
+            }
+        )
+
+    return rows
+
+
+def _root_path(request: Request) -> str:
+    root_path = str(request.scope.get("root_path") or "").rstrip("/")
+    return root_path
+
+
+def _site_origin(request: Request, root_path: str) -> str:
+    site_origin = _public_base_url() or str(request.base_url).rstrip("/")
+    if not _public_base_url() and root_path and site_origin.endswith(root_path):
+        site_origin = site_origin[: -len(root_path)].rstrip("/")
+    return site_origin
+
+
+def _public_root_base(request: Request, root_path: str) -> str:
+    site_origin = _site_origin(request, root_path).rstrip("/")
+    if not root_path:
+        return site_origin
+    root = root_path.rstrip("/")
+    if site_origin.endswith(root):
+        return site_origin
+    return f"{site_origin}{root_path}"
+
+
+def _public_url(request: Request, root_path: str, path: str) -> str:
+    if path.startswith("http://") or path.startswith("https://"):
+        return path
+    base = _public_root_base(request, root_path).rstrip("/")
+    if not path.startswith("/"):
+        path = f"/{path}"
+    return f"{base}{path}" if base else path
+
+
+def _public_lang(value: str | None, default: str = "ru") -> str:
+    return normalize_content_lang(value if value is not None else default)
+
+
+def _lastmod_for(item_discovered_at: Any) -> str | None:
+    if isinstance(item_discovered_at, datetime):
+        return item_discovered_at.date().isoformat()
+    if isinstance(item_discovered_at, date):
+        return item_discovered_at.isoformat()
+    return None
+
+
+def _sitemap_entry(
+    url: str,
+    *,
+    lastmod: str | None = None,
+    changefreq: str = "weekly",
+    priority: str = "0.6",
+    alternates: dict[str, str] | None = None,
+) -> str:
+    safe_url = escape(url, quote=True)
+    chunks = ["  <url>", f"    <loc>{safe_url}</loc>"]
+    for hreflang, alternate_url in (alternates or {}).items():
+        chunks.append(
+            '    <xhtml:link rel="alternate" hreflang="{hreflang}" href="{href}" />'.format(
+                hreflang=escape(hreflang, quote=True),
+                href=escape(alternate_url, quote=True),
+            )
+        )
+    if lastmod:
+        chunks.append(f"    <lastmod>{escape(lastmod, quote=True)}</lastmod>")
+    chunks.append(f"    <changefreq>{escape(changefreq, quote=True)}</changefreq>")
+    chunks.append(f"    <priority>{escape(priority, quote=True)}</priority>")
+    chunks.append("  </url>")
+    return "\n".join(chunks)
+
+
+@app.head("/", include_in_schema=False)
+async def root_head() -> Response:
+    return Response(status_code=200)
+
+
+@app.get("/", response_class=HTMLResponse, include_in_schema=False)
+async def root(request: Request) -> HTMLResponse:
+    root_path = _root_path(request)
+    site_origin = _site_origin(request, root_path)
+    repository = _configured_repository()
+    items = repository.size() if repository is not None else len(_cache)
+    lang = str(request.query_params.get("lang") or "").strip().lower()
+    dashboard_lang = "en" if lang == "en" else "ru"
+    return HTMLResponse(
+        render_dashboard(
+            root_path=root_path,
+            items=items,
+            lang=dashboard_lang,
+            site_origin=site_origin,
+        )
+    )
+
+
+@app.get(
+    "/opportunity/{opportunity_id}",
+    response_class=HTMLResponse,
+    include_in_schema=False,
+)
+async def opportunity_page(
+    request: Request,
+    opportunity_id: UUID,
+    lang: str | None = Query(None),
+) -> HTMLResponse:
+    content_lang = _public_lang(lang)
+    item = _find_opportunity(opportunity_id, content_lang=content_lang)
+    if item is None:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND)
+    root_path = _root_path(request)
+    site_origin = _site_origin(request, root_path)
+    related_items = _related_opportunities(item, lang=content_lang)
+    detail = await build_opportunity_detail(
+        localize_opportunity(item, content_lang),
+        lang=content_lang,
+    )
+    return HTMLResponse(
+        render_opportunity_page(
+            detail=detail,
+            lang=content_lang,
+            root_path=root_path,
+            site_origin=site_origin,
+            related_items=related_items,
+        )
+    )
+
+
+@app.api_route("/robots.txt", methods=["GET", "HEAD"], include_in_schema=False)
+async def robots_txt(request: Request) -> Response:
+    root_path = _root_path(request)
+    sitemap = _public_url(request, root_path, "/sitemap.xml")
+    return Response(
+        "\n".join(
+            [
+                "User-agent: *",
+                "Allow: /",
+                "Disallow: /health",
+                "Disallow: /ready",
+                "Disallow: /refresh",
+                "",
+                f"Sitemap: {sitemap}",
+                "",
+            ]
+        ),
+        media_type="text/plain; charset=utf-8",
+    )
+
+
+@app.api_route("/favicon.ico", methods=["GET", "HEAD"], include_in_schema=False)
+async def favicon() -> Response:
+    return Response(_FAVICON_SVG, media_type="image/svg+xml")
+
+
+@app.api_route("/og-image.svg", methods=["GET", "HEAD"], include_in_schema=False)
+async def og_image() -> Response:
+    return Response(OG_IMAGE_SVG, media_type="image/svg+xml")
+
+
+@app.get(f"/{GOOGLE_SITE_VERIFICATION_FILENAME}", include_in_schema=False)
+async def google_site_verification() -> Response:
+    return Response(
+        GOOGLE_SITE_VERIFICATION_CONTENT,
+        media_type="text/plain; charset=utf-8",
+    )
+
+
+@app.api_route("/sitemap.xml", methods=["GET", "HEAD"], include_in_schema=False)
+async def sitemap_xml(request: Request) -> Response:
+    root_path = _root_path(request)
+    root_ru = _public_url(request, root_path, "/?lang=ru")
+    root_en = _public_url(request, root_path, "/?lang=en")
+    opportunities = sorted(
+        _stored_items(content_lang="en"),
+        key=lambda item: (item.discovered_at, item.score, str(item.title).lower()),
+        reverse=True,
+    )
+    funders = _funder_index("en")
+
+    rows: list[str] = [
+        _sitemap_entry(
+            root_ru,
+            changefreq="daily",
+            priority="1.0",
+            alternates={
+                "ru": root_ru,
+                "en": root_en,
+                "x-default": root_ru,
+            },
+        ),
+    ]
+
+    for item in opportunities[:500]:
+        ru_url = _public_url(request, root_path, f"/opportunity/{item.id}?lang=ru")
+        en_url = _public_url(request, root_path, f"/opportunity/{item.id}?lang=en")
+        rows.append(
+            _sitemap_entry(
+                ru_url,
+                lastmod=_lastmod_for(item.discovered_at),
+                changefreq="weekly",
+                priority="0.8",
+                alternates={
+                    "ru": ru_url,
+                    "en": en_url,
+                    "x-default": ru_url,
+                },
+            )
+        )
+
+    for slug in sorted(funders.keys())[:200]:
+        ru_url = _public_url(request, root_path, f"/funder/{slug}?lang=ru")
+        en_url = _public_url(request, root_path, f"/funder/{slug}?lang=en")
+        rows.append(
+            _sitemap_entry(
+                ru_url,
+                changefreq="monthly",
+                priority="0.5",
+                alternates={
+                    "ru": ru_url,
+                    "en": en_url,
+                    "x-default": ru_url,
+                },
+            )
+        )
+
+    xml = '<?xml version="1.0" encoding="UTF-8"?>\n'
+    xml += (
+        '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9" '
+        'xmlns:xhtml="http://www.w3.org/1999/xhtml">\n'
+    )
+    xml += "\n".join(rows)
+    xml += "\n</urlset>"
+    return Response(xml, media_type="application/xml; charset=utf-8")
+
+
+@app.get("/health")
+async def health() -> dict:
+    repository = _configured_repository()
+    items = repository.size() if repository is not None else len(_cache)
+    return {"status": "ok", "items": items}
+
+
+@app.head("/health", include_in_schema=False)
+async def health_head() -> Response:
+    await health()
+    return Response(status_code=200)
+
+
+@app.get("/ready")
+async def ready() -> dict[str, Any]:
+    try:
+        repository = _configured_repository()
+        backend = "database" if repository is not None else "memory"
+        items = repository.size() if repository is not None else len(_cache)
+    except Exception as exc:
+        raise HTTPException(
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            detail={"status": "error", "backend": "database"},
+        ) from exc
+    return {"status": "ok", "backend": backend, "items": items}
+
+
+@app.head("/ready", include_in_schema=False)
+async def ready_head() -> Response:
+    await ready()
+    return Response(status_code=200)
+
+
+@app.get("/sources")
+async def list_sources() -> list[dict[str, Any]]:
+    return [
+        {
+            "slug": slug,
+            "name": source_cls.name,
+            "base_url": source_cls.base_url,
+            "tags": list(source_cls.default_tags),
+            "enabled": True,
+        }
+        for slug, source_cls in PARSERS.items()
+    ]
+
+
+@app.get("/coverage")
+async def coverage() -> dict[str, Any]:
+    items = _stored_items()
+    source_rows = _source_coverage(items)
+    return {
+        "status": "ok",
+        "items": len(items),
+        "sources": source_rows,
+        "enabled_sources": sum(1 for row in source_rows if row["enabled"]),
+        "relevant_open_items": sum(row["relevant_open_items"] for row in source_rows),
+    }
+
+
+@app.get("/funders")
+async def list_funders(
+    limit: int = Query(24, ge=1, le=200),
+) -> list[dict[str, Any]]:
+    groups = sorted(
+        _funder_index("en").values(),
+        key=lambda row: (
+            -int(row["current_items"]),
+            -float(row["avg_score"]),
+            -int(row["total_items"]),
+            str(row["name"]).lower(),
+        ),
+    )
+    return [_funder_payload(group) for group in groups[:limit]]
+
+
+@app.get(
+    "/funder/{funder_slug}",
+    response_class=HTMLResponse,
+    include_in_schema=False,
+)
+async def funder_page(
+    request: Request,
+    funder_slug: str,
+    lang: str | None = Query(None),
+) -> HTMLResponse:
+    content_lang = _public_lang(lang)
+    group = _funder_index(content_lang=content_lang).get(funder_slug)
+    if group is None:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND)
+    root_path = _root_path(request)
+    site_origin = _site_origin(request, root_path)
+    items = cast(list[Opportunity], group["items"])
+    live_items = [
+        localize_opportunity(item, content_lang)
+        for item in items
+        if public_lifecycle(item) in {"open", "closing_soon", "rolling", "forecast"}
+    ][:8]
+    archive_items = [
+        localize_opportunity(item, content_lang)
+        for item in items
+        if public_lifecycle(item) in {"closed", "awarded"}
+    ][:6]
+    return HTMLResponse(
+        render_funder_page(
+            funder=_funder_payload(group),
+            live_items=live_items,
+            archive_items=archive_items,
+            lang=content_lang,
+            root_path=root_path,
+            site_origin=site_origin,
+        )
+    )
+
+
+def _persist_items(items: list[Opportunity]) -> None:
+    repository = _configured_repository()
+    if repository is None:
+        return
+    for item in items:
+        repository.upsert(item)
+
+
+@app.post("/refresh")
+async def refresh(_: None = Depends(require_admin_token)) -> dict:
+    global _cache
+    sources = [source_cls() for source_cls in PARSERS.values()]  # type: ignore[abstract]
+    _cache = await run_all(sources)
+    _persist_items(_cache)
+    return {"refreshed": len(_cache)}
+
+
+@app.get("/opportunities", response_model=list[Opportunity])
+async def list_opportunities(
+    tag: str | None = Query(None),
+    min_score: float = Query(0.0, ge=0.0, le=1.0),
+    deadline_before: date | None = None,
+    deadline_after: date | None = None,
+    include_irrelevant: bool = False,
+    limit: int = Query(50, ge=1, le=5000),
+    offset: int = Query(0, ge=0),
+    lang: str | None = Query(None),
+) -> list[Opportunity]:
+    content_lang = _public_lang(lang)
+    items = _stored_items(content_lang=content_lang)
+    items = _public_scope_items(items, include_irrelevant=include_irrelevant)
+    if tag:
+        items = [o for o in items if tag.lower() in (t.lower() for t in o.tags)]
+    items = [o for o in items if o.score >= min_score]
+    if deadline_before:
+        items = [o for o in items if o.deadline and o.deadline <= deadline_before]
+    if deadline_after:
+        items = [o for o in items if o.deadline is None or o.deadline >= deadline_after]
+    items.sort(key=lambda item: (item.score, item.discovered_at), reverse=True)
+    return [
+        localize_opportunity(item, content_lang)
+        for item in items[offset : offset + limit]
+    ]
+
+
+@app.get("/opportunities/{opportunity_id}", response_model=OpportunityDetail)
+async def get_opportunity_detail(
+    opportunity_id: UUID,
+    lang: str | None = Query(None),
+) -> OpportunityDetail:
+    content_lang = _public_lang(lang)
+    item = _find_opportunity(opportunity_id, content_lang=content_lang)
+    if item is None:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND)
+    return await build_opportunity_detail(
+        localize_opportunity(item, content_lang),
+        lang=content_lang,
+    )
+
+
+@app.get("/digest", response_model=Digest)
+async def digest(
+    tag: str | None = Query(None),
+    min_score: float = Query(0.3, ge=0.0, le=1.0),
+    limit: int = Query(10, ge=1, le=50),
+    include_irrelevant: bool = False,
+    lang: str | None = Query(None),
+) -> Digest:
+    content_lang = _public_lang(lang)
+    today = date.today()
+    items = _stored_items(content_lang=content_lang)
+    items = _public_scope_items(items, include_irrelevant=include_irrelevant)
+    items = [item for item in items if _is_open(item, today)]
+    if tag:
+        items = [
+            item for item in items if tag.lower() in (t.lower() for t in item.tags)
+        ]
+    items = [item for item in items if item.score >= min_score]
+    items.sort(key=lambda item: (item.score, item.discovered_at), reverse=True)
+
+    generated_at = datetime.now(UTC)
+    return Digest(
+        generated_at=generated_at,
+        period_from=generated_at - timedelta(days=1),
+        period_to=generated_at,
+        items=[localize_opportunity(item, content_lang) for item in items[:limit]],
+        channel="api",
+    )

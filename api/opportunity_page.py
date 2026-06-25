@@ -1,0 +1,1270 @@
+"""Server-rendered public opportunity pages for QAZ.FUND."""
+
+from __future__ import annotations
+
+import json
+import re
+from datetime import date
+from enum import Enum
+from html import escape
+from urllib.parse import urlparse
+
+from api.avds import AVDS_CSS, AVDS_FONT_HEAD
+from api.dashboard import dashboard_copy
+from api.public_meta import analytics_head_html, og_image_url
+from core.models import Opportunity, OpportunityDetail, OpportunityMetadataField
+
+PUBLIC_METADATA_KEYS = frozenset(
+    {
+        "source",
+        "funder",
+        "deadline",
+        "amount",
+        "amount_raw",
+        "country",
+        "region",
+        "project_id",
+        "reference",
+        "status",
+        "notice_type",
+        "borrower",
+        "board_approval",
+        "closing_date",
+    }
+)
+
+
+def _absolute_href(origin: str, path: str) -> str:
+    clean_origin = origin.rstrip("/")
+    if path.startswith(("http://", "https://")):
+        return path
+    if not clean_origin:
+        return path or "/"
+    return f"{clean_origin}{path}"
+
+
+def _page_path(root_path: str, opportunity_id: str, lang: str) -> str:
+    base = root_path.rstrip("/")
+    path = f"/opportunity/{opportunity_id}"
+    if base:
+        path = f"{base}{path}"
+    return f"{path}?lang={lang}"
+
+
+def _catalog_path(root_path: str, lang: str) -> str:
+    base = root_path.rstrip("/")
+    if base:
+        return f"{base}/?lang={lang}#opportunities"
+    return f"/?lang={lang}#opportunities"
+
+
+def _host_label(value: str) -> str:
+    try:
+        host = urlparse(value).hostname or ""
+    except ValueError:
+        host = ""
+    if host.startswith("www."):
+        host = host[4:]
+    return host or value
+
+
+def _label_value(value: object, copy: dict[str, object]) -> str:
+    raw_value = value.value if isinstance(value, Enum) else value
+    raw = str(raw_value or "").strip()
+    if not raw:
+        return ""
+    label_map_raw = copy.get("label_map")
+    label_map = label_map_raw if isinstance(label_map_raw, dict) else {}
+    normalized = raw.lower().replace("-", "_").replace(" ", "_")
+    mapped = label_map.get(normalized) or label_map.get(raw.lower())
+    if isinstance(mapped, str) and mapped.strip():
+        return mapped.strip()
+    return raw.replace("_", " ")
+
+
+def _status_label(status: str, copy: dict[str, object]) -> str:
+    normalized = str(status or "structured_only").strip().lower()
+    key = f"detail_status_{normalized}"
+    value = copy.get(key) or copy.get("detail_status_structured_only")
+    return str(value or normalized.replace("_", " "))
+
+
+def _localized_item_value(
+    item: Opportunity,
+    field: str,
+    lang: str,
+    fallback: str,
+) -> str:
+    raw = item.raw if isinstance(item.raw, dict) else {}
+    i18n = raw.get("i18n")
+    localized = i18n.get(lang) if isinstance(i18n, dict) else None
+    value = localized.get(field) if isinstance(localized, dict) else None
+    if isinstance(value, str) and value.strip():
+        return value.strip()
+    return fallback.strip()
+
+
+def _has_cyrillic(value: str) -> bool:
+    return bool(re.search(r"[А-Яа-яЁё]", value))
+
+
+def _needs_russian_title_fallback(title: str, summary: str, lang: str) -> bool:
+    if lang != "ru" or not title or not _has_cyrillic(summary):
+        return False
+    latin_count = len(re.findall(r"[A-Za-z]", title))
+    cyrillic_count = len(re.findall(r"[А-Яа-яЁё]", title))
+    return latin_count > cyrillic_count
+
+
+def _summary_title_fallback(summary: str) -> str:
+    sentence_candidates = re.split(r"(?<=[.!?])\s+", summary.strip(), maxsplit=3)
+    candidate = sentence_candidates[0] if sentence_candidates else summary.strip()
+    skip_prefixes = (
+        "крайний срок",
+        "срок подачи",
+        "дата закрытия",
+        "заявки принимаются до",
+    )
+    for sentence in sentence_candidates:
+        normalized = sentence.strip().lower()
+        if normalized and not normalized.startswith(skip_prefixes):
+            candidate = sentence
+            break
+    candidate = candidate.rstrip(".!?").strip()
+    if len(candidate) <= 120:
+        return candidate
+    return candidate[:117].rstrip() + "..."
+
+
+def _clean_summary_text(text: str) -> str:
+    normalized = re.sub(r"\s+", " ", str(text or "")).strip()
+    if not normalized:
+        return ""
+    return re.split(r"\b(?:Читать далее|Read more)\b", normalized, maxsplit=1)[0].strip(
+        " -:;,"
+    )
+
+
+def _seo_excerpt(text: str, *, max_length: int = 280) -> str:
+    normalized = _clean_summary_text(text)
+    if not normalized:
+        return ""
+    if len(normalized) <= max_length:
+        return normalized
+    window = normalized[: max_length + 1]
+    cut = window.rfind(" ")
+    if cut >= max_length * 0.6:
+        window = window[:cut]
+    else:
+        window = normalized[:max_length]
+    return window.rstrip(" -:;,") + "..."
+
+
+def _format_deadline(value: date | None, lang: str, rolling_label: str) -> str:
+    if value is None:
+        return rolling_label
+    if lang == "en":
+        return value.strftime("%b %d, %Y")
+    return value.strftime("%d.%m.%Y")
+
+
+def _metadata_markup(
+    metadata: list[OpportunityMetadataField],
+    labels: dict[str, str],
+    copy: dict[str, object],
+) -> str:
+    if not metadata:
+        return ""
+    items = []
+    for entry in metadata:
+        if entry.key not in PUBLIC_METADATA_KEYS:
+            continue
+        label = labels.get(entry.key, entry.key.replace("_", " ").title())
+        items.append(
+            """
+            <div class="meta-item">
+              <span>{label}</span>
+              <strong>{value}</strong>
+            </div>
+            """.format(
+                label=escape(label),
+                value=escape(_label_value(entry.value, copy)),
+            )
+        )
+    return "".join(items)
+
+
+def _json_ld(payload: dict[str, object]) -> str:
+    return json.dumps(payload, ensure_ascii=False).replace("<", "\\u003c")
+
+
+def _opportunity_schema(
+    *,
+    detail: OpportunityDetail,
+    page_title: str,
+    display_title: str,
+    summary: str,
+    canonical_href: str,
+    catalog_href: str,
+    site_root_href: str,
+    lang: str,
+    funder_name: str,
+) -> str:
+    breadcrumb_id = f"{canonical_href}#breadcrumb"
+    page_id = f"{canonical_href}#page"
+    graph: list[dict[str, object]] = [
+        {
+            "@type": "BreadcrumbList",
+            "@id": breadcrumb_id,
+            "itemListElement": [
+                {
+                    "@type": "ListItem",
+                    "position": 1,
+                    "name": "QAZ.FUND",
+                    "item": catalog_href,
+                },
+                {
+                    "@type": "ListItem",
+                    "position": 2,
+                    "name": display_title,
+                    "item": canonical_href,
+                },
+            ],
+        },
+        {
+            "@type": "WebPage",
+            "@id": page_id,
+            "url": canonical_href,
+            "name": page_title,
+            "description": summary,
+            "inLanguage": lang,
+            "breadcrumb": {"@id": breadcrumb_id},
+            "isPartOf": {"@id": f"{site_root_href}#website"},
+            "about": {
+                "@type": "Thing",
+                "name": detail.title,
+                "description": summary,
+                "identifier": str(detail.id),
+                "keywords": ", ".join(detail.tags),
+                "sameAs": str(detail.source_url),
+            },
+        },
+    ]
+    if funder_name:
+        graph.append(
+            {
+                "@type": "Organization",
+                "@id": f"{canonical_href}#funder",
+                "name": funder_name,
+            }
+        )
+        graph[1]["publisher"] = {"@id": f"{canonical_href}#funder"}
+    return _json_ld({"@context": "https://schema.org", "@graph": graph})
+
+
+def _sections_markup(detail: OpportunityDetail, fallback_heading: str) -> str:
+    sections = [section for section in detail.detail_sections if section.text.strip()]
+    if not sections:
+        return ""
+    blocks = []
+    for section in sections:
+        paragraphs = "".join(
+            f"<p>{escape(_clean_summary_text(chunk) or chunk.strip())}</p>"
+            for chunk in section.text.splitlines()
+            if chunk.strip()
+        )
+        blocks.append(
+            """
+            <section class="section-card">
+              <h2>{heading}</h2>
+              <div class="richtext">{paragraphs}</div>
+            </section>
+            """.format(
+                heading=escape(section.heading or fallback_heading),
+                paragraphs=paragraphs,
+            )
+        )
+    return "".join(blocks)
+
+
+def _term_blob(detail: OpportunityDetail) -> str:
+    raw = detail.raw if isinstance(detail.raw, dict) else {}
+    raw_bits: list[str] = []
+    for value in raw.values():
+        if isinstance(value, str):
+            raw_bits.append(value)
+        elif isinstance(value, (list, tuple, set)):
+            raw_bits.extend(str(item) for item in value if isinstance(item, str))
+    return " ".join(
+        [
+            detail.title,
+            detail.summary,
+            detail.source,
+            detail.funder or "",
+            " ".join(detail.tags),
+            " ".join(detail.eligibility),
+            " ".join(raw_bits),
+        ]
+    ).lower()
+
+
+def _prepare_focus_key(detail: OpportunityDetail) -> str:
+    terms = _term_blob(detail)
+    type_value = detail.type.value
+    if any(token in terms for token in ("tender", "procurement", "rfp", "eoi")):
+        return "tender"
+    if type_value in {"tender"}:
+        return "tender"
+    if any(
+        token in terms
+        for token in (
+            "subsidy",
+            "субсид",
+            "tax_benefit",
+            "loan_guarantee",
+            "preferential_financing",
+            "domestic_support",
+            "egov",
+            "bgov",
+            "damu",
+        )
+    ):
+        return "subsidy"
+    if any(
+        token in terms
+        for token in ("science", "research", "commercialization", "lab", "university")
+    ):
+        return "science"
+    if any(
+        token in terms
+        for token in ("ngo", "nonprofit", "civil_society", "media", "journalism")
+    ):
+        return "ngo"
+    if type_value in {"accelerator", "cloud_credit"} or any(
+        token in terms
+        for token in ("startup", "accelerator", "cloud", "pitch", "pilot")
+    ):
+        return "startup"
+    return "grant"
+
+
+def _prepare_markup(
+    detail: OpportunityDetail,
+    *,
+    copy: dict[str, object],
+) -> str:
+    focus_key = _prepare_focus_key(detail)
+    focus_map = {
+        "grant": ("prepare_grant_title", "prepare_grant_text"),
+        "tender": ("prepare_tender_title", "prepare_tender_text"),
+        "startup": ("prepare_startup_title", "prepare_startup_text"),
+        "subsidy": ("prepare_subsidy_title", "prepare_subsidy_text"),
+        "science": ("prepare_science_title", "prepare_science_text"),
+        "ngo": ("prepare_ngo_title", "prepare_ngo_text"),
+    }
+    deadline_pair = (
+        ("prepare_deadline_title", "prepare_deadline_text")
+        if detail.deadline is not None
+        else ("prepare_rolling_title", "prepare_rolling_text")
+    )
+    cards = [
+        ("prepare_eligibility_title", "prepare_eligibility_text"),
+        deadline_pair,
+        focus_map[focus_key],
+        ("prepare_source_title", "prepare_source_text"),
+    ]
+    card_markup = []
+    for index, (title_key, text_key) in enumerate(cards, start=1):
+        card_markup.append(
+            """
+            <article class="prepare-card">
+              <span class="prepare-index">{index:02d}</span>
+              <h3>{title}</h3>
+              <p>{text}</p>
+            </article>
+            """.format(
+                index=index,
+                title=escape(str(copy[title_key])),
+                text=escape(str(copy[text_key])),
+            )
+        )
+    return """
+    <section class="prepare-section">
+      <div class="prepare-head">
+        <span class="eyebrow">{eyebrow}</span>
+        <h2>{title}</h2>
+        <p>{description}</p>
+      </div>
+      <div class="prepare-grid">{cards}</div>
+    </section>
+    """.format(
+        eyebrow=escape(str(copy["prepare_section_eyebrow"])),
+        title=escape(str(copy["prepare_section_title"])),
+        description=escape(str(copy["prepare_section_description"])),
+        cards="".join(card_markup),
+    )
+
+
+def _apply_markup(
+    *,
+    has_application_url: bool,
+    copy: dict[str, object],
+) -> str:
+    first_step = (
+        ("apply_step_open_apply_title", "apply_step_open_apply_text")
+        if has_application_url
+        else ("apply_step_open_source_title", "apply_step_open_source_text")
+    )
+    steps = [
+        first_step,
+        ("apply_step_check_title", "apply_step_check_text"),
+        ("apply_step_pack_title", "apply_step_pack_text"),
+        ("apply_step_submit_title", "apply_step_submit_text"),
+    ]
+    step_markup = []
+    for index, (title_key, text_key) in enumerate(steps, start=1):
+        step_markup.append(
+            """
+            <li class="apply-step">
+              <span class="apply-index">{index:02d}</span>
+              <div>
+                <h3>{title}</h3>
+                <p>{text}</p>
+              </div>
+            </li>
+            """.format(
+                index=index,
+                title=escape(str(copy[title_key])),
+                text=escape(str(copy[text_key])),
+            )
+        )
+    return """
+    <section class="apply-section">
+      <div class="apply-head">
+        <span class="eyebrow">{eyebrow}</span>
+        <h2>{title}</h2>
+        <p>{description}</p>
+      </div>
+      <ol class="apply-list">{steps}</ol>
+    </section>
+    """.format(
+        eyebrow=escape(str(copy["apply_section_eyebrow"])),
+        title=escape(str(copy["apply_section_title"])),
+        description=escape(str(copy["apply_section_description"])),
+        steps="".join(step_markup),
+    )
+
+
+def _related_markup(
+    related_items: list[tuple[Opportunity, str]],
+    *,
+    lang: str,
+    root_path: str,
+    copy: dict[str, object],
+) -> str:
+    if not related_items:
+        return ""
+    cards: list[str] = []
+    for item, reason_key in related_items:
+        title = _localized_item_value(
+            item,
+            "title",
+            lang,
+            item.title or str(copy["detail_title_fallback"]),
+        ) or str(copy["detail_title_fallback"])
+        summary = _clean_summary_text(
+            _localized_item_value(
+                item,
+                "summary",
+                lang,
+                item.summary or str(copy["no_summary"]),
+            )
+        ) or str(copy["no_summary"])
+        if _needs_russian_title_fallback(title, summary, lang):
+            title = _summary_title_fallback(summary)
+        href = escape(_page_path(root_path, str(item.id), lang), quote=True)
+        reason = escape(str(copy.get(reason_key, copy["related_reason_theme"])))
+        source_label = escape(item.funder or _label_value(item.source, copy))
+        deadline_label = escape(
+            _format_deadline(item.deadline, lang, str(copy["open_rolling"]))
+        )
+        cards.append(
+            """
+            <article class="related-card">
+              <div class="related-top">
+                <span class="related-reason">{reason}</span>
+                <span class="related-deadline">{deadline}</span>
+              </div>
+              <h3><a href="{href}">{title}</a></h3>
+              <p class="related-summary">{summary}</p>
+              <div class="related-meta">
+                <span>{source}</span>
+                <a class="related-link" href="{href}">{action}</a>
+              </div>
+            </article>
+            """.format(
+                reason=reason,
+                deadline=deadline_label,
+                href=href,
+                title=escape(title),
+                summary=escape(summary),
+                source=source_label,
+                action=escape(str(copy["related_open"])),
+            )
+        )
+    return """
+    <section class="related-section">
+      <div class="related-head">
+        <span class="eyebrow">{eyebrow}</span>
+        <h2>{title}</h2>
+        <p>{description}</p>
+      </div>
+      <div class="related-grid">{cards}</div>
+    </section>
+    """.format(
+        eyebrow=escape(str(copy["related_section_eyebrow"])),
+        title=escape(str(copy["related_section_title"])),
+        description=escape(str(copy["related_section_description"])),
+        cards="".join(cards),
+    )
+
+
+def render_opportunity_page(
+    *,
+    detail: OpportunityDetail,
+    lang: str,
+    root_path: str,
+    site_origin: str,
+    related_items: list[tuple[Opportunity, str]] | None = None,
+) -> str:
+    copy = dashboard_copy(lang)
+    active_lang = str(copy["lang"])
+    title = detail.title or str(copy["detail_title_fallback"])
+    summary = _clean_summary_text(detail.summary) or str(copy["detail_empty"])
+    seo_summary = _seo_excerpt(summary) or summary
+    page_title = f"{title} - QAZ.FUND"
+    canonical_path = _page_path(root_path, str(detail.id), active_lang)
+    canonical_href = escape(_absolute_href(site_origin, canonical_path), quote=True)
+    ru_href = escape(
+        _absolute_href(site_origin, _page_path(root_path, str(detail.id), "ru")),
+        quote=True,
+    )
+    en_href = escape(
+        _absolute_href(site_origin, _page_path(root_path, str(detail.id), "en")),
+        quote=True,
+    )
+    catalog_href = escape(_catalog_path(root_path, active_lang), quote=True)
+    source_href = escape(str(detail.source_url), quote=True)
+    application_href = (
+        escape(detail.application_url, quote=True) if detail.application_url else ""
+    )
+    raw_metadata_labels = copy.get("detail_meta_labels")
+    metadata_labels = (
+        raw_metadata_labels if isinstance(raw_metadata_labels, dict) else {}
+    )
+    metadata_markup = _metadata_markup(detail.metadata, metadata_labels, copy)
+    sections_markup = _sections_markup(detail, str(copy["detail_source_excerpt"]))
+    prepare_markup = _prepare_markup(detail, copy=copy)
+    apply_markup = _apply_markup(
+        has_application_url=bool(application_href),
+        copy=copy,
+    )
+    related_markup = _related_markup(
+        related_items or [],
+        lang=active_lang,
+        root_path=root_path,
+        copy=copy,
+    )
+    source_label = escape(detail.funder or _label_value(detail.source, copy))
+    deadline_label = escape(
+        _format_deadline(detail.deadline, active_lang, str(copy["open_rolling"]))
+    )
+    score_label = f"{detail.score:.2f}"
+    source_host = escape(_host_label(str(detail.source_url)))
+    og_locale = escape(active_lang.replace("-", "_") + "_KZ", quote=True)
+    canonical_url = _absolute_href(site_origin, canonical_path)
+    catalog_url = _absolute_href(site_origin, _catalog_path(root_path, active_lang))
+    site_root_url = _absolute_href(
+        site_origin,
+        (
+            f"{root_path.rstrip('/')}/?lang={active_lang}"
+            if root_path.rstrip("/")
+            else f"/?lang={active_lang}"
+        ),
+    )
+    social_image = escape(og_image_url(site_origin, root_path), quote=True)
+    analytics_head = analytics_head_html()
+    eligibility = [
+        escape(_label_value(value, copy))
+        for value in detail.eligibility
+        if isinstance(value, str) and value.strip()
+    ]
+    eligibility_markup = "".join(
+        f'<span class="pill">{value}</span>' for value in eligibility[:6]
+    )
+    application_button = (
+        """
+        <a class="button slim" href="{href}" target="_blank" rel="noopener">
+          {label}
+        </a>
+        """.format(
+            href=application_href,
+            label=escape(str(copy["detail_open_application"])),
+        )
+        if application_href
+        else ""
+    )
+    empty_markup = ""
+    if not metadata_markup and not sections_markup:
+        empty_markup = (
+            f'<div class="empty-state">{escape(str(copy["detail_empty"]))}</div>'
+        )
+    html_attrs = (
+        f'lang="{escape(active_lang, quote=True)}" '
+        'data-avds="grant-radar" data-av-theme="light" data-theme="light"'
+    )
+    fetch_status_note = (
+        escape(_status_label(detail.detail_fetch_status, copy))
+        if detail.detail_available
+        else escape(str(copy["detail_empty"]))
+    )
+    fetch_status_value = escape(_status_label(detail.detail_fetch_status, copy))
+    deadline_meta_label = escape(str(metadata_labels.get("deadline", "Deadline")))
+    schema_json = _opportunity_schema(
+        detail=detail,
+        page_title=page_title,
+        display_title=title,
+        summary=seo_summary,
+        canonical_href=canonical_url,
+        catalog_href=catalog_url,
+        site_root_href=site_root_url,
+        lang=active_lang,
+        funder_name=detail.funder or "",
+    )
+
+    return f"""<!doctype html>
+<html {html_attrs}>
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{escape(page_title)}</title>
+  <meta name="description" content="{escape(seo_summary, quote=True)}">
+  <link rel="canonical" href="{canonical_href}">
+  <link rel="alternate" hreflang="ru" href="{ru_href}">
+  <link rel="alternate" hreflang="en" href="{en_href}">
+  <link rel="alternate" hreflang="x-default" href="{ru_href}">
+  <meta property="og:type" content="article">
+  <meta property="og:title" content="{escape(page_title, quote=True)}">
+  <meta property="og:description" content="{escape(seo_summary, quote=True)}">
+  <meta property="og:url" content="{canonical_href}">
+  <meta property="og:image" content="{social_image}">
+  <meta property="og:image:width" content="1200">
+  <meta property="og:image:height" content="630">
+  <meta property="og:locale" content="{og_locale}">
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="{escape(page_title, quote=True)}">
+  <meta name="twitter:description" content="{escape(seo_summary, quote=True)}">
+  <meta name="twitter:image" content="{social_image}">
+  <script type="application/ld+json">{schema_json}</script>
+{analytics_head}
+{AVDS_FONT_HEAD}
+  <style>
+{AVDS_CSS}
+    :root {{
+      color-scheme: light;
+      --bg: var(--color-bg);
+      --surface: var(--color-surface);
+      --surface-subtle: var(--color-bg-subtle);
+      --surface-raised: var(--color-surface-raised);
+      --text: var(--color-text);
+      --muted: var(--color-text-muted);
+      --line: var(--color-border);
+      --line-strong: var(--color-border-strong);
+      --brand: var(--color-accent);
+      --brand-soft: var(--color-accent-subtle);
+      --success: var(--color-success);
+      --success-soft: var(--color-success-subtle);
+      --radius: var(--av-radius-lg);
+      --shadow: var(--shadow-md);
+      --container-max: min(980px, calc(100% - 32px));
+    }}
+    * {{ box-sizing: border-box; }}
+    body {{
+      margin: 0;
+      background: var(--bg);
+      color: var(--text);
+      font-family: var(--av-font-sans);
+      font-size: var(--av-text-base);
+      line-height: var(--av-leading-normal);
+    }}
+    a {{ color: inherit; text-decoration: none; }}
+    .shell {{
+      width: var(--container-max);
+      margin: 0 auto;
+      padding: 24px 0 48px;
+    }}
+    .topbar {{
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      margin-bottom: 20px;
+    }}
+    .breadcrumbs {{
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: 8px;
+      color: var(--muted);
+      font-size: var(--av-text-sm);
+    }}
+    .breadcrumbs a:hover {{
+      color: var(--brand);
+    }}
+    .hero {{
+      display: grid;
+      gap: 18px;
+      padding: 22px;
+      border: 1px solid color-mix(in oklab, var(--brand), white 78%);
+      border-radius: var(--radius);
+      background:
+        radial-gradient(circle at top left, rgb(37 99 235 / 0.14), transparent 32%),
+        linear-gradient(
+          180deg,
+          color-mix(in oklab, var(--surface), var(--brand-soft) 18%),
+          color-mix(in oklab, var(--surface), white 6%)
+        );
+      box-shadow: var(--shadow);
+      margin-bottom: 20px;
+    }}
+    .eyebrow {{
+      color: var(--muted);
+      font-size: var(--av-text-xs);
+      font-family: var(--font-sans);
+      font-weight: 650;
+      text-transform: none;
+      letter-spacing: 0;
+    }}
+    .hero h1 {{
+      margin: 0;
+      font-size: clamp(24px, 3.2vw, 34px);
+      line-height: 1.12;
+    }}
+    .summary {{
+      margin: 0;
+      max-width: 72ch;
+      color: color-mix(in oklab, var(--text), var(--muted) 35%);
+      font-size: var(--av-text-base);
+      line-height: 1.62;
+    }}
+    .hero-grid {{
+      display: grid;
+      grid-template-columns: minmax(0, 1.6fr) minmax(280px, 0.9fr);
+      gap: 18px;
+      align-items: start;
+    }}
+    .hero-actions {{
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+    }}
+    .button {{
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      min-height: var(--av-control-height-md);
+      padding: 0 14px;
+      border-radius: var(--av-radius-md);
+      border: 1px solid var(--line);
+      background: var(--surface);
+      font-weight: 600;
+    }}
+    .button.primary {{
+      border-color: color-mix(in oklab, var(--brand), black 12%);
+      background: var(--brand);
+      color: white;
+    }}
+    .button.slim {{
+      min-height: var(--av-control-height-sm);
+      background: color-mix(in oklab, var(--surface), white 14%);
+    }}
+    .hero-stats {{
+      display: grid;
+      gap: 10px;
+      padding: 16px;
+      border: 1px solid var(--line);
+      border-radius: var(--av-radius-md);
+      background: color-mix(in oklab, var(--surface), white 20%);
+    }}
+    .hero-stats strong {{
+      font-size: var(--av-text-xl);
+    }}
+    .meta-strip {{
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 12px;
+      margin-bottom: 20px;
+    }}
+    .metric {{
+      padding: 14px;
+      border: 1px solid var(--line);
+      border-radius: var(--av-radius-md);
+      background: var(--surface);
+      box-shadow: var(--shadow-sm);
+    }}
+    .metric span {{
+      display: block;
+      margin-bottom: 6px;
+      color: var(--muted);
+      font-size: var(--av-text-xs);
+      text-transform: none;
+      letter-spacing: 0;
+    }}
+    .metric strong {{
+      font-size: var(--av-text-lg);
+      line-height: 1.2;
+    }}
+    .pills {{
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-bottom: 20px;
+    }}
+    .pill {{
+      display: inline-flex;
+      align-items: center;
+      min-height: var(--av-control-height-sm);
+      padding: 0 12px;
+      border-radius: 999px;
+      border: 1px solid color-mix(in oklab, var(--success), white 74%);
+      background: var(--success-soft);
+      color: color-mix(in oklab, var(--success), black 20%);
+      font-size: var(--av-text-sm);
+      font-weight: 600;
+    }}
+    .content-grid {{
+      display: grid;
+      grid-template-columns: minmax(0, 1.4fr) minmax(260px, 0.8fr);
+      gap: 20px;
+      align-items: start;
+    }}
+    .section-stack {{
+      display: grid;
+      gap: 16px;
+    }}
+    .section-card,
+    .sidebar-card {{
+      padding: 18px;
+      border: 1px solid var(--line);
+      border-radius: var(--av-radius-md);
+      background: var(--surface);
+      box-shadow: var(--shadow-sm);
+    }}
+    .section-card h2,
+    .sidebar-card h2 {{
+      margin: 0 0 12px;
+      font-size: var(--av-text-xl);
+      line-height: 1.2;
+    }}
+    .richtext {{
+      display: grid;
+      gap: 12px;
+    }}
+    .richtext p {{
+      margin: 0;
+      color: color-mix(in oklab, var(--text), var(--muted) 28%);
+    }}
+    .meta-grid {{
+      display: grid;
+      gap: 10px;
+    }}
+    .meta-item {{
+      padding: 12px 0;
+      border-top: 1px solid var(--line);
+    }}
+    .meta-item:first-child {{
+      padding-top: 0;
+      border-top: 0;
+    }}
+    .meta-item span {{
+      display: block;
+      margin-bottom: 4px;
+      color: var(--muted);
+      font-size: var(--av-text-xs);
+      text-transform: none;
+      letter-spacing: 0;
+    }}
+    .meta-item strong {{
+      font-size: var(--av-text-base);
+      line-height: 1.4;
+    }}
+    .status-note {{
+      color: var(--muted);
+      font-size: var(--av-text-sm);
+    }}
+    .empty-state {{
+      padding: 18px;
+      border: 1px dashed var(--line-strong);
+      border-radius: var(--av-radius-md);
+      background: var(--surface-subtle);
+      color: var(--muted);
+    }}
+    .prepare-section {{
+      display: grid;
+      gap: 14px;
+      margin-bottom: 20px;
+      padding: 18px;
+      border: 1px solid color-mix(in oklab, var(--brand), white 78%);
+      border-radius: var(--av-radius-md);
+      background: color-mix(in oklab, var(--surface-subtle), var(--brand-soft) 14%);
+    }}
+    .prepare-head {{
+      display: grid;
+      gap: 6px;
+      max-width: 760px;
+    }}
+    .prepare-head h2 {{
+      margin: 0;
+      font-family: var(--font-sans);
+      font-size: clamp(22px, 3vw, 28px);
+      font-weight: 700;
+      line-height: 1.16;
+    }}
+    .prepare-head p {{
+      margin: 0;
+      color: color-mix(in oklab, var(--text), var(--muted) 28%);
+      font-size: var(--av-text-sm);
+      line-height: 1.58;
+    }}
+    .prepare-grid {{
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 12px;
+    }}
+    .prepare-card {{
+      display: grid;
+      gap: 8px;
+      min-height: 164px;
+      padding: 14px;
+      border: 1px solid var(--line);
+      border-radius: var(--av-radius-md);
+      background: color-mix(in oklab, var(--surface), white 12%);
+      box-shadow: var(--shadow-xs);
+    }}
+    .prepare-index {{
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 34px;
+      height: 28px;
+      border-radius: 999px;
+      background: var(--brand);
+      color: white;
+      font-family: var(--font-mono);
+      font-size: var(--av-text-xs);
+      font-weight: 700;
+    }}
+    .prepare-card h3 {{
+      margin: 0;
+      font-size: var(--av-text-base);
+      line-height: 1.25;
+    }}
+    .prepare-card p {{
+      margin: 0;
+      color: color-mix(in oklab, var(--text), var(--muted) 28%);
+      font-size: var(--av-text-sm);
+      line-height: 1.55;
+    }}
+    .apply-section {{
+      display: grid;
+      gap: 14px;
+      margin-bottom: 20px;
+      padding: 18px;
+      border: 1px solid var(--line);
+      border-radius: var(--av-radius-md);
+      background: var(--surface);
+      box-shadow: var(--shadow-sm);
+    }}
+    .apply-head {{
+      display: grid;
+      gap: 6px;
+      max-width: 760px;
+    }}
+    .apply-head h2 {{
+      margin: 0;
+      font-family: var(--font-sans);
+      font-size: clamp(22px, 3vw, 28px);
+      font-weight: 700;
+      line-height: 1.16;
+    }}
+    .apply-head p {{
+      margin: 0;
+      color: color-mix(in oklab, var(--text), var(--muted) 28%);
+      font-size: var(--av-text-sm);
+      line-height: 1.58;
+    }}
+    .apply-list {{
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 12px;
+      padding: 0;
+      margin: 0;
+      list-style: none;
+    }}
+    .apply-step {{
+      display: grid;
+      grid-template-columns: 34px minmax(0, 1fr);
+      gap: 10px;
+      align-items: start;
+      padding: 14px;
+      border: 1px solid var(--line);
+      border-radius: var(--av-radius-md);
+      background: color-mix(in oklab, var(--surface-subtle), white 20%);
+    }}
+    .apply-index {{
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 34px;
+      height: 28px;
+      border-radius: 999px;
+      background: color-mix(in oklab, var(--success), black 8%);
+      color: white;
+      font-family: var(--font-mono);
+      font-size: var(--av-text-xs);
+      font-weight: 700;
+    }}
+    .apply-step h3 {{
+      margin: 0 0 6px;
+      font-size: var(--av-text-base);
+      line-height: 1.25;
+    }}
+    .apply-step p {{
+      margin: 0;
+      color: color-mix(in oklab, var(--text), var(--muted) 28%);
+      font-size: var(--av-text-sm);
+      line-height: 1.55;
+    }}
+    .related-section {{
+      display: grid;
+      gap: 14px;
+      margin-top: 24px;
+      padding-top: 22px;
+      border-top: 1px solid var(--line);
+    }}
+    .related-head {{
+      display: grid;
+      gap: 6px;
+      max-width: 760px;
+    }}
+    .related-head h2 {{
+      margin: 0;
+      font-family: var(--font-sans);
+      font-size: clamp(22px, 3vw, 28px);
+      font-weight: 700;
+      line-height: 1.16;
+    }}
+    .related-head p {{
+      margin: 0;
+      color: color-mix(in oklab, var(--text), var(--muted) 28%);
+      font-size: var(--av-text-sm);
+      line-height: 1.58;
+    }}
+    .related-grid {{
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 14px;
+    }}
+    .related-card {{
+      display: grid;
+      gap: 12px;
+      min-height: 220px;
+      padding: 18px;
+      border: 1px solid var(--line);
+      border-radius: var(--av-radius-md);
+      background: linear-gradient(
+        180deg,
+        color-mix(in oklab, var(--surface), white 8%),
+        color-mix(in oklab, var(--surface-subtle), white 12%)
+      );
+      box-shadow: var(--shadow-sm);
+    }}
+    .related-top,
+    .related-meta {{
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      flex-wrap: wrap;
+    }}
+    .related-reason,
+    .related-deadline {{
+      display: inline-flex;
+      align-items: center;
+      min-height: var(--av-control-height-sm);
+      padding: 0 10px;
+      border-radius: 999px;
+      font-size: var(--av-text-xs);
+      font-weight: 700;
+      box-shadow: inset 0 0 0 1px var(--line);
+      background: color-mix(in oklab, var(--surface), white 22%);
+      color: var(--muted);
+    }}
+    .related-card h3 {{
+      margin: 0;
+      font-size: var(--av-text-lg);
+      line-height: 1.22;
+    }}
+    .related-card h3 a:hover {{
+      color: var(--brand);
+    }}
+    .related-summary {{
+      margin: 0;
+      color: color-mix(in oklab, var(--text), var(--muted) 30%);
+      font-size: var(--av-text-sm);
+      line-height: 1.6;
+    }}
+    .related-meta {{
+      margin-top: auto;
+      color: var(--muted);
+      font-size: var(--av-text-xs);
+      font-weight: 600;
+    }}
+    .related-link {{
+      color: var(--brand);
+      font-weight: 700;
+    }}
+    .related-link:hover {{
+      text-decoration: underline;
+      text-underline-offset: 2px;
+    }}
+    @media (max-width: 900px) {{
+      .hero-grid,
+      .content-grid,
+      .meta-strip,
+      .prepare-grid,
+      .apply-list,
+      .related-grid {{
+        grid-template-columns: 1fr;
+      }}
+    }}
+    @media (max-width: 640px) {{
+      .shell {{
+        width: min(100%, calc(100% - 24px));
+        padding: 16px 0 36px;
+      }}
+      .hero,
+      .prepare-section,
+      .apply-section,
+      .section-card,
+      .sidebar-card,
+      .related-card {{
+        padding: 14px;
+      }}
+      .hero h1 {{
+        font-size: 24px;
+      }}
+      .summary {{
+        font-size: var(--av-text-sm);
+      }}
+      .metric {{
+        padding: 12px;
+      }}
+      .prepare-head h2,
+      .apply-head h2,
+      .related-head h2 {{
+        font-size: 22px;
+      }}
+    }}
+  </style>
+</head>
+<body>
+  <main class="shell">
+    <div class="topbar">
+      <nav class="breadcrumbs" aria-label="Breadcrumb">
+        <a href="{catalog_href}">QAZ.FUND</a>
+        <span>/</span>
+        <a href="{catalog_href}">{escape(str(copy["opportunities_title"]))}</a>
+        <span>/</span>
+        <span>{escape(title)}</span>
+      </nav>
+    </div>
+
+    <section class="hero">
+      <div class="hero-grid">
+        <div>
+          <div class="eyebrow">QAZ.FUND</div>
+          <h1>{escape(title)}</h1>
+          <p class="summary">{escape(summary)}</p>
+          <div class="hero-actions">
+            <a class="button primary" href="{catalog_href}">
+              {escape(str(copy["hero_primary_cta"]))}
+            </a>
+            <a class="button slim" href="{source_href}" target="_blank" rel="noopener">
+              {escape(str(copy["detail_open_source"]))}
+            </a>
+            {application_button}
+          </div>
+        </div>
+        <aside class="hero-stats">
+          <div>
+            <span class="eyebrow">{escape(str(copy["detail_meta_title"]))}</span>
+          </div>
+          <div>
+            <span class="status-note">{fetch_status_note}</span>
+          </div>
+          <div>
+            <strong>{source_label}</strong>
+            <div class="status-note">{source_host}</div>
+          </div>
+          <div>
+            <strong>{deadline_label}</strong>
+            <div class="status-note">{deadline_meta_label}</div>
+          </div>
+          <div>
+            <strong>{escape(score_label)}</strong>
+            <div class="status-note">{escape(str(copy["score_title"]))}</div>
+          </div>
+        </aside>
+      </div>
+    </section>
+
+    <section class="meta-strip">
+      <div class="metric">
+        <span>{escape(str(metadata_labels.get("source", "Source")))}</span>
+        <strong>{escape(_label_value(detail.source, copy))}</strong>
+      </div>
+      <div class="metric">
+        <span>{escape(str(metadata_labels.get("funder", "Funder")))}</span>
+        <strong>{source_label}</strong>
+      </div>
+      <div class="metric">
+        <span>{escape(str(metadata_labels.get("deadline", "Deadline")))}</span>
+        <strong>{deadline_label}</strong>
+      </div>
+      <div class="metric">
+        <span>{escape(str(copy["detail_fit_title"]))}</span>
+        <strong>{fetch_status_value}</strong>
+      </div>
+    </section>
+
+    {prepare_markup}
+    {apply_markup}
+
+    <div class="pills">{eligibility_markup}</div>
+
+    <section class="content-grid">
+      <div class="section-stack">
+        {sections_markup}
+        {empty_markup}
+      </div>
+      <aside class="sidebar-card">
+        <h2>{escape(str(copy["detail_meta_title"]))}</h2>
+        <div class="meta-grid">{metadata_markup}</div>
+      </aside>
+    </section>
+    {related_markup}
+  </main>
+</body>
+</html>"""

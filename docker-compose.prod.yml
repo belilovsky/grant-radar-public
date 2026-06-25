@@ -1,0 +1,38 @@
+services:
+  db:
+    env_file:
+      - .env.prod
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-grantradar}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-changeme}
+      POSTGRES_DB: ${POSTGRES_DB:-grantradar}
+    ports:
+      - "${DB_BIND_HOST:-127.0.0.1}:${DB_BIND_PORT:-5432}:5432"
+
+  redis:
+    ports:
+      - "${REDIS_BIND_HOST:-127.0.0.1}:${REDIS_BIND_PORT:-6379}:6379"
+
+  api:
+    build:
+      context: .
+      dockerfile: Dockerfile.prod
+    env_file:
+      - .env.prod
+    environment:
+      DATABASE_URL: ${DATABASE_URL:-postgresql+psycopg://grantradar:${POSTGRES_PASSWORD:-changeme}@db:5432/grantradar}
+      GRANT_RADAR_DB_URL: ${GRANT_RADAR_DB_URL:-postgresql+psycopg://grantradar:${POSTGRES_PASSWORD:-changeme}@db:5432/grantradar}
+      PUBLIC_BASE_URL: ${PUBLIC_BASE_URL:-https://example.org}
+    ports:
+      - "${API_BIND_HOST:-127.0.0.1}:${API_BIND_PORT:-8000}:8000"
+
+  worker:
+    build:
+      context: .
+      dockerfile: Dockerfile.prod
+    env_file:
+      - .env.prod
+    environment:
+      DATABASE_URL: ${DATABASE_URL:-postgresql+psycopg://grantradar:${POSTGRES_PASSWORD:-changeme}@db:5432/grantradar}
+      GRANT_RADAR_DB_URL: ${GRANT_RADAR_DB_URL:-postgresql+psycopg://grantradar:${POSTGRES_PASSWORD:-changeme}@db:5432/grantradar}
+      PUBLIC_BASE_URL: ${PUBLIC_BASE_URL:-https://example.org}
