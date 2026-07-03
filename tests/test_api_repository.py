@@ -1,6 +1,7 @@
 from __future__ import annotations
 
-from datetime import date
+from datetime import date, datetime, timezone
+from uuid import uuid4
 
 from fastapi.testclient import TestClient
 
@@ -19,6 +20,7 @@ def _reset_api_state(monkeypatch) -> None:
     monkeypatch.delenv("GRANT_RADAR_ALLOWED_HOSTS", raising=False)
     api_main._repository_for_url.cache_clear()
     api_main._cache.clear()
+    api_main._clear_sitemap_cache()
 
 
 def test_root_renders_service_landing(monkeypatch):
@@ -522,6 +524,16 @@ def test_marketing_endpoints_are_exposed(monkeypatch):
     assert robots_head.status_code == 200
     assert robots_head.headers["content-type"].startswith("text/plain")
 
+    llms = client.get("/llms.txt")
+    assert llms.status_code == 200
+    assert llms.headers["content-type"].startswith("text/plain")
+    assert "# QAZ.FUND" in llms.text
+    assert "Home: http://testserver/" in llms.text
+    assert "Sitemap: http://testserver/sitemap.xml" in llms.text
+    llms_head = client.head("/llms.txt")
+    assert llms_head.status_code == 200
+    assert llms_head.headers["content-type"].startswith("text/plain")
+
     favicon = client.get("/favicon.ico")
     assert favicon.status_code == 200
     assert favicon.headers["content-type"].startswith("image/svg+xml")
@@ -587,6 +599,40 @@ def test_marketing_endpoints_prefer_public_base_url(monkeypatch):
         f"https://qaz.fund/opportunity/{api_main._cache[0].id}?lang=ru" in sitemap.text
     )
     assert "http://testserver" not in sitemap.text
+
+
+def test_sitemap_reuses_single_stored_items_pass(monkeypatch):
+    _reset_api_state(monkeypatch)
+    sample = Opportunity(
+        id=uuid4(),
+        source="sample",
+        source_url="https://example.org/opportunity",
+        type=OpportunityType.GRANT,
+        title="Sample opportunity",
+        summary="Sample summary",
+        funder="Sample funder",
+        funder_slug="sample-funder",
+        tags=["kazakhstan"],
+        languages=["en"],
+        score=10.0,
+        discovered_at=datetime.now(timezone.utc),
+        raw={},
+    )
+    calls = {"stored_items": 0}
+
+    def fake_stored_items(content_lang: str = "en"):
+        calls["stored_items"] += 1
+        return [sample]
+
+    monkeypatch.setattr(api_main, "_stored_items", fake_stored_items)
+    client = TestClient(api_main.app)
+
+    response = client.get("/sitemap.xml")
+    cached_response = client.get("/sitemap.xml")
+
+    assert response.status_code == 200
+    assert cached_response.status_code == 200
+    assert calls["stored_items"] == 1
 
 
 def test_security_headers_are_added(monkeypatch):

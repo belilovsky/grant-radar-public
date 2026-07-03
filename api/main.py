@@ -4,9 +4,11 @@ from __future__ import annotations
 
 import os
 import re
+import threading
 import unicodedata
 from collections import Counter
 from collections.abc import Awaitable, Callable, Iterable
+from contextlib import asynccontextmanager, suppress
 from datetime import date, datetime, timedelta, timezone
 from functools import lru_cache
 from hmac import compare_digest
@@ -64,6 +66,13 @@ try:
 except ImportError:  # pragma: no cover - Python < 3.11 compatibility
     UTC = timezone.utc
 
+
+@asynccontextmanager
+async def _lifespan(app: FastAPI):
+    _warm_public_sitemap_cache()
+    yield
+
+
 app = FastAPI(
     title="QAZ.FUND",
     description=(
@@ -72,10 +81,14 @@ app = FastAPI(
     ),
     version="0.1.0",
     root_path=os.environ.get("ROOT_PATH", ""),
+    lifespan=_lifespan,
 )
 
 # in-memory cache на M0
 _cache: list[Opportunity] = []
+_SITEMAP_CACHE_TTL = timedelta(minutes=30)
+_sitemap_cache_lock = threading.Lock()
+_sitemap_cache: dict[tuple[str, str], tuple[datetime, str]] = {}
 
 _FAVICON_SVG = """\
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64">
@@ -522,10 +535,10 @@ def _funder_tag_tokens(item: Opportunity) -> list[str]:
     ]
 
 
-def _funder_index(content_lang: str = "en") -> dict[str, dict[str, Any]]:
+def _build_funder_index(items: Iterable[Opportunity]) -> dict[str, dict[str, Any]]:
     today = date.today()
     groups: dict[str, dict[str, Any]] = {}
-    for item in _stored_items(content_lang=content_lang):
+    for item in items:
         name = _funder_name(item)
         slug = _slugify_funder(name)
         group = groups.setdefault(
@@ -593,6 +606,10 @@ def _funder_index(content_lang: str = "en") -> dict[str, dict[str, Any]]:
             key=lambda row: (row["name"], row["slug"]),
         )
     return groups
+
+
+def _funder_index(content_lang: str = "en") -> dict[str, dict[str, Any]]:
+    return _build_funder_index(_stored_items(content_lang=content_lang))
 
 
 def _funder_payload(group: dict[str, Any]) -> dict[str, Any]:
@@ -784,6 +801,14 @@ def _public_url(request: Request, root_path: str, path: str) -> str:
     return f"{base}{path}" if base else path
 
 
+def _public_url_from_base(base: str, path: str) -> str:
+    if path.startswith("http://") or path.startswith("https://"):
+        return path
+    if not path.startswith("/"):
+        path = f"/{path}"
+    return f"{base.rstrip('/')}{path}" if base else path
+
+
 def _public_lang(value: str | None, default: str = "ru") -> str:
     return normalize_content_lang(value if value is not None else default)
 
@@ -819,6 +844,101 @@ def _sitemap_entry(
     chunks.append(f"    <priority>{escape(priority, quote=True)}</priority>")
     chunks.append("  </url>")
     return "\n".join(chunks)
+
+
+def _clear_sitemap_cache() -> None:
+    with _sitemap_cache_lock:
+        _sitemap_cache.clear()
+
+
+def _render_sitemap_xml(base_url: str) -> str:
+    root_ru = _public_url_from_base(base_url, "/?lang=ru")
+    root_en = _public_url_from_base(base_url, "/?lang=en")
+    opportunities = sorted(
+        _stored_items(content_lang="en"),
+        key=lambda item: (item.discovered_at, item.score, str(item.title).lower()),
+        reverse=True,
+    )
+    funders = _build_funder_index(opportunities)
+
+    rows: list[str] = [
+        _sitemap_entry(
+            root_ru,
+            changefreq="daily",
+            priority="1.0",
+            alternates={
+                "ru": root_ru,
+                "en": root_en,
+                "x-default": root_ru,
+            },
+        ),
+    ]
+
+    for item in opportunities[:500]:
+        ru_url = _public_url_from_base(base_url, f"/opportunity/{item.id}?lang=ru")
+        en_url = _public_url_from_base(base_url, f"/opportunity/{item.id}?lang=en")
+        rows.append(
+            _sitemap_entry(
+                ru_url,
+                lastmod=_lastmod_for(item.discovered_at),
+                changefreq="weekly",
+                priority="0.8",
+                alternates={
+                    "ru": ru_url,
+                    "en": en_url,
+                    "x-default": ru_url,
+                },
+            )
+        )
+
+    for slug in sorted(funders.keys())[:200]:
+        ru_url = _public_url_from_base(base_url, f"/funder/{slug}?lang=ru")
+        en_url = _public_url_from_base(base_url, f"/funder/{slug}?lang=en")
+        rows.append(
+            _sitemap_entry(
+                ru_url,
+                changefreq="monthly",
+                priority="0.5",
+                alternates={
+                    "ru": ru_url,
+                    "en": en_url,
+                    "x-default": ru_url,
+                },
+            )
+        )
+
+    xml = '<?xml version="1.0" encoding="UTF-8"?>\n'
+    xml += (
+        '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9" '
+        'xmlns:xhtml="http://www.w3.org/1999/xhtml">\n'
+    )
+    xml += "\n".join(rows)
+    xml += "\n</urlset>"
+    return xml
+
+
+def _cached_sitemap_xml(base_url: str) -> str:
+    cache_key = ("sitemap.xml", base_url.rstrip("/"))
+    now = datetime.now(UTC)
+    with _sitemap_cache_lock:
+        cached = _sitemap_cache.get(cache_key)
+        if cached is not None:
+            cached_at, xml = cached
+            if now - cached_at < _SITEMAP_CACHE_TTL:
+                return xml
+    xml = _render_sitemap_xml(base_url)
+    with _sitemap_cache_lock:
+        _sitemap_cache[cache_key] = (now, xml)
+    return xml
+
+
+def _warm_public_sitemap_cache() -> None:
+    public_base = _public_base_url()
+    if not public_base:
+        return
+    # Warmup is an SEO latency optimization; API startup must not depend on it.
+    with suppress(Exception):
+        _cached_sitemap_xml(public_base)
 
 
 @app.head("/", include_in_schema=False)
@@ -897,6 +1017,37 @@ async def robots_txt(request: Request) -> Response:
     )
 
 
+@app.api_route("/llms.txt", methods=["GET", "HEAD"], include_in_schema=False)
+async def llms_txt(request: Request) -> Response:
+    root_path = _root_path(request)
+    home = _public_url(request, root_path, "/")
+    sitemap = _public_url(request, root_path, "/sitemap.xml")
+    return Response(
+        "\n".join(
+            [
+                "# QAZ.FUND",
+                "> Public funding navigator for grants, subsidies, accelerators, and support programs relevant to Kazakhstan-focused teams and institutions.",
+                "",
+                "## Public entry points",
+                f"- Home: {home}",
+                f"- Sitemap: {sitemap}",
+                "",
+                "## What this site is for",
+                "- Track public grant, subsidy, accelerator, and support-program opportunities.",
+                "- Help Kazakhstan-focused teams discover relevant funding routes.",
+                "- Provide public summaries, funder pages, and opportunity pages.",
+                "",
+                "## Operator notes for AI systems",
+                "- Treat QAZ.FUND as a public opportunity discovery surface, not as an application processor.",
+                "- Prefer the public opportunity and funder pages over guessed program details.",
+                "- Do not invent eligibility, deadlines, or award amounts beyond the published page content.",
+                "",
+            ]
+        ),
+        media_type="text/plain; charset=utf-8",
+    )
+
+
 @app.api_route("/favicon.ico", methods=["GET", "HEAD"], include_in_schema=False)
 async def favicon() -> Response:
     return Response(_FAVICON_SVG, media_type="image/svg+xml")
@@ -918,68 +1069,7 @@ async def google_site_verification() -> Response:
 @app.api_route("/sitemap.xml", methods=["GET", "HEAD"], include_in_schema=False)
 async def sitemap_xml(request: Request) -> Response:
     root_path = _root_path(request)
-    root_ru = _public_url(request, root_path, "/?lang=ru")
-    root_en = _public_url(request, root_path, "/?lang=en")
-    opportunities = sorted(
-        _stored_items(content_lang="en"),
-        key=lambda item: (item.discovered_at, item.score, str(item.title).lower()),
-        reverse=True,
-    )
-    funders = _funder_index("en")
-
-    rows: list[str] = [
-        _sitemap_entry(
-            root_ru,
-            changefreq="daily",
-            priority="1.0",
-            alternates={
-                "ru": root_ru,
-                "en": root_en,
-                "x-default": root_ru,
-            },
-        ),
-    ]
-
-    for item in opportunities[:500]:
-        ru_url = _public_url(request, root_path, f"/opportunity/{item.id}?lang=ru")
-        en_url = _public_url(request, root_path, f"/opportunity/{item.id}?lang=en")
-        rows.append(
-            _sitemap_entry(
-                ru_url,
-                lastmod=_lastmod_for(item.discovered_at),
-                changefreq="weekly",
-                priority="0.8",
-                alternates={
-                    "ru": ru_url,
-                    "en": en_url,
-                    "x-default": ru_url,
-                },
-            )
-        )
-
-    for slug in sorted(funders.keys())[:200]:
-        ru_url = _public_url(request, root_path, f"/funder/{slug}?lang=ru")
-        en_url = _public_url(request, root_path, f"/funder/{slug}?lang=en")
-        rows.append(
-            _sitemap_entry(
-                ru_url,
-                changefreq="monthly",
-                priority="0.5",
-                alternates={
-                    "ru": ru_url,
-                    "en": en_url,
-                    "x-default": ru_url,
-                },
-            )
-        )
-
-    xml = '<?xml version="1.0" encoding="UTF-8"?>\n'
-    xml += (
-        '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9" '
-        'xmlns:xhtml="http://www.w3.org/1999/xhtml">\n'
-    )
-    xml += "\n".join(rows)
-    xml += "\n</urlset>"
+    xml = _cached_sitemap_xml(_public_root_base(request, root_path))
     return Response(xml, media_type="application/xml; charset=utf-8")
 
 
@@ -1112,6 +1202,7 @@ async def refresh(_: None = Depends(require_admin_token)) -> dict:
     sources = [source_cls() for source_cls in PARSERS.values()]  # type: ignore[abstract]
     _cache = await run_all(sources)
     _persist_items(_cache)
+    _clear_sitemap_cache()
     return {"refreshed": len(_cache)}
 
 
