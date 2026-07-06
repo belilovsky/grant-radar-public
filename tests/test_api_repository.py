@@ -5,6 +5,8 @@ from uuid import uuid4
 
 from fastapi.testclient import TestClient
 
+from api.dashboard import dashboard_copy
+from api import funder_page as funder_page_module
 from api import main as api_main
 from api import opportunity_page as opportunity_page_module
 from core.db import SqlRepository
@@ -1944,6 +1946,16 @@ def test_funder_page_renders_public_profile(monkeypatch):
     assert "googletagmanager.com/gtag/js?id=G-9EF720PSER" in response.text
     assert '"@type": "Organization"' in response.text
     assert '"@type": "CollectionPage"' in response.text
+
+
+def test_funder_labels_keep_acronyms_and_normalized_case():
+    copy = dashboard_copy("ru")
+
+    assert funder_page_module._label_value("undp_procurement", copy) == "UNDP Procurement"
+    assert funder_page_module._label_value("ebrd_ecepp_procurement", copy) == (
+        "EBRD ECEPP Procurement"
+    )
+    assert funder_page_module._label_value("support_rk", copy) == "Support RK"
 
 
 def test_root_renders_initial_metrics_from_cached_items(monkeypatch):

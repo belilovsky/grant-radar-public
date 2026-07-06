@@ -14,6 +14,26 @@ from api.public_meta import analytics_head_html, og_image_url
 from core.models import Opportunity
 from core.opportunity_intelligence import public_lifecycle
 
+_ACRONYM_MAP = {
+    "ai": "AI",
+    "api": "API",
+    "db": "DB",
+    "ebrd": "EBRD",
+    "ecepp": "ECEPP",
+    "eu": "EU",
+    "iite": "IITE",
+    "isdb": "IsDB",
+    "ngo": "NGO",
+    "qic": "QIC",
+    "qa": "QA",
+    "rk": "RK",
+    "uk": "UK",
+    "undp": "UNDP",
+    "unesco": "UNESCO",
+    "unicef": "UNICEF",
+    "us": "US",
+}
+
 
 def _absolute_href(origin: str, path: str) -> str:
     clean_origin = origin.rstrip("/")
@@ -56,7 +76,11 @@ def _label_value(value: object, copy: dict[str, object]) -> str:
     mapped = label_map.get(normalized) or label_map.get(raw.lower())
     if isinstance(mapped, str) and mapped.strip():
         return mapped.strip()
-    return raw.replace("_", " ")
+    return " ".join(
+        _ACRONYM_MAP.get(part.lower(), part.lower().capitalize())
+        for part in raw.replace("-", "_").split("_")
+        if part
+    )
 
 
 def _object_list(value: object) -> list[object]:
@@ -300,7 +324,7 @@ def render_funder_page(
           target="_blank"
           rel="noopener"
         >
-          <strong>{escape(str(source.get("name") or ""))}</strong>
+          <strong>{escape(_label_value(str(source.get("name") or ""), copy))}</strong>
           <span>{escape(_source_meta_label(source))}</span>
         </a>
         """ for source in _dict_list(funder.get("sources"))[:8])

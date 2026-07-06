@@ -5615,6 +5615,7 @@ def render_dashboard(
       if (labelMap[normalizedKey]) return labelMap[normalizedKey];
       const acronymMap = {{
         ai: "AI",
+        adb: "ADB",
         eu: "EU",
         uk: "UK",
         us: "US",
@@ -5623,9 +5624,14 @@ def render_dashboard(
         api: "API",
         db: "DB",
         qa: "QA",
+        ebrd: "EBRD",
+        ecepp: "ECEPP",
+        isdb: "IsDB",
+        qic: "QIC",
+        rk: "RK",
+        undp: "UNDP",
         unesco: "UNESCO",
         unicef: "UNICEF",
-        adb: "ADB",
         aws: "AWS",
         eeas: "EEAS",
         iite: "IITE"
@@ -6365,7 +6371,7 @@ def render_dashboard(
         .join(", ");
       const bits = [copy.funder_overview_intro];
       if (topics) {{
-        bits.push(text("funder_overview_topics", {{ topics: topics.toLowerCase() }}));
+        bits.push(text("funder_overview_topics", {{ topics }}));
       }}
       if (regions) {{
         bits.push(text("funder_overview_regions", {{ regions }}));
