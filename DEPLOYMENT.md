@@ -88,3 +88,7 @@ The repository includes helper scripts such as `scripts/deploy_qaz_fund.sh` and
 `scripts/qaz_fund_cutover.sh`, but they intentionally require explicit host and
 certificate configuration through environment variables. Do not hardcode live
 infrastructure details into the public repository.
+
+`scripts/deploy_qaz_fund.sh` is conservative by default: it syncs the tree
+without `--delete`. If you intentionally want rsync to remove files on the
+target, opt in explicitly with `RSYNC_DELETE=1`.

@@ -6,6 +6,7 @@ DEPLOY_HOST="${DEPLOY_HOST:-}"
 DEPLOY_PATH="${DEPLOY_PATH:-/opt/grant-radar}"
 COMPOSE_FILES="${COMPOSE_FILES:--f docker-compose.yml -f docker-compose.prod.yml}"
 ENV_FILE="${ENV_FILE:-.env.prod}"
+RSYNC_DELETE="${RSYNC_DELETE:-0}"
 
 cd "$ROOT_DIR"
 
@@ -23,13 +24,20 @@ fi
 REVISION="$(git rev-parse HEAD)"
 DEPLOYED_AT="$(date -u +%Y-%m-%dT%H:%M:%SZ)"
 
-rsync -az --delete \
-  --exclude ".git" \
-  --exclude ".venv" \
-  --exclude "__pycache__" \
-  --exclude ".pytest_cache" \
-  --exclude ".mypy_cache" \
-  "$ROOT_DIR/" "$DEPLOY_HOST:$DEPLOY_PATH/"
+RSYNC_ARGS=(
+  -az
+  --exclude ".git"
+  --exclude ".venv"
+  --exclude "__pycache__"
+  --exclude ".pytest_cache"
+  --exclude ".mypy_cache"
+)
+
+if [[ "$RSYNC_DELETE" == "1" ]]; then
+  RSYNC_ARGS+=(--delete)
+fi
+
+rsync "${RSYNC_ARGS[@]}" "$ROOT_DIR/" "$DEPLOY_HOST:$DEPLOY_PATH/"
 
 ssh "$DEPLOY_HOST" "
   set -euo pipefail
