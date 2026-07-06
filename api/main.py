@@ -952,12 +952,17 @@ async def root(request: Request) -> HTMLResponse:
     site_origin = _site_origin(request, root_path)
     repository = _configured_repository()
     items = repository.size() if repository is not None else len(_cache)
+    public_items = _stored_items(content_lang="en")
+    relevant_items = len(_public_scope_items(public_items, include_irrelevant=False))
+    source_count = len({item.source for item in public_items if str(item.source).strip()})
     lang = str(request.query_params.get("lang") or "").strip().lower()
     dashboard_lang = "en" if lang == "en" else "ru"
     return HTMLResponse(
         render_dashboard(
             root_path=root_path,
             items=items,
+            relevant_items=relevant_items,
+            source_count=source_count,
             lang=dashboard_lang,
             site_origin=site_origin,
         )

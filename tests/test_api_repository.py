@@ -99,6 +99,8 @@ def test_root_renders_service_landing(monkeypatch):
     assert "Локальные субсидии и меры РК" in response.text
     assert "Убрать тему" in response.text
     assert "Приоритет: Казахстан и ЦА" in response.text
+    assert '<strong id="metric-strong">0</strong>' in response.text
+    assert '<strong id="metric-sources">0</strong>' in response.text
     assert "медиа" in response.text
     assert "-webkit-line-clamp: 2;" in response.text
     assert ".hero-band" in response.text
@@ -1653,13 +1655,15 @@ def test_opportunity_page_renders_public_permalink(monkeypatch):
     assert "Как подать" in response.text
     assert "Откройте страницу подачи" in response.text
     assert "Сверьте критерии" in response.text
-    assert "Текст подтянут с источника" in response.text
+    assert "Описание и ключевые поля собраны с официального источника" in response.text
     assert "structured_only" not in response.text
     assert "English source page title" not in response.text
     assert "deadline is October" not in response.text
     assert 'href="https://example.org/project/P179204-page"' in response.text
     assert 'href="https://example.org/apply/P179204-page"' in response.text
     assert 'href="/?lang=ru#opportunities"' in response.text
+    assert "Все возможности" in response.text
+    assert 'class="button primary" href="https://example.org/project/P179204-page"' in response.text
     assert (
         'property="og:image" content="http://testserver/og-image.svg"' in response.text
     )
@@ -1879,6 +1883,10 @@ def test_funder_page_renders_public_profile(monkeypatch):
     assert "Живые и рабочие возможности" in response.text
     assert "Архив и исторический след" in response.text
     assert "Обычно поддерживает" in response.text
+    assert "Обычно поддерживает гранты и программы." in response.text
+    assert "Основные темы:" in response.text
+    assert "Фокус по регионам:" in response.text
+    assert "science_fund" not in response.text
     assert "opportunitytype." not in response.text.lower()
     assert "Open science commercialization" in response.text
     assert "Pipeline university innovation program" in response.text

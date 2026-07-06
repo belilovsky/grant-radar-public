@@ -131,9 +131,9 @@ COPY = {
         "funder_open_profile": "Профиль фонда",
         "funder_empty": "Профили фондов появятся после загрузки каталога.",
         "funder_live_now": "Живые возможности",
-        "funder_overview_intro": "Обычно поддерживает",
-        "funder_overview_topics": "по темам: {topics}",
-        "funder_overview_regions": "в фокусе: {regions}.",
+        "funder_overview_intro": "Обычно поддерживает гранты и программы.",
+        "funder_overview_topics": "Основные темы: {topics}.",
+        "funder_overview_regions": "Фокус по регионам: {regions}.",
         "funder_page_eyebrow": "Профиль фонда",
         "funder_focus_title": "Что обычно поддерживается",
         "funder_focus_note": (
@@ -225,7 +225,7 @@ COPY = {
         "focus_aria": "Текущий продуктовый фокус",
         "focus_primary": "Приоритет: Казахстан и ЦА",
         "focus_secondary": "Темы: ИИ, образование, госсектор, агро, вет, эко, медиа",
-        "status_checking": "Проверяем обновление",
+        "status_checking": "Проверяем свежесть данных",
         "api_docs": "API",
         "methodology_link": "Как это работает",
         "status_link": "Статус данных",
@@ -328,7 +328,7 @@ COPY = {
             "Показываем, что каталог доступен и сколько источников сейчас участвует "
             "в витрине."
         ),
-        "health_ok_value": "В норме",
+        "health_ok_value": "Данные актуальны",
         "health_attention_value": "Проверить",
         "health_note_loading": "Проверяем витрину и время последнего обновления...",
         "health_note_ready": (
@@ -342,7 +342,7 @@ COPY = {
         "api_status": "Поток данных",
         "stored_items": "Записей в каталоге",
         "health_sources": "Активные источники",
-        "api_online": "Данные обновляются",
+        "api_online": "Данные актуальны",
         "api_failed": "Нужна проверка данных",
         "api_error": "Ошибка загрузки данных",
         "source_catalog_unavailable": "Каталог источников сейчас недоступен.",
@@ -519,11 +519,12 @@ COPY = {
         ),
         "detail_close": "Закрыть",
         "detail_open_page": "Открыть страницу",
+        "detail_all_opportunities": "Все возможности",
         "detail_open_source": "Открыть источник",
         "detail_open_application": "Открыть подачу",
         "detail_meta_title": "Параметры",
         "detail_sections_title": "Текст и выдержки",
-        "detail_status_ok": "Текст подтянут с источника",
+        "detail_status_ok": "Описание и ключевые поля собраны с официального источника",
         "detail_status_structured_only": "Показываем локальную структурированную карточку",
         "detail_status_blocked": "Источник не дал забрать полный текст автоматически",
         "detail_status_not_allowed": "Для этого источника локальная загрузка отключена",
@@ -873,9 +874,9 @@ COPY = {
         "funder_open_profile": "Funder profile",
         "funder_empty": "Funder profiles will appear here after the catalog loads.",
         "funder_live_now": "Live opportunities",
-        "funder_overview_intro": "Usually supports",
-        "funder_overview_topics": "across: {topics}",
-        "funder_overview_regions": "with a focus on {regions}.",
+        "funder_overview_intro": "Usually supports grants and support programs.",
+        "funder_overview_topics": "Main topics: {topics}.",
+        "funder_overview_regions": "Regional focus: {regions}.",
         "funder_page_eyebrow": "Funder profile",
         "funder_focus_title": "What this funder usually backs",
         "funder_focus_note": (
@@ -971,7 +972,7 @@ COPY = {
         "focus_secondary": (
             "Themes: AI, EdTech, GovTech, AgroTech, VetTech, EcoTech, media"
         ),
-        "status_checking": "Checking updates",
+        "status_checking": "Checking data freshness",
         "api_docs": "API",
         "methodology_link": "How it works",
         "status_link": "Data status",
@@ -1071,7 +1072,7 @@ COPY = {
             "Shows whether the catalog is reachable and how many sources are "
             "currently active in the public feed."
         ),
-        "health_ok_value": "Healthy",
+        "health_ok_value": "Data is current",
         "health_attention_value": "Needs review",
         "health_note_loading": "Checking the public feed and latest refresh time...",
         "health_note_ready": (
@@ -1085,7 +1086,7 @@ COPY = {
         "api_status": "Data stream",
         "stored_items": "Catalog entries",
         "health_sources": "Active sources",
-        "api_online": "Data is updating",
+        "api_online": "Data is current",
         "api_failed": "Data needs attention",
         "api_error": "Data load error",
         "source_catalog_unavailable": "Source catalog is unavailable right now.",
@@ -1261,11 +1262,12 @@ COPY = {
         ),
         "detail_close": "Close",
         "detail_open_page": "Open page",
+        "detail_all_opportunities": "All opportunities",
         "detail_open_source": "Open source",
         "detail_open_application": "Open application",
         "detail_meta_title": "Key fields",
         "detail_sections_title": "Text and excerpts",
-        "detail_status_ok": "Source text loaded locally",
+        "detail_status_ok": "Description and key fields were collected from the official source",
         "detail_status_structured_only": "Showing structured local detail only",
         "detail_status_blocked": "The source blocked automatic full-text retrieval",
         "detail_status_not_allowed": "Local fetch is disabled for this source",
@@ -1612,6 +1614,8 @@ def render_dashboard(
     *,
     root_path: str,
     items: int,
+    relevant_items: int = 0,
+    source_count: int = 0,
     lang: str = "ru",
     site_origin: str = "",
 ) -> str:
@@ -4288,10 +4292,10 @@ def render_dashboard(
           <span>{escape(str(copy["metric_total"]))}</span><strong id="metric-total">{items}</strong>
         </div>
         <div class="metric strong avds-stat-kpi-card" data-avds-component="metric-card">
-          <span>{escape(str(copy["metric_relevant"]))}</span><strong id="metric-strong">-</strong>
+          <span>{escape(str(copy["metric_relevant"]))}</span><strong id="metric-strong">{relevant_items}</strong>
         </div>
         <div class="metric sources avds-stat-kpi-card" data-avds-component="metric-card">
-          <span>{escape(str(copy["metric_sources"]))}</span><strong id="metric-sources">-</strong>
+          <span>{escape(str(copy["metric_sources"]))}</span><strong id="metric-sources">{source_count}</strong>
         </div>
       </section>
     </section>

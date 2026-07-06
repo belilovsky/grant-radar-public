@@ -6,6 +6,7 @@ import json
 from enum import Enum
 from html import escape
 from typing import Any, cast
+from urllib.parse import urlparse
 
 from api.avds import AVDS_CSS, AVDS_FONT_HEAD
 from api.dashboard import dashboard_copy
@@ -104,12 +105,20 @@ def _overview_sentence(funder: dict[str, object], copy: dict[str, object]) -> st
     regions = _region_summary(funder, copy)
     bits = [str(copy["funder_overview_intro"])]
     if types:
-        bits.append(types.lower())
+        bits.append(types)
     if tags:
-        bits.append(str(copy["funder_overview_topics"]).format(topics=tags.lower()))
+        bits.append(str(copy["funder_overview_topics"]).format(topics=tags))
     if regions:
         bits.append(str(copy["funder_overview_regions"]).format(regions=regions))
     return " ".join(bits).strip()
+
+
+def _source_meta_label(source: dict[str, Any]) -> str:
+    base_url = str(source.get("base_url") or "").strip()
+    host = urlparse(base_url).netloc.strip()
+    if host:
+        return host
+    return "official source"
 
 
 def _clean_summary_text(text: str) -> str:
@@ -292,7 +301,7 @@ def render_funder_page(
           rel="noopener"
         >
           <strong>{escape(str(source.get("name") or ""))}</strong>
-          <span>{escape(str(source.get("slug") or ""))}</span>
+          <span>{escape(_source_meta_label(source))}</span>
         </a>
         """ for source in _dict_list(funder.get("sources"))[:8])
     live_markup = "".join(

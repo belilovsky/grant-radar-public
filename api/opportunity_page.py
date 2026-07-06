@@ -1198,11 +1198,11 @@ def render_opportunity_page(
           <h1>{escape(title)}</h1>
           <p class="summary">{escape(summary)}</p>
           <div class="hero-actions">
-            <a class="button primary" href="{catalog_href}">
-              {escape(str(copy["hero_primary_cta"]))}
-            </a>
-            <a class="button slim" href="{source_href}" target="_blank" rel="noopener">
+            <a class="button primary" href="{source_href}" target="_blank" rel="noopener">
               {escape(str(copy["detail_open_source"]))}
+            </a>
+            <a class="button slim" href="{catalog_href}">
+              {escape(str(copy["detail_all_opportunities"]))}
             </a>
             {application_button}
           </div>
