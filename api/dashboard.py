@@ -36,7 +36,7 @@ COPY = {
             "бизнеса, фермеров, НКО и исследовательских команд без ручного "
             "обхода десятков сайтов."
         ),
-        "hero_primary_cta": "Смотреть возможности",
+        "hero_primary_cta": "Открыть каталог",
         "hero_secondary_cta": "Стартапам",
         "hero_tertiary_cta": "Субсидии РК",
         "hero_stage_eyebrow": "Почему сюда возвращаются",
@@ -354,6 +354,8 @@ COPY = {
         "relevant_open_count": "Релевантных открытых: {count}",
         "direct_badge": "Прямой",
         "watchlist_badge": "Мониторинг",
+        "source_direct_note": "Прямое подключение к официальному источнику",
+        "source_watchlist_note": "Внешний мониторинг и редакционная выборка",
         "regional_badge_kazakhstan": "Казахстан в приоритете",
         "regional_badge_central_asia": "Центральная Азия",
         "summary_matches": "Совпадений: {count}",
@@ -668,13 +670,16 @@ COPY = {
             "mongodb": "MongoDB",
             "central_asia_eligible": "Центральная Азия",
             "google_cloud_startup": "Google Cloud для стартапов",
-            "google_org_ai_opportunity": "Google.org ИИ",
+            "google_org_ai_opportunity": "Google.org AI Opportunity Fund",
             "microsoft_founders_hub": "Microsoft Founders Hub",
             "world_bank_kazakhstan": "Всемирный банк Казахстан",
             "adb_kazakhstan": "АБР Казахстан",
             "eeas_kazakhstan": "Представительство ЕС в Казахстане",
             "unicef_kazakhstan": "UNICEF Казахстан",
             "unesco_iite": "UNESCO IITE",
+            "isdb_project_procurement": "IsDB Procurement",
+            "ebrd_ecepp_procurement": "EBRD ECEPP Procurement",
+            "undp_procurement": "UNDP Procurement",
             "kazakhstan": "Казахстан",
             "central_asia": "Центральная Азия",
             "global": "Глобально",
@@ -782,7 +787,7 @@ COPY = {
             "businesses, farms, NGOs, and research teams without checking "
             "dozens of separate sites by hand."
         ),
-        "hero_primary_cta": "Browse opportunities",
+        "hero_primary_cta": "Open catalog",
         "hero_secondary_cta": "For startups",
         "hero_tertiary_cta": "Kazakhstan support",
         "hero_stage_eyebrow": "Why people stay here",
@@ -1099,6 +1104,8 @@ COPY = {
         "relevant_open_count": "{count} relevant open",
         "direct_badge": "Direct",
         "watchlist_badge": "Watchlist",
+        "source_direct_note": "Direct connection to the official source",
+        "source_watchlist_note": "External watch feed with curated monitoring",
         "regional_badge_kazakhstan": "Kazakhstan priority",
         "regional_badge_central_asia": "Central Asia",
         "summary_matches": "{count} matches",
@@ -1408,13 +1415,16 @@ COPY = {
             "mongodb": "MongoDB",
             "central_asia_eligible": "Central Asia",
             "google_cloud_startup": "Google Cloud Startup",
-            "google_org_ai_opportunity": "Google.org AI opportunity",
+            "google_org_ai_opportunity": "Google.org AI Opportunity Fund",
             "microsoft_founders_hub": "Microsoft Founders Hub",
             "world_bank_kazakhstan": "World Bank Kazakhstan",
             "adb_kazakhstan": "ADB Kazakhstan",
             "eeas_kazakhstan": "EEAS Kazakhstan",
             "unicef_kazakhstan": "UNICEF Kazakhstan",
             "unesco_iite": "UNESCO IITE",
+            "isdb_project_procurement": "IsDB Procurement",
+            "ebrd_ecepp_procurement": "EBRD ECEPP Procurement",
+            "undp_procurement": "UNDP Procurement",
             "kazakhstan": "Kazakhstan",
             "central_asia": "Central Asia",
             "media": "Media",
@@ -3382,7 +3392,7 @@ def render_dashboard(
       margin-top: var(--av-spacing-1);
       min-width: 0;
     }}
-    .source-slug {{
+    .source-note {{
       color: var(--muted);
       font-size: var(--av-text-xs);
       line-height: 1.2;
@@ -5553,6 +5563,12 @@ def render_dashboard(
       return `<span class="${{cls}}" data-avds-component="badge">${{escapeHtml(label)}}</span>`;
     }}
 
+    function sourceContextLabel(source) {{
+      return hasTag(source, "watchlist")
+        ? copy.source_watchlist_note
+        : copy.source_direct_note;
+    }}
+
     function sourceIconVariant(source) {{
       const variants = ["blue", "green", "amber", "violet", "slate", "red"];
       const key = String(source.slug || source.name || "");
@@ -7287,7 +7303,7 @@ def render_dashboard(
             <strong class="avds-source-card__name">${{sourceName}}</strong>
             <div class="source-meta" data-avds-component="source-meta">
               ${{sourceBadge(source)}}
-              <span class="source-slug">${{escapeHtml(humanizeLabel(source.slug))}}</span>
+              <span class="source-note">${{escapeHtml(sourceContextLabel(source))}}</span>
             </div>
           </div>
           <span

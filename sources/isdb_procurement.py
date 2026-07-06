@@ -193,7 +193,7 @@ def _extract_tenders(html: str) -> list[IsdbTender]:
 
 class IsdbProjectProcurementSource(BaseSource):
     slug = "isdb_project_procurement"
-    name = "IsDB project procurement"
+    name = "IsDB Procurement"
     base_url = "https://www.isdb.org/project-procurement/pproc-front"
     default_tags = ["central_asia", "isdb", "tender", "procurement"]
 

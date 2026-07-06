@@ -168,7 +168,7 @@ def _extract_notices(html: str, *, today: date | None = None) -> list[EceppNotic
 
 class EbrdEceppProcurementSource(BaseSource):
     slug = "ebrd_ecepp_procurement"
-    name = "EBRD ECEPP procurement"
+    name = "EBRD ECEPP Procurement"
     base_url = ECEPP_SEARCH_URL
     default_tags = ["central_asia", "ebrd", "ecepp", "tender", "procurement"]
 

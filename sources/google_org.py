@@ -34,7 +34,7 @@ def _html_title(html: str) -> str | None:
 
 class GoogleOrgAiOpportunitySource(BaseSource):
     slug = "google_org_ai_opportunity"
-    name = "Google.org AI Opportunity Fund watch"
+    name = "Google.org AI Opportunity Fund"
     base_url = GOOGLE_ORG_KNOWLEDGE_URL
     default_tags = [
         "global",

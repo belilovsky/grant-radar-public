@@ -225,7 +225,7 @@ def _extract_notices(
 
 class UndpProcurementSource(BaseSource):
     slug = "undp_procurement"
-    name = "UNDP procurement"
+    name = "UNDP Procurement"
     base_url = LISTING_URL
     default_tags = [
         "central_asia",

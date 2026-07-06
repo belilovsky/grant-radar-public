@@ -78,9 +78,11 @@ def test_root_renders_service_landing(monkeypatch):
         "Находите гранты, субсидии и программы поддержки для стартапов" in response.text
     )
     assert "Один адрес вместо десятков разрозненных источников" in response.text
-    assert "Смотреть возможности" in response.text
+    assert "Открыть каталог" in response.text
     assert "Стартапам" in response.text
     assert "Субсидии РК" in response.text
+    assert "Прямое подключение к официальному источнику" in response.text
+    assert "Внешний мониторинг и редакционная выборка" in response.text
     assert "Быстрый старт" in response.text
     assert "Гранты для стартапов" in response.text
     assert "Подборки для старта" in response.text
@@ -495,7 +497,7 @@ def test_root_supports_explicit_english_dashboard(monkeypatch):
     assert "Timing" in response.text
     assert "All regions" in response.text
     assert "Rolling" in response.text
-    assert "Browse opportunities" in response.text
+    assert "Open catalog" in response.text
     assert "Where to begin" in response.text
     assert "Best signals this week" in response.text
     assert "Support for businesses and teams" in response.text
@@ -906,6 +908,12 @@ def test_sources_catalog_lists_registered_parsers(monkeypatch):
     }.issubset(slugs)
     by_slug = {item["slug"]: item for item in data}
     assert by_slug["kazakhstan_watch"]["base_url"] == "https://qaz.fund/"
+    assert by_slug["undp_procurement"]["name"] == "UNDP Procurement"
+    assert by_slug["isdb_project_procurement"]["name"] == "IsDB Procurement"
+    assert by_slug["ebrd_ecepp_procurement"]["name"] == "EBRD ECEPP Procurement"
+    assert (
+        by_slug["google_org_ai_opportunity"]["name"] == "Google.org AI Opportunity Fund"
+    )
     assert all(item["enabled"] is True for item in data)
 
 
