@@ -137,12 +137,12 @@ def _overview_sentence(funder: dict[str, object], copy: dict[str, object]) -> st
     return " ".join(bits).strip()
 
 
-def _source_meta_label(source: dict[str, Any]) -> str:
+def _source_meta_label(source: dict[str, Any], copy: dict[str, object]) -> str:
     base_url = str(source.get("base_url") or "").strip()
     host = urlparse(base_url).netloc.strip()
     if host:
         return host
-    return "official source"
+    return str(copy.get("detail_open_source") or "Official source")
 
 
 def _clean_summary_text(text: str) -> str:
@@ -325,7 +325,7 @@ def render_funder_page(
           rel="noopener"
         >
           <strong>{escape(_label_value(str(source.get("name") or ""), copy))}</strong>
-          <span>{escape(_source_meta_label(source))}</span>
+          <span>{escape(_source_meta_label(source, copy))}</span>
         </a>
         """ for source in _dict_list(funder.get("sources"))[:8])
     live_markup = "".join(

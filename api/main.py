@@ -18,7 +18,7 @@ from uuid import NAMESPACE_URL, UUID, uuid5
 
 from fastapi import Depends, FastAPI, Header, HTTPException, Query, Request, status
 from fastapi.openapi.docs import get_swagger_ui_html
-from fastapi.responses import HTMLResponse, Response
+from fastapi.responses import HTMLResponse, JSONResponse, Response
 from starlette.middleware.trustedhost import TrustedHostMiddleware
 
 from api.dashboard import (
@@ -1051,6 +1051,9 @@ async def llms_txt(request: Request) -> Response:
     root_path = _root_path(request)
     home = _public_url(request, root_path, "/")
     sitemap = _public_url(request, root_path, "/sitemap.xml")
+    docs = _public_url(request, root_path, "/docs")
+    openapi_url = _public_url(request, root_path, "/openapi.json")
+    discovery = _public_url(request, root_path, "/site-discovery.json")
     return Response(
         "\n".join(
             [
@@ -1060,6 +1063,13 @@ async def llms_txt(request: Request) -> Response:
                 "## Public entry points",
                 f"- Home: {home}",
                 f"- Sitemap: {sitemap}",
+                f"- API docs: {docs}",
+                f"- OpenAPI schema: {openapi_url}",
+                f"- Site discovery JSON: {discovery}",
+                "",
+                "## Public route templates",
+                "- Opportunity page: /opportunity/{id}?lang=ru|en",
+                "- Funder page: /funder/{slug}?lang=ru|en",
                 "",
                 "## What this site is for",
                 "- Track public grant, subsidy, accelerator, and support-program opportunities.",
@@ -1075,6 +1085,40 @@ async def llms_txt(request: Request) -> Response:
         ),
         media_type="text/plain; charset=utf-8",
     )
+
+
+@app.api_route(
+    "/site-discovery.json", methods=["GET", "HEAD"], include_in_schema=False
+)
+async def site_discovery(request: Request) -> Response:
+    root_path = _root_path(request)
+    home = _public_url(request, root_path, "/")
+    sitemap = _public_url(request, root_path, "/sitemap.xml")
+    docs = _public_url(request, root_path, "/docs")
+    openapi_url = _public_url(request, root_path, "/openapi.json")
+    llms = _public_url(request, root_path, "/llms.txt")
+    payload = {
+        "site": "QAZ.FUND",
+        "type": "public-funding-navigator",
+        "home": home,
+        "sitemap": sitemap,
+        "llms": llms,
+        "api_docs": docs,
+        "openapi": openapi_url,
+        "languages": ["ru", "en"],
+        "routes": {
+            "home": "/?lang={lang}",
+            "opportunity": "/opportunity/{id}?lang={lang}",
+            "funder": "/funder/{slug}?lang={lang}",
+        },
+        "capabilities": [
+            "public opportunity pages",
+            "public funder pages",
+            "official source links",
+            "read-only public catalog",
+        ],
+    }
+    return JSONResponse(payload)
 
 
 @app.api_route("/favicon.ico", methods=["GET", "HEAD"], include_in_schema=False)

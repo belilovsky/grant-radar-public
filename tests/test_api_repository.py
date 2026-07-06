@@ -569,9 +569,42 @@ def test_marketing_endpoints_are_exposed(monkeypatch):
     assert "# QAZ.FUND" in llms.text
     assert "Home: http://testserver/" in llms.text
     assert "Sitemap: http://testserver/sitemap.xml" in llms.text
+    assert "API docs: http://testserver/docs" in llms.text
+    assert "OpenAPI schema: http://testserver/openapi.json" in llms.text
+    assert "Site discovery JSON: http://testserver/site-discovery.json" in llms.text
+    assert "Opportunity page: /opportunity/{id}?lang=ru|en" in llms.text
+    assert "Funder page: /funder/{slug}?lang=ru|en" in llms.text
     llms_head = client.head("/llms.txt")
     assert llms_head.status_code == 200
     assert llms_head.headers["content-type"].startswith("text/plain")
+
+    discovery = client.get("/site-discovery.json")
+    assert discovery.status_code == 200
+    assert discovery.headers["content-type"].startswith("application/json")
+    assert discovery.json() == {
+        "site": "QAZ.FUND",
+        "type": "public-funding-navigator",
+        "home": "http://testserver/",
+        "sitemap": "http://testserver/sitemap.xml",
+        "llms": "http://testserver/llms.txt",
+        "api_docs": "http://testserver/docs",
+        "openapi": "http://testserver/openapi.json",
+        "languages": ["ru", "en"],
+        "routes": {
+            "home": "/?lang={lang}",
+            "opportunity": "/opportunity/{id}?lang={lang}",
+            "funder": "/funder/{slug}?lang={lang}",
+        },
+        "capabilities": [
+            "public opportunity pages",
+            "public funder pages",
+            "official source links",
+            "read-only public catalog",
+        ],
+    }
+    discovery_head = client.head("/site-discovery.json")
+    assert discovery_head.status_code == 200
+    assert discovery_head.headers["content-type"].startswith("application/json")
 
     favicon = client.get("/favicon.ico")
     assert favicon.status_code == 200
