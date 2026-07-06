@@ -61,6 +61,12 @@ Local bootstrap expects Python 3.12+. On machines where `python3` still points
 to 3.9 or 3.10, pass `BOOTSTRAP_PYTHON=python3.12` explicitly or use the Docker
 workflow instead.
 
+If you already have an older `.venv`, run:
+
+```bash
+make bootstrap-reset BOOTSTRAP_PYTHON=python3.12
+```
+
 ### Docker-based setup
 
 ```bash

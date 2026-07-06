@@ -5,11 +5,12 @@ PY_MODULES ?= api/ core/ sources/ tests/ scripts/ alembic/
 MYPY_MODULES ?= api/ core/ sources/ scripts/
 COMPOSE ?= $(shell if command -v docker-compose >/dev/null 2>&1; then echo docker-compose; elif command -v docker >/dev/null 2>&1; then echo "docker compose"; else echo docker-compose; fi)
 
-.PHONY: help bootstrap playwright-install export-public-repo dev dev-logs dev-down lint format test test-cov db-shell redis-cli build build-prod install-hooks db-init db-reset test-db ci ci-fast ci-local smoke-prod content-audit db-upgrade db-downgrade db-revision db-migrate migrate translate-ru
+.PHONY: help bootstrap bootstrap-reset playwright-install export-public-repo dev dev-logs dev-down lint format test test-cov db-shell redis-cli build build-prod install-hooks db-init db-reset test-db ci ci-fast ci-local smoke-prod content-audit db-upgrade db-downgrade db-revision db-migrate migrate translate-ru
 
 help:
 	@echo "Available commands:"
 	@echo "  make bootstrap        - Create .venv and install project dependencies"
+	@echo "  make bootstrap-reset  - Recreate .venv with the selected Python runtime"
 	@echo "  make playwright-install - Install Playwright browser binaries"
 	@echo "  make export-public-repo - Create a fresh public-safe repo snapshot"
 	@echo "  make dev              - Start development environment"
@@ -32,6 +33,15 @@ help:
 bootstrap:
 	$(BOOTSTRAP_PYTHON) scripts/check_python_version.py
 	test -d .venv || $(BOOTSTRAP_PYTHON) -m venv .venv
+	./.venv/bin/python scripts/check_python_version.py
+	./.venv/bin/python -m pip install --upgrade pip
+	./.venv/bin/python -m pip install -r requirements.txt
+
+bootstrap-reset:
+	rm -rf .venv
+	$(BOOTSTRAP_PYTHON) scripts/check_python_version.py
+	$(BOOTSTRAP_PYTHON) -m venv .venv
+	./.venv/bin/python scripts/check_python_version.py
 	./.venv/bin/python -m pip install --upgrade pip
 	./.venv/bin/python -m pip install -r requirements.txt
 
