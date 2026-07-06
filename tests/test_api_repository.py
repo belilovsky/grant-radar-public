@@ -5,10 +5,10 @@ from uuid import uuid4
 
 from fastapi.testclient import TestClient
 
-from api.dashboard import dashboard_copy
 from api import funder_page as funder_page_module
 from api import main as api_main
 from api import opportunity_page as opportunity_page_module
+from api.dashboard import dashboard_copy
 from core.db import SqlRepository
 from core.models import Opportunity, OpportunityType
 from sources.base import GrantRecord
@@ -409,7 +409,7 @@ def test_docs_exposes_swagger_with_return_link(monkeypatch):
     assert "SwaggerUIBundle" in response.text
     assert 'href="/?lang=ru"' in response.text
     assert "Вернуться на сайт" in response.text
-    assert 'url: \'/openapi.json\'' in response.text
+    assert "url: '/openapi.json'" in response.text
 
 
 def test_docs_preserves_root_path_prefix(monkeypatch):
@@ -420,7 +420,7 @@ def test_docs_preserves_root_path_prefix(monkeypatch):
 
     assert response.status_code == 200
     assert 'href="/grant-radar/?lang=ru"' in response.text
-    assert 'url: \'/grant-radar/openapi.json\'' in response.text
+    assert "url: '/grant-radar/openapi.json'" in response.text
 
 
 def test_seo_excerpt_trims_read_more_and_length():
@@ -1735,7 +1735,10 @@ def test_opportunity_page_renders_public_permalink(monkeypatch):
     assert 'href="https://example.org/apply/P179204-page"' in response.text
     assert 'href="/?lang=ru#opportunities"' in response.text
     assert "Все возможности" in response.text
-    assert 'class="button primary" href="https://example.org/project/P179204-page"' in response.text
+    assert (
+        'class="button primary" href="https://example.org/project/P179204-page"'
+        in response.text
+    )
     assert (
         'property="og:image" content="http://testserver/og-image.svg"' in response.text
     )
@@ -1984,7 +1987,9 @@ def test_funder_page_renders_public_profile(monkeypatch):
 def test_funder_labels_keep_acronyms_and_normalized_case():
     copy = dashboard_copy("ru")
 
-    assert funder_page_module._label_value("undp_procurement", copy) == "UNDP Procurement"
+    assert (
+        funder_page_module._label_value("undp_procurement", copy) == "UNDP Procurement"
+    )
     assert funder_page_module._label_value("ebrd_ecepp_procurement", copy) == (
         "EBRD ECEPP Procurement"
     )

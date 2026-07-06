@@ -4291,13 +4291,16 @@ def render_dashboard(
 
       <section class="grid" aria-label="{escape(str(copy["metrics_aria"]), quote=True)}">
         <div class="metric avds-stat-kpi-card" data-avds-component="metric-card">
-          <span>{escape(str(copy["metric_total"]))}</span><strong id="metric-total">{items}</strong>
+          <span>{escape(str(copy["metric_total"]))}</span>
+          <strong id="metric-total">{items}</strong>
         </div>
         <div class="metric strong avds-stat-kpi-card" data-avds-component="metric-card">
-          <span>{escape(str(copy["metric_relevant"]))}</span><strong id="metric-strong">{relevant_items}</strong>
+          <span>{escape(str(copy["metric_relevant"]))}</span>
+          <strong id="metric-strong">{relevant_items}</strong>
         </div>
         <div class="metric sources avds-stat-kpi-card" data-avds-component="metric-card">
-          <span>{escape(str(copy["metric_sources"]))}</span><strong id="metric-sources">{source_count}</strong>
+          <span>{escape(str(copy["metric_sources"]))}</span>
+          <strong id="metric-sources">{source_count}</strong>
         </div>
       </section>
     </section>

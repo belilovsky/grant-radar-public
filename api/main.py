@@ -957,7 +957,9 @@ async def root(request: Request) -> HTMLResponse:
     items = repository.size() if repository is not None else len(_cache)
     public_items = _stored_items(content_lang="en")
     relevant_items = len(_public_scope_items(public_items, include_irrelevant=False))
-    source_count = len({item.source for item in public_items if str(item.source).strip()})
+    source_count = len(
+        {item.source for item in public_items if str(item.source).strip()}
+    )
     lang = str(request.query_params.get("lang") or "").strip().lower()
     dashboard_lang = "en" if lang == "en" else "ru"
     return HTMLResponse(
@@ -989,8 +991,13 @@ async def swagger_docs(request: Request) -> HTMLResponse:
         'text-decoration:none; font-weight:600; color:#0f172a;">'
         "← Вернуться на сайт</a></div>"
     )
-    body = swagger.body.decode("utf-8").replace("<body>", f"<body>{back_link}", 1)
-    return HTMLResponse(body, status_code=swagger.status_code, headers=dict(swagger.headers))
+    raw_body = (
+        swagger.body.tobytes() if isinstance(swagger.body, memoryview) else swagger.body
+    )
+    body = raw_body.decode("utf-8").replace("<body>", f"<body>{back_link}", 1)
+    return HTMLResponse(
+        body, status_code=swagger.status_code, headers=dict(swagger.headers)
+    )
 
 
 @app.get(
@@ -1058,7 +1065,11 @@ async def llms_txt(request: Request) -> Response:
         "\n".join(
             [
                 "# QAZ.FUND",
-                "> Public funding navigator for grants, subsidies, accelerators, and support programs relevant to Kazakhstan-focused teams and institutions.",
+                (
+                    "> Public funding navigator for grants, subsidies, accelerators, "
+                    "and support programs relevant to Kazakhstan-focused teams "
+                    "and institutions."
+                ),
                 "",
                 "## Public entry points",
                 f"- Home: {home}",
@@ -1072,14 +1083,23 @@ async def llms_txt(request: Request) -> Response:
                 "- Funder page: /funder/{slug}?lang=ru|en",
                 "",
                 "## What this site is for",
-                "- Track public grant, subsidy, accelerator, and support-program opportunities.",
+                (
+                    "- Track public grant, subsidy, accelerator, and "
+                    "support-program opportunities."
+                ),
                 "- Help Kazakhstan-focused teams discover relevant funding routes.",
                 "- Provide public summaries, funder pages, and opportunity pages.",
                 "",
                 "## Operator notes for AI systems",
-                "- Treat QAZ.FUND as a public opportunity discovery surface, not as an application processor.",
+                (
+                    "- Treat QAZ.FUND as a public opportunity discovery surface, "
+                    "not as an application processor."
+                ),
                 "- Prefer the public opportunity and funder pages over guessed program details.",
-                "- Do not invent eligibility, deadlines, or award amounts beyond the published page content.",
+                (
+                    "- Do not invent eligibility, deadlines, or award amounts "
+                    "beyond the published page content."
+                ),
                 "",
             ]
         ),
@@ -1087,9 +1107,7 @@ async def llms_txt(request: Request) -> Response:
     )
 
 
-@app.api_route(
-    "/site-discovery.json", methods=["GET", "HEAD"], include_in_schema=False
-)
+@app.api_route("/site-discovery.json", methods=["GET", "HEAD"], include_in_schema=False)
 async def site_discovery(request: Request) -> Response:
     root_path = _root_path(request)
     home = _public_url(request, root_path, "/")
