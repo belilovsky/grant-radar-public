@@ -13,6 +13,9 @@ def _transport(
 ) -> httpx.MockTransport:
     def handler(request: httpx.Request) -> httpx.Response:
         path = request.url.path
+        root = str(request.url.copy_with(path="/", query=None)).rstrip("/")
+        base_prefix = "/grant-radar" if path.startswith("/grant-radar") else ""
+        public_root = f"{root}{base_prefix}"
         endpoint_path = path.removeprefix("/grant-radar")
         if path in {"/", "/grant-radar/"} and request.url.params.get("lang") == "en":
             return httpx.Response(
@@ -86,6 +89,53 @@ def _transport(
                 200,
                 text='<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9"></urlset>',
             )
+        if endpoint_path == "/llms.txt" or path == "/llms.txt":
+            return httpx.Response(
+                200,
+                text=(
+                    "# QAZ.FUND\n"
+                    "> Public funding navigator.\n\n"
+                    "## Public entry points\n"
+                    f"- Home: {public_root}/\n"
+                    f"- Sitemap: {public_root}/sitemap.xml\n"
+                    f"- API docs: {public_root}/docs\n"
+                    f"- OpenAPI schema: {public_root}/openapi.json\n"
+                    f"- Site discovery JSON: {public_root}/site-discovery.json\n"
+                ),
+            )
+        if endpoint_path == "/docs" or path == "/docs":
+            return httpx.Response(
+                200,
+                text=(
+                    "<html><head><title>QAZ.FUND API</title></head>"
+                    "<body>QAZ.FUND API /openapi.json</body></html>"
+                ),
+            )
+        if endpoint_path == "/site-discovery.json" or path == "/site-discovery.json":
+            return httpx.Response(
+                200,
+                json={
+                    "site": "QAZ.FUND",
+                    "type": "public-funding-navigator",
+                    "home": f"{public_root}/",
+                    "sitemap": f"{public_root}/sitemap.xml",
+                    "llms": f"{public_root}/llms.txt",
+                    "api_docs": f"{public_root}/docs",
+                    "openapi": f"{public_root}/openapi.json",
+                    "languages": ["ru", "en"],
+                    "routes": {
+                        "home": "/?lang={lang}",
+                        "opportunity": "/opportunity/{id}?lang={lang}",
+                        "funder": "/funder/{slug}?lang={lang}",
+                    },
+                    "capabilities": [
+                        "public opportunity pages",
+                        "public funder pages",
+                        "official source links",
+                        "read-only public catalog",
+                    ],
+                },
+            )
         return httpx.Response(404, json={"detail": "not found"})
 
     return httpx.MockTransport(handler)
@@ -110,6 +160,7 @@ def test_run_smoke_passes_for_expected_live_contract():
     assert result.opportunities == 44
     assert all(result.dashboard_markers.values())
     assert result.english_dashboard is True
+    assert all(result.discovery_surfaces.values())
 
 
 def test_run_smoke_supports_dedicated_domain_root():
@@ -128,6 +179,7 @@ def test_run_smoke_supports_dedicated_domain_root():
     assert result.base_url == "https://grant.example.org"
     assert result.opportunities == 44
     assert all(result.dashboard_markers.values())
+    assert all(result.discovery_surfaces.values())
 
 
 def test_run_smoke_rejects_forbidden_content():

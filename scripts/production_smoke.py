@@ -52,6 +52,7 @@ class SmokeResult:
     forbidden_hits: list[str]
     dashboard_markers: dict[str, bool]
     english_dashboard: bool
+    discovery_surfaces: dict[str, bool]
 
 
 def _url(base_url: str, path: str) -> str:
@@ -116,6 +117,9 @@ def run_smoke(
         digest = _get_json(client, base_url, "/digest?limit=5&tag=ai")
         robots = _get_text(client, base_url, "/robots.txt")
         sitemap = _get_text(client, base_url, "/sitemap.xml")
+        llms = _get_text(client, base_url, "/llms.txt")
+        docs = _get_text(client, base_url, "/docs")
+        discovery = _get_json(client, base_url, "/site-discovery.json")
 
     _require(health.get("status") == "ok", "health status is not ok")
     _require(ready.get("status") == "ok", "ready status is not ok")
@@ -152,6 +156,27 @@ def run_smoke(
     )
     _require(english_dashboard, "english dashboard variant is missing")
 
+    discovery_status = {
+        "llms_home": f"Home: {_url(base_url, '/')}" in llms,
+        "llms_sitemap": f"Sitemap: {_url(base_url, '/sitemap.xml')}" in llms,
+        "llms_openapi": f"OpenAPI schema: {_url(base_url, '/openapi.json')}" in llms,
+        "docs_brand": "QAZ.FUND API" in docs,
+        "docs_openapi": "/openapi.json" in docs,
+        "site_discovery_openapi": str(discovery.get("openapi") or "")
+        == _url(base_url, "/openapi.json"),
+        "site_discovery_llms": str(discovery.get("llms") or "")
+        == _url(base_url, "/llms.txt"),
+        "site_discovery_docs": str(discovery.get("api_docs") or "")
+        == _url(base_url, "/docs"),
+    }
+    missing_discovery = [
+        marker for marker, present in discovery_status.items() if not present
+    ]
+    _require(
+        not missing_discovery,
+        f"discovery surfaces missing: {missing_discovery}",
+    )
+
     opportunities_payload = json.dumps(opportunities, ensure_ascii=False)
     forbidden_hits = [needle for needle in forbidden if needle in opportunities_payload]
     _require(not forbidden_hits, f"forbidden content found: {forbidden_hits}")
@@ -168,6 +193,7 @@ def run_smoke(
         forbidden_hits=forbidden_hits,
         dashboard_markers=marker_status,
         english_dashboard=english_dashboard,
+        discovery_surfaces=discovery_status,
     )
 
 

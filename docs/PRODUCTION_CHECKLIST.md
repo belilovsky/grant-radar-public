@@ -17,6 +17,8 @@ historic backup filenames, and maintainer-only evidence.
 - `GET` and `HEAD /health` are public.
 - `GET` and `HEAD /ready` are public and must not expose secrets.
 - `GET /coverage`, `GET /opportunities`, and `GET /digest` are public.
+- `GET` and `HEAD /robots.txt`, `/sitemap.xml`, `/llms.txt`, and `/site-discovery.json` are public.
+- `GET /docs` and `GET /openapi.json` must stay reachable for public API consumers.
 - `POST /refresh` must require `GRANT_RADAR_ADMIN_TOKEN`.
 
 ## Pre-release checks
@@ -36,6 +38,9 @@ curl -fsS https://example.org/health
 curl -fsS https://example.org/ready
 curl -fsSI https://example.org/ready
 curl -fsSI https://example.org/favicon.ico
+curl -fsS https://example.org/llms.txt
+curl -fsS https://example.org/site-discovery.json
+curl -fsSI https://example.org/docs
 curl -fsS 'https://example.org/opportunities?limit=3&min_score=0.5'
 curl -fsS 'https://example.org/digest?limit=5&tag=ai'
 ```
