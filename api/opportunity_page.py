@@ -1244,7 +1244,7 @@ def render_opportunity_page(
         <strong>{deadline_label}</strong>
       </div>
       <div class="metric">
-        <span>{escape(str(copy["detail_fit_title"]))}</span>
+        <span>{escape(str(copy["detail_source_status_title"]))}</span>
         <strong>{fetch_status_value}</strong>
       </div>
     </section>

@@ -1656,6 +1656,8 @@ def test_opportunity_page_renders_public_permalink(monkeypatch):
     assert "Откройте страницу подачи" in response.text
     assert "Сверьте критерии" in response.text
     assert "Описание и ключевые поля собраны с официального источника" in response.text
+    assert "Статус источника" in response.text
+    assert "Быстрая оценка" not in response.text
     assert "structured_only" not in response.text
     assert "English source page title" not in response.text
     assert "deadline is October" not in response.text
@@ -1907,6 +1909,40 @@ def test_funder_page_renders_public_profile(monkeypatch):
     assert "googletagmanager.com/gtag/js?id=G-9EF720PSER" in response.text
     assert '"@type": "Organization"' in response.text
     assert '"@type": "CollectionPage"' in response.text
+
+
+def test_root_renders_initial_metrics_from_cached_items(monkeypatch):
+    _reset_api_state(monkeypatch)
+    api_main._cache.extend(
+        [
+            Opportunity(
+                source="astana_hub",
+                source_url="https://example.org/one",
+                type=OpportunityType.ACCELERATOR,
+                title="One",
+                summary="One summary",
+                tags=["kz", "startup"],
+                score=0.9,
+            ),
+            Opportunity(
+                source="grants_gov",
+                source_url="https://example.org/two",
+                type=OpportunityType.GRANT,
+                title="Two",
+                summary="Two summary",
+                tags=["us"],
+                score=0.1,
+            ),
+        ]
+    )
+    client = TestClient(api_main.app)
+
+    response = client.get("/")
+
+    assert response.status_code == 200
+    assert '<strong id="metric-total">2</strong>' in response.text
+    assert '<strong id="metric-strong">1</strong>' in response.text
+    assert '<strong id="metric-sources">2</strong>' in response.text
 
 
 def test_opportunity_page_prefers_public_base_url(monkeypatch):
