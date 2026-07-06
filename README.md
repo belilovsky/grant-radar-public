@@ -135,7 +135,7 @@ grant-radar/
 
 ## Quality checks
 
-GitHub Actions runs lint and tests on pushes and pull requests to `main`.
+Run lint and tests before opening or updating a pull request.
 The same checks are available locally:
 
 ```bash
