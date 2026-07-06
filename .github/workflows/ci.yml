@@ -1,0 +1,33 @@
+name: CI
+
+on:
+  push:
+    branches:
+      - main
+      - "codex/**"
+  pull_request:
+
+jobs:
+  lint-and-test:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python 3.12
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: "pip"
+          cache-dependency-path: requirements.txt
+
+      - name: Bootstrap local environment
+        run: make bootstrap BOOTSTRAP_PYTHON=python
+
+      - name: Run lint checks
+        run: PYTHON=.venv/bin/python make lint
+
+      - name: Run fast test suite
+        run: PYTHON=.venv/bin/python make ci-fast

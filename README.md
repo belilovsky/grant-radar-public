@@ -138,6 +138,8 @@ grant-radar/
 GitHub Actions runs lint and tests on pushes and pull requests to `main`.
 The same checks are available locally:
 
+Workflow definition: `.github/workflows/ci.yml`.
+
 ```bash
 make lint
 make ci-fast
