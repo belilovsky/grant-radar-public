@@ -20,7 +20,7 @@ COPY = {
     "ru": {
         "lang": "ru",
         "locale": "ru-KZ",
-        "title": "QAZ.FUND",
+        "title": "QAZ.FUND — гранты и меры поддержки для Казахстана",
         "meta_description": (
             "QAZ.FUND — публичный навигатор по грантам, субсидиям, акселераторам "
             "и программам поддержки для Казахстана."
@@ -766,7 +766,7 @@ COPY = {
     "en": {
         "lang": "en",
         "locale": "en-KZ",
-        "title": "QAZ.FUND",
+        "title": "QAZ.FUND — funding and support programs for Kazakhstan",
         "meta_description": (
             "QAZ.FUND is a public funding navigator for grants, subsidies, "
             "accelerators, and support programs in Kazakhstan."

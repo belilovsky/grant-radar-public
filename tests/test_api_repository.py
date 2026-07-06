@@ -31,7 +31,10 @@ def test_root_renders_service_landing(monkeypatch):
 
     assert response.status_code == 200
     assert '<html lang="ru"' in response.text
-    assert "<title>QAZ.FUND</title>" in response.text
+    assert (
+        "<title>QAZ.FUND — гранты и меры поддержки для Казахстана</title>"
+        in response.text
+    )
     assert 'rel="preconnect" href="https://fonts.googleapis.com"' in response.text
     assert (
         'rel="preconnect" href="https://fonts.gstatic.com" crossorigin' in response.text
@@ -133,7 +136,10 @@ def test_root_renders_service_landing(monkeypatch):
         in response.text
     )
     assert 'property="og:type" content="website"' in response.text
-    assert 'property="og:title" content="QAZ.FUND"' in response.text
+    assert (
+        'property="og:title" content="QAZ.FUND — гранты и меры поддержки '
+        'для Казахстана"' in response.text
+    )
     assert 'property="og:url" content="http://testserver/?lang=ru"' in response.text
     assert (
         'property="og:image" content="http://testserver/og-image.svg"' in response.text
@@ -390,6 +396,31 @@ def test_root_landing_preserves_root_path_prefix(monkeypatch):
     assert 'href="/grant-radar/opportunities?limit=20"' not in response.text
 
 
+def test_docs_exposes_swagger_with_return_link(monkeypatch):
+    _reset_api_state(monkeypatch)
+    client = TestClient(api_main.app)
+
+    response = client.get("/docs")
+
+    assert response.status_code == 200
+    assert "QAZ.FUND API" in response.text
+    assert "SwaggerUIBundle" in response.text
+    assert 'href="/?lang=ru"' in response.text
+    assert "Вернуться на сайт" in response.text
+    assert 'url: \'/openapi.json\'' in response.text
+
+
+def test_docs_preserves_root_path_prefix(monkeypatch):
+    _reset_api_state(monkeypatch)
+    client = TestClient(api_main.app, root_path="/grant-radar")
+
+    response = client.get("/docs")
+
+    assert response.status_code == 200
+    assert 'href="/grant-radar/?lang=ru"' in response.text
+    assert 'url: \'/grant-radar/openapi.json\'' in response.text
+
+
 def test_seo_excerpt_trims_read_more_and_length():
     value = (
         "Глобальный конкурс для команд из Центральной Азии по цифровому образованию "
@@ -443,6 +474,10 @@ def test_root_supports_explicit_english_dashboard(monkeypatch):
 
     assert response.status_code == 200
     assert '<html lang="en"' in response.text
+    assert (
+        "<title>QAZ.FUND — funding and support programs for Kazakhstan</title>"
+        in response.text
+    )
     assert (
         "Public funding navigator for grants, subsidies, accelerators" in response.text
     )

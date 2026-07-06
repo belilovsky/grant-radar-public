@@ -17,6 +17,7 @@ from typing import Any, cast
 from uuid import NAMESPACE_URL, UUID, uuid5
 
 from fastapi import Depends, FastAPI, Header, HTTPException, Query, Request, status
+from fastapi.openapi.docs import get_swagger_ui_html
 from fastapi.responses import HTMLResponse, Response
 from starlette.middleware.trustedhost import TrustedHostMiddleware
 
@@ -82,6 +83,8 @@ app = FastAPI(
     version="0.1.0",
     root_path=os.environ.get("ROOT_PATH", ""),
     lifespan=_lifespan,
+    docs_url=None,
+    redoc_url=None,
 )
 
 # in-memory cache на M0
@@ -967,6 +970,27 @@ async def root(request: Request) -> HTMLResponse:
             site_origin=site_origin,
         )
     )
+
+
+@app.get("/docs", include_in_schema=False)
+async def swagger_docs(request: Request) -> HTMLResponse:
+    root_path = _root_path(request).rstrip("/")
+    home_href = f"{root_path}/?lang=ru" if root_path else "/?lang=ru"
+    openapi_href = f"{root_path}/openapi.json" if root_path else "/openapi.json"
+    swagger = get_swagger_ui_html(
+        openapi_url=openapi_href,
+        title="QAZ.FUND API",
+        swagger_favicon_url=f"{root_path}/favicon.ico" if root_path else "/favicon.ico",
+    )
+    back_link = (
+        '<div style="padding:16px 20px 0; font-family:system-ui,-apple-system,sans-serif;">'
+        f'<a href="{escape(home_href, quote=True)}" '
+        'style="display:inline-flex; align-items:center; gap:8px; '
+        'text-decoration:none; font-weight:600; color:#0f172a;">'
+        "← Вернуться на сайт</a></div>"
+    )
+    body = swagger.body.decode("utf-8").replace("<body>", f"<body>{back_link}", 1)
+    return HTMLResponse(body, status_code=swagger.status_code, headers=dict(swagger.headers))
 
 
 @app.get(
