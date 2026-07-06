@@ -49,13 +49,17 @@ The main public endpoints are:
 ### Host-based setup
 
 ```bash
-make bootstrap
+make bootstrap BOOTSTRAP_PYTHON=python3.12
 cp .env.example .env.dev
 make ci-fast
 ```
 
 For a lightweight local setup, keep
 `GRANT_RADAR_DB_URL=sqlite:///./data/grants.db` in `.env.dev`.
+
+Local bootstrap expects Python 3.12+. On machines where `python3` still points
+to 3.9 or 3.10, pass `BOOTSTRAP_PYTHON=python3.12` explicitly or use the Docker
+workflow instead.
 
 ### Docker-based setup
 

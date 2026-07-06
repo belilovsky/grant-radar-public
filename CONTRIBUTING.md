@@ -3,10 +3,14 @@
 ## Local setup
 
 ```bash
-make bootstrap
+make bootstrap BOOTSTRAP_PYTHON=python3.12
 cp .env.example .env.dev
 make dev
 ```
+
+If your local `python3` still resolves to 3.9 or 3.10, bootstrap will now stop
+early with a clear error. Use Python 3.12 explicitly or stay on the Docker
+workflow.
 
 Main local surfaces:
 

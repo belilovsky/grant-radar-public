@@ -1,4 +1,5 @@
 PYTHON ?= $(if $(wildcard .venv/bin/python),.venv/bin/python,python3)
+BOOTSTRAP_PYTHON ?= python3
 PYTEST ?= $(PYTHON) -m pytest
 PY_MODULES ?= api/ core/ sources/ tests/ scripts/ alembic/
 MYPY_MODULES ?= api/ core/ sources/ scripts/
@@ -29,7 +30,8 @@ help:
 	@echo "  make content-audit    - Run live content coverage and quality checks"
 
 bootstrap:
-	test -d .venv || python3 -m venv .venv
+	$(BOOTSTRAP_PYTHON) scripts/check_python_version.py
+	test -d .venv || $(BOOTSTRAP_PYTHON) -m venv .venv
 	./.venv/bin/python -m pip install --upgrade pip
 	./.venv/bin/python -m pip install -r requirements.txt
 
