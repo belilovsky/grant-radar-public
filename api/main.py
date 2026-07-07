@@ -367,17 +367,22 @@ def _public_dedup_key(item: Opportunity) -> str:
 
 def _public_dedup_rank(
     item: Opportunity, *, content_lang: str
-) -> tuple[float, int, int]:
+) -> tuple[float, int, int, float]:
     raw = item.raw if isinstance(item.raw, dict) else {}
     localized_title = _display_text(_localized_value(raw, content_lang, "title"))
     has_matching_localized_title = int(
         bool(localized_title) and localized_title == item.title
     )
     summary_length = len(str(item.summary or "").strip())
+    discovered_at = item.discovered_at
+    discovered_ts = (
+        discovered_at.timestamp() if isinstance(discovered_at, datetime) else 0.0
+    )
     return (
         float(item.score or 0.0),
         has_matching_localized_title,
         summary_length,
+        discovered_ts,
     )
 
 

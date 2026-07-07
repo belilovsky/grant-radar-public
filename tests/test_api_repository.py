@@ -555,6 +555,34 @@ def test_root_head_is_available(monkeypatch):
     assert response.status_code == 200
 
 
+def test_public_dedupe_prefers_latest_discovered_at_for_equal_records():
+    older = Opportunity(
+        source="google_org_ai_opportunity",
+        source_url="https://example.org/opportunity",
+        type=OpportunityType.GRANT,
+        title="AI Opportunity",
+        summary="Same summary",
+        score=0.8,
+        discovered_at=datetime(2026, 7, 1, tzinfo=timezone.utc),
+        raw={"external_id": "GOOG-1"},
+    )
+    newer = Opportunity(
+        source="google_org_ai_opportunity",
+        source_url="https://example.org/opportunity",
+        type=OpportunityType.GRANT,
+        title="AI Opportunity",
+        summary="Same summary",
+        score=0.8,
+        discovered_at=datetime(2026, 7, 7, tzinfo=timezone.utc),
+        raw={"external_id": "GOOG-1"},
+    )
+
+    deduped = api_main._dedupe_public_items([older, newer], content_lang="en")
+
+    assert len(deduped) == 1
+    assert deduped[0].discovered_at == newer.discovered_at
+
+
 def test_marketing_endpoints_are_exposed(monkeypatch):
     _reset_api_state(monkeypatch)
     api_main._cache.extend(
