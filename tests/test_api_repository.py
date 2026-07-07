@@ -127,7 +127,7 @@ def test_root_renders_service_landing(monkeypatch):
     assert ".topbar-actions" in response.text
     assert ">API</a>" in response.text
     assert "Статус данных" in response.text
-    assert 'href="/docs"' in response.text
+    assert 'href="/docs?lang=ru"' in response.text
     assert 'href="/?lang=ru"' in response.text
     assert 'href="/?lang=en"' in response.text
     assert 'name="yandex-verification" content="01df12ab51cd6b70"' in response.text
@@ -396,7 +396,7 @@ def test_root_landing_preserves_root_path_prefix(monkeypatch):
 
     assert response.status_code == 200
     assert 'data-api-base="/grant-radar"' in response.text
-    assert 'href="/grant-radar/docs"' in response.text
+    assert 'href="/grant-radar/docs?lang=ru"' in response.text
     assert 'href="/grant-radar/?lang=ru"' in response.text
     assert 'href="/grant-radar/?lang=en"' in response.text
     assert (
@@ -417,6 +417,17 @@ def test_docs_exposes_swagger_with_return_link(monkeypatch):
     assert 'href="/?lang=ru"' in response.text
     assert "Вернуться на сайт" in response.text
     assert "url: '/openapi.json'" in response.text
+
+
+def test_docs_supports_english_return_link(monkeypatch):
+    _reset_api_state(monkeypatch)
+    client = TestClient(api_main.app)
+
+    response = client.get("/docs?lang=en")
+
+    assert response.status_code == 200
+    assert 'href="/?lang=en"' in response.text
+    assert "Back to site" in response.text
 
 
 def test_docs_preserves_root_path_prefix(monkeypatch):

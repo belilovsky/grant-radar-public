@@ -977,19 +977,21 @@ async def root(request: Request) -> HTMLResponse:
 @app.get("/docs", include_in_schema=False)
 async def swagger_docs(request: Request) -> HTMLResponse:
     root_path = _root_path(request).rstrip("/")
-    home_href = f"{root_path}/?lang=ru" if root_path else "/?lang=ru"
+    docs_lang = _public_lang(str(request.query_params.get("lang") or "").strip())
+    home_href = f"{root_path}/?lang={docs_lang}" if root_path else f"/?lang={docs_lang}"
     openapi_href = f"{root_path}/openapi.json" if root_path else "/openapi.json"
     swagger = get_swagger_ui_html(
         openapi_url=openapi_href,
         title="QAZ.FUND API",
         swagger_favicon_url=f"{root_path}/favicon.ico" if root_path else "/favicon.ico",
     )
+    back_label = "Back to site" if docs_lang == "en" else "Вернуться на сайт"
     back_link = (
         '<div style="padding:16px 20px 0; font-family:system-ui,-apple-system,sans-serif;">'
         f'<a href="{escape(home_href, quote=True)}" '
         'style="display:inline-flex; align-items:center; gap:8px; '
         'text-decoration:none; font-weight:600; color:#0f172a;">'
-        "← Вернуться на сайт</a></div>"
+        f"← {escape(back_label)}</a></div>"
     )
     raw_body = (
         swagger.body.tobytes() if isinstance(swagger.body, memoryview) else swagger.body

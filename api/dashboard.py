@@ -1636,10 +1636,16 @@ def render_dashboard(
     copy = _copy_for(lang if lang in SUPPORTED_LANGS else "ru")
     base_raw = root_path.rstrip("/")
     base = escape(base_raw, quote=True)
-    docs_href = escape(f"{base_raw}/docs" if base_raw else "/docs", quote=True)
+    active_lang = str(copy["lang"])
+    docs_path = (
+        f"{base_raw}/docs?lang={active_lang}"
+        if base_raw
+        else f"/docs?lang={active_lang}"
+    )
+    docs_href = escape(docs_path, quote=True)
     ru_href = escape(_root_href(base_raw, "ru"), quote=True)
     en_href = escape(_root_href(base_raw, "en"), quote=True)
-    canonical_path = _root_href(base_raw, str(copy["lang"]))
+    canonical_path = _root_href(base_raw, active_lang)
     canonical_href = escape(_absolute_href(site_origin, canonical_path), quote=True)
     ru_canonical = escape(
         _absolute_href(site_origin, _root_href(base_raw, "ru")),
@@ -1657,7 +1663,6 @@ def render_dashboard(
         items=items,
     )
     copy_json = json.dumps(copy, ensure_ascii=False)
-    active_lang = str(copy["lang"])
     html_lang = escape(active_lang, quote=True)
     og_locale = escape(active_lang.replace("-", "_") + "_KZ", quote=True)
     social_image = escape(og_image_url(site_origin, base_raw), quote=True)
