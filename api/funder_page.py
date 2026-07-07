@@ -419,8 +419,8 @@ def render_funder_page(
     .back-link:hover {{ color: var(--brand); }}
     .hero {{
       display: grid;
-      gap: 14px;
-      padding: 20px;
+      gap: 10px;
+      padding: 16px;
       border: 1px solid var(--line);
       border-radius: calc(var(--radius) + 2px);
       background: linear-gradient(180deg, color-mix(in oklab, var(--brand-soft), white 32%), var(--panel));
@@ -437,8 +437,8 @@ def render_funder_page(
     h1 {{
       margin: 0;
       font-family: var(--av-font-sans, Arial, sans-serif);
-      max-width: 18ch;
-      font-size: clamp(24px, 2.4vw, 30px);
+      max-width: 20ch;
+      font-size: clamp(22px, 2.1vw, 28px);
       line-height: 1.08;
       text-wrap: balance;
     }}
@@ -446,23 +446,23 @@ def render_funder_page(
       margin: 0;
       max-width: 60ch;
       color: var(--muted);
-      font-size: 15px;
-      line-height: 1.55;
+      font-size: 14px;
+      line-height: 1.45;
     }}
     .stat-grid {{
       display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(136px, 1fr));
-      gap: 10px;
+      grid-template-columns: repeat(auto-fit, minmax(118px, 1fr));
+      gap: 8px;
     }}
     .stat {{
       border: 1px solid var(--line);
       border-radius: 14px;
       background: color-mix(in oklab, var(--panel), white 10%);
-      padding: 10px 12px;
+      padding: 8px 10px;
     }}
     .stat span {{
       display: block;
-      margin-bottom: 8px;
+      margin-bottom: 6px;
       color: var(--muted);
       font-family: var(--av-font-sans, Arial, sans-serif);
       font-size: 12px;
@@ -471,24 +471,24 @@ def render_funder_page(
       text-transform: none;
     }}
     .stat strong {{
-      font-size: 22px;
+      font-size: 18px;
       line-height: 1.05;
       font-family: var(--av-font-sans, Arial, sans-serif);
     }}
     .section {{
-      padding-top: 28px;
+      padding-top: 18px;
     }}
     .section h2 {{
       margin: 0 0 8px;
       font-family: var(--av-font-sans, Arial, sans-serif);
-      font-size: 22px;
+      font-size: 18px;
       line-height: 1.2;
     }}
     .section p.section-note {{
-      margin: 0 0 18px;
+      margin: 0 0 10px;
       color: var(--muted);
-      font-size: 15px;
-      line-height: 1.6;
+      font-size: 14px;
+      line-height: 1.45;
     }}
     .topic-row {{
       display: flex;
@@ -518,24 +518,24 @@ def render_funder_page(
     }}
     .opportunity-list {{
       display: grid;
-      gap: 14px;
+      gap: 10px;
     }}
     .opportunity-card {{
       border: 1px solid var(--line);
       border-radius: 16px;
       background: var(--panel);
-      padding: 16px;
+      padding: 12px;
     }}
     .opportunity-head {{
       display: grid;
       grid-template-columns: 1fr;
       gap: 8px;
       align-items: start;
-      margin-bottom: 10px;
+      margin-bottom: 8px;
     }}
     .opportunity-card h3 {{
       margin: 0 0 8px;
-      font-size: 18px;
+      font-size: 16px;
       line-height: 1.25;
     }}
     .opportunity-card h3 a {{
@@ -552,15 +552,15 @@ def render_funder_page(
     .opportunity-card p {{
       margin: 0;
       color: var(--muted);
-      font-size: 14px;
-      line-height: 1.6;
+      font-size: 13px;
+      line-height: 1.45;
     }}
     .score {{
       display: inline-flex;
       align-items: center;
       justify-content: center;
-      min-width: 64px;
-      min-height: 28px;
+      min-width: 56px;
+      min-height: 24px;
       justify-self: start;
       border-radius: 999px;
       background: var(--brand-soft);
@@ -572,15 +572,15 @@ def render_funder_page(
     .card-actions {{
       display: flex;
       flex-wrap: wrap;
-      gap: 10px;
-      margin-top: 14px;
+      gap: 8px;
+      margin-top: 10px;
     }}
     .button {{
       display: inline-flex;
       align-items: center;
       justify-content: center;
-      min-height: 38px;
-      padding: 0 14px;
+      min-height: 34px;
+      padding: 0 12px;
       border: 1px solid transparent;
       border-radius: 12px;
       background: var(--brand);
@@ -597,12 +597,12 @@ def render_funder_page(
     .source-grid {{
       display: grid;
       grid-template-columns: repeat(2, minmax(0, 1fr));
-      gap: 12px;
+      gap: 10px;
     }}
     .source-link {{
       display: grid;
       gap: 4px;
-      padding: 14px;
+      padding: 12px;
       border: 1px solid var(--line);
       border-radius: 14px;
       background: var(--panel);
@@ -617,7 +617,7 @@ def render_funder_page(
       overflow-wrap: anywhere;
     }}
     .empty {{
-      padding: 18px;
+      padding: 14px;
       border: 1px dashed var(--line);
       border-radius: 16px;
       color: var(--muted);
@@ -634,7 +634,7 @@ def render_funder_page(
         padding-top: 16px;
       }}
       .hero {{
-        padding: 18px;
+        padding: 14px;
       }}
       .stat-grid {{
         grid-template-columns: repeat(2, minmax(0, 1fr));

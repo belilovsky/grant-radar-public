@@ -631,7 +631,6 @@ def render_opportunity_page(
         if detail.detail_available
         else escape(str(copy["detail_empty"]))
     )
-    fetch_status_value = escape(_status_label(detail.detail_fetch_status, copy))
     deadline_meta_label = escape(str(metadata_labels.get("deadline", "Deadline")))
     schema_json = _opportunity_schema(
         detail=detail,
@@ -727,8 +726,8 @@ def render_opportunity_page(
     }}
     .hero {{
       display: grid;
-      gap: 16px;
-      padding: 20px;
+      gap: 14px;
+      padding: 16px;
       border: 1px solid color-mix(in oklab, var(--brand), white 78%);
       border-radius: var(--radius);
       background:
@@ -739,7 +738,7 @@ def render_opportunity_page(
           color-mix(in oklab, var(--surface), white 6%)
         );
       box-shadow: var(--shadow);
-      margin-bottom: 20px;
+      margin-bottom: 16px;
     }}
     .eyebrow {{
       color: var(--muted);
@@ -751,8 +750,8 @@ def render_opportunity_page(
     }}
     .hero h1 {{
       margin: 0;
-      max-width: 22ch;
-      font-size: clamp(22px, 2.5vw, 30px);
+      max-width: 24ch;
+      font-size: clamp(20px, 2.2vw, 28px);
       line-height: 1.08;
       text-wrap: balance;
     }}
@@ -760,19 +759,19 @@ def render_opportunity_page(
       margin: 0;
       max-width: 64ch;
       color: color-mix(in oklab, var(--text), var(--muted) 35%);
-      font-size: 15px;
-      line-height: 1.58;
+      font-size: 14px;
+      line-height: 1.5;
     }}
     .hero-grid {{
       display: grid;
-      grid-template-columns: minmax(0, 1.45fr) minmax(260px, 0.82fr);
-      gap: 16px;
+      grid-template-columns: minmax(0, 1.55fr) minmax(220px, 0.75fr);
+      gap: 14px;
       align-items: start;
     }}
     .hero-actions {{
       display: flex;
       flex-wrap: wrap;
-      gap: 10px;
+      gap: 8px;
     }}
     .button {{
       display: inline-flex;
@@ -796,8 +795,8 @@ def render_opportunity_page(
     }}
     .hero-stats {{
       display: grid;
-      gap: 8px;
-      padding: 14px;
+      gap: 6px;
+      padding: 12px;
       border: 1px solid var(--line);
       border-radius: var(--av-radius-md);
       background: color-mix(in oklab, var(--surface), white 20%);
@@ -807,17 +806,11 @@ def render_opportunity_page(
       gap: 2px;
     }}
     .hero-stats strong {{
-      font-size: var(--av-text-lg);
+      font-size: var(--av-text-base);
       line-height: 1.15;
     }}
-    .meta-strip {{
-      display: grid;
-      grid-template-columns: repeat(4, minmax(0, 1fr));
-      gap: 10px;
-      margin-bottom: 18px;
-    }}
     .metric {{
-      padding: 12px;
+      padding: 10px 12px;
       border: 1px solid var(--line);
       border-radius: var(--av-radius-md);
       background: var(--surface);
@@ -832,14 +825,14 @@ def render_opportunity_page(
       letter-spacing: 0;
     }}
     .metric strong {{
-      font-size: var(--av-text-lg);
+      font-size: var(--av-text-base);
       line-height: 1.2;
     }}
     .pills {{
       display: flex;
       flex-wrap: wrap;
-      gap: 8px;
-      margin-bottom: 20px;
+      gap: 6px;
+      margin-bottom: 16px;
     }}
     .pill {{
       display: inline-flex;
@@ -856,16 +849,16 @@ def render_opportunity_page(
     .content-grid {{
       display: grid;
       grid-template-columns: minmax(0, 1.4fr) minmax(260px, 0.8fr);
-      gap: 20px;
+      gap: 16px;
       align-items: start;
     }}
     .section-stack {{
       display: grid;
-      gap: 16px;
+      gap: 12px;
     }}
     .section-card,
     .sidebar-card {{
-      padding: 18px;
+      padding: 14px;
       border: 1px solid var(--line);
       border-radius: var(--av-radius-md);
       background: var(--surface);
@@ -873,13 +866,13 @@ def render_opportunity_page(
     }}
     .section-card h2,
     .sidebar-card h2 {{
-      margin: 0 0 12px;
-      font-size: var(--av-text-xl);
+      margin: 0 0 8px;
+      font-size: var(--av-text-lg);
       line-height: 1.2;
     }}
     .richtext {{
       display: grid;
-      gap: 12px;
+      gap: 8px;
     }}
     .richtext p {{
       margin: 0;
@@ -887,10 +880,10 @@ def render_opportunity_page(
     }}
     .meta-grid {{
       display: grid;
-      gap: 10px;
+      gap: 8px;
     }}
     .meta-item {{
-      padding: 12px 0;
+      padding: 8px 0;
       border-top: 1px solid var(--line);
     }}
     .meta-item:first-child {{
@@ -922,9 +915,9 @@ def render_opportunity_page(
     }}
     .prepare-section {{
       display: grid;
-      gap: 14px;
-      margin-bottom: 20px;
-      padding: 18px;
+      gap: 12px;
+      margin-bottom: 16px;
+      padding: 14px;
       border: 1px solid color-mix(in oklab, var(--brand), white 78%);
       border-radius: var(--av-radius-md);
       background: color-mix(in oklab, var(--surface-subtle), var(--brand-soft) 14%);
@@ -937,7 +930,7 @@ def render_opportunity_page(
     .prepare-head h2 {{
       margin: 0;
       font-family: var(--font-sans);
-      font-size: clamp(22px, 3vw, 28px);
+      font-size: clamp(18px, 2.4vw, 24px);
       font-weight: 700;
       line-height: 1.16;
     }}
@@ -945,18 +938,18 @@ def render_opportunity_page(
       margin: 0;
       color: color-mix(in oklab, var(--text), var(--muted) 28%);
       font-size: var(--av-text-sm);
-      line-height: 1.58;
+      line-height: 1.46;
     }}
     .prepare-grid {{
       display: grid;
       grid-template-columns: repeat(4, minmax(0, 1fr));
-      gap: 12px;
+      gap: 10px;
     }}
     .prepare-card {{
       display: grid;
       gap: 8px;
-      min-height: 164px;
-      padding: 14px;
+      min-height: 0;
+      padding: 12px;
       border: 1px solid var(--line);
       border-radius: var(--av-radius-md);
       background: color-mix(in oklab, var(--surface), white 12%);
@@ -988,9 +981,9 @@ def render_opportunity_page(
     }}
     .apply-section {{
       display: grid;
-      gap: 14px;
-      margin-bottom: 20px;
-      padding: 18px;
+      gap: 12px;
+      margin-bottom: 16px;
+      padding: 14px;
       border: 1px solid var(--line);
       border-radius: var(--av-radius-md);
       background: var(--surface);
@@ -1004,7 +997,7 @@ def render_opportunity_page(
     .apply-head h2 {{
       margin: 0;
       font-family: var(--font-sans);
-      font-size: clamp(22px, 3vw, 28px);
+      font-size: clamp(18px, 2.4vw, 24px);
       font-weight: 700;
       line-height: 1.16;
     }}
@@ -1012,12 +1005,12 @@ def render_opportunity_page(
       margin: 0;
       color: color-mix(in oklab, var(--text), var(--muted) 28%);
       font-size: var(--av-text-sm);
-      line-height: 1.58;
+      line-height: 1.46;
     }}
     .apply-list {{
       display: grid;
       grid-template-columns: repeat(4, minmax(0, 1fr));
-      gap: 12px;
+      gap: 10px;
       padding: 0;
       margin: 0;
       list-style: none;
@@ -1027,7 +1020,7 @@ def render_opportunity_page(
       grid-template-columns: 34px minmax(0, 1fr);
       gap: 10px;
       align-items: start;
-      padding: 14px;
+      padding: 12px;
       border: 1px solid var(--line);
       border-radius: var(--av-radius-md);
       background: color-mix(in oklab, var(--surface-subtle), white 20%);
@@ -1058,9 +1051,9 @@ def render_opportunity_page(
     }}
     .related-section {{
       display: grid;
-      gap: 14px;
-      margin-top: 24px;
-      padding-top: 22px;
+      gap: 12px;
+      margin-top: 18px;
+      padding-top: 16px;
       border-top: 1px solid var(--line);
     }}
     .related-head {{
@@ -1071,7 +1064,7 @@ def render_opportunity_page(
     .related-head h2 {{
       margin: 0;
       font-family: var(--font-sans);
-      font-size: clamp(22px, 3vw, 28px);
+      font-size: clamp(18px, 2.4vw, 24px);
       font-weight: 700;
       line-height: 1.16;
     }}
@@ -1079,18 +1072,18 @@ def render_opportunity_page(
       margin: 0;
       color: color-mix(in oklab, var(--text), var(--muted) 28%);
       font-size: var(--av-text-sm);
-      line-height: 1.58;
+      line-height: 1.46;
     }}
     .related-grid {{
       display: grid;
       grid-template-columns: repeat(3, minmax(0, 1fr));
-      gap: 14px;
+      gap: 12px;
     }}
     .related-card {{
       display: grid;
-      gap: 12px;
-      min-height: 220px;
-      padding: 18px;
+      gap: 10px;
+      min-height: 0;
+      padding: 14px;
       border: 1px solid var(--line);
       border-radius: var(--av-radius-md);
       background: linear-gradient(
@@ -1123,7 +1116,7 @@ def render_opportunity_page(
     }}
     .related-card h3 {{
       margin: 0;
-      font-size: var(--av-text-lg);
+      font-size: var(--av-text-base);
       line-height: 1.22;
     }}
     .related-card h3 a:hover {{
@@ -1133,7 +1126,7 @@ def render_opportunity_page(
       margin: 0;
       color: color-mix(in oklab, var(--text), var(--muted) 30%);
       font-size: var(--av-text-sm);
-      line-height: 1.6;
+      line-height: 1.48;
     }}
     .related-meta {{
       margin-top: auto;
@@ -1152,7 +1145,6 @@ def render_opportunity_page(
     @media (max-width: 900px) {{
       .hero-grid,
       .content-grid,
-      .meta-strip,
       .prepare-grid,
       .apply-list,
       .related-grid {{
@@ -1170,21 +1162,18 @@ def render_opportunity_page(
       .section-card,
       .sidebar-card,
       .related-card {{
-        padding: 14px;
+        padding: 12px;
       }}
       .hero h1 {{
-        font-size: 22px;
+        font-size: 20px;
       }}
       .summary {{
         font-size: var(--av-text-sm);
       }}
-      .metric {{
-        padding: 12px;
-      }}
       .prepare-head h2,
       .apply-head h2,
       .related-head h2 {{
-        font-size: 22px;
+        font-size: 19px;
       }}
     }}
   </style>
@@ -1222,7 +1211,8 @@ def render_opportunity_page(
             <span class="eyebrow">{escape(str(copy["detail_meta_title"]))}</span>
           </div>
           <div>
-            <span class="status-note">{fetch_status_note}</span>
+            <strong>{escape(str(copy["detail_source_status_title"]))}</strong>
+            <div class="status-note">{fetch_status_note}</div>
           </div>
           <div>
             <strong>{source_label}</strong>
@@ -1237,25 +1227,6 @@ def render_opportunity_page(
             <div class="status-note">{escape(str(copy["score_title"]))}</div>
           </div>
         </aside>
-      </div>
-    </section>
-
-    <section class="meta-strip">
-      <div class="metric">
-        <span>{escape(str(metadata_labels.get("source", "Source")))}</span>
-        <strong>{escape(_label_value(detail.source, copy))}</strong>
-      </div>
-      <div class="metric">
-        <span>{escape(str(metadata_labels.get("funder", "Funder")))}</span>
-        <strong>{source_label}</strong>
-      </div>
-      <div class="metric">
-        <span>{escape(str(metadata_labels.get("deadline", "Deadline")))}</span>
-        <strong>{deadline_label}</strong>
-      </div>
-      <div class="metric">
-        <span>{escape(str(copy["detail_source_status_title"]))}</span>
-        <strong>{fetch_status_value}</strong>
       </div>
     </section>
 

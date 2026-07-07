@@ -54,7 +54,7 @@ def test_root_renders_service_landing(monkeypatch):
     assert "--badge-outline" in response.text
     assert "--color-focus-ring: var(--av-focus-ring)" in response.text
     assert "--color-bg: var(--av-color-background)" in response.text
-    assert "width: min(var(--container-max), calc(100% - 32px));" in response.text
+    assert "width: min(var(--container-max), calc(100% - 28px));" in response.text
     assert "grid-template-columns: repeat(3, minmax(148px, 196px));" in response.text
     assert "width: fit-content;" in response.text
     assert "grid-template-columns: repeat(3, minmax(0, 1fr));" in response.text

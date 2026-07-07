@@ -1762,14 +1762,14 @@ def render_dashboard(
     button, input, select {{ font: inherit; }}
     input, select {{ min-width: 0; }}
     .shell {{
-      width: min(var(--container-max), calc(100% - 32px));
+      width: min(var(--container-max), calc(100% - 28px));
       margin: 0 auto;
-      padding: var(--av-spacing-4) 0 var(--av-spacing-8);
+      padding: var(--av-spacing-3) 0 var(--av-spacing-6);
     }}
     .hero-band {{
       position: relative;
       overflow: hidden;
-      padding: 18px 22px 14px;
+      padding: 14px 18px 12px;
       margin-bottom: var(--av-spacing-2);
       border: 1px solid color-mix(in oklab, var(--brand), white 78%);
       border-radius: var(--av-radius-lg);
@@ -1831,13 +1831,13 @@ def render_dashboard(
     }}
     .topbar {{
       display: grid;
-      gap: var(--av-spacing-2);
-      margin-bottom: var(--av-spacing-3);
+      gap: var(--av-spacing-1);
+      margin-bottom: var(--av-spacing-2);
     }}
     .brand {{
       min-width: 0;
       display: grid;
-      gap: var(--av-spacing-2);
+      gap: var(--av-spacing-1);
     }}
     .eyebrow {{
       color: var(--muted);
@@ -1855,7 +1855,7 @@ def render_dashboard(
     }}
     .brand h1 {{
       margin: 0;
-      font-size: clamp(26px, 3vw, 32px);
+      font-size: clamp(22px, 2.5vw, 28px);
       line-height: var(--av-leading-tight);
       letter-spacing: 0;
     }}
@@ -1863,8 +1863,8 @@ def render_dashboard(
       margin: 0;
       max-width: 720px;
       color: color-mix(in oklab, var(--ink), white 28%);
-      font-size: var(--av-text-base);
-      line-height: 1.6;
+      font-size: var(--av-text-sm);
+      line-height: 1.45;
     }}
     .focus-row {{
       display: flex;
@@ -1878,7 +1878,7 @@ def render_dashboard(
       width: fit-content;
       max-width: 100%;
       min-height: 28px;
-      padding: 2px var(--av-spacing-2);
+      padding: 1px var(--av-spacing-2);
       border: 1px solid color-mix(in oklab, var(--brand), white 64%);
       border-radius: var(--av-radius-sm);
       background: rgb(255 255 255 / 0.54);
@@ -1890,14 +1890,14 @@ def render_dashboard(
     }}
     .hero-grid {{
       display: grid;
-      grid-template-columns: minmax(0, 1.1fr) minmax(320px, 0.9fr);
-      gap: var(--av-spacing-3);
+      grid-template-columns: minmax(0, 1.2fr) minmax(280px, 0.78fr);
+      gap: var(--av-spacing-2);
       align-items: stretch;
-      margin-bottom: var(--av-spacing-3);
+      margin-bottom: var(--av-spacing-2);
     }}
     .hero-copy {{
       display: grid;
-      gap: var(--av-spacing-2);
+      gap: var(--av-spacing-1);
       align-content: start;
       min-width: 0;
     }}
@@ -1905,8 +1905,8 @@ def render_dashboard(
       margin: 0;
       max-width: 60ch;
       color: color-mix(in oklab, var(--ink), white 20%);
-      font-size: var(--av-text-base);
-      line-height: 1.58;
+      font-size: var(--av-text-sm);
+      line-height: 1.45;
     }}
     .hero-actions {{
       display: flex;
@@ -1945,10 +1945,10 @@ def render_dashboard(
     }}
     .hero-stage {{
       display: grid;
-      gap: var(--av-spacing-2);
+      gap: var(--av-spacing-1);
       min-width: 0;
       align-content: start;
-      padding: 18px;
+      padding: 14px;
       border: 1px solid color-mix(in oklab, var(--brand), white 72%);
       border-radius: var(--av-radius-md);
       background: rgb(255 255 255 / 0.58);
@@ -1965,14 +1965,14 @@ def render_dashboard(
     .hero-stage-title {{
       margin: 0;
       font-family: var(--font-sans);
-      font-size: clamp(20px, 2vw, 24px);
+      font-size: clamp(17px, 1.5vw, 20px);
       font-weight: 700;
       line-height: var(--av-leading-tight);
       letter-spacing: 0;
     }}
     .hero-points {{
       display: grid;
-      gap: 10px;
+      gap: 8px;
     }}
     .hero-point {{
       display: grid;
@@ -1980,8 +1980,8 @@ def render_dashboard(
       gap: var(--av-spacing-2);
       align-items: start;
       color: color-mix(in oklab, var(--ink), white 22%);
-      font-size: var(--av-text-sm);
-      line-height: 1.55;
+      font-size: var(--av-text-xs);
+      line-height: 1.4;
     }}
     .hero-point-index {{
       display: inline-flex;
@@ -2008,8 +2008,8 @@ def render_dashboard(
       gap: var(--av-spacing-1);
     }}
     .hero-pick {{
-      min-height: 30px;
-      padding-inline: 10px;
+      min-height: 28px;
+      padding-inline: 8px;
       border-radius: var(--av-radius-sm);
       border: 1px solid color-mix(in oklab, var(--line), var(--brand) 18%);
       background: rgb(255 255 255 / 0.56);
@@ -2032,31 +2032,31 @@ def render_dashboard(
       backdrop-filter: blur(14px);
     }}
     .hero-band .metric {{
-      min-height: 78px;
-      padding: 14px 16px;
+      min-height: 64px;
+      padding: 10px 12px;
     }}
     .hero-band .metric span {{
       color: color-mix(in oklab, var(--muted), var(--ink) 22%);
     }}
     .spotlight-section {{
       display: grid;
-      gap: var(--av-spacing-3);
-      margin-bottom: var(--av-spacing-4);
+      gap: var(--av-spacing-2);
+      margin-bottom: var(--av-spacing-3);
     }}
     .funder-section {{
       display: grid;
-      gap: var(--av-spacing-3);
-      margin-bottom: var(--av-spacing-4);
+      gap: var(--av-spacing-2);
+      margin-bottom: var(--av-spacing-3);
     }}
     .spotlight-copy {{
       display: grid;
-      gap: 6px;
+      gap: 4px;
       max-width: 760px;
     }}
     .spotlight-copy h2 {{
       margin: 0;
       font-family: var(--font-sans);
-      font-size: clamp(22px, 3vw, 28px);
+      font-size: clamp(18px, 2vw, 22px);
       font-weight: 700;
       line-height: var(--av-leading-tight);
       letter-spacing: 0;
@@ -2064,19 +2064,19 @@ def render_dashboard(
     .spotlight-copy p {{
       margin: 0;
       color: color-mix(in oklab, var(--muted), var(--ink) 28%);
-      font-size: var(--av-text-sm);
-      line-height: 1.6;
+      font-size: var(--av-text-xs);
+      line-height: 1.45;
     }}
     .spotlight-grid {{
       display: grid;
       grid-template-columns: repeat(4, minmax(0, 1fr));
-      gap: var(--av-spacing-3);
+      gap: var(--av-spacing-2);
     }}
     .spotlight-card {{
       display: grid;
-      gap: var(--av-spacing-3);
-      min-height: 218px;
-      padding: 18px;
+      gap: var(--av-spacing-2);
+      min-height: 0;
+      padding: 14px;
       border: 1px solid var(--line-subtle);
       border-radius: var(--av-radius-md);
       background: linear-gradient(
@@ -2144,7 +2144,7 @@ def render_dashboard(
     }}
     .spotlight-card h3 {{
       margin: 0;
-      font-size: var(--av-text-xl);
+      font-size: var(--av-text-lg);
       line-height: 1.18;
       letter-spacing: 0;
     }}
@@ -2152,7 +2152,7 @@ def render_dashboard(
       margin: 0;
       color: color-mix(in oklab, var(--muted), var(--ink) 30%);
       font-size: var(--av-text-sm);
-      line-height: 1.58;
+      line-height: 1.42;
     }}
     .spotlight-list {{
       display: grid;
@@ -2207,24 +2207,24 @@ def render_dashboard(
     }}
     .pathways-section {{
       display: grid;
-      gap: var(--av-spacing-3);
-      margin-bottom: var(--av-spacing-4);
+      gap: var(--av-spacing-2);
+      margin-bottom: var(--av-spacing-3);
     }}
     .themes-section {{
       display: grid;
-      gap: var(--av-spacing-3);
-      margin-bottom: var(--av-spacing-4);
+      gap: var(--av-spacing-2);
+      margin-bottom: var(--av-spacing-3);
     }}
     .funder-grid {{
       display: grid;
       grid-template-columns: repeat(3, minmax(0, 1fr));
-      gap: var(--av-spacing-3);
+      gap: var(--av-spacing-2);
     }}
     .funder-card {{
       display: grid;
-      gap: var(--av-spacing-2);
-      min-height: 184px;
-      padding: 18px;
+      gap: var(--av-spacing-1);
+      min-height: 0;
+      padding: 14px;
       border: 1px solid var(--line-subtle);
       border-radius: var(--av-radius-md);
       background: linear-gradient(
@@ -2250,7 +2250,7 @@ def render_dashboard(
       margin: 0;
       color: color-mix(in oklab, var(--muted), var(--ink) 26%);
       font-size: var(--av-text-sm);
-      line-height: 1.55;
+      line-height: 1.42;
       display: -webkit-box;
       -webkit-line-clamp: 3;
       -webkit-box-orient: vertical;
@@ -2289,13 +2289,13 @@ def render_dashboard(
     .themes-grid {{
       display: grid;
       grid-template-columns: repeat(3, minmax(0, 1fr));
-      gap: var(--av-spacing-3);
+      gap: var(--av-spacing-2);
     }}
     .theme-card {{
       display: grid;
-      gap: var(--av-spacing-3);
-      min-height: 186px;
-      padding: 18px;
+      gap: var(--av-spacing-2);
+      min-height: 0;
+      padding: 14px;
       border: 1px solid var(--line-subtle);
       border-radius: var(--av-radius-md);
       background: linear-gradient(
@@ -2379,7 +2379,7 @@ def render_dashboard(
       margin: 0;
       color: color-mix(in oklab, var(--muted), var(--ink) 30%);
       font-size: var(--av-text-sm);
-      line-height: 1.58;
+      line-height: 1.42;
     }}
     .theme-footer {{
       display: flex;
@@ -2391,9 +2391,9 @@ def render_dashboard(
     }}
     .topic-brief {{
       display: grid;
-      gap: 14px;
-      margin-bottom: var(--av-spacing-3);
-      padding: 16px 18px;
+      gap: 10px;
+      margin-bottom: var(--av-spacing-2);
+      padding: 12px 14px;
       border-inline-start: 3px solid color-mix(in oklab, var(--brand), white 20%);
       border-radius: 0 var(--av-radius-sm) var(--av-radius-sm) 0;
       background: color-mix(in oklab, var(--panel-subtle), var(--brand-soft) 14%);
@@ -2433,7 +2433,7 @@ def render_dashboard(
     }}
     .topic-brief h3 {{
       margin: 0;
-      font-size: clamp(22px, 3vw, 28px);
+      font-size: clamp(18px, 2vw, 22px);
       line-height: 1.15;
       letter-spacing: 0;
     }}
@@ -2441,13 +2441,13 @@ def render_dashboard(
       margin: 0;
       max-width: 720px;
       color: color-mix(in oklab, var(--muted), var(--ink) 28%);
-      font-size: var(--av-text-sm);
-      line-height: 1.6;
+      font-size: var(--av-text-xs);
+      line-height: 1.45;
     }}
     .topic-brief-grid {{
       display: grid;
       grid-template-columns: minmax(0, 1.3fr) minmax(220px, 0.9fr);
-      gap: var(--av-spacing-3);
+      gap: var(--av-spacing-2);
       align-items: start;
     }}
     .topic-brief-group {{
@@ -2495,13 +2495,13 @@ def render_dashboard(
     .pathways-grid {{
       display: grid;
       grid-template-columns: repeat(2, minmax(0, 1fr));
-      gap: var(--av-spacing-3);
+      gap: var(--av-spacing-2);
     }}
     .pathway-card {{
       display: grid;
-      gap: var(--av-spacing-3);
-      min-height: 190px;
-      padding: 18px;
+      gap: var(--av-spacing-2);
+      min-height: 0;
+      padding: 14px;
       border: 1px solid var(--line-subtle);
       border-radius: var(--av-radius-md);
       background: linear-gradient(
@@ -2574,7 +2574,7 @@ def render_dashboard(
     }}
     .pathway-card h3 {{
       margin: 0;
-      font-size: var(--av-text-xl);
+      font-size: var(--av-text-lg);
       line-height: 1.22;
       letter-spacing: 0;
     }}
@@ -2582,7 +2582,7 @@ def render_dashboard(
       margin: 0;
       color: color-mix(in oklab, var(--muted), var(--ink) 28%);
       font-size: var(--av-text-sm);
-      line-height: 1.58;
+      line-height: 1.42;
     }}
     .pathway-footer {{
       display: flex;
@@ -2596,9 +2596,9 @@ def render_dashboard(
       display: inline-flex;
       align-items: center;
       width: fit-content;
-      gap: var(--av-spacing-2);
+      gap: var(--av-spacing-1);
       min-height: var(--control-height-sm);
-      padding: 0 var(--av-spacing-2);
+      padding: 0 10px;
       border: 1px solid color-mix(in oklab, var(--good), white 62%);
       border-radius: var(--av-radius-full);
       background: var(--good-soft);
@@ -2615,7 +2615,7 @@ def render_dashboard(
     }}
     .topbar-actions {{
       display: grid;
-      gap: var(--av-spacing-2);
+      gap: var(--av-spacing-1);
       justify-items: end;
       min-width: 0;
     }}
@@ -2623,7 +2623,7 @@ def render_dashboard(
       display: flex;
       align-items: center;
       justify-content: flex-end;
-      gap: var(--av-spacing-2);
+      gap: var(--av-spacing-1);
       flex-wrap: wrap;
       min-width: 0;
     }}
@@ -2631,7 +2631,7 @@ def render_dashboard(
       display: flex;
       align-items: center;
       justify-content: flex-end;
-      gap: var(--av-spacing-2);
+      gap: var(--av-spacing-1);
       flex-wrap: wrap;
     }}
     .utility-link {{
@@ -2679,7 +2679,7 @@ def render_dashboard(
       align-items: center;
       gap: 4px;
       overflow-x: auto;
-      min-height: 40px;
+      min-height: 36px;
       max-width: 100%;
       padding: 4px;
       border: 1px solid var(--line-subtle);
@@ -2695,7 +2695,7 @@ def render_dashboard(
       display: inline-flex;
       align-items: center;
       justify-content: center;
-      min-height: var(--control-height);
+      min-height: var(--control-height-sm);
       padding: 0 var(--av-spacing-3);
       border: 1px solid var(--button-outline);
       border-radius: var(--av-radius-md);
@@ -2778,9 +2778,9 @@ def render_dashboard(
       border-radius: 0;
       background: transparent;
       box-shadow: none;
-      min-height: 74px;
+      min-height: 60px;
       min-width: 0;
-      padding: 14px 18px;
+      padding: 10px 12px;
       display: grid;
       align-content: center;
     }}
@@ -2799,15 +2799,15 @@ def render_dashboard(
     }}
     .metric strong {{
       font-family: var(--font-sans);
-      font-size: 26px;
+      font-size: 22px;
       font-weight: 700;
       line-height: 1;
       letter-spacing: 0;
       font-feature-settings: "tnum" 1, "lnum" 1;
     }}
     .panel {{
-      padding: var(--section-gap) 0 0;
-      margin-top: var(--section-gap);
+      padding: calc(var(--section-gap) * 0.72) 0 0;
+      margin-top: calc(var(--section-gap) * 0.72);
       border-top: 1px solid var(--line);
       scroll-margin-top: 156px;
     }}
@@ -2821,13 +2821,13 @@ def render_dashboard(
       justify-content: space-between;
       align-items: flex-end;
       flex-wrap: wrap;
-      gap: var(--av-spacing-2);
-      margin-bottom: var(--av-spacing-2);
+      gap: var(--av-spacing-1);
+      margin-bottom: var(--av-spacing-1);
     }}
     .panel-head h2 {{
       margin: 0;
       font-family: var(--font-sans);
-      font-size: var(--av-text-xl);
+      font-size: var(--av-text-lg);
       font-weight: 700;
       line-height: var(--av-leading-tight);
     }}
@@ -2849,15 +2849,15 @@ def render_dashboard(
     .filters {{
       display: grid;
       grid-template-columns: minmax(220px, 1fr) repeat(3, minmax(128px, 0.28fr));
-      gap: var(--av-spacing-2);
-      margin-bottom: var(--av-spacing-2);
+      gap: var(--av-spacing-1);
+      margin-bottom: var(--av-spacing-1);
       align-items: end;
     }}
     .preset-grid {{
       display: grid;
       grid-template-columns: repeat(3, minmax(0, 1fr));
-      gap: var(--av-spacing-2);
-      margin-bottom: var(--av-spacing-2);
+      gap: var(--av-spacing-1);
+      margin-bottom: var(--av-spacing-1);
     }}
     .preset-group {{
       display: grid;
@@ -2913,9 +2913,9 @@ def render_dashboard(
       display: flex;
       align-items: center;
       justify-content: space-between;
-      gap: var(--av-spacing-2);
+      gap: var(--av-spacing-1);
       flex-wrap: wrap;
-      margin-bottom: var(--av-spacing-3);
+      margin-bottom: var(--av-spacing-2);
     }}
     .filter-summary {{
       display: flex;
@@ -2925,9 +2925,9 @@ def render_dashboard(
     }}
     .saved-views {{
       display: grid;
-      gap: var(--av-spacing-2);
-      margin-bottom: var(--av-spacing-3);
-      padding: 12px;
+      gap: var(--av-spacing-1);
+      margin-bottom: var(--av-spacing-2);
+      padding: 10px 12px;
       border: 1px solid var(--line-subtle);
       border-radius: var(--av-radius-md);
       background: color-mix(in oklab, var(--panel), var(--panel-subtle) 20%);
@@ -3052,13 +3052,13 @@ def render_dashboard(
       background-repeat: no-repeat;
     }}
     .message {{
-      min-height: var(--control-height);
+      min-height: auto;
       display: flex;
       align-items: center;
       color: var(--muted);
       border: 1px dashed var(--line-strong);
       border-radius: var(--av-radius-md);
-      padding: 10px;
+      padding: 8px 10px;
       background: var(--panel-subtle);
     }}
     .message.empty {{
@@ -3097,7 +3097,7 @@ def render_dashboard(
       border-color: var(--danger);
       background: var(--danger-soft);
     }}
-    .list {{ display: grid; gap: var(--av-spacing-2); }}
+    .list {{ display: grid; gap: var(--av-spacing-1); }}
     .list-actions {{
       display: flex;
       justify-content: center;
@@ -3108,7 +3108,7 @@ def render_dashboard(
       border-top: 3px solid var(--line-strong);
       border-radius: var(--av-radius-md);
       background: var(--panel);
-      padding: 14px;
+      padding: 12px;
       box-shadow: none;
       position: relative;
       overflow: hidden;
@@ -3128,7 +3128,7 @@ def render_dashboard(
     }}
     .opportunity-main {{
       display: grid;
-      gap: var(--av-spacing-1);
+      gap: 4px;
     }}
     .opportunity-top {{
       display: grid;
@@ -3221,8 +3221,8 @@ def render_dashboard(
     }}
     .signal-box {{
       display: grid;
-      gap: 8px;
-      padding: 10px 12px;
+      gap: 6px;
+      padding: 8px 10px;
       border: 1px solid var(--line-subtle);
       border-radius: var(--av-radius-md);
       background: color-mix(in oklab, var(--panel), var(--brand-soft) 10%);
@@ -3275,7 +3275,7 @@ def render_dashboard(
       text-transform: none;
     }}
     .side {{
-      min-width: 118px;
+      min-width: 104px;
       display: flex;
       align-items: center;
       justify-content: flex-end;
@@ -3286,8 +3286,8 @@ def render_dashboard(
       display: inline-flex;
       align-items: center;
       justify-content: center;
-      min-width: 56px;
-      min-height: 24px;
+      min-width: 48px;
+      min-height: 22px;
       border-radius: var(--av-radius-sm);
       background: var(--brand-soft);
       color: var(--brand);
@@ -3336,7 +3336,7 @@ def render_dashboard(
     .source-grid {{
       display: grid;
       grid-template-columns: 1fr;
-      gap: var(--av-spacing-2);
+      gap: var(--av-spacing-1);
     }}
     .source-card {{
       display: flex;
@@ -3344,9 +3344,9 @@ def render_dashboard(
       gap: 0.85rem;
       border: 1.5px solid var(--line);
       border-radius: var(--av-radius-md);
-      padding: 0.85rem 1.1rem;
+      padding: 0.7rem 0.9rem;
       background: var(--panel);
-      min-height: 66px;
+      min-height: 58px;
       color: inherit;
       text-decoration: none;
       transition:
@@ -3358,8 +3358,8 @@ def render_dashboard(
       contain-intrinsic-size: 76px;
     }}
     .source-icon {{
-      width: 38px;
-      height: 38px;
+      width: 34px;
+      height: 34px;
       display: inline-flex;
       align-items: center;
       justify-content: center;
@@ -3415,7 +3415,7 @@ def render_dashboard(
       display: flex;
       flex-wrap: wrap;
       align-items: center;
-      gap: var(--av-spacing-2);
+      gap: var(--av-spacing-1);
       margin-top: var(--av-spacing-1);
       min-width: 0;
     }}
@@ -3438,7 +3438,7 @@ def render_dashboard(
     }}
     .source-card:hover .source-url {{ color: var(--brand); }}
     .source-count {{
-      flex: 0 0 136px;
+      flex: 0 0 104px;
       justify-self: end;
       display: grid;
       gap: 4px;
@@ -3584,7 +3584,7 @@ def render_dashboard(
       position: fixed;
       inset: 0 0 0 auto;
       z-index: 80;
-      width: min(720px, 100vw);
+      width: min(640px, 100vw);
       border-left: 1px solid var(--line);
       background: color-mix(in oklab, var(--panel), white 6%);
       box-shadow: -24px 0 64px rgb(15 23 42 / 0.18);
@@ -3601,14 +3601,14 @@ def render_dashboard(
       justify-content: space-between;
       align-items: flex-start;
       gap: var(--av-spacing-2);
-      padding: var(--av-spacing-3);
+      padding: 12px;
       border-bottom: 1px solid var(--line-subtle);
       background: color-mix(in oklab, var(--panel), var(--brand-soft) 9%);
     }}
     .detail-header h2 {{
       margin: var(--av-spacing-1) 0 0;
       font-family: var(--font-sans);
-      font-size: var(--av-text-xl);
+      font-size: var(--av-text-lg);
       line-height: var(--av-leading-tight);
     }}
     .detail-status {{
@@ -3624,9 +3624,9 @@ def render_dashboard(
     }}
     .detail-body {{
       overflow-y: auto;
-      padding: var(--av-spacing-3);
+      padding: 12px;
       display: grid;
-      gap: var(--av-spacing-3);
+      gap: var(--av-spacing-2);
       align-content: start;
     }}
     .detail-meta {{
@@ -3636,7 +3636,7 @@ def render_dashboard(
     .detail-fit {{
       display: grid;
       gap: var(--av-spacing-2);
-      padding: 12px;
+      padding: 10px;
       border: 1px solid var(--line-subtle);
       border-radius: var(--av-radius-md);
       background: color-mix(in oklab, var(--panel), var(--brand-soft) 10%);
@@ -3660,7 +3660,7 @@ def render_dashboard(
     }}
     .detail-meta-item {{
       min-width: 0;
-      padding: 12px;
+      padding: 10px;
       border: 1px solid var(--line-subtle);
       border-radius: var(--av-radius-md);
       background: var(--panel);
@@ -3718,7 +3718,7 @@ def render_dashboard(
       align-items: center;
       gap: var(--av-spacing-2);
       flex-wrap: wrap;
-      padding: var(--av-spacing-3);
+      padding: 12px;
       border-top: 1px solid var(--line-subtle);
       background: color-mix(in oklab, var(--panel), var(--panel-subtle) 20%);
     }}
@@ -3732,7 +3732,7 @@ def render_dashboard(
       border: 1px solid var(--line-subtle);
       border-top: 3px solid var(--brand);
       border-radius: var(--av-radius-md);
-      padding: 14px;
+      padding: 12px;
       background: var(--panel);
     }}
     .health-item span {{
@@ -3748,7 +3748,7 @@ def render_dashboard(
     .health-item strong {{
       display: block;
       font-family: var(--font-sans);
-      font-size: var(--av-text-xl);
+      font-size: var(--av-text-lg);
       line-height: 1.1;
       overflow-wrap: anywhere;
     }}
@@ -3764,7 +3764,7 @@ def render_dashboard(
       border: 1px solid var(--line-subtle);
       border-radius: var(--av-radius-md);
       background: var(--panel);
-      padding: 16px 18px;
+      padding: 12px 14px;
     }}
     .method-card h3,
     .faq-item h3,
@@ -3790,8 +3790,8 @@ def render_dashboard(
     .faq-list {{
       display: grid;
       grid-template-columns: repeat(2, minmax(0, 1fr));
-      gap: var(--av-spacing-3);
-      margin-top: var(--av-spacing-3);
+      gap: var(--av-spacing-2);
+      margin-top: var(--av-spacing-2);
     }}
     .hidden {{ display: none; }}
 
