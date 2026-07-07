@@ -997,9 +997,9 @@ async def swagger_docs(request: Request) -> HTMLResponse:
         swagger.body.tobytes() if isinstance(swagger.body, memoryview) else swagger.body
     )
     body = raw_body.decode("utf-8").replace("<body>", f"<body>{back_link}", 1)
-    return HTMLResponse(
-        body, status_code=swagger.status_code, headers=dict(swagger.headers)
-    )
+    headers = dict(swagger.headers)
+    headers.pop("content-length", None)
+    return HTMLResponse(body, status_code=swagger.status_code, headers=headers)
 
 
 @app.get(

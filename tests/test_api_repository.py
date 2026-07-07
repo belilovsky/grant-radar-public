@@ -437,6 +437,7 @@ def test_docs_supports_english_return_link(monkeypatch):
     assert response.status_code == 200
     assert 'href="/?lang=en"' in response.text
     assert "Back to site" in response.text
+    assert response.headers["content-length"] == str(len(response.content))
 
 
 def test_docs_preserves_root_path_prefix(monkeypatch):
