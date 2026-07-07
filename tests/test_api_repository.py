@@ -359,7 +359,7 @@ def test_root_renders_service_landing(monkeypatch):
     assert "setSavedViewNotice(copy.saved_view_removed);" in response.text
     assert "setSavedViewNotice(copy.saved_view_shared);" in response.text
     assert "window.alert(" not in response.text
-    assert 'window.prompt(copy.saved_view_share_prompt, href);' in response.text
+    assert "window.prompt(copy.saved_view_share_prompt, href);" in response.text
     assert 'aria-pressed="true"' in response.text
     assert "goToView(button.dataset.view)" in response.text
     assert "function goToView(view, options = {})" in response.text
