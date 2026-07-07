@@ -120,6 +120,8 @@ REMOTE_DETAIL_NOISE_PHRASES = (
     "fortebank",
     "получите консультацию",
 )
+_TAXONOMY_TOKEN_RE = re.compile(r"^[a-z0-9_][a-z0-9_\-]{1,31}$")
+_LOWERCASE_TOKEN_RE = re.compile(r"^[a-z][a-z0-9_\-]{1,31}$")
 _DETAIL_CACHE: dict[str, tuple[datetime, dict[str, Any]]] = {}
 _SECTION_HEADINGS = {
     "en": {
@@ -368,16 +370,19 @@ def _structured_sections(
             )
         )
     if item.eligibility:
-        sections.append(
-            OpportunityDetailSection(
-                heading=_section_heading("eligibility", lang),
-                text="\n".join(
-                    _clean_text(str(entry))
-                    for entry in item.eligibility
-                    if str(entry).strip()
-                ),
+        eligibility_lines = [
+            cleaned
+            for entry in item.eligibility
+            if (cleaned := _clean_text(str(entry)))
+            and not _is_internal_eligibility_text(cleaned)
+        ]
+        if eligibility_lines:
+            sections.append(
+                OpportunityDetailSection(
+                    heading=_section_heading("eligibility", lang),
+                    text="\n".join(eligibility_lines),
+                )
             )
-        )
     status_note = localized_text(
         raw,
         lang,
@@ -436,8 +441,28 @@ def _is_noise_chunk(text: str) -> bool:
         return False
     if any(phrase in normalized for phrase in REMOTE_DETAIL_NOISE_PHRASES):
         return True
+    if _looks_like_taxonomy_chunk(normalized):
+        return True
     hits = sum(1 for phrase in REMOTE_DETAIL_NOISE_PHRASES if phrase in normalized)
     return hits >= 2
+
+
+def _looks_like_taxonomy_chunk(normalized: str) -> bool:
+    if len(normalized) > 64 or any(mark in normalized for mark in ".!?,:;/()"):
+        return False
+    tokens = normalized.split()
+    if not 1 <= len(tokens) <= 4:
+        return False
+    if not any("_" in token for token in tokens):
+        return False
+    return all(_TAXONOMY_TOKEN_RE.fullmatch(token) for token in tokens)
+
+
+def _is_internal_eligibility_text(text: str) -> bool:
+    normalized = text.strip().lower()
+    if _looks_like_taxonomy_chunk(normalized):
+        return True
+    return " " not in normalized and bool(_LOWERCASE_TOKEN_RE.fullmatch(normalized))
 
 
 def _extract_remote_sections(html: str) -> tuple[list[OpportunityDetailSection], bool]:

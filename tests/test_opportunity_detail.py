@@ -229,6 +229,47 @@ async def test_build_opportunity_detail_sanitizes_persisted_russian_noise_sectio
 
 
 @pytest.mark.asyncio
+async def test_build_opportunity_detail_drops_taxonomy_like_sections():
+    item = Opportunity(
+        source="unesco_iite",
+        source_url="https://example.org/unesco/call",
+        type=OpportunityType.TENDER,
+        title="Kazakhstan consulting services",
+        summary="Structured summary.",
+        tags=["global", "education_organisation"],
+        score=0.8,
+        raw={
+            "detail_fetch_status": "ok",
+            "detail_sections": [
+                {
+                    "heading": "Overview",
+                    "text": "Detailed public explanation for applicants.",
+                },
+                {
+                    "heading": "",
+                    "text": "global education_organisation",
+                },
+            ],
+            "detail_text": "Overview\nDetailed public explanation for applicants.",
+        },
+    )
+
+    detail = await detail_api.build_opportunity_detail(item)
+
+    assert any(
+        section.text == "Detailed public explanation for applicants."
+        for section in detail.detail_sections
+    )
+    assert all(section.heading != "Eligibility" for section in detail.detail_sections)
+    assert all(
+        "education_organisation" not in section.text
+        for section in detail.detail_sections
+    )
+    assert "global" not in detail.detail_text.lower()
+    assert "education_organisation" not in detail.detail_text
+
+
+@pytest.mark.asyncio
 @respx.mock
 async def test_build_opportunity_detail_follows_same_family_redirect(monkeypatch):
     source_url = "https://internews.org/opportunity/media-grant-2026/"
