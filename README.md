@@ -44,6 +44,9 @@ The main public endpoints are:
 - `GET /llms.txt`
 - `GET /site-discovery.json`
 
+For machine consumers, `llms.txt` and `site-discovery.json` publish the public
+entry points, read-only JSON endpoints, and supported query templates.
+
 ## Quick start
 
 ### Host-based setup

@@ -101,6 +101,9 @@ def _transport(
                     f"- API docs: {public_root}/docs\n"
                     f"- OpenAPI schema: {public_root}/openapi.json\n"
                     f"- Site discovery JSON: {public_root}/site-discovery.json\n"
+                    f"- Coverage JSON: {public_root}/coverage\n"
+                    f"- Opportunities JSON: {public_root}/opportunities\n"
+                    f"- Digest JSON: {public_root}/digest\n"
                 ),
             )
         if endpoint_path == "/docs" or path == "/docs":
@@ -125,12 +128,31 @@ def _transport(
                     "languages": ["ru", "en"],
                     "routes": {
                         "home": "/?lang={lang}",
+                        "coverage": "/coverage",
+                        "opportunities": "/opportunities?lang={lang}",
+                        "opportunity_api": "/opportunities/{id}?lang={lang}",
                         "opportunity": "/opportunity/{id}?lang={lang}",
                         "funder": "/funder/{slug}?lang={lang}",
+                        "digest": "/digest?lang={lang}",
+                    },
+                    "data_endpoints": {
+                        "coverage": f"{public_root}/coverage",
+                        "opportunities": f"{public_root}/opportunities",
+                        "digest": f"{public_root}/digest",
+                    },
+                    "query_templates": {
+                        "opportunities_recent": (
+                            "/opportunities?lang=ru&limit=50&min_score=0.5"
+                            "&deadline_after={yyyy-mm-dd}"
+                        ),
+                        "opportunities_by_tag": "/opportunities?lang=ru&limit=50&tag={tag}",
+                        "digest_ai": "/digest?lang=ru&limit=5&tag=ai",
                     },
                     "capabilities": [
                         "public opportunity pages",
                         "public funder pages",
+                        "machine-readable opportunity api",
+                        "machine-readable source coverage",
                         "official source links",
                         "read-only public catalog",
                     ],

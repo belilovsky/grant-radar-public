@@ -160,6 +160,10 @@ def run_smoke(
         "llms_home": f"Home: {_url(base_url, '/')}" in llms,
         "llms_sitemap": f"Sitemap: {_url(base_url, '/sitemap.xml')}" in llms,
         "llms_openapi": f"OpenAPI schema: {_url(base_url, '/openapi.json')}" in llms,
+        "llms_coverage": f"Coverage JSON: {_url(base_url, '/coverage')}" in llms,
+        "llms_opportunities": (
+            f"Opportunities JSON: {_url(base_url, '/opportunities')}" in llms
+        ),
         "docs_brand": "QAZ.FUND API" in docs,
         "docs_openapi": "/openapi.json" in docs,
         "site_discovery_openapi": str(discovery.get("openapi") or "")
@@ -168,6 +172,14 @@ def run_smoke(
         == _url(base_url, "/llms.txt"),
         "site_discovery_docs": str(discovery.get("api_docs") or "")
         == _url(base_url, "/docs"),
+        "site_discovery_coverage": str(
+            (discovery.get("data_endpoints") or {}).get("coverage") or ""
+        )
+        == _url(base_url, "/coverage"),
+        "site_discovery_opportunities": str(
+            (discovery.get("data_endpoints") or {}).get("opportunities") or ""
+        )
+        == _url(base_url, "/opportunities"),
     }
     missing_discovery = [
         marker for marker, present in discovery_status.items() if not present

@@ -633,8 +633,13 @@ def test_marketing_endpoints_are_exposed(monkeypatch):
     assert "API docs: http://testserver/docs" in llms.text
     assert "OpenAPI schema: http://testserver/openapi.json" in llms.text
     assert "Site discovery JSON: http://testserver/site-discovery.json" in llms.text
+    assert "Coverage JSON: http://testserver/coverage" in llms.text
+    assert "Opportunities JSON: http://testserver/opportunities" in llms.text
+    assert "Opportunity detail JSON: /opportunities/{id}?lang=ru|en" in llms.text
+    assert "Digest JSON: http://testserver/digest" in llms.text
     assert "Opportunity page: /opportunity/{id}?lang=ru|en" in llms.text
     assert "Funder page: /funder/{slug}?lang=ru|en" in llms.text
+    assert "Opportunities filters: limit, min_score, deadline_after" in llms.text
     llms_head = client.head("/llms.txt")
     assert llms_head.status_code == 200
     assert llms_head.headers["content-type"].startswith("text/plain")
@@ -653,12 +658,31 @@ def test_marketing_endpoints_are_exposed(monkeypatch):
         "languages": ["ru", "en"],
         "routes": {
             "home": "/?lang={lang}",
+            "coverage": "/coverage",
+            "opportunities": "/opportunities?lang={lang}",
+            "opportunity_api": "/opportunities/{id}?lang={lang}",
             "opportunity": "/opportunity/{id}?lang={lang}",
             "funder": "/funder/{slug}?lang={lang}",
+            "digest": "/digest?lang={lang}",
+        },
+        "data_endpoints": {
+            "coverage": "http://testserver/coverage",
+            "opportunities": "http://testserver/opportunities",
+            "digest": "http://testserver/digest",
+        },
+        "query_templates": {
+            "opportunities_recent": (
+                "/opportunities?lang=ru&limit=50&min_score=0.5"
+                "&deadline_after={yyyy-mm-dd}"
+            ),
+            "opportunities_by_tag": "/opportunities?lang=ru&limit=50&tag={tag}",
+            "digest_ai": "/digest?lang=ru&limit=5&tag=ai",
         },
         "capabilities": [
             "public opportunity pages",
             "public funder pages",
+            "machine-readable opportunity api",
+            "machine-readable source coverage",
             "official source links",
             "read-only public catalog",
         ],

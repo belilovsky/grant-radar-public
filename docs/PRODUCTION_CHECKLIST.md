@@ -19,6 +19,8 @@ historic backup filenames, and maintainer-only evidence.
 - `GET /coverage`, `GET /opportunities`, and `GET /digest` are public.
 - `GET` and `HEAD /robots.txt`, `/sitemap.xml`, `/llms.txt`, and `/site-discovery.json` are public.
 - `GET /docs` and `GET /openapi.json` must stay reachable for public API consumers.
+- `llms.txt` and `site-discovery.json` should expose the read-only data endpoints
+  and stable query templates for machine consumers.
 - `POST /refresh` must require `GRANT_RADAR_ADMIN_TOKEN`.
 
 ## Pre-release checks

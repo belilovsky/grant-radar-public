@@ -1068,6 +1068,9 @@ async def llms_txt(request: Request) -> Response:
     docs = _public_url(request, root_path, "/docs")
     openapi_url = _public_url(request, root_path, "/openapi.json")
     discovery = _public_url(request, root_path, "/site-discovery.json")
+    coverage = _public_url(request, root_path, "/coverage")
+    opportunities = _public_url(request, root_path, "/opportunities")
+    digest = _public_url(request, root_path, "/digest")
     return Response(
         "\n".join(
             [
@@ -1085,9 +1088,22 @@ async def llms_txt(request: Request) -> Response:
                 f"- OpenAPI schema: {openapi_url}",
                 f"- Site discovery JSON: {discovery}",
                 "",
+                "## Public data endpoints",
+                f"- Coverage JSON: {coverage}",
+                f"- Opportunities JSON: {opportunities}",
+                "- Opportunity detail JSON: /opportunities/{id}?lang=ru|en",
+                f"- Digest JSON: {digest}",
+                "",
                 "## Public route templates",
                 "- Opportunity page: /opportunity/{id}?lang=ru|en",
                 "- Funder page: /funder/{slug}?lang=ru|en",
+                "",
+                "## Query hints",
+                (
+                    "- Opportunities filters: limit, min_score, deadline_after, "
+                    "tag, format, region, audience, topic, source, lang"
+                ),
+                "- Digest filters: limit, min_score, tag, lang",
                 "",
                 "## What this site is for",
                 (
@@ -1122,6 +1138,9 @@ async def site_discovery(request: Request) -> Response:
     docs = _public_url(request, root_path, "/docs")
     openapi_url = _public_url(request, root_path, "/openapi.json")
     llms = _public_url(request, root_path, "/llms.txt")
+    coverage = _public_url(request, root_path, "/coverage")
+    opportunities = _public_url(request, root_path, "/opportunities")
+    digest = _public_url(request, root_path, "/digest")
     payload = {
         "site": "QAZ.FUND",
         "type": "public-funding-navigator",
@@ -1133,12 +1152,31 @@ async def site_discovery(request: Request) -> Response:
         "languages": ["ru", "en"],
         "routes": {
             "home": "/?lang={lang}",
+            "coverage": "/coverage",
+            "opportunities": "/opportunities?lang={lang}",
+            "opportunity_api": "/opportunities/{id}?lang={lang}",
             "opportunity": "/opportunity/{id}?lang={lang}",
             "funder": "/funder/{slug}?lang={lang}",
+            "digest": "/digest?lang={lang}",
+        },
+        "data_endpoints": {
+            "coverage": coverage,
+            "opportunities": opportunities,
+            "digest": digest,
+        },
+        "query_templates": {
+            "opportunities_recent": (
+                "/opportunities?lang=ru&limit=50&min_score=0.5"
+                "&deadline_after={yyyy-mm-dd}"
+            ),
+            "opportunities_by_tag": "/opportunities?lang=ru&limit=50&tag={tag}",
+            "digest_ai": "/digest?lang=ru&limit=5&tag=ai",
         },
         "capabilities": [
             "public opportunity pages",
             "public funder pages",
+            "machine-readable opportunity api",
+            "machine-readable source coverage",
             "official source links",
             "read-only public catalog",
         ],
