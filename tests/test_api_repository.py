@@ -187,6 +187,9 @@ def test_root_renders_service_landing(monkeypatch):
     assert 'id="topic-brief"' in response.text
     assert 'id="save-view"' in response.text
     assert 'id="share-view"' in response.text
+    assert 'id="saved-view-notice"' in response.text
+    assert 'aria-label="Статус подборок"' in response.text
+    assert 'aria-live="polite"' in response.text
     assert 'id="detail-drawer"' in response.text
     assert 'id="detail-fit"' in response.text
     assert 'id="detail-fit-summary"' in response.text
@@ -351,6 +354,12 @@ def test_root_renders_service_landing(monkeypatch):
     assert "Казахстан в приоритете" in response.text
     assert "Показать ещё" in response.text
     assert "renderSavedViews();" in response.text
+    assert "function setSavedViewNotice(message)" in response.text
+    assert "setSavedViewNotice(copy.saved_view_saved);" in response.text
+    assert "setSavedViewNotice(copy.saved_view_removed);" in response.text
+    assert "setSavedViewNotice(copy.saved_view_shared);" in response.text
+    assert "window.alert(" not in response.text
+    assert 'window.prompt(copy.saved_view_share_prompt, href);' in response.text
     assert 'aria-pressed="true"' in response.text
     assert "goToView(button.dataset.view)" in response.text
     assert "function goToView(view, options = {})" in response.text
@@ -532,6 +541,8 @@ def test_root_supports_explicit_english_dashboard(monkeypatch):
     assert "Try relaxing one of the filters" in response.text
     assert 'rel="canonical" href="http://testserver/?lang=en"' in response.text
     assert "Load more" in response.text
+    assert 'aria-label="Saved collection status"' in response.text
+    assert "Copy the link to the current collection" in response.text
 
 
 def test_root_head_is_available(monkeypatch):

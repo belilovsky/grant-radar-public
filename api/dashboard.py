@@ -431,6 +431,8 @@ COPY = {
         "saved_view_shared": "Ссылка на текущую подборку скопирована.",
         "saved_view_default_name": "Моя подборка",
         "saved_view_remove_aria": "Удалить подборку",
+        "saved_view_status_label": "Статус подборок",
+        "saved_view_share_prompt": "Скопируйте ссылку на текущую подборку",
         "view_funder": "Профиль фонда",
         "fit_label": "Кому подходит",
         "fit_unknown": "Критерии нужно уточнить",
@@ -1182,6 +1184,8 @@ COPY = {
         "saved_view_shared": "Copied a link to the current collection.",
         "saved_view_default_name": "My collection",
         "saved_view_remove_aria": "Remove collection",
+        "saved_view_status_label": "Saved collection status",
+        "saved_view_share_prompt": "Copy the link to the current collection",
         "view_funder": "Funder profile",
         "fit_label": "Who it fits",
         "fit_unknown": "Check eligibility",
@@ -2974,6 +2978,12 @@ def render_dashboard(
       font-size: var(--av-text-sm);
       line-height: 1.55;
     }}
+    .saved-view-notice {{
+      min-height: 20px;
+      color: var(--muted);
+      font-size: var(--av-text-xs);
+      line-height: 1.45;
+    }}
     .summary-pill {{
       display: inline-flex;
       align-items: center;
@@ -4610,6 +4620,12 @@ def render_dashboard(
         <div id="saved-views" class="saved-view-row">
           <span class="saved-empty">{escape(str(copy["collections_empty"]))}</span>
         </div>
+        <div
+          id="saved-view-notice"
+          class="saved-view-notice hidden"
+          aria-live="polite"
+          aria-label="{escape(str(copy["saved_view_status_label"]), quote=True)}"
+        ></div>
       </div>
       <div
         id="topic-brief"
@@ -6705,6 +6721,14 @@ def render_dashboard(
       `).join("");
     }}
 
+    function setSavedViewNotice(message) {{
+      const root = $("#saved-view-notice");
+      if (!root) return;
+      const text = String(message || "").trim();
+      root.textContent = text;
+      root.classList.toggle("hidden", !text);
+    }}
+
     function saveCurrentView() {{
       syncUrlState();
       const currentUrl = new URL(window.location.href);
@@ -6719,7 +6743,7 @@ def render_dashboard(
       deduped.unshift(next);
       writeSavedViews(deduped.slice(0, 8));
       renderSavedViews();
-      window.alert(copy.saved_view_saved);
+      setSavedViewNotice(copy.saved_view_saved);
     }}
 
     function applySavedView(query) {{
@@ -6735,7 +6759,7 @@ def render_dashboard(
       const next = readSavedViews().filter((view) => view.query !== query);
       writeSavedViews(next);
       renderSavedViews();
-      window.alert(copy.saved_view_removed);
+      setSavedViewNotice(copy.saved_view_removed);
     }}
 
     async function shareCurrentView() {{
@@ -6743,9 +6767,9 @@ def render_dashboard(
       const href = window.location.href;
       try {{
         await navigator.clipboard.writeText(href);
-        window.alert(copy.saved_view_shared);
+        setSavedViewNotice(copy.saved_view_shared);
       }} catch {{
-        window.prompt("Link", href);
+        window.prompt(copy.saved_view_share_prompt, href);
       }}
     }}
 
