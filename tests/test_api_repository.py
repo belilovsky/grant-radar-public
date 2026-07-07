@@ -108,6 +108,11 @@ def test_root_renders_service_landing(monkeypatch):
     assert "Приоритет: Казахстан и ЦА" in response.text
     assert '<strong id="metric-strong">0</strong>' in response.text
     assert '<strong id="metric-sources">0</strong>' in response.text
+    assert (
+        '<strong id="health-status">Проверяем свежесть данных</strong>' in response.text
+    )
+    assert '<strong id="health-items">0</strong>' in response.text
+    assert '<strong id="health-sources">0</strong>' in response.text
     assert "медиа" in response.text
     assert "-webkit-line-clamp: 2;" in response.text
     assert ".hero-band" in response.text
@@ -498,6 +503,9 @@ def test_root_supports_explicit_english_dashboard(monkeypatch):
     assert "All regions" in response.text
     assert "Rolling" in response.text
     assert "Open catalog" in response.text
+    assert (
+        '<strong id="health-status">Checking data freshness</strong>' in response.text
+    )
     assert "Where to begin" in response.text
     assert "Best signals this week" in response.text
     assert "Support for businesses and teams" in response.text
@@ -2036,6 +2044,8 @@ def test_root_renders_initial_metrics_from_cached_items(monkeypatch):
     assert '<strong id="metric-total">2</strong>' in response.text
     assert '<strong id="metric-strong">1</strong>' in response.text
     assert '<strong id="metric-sources">2</strong>' in response.text
+    assert '<strong id="health-items">2</strong>' in response.text
+    assert '<strong id="health-sources">2</strong>' in response.text
 
 
 def test_opportunity_page_prefers_public_base_url(monkeypatch):

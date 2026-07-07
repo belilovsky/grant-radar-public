@@ -430,6 +430,7 @@ COPY = {
         "saved_view_removed": "Подборка удалена.",
         "saved_view_shared": "Ссылка на текущую подборку скопирована.",
         "saved_view_default_name": "Моя подборка",
+        "saved_view_remove_aria": "Удалить подборку",
         "view_funder": "Профиль фонда",
         "fit_label": "Кому подходит",
         "fit_unknown": "Критерии нужно уточнить",
@@ -1179,6 +1180,7 @@ COPY = {
         "saved_view_removed": "Collection removed.",
         "saved_view_shared": "Copied a link to the current collection.",
         "saved_view_default_name": "My collection",
+        "saved_view_remove_aria": "Remove collection",
         "view_funder": "Funder profile",
         "fit_label": "Who it fits",
         "fit_unknown": "Check eligibility",
@@ -1665,6 +1667,9 @@ def render_dashboard(
     )
     language_switch_label = escape(str(copy["language_switch"]), quote=True)
     loading_sources_label = escape(str(copy["loading_sources"]))
+    initial_health_status = escape(str(copy["status_checking"]))
+    initial_health_items = escape(str(items))
+    initial_health_sources = escape(str(source_count))
     lang_ru_class = "lang-link active" if active_lang == "ru" else "lang-link"
     lang_en_class = "lang-link active" if active_lang == "en" else "lang-link"
     lang_ru_current = ' aria-current="true"' if active_lang == "ru" else ""
@@ -4656,14 +4661,16 @@ def render_dashboard(
       </div>
       <div class="health-grid">
         <div class="health-item avds-stat-kpi-card" data-avds-component="health-card">
-          <span>{escape(str(copy["api_status"]))}</span><strong id="health-status">-</strong>
+          <span>{escape(str(copy["api_status"]))}</span>
+          <strong id="health-status">{initial_health_status}</strong>
         </div>
         <div class="health-item avds-stat-kpi-card" data-avds-component="health-card">
-          <span>{escape(str(copy["stored_items"]))}</span><strong id="health-items">-</strong>
+          <span>{escape(str(copy["stored_items"]))}</span>
+          <strong id="health-items">{initial_health_items}</strong>
         </div>
         <div class="health-item avds-stat-kpi-card" data-avds-component="health-card">
           <span>{escape(str(copy["health_sources"]))}</span>
-          <strong id="health-sources">-</strong>
+          <strong id="health-sources">{initial_health_sources}</strong>
         </div>
       </div>
       <p class="health-note" id="health-note">{escape(str(copy["health_note_loading"]))}</p>
@@ -6685,7 +6692,7 @@ def render_dashboard(
             class="saved-remove"
             type="button"
             data-remove-saved-view="${{escapeHtml(String(view.query || ""))}}"
-            aria-label="Remove"
+            aria-label="${{escapeHtml(copy.saved_view_remove_aria)}}"
           >×</button>
         </span>
       `).join("");
