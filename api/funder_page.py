@@ -416,8 +416,8 @@ def render_funder_page(
     .back-link:hover {{ color: var(--brand); }}
     .hero {{
       display: grid;
-      gap: 16px;
-      padding: 24px;
+      gap: 14px;
+      padding: 20px;
       border: 1px solid var(--line);
       border-radius: calc(var(--radius) + 2px);
       background: linear-gradient(180deg, color-mix(in oklab, var(--brand-soft), white 32%), var(--panel));
@@ -434,26 +434,28 @@ def render_funder_page(
     h1 {{
       margin: 0;
       font-family: var(--av-font-sans, "IBM Plex Sans", sans-serif);
-      font-size: clamp(24px, 3vw, 34px);
-      line-height: 1.1;
+      max-width: 18ch;
+      font-size: clamp(24px, 2.4vw, 30px);
+      line-height: 1.08;
+      text-wrap: balance;
     }}
     .hero p {{
       margin: 0;
-      max-width: 760px;
+      max-width: 60ch;
       color: var(--muted);
-      font-size: 14px;
+      font-size: 15px;
       line-height: 1.55;
     }}
     .stat-grid {{
       display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(148px, 1fr));
+      grid-template-columns: repeat(auto-fit, minmax(136px, 1fr));
       gap: 10px;
     }}
     .stat {{
       border: 1px solid var(--line);
       border-radius: 14px;
       background: color-mix(in oklab, var(--panel), white 10%);
-      padding: 12px;
+      padding: 10px 12px;
     }}
     .stat span {{
       display: block;
@@ -466,8 +468,8 @@ def render_funder_page(
       text-transform: none;
     }}
     .stat strong {{
-      font-size: 24px;
-      line-height: 1;
+      font-size: 22px;
+      line-height: 1.05;
       font-family: var(--av-font-sans, "IBM Plex Sans", sans-serif);
     }}
     .section {{
@@ -519,13 +521,13 @@ def render_funder_page(
       border: 1px solid var(--line);
       border-radius: 16px;
       background: var(--panel);
-      padding: 18px;
+      padding: 16px;
     }}
     .opportunity-head {{
       display: grid;
       grid-template-columns: minmax(0, 1fr) auto;
       gap: 12px;
-      align-items: start;
+      align-items: center;
       margin-bottom: 10px;
     }}
     .opportunity-card h3 {{
@@ -554,7 +556,7 @@ def render_funder_page(
       display: inline-flex;
       align-items: center;
       justify-content: center;
-      min-width: 58px;
+      min-width: 64px;
       min-height: 28px;
       border-radius: 999px;
       background: var(--brand-soft);
@@ -628,7 +630,7 @@ def render_funder_page(
         padding-top: 16px;
       }}
       .hero {{
-        padding: 20px;
+        padding: 18px;
       }}
       .stat-grid {{
         grid-template-columns: repeat(2, minmax(0, 1fr));

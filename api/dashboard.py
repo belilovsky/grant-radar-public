@@ -1769,8 +1769,8 @@ def render_dashboard(
     .hero-band {{
       position: relative;
       overflow: hidden;
-      padding: 22px 24px 18px;
-      margin-bottom: var(--av-spacing-3);
+      padding: 18px 22px 14px;
+      margin-bottom: var(--av-spacing-2);
       border: 1px solid color-mix(in oklab, var(--brand), white 78%);
       border-radius: var(--av-radius-lg);
       background:
@@ -1831,8 +1831,8 @@ def render_dashboard(
     }}
     .topbar {{
       display: grid;
-      gap: var(--av-spacing-3);
-      margin-bottom: var(--av-spacing-4);
+      gap: var(--av-spacing-2);
+      margin-bottom: var(--av-spacing-3);
     }}
     .brand {{
       min-width: 0;
@@ -1855,13 +1855,13 @@ def render_dashboard(
     }}
     .brand h1 {{
       margin: 0;
-      font-size: clamp(28px, 3.4vw, 34px);
+      font-size: clamp(26px, 3vw, 32px);
       line-height: var(--av-leading-tight);
       letter-spacing: 0;
     }}
     .brand p {{
       margin: 0;
-      max-width: 780px;
+      max-width: 720px;
       color: color-mix(in oklab, var(--ink), white 28%);
       font-size: var(--av-text-base);
       line-height: 1.6;
@@ -1890,14 +1890,15 @@ def render_dashboard(
     }}
     .hero-grid {{
       display: grid;
-      grid-template-columns: minmax(0, 1.2fr) minmax(300px, 0.86fr);
-      gap: var(--av-spacing-4);
-      align-items: start;
-      margin-bottom: var(--av-spacing-4);
+      grid-template-columns: minmax(0, 1.1fr) minmax(320px, 0.9fr);
+      gap: var(--av-spacing-3);
+      align-items: stretch;
+      margin-bottom: var(--av-spacing-3);
     }}
     .hero-copy {{
       display: grid;
-      gap: var(--av-spacing-3);
+      gap: var(--av-spacing-2);
+      align-content: start;
       min-width: 0;
     }}
     .hero-intro {{
@@ -1944,10 +1945,14 @@ def render_dashboard(
     }}
     .hero-stage {{
       display: grid;
-      gap: var(--av-spacing-3);
+      gap: var(--av-spacing-2);
       min-width: 0;
-      padding-left: var(--av-spacing-4);
-      border-left: 1px solid color-mix(in oklab, var(--brand), white 72%);
+      align-content: start;
+      padding: 18px;
+      border: 1px solid color-mix(in oklab, var(--brand), white 72%);
+      border-radius: var(--av-radius-md);
+      background: rgb(255 255 255 / 0.58);
+      box-shadow: inset 0 1px 0 rgb(255 255 255 / 0.45);
     }}
     .hero-stage-eyebrow {{
       color: var(--muted);
@@ -1960,14 +1965,14 @@ def render_dashboard(
     .hero-stage-title {{
       margin: 0;
       font-family: var(--font-sans);
-      font-size: var(--av-text-xl);
+      font-size: clamp(20px, 2vw, 24px);
       font-weight: 700;
       line-height: var(--av-leading-tight);
       letter-spacing: 0;
     }}
     .hero-points {{
       display: grid;
-      gap: var(--av-spacing-2);
+      gap: 10px;
     }}
     .hero-point {{
       display: grid;
@@ -2027,8 +2032,8 @@ def render_dashboard(
       backdrop-filter: blur(14px);
     }}
     .hero-band .metric {{
-      min-height: 86px;
-      padding: 16px 18px;
+      min-height: 78px;
+      padding: 14px 16px;
     }}
     .hero-band .metric span {{
       color: color-mix(in oklab, var(--muted), var(--ink) 22%);
@@ -3814,10 +3819,7 @@ def render_dashboard(
         grid-template-columns: 1fr;
       }}
       .hero-stage {{
-        padding-left: 0;
-        padding-top: var(--av-spacing-3);
-        border-left: 0;
-        border-top: 1px solid color-mix(in oklab, var(--brand), white 72%);
+        padding: 16px;
       }}
       .sticky-bar {{
         align-items: flex-start;

@@ -724,8 +724,8 @@ def render_opportunity_page(
     }}
     .hero {{
       display: grid;
-      gap: 18px;
-      padding: 22px;
+      gap: 16px;
+      padding: 20px;
       border: 1px solid color-mix(in oklab, var(--brand), white 78%);
       border-radius: var(--radius);
       background:
@@ -748,20 +748,22 @@ def render_opportunity_page(
     }}
     .hero h1 {{
       margin: 0;
-      font-size: clamp(24px, 3.2vw, 34px);
-      line-height: 1.12;
+      max-width: 17ch;
+      font-size: clamp(22px, 2.5vw, 30px);
+      line-height: 1.08;
+      text-wrap: balance;
     }}
     .summary {{
       margin: 0;
-      max-width: 72ch;
+      max-width: 64ch;
       color: color-mix(in oklab, var(--text), var(--muted) 35%);
-      font-size: var(--av-text-base);
-      line-height: 1.62;
+      font-size: 15px;
+      line-height: 1.58;
     }}
     .hero-grid {{
       display: grid;
-      grid-template-columns: minmax(0, 1.6fr) minmax(280px, 0.9fr);
-      gap: 18px;
+      grid-template-columns: minmax(0, 1.45fr) minmax(260px, 0.82fr);
+      gap: 16px;
       align-items: start;
     }}
     .hero-actions {{
@@ -791,23 +793,28 @@ def render_opportunity_page(
     }}
     .hero-stats {{
       display: grid;
-      gap: 10px;
-      padding: 16px;
+      gap: 8px;
+      padding: 14px;
       border: 1px solid var(--line);
       border-radius: var(--av-radius-md);
       background: color-mix(in oklab, var(--surface), white 20%);
     }}
+    .hero-stats > div {{
+      display: grid;
+      gap: 2px;
+    }}
     .hero-stats strong {{
-      font-size: var(--av-text-xl);
+      font-size: var(--av-text-lg);
+      line-height: 1.15;
     }}
     .meta-strip {{
       display: grid;
       grid-template-columns: repeat(4, minmax(0, 1fr));
-      gap: 12px;
-      margin-bottom: 20px;
+      gap: 10px;
+      margin-bottom: 18px;
     }}
     .metric {{
-      padding: 14px;
+      padding: 12px;
       border: 1px solid var(--line);
       border-radius: var(--av-radius-md);
       background: var(--surface);
@@ -1163,7 +1170,7 @@ def render_opportunity_page(
         padding: 14px;
       }}
       .hero h1 {{
-        font-size: 24px;
+        font-size: 22px;
       }}
       .summary {{
         font-size: var(--av-text-sm);
