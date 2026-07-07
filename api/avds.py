@@ -2,14 +2,7 @@
 
 from __future__ import annotations
 
-AVDS_FONT_HEAD = """
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link
-    rel="stylesheet"
-    href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Serif:wght@400;600;700&family=IBM+Plex+Mono:wght@400;500;600;700&display=swap"
-  >
-"""
+AVDS_FONT_HEAD = ""
 
 AVDS_CSS = """
     :root {
@@ -70,9 +63,9 @@ AVDS_CSS = """
       --av-card-padding-sm: 10px;
       --av-card-padding-md: 12px;
       --av-section-gap: 24px;
-      --av-font-sans: "IBM Plex Sans", "Inter", "Onest", "Helvetica Neue", system-ui, sans-serif;
-      --av-font-serif: "IBM Plex Serif", Georgia, ui-serif, serif;
-      --av-font-mono: "IBM Plex Mono", ui-monospace, SFMono-Regular, Menlo, monospace;
+      --av-font-sans: Arial, "Helvetica Neue", Helvetica, system-ui, sans-serif;
+      --av-font-serif: Georgia, ui-serif, serif;
+      --av-font-mono: "Arial", ui-monospace, SFMono-Regular, Menlo, monospace;
       --font-sans: var(--av-font-sans);
       --font-serif: var(--av-font-serif);
       --font-mono: var(--av-font-mono);

@@ -128,15 +128,44 @@ def _matches_any(text: str, patterns: Iterable[str]) -> bool:
     return any(pattern.lower() in lowered for pattern in patterns)
 
 
-def clean_source_summary(text: str) -> str:
+def _strip_title_prefix(text: str, title: str) -> str:
+    title_tokens = " ".join(str(title or "").split()).strip(" -:;,.")
+    if not title_tokens:
+        return text
+    candidates = [title_tokens]
+    if ":" in title_tokens:
+        leading_clause = title_tokens.split(":", 1)[0].strip(" -:;,.")
+        if len(leading_clause) >= 12:
+            candidates.append(leading_clause)
+    patterns = []
+    for candidate in sorted(set(candidates), key=len, reverse=True):
+        prefix = r"\s+".join(re.escape(token) for token in candidate.split())
+        patterns.append(re.compile(rf"^\s*{prefix}\s*[:\-–—.]?\s*", re.IGNORECASE))
+    cleaned = text
+    for _ in range(3):
+        match = next(
+            (pattern.match(cleaned) for pattern in patterns if pattern.match(cleaned)),
+            None,
+        )
+        if match is None:
+            break
+        remainder = cleaned[match.end() :].lstrip(" -:;,.")
+        if len(remainder) < 20:
+            break
+        cleaned = remainder
+    return cleaned
+
+
+def clean_source_summary(text: str, *, title: str = "") -> str:
     """Remove source UI fragments that should not leak into public summaries."""
 
     normalized = re.sub(r"\s+", " ", str(text or "")).strip()
     if not normalized:
         return ""
-    return re.split(r"\b(?:Читать далее|Read more)\b", normalized, maxsplit=1)[0].strip(
-        " -:;,"
-    )
+    cleaned = re.split(r"\b(?:Читать далее|Read more)\b", normalized, maxsplit=1)[
+        0
+    ].strip(" -:;,")
+    return _strip_title_prefix(cleaned, title).strip(" -:;,")
 
 
 def extract_rule_based_entities(

@@ -8,7 +8,7 @@ from html import escape
 DEFAULT_GA4_ID = "G-9EF720PSER"
 DEFAULT_YANDEX_METRICA_ID = "109803011"
 DEFAULT_CLARITY_PROJECT_ID = "x5ualin2jv"
-OG_FONT_FAMILY = "'IBM Plex Sans', 'Inter', sans-serif"
+OG_FONT_FAMILY = "Arial, Helvetica, sans-serif"
 OG_IMAGE_SVG = "\n".join(
     [
         '<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="630"',

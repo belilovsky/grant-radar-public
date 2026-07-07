@@ -12,6 +12,7 @@ from api.avds import AVDS_CSS, AVDS_FONT_HEAD
 from api.dashboard import dashboard_copy
 from api.public_meta import analytics_head_html, og_image_url
 from core.models import Opportunity
+from core.nlp import clean_source_summary
 from core.opportunity_intelligence import public_lifecycle
 
 _ACRONYM_MAP = {
@@ -145,11 +146,8 @@ def _source_meta_label(source: dict[str, Any], copy: dict[str, object]) -> str:
     return str(copy.get("detail_open_source") or "Official source")
 
 
-def _clean_summary_text(text: str) -> str:
-    raw = " ".join(str(text or "").split()).strip()
-    if not raw:
-        return ""
-    return raw.split("Читать далее", 1)[0].split("Read more", 1)[0].rstrip(" -:;,")
+def _clean_summary_text(text: str, *, title: str = "") -> str:
+    return clean_source_summary(text, title=title)
 
 
 def _stat(value: object) -> str:
@@ -250,24 +248,29 @@ def _opportunity_card(
         f'<span class="meta-chip">{escape(_label_value(str(tag), copy))}</span>'
         for tag in list(item.tags)[:3]
     )
+    href = escape(_opportunity_path(root_path, str(item.id), lang), quote=True)
+    summary_text = escape(
+        _clean_summary_text(item.summary, title=item.title) or str(copy["no_summary"])
+    )
+    score_text = escape(f"{float(item.score or 0):.2f}")
     return f"""
     <article class="opportunity-card">
       <div class="opportunity-head">
         <div>
-          <h3><a href="{escape(_opportunity_path(root_path, str(item.id), lang), quote=True)}">{escape(item.title)}</a></h3>
+          <h3><a href="{href}">{escape(item.title)}</a></h3>
           <div class="meta-row">
             <span class="meta-chip strong">{escape(_label_value(item.type, copy))}</span>
             <span class="meta-chip lifecycle">{escape(_lifecycle_label(lifecycle, copy))}</span>
             {tag_markup}
           </div>
         </div>
-        <span class="score">{escape(f"{float(item.score or 0):.2f}")}</span>
+        <span class="score">{score_text}</span>
       </div>
-      <p>{escape(_clean_summary_text(item.summary) or str(copy["no_summary"]))}</p>
+      <p>{summary_text}</p>
       <div class="card-actions">
         <a
           class="button soft"
-          href="{escape(_opportunity_path(root_path, str(item.id), lang), quote=True)}"
+          href="{href}"
         >{escape(str(copy["funder_open_card"]))}</a>
         <a
           class="button"
@@ -393,7 +396,7 @@ def render_funder_page(
     * {{ box-sizing: border-box; }}
     body {{
       margin: 0;
-      font-family: var(--av-font-sans, "IBM Plex Sans", sans-serif);
+      font-family: var(--av-font-sans, Arial, sans-serif);
       background: var(--bg);
       color: var(--ink);
     }}
@@ -425,7 +428,7 @@ def render_funder_page(
     }}
     .eyebrow {{
       color: var(--muted);
-      font-family: var(--av-font-sans, "IBM Plex Sans", sans-serif);
+      font-family: var(--av-font-sans, Arial, sans-serif);
       font-size: 12px;
       font-weight: 700;
       text-transform: none;
@@ -433,7 +436,7 @@ def render_funder_page(
     }}
     h1 {{
       margin: 0;
-      font-family: var(--av-font-sans, "IBM Plex Sans", sans-serif);
+      font-family: var(--av-font-sans, Arial, sans-serif);
       max-width: 18ch;
       font-size: clamp(24px, 2.4vw, 30px);
       line-height: 1.08;
@@ -461,7 +464,7 @@ def render_funder_page(
       display: block;
       margin-bottom: 8px;
       color: var(--muted);
-      font-family: var(--av-font-sans, "IBM Plex Sans", sans-serif);
+      font-family: var(--av-font-sans, Arial, sans-serif);
       font-size: 12px;
       font-weight: 700;
       letter-spacing: 0;
@@ -470,14 +473,14 @@ def render_funder_page(
     .stat strong {{
       font-size: 22px;
       line-height: 1.05;
-      font-family: var(--av-font-sans, "IBM Plex Sans", sans-serif);
+      font-family: var(--av-font-sans, Arial, sans-serif);
     }}
     .section {{
       padding-top: 28px;
     }}
     .section h2 {{
       margin: 0 0 8px;
-      font-family: var(--av-font-sans, "IBM Plex Sans", sans-serif);
+      font-family: var(--av-font-sans, Arial, sans-serif);
       font-size: 22px;
       line-height: 1.2;
     }}
@@ -562,7 +565,7 @@ def render_funder_page(
       border-radius: 999px;
       background: var(--brand-soft);
       color: var(--brand);
-      font-family: var(--av-font-mono, "IBM Plex Mono", monospace);
+      font-family: var(--av-font-mono, Arial, monospace);
       font-size: 12px;
       font-weight: 700;
     }}

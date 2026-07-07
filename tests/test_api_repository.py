@@ -37,13 +37,8 @@ def test_root_renders_service_landing(monkeypatch):
         "<title>QAZ.FUND — гранты и меры поддержки для Казахстана</title>"
         in response.text
     )
-    assert 'rel="preconnect" href="https://fonts.googleapis.com"' in response.text
-    assert (
-        'rel="preconnect" href="https://fonts.gstatic.com" crossorigin' in response.text
-    )
-    assert "fonts.googleapis.com/css2?family=IBM+Plex+Sans" in response.text
-    assert "family=IBM+Plex+Serif" in response.text
-    assert "family=IBM+Plex+Mono" in response.text
+    assert "fonts.googleapis.com" not in response.text
+    assert '--av-font-sans: Arial, "Helvetica Neue", Helvetica' in response.text
     assert 'data-avds="grant-radar"' in response.text
     assert 'data-av-theme="light"' in response.text
     assert "--av-color-background" in response.text
@@ -469,6 +464,14 @@ def test_seo_excerpt_trims_read_more_and_length():
     assert (
         opportunity_page_module._clean_summary_text("Текст. Читать далее хвост")
         == "Текст."
+    )
+    assert (
+        opportunity_page_module._clean_summary_text(
+            "Закупочная возможность в Казахстане: Закупочная возможность в "
+            "Казахстане: консультационные услуги. Проверьте техническое задание.",
+            title="Закупочная возможность в Казахстане: консультационные услуги",
+        )
+        == "Проверьте техническое задание."
     )
 
 

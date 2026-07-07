@@ -13,6 +13,7 @@ from api.avds import AVDS_CSS, AVDS_FONT_HEAD
 from api.dashboard import dashboard_copy
 from api.public_meta import analytics_head_html, og_image_url
 from core.models import Opportunity, OpportunityDetail, OpportunityMetadataField
+from core.nlp import clean_source_summary
 
 PUBLIC_METADATA_KEYS = frozenset(
     {
@@ -136,13 +137,8 @@ def _summary_title_fallback(summary: str) -> str:
     return candidate[:117].rstrip() + "..."
 
 
-def _clean_summary_text(text: str) -> str:
-    normalized = re.sub(r"\s+", " ", str(text or "")).strip()
-    if not normalized:
-        return ""
-    return re.split(r"\b(?:Читать далее|Read more)\b", normalized, maxsplit=1)[0].strip(
-        " -:;,"
-    )
+def _clean_summary_text(text: str, *, title: str = "") -> str:
+    return clean_source_summary(text, title=title)
 
 
 def _seo_excerpt(text: str, *, max_length: int = 280) -> str:
@@ -478,7 +474,8 @@ def _related_markup(
                 "summary",
                 lang,
                 item.summary or str(copy["no_summary"]),
-            )
+            ),
+            title=title,
         ) or str(copy["no_summary"])
         if _needs_russian_title_fallback(title, summary, lang):
             title = _summary_title_fallback(summary)
@@ -540,7 +537,9 @@ def render_opportunity_page(
     copy = dashboard_copy(lang)
     active_lang = str(copy["lang"])
     title = detail.title or str(copy["detail_title_fallback"])
-    summary = _clean_summary_text(detail.summary) or str(copy["detail_empty"])
+    summary = _clean_summary_text(detail.summary, title=title) or str(
+        copy["detail_empty"]
+    )
     seo_summary = _seo_excerpt(summary) or summary
     page_title = f"{title} - QAZ.FUND"
     canonical_path = _page_path(root_path, str(detail.id), active_lang)
