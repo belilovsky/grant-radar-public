@@ -1761,6 +1761,7 @@ def test_opportunity_page_renders_public_permalink(monkeypatch):
     assert 'href="https://example.org/project/P179204-page"' in response.text
     assert 'href="https://example.org/apply/P179204-page"' in response.text
     assert 'href="/?lang=ru#opportunities"' in response.text
+    assert 'aria-label="Навигационная цепочка"' in response.text
     assert "Все возможности" in response.text
     assert (
         'class="button primary" href="https://example.org/project/P179204-page"'
@@ -1847,6 +1848,7 @@ def test_opportunity_page_tailors_prepare_checklist_for_subsidies(monkeypatch):
     response = client.get(f"/opportunity/{item.id}", params={"lang": "en"})
 
     assert response.status_code == 200
+    assert 'aria-label="Breadcrumbs"' in response.text
     assert "What to prepare" in response.text
     assert "Prepare local documents" in response.text
     assert "Check company status, digital signature, tax status" in response.text
@@ -2076,6 +2078,7 @@ def test_opportunity_page_prefers_public_base_url(monkeypatch):
     response = client.get(f"/opportunity/{item.id}", params={"lang": "en"})
 
     assert response.status_code == 200
+    assert 'aria-label="Breadcrumbs"' in response.text
     assert (
         'rel="canonical" href="https://qaz.fund/opportunity/'
         f'{item.id}?lang=en"' in response.text

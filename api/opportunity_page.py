@@ -1182,7 +1182,7 @@ def render_opportunity_page(
 <body>
   <main class="shell">
     <div class="topbar">
-      <nav class="breadcrumbs" aria-label="Breadcrumb">
+      <nav class="breadcrumbs" aria-label="{escape(str(copy["breadcrumbs_aria"]), quote=True)}">
         <a href="{catalog_href}">QAZ.FUND</a>
         <span>/</span>
         <a href="{catalog_href}">{escape(str(copy["opportunities_title"]))}</a>
