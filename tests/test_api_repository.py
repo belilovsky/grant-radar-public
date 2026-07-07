@@ -419,8 +419,11 @@ def test_docs_exposes_swagger_with_return_link(monkeypatch):
     client = TestClient(api_main.app)
 
     response = client.get("/docs")
+    head_response = client.head("/docs")
 
     assert response.status_code == 200
+    assert head_response.status_code == 200
+    assert head_response.headers["content-type"].startswith("text/html")
     assert "QAZ.FUND API" in response.text
     assert "SwaggerUIBundle" in response.text
     assert 'href="/?lang=ru"' in response.text

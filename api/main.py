@@ -979,7 +979,7 @@ async def root(request: Request) -> HTMLResponse:
     )
 
 
-@app.get("/docs", include_in_schema=False)
+@app.api_route("/docs", methods=["GET", "HEAD"], include_in_schema=False)
 async def swagger_docs(request: Request) -> HTMLResponse:
     root_path = _root_path(request).rstrip("/")
     docs_lang = _public_lang(str(request.query_params.get("lang") or "").strip())

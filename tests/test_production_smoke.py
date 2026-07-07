@@ -113,6 +113,7 @@ def _transport(
                     "<html><head><title>QAZ.FUND API</title></head>"
                     "<body>QAZ.FUND API /openapi.json</body></html>"
                 ),
+                headers={"content-type": "text/html; charset=utf-8"},
             )
         if endpoint_path == "/site-discovery.json" or path == "/site-discovery.json":
             return httpx.Response(

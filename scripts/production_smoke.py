@@ -71,6 +71,12 @@ def _get_text(client: httpx.Client, base_url: str, path: str) -> str:
     return response.text
 
 
+def _head(client: httpx.Client, base_url: str, path: str) -> httpx.Response:
+    response = client.head(_url(base_url, path))
+    response.raise_for_status()
+    return response
+
+
 def _require(condition: bool, message: str) -> None:
     if not condition:
         raise SmokeError(message)
@@ -119,6 +125,7 @@ def run_smoke(
         sitemap = _get_text(client, base_url, "/sitemap.xml")
         llms = _get_text(client, base_url, "/llms.txt")
         docs = _get_text(client, base_url, "/docs")
+        docs_head = _head(client, base_url, "/docs")
         discovery = _get_json(client, base_url, "/site-discovery.json")
 
     _require(health.get("status") == "ok", "health status is not ok")
@@ -166,6 +173,7 @@ def run_smoke(
         ),
         "docs_brand": "QAZ.FUND API" in docs,
         "docs_openapi": "/openapi.json" in docs,
+        "docs_head": docs_head.headers.get("content-type", "").startswith("text/html"),
         "site_discovery_openapi": str(discovery.get("openapi") or "")
         == _url(base_url, "/openapi.json"),
         "site_discovery_llms": str(discovery.get("llms") or "")
