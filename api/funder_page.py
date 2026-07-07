@@ -525,9 +525,9 @@ def render_funder_page(
     }}
     .opportunity-head {{
       display: grid;
-      grid-template-columns: minmax(0, 1fr) auto;
-      gap: 12px;
-      align-items: center;
+      grid-template-columns: 1fr;
+      gap: 8px;
+      align-items: start;
       margin-bottom: 10px;
     }}
     .opportunity-card h3 {{
@@ -558,6 +558,7 @@ def render_funder_page(
       justify-content: center;
       min-width: 64px;
       min-height: 28px;
+      justify-self: start;
       border-radius: 999px;
       background: var(--brand-soft);
       color: var(--brand);

@@ -748,7 +748,7 @@ def render_opportunity_page(
     }}
     .hero h1 {{
       margin: 0;
-      max-width: 17ch;
+      max-width: 22ch;
       font-size: clamp(22px, 2.5vw, 30px);
       line-height: 1.08;
       text-wrap: balance;
