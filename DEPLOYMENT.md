@@ -91,4 +91,7 @@ infrastructure details into the public repository.
 
 `scripts/deploy_qaz_fund.sh` is conservative by default: it syncs the tree
 without `--delete`. If you intentionally want rsync to remove files on the
-target, opt in explicitly with `RSYNC_DELETE=1`.
+target, opt in explicitly with `RSYNC_DELETE=1`. The script also waits for the
+API container to answer `GET /ready` before it prints a successful deploy
+result; tune this with `READY_URL`, `READY_ATTEMPTS`, and `READY_DELAY` if the
+runtime shape changes.

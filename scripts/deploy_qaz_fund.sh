@@ -7,6 +7,9 @@ DEPLOY_PATH="${DEPLOY_PATH:-/opt/grant-radar}"
 COMPOSE_FILES="${COMPOSE_FILES:--f docker-compose.yml -f docker-compose.prod.yml}"
 ENV_FILE="${ENV_FILE:-.env.prod}"
 RSYNC_DELETE="${RSYNC_DELETE:-0}"
+READY_URL="${READY_URL:-http://127.0.0.1:8000/ready}"
+READY_ATTEMPTS="${READY_ATTEMPTS:-30}"
+READY_DELAY="${READY_DELAY:-2}"
 
 cd "$ROOT_DIR"
 
@@ -43,6 +46,20 @@ ssh "$DEPLOY_HOST" "
   set -euo pipefail
   cd '$DEPLOY_PATH'
   docker compose --env-file '$ENV_FILE' $COMPOSE_FILES up -d --build
+  ready_ok=0
+  for attempt in \$(seq 1 '$READY_ATTEMPTS'); do
+    if docker compose --env-file '$ENV_FILE' $COMPOSE_FILES exec -T api \
+      curl -fsS '$READY_URL' >/dev/null; then
+      ready_ok=1
+      break
+    fi
+    sleep '$READY_DELAY'
+  done
+  if [[ \"\$ready_ok\" != \"1\" ]]; then
+    echo 'API readiness check failed after deploy.' >&2
+    docker compose --env-file '$ENV_FILE' $COMPOSE_FILES logs --tail=80 api >&2 || true
+    exit 1
+  fi
   printf '%s\n' '$REVISION' > .deployed-revision
   printf '%s\n' '$DEPLOYED_AT' > .deployed-at
   docker compose --env-file '$ENV_FILE' $COMPOSE_FILES ps
