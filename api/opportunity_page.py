@@ -703,7 +703,7 @@ def render_opportunity_page(
     .shell {{
       width: var(--container-max);
       margin: 0 auto;
-      padding: 24px 0 48px;
+      padding: 20px 0 40px;
     }}
     .topbar {{
       display: flex;
@@ -711,7 +711,7 @@ def render_opportunity_page(
       align-items: center;
       justify-content: space-between;
       gap: 12px;
-      margin-bottom: 20px;
+      margin-bottom: 16px;
     }}
     .breadcrumbs {{
       display: flex;
@@ -727,7 +727,7 @@ def render_opportunity_page(
     .hero {{
       display: grid;
       gap: 14px;
-      padding: 16px;
+      padding: 14px;
       border: 1px solid color-mix(in oklab, var(--brand), white 78%);
       border-radius: var(--radius);
       background:
@@ -751,7 +751,7 @@ def render_opportunity_page(
     .hero h1 {{
       margin: 0;
       max-width: 24ch;
-      font-size: clamp(20px, 2.2vw, 28px);
+      font-size: clamp(18px, 1.95vw, 24px);
       line-height: 1.08;
       text-wrap: balance;
     }}
@@ -759,13 +759,13 @@ def render_opportunity_page(
       margin: 0;
       max-width: 64ch;
       color: color-mix(in oklab, var(--text), var(--muted) 35%);
-      font-size: 14px;
-      line-height: 1.5;
+      font-size: 13px;
+      line-height: 1.45;
     }}
     .hero-grid {{
       display: grid;
       grid-template-columns: minmax(0, 1.55fr) minmax(220px, 0.75fr);
-      gap: 14px;
+      gap: 12px;
       align-items: start;
     }}
     .hero-actions {{
@@ -858,7 +858,7 @@ def render_opportunity_page(
     }}
     .section-card,
     .sidebar-card {{
-      padding: 14px;
+      padding: 12px;
       border: 1px solid var(--line);
       border-radius: var(--av-radius-md);
       background: var(--surface);
@@ -867,7 +867,7 @@ def render_opportunity_page(
     .section-card h2,
     .sidebar-card h2 {{
       margin: 0 0 8px;
-      font-size: var(--av-text-lg);
+      font-size: 17px;
       line-height: 1.2;
     }}
     .richtext {{
@@ -907,7 +907,7 @@ def render_opportunity_page(
       font-size: var(--av-text-sm);
     }}
     .empty-state {{
-      padding: 18px;
+      padding: 14px;
       border: 1px dashed var(--line-strong);
       border-radius: var(--av-radius-md);
       background: var(--surface-subtle);
@@ -917,7 +917,7 @@ def render_opportunity_page(
       display: grid;
       gap: 12px;
       margin-bottom: 16px;
-      padding: 14px;
+      padding: 12px;
       border: 1px solid color-mix(in oklab, var(--brand), white 78%);
       border-radius: var(--av-radius-md);
       background: color-mix(in oklab, var(--surface-subtle), var(--brand-soft) 14%);
@@ -930,7 +930,7 @@ def render_opportunity_page(
     .prepare-head h2 {{
       margin: 0;
       font-family: var(--font-sans);
-      font-size: clamp(18px, 2.4vw, 24px);
+      font-size: clamp(17px, 2vw, 21px);
       font-weight: 700;
       line-height: 1.16;
     }}
@@ -949,7 +949,7 @@ def render_opportunity_page(
       display: grid;
       gap: 8px;
       min-height: 0;
-      padding: 12px;
+      padding: 10px;
       border: 1px solid var(--line);
       border-radius: var(--av-radius-md);
       background: color-mix(in oklab, var(--surface), white 12%);
@@ -983,7 +983,7 @@ def render_opportunity_page(
       display: grid;
       gap: 12px;
       margin-bottom: 16px;
-      padding: 14px;
+      padding: 12px;
       border: 1px solid var(--line);
       border-radius: var(--av-radius-md);
       background: var(--surface);
@@ -997,7 +997,7 @@ def render_opportunity_page(
     .apply-head h2 {{
       margin: 0;
       font-family: var(--font-sans);
-      font-size: clamp(18px, 2.4vw, 24px);
+      font-size: clamp(17px, 2vw, 21px);
       font-weight: 700;
       line-height: 1.16;
     }}
@@ -1052,8 +1052,8 @@ def render_opportunity_page(
     .related-section {{
       display: grid;
       gap: 12px;
-      margin-top: 18px;
-      padding-top: 16px;
+      margin-top: 14px;
+      padding-top: 12px;
       border-top: 1px solid var(--line);
     }}
     .related-head {{
@@ -1064,7 +1064,7 @@ def render_opportunity_page(
     .related-head h2 {{
       margin: 0;
       font-family: var(--font-sans);
-      font-size: clamp(18px, 2.4vw, 24px);
+      font-size: clamp(17px, 2vw, 21px);
       font-weight: 700;
       line-height: 1.16;
     }}
@@ -1083,7 +1083,7 @@ def render_opportunity_page(
       display: grid;
       gap: 10px;
       min-height: 0;
-      padding: 14px;
+      padding: 10px;
       border: 1px solid var(--line);
       border-radius: var(--av-radius-md);
       background: linear-gradient(
@@ -1154,7 +1154,7 @@ def render_opportunity_page(
     @media (max-width: 640px) {{
       .shell {{
         width: min(100%, calc(100% - 24px));
-        padding: 16px 0 36px;
+        padding: 14px 0 32px;
       }}
       .hero,
       .prepare-section,
@@ -1165,15 +1165,15 @@ def render_opportunity_page(
         padding: 12px;
       }}
       .hero h1 {{
-        font-size: 20px;
+        font-size: 18px;
       }}
       .summary {{
-        font-size: var(--av-text-sm);
+        font-size: 13px;
       }}
       .prepare-head h2,
       .apply-head h2,
       .related-head h2 {{
-        font-size: 19px;
+        font-size: 18px;
       }}
     }}
   </style>

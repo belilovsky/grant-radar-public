@@ -1855,7 +1855,7 @@ def render_dashboard(
     }}
     .brand h1 {{
       margin: 0;
-      font-size: clamp(22px, 2.5vw, 28px);
+      font-size: clamp(20px, 2.2vw, 26px);
       line-height: var(--av-leading-tight);
       letter-spacing: 0;
     }}
@@ -1905,8 +1905,8 @@ def render_dashboard(
       margin: 0;
       max-width: 60ch;
       color: color-mix(in oklab, var(--ink), white 20%);
-      font-size: var(--av-text-sm);
-      line-height: 1.45;
+      font-size: 13px;
+      line-height: 1.4;
     }}
     .hero-actions {{
       display: flex;
@@ -1965,7 +1965,7 @@ def render_dashboard(
     .hero-stage-title {{
       margin: 0;
       font-family: var(--font-sans);
-      font-size: clamp(17px, 1.5vw, 20px);
+      font-size: clamp(16px, 1.35vw, 18px);
       font-weight: 700;
       line-height: var(--av-leading-tight);
       letter-spacing: 0;
@@ -2056,7 +2056,7 @@ def render_dashboard(
     .spotlight-copy h2 {{
       margin: 0;
       font-family: var(--font-sans);
-      font-size: clamp(18px, 2vw, 22px);
+      font-size: clamp(17px, 1.75vw, 20px);
       font-weight: 700;
       line-height: var(--av-leading-tight);
       letter-spacing: 0;
@@ -2076,7 +2076,7 @@ def render_dashboard(
       display: grid;
       gap: var(--av-spacing-2);
       min-height: 0;
-      padding: 14px;
+      padding: 12px;
       border: 1px solid var(--line-subtle);
       border-radius: var(--av-radius-md);
       background: linear-gradient(
@@ -2144,7 +2144,7 @@ def render_dashboard(
     }}
     .spotlight-card h3 {{
       margin: 0;
-      font-size: var(--av-text-lg);
+      font-size: 17px;
       line-height: 1.18;
       letter-spacing: 0;
     }}
@@ -2224,7 +2224,7 @@ def render_dashboard(
       display: grid;
       gap: var(--av-spacing-1);
       min-height: 0;
-      padding: 14px;
+      padding: 12px;
       border: 1px solid var(--line-subtle);
       border-radius: var(--av-radius-md);
       background: linear-gradient(
@@ -2242,7 +2242,7 @@ def render_dashboard(
     }}
     .funder-card h3 {{
       margin: 0;
-      font-size: var(--av-text-lg);
+      font-size: 17px;
       line-height: 1.2;
       letter-spacing: 0;
     }}
@@ -2295,7 +2295,7 @@ def render_dashboard(
       display: grid;
       gap: var(--av-spacing-2);
       min-height: 0;
-      padding: 14px;
+      padding: 12px;
       border: 1px solid var(--line-subtle);
       border-radius: var(--av-radius-md);
       background: linear-gradient(
@@ -2371,7 +2371,7 @@ def render_dashboard(
     }}
     .theme-card h3 {{
       margin: 0;
-      font-size: var(--av-text-lg);
+      font-size: 17px;
       line-height: 1.24;
       letter-spacing: 0;
     }}
@@ -2433,7 +2433,7 @@ def render_dashboard(
     }}
     .topic-brief h3 {{
       margin: 0;
-      font-size: clamp(18px, 2vw, 22px);
+      font-size: clamp(17px, 1.7vw, 19px);
       line-height: 1.15;
       letter-spacing: 0;
     }}
@@ -2501,7 +2501,7 @@ def render_dashboard(
       display: grid;
       gap: var(--av-spacing-2);
       min-height: 0;
-      padding: 14px;
+      padding: 12px;
       border: 1px solid var(--line-subtle);
       border-radius: var(--av-radius-md);
       background: linear-gradient(
@@ -2574,7 +2574,7 @@ def render_dashboard(
     }}
     .pathway-card h3 {{
       margin: 0;
-      font-size: var(--av-text-lg);
+      font-size: 17px;
       line-height: 1.22;
       letter-spacing: 0;
     }}
@@ -2799,15 +2799,15 @@ def render_dashboard(
     }}
     .metric strong {{
       font-family: var(--font-sans);
-      font-size: 22px;
+      font-size: 20px;
       font-weight: 700;
       line-height: 1;
       letter-spacing: 0;
       font-feature-settings: "tnum" 1, "lnum" 1;
     }}
     .panel {{
-      padding: calc(var(--section-gap) * 0.72) 0 0;
-      margin-top: calc(var(--section-gap) * 0.72);
+      padding: calc(var(--section-gap) * 0.58) 0 0;
+      margin-top: calc(var(--section-gap) * 0.58);
       border-top: 1px solid var(--line);
       scroll-margin-top: 156px;
     }}
@@ -2827,7 +2827,7 @@ def render_dashboard(
     .panel-head h2 {{
       margin: 0;
       font-family: var(--font-sans);
-      font-size: var(--av-text-lg);
+      font-size: 18px;
       font-weight: 700;
       line-height: var(--av-leading-tight);
     }}
@@ -4026,15 +4026,15 @@ def render_dashboard(
       }}
       .spotlight-card {{
         min-height: 0;
-        padding: 16px;
+        padding: 12px;
       }}
       .theme-card {{
         min-height: 0;
-        padding: 16px;
+        padding: 12px;
       }}
       .pathway-card {{
         min-height: 0;
-        padding: 16px;
+        padding: 12px;
       }}
       .metric.sources {{
         grid-column: auto;
@@ -4071,7 +4071,7 @@ def render_dashboard(
         line-height: 1.45;
       }}
       .spotlight-copy h2 {{
-        font-size: 24px;
+        font-size: 20px;
       }}
       .pathway-card h3 {{
         font-size: var(--av-text-lg);

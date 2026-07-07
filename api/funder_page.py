@@ -404,7 +404,7 @@ def render_funder_page(
     .shell {{
       width: min(1120px, calc(100% - 32px));
       margin: 0 auto;
-      padding: 24px 0 56px;
+      padding: 20px 0 40px;
     }}
     .back-link {{
       display: inline-flex;
@@ -414,13 +414,13 @@ def render_funder_page(
       text-decoration: none;
       font-size: 14px;
       font-weight: 600;
-      margin-bottom: 16px;
+      margin-bottom: 14px;
     }}
     .back-link:hover {{ color: var(--brand); }}
     .hero {{
       display: grid;
       gap: 10px;
-      padding: 16px;
+      padding: 14px;
       border: 1px solid var(--line);
       border-radius: calc(var(--radius) + 2px);
       background: linear-gradient(180deg, color-mix(in oklab, var(--brand-soft), white 32%), var(--panel));
@@ -438,7 +438,7 @@ def render_funder_page(
       margin: 0;
       font-family: var(--av-font-sans, Arial, sans-serif);
       max-width: 20ch;
-      font-size: clamp(22px, 2.1vw, 28px);
+      font-size: clamp(19px, 1.95vw, 24px);
       line-height: 1.08;
       text-wrap: balance;
     }}
@@ -446,8 +446,8 @@ def render_funder_page(
       margin: 0;
       max-width: 60ch;
       color: var(--muted);
-      font-size: 14px;
-      line-height: 1.45;
+      font-size: 13px;
+      line-height: 1.42;
     }}
     .stat-grid {{
       display: grid;
@@ -471,17 +471,17 @@ def render_funder_page(
       text-transform: none;
     }}
     .stat strong {{
-      font-size: 18px;
+      font-size: 16px;
       line-height: 1.05;
       font-family: var(--av-font-sans, Arial, sans-serif);
     }}
     .section {{
-      padding-top: 18px;
+      padding-top: 14px;
     }}
     .section h2 {{
       margin: 0 0 8px;
       font-family: var(--av-font-sans, Arial, sans-serif);
-      font-size: 18px;
+      font-size: 17px;
       line-height: 1.2;
     }}
     .section p.section-note {{
@@ -524,7 +524,7 @@ def render_funder_page(
       border: 1px solid var(--line);
       border-radius: 16px;
       background: var(--panel);
-      padding: 12px;
+      padding: 10px;
     }}
     .opportunity-head {{
       display: grid;
@@ -634,7 +634,7 @@ def render_funder_page(
         padding-top: 16px;
       }}
       .hero {{
-        padding: 14px;
+        padding: 12px;
       }}
       .stat-grid {{
         grid-template-columns: repeat(2, minmax(0, 1fr));
