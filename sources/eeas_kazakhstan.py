@@ -26,6 +26,15 @@ LISTING_URL = (
     "https://www.eeas.europa.eu/eeas/grants_en?f%5B0%5D=grant_site%3AKazakhstan&s=222"
 )
 DETAIL_PREFIX = "https://www.eeas.europa.eu"
+FALLBACK_DETAIL_URLS = (
+    "https://www.eeas.europa.eu/delegations/kazakhstan/"
+    "call-proposals-%E2%80%9Csupport-civil-society-kazakhstan%E2%80%9D-2_en?s=222",
+    "https://www.eeas.europa.eu/delegations/kazakhstan/"
+    "call-proposals-facilitating-region-specific-approaches-addressing-climate-"
+    "and-environment-related_en?s=222",
+    "https://www.eeas.europa.eu/delegations/kazakhstan/"
+    "call-proposals-under-peace-stability-and-conflict-prevention-thematic-programme_en?s=222",
+)
 
 LINK_RE = re.compile(
     r"<a\b[^>]*href\s*=\s*(?:"
@@ -202,6 +211,13 @@ def _extract_listing_entries(html: str) -> list[ListingEntry]:
     return entries
 
 
+def _fallback_entries() -> list[ListingEntry]:
+    return [
+        ListingEntry(url=url, title="EEAS Kazakhstan call", deadline=None)
+        for url in FALLBACK_DETAIL_URLS
+    ]
+
+
 def _title_from_detail(html: str) -> str | None:
     title = _meta_content(html, "og:title", "twitter:title")
     if title:
@@ -257,7 +273,12 @@ class EeasKazakhstanSource(BaseSource):
             return
 
         count = 0
-        for entry in _extract_listing_entries(response.text)[:20]:
+        entries = _extract_listing_entries(response.text)[:20]
+        if not entries:
+            log.info("eeas_kazakhstan.listing_fallback_used", url=LISTING_URL)
+            entries = _fallback_entries()
+
+        for entry in entries:
             detail_html = ""
             try:
                 detail_response = await self.client.get(entry.url)

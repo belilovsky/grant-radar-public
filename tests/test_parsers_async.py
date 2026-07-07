@@ -130,6 +130,14 @@ EEAS_LISTING_HTML = f"""
 </body></html>
 """
 
+EEAS_EMPTY_LISTING_HTML = """
+<html><body>
+<div class="card">
+  <h3 class="h2 card-title">No current calls are listed.</h3>
+</div>
+</body></html>
+"""
+
 EEAS_LISTING_WITH_CONTRACTS_HTML = f"""
 <html><body>
 <div class="card">
@@ -1120,6 +1128,35 @@ async def test_eeas_kazakhstan_fetch_yields_grant_page():
         "(EuropeAid/186114/DD/ACT/KZ)"
     )
     assert item.raw["reference"] == "EuropeAid/186114/DD/ACT/KZ"
+
+
+@pytest.mark.asyncio
+@respx.mock
+async def test_eeas_kazakhstan_uses_curated_fallback_when_listing_is_empty(
+    monkeypatch: pytest.MonkeyPatch,
+):
+    fallback_url = (
+        "https://www.eeas.europa.eu/delegations/kazakhstan/fallback-call_en?s=222"
+    )
+    monkeypatch.setattr(
+        "sources.eeas_kazakhstan.FALLBACK_DETAIL_URLS",
+        (fallback_url,),
+    )
+    respx.get(EEAS_LISTING_URL).mock(
+        return_value=httpx.Response(200, text=EEAS_EMPTY_LISTING_HTML)
+    )
+    respx.get(fallback_url).mock(
+        return_value=httpx.Response(200, text=EEAS_DETAIL_HTML)
+    )
+
+    items = await _collect(EeasKazakhstanSource())
+
+    assert len(items) == 1
+    item = items[0]
+    assert str(item.source_url) == fallback_url
+    assert item.deadline.isoformat() == "2026-05-12"
+    assert item.raw["listing_url"] == EEAS_LISTING_URL
+    assert item.title.endswith("(EuropeAid/186114/DD/ACT/KZ)")
 
 
 @pytest.mark.asyncio
