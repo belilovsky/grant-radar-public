@@ -1043,6 +1043,9 @@ def test_coverage_reports_source_counts(monkeypatch):
     assert sources["world_bank_kazakhstan"]["relevant_open_items"] == 1
     assert sources["eeas_kazakhstan"]["items"] == 1
     assert sources["eeas_kazakhstan"]["open_items"] == 0
+    head_response = client.head("/coverage")
+    assert head_response.status_code == 200
+    assert head_response.headers["content-type"].startswith("application/json")
 
 
 def test_funders_endpoint_aggregates_lifecycle(monkeypatch):
@@ -1344,6 +1347,9 @@ def test_digest_returns_open_relevant_items_with_tag_filter(monkeypatch):
     assert len(data["items"]) == 1
     assert data["items"][0]["source"] == "google_cloud_startup"
     assert data["items"][0]["title"] == "Google for Startups Cloud Program"
+    head_response = client.head("/digest", params={"tag": "cloud_credits", "limit": 5})
+    assert head_response.status_code == 200
+    assert head_response.headers["content-type"].startswith("application/json")
 
 
 def test_digest_defaults_to_russian_without_lang(monkeypatch):
@@ -1413,6 +1419,9 @@ def test_opportunities_endpoint_defaults_to_russian_without_lang(monkeypatch):
     assert len(data) == 1
     assert data[0]["title"] == "Заголовок на русском"
     assert data[0]["summary"] == "Краткое описание на русском языке."
+    head_response = client.head("/opportunities", params={"min_score": 0.5})
+    assert head_response.status_code == 200
+    assert head_response.headers["content-type"].startswith("application/json")
 
 
 def test_api_returns_clean_source_raw_for_persisted_opportunity(tmp_path, monkeypatch):

@@ -1269,6 +1269,12 @@ async def coverage() -> dict[str, Any]:
     }
 
 
+@app.head("/coverage", include_in_schema=False)
+async def coverage_head() -> Response:
+    await coverage()
+    return Response(status_code=200, media_type="application/json")
+
+
 @app.get("/funders")
 async def list_funders(
     limit: int = Query(24, ge=1, le=200),
@@ -1370,6 +1376,30 @@ async def list_opportunities(
     ]
 
 
+@app.head("/opportunities", include_in_schema=False)
+async def list_opportunities_head(
+    tag: str | None = Query(None),
+    min_score: float = Query(0.0, ge=0.0, le=1.0),
+    deadline_before: date | None = None,
+    deadline_after: date | None = None,
+    include_irrelevant: bool = False,
+    limit: int = Query(50, ge=1, le=5000),
+    offset: int = Query(0, ge=0),
+    lang: str | None = Query(None),
+) -> Response:
+    await list_opportunities(
+        tag=tag,
+        min_score=min_score,
+        deadline_before=deadline_before,
+        deadline_after=deadline_after,
+        include_irrelevant=include_irrelevant,
+        limit=limit,
+        offset=offset,
+        lang=lang,
+    )
+    return Response(status_code=200, media_type="application/json")
+
+
 @app.get("/opportunities/{opportunity_id}", response_model=OpportunityDetail)
 async def get_opportunity_detail(
     opportunity_id: UUID,
@@ -1413,3 +1443,21 @@ async def digest(
         items=[localize_opportunity(item, content_lang) for item in items[:limit]],
         channel="api",
     )
+
+
+@app.head("/digest", include_in_schema=False)
+async def digest_head(
+    tag: str | None = Query(None),
+    min_score: float = Query(0.3, ge=0.0, le=1.0),
+    limit: int = Query(10, ge=1, le=50),
+    include_irrelevant: bool = False,
+    lang: str | None = Query(None),
+) -> Response:
+    await digest(
+        tag=tag,
+        min_score=min_score,
+        limit=limit,
+        include_irrelevant=include_irrelevant,
+        lang=lang,
+    )
+    return Response(status_code=200, media_type="application/json")
