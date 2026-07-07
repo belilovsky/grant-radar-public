@@ -258,14 +258,16 @@ def _opportunity_schema(
     return _json_ld({"@context": "https://schema.org", "@graph": graph})
 
 
-def _sections_markup(detail: OpportunityDetail, fallback_heading: str) -> str:
+def _sections_markup(
+    detail: OpportunityDetail, fallback_heading: str, *, title: str
+) -> str:
     sections = [section for section in detail.detail_sections if section.text.strip()]
     if not sections:
         return ""
     blocks = []
     for section in sections:
         paragraphs = "".join(
-            f"<p>{escape(_clean_summary_text(chunk) or chunk.strip())}</p>"
+            f"<p>{escape(_clean_summary_text(chunk, title=title) or chunk.strip())}</p>"
             for chunk in section.text.splitlines()
             if chunk.strip()
         )
@@ -562,7 +564,9 @@ def render_opportunity_page(
         raw_metadata_labels if isinstance(raw_metadata_labels, dict) else {}
     )
     metadata_markup = _metadata_markup(detail.metadata, metadata_labels, copy)
-    sections_markup = _sections_markup(detail, str(copy["detail_source_excerpt"]))
+    sections_markup = _sections_markup(
+        detail, str(copy["detail_source_excerpt"]), title=title
+    )
     prepare_markup = _prepare_markup(detail, copy=copy)
     apply_markup = _apply_markup(
         has_application_url=bool(application_href),

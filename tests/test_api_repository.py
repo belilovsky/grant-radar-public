@@ -10,7 +10,12 @@ from api import main as api_main
 from api import opportunity_page as opportunity_page_module
 from api.dashboard import dashboard_copy
 from core.db import SqlRepository
-from core.models import Opportunity, OpportunityType
+from core.models import (
+    Opportunity,
+    OpportunityDetail,
+    OpportunityDetailSection,
+    OpportunityType,
+)
 from sources.base import GrantRecord
 
 
@@ -472,6 +477,37 @@ def test_seo_excerpt_trims_read_more_and_length():
             title="Закупочная возможность в Казахстане: консультационные услуги",
         )
         == "Проверьте техническое задание."
+    )
+
+
+def test_sections_markup_strips_repeated_title_prefix():
+    detail = OpportunityDetail(
+        source="unesco_iite",
+        source_url="https://example.org/source",
+        type=OpportunityType.TENDER,
+        title="Закупочная возможность в Казахстане: консультационные услуги",
+        summary="Проверьте техническое задание.",
+        detail_fetch_status="structured_only",
+        detail_sections=[
+            OpportunityDetailSection(
+                heading="Источник",
+                text=(
+                    "Закупочная возможность в Казахстане: Закупочная возможность в "
+                    "Казахстане: консультационные услуги. Проверьте техническое задание."
+                ),
+            )
+        ],
+    )
+    markup = opportunity_page_module._sections_markup(
+        detail,
+        "Описание",
+        title=detail.title,
+    )
+
+    assert "Проверьте техническое задание." in markup
+    assert (
+        "Закупочная возможность в Казахстане: Закупочная возможность в Казахстане"
+        not in markup
     )
 
 
