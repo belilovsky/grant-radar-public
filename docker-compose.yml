@@ -60,6 +60,8 @@ services:
       DATABASE_URL: postgresql+psycopg://grantradar:${POSTGRES_PASSWORD:-changeme}@db:5432/grantradar
       GRANT_RADAR_DB_URL: postgresql+psycopg://grantradar:${POSTGRES_PASSWORD:-changeme}@db:5432/grantradar
       REDIS_URL: redis://redis:6379/0
+      # Migrations are owned by the API entrypoint to avoid concurrent Alembic runs.
+      GRANT_RADAR_SKIP_MIGRATIONS: "1"
     command: ["python", "-m", "core.scheduler"]
 
 volumes:

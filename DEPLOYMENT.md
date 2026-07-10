@@ -40,8 +40,9 @@ docker compose -f docker-compose.yml -f docker-compose.prod.yml up -d --build
 
 The production image uses `requirements-prod.txt` and runs
 `scripts/entrypoint.sh`, which applies Alembic migrations before uvicorn
-starts. Disable that behavior for one-off jobs with
-`GRANT_RADAR_SKIP_MIGRATIONS=1`.
+starts. In the standard Compose layout the API is the single migration owner;
+the worker skips migrations to avoid a concurrent Alembic run. Disable the
+behavior for other one-off jobs with `GRANT_RADAR_SKIP_MIGRATIONS=1`.
 
 ## Reverse proxy
 

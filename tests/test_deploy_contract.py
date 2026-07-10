@@ -43,6 +43,12 @@ def test_production_compose_requires_password_and_checks_api_readiness() -> None
     assert "POSTGRES_PASSWORD must be set in .env.prod" in production_compose
 
 
+def test_worker_does_not_run_migrations_concurrently_with_api() -> None:
+    base_compose = (ROOT / "docker-compose.yml").read_text()
+
+    assert 'GRANT_RADAR_SKIP_MIGRATIONS: "1"' in base_compose
+
+
 def test_backup_script_creates_rotated_postgres_dumps() -> None:
     script = (ROOT / "scripts" / "backup_postgres.sh").read_text()
 
