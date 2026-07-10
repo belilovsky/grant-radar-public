@@ -28,6 +28,7 @@ def _reset_api_state(monkeypatch) -> None:
     api_main._repository_for_url.cache_clear()
     api_main._cache.clear()
     api_main._clear_sitemap_cache()
+    api_main._clear_public_items_cache()
 
 
 def test_root_renders_service_landing(monkeypatch):
@@ -233,8 +234,8 @@ def test_root_renders_service_landing(monkeypatch):
     assert '"world_bank_kazakhstan": "Всемирный банк Казахстан"' in response.text
     assert '"europe_and_central_asia": "Европа и Центральная Азия"' in response.text
     assert "new Map(" in response.text
-    assert "limit=5000&min_score=0&deadline_after=${today}" in response.text
-    assert "limit=5000&min_score=0&include_irrelevant=true" in response.text
+    assert "limit=5000&min_score=0&deadline_after=${today}&compact=true" in response.text
+    assert "limit=5000&min_score=0&include_irrelevant=true&compact=true" in response.text
     assert 'params.set("lang", copy.lang || "ru");' in response.text
     assert 'id="scope-filter"' in response.text
     assert 'id="lifecycle-filter"' in response.text
@@ -1524,6 +1525,77 @@ def test_api_returns_clean_source_raw_for_persisted_opportunity(tmp_path, monkey
     assert data[0]["score"] == 0.8
     assert data[0]["raw"] == {"external_id": "RAW-1", "agency": "Example Agency"}
     assert "source_url" not in data[0]["raw"]
+
+
+def test_compact_opportunities_keep_dashboard_fields_without_ingestion_payload(
+    tmp_path, monkeypatch
+):
+    _reset_api_state(monkeypatch)
+    db_url = f"sqlite:///{tmp_path / 'api-compact-raw.sqlite'}"
+    monkeypatch.setenv("GRANT_RADAR_DB_URL", db_url)
+
+    repo = SqlRepository(db_url)
+    repo.upsert(
+        Opportunity(
+            source="grants_gov",
+            source_url="https://example.org/api-compact-raw",
+            type=OpportunityType.GRANT,
+            title="Compact API grant",
+            summary="A normalized opportunity for Central Asia",
+            tags=["ai", "education"],
+            score=0.8,
+            raw={
+                "external_id": "COMPACT-1",
+                "agency": "Example Agency",
+                "application_url": "https://example.org/apply",
+                "deadline_policy": "rolling",
+                "detail_text": "x" * 10_000,
+                "source_html": "<main>Large source payload</main>",
+            },
+        )
+    )
+
+    client = TestClient(api_main.app)
+    response = client.get(
+        "/opportunities", params={"min_score": 0.5, "compact": "true"}
+    )
+
+    assert response.status_code == 200
+    data = response.json()
+    assert len(data) == 1
+    assert data[0]["raw"] == {
+        "agency": "Example Agency",
+        "application_url": "https://example.org/apply",
+        "deadline_policy": "rolling",
+    }
+
+
+def test_public_items_cache_reuses_loaded_items_until_invalidated(monkeypatch):
+    _reset_api_state(monkeypatch)
+    calls = {"count": 0}
+    item = Opportunity(
+        source="grants_gov",
+        source_url="https://example.org/cache",
+        type=OpportunityType.GRANT,
+        title="Cacheable grant",
+        summary="Cacheable Central Asia opportunity",
+        tags=["central_asia"],
+        score=0.8,
+    )
+
+    def fake_stored_items(content_lang: str = "en"):
+        calls["count"] += 1
+        return [item]
+
+    monkeypatch.setattr(api_main, "_stored_items", fake_stored_items)
+
+    assert api_main._cached_public_items("en")[0].title == "Cacheable grant"
+    assert api_main._cached_public_items("en")[0].title == "Cacheable grant"
+    assert calls["count"] == 1
+
+    api_main._clear_public_items_cache()
+    assert api_main._cached_public_items("en")[0].title == "Cacheable grant"
+    assert calls["count"] == 2
 
 
 def test_api_cleans_source_ui_noise_from_persisted_summary(tmp_path, monkeypatch):

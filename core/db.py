@@ -24,6 +24,7 @@ from sqlalchemy import (
     String,
     Text,
     create_engine,
+    func,
     select,
 )
 from sqlalchemy.orm import DeclarativeBase, sessionmaker
@@ -224,7 +225,7 @@ class SqlRepository:
 
     def size(self) -> int:
         with self._Session() as s:
-            return len(list(s.scalars(select(OpportunityRow)).all()))
+            return int(s.scalar(select(func.count()).select_from(OpportunityRow)) or 0)
 
     def clear(self) -> None:
         with self._Session() as s:

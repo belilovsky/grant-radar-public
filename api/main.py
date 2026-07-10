@@ -71,6 +71,7 @@ except ImportError:  # pragma: no cover - Python < 3.11 compatibility
 @asynccontextmanager
 async def _lifespan(app: FastAPI):
     _warm_public_sitemap_cache()
+    _warm_public_items_cache()
     yield
 
 
@@ -92,6 +93,29 @@ _cache: list[Opportunity] = []
 _SITEMAP_CACHE_TTL = timedelta(minutes=30)
 _sitemap_cache_lock = threading.Lock()
 _sitemap_cache: dict[tuple[str, str], tuple[datetime, str]] = {}
+_PUBLIC_ITEMS_CACHE_TTL = timedelta(
+    seconds=max(30, int(os.environ.get("PUBLIC_ITEMS_CACHE_TTL_SECONDS", "300")))
+)
+_public_items_cache_lock = threading.Lock()
+_public_items_cache: dict[str, tuple[datetime, list[Opportunity]]] = {}
+_DASHBOARD_RAW_FIELDS = frozenset(
+    {
+        "agency",
+        "agencyCode",
+        "application_url",
+        "country",
+        "deadline_policy",
+        "funder_slug",
+        "lifecycle",
+        "notice_type",
+        "opportunity_status",
+        "project_status",
+        "projectstatusdisplay",
+        "region",
+        "status",
+        "status_raw",
+    }
+)
 
 _FAVICON_SVG = """\
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64">
@@ -435,6 +459,42 @@ def _stored_items(content_lang: str = "en") -> list[Opportunity]:
     )
 
 
+def _cached_public_items(content_lang: str = "en") -> list[Opportunity]:
+    """Return a bounded-lifetime public read model for repeated web requests."""
+    normalized_lang = _public_lang(content_lang)
+    now = datetime.now(UTC)
+    with _public_items_cache_lock:
+        cached = _public_items_cache.get(normalized_lang)
+        if cached is not None and now - cached[0] < _PUBLIC_ITEMS_CACHE_TTL:
+            return list(cached[1])
+
+    items = _stored_items(content_lang=normalized_lang)
+    with _public_items_cache_lock:
+        _public_items_cache[normalized_lang] = (now, items)
+    return list(items)
+
+
+def _clear_public_items_cache() -> None:
+    with _public_items_cache_lock:
+        _public_items_cache.clear()
+
+
+def _warm_public_items_cache() -> None:
+    """Warm both dashboard languages before the first public visitor arrives."""
+    for content_lang in ("en", "ru"):
+        with suppress(Exception):
+            _cached_public_items(content_lang)
+
+
+def _compact_dashboard_item(item: Opportunity) -> Opportunity:
+    """Strip large ingestion-only payloads from the dashboard collection response."""
+    raw = item.raw if isinstance(item.raw, dict) else {}
+    compact_raw = {
+        key: value for key, value in raw.items() if key in _DASHBOARD_RAW_FIELDS
+    }
+    return item.model_copy(update={"raw": compact_raw})
+
+
 def _find_opportunity(
     opportunity_id: UUID,
     content_lang: str = "en",
@@ -442,7 +502,7 @@ def _find_opportunity(
     return next(
         (
             item
-            for item in _stored_items(content_lang=content_lang)
+            for item in _cached_public_items(content_lang=content_lang)
             if item.id == opportunity_id
         ),
         None,
@@ -617,7 +677,7 @@ def _build_funder_index(items: Iterable[Opportunity]) -> dict[str, dict[str, Any
 
 
 def _funder_index(content_lang: str = "en") -> dict[str, dict[str, Any]]:
-    return _build_funder_index(_stored_items(content_lang=content_lang))
+    return _build_funder_index(_cached_public_items(content_lang=content_lang))
 
 
 def _funder_payload(group: dict[str, Any]) -> dict[str, Any]:
@@ -675,7 +735,7 @@ def _related_opportunities(
     target_tokens = _similarity_tokens(target)
     target_funder = _normalized_token(target.funder)
     rows: list[tuple[float, Opportunity]] = []
-    for candidate in _stored_items(content_lang=lang):
+    for candidate in _cached_public_items(content_lang=lang):
         if candidate.id == target.id or not _is_open(candidate, today):
             continue
         candidate_tokens = _similarity_tokens(candidate)
@@ -863,7 +923,7 @@ def _render_sitemap_xml(base_url: str) -> str:
     root_ru = _public_url_from_base(base_url, "/?lang=ru")
     root_en = _public_url_from_base(base_url, "/?lang=en")
     opportunities = sorted(
-        _stored_items(content_lang="en"),
+        _cached_public_items(content_lang="en"),
         key=lambda item: (item.discovered_at, item.score, str(item.title).lower()),
         reverse=True,
     )
@@ -960,7 +1020,7 @@ async def root(request: Request) -> HTMLResponse:
     site_origin = _site_origin(request, root_path)
     repository = _configured_repository()
     items = repository.size() if repository is not None else len(_cache)
-    public_items = _stored_items(content_lang="en")
+    public_items = _cached_public_items(content_lang="en")
     relevant_items = len(_public_scope_items(public_items, include_irrelevant=False))
     source_count = len(
         {item.source for item in public_items if str(item.source).strip()}
@@ -1258,7 +1318,7 @@ async def list_sources() -> list[dict[str, Any]]:
 
 @app.get("/coverage")
 async def coverage() -> dict[str, Any]:
-    items = _stored_items()
+    items = _cached_public_items()
     source_rows = _source_coverage(items)
     return {
         "status": "ok",
@@ -1345,6 +1405,7 @@ async def refresh(_: None = Depends(require_admin_token)) -> dict:
     _cache = await run_all(sources)
     _persist_items(_cache)
     _clear_sitemap_cache()
+    _clear_public_items_cache()
     return {"refreshed": len(_cache)}
 
 
@@ -1358,9 +1419,10 @@ async def list_opportunities(
     limit: int = Query(50, ge=1, le=5000),
     offset: int = Query(0, ge=0),
     lang: str | None = Query(None),
+    compact: bool = Query(False),
 ) -> list[Opportunity]:
     content_lang = _public_lang(lang)
-    items = _stored_items(content_lang=content_lang)
+    items = _cached_public_items(content_lang=content_lang)
     items = _public_scope_items(items, include_irrelevant=include_irrelevant)
     if tag:
         items = [o for o in items if tag.lower() in (t.lower() for t in o.tags)]
@@ -1370,10 +1432,13 @@ async def list_opportunities(
     if deadline_after:
         items = [o for o in items if o.deadline is None or o.deadline >= deadline_after]
     items.sort(key=lambda item: (item.score, item.discovered_at), reverse=True)
-    return [
+    results = [
         localize_opportunity(item, content_lang)
         for item in items[offset : offset + limit]
     ]
+    if compact:
+        return [_compact_dashboard_item(item) for item in results]
+    return results
 
 
 @app.head("/opportunities", include_in_schema=False)
@@ -1386,6 +1451,7 @@ async def list_opportunities_head(
     limit: int = Query(50, ge=1, le=5000),
     offset: int = Query(0, ge=0),
     lang: str | None = Query(None),
+    compact: bool = Query(False),
 ) -> Response:
     await list_opportunities(
         tag=tag,
@@ -1396,6 +1462,7 @@ async def list_opportunities_head(
         limit=limit,
         offset=offset,
         lang=lang,
+        compact=compact,
     )
     return Response(status_code=200, media_type="application/json")
 
@@ -1425,7 +1492,7 @@ async def digest(
 ) -> Digest:
     content_lang = _public_lang(lang)
     today = date.today()
-    items = _stored_items(content_lang=content_lang)
+    items = _cached_public_items(content_lang=content_lang)
     items = _public_scope_items(items, include_irrelevant=include_irrelevant)
     items = [item for item in items if _is_open(item, today)]
     if tag:

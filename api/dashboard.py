@@ -7792,8 +7792,8 @@ def render_dashboard(
       const message = $("#opportunities-message");
       const today = localDateISO();
       const params = state.includeArchived
-        ? "limit=5000&min_score=0&include_irrelevant=true"
-        : `limit=5000&min_score=0&deadline_after=${{today}}`;
+        ? "limit=5000&min_score=0&include_irrelevant=true&compact=true"
+        : `limit=5000&min_score=0&deadline_after=${{today}}&compact=true`;
       message.className = "message";
       message.textContent = copy.loading_opportunities;
       state.items = await fetchJson(withLang(`/opportunities?${{params}}`));
