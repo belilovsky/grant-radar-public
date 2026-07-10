@@ -5203,6 +5203,7 @@ def render_dashboard(
         id: "support",
         label: copy.format_support,
         matches: (item) => matchesAnyTag(item, SUPPORT_FORMAT_TAGS)
+          && !matchesAnyTag(item, ["grant"])
       }},
       {{
         id: "accelerators",

@@ -288,6 +288,7 @@ def test_root_renders_service_landing(monkeypatch):
     assert "const SUPPORT_FORMAT_TAGS = [" in response.text
     assert "const FORMAT_PRESETS = [" in response.text
     assert "&& !matchesAnyTag(item, SUPPORT_FORMAT_TAGS)" in response.text
+    assert '&& !matchesAnyTag(item, ["grant"])' in response.text
     assert "const TOPIC_PRESETS = [" in response.text
     assert "const LIFECYCLE_FILTERS = [" in response.text
     assert "const REGION_FILTERS = [" in response.text
