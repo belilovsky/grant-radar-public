@@ -1687,6 +1687,38 @@ def test_public_scope_cache_reuses_expensive_geography_filter(monkeypatch):
     assert calls["count"] == 1
 
 
+def test_coverage_cache_reuses_source_aggregation(monkeypatch):
+    _reset_api_state(monkeypatch)
+    calls = {"count": 0}
+    item = Opportunity(
+        source="grants_gov",
+        source_url="https://example.org/coverage-cache",
+        type=OpportunityType.GRANT,
+        title="Coverage cache grant",
+        summary="Coverage cache opportunity for Central Asia.",
+        tags=["central_asia"],
+        score=0.8,
+    )
+
+    def fake_coverage(items):
+        calls["count"] += 1
+        assert items == [item]
+        return [
+            {
+                "slug": "grants_gov",
+                "enabled": True,
+                "relevant_open_items": 1,
+            }
+        ]
+
+    monkeypatch.setattr(api_main, "_cached_public_items", lambda: [item])
+    monkeypatch.setattr(api_main, "_source_coverage", fake_coverage)
+
+    assert api_main._cached_coverage_payload()["items"] == 1
+    assert api_main._cached_coverage_payload()["relevant_open_items"] == 1
+    assert calls["count"] == 1
+
+
 def test_api_cleans_source_ui_noise_from_persisted_summary(tmp_path, monkeypatch):
     _reset_api_state(monkeypatch)
     db_url = f"sqlite:///{tmp_path / 'api-clean-summary.sqlite'}"

@@ -99,6 +99,7 @@ _PUBLIC_ITEMS_CACHE_TTL = timedelta(
 _public_items_cache_lock = threading.Lock()
 _public_items_cache: dict[str, tuple[datetime, list[Opportunity]]] = {}
 _public_scope_cache: dict[tuple[str, bool], tuple[datetime, list[Opportunity]]] = {}
+_coverage_cache: tuple[datetime, dict[str, Any]] | None = None
 _DASHBOARD_RAW_FIELDS = frozenset(
     {
         "agency",
@@ -510,9 +511,11 @@ def _cached_public_scope_items(
 
 
 def _clear_public_items_cache() -> None:
+    global _coverage_cache
     with _public_items_cache_lock:
         _public_items_cache.clear()
         _public_scope_cache.clear()
+        _coverage_cache = None
 
 
 def _warm_public_items_cache() -> None:
@@ -521,6 +524,8 @@ def _warm_public_items_cache() -> None:
         with suppress(Exception):
             _cached_public_items(content_lang)
             _cached_public_scope_items(content_lang)
+    with suppress(Exception):
+        _cached_coverage_payload()
 
 
 def _compact_dashboard_item(item: Opportunity) -> Opportunity:
@@ -873,6 +878,28 @@ def _source_coverage(items: list[Opportunity]) -> list[dict[str, Any]]:
         )
 
     return rows
+
+
+def _cached_coverage_payload() -> dict[str, Any]:
+    """Reuse source aggregation while the public item cache is fresh."""
+    global _coverage_cache
+    now = datetime.now(UTC)
+    with _public_items_cache_lock:
+        cached = _coverage_cache
+        if cached is not None and now - cached[0] < _PUBLIC_ITEMS_CACHE_TTL:
+            return dict(cached[1])
+
+    source_rows = _source_coverage(_cached_public_items())
+    payload = {
+        "status": "ok",
+        "items": len(_cached_public_items()),
+        "sources": source_rows,
+        "enabled_sources": sum(1 for row in source_rows if row["enabled"]),
+        "relevant_open_items": sum(row["relevant_open_items"] for row in source_rows),
+    }
+    with _public_items_cache_lock:
+        _coverage_cache = (now, payload)
+    return dict(payload)
 
 
 def _root_path(request: Request) -> str:
@@ -1359,15 +1386,7 @@ async def list_sources() -> list[dict[str, Any]]:
 
 @app.get("/coverage")
 async def coverage() -> dict[str, Any]:
-    items = _cached_public_items()
-    source_rows = _source_coverage(items)
-    return {
-        "status": "ok",
-        "items": len(items),
-        "sources": source_rows,
-        "enabled_sources": sum(1 for row in source_rows if row["enabled"]),
-        "relevant_open_items": sum(row["relevant_open_items"] for row in source_rows),
-    }
+    return _cached_coverage_payload()
 
 
 @app.head("/coverage", include_in_schema=False)
