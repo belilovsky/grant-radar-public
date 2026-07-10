@@ -45,11 +45,15 @@ def _remove_repeated_title_prefix(summary: str, title: str) -> str:
     title_text = _string_value(title)
     if not summary_text or not title_text:
         return summary_text
-    if not summary_text.casefold().startswith(title_text.casefold()):
-        return summary_text
-    remainder = summary_text[len(title_text) :].lstrip(" :-—–.")
-    if remainder.casefold().startswith(title_text.casefold()):
-        return clean_source_summary(summary_text, title=title_text)
+    candidates = [title_text]
+    if " — " in title_text:
+        candidates.append(title_text.split(" — ", maxsplit=1)[0])
+    for candidate in candidates:
+        if not summary_text.casefold().startswith(candidate.casefold()):
+            continue
+        remainder = summary_text[len(candidate) :].lstrip(" :-—–.")
+        if remainder.casefold().startswith(candidate.casefold()):
+            return clean_source_summary(summary_text, title=candidate)
     return summary_text
 
 

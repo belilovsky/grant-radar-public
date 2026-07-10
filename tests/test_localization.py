@@ -120,3 +120,25 @@ def test_russian_localization_removes_doubled_public_title_prefix():
     localized = localize_opportunity(item, "ru")
 
     assert localized.summary == "Проверьте требования и срок подачи."
+
+
+def test_russian_localization_removes_old_title_repeat_after_reference_added():
+    public_title = "Закупочная возможность в Казахстане: консультационные услуги"
+    item = Opportunity(
+        source="unicef_kazakhstan",
+        source_url=HttpUrl("https://example.org/tender/legacy"),
+        type=OpportunityType.TENDER,
+        title="Individual consultant for project support",
+        summary=(
+            f"{public_title}: {public_title}. "
+            "Проверьте техническое задание и срок подачи."
+        ),
+        raw={
+            "external_id": "legacy-source-identifier-that-is-longer-than-48-characters"
+        },
+    )
+
+    localized = localize_opportunity(item, "ru")
+
+    assert "№" in localized.title
+    assert localized.summary == "Проверьте техническое задание и срок подачи."
