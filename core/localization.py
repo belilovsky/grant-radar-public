@@ -137,6 +137,12 @@ def _english_source_fallback(
     item: Opportunity, title: str, summary: str
 ) -> tuple[str, str]:
     """Keep the English surface readable when an official notice is Russian-only."""
+    if item.source == "eeas_kazakhstan" and len(summary) < 80:
+        summary = (
+            f"Official EEAS Kazakhstan call: {title.rstrip('.')}. Review the source "
+            "page for eligibility, available funding, submission documents and the "
+            "current deadline."
+        )
     if not _CYRILLIC_RE.search(title) and not _CYRILLIC_RE.search(summary):
         return title, summary
 

@@ -117,6 +117,22 @@ def test_english_localization_uses_curated_astana_hub_fallback():
     assert localized.summary.startswith("Astana Hub digital-skills program.")
 
 
+def test_english_localization_expands_short_eeas_summary():
+    item = Opportunity(
+        source="eeas_kazakhstan",
+        source_url=HttpUrl("https://example.org/eeas/civil-society"),
+        type=OpportunityType.GRANT,
+        title='Call for Proposals "Support to Civil Society in Kazakhstan"',
+        summary="EEAS Kazakhstan grant call.",
+    )
+
+    localized = localize_opportunity(item, "en")
+
+    assert localized.summary.startswith("Official EEAS Kazakhstan call:")
+    assert "eligibility" in localized.summary
+    assert len(localized.summary) >= 120
+
+
 def test_russian_procurement_title_keeps_reference_for_distinction():
     item = Opportunity(
         source="undp_procurement",

@@ -243,6 +243,14 @@ def _display_title(title: str, reference: str | None) -> str:
     return cleaned
 
 
+def _fallback_summary(title: str) -> str:
+    subject = title.strip().rstrip(".") or "funding opportunity"
+    return (
+        f"Official EEAS Kazakhstan call: {subject}. Review the source page for "
+        "eligibility, available funding, submission documents and the current deadline."
+    )
+
+
 def _infer_tags(text: str) -> list[str]:
     lowered = text.lower()
     tags: list[str] = []
@@ -293,7 +301,7 @@ class EeasKazakhstanSource(BaseSource):
 
             title = _title_from_detail(detail_html) or entry.title
             summary = _meta_content(detail_html, "description", "og:description")
-            summary = summary or "EEAS Kazakhstan grant call."
+            summary = summary or _fallback_summary(title)
             deadline = _parse_date_from_text(detail_html) or entry.deadline
             reference = _reference_from_detail(detail_html)
             title = _display_title(title, reference)

@@ -111,6 +111,14 @@ def test_eeas_listing_extractor_finds_kazakhstan_grant_card():
     assert entries[0].deadline.isoformat() == "2026-05-12"
 
 
+def test_eeas_fallback_summary_is_public_ready():
+    summary = eeas._fallback_summary("Call for Proposals on climate resilience")
+
+    assert summary.startswith("Official EEAS Kazakhstan call:")
+    assert "submission documents" in summary
+    assert len(summary) >= 120
+
+
 @pytest.mark.parametrize(
     "text,expected",
     [
