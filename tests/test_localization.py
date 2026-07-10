@@ -142,3 +142,28 @@ def test_russian_localization_removes_old_title_repeat_after_reference_added():
 
     assert "№" in localized.title
     assert localized.summary == "Проверьте техническое задание и срок подачи."
+
+
+def test_russian_localization_removes_leading_clause_before_repeated_title():
+    base_title = "Закупочная возможность в Казахстане: консультационные услуги"
+    item = Opportunity(
+        source="unicef_kazakhstan",
+        source_url=HttpUrl("https://example.org/tender/generated"),
+        type=OpportunityType.TENDER,
+        title=base_title,
+        summary="Временное описание.",
+    )
+    generated_title = f"{base_title} — № {str(item.id).split('-')[0].upper()}"
+    item = item.model_copy(
+        update={
+            "title": generated_title,
+            "summary": (
+                "Закупочная возможность в Казахстане: "
+                f"{generated_title}. Проверьте требования и срок подачи."
+            ),
+        }
+    )
+
+    localized = localize_opportunity(item, "ru")
+
+    assert localized.summary == "Проверьте требования и срок подачи."
