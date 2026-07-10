@@ -142,11 +142,12 @@ def _english_source_fallback(
 
     raw = item.raw if isinstance(item.raw, dict) else {}
     title_candidate = _english_segment(title)
-    summary_candidate = _english_segment(summary)
     if not _CYRILLIC_RE.search(title_candidate) and title_candidate:
         title = title_candidate
-    if not _CYRILLIC_RE.search(summary_candidate) and summary_candidate:
-        summary = summary_candidate
+    if _CYRILLIC_RE.search(summary):
+        summary_candidate = _english_segment(summary)
+        if not _CYRILLIC_RE.search(summary_candidate) and summary_candidate:
+            summary = summary_candidate
 
     if item.source == "astana_hub":
         return (

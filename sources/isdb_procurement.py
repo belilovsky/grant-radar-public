@@ -232,7 +232,8 @@ class IsdbProjectProcurementSource(BaseSource):
                     title=tender.title,
                     summary=(
                         f"Active IsDB project procurement notice for {tender.country}: "
-                        f"{tender.tender_type}."
+                        f"{tender.tender_type}. Review the official procurement "
+                        "documents, eligibility requirements and submission conditions."
                     ),
                     funder="Islamic Development Bank",
                     deadline=tender.deadline,

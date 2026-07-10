@@ -55,7 +55,10 @@ WATCH_PAGES = (
     WatchPage(
         url="https://www.ebrd.com/kazakhstan.html",
         title="EBRD Kazakhstan",
-        summary="EBRD Kazakhstan investment, advisory, and SME support context.",
+        summary=(
+            "EBRD Kazakhstan investment, advisory and SME support context. Review "
+            "current financing, consulting and eligibility routes on the official page."
+        ),
         tags=("grant", "startup", "sme", "development"),
         type=OpportunityType.GRANT,
         rolling=True,
@@ -63,7 +66,10 @@ WATCH_PAGES = (
     WatchPage(
         url="https://www.ebrd.com/work-with-us/advice-for-small-businesses/kazakhstan.html",
         title="EBRD Kazakhstan SME advice and access to finance",
-        summary="EBRD support paths for startups, SMEs, and business advisory services.",
+        summary=(
+            "EBRD support paths for startups, SMEs and business advisory services in "
+            "Kazakhstan. Review the official route for current eligibility and contacts."
+        ),
         tags=("grant", "startup", "sme", "business_support"),
         type=OpportunityType.GRANT,
         rolling=True,

@@ -43,6 +43,7 @@ _SUPPORT_TYPE_PATTERNS = {
     "project_finance": (
         "project pipeline",
         "project will",
+        "restoration project",
         "проект",
         "проектное финанс",
         "finance",
@@ -51,7 +52,13 @@ _SUPPORT_TYPE_PATTERNS = {
         "инфраструктур",
     ),
     "accelerator": ("accelerator", "акселератор", "mentoring", "ментор"),
-    "startup_support": ("startup support", "support program", "программа", "поддержк"),
+    "startup_support": (
+        "startup support",
+        "support program",
+        "nvidia inception",
+        "программа",
+        "поддержк",
+    ),
     "training": ("training", "education", "обучени", "образован", "курс"),
     "award": ("award", "prize", "преми", "награда"),
     "tender": (
@@ -82,7 +89,14 @@ _SECTOR_PATTERNS = {
 
 _REGION_PATTERNS = {
     "kazakhstan": ("kazakhstan", "казахстан", "қазақстан"),
-    "central_asia": ("central asia", "центральн", "central asian"),
+    "central_asia": (
+        "central asia",
+        "central_asia",
+        "undp-kaz",
+        "undp-tkm",
+        "центральн",
+        "central asian",
+    ),
     "uzbekistan": ("uzbekistan", "узбекистан", "uzb"),
     "tajikistan": ("tajikistan", "таджикистан", "tjk"),
     "kyrgyzstan": ("kyrgyzstan", "kyrgyz republic", "кыргыз", "киргиз"),
