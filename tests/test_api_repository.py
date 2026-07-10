@@ -129,8 +129,11 @@ def test_root_renders_service_landing(monkeypatch):
     assert '<strong id="health-sources">0</strong>' in response.text
     assert 'class="discovery-grid"' in response.text
     assert response.text.index('id="opportunities-panel"') < response.text.index(
-        'id="funders-title"'
+        'data-avds-component="discovery-library"'
     )
+    assert response.text.index(
+        'data-avds-component="discovery-library"'
+    ) < response.text.index('id="funders-title"')
     assert "медиа" in response.text
     assert "-webkit-line-clamp: 2;" in response.text
     assert ".hero-band" in response.text
@@ -201,6 +204,8 @@ def test_root_renders_service_landing(monkeypatch):
     assert 'id="toggle-sources"' in response.text
     assert 'id="opportunities-list"' in response.text
     assert 'id="load-more-wrap"' in response.text
+    assert 'data-avds-component="discovery-library"' in response.text
+    assert "Подборки и маршруты" in response.text
     assert 'id="spotlight-grid"' in response.text
     assert 'id="themes-grid"' in response.text
     assert 'id="pathways-grid"' in response.text

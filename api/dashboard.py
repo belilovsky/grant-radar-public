@@ -117,6 +117,10 @@ COPY = {
         "themes_section_description": (
             "Откройте возможности по теме без ручного просмотра всего каталога."
         ),
+        "discovery_library_summary": "Подборки и маршруты",
+        "discovery_library_description": (
+            "Готовые срезы для первого знакомства с каталогом."
+        ),
         "themes_count": "Сейчас: {count}",
         "themes_action_open": "Открыть тему",
         "themes_empty": "По этому направлению сейчас нет активных карточек.",
@@ -961,6 +965,10 @@ COPY = {
         "themes_section_title": "By focus area",
         "themes_section_description": (
             "Open opportunities by topic without scanning the full catalog."
+        ),
+        "discovery_library_summary": "Collections and routes",
+        "discovery_library_description": (
+            "Ready-made views for getting acquainted with the catalog."
         ),
         "themes_count": "Now: {count}",
         "themes_action_open": "Open theme",
@@ -2387,10 +2395,47 @@ def render_dashboard(
       display: grid;
       grid-template-columns: minmax(280px, 0.78fr) minmax(0, 1.22fr);
       gap: var(--av-spacing-5);
-      margin-bottom: var(--av-spacing-4);
-      padding: var(--av-spacing-4) 0;
+      padding-top: var(--av-spacing-3);
+    }}
+    .discovery-library {{
+      margin: var(--av-spacing-4) 0;
       border-top: 1px solid var(--line-subtle);
       border-bottom: 1px solid var(--line-subtle);
+    }}
+    .discovery-library > summary {{
+      display: flex;
+      align-items: baseline;
+      justify-content: space-between;
+      gap: var(--av-spacing-3);
+      min-height: 52px;
+      cursor: pointer;
+      color: var(--ink);
+      font-size: var(--av-text-sm);
+      font-weight: 700;
+      list-style: none;
+    }}
+    .discovery-library > summary::-webkit-details-marker {{ display: none; }}
+    .discovery-library > summary::after {{
+      content: "+";
+      flex: 0 0 auto;
+      color: var(--brand);
+      font-size: 20px;
+      font-weight: 500;
+      line-height: 1;
+    }}
+    .discovery-library[open] > summary::after {{ content: "−"; }}
+    .discovery-library > summary:focus-visible {{
+      outline: 2px solid var(--focus-ring);
+      outline-offset: -2px;
+    }}
+    .discovery-library-description {{
+      color: var(--muted);
+      font-size: var(--av-text-xs);
+      font-weight: 500;
+      text-align: right;
+    }}
+    .discovery-library-body {{
+      padding: 0 0 var(--av-spacing-4);
     }}
     .funder-grid {{
       display: grid;
@@ -4295,6 +4340,12 @@ def render_dashboard(
       .discovery-grid {{
         padding-block: var(--av-spacing-3);
       }}
+      .discovery-library > summary {{
+        min-height: 48px;
+      }}
+      .discovery-library-description {{
+        display: none;
+      }}
       .themes-grid {{
         grid-template-columns: 1fr;
       }}
@@ -4663,50 +4714,6 @@ def render_dashboard(
       </div>
     </div>
 
-    <section class="spotlight-section" aria-labelledby="spotlight-title">
-      <div class="spotlight-copy">
-        <span class="eyebrow">{escape(str(copy["spotlight_section_eyebrow"]))}</span>
-        <h2 id="spotlight-title">{escape(str(copy["spotlight_section_title"]))}</h2>
-        <p>{escape(str(copy["spotlight_section_description"]))}</p>
-      </div>
-      <div
-        class="spotlight-grid async-grid"
-        id="spotlight-grid"
-        data-avds-component="spotlight-grid"
-        aria-busy="true"
-      ></div>
-    </section>
-
-    <div class="discovery-grid" data-avds-component="discovery-grid">
-    <section class="pathways-section" aria-labelledby="pathways-title">
-      <div class="spotlight-copy">
-        <span class="eyebrow">{escape(str(copy["pathways_section_eyebrow"]))}</span>
-        <h2 id="pathways-title">{escape(str(copy["pathways_section_title"]))}</h2>
-        <p>{escape(str(copy["pathways_section_description"]))}</p>
-      </div>
-      <div
-        class="pathways-grid async-grid"
-        id="pathways-grid"
-        data-avds-component="pathways-grid"
-        aria-busy="true"
-      ></div>
-    </section>
-
-    <section class="themes-section" aria-labelledby="themes-title">
-      <div class="spotlight-copy">
-        <span class="eyebrow">{escape(str(copy["themes_section_eyebrow"]))}</span>
-        <h2 id="themes-title">{escape(str(copy["themes_section_title"]))}</h2>
-        <p>{escape(str(copy["themes_section_description"]))}</p>
-      </div>
-      <div
-        class="themes-grid async-grid"
-        id="themes-grid"
-        data-avds-component="themes-grid"
-        aria-busy="true"
-      ></div>
-    </section>
-    </div>
-
     <section class="panel primary" id="opportunities-panel" data-avds-component="panel">
       <div class="panel-head">
         <div>
@@ -4931,6 +4938,60 @@ def render_dashboard(
         >{escape(str(copy["load_more"]))}</button>
       </div>
     </section>
+
+    <details class="discovery-library" data-avds-component="discovery-library">
+      <summary>
+        <span>{escape(str(copy["discovery_library_summary"]))}</span>
+        <span class="discovery-library-description">
+          {escape(str(copy["discovery_library_description"]))}
+        </span>
+      </summary>
+      <div class="discovery-library-body">
+        <section class="spotlight-section" aria-labelledby="spotlight-title">
+          <div class="spotlight-copy">
+            <span class="eyebrow">{escape(str(copy["spotlight_section_eyebrow"]))}</span>
+            <h2 id="spotlight-title">{escape(str(copy["spotlight_section_title"]))}</h2>
+            <p>{escape(str(copy["spotlight_section_description"]))}</p>
+          </div>
+          <div
+            class="spotlight-grid async-grid"
+            id="spotlight-grid"
+            data-avds-component="spotlight-grid"
+            aria-busy="true"
+          ></div>
+        </section>
+
+        <div class="discovery-grid" data-avds-component="discovery-grid">
+          <section class="pathways-section" aria-labelledby="pathways-title">
+            <div class="spotlight-copy">
+              <span class="eyebrow">{escape(str(copy["pathways_section_eyebrow"]))}</span>
+              <h2 id="pathways-title">{escape(str(copy["pathways_section_title"]))}</h2>
+              <p>{escape(str(copy["pathways_section_description"]))}</p>
+            </div>
+            <div
+              class="pathways-grid async-grid"
+              id="pathways-grid"
+              data-avds-component="pathways-grid"
+              aria-busy="true"
+            ></div>
+          </section>
+
+          <section class="themes-section" aria-labelledby="themes-title">
+            <div class="spotlight-copy">
+              <span class="eyebrow">{escape(str(copy["themes_section_eyebrow"]))}</span>
+              <h2 id="themes-title">{escape(str(copy["themes_section_title"]))}</h2>
+              <p>{escape(str(copy["themes_section_description"]))}</p>
+            </div>
+            <div
+              class="themes-grid async-grid"
+              id="themes-grid"
+              data-avds-component="themes-grid"
+              aria-busy="true"
+            ></div>
+          </section>
+        </div>
+      </div>
+    </details>
 
     <section class="funder-section" aria-labelledby="funders-title">
       <div class="spotlight-copy">
