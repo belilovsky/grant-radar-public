@@ -50,4 +50,4 @@ def test_backup_script_creates_rotated_postgres_dumps() -> None:
     assert "--format=custom" in script
     assert "KEEP_DAYS" in script
     assert "qaz-fund-*.dump" in script
-    assert "rm -f \"$temporary_path\"" in script
+    assert 'rm -f "$temporary_path"' in script

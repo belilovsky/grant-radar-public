@@ -235,8 +235,12 @@ def test_root_renders_service_landing(monkeypatch):
     assert '"world_bank_kazakhstan": "Всемирный банк Казахстан"' in response.text
     assert '"europe_and_central_asia": "Европа и Центральная Азия"' in response.text
     assert "new Map(" in response.text
-    assert "limit=5000&min_score=0&deadline_after=${today}&compact=true" in response.text
-    assert "limit=5000&min_score=0&include_irrelevant=true&compact=true" in response.text
+    assert (
+        "limit=5000&min_score=0&deadline_after=${today}&compact=true" in response.text
+    )
+    assert (
+        "limit=5000&min_score=0&include_irrelevant=true&compact=true" in response.text
+    )
     assert 'params.set("lang", copy.lang || "ru");' in response.text
     assert 'id="scope-filter"' in response.text
     assert 'id="lifecycle-filter"' in response.text
