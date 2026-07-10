@@ -65,6 +65,8 @@ make lint
 make ci-fast
 PYTHONPATH=. ./.venv/bin/python -m scripts.production_smoke --base-url https://example.org
 PYTHONPATH=. ./.venv/bin/python -m scripts.content_audit --base-url https://example.org
+PYTHONPATH=. ./.venv/bin/python -m scripts.nlp_quality_audit --base-url https://example.org --lang ru --limit 150
+PYTHONPATH=. ./.venv/bin/python -m scripts.nlp_quality_audit --base-url https://example.org --lang en --limit 150
 ```
 
 After deploy:
@@ -72,15 +74,22 @@ After deploy:
 ```bash
 curl -fsS https://example.org/health
 curl -fsS https://example.org/ready
+curl -fsSI https://example.org/ready
 curl -fsSI https://example.org/favicon.ico
 curl -fsS 'https://example.org/opportunities?limit=3'
 ```
 
-If Russian localization is enabled in your storage backend, you can also run:
+## Backups
+
+Create encrypted database dumps outside the repository and verify a restore
+regularly. The helper retains the newest fourteen archives by default:
 
 ```bash
-PYTHONPATH=. ./.venv/bin/python -m scripts.nlp_quality_audit --base-url https://example.org --lang ru --limit 150
+BACKUP_DIR=/var/backups/grant-radar ./scripts/backup_postgres.sh
 ```
+
+Schedule this command from the private maintainer runbook only after a restore
+drill. Do not commit dump files or host-specific backup paths.
 
 ## Automation
 
