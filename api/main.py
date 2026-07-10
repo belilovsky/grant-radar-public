@@ -1135,8 +1135,9 @@ async def swagger_docs(request: Request) -> HTMLResponse:
     return HTMLResponse(body, status_code=swagger.status_code, headers=headers)
 
 
-@app.get(
+@app.api_route(
     "/opportunity/{opportunity_id}",
+    methods=["GET", "HEAD"],
     response_class=HTMLResponse,
     include_in_schema=False,
 )
@@ -1411,8 +1412,9 @@ async def list_funders(
     return [_funder_payload(group) for group in groups[:limit]]
 
 
-@app.get(
+@app.api_route(
     "/funder/{funder_slug}",
+    methods=["GET", "HEAD"],
     response_class=HTMLResponse,
     include_in_schema=False,
 )
@@ -1541,6 +1543,15 @@ async def get_opportunity_detail(
         localize_opportunity(item, content_lang),
         lang=content_lang,
     )
+
+
+@app.head("/opportunities/{opportunity_id}", include_in_schema=False)
+async def get_opportunity_detail_head(
+    opportunity_id: UUID,
+    lang: str | None = Query(None),
+) -> Response:
+    await get_opportunity_detail(opportunity_id, lang=lang)
+    return Response(status_code=200, media_type="application/json")
 
 
 @app.get("/digest", response_model=Digest)

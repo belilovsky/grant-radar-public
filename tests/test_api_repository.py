@@ -93,6 +93,14 @@ def test_root_renders_service_landing(monkeypatch):
     )
     assert "function pathwayPreviewMarkup" not in response.text
     assert "function themePreviewMarkup" not in response.text
+    assert "Дополнительные фильтры" in response.text
+    assert "qdev.run" in response.text
+    assert "QAZ.FUND не выдаёт гранты и не принимает заявки" in response.text
+    assert "GitHub Issues" in response.text
+    assert "qazfund-opportunities.csv" in response.text
+    assert "qazfund-deadlines.ics" in response.text
+    assert "grantRadarSavedOpportunities.v1" in response.text
+    assert "Сообщить об ошибке" in response.text
     assert "Подборки для старта" in response.text
     assert "С чего начать просмотр" in response.text
     assert "Лучшие сигналы недели" in response.text
@@ -2120,6 +2128,9 @@ def test_opportunity_page_renders_public_permalink(monkeypatch):
     assert '"identifier": "' in response.text
     assert '"sameAs": "https://example.org/project/P179204-page"' in response.text
 
+    head_response = client.head(f"/opportunity/{item.id}", params={"lang": "ru"})
+    assert head_response.status_code == 200
+
 
 def test_opportunity_page_defaults_to_russian_without_lang(monkeypatch):
     _reset_api_state(monkeypatch)
@@ -2150,6 +2161,33 @@ def test_opportunity_page_defaults_to_russian_without_lang(monkeypatch):
     assert "Цифровое ускорение без параметра языка" in response.text
 
 
+def test_opportunity_page_hides_duplicate_source_funder_metadata(monkeypatch):
+    _reset_api_state(monkeypatch)
+    item = Opportunity(
+        source="unesco_iite",
+        source_url="https://example.org/unesco/notice",
+        type=OpportunityType.TENDER,
+        title="UNESCO consultancy notice",
+        summary="Consultancy procurement notice.",
+        funder="unesco_iite",
+        deadline=date(2026, 7, 13),
+        tags=["unesco", "education", "consultancy"],
+        score=0.72,
+    )
+    api_main._cache.append(item)
+    client = TestClient(api_main.app)
+
+    response = client.get(f"/opportunity/{item.id}", params={"lang": "ru"})
+
+    assert response.status_code == 200
+    assert response.text.count("<span>Источник</span>") == 1
+    assert "<span>Фонд</span>" not in response.text
+    assert "<strong>13.07.2026</strong>" in response.text
+
+    detail_head = client.head(f"/opportunities/{item.id}", params={"lang": "ru"})
+    assert detail_head.status_code == 200
+
+
 def test_funder_page_defaults_to_russian_without_lang(monkeypatch):
     _reset_api_state(monkeypatch)
     open_item = Opportunity(
@@ -2171,6 +2209,9 @@ def test_funder_page_defaults_to_russian_without_lang(monkeypatch):
     assert response.status_code == 200
     assert '<html lang="ru"' in response.text
     assert "Фонд науки" in response.text
+
+    head_response = client.head("/funder/science-fund")
+    assert head_response.status_code == 200
 
 
 def test_opportunity_page_tailors_prepare_checklist_for_subsidies(monkeypatch):

@@ -176,14 +176,39 @@ def _metadata_markup(
     metadata: list[OpportunityMetadataField],
     labels: dict[str, str],
     copy: dict[str, object],
+    *,
+    lang: str,
 ) -> str:
     if not metadata:
         return ""
     items = []
+    source_value = next(
+        (
+            entry.value
+            for entry in metadata
+            if entry.key == "source" and str(entry.value or "").strip()
+        ),
+        "",
+    )
     for entry in metadata:
         if entry.key not in PUBLIC_METADATA_KEYS:
             continue
+        if (
+            entry.key == "funder"
+            and source_value
+            and str(entry.value or "").strip().casefold()
+            == str(source_value).strip().casefold()
+        ):
+            continue
         label = labels.get(entry.key, entry.key.replace("_", " ").title())
+        value = _label_value(entry.value, copy)
+        if entry.key in {"deadline", "closing_date", "board_approval"}:
+            try:
+                parsed_date = date.fromisoformat(str(entry.value).strip())
+            except ValueError:
+                parsed_date = None
+            if parsed_date is not None:
+                value = _format_deadline(parsed_date, lang, str(copy["open_rolling"]))
         items.append(
             """
             <div class="meta-item">
@@ -192,7 +217,7 @@ def _metadata_markup(
             </div>
             """.format(
                 label=escape(label),
-                value=escape(_label_value(entry.value, copy)),
+                value=escape(value),
             )
         )
     return "".join(items)
@@ -571,7 +596,12 @@ def render_opportunity_page(
     metadata_labels = (
         raw_metadata_labels if isinstance(raw_metadata_labels, dict) else {}
     )
-    metadata_markup = _metadata_markup(detail.metadata, metadata_labels, copy)
+    metadata_markup = _metadata_markup(
+        detail.metadata,
+        metadata_labels,
+        copy,
+        lang=active_lang,
+    )
     sections_markup = _sections_markup(
         detail, str(copy["detail_source_excerpt"]), title=title
     )

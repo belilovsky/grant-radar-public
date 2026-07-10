@@ -434,6 +434,21 @@ COPY = {
         "saved_view_remove_aria": "Удалить подборку",
         "saved_view_status_label": "Статус подборок",
         "saved_view_share_prompt": "Скопируйте ссылку на текущую подборку",
+        "advanced_filters": "Дополнительные фильтры",
+        "export_csv": "CSV",
+        "export_deadlines": "Календарь",
+        "saved_opportunity_saved": "Карточка сохранена локально.",
+        "saved_opportunity_removed": "Карточка удалена из локальных сохранённых.",
+        "save_opportunity": "Сохранить",
+        "unsave_opportunity": "Убрать",
+        "report_issue": "Сообщить об ошибке",
+        "footer_owner": "QAZ.FUND — публичный навигатор возможностей. Сделано",
+        "footer_disclaimer": (
+            "QAZ.FUND не выдаёт гранты и не принимает заявки. Финальные условия, "
+            "сроки и формы подачи проверяйте на официальном источнике."
+        ),
+        "footer_support": "GitHub Issues",
+        "footer_qdev": "qdev.run",
         "view_funder": "Профиль фонда",
         "fit_label": "Кому подходит",
         "fit_unknown": "Критерии нужно уточнить",
@@ -1262,6 +1277,21 @@ COPY = {
         "saved_view_remove_aria": "Remove collection",
         "saved_view_status_label": "Saved collection status",
         "saved_view_share_prompt": "Copy the link to the current collection",
+        "advanced_filters": "Advanced filters",
+        "export_csv": "CSV",
+        "export_deadlines": "Calendar",
+        "saved_opportunity_saved": "Card saved locally.",
+        "saved_opportunity_removed": "Card removed from local saved items.",
+        "save_opportunity": "Save",
+        "unsave_opportunity": "Remove",
+        "report_issue": "Report data issue",
+        "footer_owner": "QAZ.FUND is a public opportunity navigator. Built by",
+        "footer_disclaimer": (
+            "QAZ.FUND does not award grants or process applications. Always verify "
+            "final terms, deadlines, and forms on the official source."
+        ),
+        "footer_support": "GitHub Issues",
+        "footer_qdev": "qdev.run",
         "view_funder": "Funder profile",
         "fit_label": "Who it fits",
         "fit_unknown": "Check eligibility",
@@ -2929,16 +2959,60 @@ def render_dashboard(
       color: var(--muted);
       font-size: var(--av-text-sm);
     }}
-    .filters {{
+    .filters-shell {{
       display: grid;
-      grid-template-columns: minmax(220px, 1fr) repeat(3, minmax(128px, 0.28fr));
-      gap: 10px;
-      margin-bottom: var(--av-spacing-1);
+      gap: var(--av-spacing-1);
+      margin-bottom: var(--av-spacing-2);
       padding: 12px;
       border: 1px solid var(--line-subtle);
       border-radius: var(--av-radius-md);
       background: var(--panel);
+    }}
+    .filters {{
+      display: grid;
+      grid-template-columns: minmax(220px, 1fr) repeat(3, minmax(128px, 0.28fr));
+      gap: 10px;
+      margin: 0;
+      padding: 0;
+      border: 0;
+      border-radius: 0;
+      background: transparent;
       align-items: end;
+    }}
+    .filters.primary-filters {{
+      grid-template-columns: minmax(240px, 1fr) repeat(2, minmax(150px, 0.25fr));
+    }}
+    .advanced-filters {{
+      border-top: 1px solid var(--line-subtle);
+      padding-top: 8px;
+    }}
+    .advanced-filters > summary {{
+      display: inline-flex;
+      width: fit-content;
+      min-height: 30px;
+      align-items: center;
+      gap: 6px;
+      color: var(--muted);
+      cursor: pointer;
+      font-size: var(--av-text-sm);
+      font-weight: 650;
+      list-style: none;
+    }}
+    .advanced-filters > summary::-webkit-details-marker {{ display: none; }}
+    .advanced-filters > summary::after {{
+      content: "⌄";
+      color: var(--muted);
+      font-size: 14px;
+    }}
+    .advanced-filters[open] > summary {{
+      margin-bottom: 8px;
+      color: var(--ink);
+    }}
+    .advanced-filters[open] > summary::after {{
+      transform: rotate(180deg);
+    }}
+    .advanced-filters .filters {{
+      grid-template-columns: repeat(5, minmax(138px, 1fr));
     }}
     .preset-grid {{
       display: grid;
@@ -3019,10 +3093,10 @@ def render_dashboard(
       display: grid;
       gap: 6px;
       margin-bottom: var(--av-spacing-2);
-      padding: 10px 12px;
-      border: 1px solid var(--line-subtle);
-      border-radius: var(--av-radius-md);
-      background: var(--panel);
+      padding: 0;
+      border: 0;
+      border-radius: 0;
+      background: transparent;
     }}
     .saved-views-head {{
       display: flex;
@@ -3321,10 +3395,10 @@ def render_dashboard(
     .signal-box {{
       display: grid;
       gap: 6px;
-      padding: 9px 10px;
-      border: 1px solid var(--line-subtle);
-      border-radius: var(--av-radius-sm);
-      background: var(--panel-subtle);
+      padding: 0;
+      border: 0;
+      border-radius: 0;
+      background: transparent;
     }}
     .focus-copy {{
       display: grid;
@@ -3656,6 +3730,31 @@ def render_dashboard(
       text-underline-offset: 2px;
     }}
     .footer-sep {{ color: var(--line-strong); }}
+    .site-footer {{
+      display: grid;
+      gap: 6px;
+      margin-top: var(--section-gap);
+      padding: 16px 0 0;
+      border-top: 1px solid var(--line);
+      color: var(--muted);
+      font-size: var(--av-text-xs);
+      line-height: 1.55;
+    }}
+    .site-footer p {{
+      margin: 0;
+      max-width: 920px;
+    }}
+    .site-footer a {{
+      color: var(--ink);
+      font-weight: 650;
+      text-decoration: none;
+    }}
+    .site-footer a:hover,
+    .site-footer a:focus-visible {{
+      color: var(--brand);
+      text-decoration: underline;
+      text-underline-offset: 2px;
+    }}
     .more-link {{
       color: var(--brand);
       font-size: var(--av-text-sm);
@@ -3938,7 +4037,9 @@ def render_dashboard(
         justify-content: space-between;
       }}
       .preset-grid,
-      .filters {{
+      .filters,
+      .filters.primary-filters,
+      .advanced-filters .filters {{
         grid-template-columns: 1fr 1fr;
       }}
       .filters .filter-block:first-child {{
@@ -4027,7 +4128,9 @@ def render_dashboard(
         grid-template-columns: 1fr;
       }}
       .preset-grid,
-      .filters {{
+      .filters,
+      .filters.primary-filters,
+      .advanced-filters .filters {{
         grid-template-columns: 1fr;
       }}
       .panel {{
@@ -4196,6 +4299,10 @@ def render_dashboard(
       .preset-row {{
         display: grid;
         grid-template-columns: repeat(2, minmax(0, 1fr));
+      }}
+      .preset-button {{
+        min-height: 34px;
+        text-align: left;
       }}
       .focus-chip {{
         width: auto;
@@ -4581,112 +4688,122 @@ def render_dashboard(
           ></div>
         </div>
       </div>
-      <div class="filters" aria-label="{escape(str(copy["opportunities_title"]), quote=True)}">
-        <label class="filter-block" for="search">
-          <span class="filter-label">{escape(str(copy["search_label"]))}</span>
-          <input
-            class="field avds-field"
-            id="search"
-            type="search"
-            placeholder="{escape(str(copy["search_placeholder"]), quote=True)}"
-            data-avds-component="field"
-          >
-        </label>
-        <label class="filter-block" for="scope-filter">
-          <span class="filter-label">{escape(str(copy["scope_label"]))}</span>
-          <select
-            class="field avds-field"
-            id="scope-filter"
-            aria-label="{escape(str(copy["scope_aria"]), quote=True)}"
-            data-avds-component="field"
-          >
-            <option value="open" selected>{escape(str(copy["scope_open"]))}</option>
-            <option value="all">{escape(str(copy["scope_all"]))}</option>
-          </select>
-        </label>
-        <label class="filter-block" for="lifecycle-filter">
-          <span class="filter-label">{escape(str(copy["lifecycle_label"]))}</span>
-          <select
-            class="field avds-field"
-            id="lifecycle-filter"
-            aria-label="{escape(str(copy["lifecycle_aria"]), quote=True)}"
-            data-avds-component="field"
-          >
-            <option value="all" selected>{escape(str(copy["lifecycle_all"]))}</option>
-            <option value="open">{escape(str(copy["lifecycle_open"]))}</option>
-            <option value="forecast">{escape(str(copy["lifecycle_forecast"]))}</option>
-            <option value="closing_soon">{escape(str(copy["lifecycle_closing_soon"]))}</option>
-            <option value="rolling">{escape(str(copy["lifecycle_rolling"]))}</option>
-            <option value="closed">{escape(str(copy["lifecycle_closed"]))}</option>
-            <option value="awarded">{escape(str(copy["lifecycle_awarded"]))}</option>
-          </select>
-        </label>
-        <label class="filter-block" for="region-filter">
-          <span class="filter-label">{escape(str(copy["region_label"]))}</span>
-          <select
-            class="field avds-field"
-            id="region-filter"
-            aria-label="{escape(str(copy["region_aria"]), quote=True)}"
-            data-avds-component="field"
-          >
-            <option value="all" selected>{escape(str(copy["region_all"]))}</option>
-            <option value="kazakhstan">{escape(str(copy["region_kazakhstan"]))}</option>
-            <option value="central_asia">{escape(str(copy["region_central_asia"]))}</option>
-            <option value="global">{escape(str(copy["region_global"]))}</option>
-          </select>
-        </label>
-        <label class="filter-block" for="deadline-filter">
-          <span class="filter-label">{escape(str(copy["deadline_filter_label"]))}</span>
-          <select
-            class="field avds-field"
-            id="deadline-filter"
-            aria-label="{escape(str(copy["deadline_filter_aria"]), quote=True)}"
-            data-avds-component="field"
-          >
-            <option value="all" selected>{escape(str(copy["deadline_filter_all"]))}</option>
-            <option value="soon">{escape(str(copy["deadline_filter_soon"]))}</option>
-            <option value="month">{escape(str(copy["deadline_filter_month"]))}</option>
-            <option value="rolling">{escape(str(copy["deadline_filter_rolling"]))}</option>
-          </select>
-        </label>
-        <label class="filter-block" for="sort-filter">
-          <span class="filter-label">{escape(str(copy["sort_label"]))}</span>
-          <select
-            class="field avds-field"
-            id="sort-filter"
-            aria-label="{escape(str(copy["sort_aria"]), quote=True)}"
-            data-avds-component="field"
-          >
-            <option value="priority" selected>{escape(str(copy["sort_priority"]))}</option>
-            <option value="deadline">{escape(str(copy["sort_deadline"]))}</option>
-            <option value="updated">{escape(str(copy["sort_updated"]))}</option>
-          </select>
-        </label>
-        <label class="filter-block" for="score-filter">
-          <span class="filter-label">{escape(str(copy["min_score_label"]))}</span>
-          <select
-            class="field avds-field"
-            id="score-filter"
-            aria-label="{escape(str(copy["min_score_aria"]), quote=True)}"
-            data-avds-component="field"
-          >
-            <option value="0">{escape(str(copy["all_scores"]))}</option>
-            <option value="0.3" selected>{escape(str(copy["score_option_03"]))}</option>
-            <option value="0.5">{escape(str(copy["score_option_05"]))}</option>
-            <option value="0.7">{escape(str(copy["score_option_07"]))}</option>
-          </select>
-        </label>
-        <label class="filter-block" for="source-filter">
-          <span class="filter-label">{escape(str(copy["source_label"]))}</span>
-          <select
-            class="field avds-field"
-            id="source-filter"
-            aria-label="{escape(str(copy["source_aria"]), quote=True)}"
-            data-avds-component="field"
-          >
-            <option value="all">{escape(str(copy["all_sources"]))}</option>
-          </select>
-        </label>
+      <div
+        class="filters-shell"
+        aria-label="{escape(str(copy["opportunities_title"]), quote=True)}"
+      >
+        <div class="filters primary-filters">
+          <label class="filter-block" for="search">
+            <span class="filter-label">{escape(str(copy["search_label"]))}</span>
+            <input
+              class="field avds-field"
+              id="search"
+              type="search"
+              placeholder="{escape(str(copy["search_placeholder"]), quote=True)}"
+              data-avds-component="field"
+            >
+          </label>
+          <label class="filter-block" for="region-filter">
+            <span class="filter-label">{escape(str(copy["region_label"]))}</span>
+            <select
+              class="field avds-field"
+              id="region-filter"
+              aria-label="{escape(str(copy["region_aria"]), quote=True)}"
+              data-avds-component="field"
+            >
+              <option value="all" selected>{escape(str(copy["region_all"]))}</option>
+              <option value="kazakhstan">{escape(str(copy["region_kazakhstan"]))}</option>
+              <option value="central_asia">{escape(str(copy["region_central_asia"]))}</option>
+              <option value="global">{escape(str(copy["region_global"]))}</option>
+            </select>
+          </label>
+          <label class="filter-block" for="scope-filter">
+            <span class="filter-label">{escape(str(copy["scope_label"]))}</span>
+            <select
+              class="field avds-field"
+              id="scope-filter"
+              aria-label="{escape(str(copy["scope_aria"]), quote=True)}"
+              data-avds-component="field"
+            >
+              <option value="open" selected>{escape(str(copy["scope_open"]))}</option>
+              <option value="all">{escape(str(copy["scope_all"]))}</option>
+            </select>
+          </label>
+        </div>
+        <details class="advanced-filters">
+          <summary>{escape(str(copy["advanced_filters"]))}</summary>
+          <div class="filters">
+            <label class="filter-block" for="lifecycle-filter">
+              <span class="filter-label">{escape(str(copy["lifecycle_label"]))}</span>
+              <select
+                class="field avds-field"
+                id="lifecycle-filter"
+                aria-label="{escape(str(copy["lifecycle_aria"]), quote=True)}"
+                data-avds-component="field"
+              >
+                <option value="all" selected>{escape(str(copy["lifecycle_all"]))}</option>
+                <option value="open">{escape(str(copy["lifecycle_open"]))}</option>
+                <option value="forecast">{escape(str(copy["lifecycle_forecast"]))}</option>
+                <option value="closing_soon">{escape(str(copy["lifecycle_closing_soon"]))}</option>
+                <option value="rolling">{escape(str(copy["lifecycle_rolling"]))}</option>
+                <option value="closed">{escape(str(copy["lifecycle_closed"]))}</option>
+                <option value="awarded">{escape(str(copy["lifecycle_awarded"]))}</option>
+              </select>
+            </label>
+            <label class="filter-block" for="deadline-filter">
+              <span class="filter-label">{escape(str(copy["deadline_filter_label"]))}</span>
+              <select
+                class="field avds-field"
+                id="deadline-filter"
+                aria-label="{escape(str(copy["deadline_filter_aria"]), quote=True)}"
+                data-avds-component="field"
+              >
+                <option value="all" selected>{escape(str(copy["deadline_filter_all"]))}</option>
+                <option value="soon">{escape(str(copy["deadline_filter_soon"]))}</option>
+                <option value="month">{escape(str(copy["deadline_filter_month"]))}</option>
+                <option value="rolling">{escape(str(copy["deadline_filter_rolling"]))}</option>
+              </select>
+            </label>
+            <label class="filter-block" for="sort-filter">
+              <span class="filter-label">{escape(str(copy["sort_label"]))}</span>
+              <select
+                class="field avds-field"
+                id="sort-filter"
+                aria-label="{escape(str(copy["sort_aria"]), quote=True)}"
+                data-avds-component="field"
+              >
+                <option value="priority" selected>{escape(str(copy["sort_priority"]))}</option>
+                <option value="deadline">{escape(str(copy["sort_deadline"]))}</option>
+                <option value="updated">{escape(str(copy["sort_updated"]))}</option>
+              </select>
+            </label>
+            <label class="filter-block" for="score-filter">
+              <span class="filter-label">{escape(str(copy["min_score_label"]))}</span>
+              <select
+                class="field avds-field"
+                id="score-filter"
+                aria-label="{escape(str(copy["min_score_aria"]), quote=True)}"
+                data-avds-component="field"
+              >
+                <option value="0">{escape(str(copy["all_scores"]))}</option>
+                <option value="0.3" selected>{escape(str(copy["score_option_03"]))}</option>
+                <option value="0.5">{escape(str(copy["score_option_05"]))}</option>
+                <option value="0.7">{escape(str(copy["score_option_07"]))}</option>
+              </select>
+            </label>
+            <label class="filter-block" for="source-filter">
+              <span class="filter-label">{escape(str(copy["source_label"]))}</span>
+              <select
+                class="field avds-field"
+                id="source-filter"
+                aria-label="{escape(str(copy["source_aria"]), quote=True)}"
+                data-avds-component="field"
+              >
+                <option value="all">{escape(str(copy["all_sources"]))}</option>
+              </select>
+            </label>
+          </div>
+        </details>
       </div>
       <div class="filters-meta">
         <div id="filter-summary" class="filter-summary" data-avds-component="filter-summary"></div>
@@ -4705,6 +4822,18 @@ def render_dashboard(
         <div class="saved-views-head">
           <span class="filter-label">{escape(str(copy["collections_label"]))}</span>
           <div class="saved-actions">
+            <button
+              class="text-button"
+              type="button"
+              id="export-csv"
+              data-avds-component="button"
+            >{escape(str(copy["export_csv"]))}</button>
+            <button
+              class="text-button"
+              type="button"
+              id="export-deadlines"
+              data-avds-component="button"
+            >{escape(str(copy["export_deadlines"]))}</button>
             <button
               class="text-button"
               type="button"
@@ -4845,6 +4974,24 @@ def render_dashboard(
         </article>
       </div>
     </section>
+    <footer class="site-footer" data-avds-component="site-footer">
+      <p>
+        {escape(str(copy["footer_owner"]))}
+        <a href="https://qdev.run" target="_blank" rel="noopener">
+          {escape(str(copy["footer_qdev"]))}
+        </a>
+      </p>
+      <p>{escape(str(copy["footer_disclaimer"]))}</p>
+      <p>
+        <a
+          href="https://github.com/belilovsky/grant-radar-public/issues"
+          target="_blank"
+          rel="noopener"
+        >
+          {escape(str(copy["footer_support"]))}
+        </a>
+      </p>
+    </footer>
   </main>
 
   <div
@@ -4964,6 +5111,7 @@ def render_dashboard(
     const DEFAULT_VISIBLE_ITEMS = 15;
     const COLLAPSED_SOURCES = 5;
     const SAVED_VIEW_STORAGE_KEY = "grantRadarSavedViews.v1";
+    const SAVED_OPPORTUNITY_STORAGE_KEY = "grantRadarSavedOpportunities.v1";
     const formatNumber = new Intl.NumberFormat(copy.locale || "ru-KZ");
     const $ = (selector) => document.querySelector(selector);
     const labelMap = copy.label_map || copy.labelMap || {{}};
@@ -6849,6 +6997,133 @@ def render_dashboard(
       }}
     }}
 
+    function readSavedOpportunities() {{
+      try {{
+        const stored = window.localStorage.getItem(SAVED_OPPORTUNITY_STORAGE_KEY);
+        const parsed = stored ? JSON.parse(stored) : [];
+        return Array.isArray(parsed) ? parsed.map(String) : [];
+      }} catch {{
+        return [];
+      }}
+    }}
+
+    function writeSavedOpportunities(ids) {{
+      try {{
+        window.localStorage.setItem(
+          SAVED_OPPORTUNITY_STORAGE_KEY,
+          JSON.stringify(Array.from(new Set(ids.map(String))).slice(0, 200))
+        );
+      }} catch {{
+        // local-only feature; ignore private-mode or quota errors
+      }}
+    }}
+
+    function isOpportunitySaved(opportunityId) {{
+      return readSavedOpportunities().includes(String(opportunityId || ""));
+    }}
+
+    function toggleSavedOpportunity(opportunityId) {{
+      if (!opportunityId) return;
+      const id = String(opportunityId);
+      const current = readSavedOpportunities();
+      const exists = current.includes(id);
+      const next = exists ? current.filter((value) => value !== id) : [id, ...current];
+      writeSavedOpportunities(next);
+      setSavedViewNotice(
+        exists ? copy.saved_opportunity_removed : copy.saved_opportunity_saved
+      );
+      renderOpportunities();
+    }}
+
+    function csvCell(value) {{
+      const textValue = String(value || "").replace(/\\s+/g, " ").trim();
+      return `"${{textValue.replace(/"/g, '""')}}"`;
+    }}
+
+    function downloadText(filename, content, mimeType) {{
+      const blob = new Blob([content], {{ type: mimeType }});
+      const url = window.URL.createObjectURL(blob);
+      const anchor = document.createElement("a");
+      anchor.href = url;
+      anchor.download = filename;
+      document.body.appendChild(anchor);
+      anchor.click();
+      anchor.remove();
+      window.URL.revokeObjectURL(url);
+    }}
+
+    function exportVisibleCsv() {{
+      const rows = visibleItems();
+      const header = [
+        "title",
+        "funder",
+        "source",
+        "format",
+        "match",
+        "deadline",
+        "page_url",
+        "source_url"
+      ];
+      const csvRows = [
+        header.map(csvCell).join(","),
+        ...rows.map((item) => [
+          item.title,
+          item.funder || humanizeLabel(item.source),
+          humanizeLabel(item.source),
+          opportunityFormatLabel(item),
+          formatScore(item.score),
+          item.deadline || "",
+          new URL(opportunityPageHref(item.id), window.location.origin).href,
+          item.source_url || ""
+        ].map(csvCell).join(","))
+      ];
+      downloadText("qazfund-opportunities.csv", csvRows.join("\\n"), "text/csv;charset=utf-8");
+    }}
+
+    function icsDate(value) {{
+      return String(value || "").replace(/-/g, "");
+    }}
+
+    function exportVisibleDeadlines() {{
+      const rows = visibleItems().filter((item) => item.deadline);
+      const escapeIcs = (value) => String(value || "")
+        .replace(/\\\\/g, "\\\\\\\\")
+        .replace(/,/g, "\\\\,")
+        .replace(/;/g, "\\\\;")
+        .replace(/\\n/g, "\\\\n");
+      const now = new Date().toISOString().replace(/[-:]/g, "").split(".")[0] + "Z";
+      const events = rows.map((item) => [
+        "BEGIN:VEVENT",
+        `UID:qazfund-${{item.id}}@qaz.fund`,
+        `DTSTAMP:${{now}}`,
+        `DTSTART;VALUE=DATE:${{icsDate(item.deadline)}}`,
+        `SUMMARY:${{escapeIcs(item.title || copy.detail_title_fallback)}}`,
+        `DESCRIPTION:${{escapeIcs((summarize(item) || "") + " " + opportunityPageHref(item.id))}}`,
+        `URL:${{new URL(opportunityPageHref(item.id), window.location.origin).href}}`,
+        "END:VEVENT"
+      ].join("\\r\\n"));
+      const body = [
+        "BEGIN:VCALENDAR",
+        "VERSION:2.0",
+        "PRODID:-//QAZ.FUND//Opportunity Deadlines//EN",
+        ...events,
+        "END:VCALENDAR"
+      ].join("\\r\\n");
+      downloadText("qazfund-deadlines.ics", body, "text/calendar;charset=utf-8");
+    }}
+
+    function issueUrl(item) {{
+      const params = new URLSearchParams();
+      params.set("title", `Data issue: ${{item && item.title ? item.title : "opportunity"}}`);
+      params.set("body", [
+        "Public page:",
+        new URL(opportunityPageHref(item && item.id), window.location.origin).href,
+        "",
+        "What should be corrected:"
+      ].join("\\n"));
+      return `https://github.com/belilovsky/grant-radar-public/issues/new?${{params.toString()}}`;
+    }}
+
     function cleanSummaryText(value) {{
       const raw = String(value || "").replace(/\\s+/g, " ").trim();
       if (!raw) return "";
@@ -7634,6 +7909,9 @@ def render_dashboard(
         const opportunityId = escapeHtml(item.id);
         const cardUrl = escapeHtml(externalActionUrl(item));
         const pageUrl = escapeHtml(opportunityPageHref(item.id));
+        const reportUrl = escapeHtml(issueUrl(item));
+        const saved = isOpportunitySaved(item.id);
+        const saveLabel = saved ? copy.unsave_opportunity : copy.save_opportunity;
         const clickLabel = escapeHtml(cardTitleText);
         return `<article
           class="opportunity avds-document-row ${{scoreTone}}"
@@ -7672,6 +7950,17 @@ def render_dashboard(
                   target="_blank"
                   rel="noopener"
                 >${{escapeHtml(copy.read_more)}}</a>
+                <button
+                  class="detail-link"
+                  type="button"
+                  data-save-opportunity="${{opportunityId}}"
+                >${{escapeHtml(saveLabel)}}</button>
+                <a
+                  class="more-link"
+                  href="${{reportUrl}}"
+                  target="_blank"
+                  rel="noopener"
+                >${{escapeHtml(copy.report_issue)}}</a>
               </div>
             </div>
             <aside class="opportunity-rail" aria-label="${{escapeHtml(copy.card_meta_label)}}">
@@ -7752,6 +8041,16 @@ def render_dashboard(
           const opportunityId = button.getAttribute("data-opportunity-detail");
           const fallbackUrl = button.getAttribute("data-opportunity-url") || "";
           openOpportunityDetail(opportunityId, fallbackUrl);
+        }});
+      }});
+      const saveButtons = document.querySelectorAll("[data-save-opportunity]");
+      saveButtons.forEach((button) => {{
+        if (button.dataset.bound === "true") {{
+          return;
+        }}
+        button.dataset.bound = "true";
+        button.addEventListener("click", () => {{
+          toggleSavedOpportunity(button.getAttribute("data-save-opportunity"));
         }});
       }});
     }}
@@ -7998,6 +8297,8 @@ def render_dashboard(
     $("#share-view").addEventListener("click", () => {{
       shareCurrentView();
     }});
+    $("#export-csv").addEventListener("click", exportVisibleCsv);
+    $("#export-deadlines").addEventListener("click", exportVisibleDeadlines);
     document.addEventListener("click", (event) => {{
       const applyButton = event.target.closest("[data-saved-view]");
       if (applyButton) {{

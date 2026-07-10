@@ -17,6 +17,9 @@ historic backup filenames, and maintainer-only evidence.
 - `GET` and `HEAD /health` are public.
 - `GET` and `HEAD /ready` are public and must not expose secrets.
 - `GET /coverage`, `GET /opportunities`, and `GET /digest` are public.
+- `GET` and `HEAD /opportunity/{id}` render public opportunity pages.
+- `GET` and `HEAD /funder/{slug}` render public funder pages.
+- `GET` and `HEAD /opportunities/{id}` return public opportunity detail availability.
 - `GET` and `HEAD /robots.txt`, `/sitemap.xml`, `/llms.txt`, and `/site-discovery.json` are public.
 - `GET /docs` and `GET /openapi.json` must stay reachable for public API consumers.
 - `llms.txt` and `site-discovery.json` should expose the read-only data endpoints
@@ -36,6 +39,21 @@ PYTHONPATH=. ./.venv/bin/python -m scripts.nlp_quality_audit --base-url https://
 PYTHONPATH=. ./.venv/bin/python -m scripts.nlp_quality_audit --base-url https://example.org --lang en --limit 150
 ```
 
+## Public UX expectations
+
+- The catalog keeps primary filters visible and places lifecycle/deadline/source
+  filters under "Additional filters" / "Дополнительные фильтры".
+- Saved views and saved opportunity cards are browser-local only. They are not
+  synchronized between devices or accounts.
+- CSV export downloads the currently visible result set as
+  `qazfund-opportunities.csv`.
+- Calendar export downloads visible deadline items as `qazfund-deadlines.ics`.
+- "Report data issue" links open the public GitHub Issues form with the
+  opportunity page prefilled.
+- The footer must state that QAZ.FUND does not award grants or process
+  applications, and must link to qdev.run without turning the footer into a
+  promotional block.
+
 ## Post-release checks
 
 ```bash
@@ -47,6 +65,9 @@ curl -fsS https://example.org/llms.txt
 curl -fsS https://example.org/site-discovery.json
 curl -fsSI https://example.org/docs
 curl -fsS 'https://example.org/opportunities?limit=3&min_score=0.5'
+curl -fsSI 'https://example.org/opportunities/<uuid>?lang=ru'
+curl -fsSI 'https://example.org/opportunity/<uuid>?lang=ru'
+curl -fsSI 'https://example.org/funder/<slug>?lang=ru'
 curl -fsS 'https://example.org/digest?limit=5&tag=ai'
 ```
 
