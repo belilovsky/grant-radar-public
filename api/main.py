@@ -719,7 +719,9 @@ def _build_funder_index(items: Iterable[Opportunity]) -> dict[str, dict[str, Any
 
 
 def _funder_index(content_lang: str = "en") -> dict[str, dict[str, Any]]:
-    return _build_funder_index(_cached_public_items(content_lang=content_lang))
+    return _build_funder_index(
+        _cached_public_scope_items(content_lang=content_lang, include_irrelevant=False)
+    )
 
 
 def _funder_payload(group: dict[str, Any]) -> dict[str, Any]:

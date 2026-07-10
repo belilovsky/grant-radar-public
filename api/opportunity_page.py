@@ -83,13 +83,6 @@ def _label_value(value: object, copy: dict[str, object]) -> str:
     return raw.replace("_", " ")
 
 
-def _status_label(status: str, copy: dict[str, object]) -> str:
-    normalized = str(status or "structured_only").strip().lower()
-    key = f"detail_status_{normalized}"
-    value = copy.get(key) or copy.get("detail_status_structured_only")
-    return str(value or normalized.replace("_", " "))
-
-
 def _localized_item_value(
     item: Opportunity,
     field: str,
@@ -162,14 +155,6 @@ def _format_deadline(value: date | None, lang: str, rolling_label: str) -> str:
     if lang == "en":
         return value.strftime("%b %d, %Y")
     return value.strftime("%d.%m.%Y")
-
-
-def _score_label(score: float, copy: dict[str, object]) -> str:
-    if score >= 0.7:
-        return str(copy["score_exact"])
-    if score >= 0.5:
-        return str(copy["score_high"])
-    return str(copy["score_base"])
 
 
 def _metadata_markup(
@@ -301,7 +286,7 @@ def _sections_markup(
     for section in sections:
         paragraphs = "".join(
             f"<p>{escape(_clean_summary_text(chunk, title=title) or chunk.strip())}</p>"
-            for chunk in section.text.splitlines()
+            for chunk in _paragraph_chunks(section.text)
             if chunk.strip()
         )
         blocks.append(
@@ -316,6 +301,33 @@ def _sections_markup(
             )
         )
     return "".join(blocks)
+
+
+def _paragraph_chunks(text: str, *, target_length: int = 520) -> list[str]:
+    """Turn source walls of text into stable, readable paragraphs."""
+
+    blocks: list[str] = []
+    for raw_block in text.splitlines():
+        normalized = re.sub(r"\s+", " ", raw_block).strip()
+        if not normalized:
+            continue
+        sentences = re.split(r"(?<=[.!?])\s+(?=[A-ZА-ЯӘҒҚҢӨҰҮҺІ0-9«])", normalized)
+        current: list[str] = []
+        current_length = 0
+        for sentence in sentences:
+            sentence = sentence.strip()
+            if not sentence:
+                continue
+            projected = current_length + len(sentence) + (1 if current else 0)
+            if current and projected > target_length:
+                blocks.append(" ".join(current))
+                current = []
+                current_length = 0
+            current.append(sentence)
+            current_length += len(sentence) + (1 if current_length else 0)
+        if current:
+            blocks.append(" ".join(current))
+    return blocks
 
 
 def _term_blob(detail: OpportunityDetail) -> str:
@@ -620,8 +632,8 @@ def render_opportunity_page(
     deadline_label = escape(
         _format_deadline(detail.deadline, active_lang, str(copy["open_rolling"]))
     )
-    score_label = _score_label(detail.score, copy)
     source_host = escape(_host_label(str(detail.source_url)))
+    format_label = escape(_label_value(detail.type, copy))
     og_locale = escape(active_lang.replace("-", "_") + "_KZ", quote=True)
     canonical_url = _absolute_href(site_origin, canonical_path)
     catalog_url = _absolute_href(site_origin, _catalog_path(root_path, active_lang))
@@ -635,6 +647,8 @@ def render_opportunity_page(
     )
     social_image = escape(og_image_url(site_origin, root_path), quote=True)
     analytics_head = analytics_head_html()
+    ru_lang_class = "active" if active_lang == "ru" else ""
+    en_lang_class = "active" if active_lang == "en" else ""
     eligibility = [
         escape(_label_value(value, copy))
         for value in detail.eligibility
@@ -663,11 +677,6 @@ def render_opportunity_page(
     html_attrs = (
         f'lang="{escape(active_lang, quote=True)}" '
         'data-avds="grant-radar" data-av-theme="light" data-theme="light"'
-    )
-    fetch_status_note = (
-        escape(_status_label(detail.detail_fetch_status, copy))
-        if detail.detail_available
-        else escape(str(copy["detail_empty"]))
     )
     deadline_meta_label = escape(str(metadata_labels.get("deadline", "Deadline")))
     schema_json = _opportunity_schema(
@@ -762,6 +771,24 @@ def render_opportunity_page(
     .breadcrumbs a:hover {{
       color: var(--brand);
     }}
+    .lang-switch {{
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+    }}
+    .lang-switch a {{
+      min-width: 34px;
+      padding: 6px 8px;
+      border-bottom: 2px solid transparent;
+      color: var(--muted);
+      text-align: center;
+      font-size: var(--av-text-xs);
+      font-weight: 700;
+    }}
+    .lang-switch a.active {{
+      border-bottom-color: var(--brand);
+      color: var(--text);
+    }}
     .hero {{
       display: grid;
       gap: 14px;
@@ -783,7 +810,7 @@ def render_opportunity_page(
     .hero h1 {{
       margin: 0;
       max-width: 24ch;
-      font-size: clamp(18px, 1.95vw, 24px);
+      font-size: clamp(26px, 3.4vw, 38px);
       line-height: 1.08;
       text-wrap: balance;
     }}
@@ -791,8 +818,8 @@ def render_opportunity_page(
       margin: 0;
       max-width: 64ch;
       color: color-mix(in oklab, var(--text), var(--muted) 35%);
-      font-size: 13px;
-      line-height: 1.45;
+      font-size: 15px;
+      line-height: 1.55;
     }}
     .hero-grid {{
       display: grid;
@@ -883,15 +910,17 @@ def render_opportunity_page(
     .content-grid {{
       display: grid;
       grid-template-columns: minmax(0, 1.4fr) minmax(260px, 0.8fr);
-      gap: 16px;
+      gap: 24px;
       align-items: start;
+      padding-top: 18px;
+      border-top: 1px solid var(--line);
     }}
     .section-stack {{
       display: grid;
       gap: 12px;
     }}
     .section-card {{
-      padding: 12px 0 0;
+      padding: 18px 0 0;
       border: 0;
       border-top: 1px solid var(--line);
       border-radius: 0;
@@ -909,7 +938,7 @@ def render_opportunity_page(
     .section-card h2,
     .sidebar-card h2 {{
       margin: 0 0 8px;
-      font-size: 17px;
+      font-size: 20px;
       line-height: 1.2;
     }}
     .richtext {{
@@ -918,7 +947,9 @@ def render_opportunity_page(
     }}
     .richtext p {{
       margin: 0;
+      max-width: 72ch;
       color: color-mix(in oklab, var(--text), var(--muted) 28%);
+      line-height: 1.68;
     }}
     .meta-grid {{
       display: grid;
@@ -1184,6 +1215,18 @@ def render_opportunity_page(
       text-decoration: underline;
       text-underline-offset: 2px;
     }}
+    .site-footer {{
+      display: grid;
+      gap: 4px;
+      margin-top: 28px;
+      padding-top: 16px;
+      border-top: 1px solid var(--line);
+      color: var(--muted);
+      font-size: var(--av-text-xs);
+      line-height: 1.5;
+    }}
+    .site-footer p {{ margin: 0; }}
+    .site-footer a {{ color: var(--text); font-weight: 700; }}
     @media (max-width: 900px) {{
       .hero-grid,
       .content-grid,
@@ -1209,7 +1252,7 @@ def render_opportunity_page(
         padding: 12px;
       }}
       .hero h1 {{
-        font-size: 18px;
+        font-size: 25px;
       }}
       .summary {{
         font-size: 13px;
@@ -1231,6 +1274,10 @@ def render_opportunity_page(
         <a href="{catalog_href}">{escape(str(copy["opportunities_title"]))}</a>
         <span>/</span>
         <span>{escape(title)}</span>
+      </nav>
+      <nav class="lang-switch" aria-label="{escape(str(copy['language_switch']), quote=True)}">
+        <a class="{ru_lang_class}" href="{ru_href}" lang="ru">RU</a>
+        <a class="{en_lang_class}" href="{en_href}" lang="en">EN</a>
       </nav>
     </div>
 
@@ -1255,10 +1302,6 @@ def render_opportunity_page(
             <span class="eyebrow">{escape(str(copy["detail_meta_title"]))}</span>
           </div>
           <div>
-            <strong>{escape(str(copy["detail_source_status_title"]))}</strong>
-            <div class="status-note">{fetch_status_note}</div>
-          </div>
-          <div>
             <strong>{source_label}</strong>
             <div class="status-note">{source_host}</div>
           </div>
@@ -1267,15 +1310,12 @@ def render_opportunity_page(
             <div class="status-note">{deadline_meta_label}</div>
           </div>
           <div>
-            <strong>{escape(score_label)}</strong>
-            <div class="status-note">{escape(str(copy["score_title"]))}</div>
+            <strong>{format_label}</strong>
+            <div class="status-note">{escape(str(copy["meta_format_label"]))}</div>
           </div>
         </aside>
       </div>
     </section>
-
-    {prepare_markup}
-    {apply_markup}
 
     <div class="pills">{eligibility_markup}</div>
 
@@ -1289,7 +1329,16 @@ def render_opportunity_page(
         <div class="meta-grid">{metadata_markup}</div>
       </aside>
     </section>
+    {prepare_markup}
+    {apply_markup}
     {related_markup}
+    <footer class="site-footer">
+      <p>
+        {escape(str(copy["footer_owner"]))}
+        <a href="https://qdev.run">{escape(str(copy["footer_qdev"]))}</a>
+      </p>
+      <p>{escape(str(copy["footer_disclaimer"]))}</p>
+    </footer>
   </main>
 </body>
 </html>"""

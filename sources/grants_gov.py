@@ -8,6 +8,7 @@ vettech, ecotech).
 
 from __future__ import annotations
 
+import re
 from collections.abc import AsyncIterator
 from datetime import datetime
 from html import unescape
@@ -36,6 +37,16 @@ KEYWORDS = [
 
 def _clean_text(value: object) -> str:
     return unescape(str(value or "")).strip()
+
+
+def _keyword_is_visible(keyword: str, *values: str) -> bool:
+    """Only expose a search keyword as a topic when public copy supports it."""
+
+    normalized = re.escape(keyword.strip().lower()).replace(r"\ ", r"[\s_-]+")
+    if not normalized:
+        return False
+    pattern = rf"(?<![a-z0-9]){normalized}(?![a-z0-9])"
+    return any(re.search(pattern, value.lower()) for value in values if value)
 
 
 class GrantsGovSource(BaseSource):
@@ -97,6 +108,7 @@ class GrantsGovSource(BaseSource):
                 deadline = datetime.strptime(cd, "%m/%d/%Y").date()
             except ValueError:
                 pass
+        topic_tags = [kw] if _keyword_is_visible(kw, title, summary) else []
         return Opportunity(
             source=self.slug,
             source_url=url,  # type: ignore[arg-type]
@@ -105,7 +117,7 @@ class GrantsGovSource(BaseSource):
             summary=summary,
             funder=agency,
             deadline=deadline,
-            tags=[*self.default_tags, kw],
+            tags=[*self.default_tags, *topic_tags],
             raw=h,
         )
 

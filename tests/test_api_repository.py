@@ -559,6 +559,28 @@ def test_sections_markup_strips_repeated_title_prefix():
     )
 
 
+def test_sections_markup_splits_source_wall_of_text_into_paragraphs():
+    sentence = (
+        "Программа поддерживает технологические команды и исследовательские проекты. "
+    )
+    detail = OpportunityDetail(
+        source="science_fund",
+        source_url="https://example.org/source",
+        type=OpportunityType.GRANT,
+        title="Программа поддержки",
+        summary="Краткое описание.",
+        detail_sections=[OpportunityDetailSection(heading="Обзор", text=sentence * 18)],
+    )
+
+    markup = opportunity_page_module._sections_markup(
+        detail,
+        "Описание",
+        title=detail.title,
+    )
+
+    assert markup.count("<p>") >= 3
+
+
 def test_root_prefers_public_base_url_for_canonical_links(monkeypatch):
     _reset_api_state(monkeypatch)
     monkeypatch.setenv("PUBLIC_BASE_URL", "https://qaz.fund")
@@ -2100,10 +2122,15 @@ def test_opportunity_page_renders_public_permalink(monkeypatch):
     assert "Как подать" in response.text
     assert "Откройте страницу подачи" in response.text
     assert "Сверьте критерии" in response.text
-    assert "Описание и ключевые поля собраны с официального источника" in response.text
-    assert "Статус источника" in response.text
-    assert "<strong>Точное</strong>" in response.text
+    assert (
+        "Описание и ключевые поля собраны с официального источника" not in response.text
+    )
+    assert "Статус источника" not in response.text
+    assert "<strong>Точное</strong>" not in response.text
     assert ">0.92<" not in response.text
+    assert response.text.index("Что финансируется") < response.text.index(
+        "Что подготовить"
+    )
     assert "Быстрая оценка" not in response.text
     assert "structured_only" not in response.text
     assert "English source page title" not in response.text
@@ -2212,6 +2239,29 @@ def test_funder_page_defaults_to_russian_without_lang(monkeypatch):
 
     head_response = client.head("/funder/science-fund")
     assert head_response.status_code == 200
+
+
+def test_public_funder_index_excludes_usamraa_domestic_grants(monkeypatch):
+    _reset_api_state(monkeypatch)
+    item = Opportunity(
+        source="grants_gov",
+        source_url="https://grants.gov/opportunity/dod-amraa",
+        type=OpportunityType.GRANT,
+        title="DoD Epilepsy Research Program Award",
+        summary="Clinical research opportunity from USAMRAA.",
+        funder="DOD-AMRAA",
+        tags=["us", "federal", "grant", "artificial intelligence"],
+        deadline=date(2026, 8, 17),
+        score=0.72,
+        raw={"agencyName": "USAMRAA", "agencyCode": "DOD-AMRAA"},
+    )
+    api_main._cache.append(item)
+    client = TestClient(api_main.app)
+
+    funders = client.get("/funders").json()
+
+    assert all(row["slug"] != "dod-amraa" for row in funders)
+    assert client.get("/funder/dod-amraa").status_code == 404
 
 
 def test_opportunity_page_tailors_prepare_checklist_for_subsidies(monkeypatch):
@@ -2381,9 +2431,10 @@ def test_funder_page_renders_public_profile(monkeypatch):
     assert "Open science commercialization" in response.text
     assert "Pipeline university innovation program" in response.text
     assert "Closed lab capacity grant" in response.text
-    assert "Точное" in response.text
+    assert "Точное" not in response.text
     assert ">0.91<" not in response.text
-    assert "border-bottom: 1px solid var(--line);" in response.text
+    assert "grid-template-columns: repeat(2, minmax(0, 1fr));" in response.text
+    assert "Ближайший срок" in response.text
     assert f'href="/opportunity/{open_item.id}?lang=ru"' in response.text
     assert f'href="/opportunity/{forecast_item.id}?lang=ru"' in response.text
     assert 'href="/?lang=ru#opportunities"' in response.text

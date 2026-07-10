@@ -129,6 +129,8 @@ COPY = {
         "funder_open_profile": "Профиль фонда",
         "funder_empty": "Активные профили фондов сейчас не найдены.",
         "funder_live_now": "Живые возможности",
+        "funder_total_items": "Всего в индексе",
+        "funder_next_deadline": "Ближайший срок",
         "funder_overview_intro": "Обычно поддерживает гранты и программы.",
         "funder_overview_types": "Форматы: {types}.",
         "funder_overview_topics": "Основные темы: {topics}.",
@@ -972,6 +974,8 @@ COPY = {
         "funder_open_profile": "Funder profile",
         "funder_empty": "No active funder profiles are available right now.",
         "funder_live_now": "Live opportunities",
+        "funder_total_items": "Total indexed",
+        "funder_next_deadline": "Nearest deadline",
         "funder_overview_intro": "Usually supports grants and support programs.",
         "funder_overview_types": "Formats: {types}.",
         "funder_overview_topics": "Main topics: {topics}.",
@@ -5171,7 +5175,7 @@ def render_dashboard(
     const DEFAULT_LIFECYCLE = "all";
     const DEFAULT_REGION = "all";
     const DEFAULT_DEADLINE = "all";
-    const DEFAULT_VISIBLE_ITEMS = 15;
+    const DEFAULT_VISIBLE_ITEMS = window.matchMedia("(max-width: 560px)").matches ? 6 : 8;
     const COLLAPSED_SOURCES = 5;
     const SAVED_VIEW_STORAGE_KEY = "grantRadarSavedViews.v1";
     const SAVED_OPPORTUNITY_STORAGE_KEY = "grantRadarSavedOpportunities.v1";

@@ -179,6 +179,10 @@ HARD_EXCLUSION_RAW_VALUES = (
 )
 
 GRANTS_GOV_DOMESTIC_AGENCY_PATTERNS = (
+    r"\bdod[\s_-]*amraa\b",
+    r"\busamraa\b",
+    r"\bu\.?s\.?[\s_-]+army[\s_-]+medical[\s_-]+research\b",
+    r"\bdepartment[\s_-]+of[\s_-]+defense\b",
     r"\bbureau[\s_-]+of[\s_-]+educational[\s_-]+and[\s_-]+cultural[\s_-]+affairs\b",
     r"\bbureau[\s_-]+of[\s_-]+international[\s_-]+narcotics[\s_-]+[-–]?law[\s_-]+enforcement\b",
     r"\bnational[\s_-]+institute[\s_-]+of[\s_-]+food[\s_-]+and[\s_-]+agriculture\b",

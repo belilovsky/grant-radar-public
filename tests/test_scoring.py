@@ -180,6 +180,18 @@ def test_grants_gov_nih_research_notice_is_not_product_relevant_without_region_s
     assert not is_relevant_for_kazakhstan_focus(opp)
 
 
+def test_grants_gov_usamraa_notice_is_not_product_relevant():
+    opp = _opp(
+        "DoD Epilepsy Research Program Award",
+        summary="Clinical research opportunity from USAMRAA.",
+        tags=["us", "federal", "grant", "artificial intelligence"],
+    )
+    opp.source = "grants_gov"
+    opp.raw = {"agencyName": "USAMRAA", "agencyCode": "DOD-AMRAA"}
+
+    assert not is_relevant_for_kazakhstan_focus(opp)
+
+
 def test_grants_gov_postsecondary_office_notice_is_not_product_relevant_without_region_signal():
     opp = _opp(
         "Strengthening Institutions Program FY 2026 Competition",

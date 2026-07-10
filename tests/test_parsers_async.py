@@ -1553,6 +1553,35 @@ async def test_undp_procurement_skips_russian_operational_service_notice():
     assert items == []
 
 
+def test_grants_gov_does_not_publish_query_keyword_without_content_signal():
+    item = GrantsGovSource()._to_opportunity(
+        {
+            "id": "DOD-AMRAA-26-001",
+            "title": "Epilepsy Research Program Award",
+            "description": "Clinical research opportunity from USAMRAA.",
+            "agencyName": "USAMRAA",
+            "closeDate": "08/17/2026",
+        },
+        "artificial intelligence",
+    )
+
+    assert "artificial intelligence" not in item.tags
+
+
+def test_grants_gov_keeps_query_keyword_when_public_copy_supports_it():
+    item = GrantsGovSource()._to_opportunity(
+        {
+            "id": "AI-KZ-001",
+            "title": "Artificial intelligence education program for Kazakhstan",
+            "description": "Supports responsible AI training in Kazakhstan.",
+            "agencyName": "International Programs Office",
+        },
+        "artificial intelligence",
+    )
+
+    assert "artificial intelligence" in item.tags
+
+
 @pytest.mark.asyncio
 @respx.mock
 async def test_kazakhstan_watch_skips_technical_difficulties_page():

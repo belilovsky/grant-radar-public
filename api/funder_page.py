@@ -3,6 +3,8 @@
 from __future__ import annotations
 
 import json
+import re
+from datetime import date
 from enum import Enum
 from html import escape
 from typing import Any, cast
@@ -138,19 +140,35 @@ def _overview_sentence(funder: dict[str, object], copy: dict[str, object]) -> st
     return " ".join(bits).strip()
 
 
-def _score_label(score: float | None, copy: dict[str, object]) -> str:
-    value = float(score or 0)
-    if value >= 0.7:
-        return str(copy["score_exact"])
-    if value >= 0.5:
-        return str(copy["score_high"])
-    return str(copy["score_base"])
+def _format_deadline(value: date | None, lang: str, rolling_label: str) -> str:
+    if value is None:
+        return rolling_label
+    if lang == "en":
+        return value.strftime("%b %d, %Y")
+    return value.strftime("%d.%m.%Y")
+
+
+def _tag_is_supported(item: Opportunity, raw_tag: object) -> bool:
+    normalized = str(raw_tag or "").strip().casefold().replace("_", " ")
+    if normalized not in {"ai", "artificial intelligence", "ии"}:
+        return True
+    public_copy = f"{item.title} {item.summary}".casefold()
+    return bool(
+        re.search(
+            r"(?<![a-z0-9])ai(?![a-z0-9])|artificial intelligence|"
+            r"искусственн\w* интеллект\w*|жасанды интеллект",
+            public_copy,
+            re.IGNORECASE,
+        )
+    )
 
 
 def _unique_public_tags(item: Opportunity, copy: dict[str, object]) -> list[str]:
     labels: list[str] = []
     seen: set[str] = set()
     for raw_tag in [item.type, *list(item.tags)]:
+        if not _tag_is_supported(item, raw_tag):
+            continue
         label = _label_value(raw_tag, copy)
         normalized = label.casefold()
         if not label or normalized in seen:
@@ -170,10 +188,6 @@ def _source_meta_label(source: dict[str, Any], copy: dict[str, object]) -> str:
 
 def _clean_summary_text(text: str, *, title: str = "") -> str:
     return clean_source_summary(text, title=title)
-
-
-def _stat(value: object) -> str:
-    return escape(str(value if value not in (None, "") else "0"))
 
 
 def _int_stat(value: object) -> int:
@@ -275,7 +289,9 @@ def _opportunity_card(
     summary_text = escape(
         _clean_summary_text(item.summary, title=item.title) or str(copy["no_summary"])
     )
-    score_text = escape(_score_label(item.score, copy))
+    deadline_text = escape(
+        _format_deadline(item.deadline, lang, str(copy["open_rolling"]))
+    )
     return f"""
     <article class="opportunity-card">
       <div class="opportunity-head">
@@ -284,13 +300,10 @@ def _opportunity_card(
           <div class="meta-row">
             <span class="meta-chip strong">{escape(primary_format)}</span>
             <span class="meta-chip lifecycle">{escape(_lifecycle_label(lifecycle, copy))}</span>
+            <span class="meta-chip deadline">{deadline_text}</span>
             {tag_markup}
           </div>
         </div>
-        <span
-          class="score"
-          title="{escape(str(copy['score_title']), quote=True)}"
-        >{score_text}</span>
       </div>
       <p>{summary_text}</p>
       <div class="card-actions">
@@ -365,6 +378,42 @@ def render_funder_page(
         _opportunity_card(item, copy=copy, root_path=root_path, lang=active_lang)
         for item in archive_items
     )
+    stat_entries: list[tuple[str, str]] = []
+    current_items = _int_stat(funder.get("current_items"))
+    rolling_items = _int_stat(funder.get("rolling_items"))
+    forecast_items = _int_stat(funder.get("forecast_items"))
+    total_items = _int_stat(funder.get("total_items"))
+    if current_items:
+        stat_entries.append((str(copy["funder_live_now"]), str(current_items)))
+    if rolling_items:
+        stat_entries.append((str(copy["lifecycle_rolling"]), str(rolling_items)))
+    if forecast_items:
+        stat_entries.append((str(copy["lifecycle_forecast"]), str(forecast_items)))
+    next_deadline = funder.get("next_deadline")
+    if isinstance(next_deadline, date):
+        stat_entries.append(
+            (
+                str(copy["funder_next_deadline"]),
+                _format_deadline(next_deadline, active_lang, str(copy["open_rolling"])),
+            )
+        )
+    if total_items and total_items != current_items:
+        stat_entries.append((str(copy["funder_total_items"]), str(total_items)))
+    stat_markup = "".join(
+        f'<div class="stat"><span>{escape(label)}</span><strong>{escape(value)}</strong></div>'
+        for label, value in stat_entries
+    )
+    archive_section = (
+        f"""
+    <section class="section">
+      <h2>{escape(str(copy["funder_archive_title"]))}</h2>
+      <p class="section-note">{escape(str(copy["funder_archive_note"]))}</p>
+      <div class="opportunity-list">{archive_markup}</div>
+    </section>
+        """
+        if archive_markup
+        else ""
+    )
     schema_json = _funder_schema(
         funder=funder,
         display_name=_label_value(str(funder["name"]), copy),
@@ -378,6 +427,8 @@ def render_funder_page(
     )
     social_image = escape(og_image_url(site_origin, root_path), quote=True)
     analytics_head = analytics_head_html()
+    ru_lang_class = "active" if active_lang == "ru" else ""
+    en_lang_class = "active" if active_lang == "en" else ""
 
     return f"""<!doctype html>
 <html lang="{html_lang}" {html_theme_attrs}>
@@ -428,7 +479,7 @@ def render_funder_page(
     }}
     a {{ color: inherit; }}
     .shell {{
-      width: min(1120px, calc(100% - 32px));
+      width: min(1180px, calc(100% - 32px));
       margin: 0 auto;
       padding: 20px 0 40px;
     }}
@@ -443,10 +494,37 @@ def render_funder_page(
       margin-bottom: 14px;
     }}
     .back-link:hover {{ color: var(--brand); }}
+    .topbar {{
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      margin-bottom: 14px;
+    }}
+    .topbar .back-link {{ margin-bottom: 0; }}
+    .lang-switch {{
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+    }}
+    .lang-switch a {{
+      min-width: 34px;
+      padding: 6px 8px;
+      border-bottom: 2px solid transparent;
+      color: var(--muted);
+      text-align: center;
+      text-decoration: none;
+      font-size: 12px;
+      font-weight: 700;
+    }}
+    .lang-switch a.active {{
+      border-bottom-color: var(--brand);
+      color: var(--ink);
+    }}
     .hero {{
       display: grid;
-      gap: 10px;
-      padding: 14px;
+      gap: 14px;
+      padding: 20px;
       border: 0;
       border-radius: 0;
       background: color-mix(in oklab, var(--panel), var(--brand-soft) 18%);
@@ -464,20 +542,20 @@ def render_funder_page(
       margin: 0;
       font-family: var(--av-font-sans, Arial, sans-serif);
       max-width: 20ch;
-      font-size: clamp(19px, 1.95vw, 24px);
+      font-size: clamp(26px, 3vw, 38px);
       line-height: 1.08;
       text-wrap: balance;
     }}
     .hero p {{
       margin: 0;
-      max-width: 60ch;
+      max-width: 72ch;
       color: var(--muted);
-      font-size: 13px;
-      line-height: 1.42;
+      font-size: 15px;
+      line-height: 1.55;
     }}
     .stat-grid {{
       display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(118px, 1fr));
+      grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
       gap: 0;
     }}
     .stat {{
@@ -504,8 +582,8 @@ def render_funder_page(
       font-family: var(--av-font-sans, Arial, sans-serif);
     }}
     .section {{
-      padding-top: 14px;
-      margin-top: 14px;
+      padding-top: 22px;
+      margin-top: 22px;
       border-top: 1px solid var(--line);
     }}
     .section h2 {{
@@ -547,14 +625,16 @@ def render_funder_page(
     }}
     .opportunity-list {{
       display: grid;
-      gap: 0;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 12px;
     }}
     .opportunity-card {{
-      border: 0;
-      border-bottom: 1px solid var(--line);
-      border-radius: 0;
-      background: transparent;
-      padding: 12px 4px;
+      display: grid;
+      align-content: start;
+      border: 1px solid var(--line);
+      border-radius: var(--av-radius-md);
+      background: var(--panel);
+      padding: 14px;
     }}
     .opportunity-head {{
       display: grid;
@@ -584,27 +664,17 @@ def render_funder_page(
       color: var(--muted);
       font-size: 13px;
       line-height: 1.45;
-    }}
-    .score {{
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-      min-width: 72px;
-      min-height: 24px;
-      padding: 0 9px;
-      justify-self: start;
-      border-radius: 999px;
-      background: var(--brand-soft);
-      color: var(--brand);
-      font-family: var(--av-font-mono, Arial, monospace);
-      font-size: 12px;
-      font-weight: 700;
+      display: -webkit-box;
+      -webkit-line-clamp: 3;
+      -webkit-box-orient: vertical;
+      overflow: hidden;
     }}
     .card-actions {{
       display: flex;
       flex-wrap: wrap;
       gap: 8px;
       margin-top: 10px;
+      align-self: end;
     }}
     .button {{
       display: inline-flex;
@@ -655,7 +725,22 @@ def render_funder_page(
       color: var(--muted);
       background: var(--panel-subtle);
     }}
+    .site-footer {{
+      display: grid;
+      gap: 4px;
+      margin-top: 28px;
+      padding-top: 16px;
+      border-top: 1px solid var(--line);
+      color: var(--muted);
+      font-size: 12px;
+      line-height: 1.5;
+    }}
+    .site-footer p {{ margin: 0; }}
+    .site-footer a {{ color: var(--ink); font-weight: 700; }}
     @media (max-width: 900px) {{
+      .opportunity-list {{
+        grid-template-columns: 1fr;
+      }}
       .source-grid {{
         grid-template-columns: repeat(2, minmax(0, 1fr));
       }}
@@ -682,7 +767,13 @@ def render_funder_page(
 </head>
 <body>
   <main class="shell">
-    <a class="back-link" href="{catalog_href}">{back_label}</a>
+    <div class="topbar">
+      <a class="back-link" href="{catalog_href}">{back_label}</a>
+      <nav class="lang-switch" aria-label="{escape(str(copy['language_switch']), quote=True)}">
+        <a class="{ru_lang_class}" href="{ru_href}" lang="ru">RU</a>
+        <a class="{en_lang_class}" href="{en_href}" lang="en">EN</a>
+      </nav>
+    </div>
     <section class="hero">
       <span class="eyebrow">{escape(str(copy["funder_page_eyebrow"]))}</span>
       <div>
@@ -690,23 +781,7 @@ def render_funder_page(
         <p>{overview}</p>
       </div>
       <div class="topic-row">{tag_chips}</div>
-      <div class="stat-grid">
-        <div class="stat"><span>{escape(str(copy["funder_live_now"]))}</span><strong>{_stat(funder.get("current_items"))}</strong></div>
-        <div class="stat"><span>{escape(str(copy["lifecycle_forecast"]))}</span><strong>{_stat(funder.get("forecast_items"))}</strong></div>
-        <div class="stat"><span>{escape(str(copy["lifecycle_rolling"]))}</span><strong>{_stat(funder.get("rolling_items"))}</strong></div>
-        <div class="stat"><span>{escape(str(copy["lifecycle_closed"]))}</span><strong>{_stat(funder.get("closed_items"))}</strong></div>
-        <div class="stat"><span>{escape(str(copy["lifecycle_awarded"]))}</span><strong>{_stat(funder.get("awarded_items"))}</strong></div>
-      </div>
-    </section>
-
-    <section class="section">
-      <h2>{escape(str(copy["funder_focus_title"]))}</h2>
-      <p class="section-note">{escape(str(copy["funder_focus_note"]))}</p>
-      <div class="topic-row">
-        <span class="topic-chip">{escape(str(copy["funder_focus_types"]))}: {escape(_type_summary(funder, copy) or "-")}</span>
-        <span class="topic-chip">{escape(str(copy["funder_focus_regions"]))}: {escape(_region_summary(funder, copy) or "-")}</span>
-        <span class="topic-chip">{escape(str(copy["funder_focus_indexed"]))}: {escape(str(funder.get("total_items") or 0))}</span>
-      </div>
+      <div class="stat-grid">{stat_markup}</div>
     </section>
 
     <section class="section">
@@ -717,13 +792,7 @@ def render_funder_page(
       </div>
     </section>
 
-    <section class="section">
-      <h2>{escape(str(copy["funder_archive_title"]))}</h2>
-      <p class="section-note">{escape(str(copy["funder_archive_note"]))}</p>
-      <div class="opportunity-list">
-        {archive_markup or f'<div class="empty">{escape(str(copy["funder_archive_empty"]))}</div>'}
-      </div>
-    </section>
+    {archive_section}
 
     <section class="section">
       <h2>{escape(str(copy["funder_sources_title"]))}</h2>
@@ -734,6 +803,13 @@ def render_funder_page(
         )}
       </div>
     </section>
+    <footer class="site-footer">
+      <p>
+        {escape(str(copy["footer_owner"]))}
+        <a href="https://qdev.run">{escape(str(copy["footer_qdev"]))}</a>
+      </p>
+      <p>{escape(str(copy["footer_disclaimer"]))}</p>
+    </footer>
   </main>
 </body>
 </html>"""

@@ -49,6 +49,11 @@ PYTHONPATH=. ./.venv/bin/python -m scripts.nlp_quality_audit --base-url https://
 - Loading states use neutral skeletons. Public copy must not expose editorial
   notes, draft labels, implementation language, or promises that content will
   appear later.
+- Funder profiles use the same Kazakhstan/Central Asia relevance scope as the
+  public catalog. Domestic-only federal programs must not reappear through the
+  funder index.
+- Opportunity pages show source content and factual metadata before generic
+  preparation guidance. Long source text is split into readable paragraphs.
 - The catalog keeps primary filters visible and places lifecycle/deadline/source
   filters under "Additional filters" / "Дополнительные фильтры".
 - Saved views and saved opportunity cards are browser-local only. They are not
@@ -56,7 +61,7 @@ PYTHONPATH=. ./.venv/bin/python -m scripts.nlp_quality_audit --base-url https://
 - CSV export downloads the currently visible result set as
   `qazfund-opportunities.csv`.
 - Calendar export downloads visible deadline items as `qazfund-deadlines.ics`.
-- "Report data issue" links open the public GitHub Issues form with the
+- "Correct the data" / "Уточнить данные" links open the public GitHub Issues form with the
   opportunity page prefilled.
 - The footer must state that QAZ.FUND does not award grants or process
   applications, and must link to qdev.run without turning the footer into a

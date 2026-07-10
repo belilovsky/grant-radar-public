@@ -38,7 +38,7 @@ These sources are high-value because they produce directly actionable opportunit
 | Google.org | grants / philanthropy | Relevant through nonprofit or government partners | weekly | Active `google_org_ai_opportunity` watch monitor; item-level partner/grantee pages next |
 | Microsoft for Startups / Founders Hub | cloud credits / startup support | High-probability infrastructure support | weekly | Active `microsoft_founders_hub` monitor |
 | AWS Activate | cloud credits | Fastest non-dilutive infrastructure support | weekly | Active `aws_activate` monitor |
-| Grants.gov | grants | Large upstream source for U.S.-funded opportunities | 2-3 times per week | Best for institutional and partner-led bids |
+| Grants.gov | grants | Large upstream source for U.S.-funded opportunities | 2-3 times per week | Domestic-only notices are excluded; a search keyword becomes a public topic tag only when the visible title or summary supports it |
 | Opportunity Desk | grants / fellowships / contests | Broad global opportunities with many fellowships and scholarships | daily | RSS-backed active parser; blog posts are filtered |
 | FundsforNGOs | grants / NGO funding | Strong bridge source for donor grants, education, media, agriculture, environment and animal-welfare calls | daily | RSS-backed active parser; expanded category set now contributes AgroTech, VetTech and EcoTech signals |
 | World Bank procurement and project pages | tenders / multilateral | Major route for education and digital transformation projects | weekly | Active `world_bank_kazakhstan` JSON adapter monitors Kazakhstan project pipeline |
