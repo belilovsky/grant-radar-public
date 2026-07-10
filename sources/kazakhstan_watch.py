@@ -30,6 +30,8 @@ class WatchPage:
     type: OpportunityType
     rolling: bool = False
     retain_on_fetch_error: bool = False
+    title_ru: str = ""
+    summary_ru: str = ""
 
 
 WATCH_PAGES = (
@@ -43,6 +45,12 @@ WATCH_PAGES = (
         tags=("grant", "public_diplomacy", "education"),
         type=OpportunityType.GRANT,
         rolling=True,
+        title_ru="Гранты Посольства США в Казахстане",
+        summary_ru=(
+            "Малые гранты и возможности общественной дипломатии для Казахстана. "
+            "Перед подачей проверьте на странице Посольства требования, темы, сроки "
+            "и порядок оформления заявки."
+        ),
     ),
     WatchPage(
         url="https://www.ebrd.com/kazakhstan.html",
@@ -160,6 +168,19 @@ class KazakhstanWatchSource(BaseSource):
         *,
         raw: dict[str, Any],
     ) -> Opportunity:
+        raw_payload = dict(raw)
+        if page.title_ru or page.summary_ru:
+            i18n = raw_payload.get("i18n")
+            localized = dict(i18n) if isinstance(i18n, dict) else {}
+            ru = localized.get("ru")
+            ru_payload = dict(ru) if isinstance(ru, dict) else {}
+            if page.title_ru:
+                ru_payload["title"] = page.title_ru
+            if page.summary_ru:
+                ru_payload["summary"] = page.summary_ru
+            localized["ru"] = ru_payload
+            raw_payload["i18n"] = localized
+
         return Opportunity(
             source=self.slug,
             source_url=page.url,  # type: ignore[arg-type]
@@ -167,7 +188,7 @@ class KazakhstanWatchSource(BaseSource):
             title=page.title,
             summary=page.summary,
             tags=_page_tags(page, self.default_tags),
-            raw=raw,
+            raw=raw_payload,
         )
 
     async def fetch(self) -> AsyncIterator[Opportunity]:

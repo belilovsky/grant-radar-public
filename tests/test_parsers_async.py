@@ -1621,6 +1621,25 @@ async def test_kazakhstan_watch_keeps_curated_blocked_page_without_access_denied
     assert "Access Denied" not in items[0].raw.values()
 
 
+def test_kazakhstan_watch_keeps_curated_russian_copy_with_source_record():
+    page = WatchPage(
+        url="https://example.org/embassy-grants",
+        title="U.S. Embassy Kazakhstan grants",
+        summary="Small grants and public diplomacy opportunities for Kazakhstan.",
+        tags=("grant", "education"),
+        type=OpportunityType.GRANT,
+        title_ru="Гранты Посольства США в Казахстане",
+        summary_ru="Актуальные условия и сроки подачи доступны на странице Посольства.",
+    )
+
+    item = KazakhstanWatchSource()._opportunity(page, raw={"external_id": page.url})
+
+    assert item.raw["i18n"]["ru"] == {
+        "title": "Гранты Посольства США в Казахстане",
+        "summary": "Актуальные условия и сроки подачи доступны на странице Посольства.",
+    }
+
+
 @pytest.mark.asyncio
 @respx.mock
 async def test_kazakhstan_watch_can_retain_official_page_on_fetch_error():
