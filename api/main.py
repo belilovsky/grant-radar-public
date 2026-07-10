@@ -98,6 +98,7 @@ _PUBLIC_ITEMS_CACHE_TTL = timedelta(
 )
 _public_items_cache_lock = threading.Lock()
 _public_items_cache: dict[str, tuple[datetime, list[Opportunity]]] = {}
+_public_scope_cache: dict[tuple[str, bool], tuple[datetime, list[Opportunity]]] = {}
 _DASHBOARD_RAW_FIELDS = frozenset(
     {
         "agency",
@@ -487,9 +488,31 @@ def _cached_public_items(content_lang: str = "en") -> list[Opportunity]:
     return list(items)
 
 
+def _cached_public_scope_items(
+    content_lang: str = "en", *, include_irrelevant: bool = False
+) -> list[Opportunity]:
+    """Cache the expensive Kazakhstan/Central Asia applicability pass."""
+    normalized_lang = _public_lang(content_lang)
+    cache_key = (normalized_lang, include_irrelevant)
+    now = datetime.now(UTC)
+    with _public_items_cache_lock:
+        cached = _public_scope_cache.get(cache_key)
+        if cached is not None and now - cached[0] < _PUBLIC_ITEMS_CACHE_TTL:
+            return list(cached[1])
+
+    scoped_items = _public_scope_items(
+        _cached_public_items(normalized_lang),
+        include_irrelevant=include_irrelevant,
+    )
+    with _public_items_cache_lock:
+        _public_scope_cache[cache_key] = (now, scoped_items)
+    return list(scoped_items)
+
+
 def _clear_public_items_cache() -> None:
     with _public_items_cache_lock:
         _public_items_cache.clear()
+        _public_scope_cache.clear()
 
 
 def _warm_public_items_cache() -> None:
@@ -497,6 +520,7 @@ def _warm_public_items_cache() -> None:
     for content_lang in ("en", "ru"):
         with suppress(Exception):
             _cached_public_items(content_lang)
+            _cached_public_scope_items(content_lang)
 
 
 def _compact_dashboard_item(item: Opportunity) -> Opportunity:
@@ -938,9 +962,7 @@ def _render_sitemap_xml(base_url: str) -> str:
     opportunities = sorted(
         [
             item
-            for item in _public_scope_items(
-                _cached_public_items(content_lang="en"), include_irrelevant=False
-            )
+            for item in _cached_public_scope_items(content_lang="en")
             if _is_open(item, date.today())
         ],
         key=lambda item: (item.discovered_at, item.score, str(item.title).lower()),
@@ -1040,7 +1062,7 @@ async def root(request: Request) -> HTMLResponse:
     repository = _configured_repository()
     items = repository.size() if repository is not None else len(_cache)
     public_items = _cached_public_items(content_lang="en")
-    relevant_items = len(_public_scope_items(public_items, include_irrelevant=False))
+    relevant_items = len(_cached_public_scope_items(content_lang="en"))
     source_count = len(
         {item.source for item in public_items if str(item.source).strip()}
     )
@@ -1441,8 +1463,9 @@ async def list_opportunities(
     compact: bool = Query(False),
 ) -> list[Opportunity]:
     content_lang = _public_lang(lang)
-    items = _cached_public_items(content_lang=content_lang)
-    items = _public_scope_items(items, include_irrelevant=include_irrelevant)
+    items = _cached_public_scope_items(
+        content_lang=content_lang, include_irrelevant=include_irrelevant
+    )
     if tag:
         items = [o for o in items if tag.lower() in (t.lower() for t in o.tags)]
     items = [o for o in items if o.score >= min_score]
@@ -1511,8 +1534,9 @@ async def digest(
 ) -> Digest:
     content_lang = _public_lang(lang)
     today = date.today()
-    items = _cached_public_items(content_lang=content_lang)
-    items = _public_scope_items(items, include_irrelevant=include_irrelevant)
+    items = _cached_public_scope_items(
+        content_lang=content_lang, include_irrelevant=include_irrelevant
+    )
     items = [item for item in items if _is_open(item, today)]
     if tag:
         items = [

@@ -1658,6 +1658,35 @@ def test_public_items_cache_reuses_loaded_items_until_invalidated(monkeypatch):
     assert calls["count"] == 2
 
 
+def test_public_scope_cache_reuses_expensive_geography_filter(monkeypatch):
+    _reset_api_state(monkeypatch)
+    calls = {"count": 0}
+    items = [
+        Opportunity(
+            source="grants_gov",
+            source_url="https://example.org/scoped-cache",
+            type=OpportunityType.GRANT,
+            title="Scoped cache grant",
+            summary="Opportunity for Central Asia teams.",
+            tags=["central_asia"],
+            score=0.8,
+        )
+    ]
+
+    def fake_scope(values, *, include_irrelevant: bool):
+        calls["count"] += 1
+        assert values == items
+        assert include_irrelevant is False
+        return values
+
+    monkeypatch.setattr(api_main, "_cached_public_items", lambda lang: items)
+    monkeypatch.setattr(api_main, "_public_scope_items", fake_scope)
+
+    assert api_main._cached_public_scope_items("en")[0].title == "Scoped cache grant"
+    assert api_main._cached_public_scope_items("en")[0].title == "Scoped cache grant"
+    assert calls["count"] == 1
+
+
 def test_api_cleans_source_ui_noise_from_persisted_summary(tmp_path, monkeypatch):
     _reset_api_state(monkeypatch)
     db_url = f"sqlite:///{tmp_path / 'api-clean-summary.sqlite'}"
