@@ -266,7 +266,12 @@ def test_root_renders_service_landing(monkeypatch):
     assert "Сбросить всё" in response.text
     assert "Открыть весь индекс" in response.text
     assert "Подробнее" in response.text
-    assert "Официальный источник" in response.text
+    assert "Официальный источник" not in response.text
+    assert "Открыть страницу" in response.text
+    assert '"read_more": "Открыть страницу"' in response.text
+    assert '"kz": "Казахстан"' in response.text
+    assert '"program": "Программа"' in response.text
+    assert '"education_organisation": "Образовательные организации"' in response.text
     assert 'value="all">Весь индекс' in response.text
     assert "state.includeArchived" in response.text
     assert "const ALL_INDEX_SCORE = 0;" in response.text
@@ -280,7 +285,9 @@ def test_root_renders_service_landing(monkeypatch):
     assert 'region: "all"' in response.text
     assert 'deadlineMode: "all"' in response.text
     assert "const AUDIENCE_PRESETS = [" in response.text
+    assert "const SUPPORT_FORMAT_TAGS = [" in response.text
     assert "const FORMAT_PRESETS = [" in response.text
+    assert "&& !matchesAnyTag(item, SUPPORT_FORMAT_TAGS)" in response.text
     assert "const TOPIC_PRESETS = [" in response.text
     assert "const LIFECYCLE_FILTERS = [" in response.text
     assert "const REGION_FILTERS = [" in response.text
@@ -302,6 +309,10 @@ def test_root_renders_service_landing(monkeypatch):
     assert 'href="${pageUrl}"' in response.text
     assert "function renderDetailFit(item)" in response.text
     assert "function renderSpotlights()" in response.text
+    assert (
+        "function takeUniqueSpotlightPreview(items, usedKeys, count = 3)"
+        in response.text
+    )
     assert "function renderThemes()" in response.text
     assert "function themeCardMarkup(config)" in response.text
     assert "function activeTopicBrief()" in response.text
@@ -1884,6 +1895,8 @@ def test_opportunity_page_renders_public_permalink(monkeypatch):
     assert "Сверьте критерии" in response.text
     assert "Описание и ключевые поля собраны с официального источника" in response.text
     assert "Статус источника" in response.text
+    assert "<strong>Точное</strong>" in response.text
+    assert ">0.92<" not in response.text
     assert "Быстрая оценка" not in response.text
     assert "structured_only" not in response.text
     assert "English source page title" not in response.text
@@ -2114,6 +2127,8 @@ def test_funder_page_renders_public_profile(monkeypatch):
     assert "<title>Фонд науки - QAZ.FUND</title>" in response.text
     assert "<h1>Фонд науки</h1>" in response.text
     assert "Профиль фонда" in response.text
+    assert "--brand: var(--color-accent);" in response.text
+    assert "--av-color-primary-700" not in response.text
     assert "Живые и рабочие возможности" in response.text
     assert "Архив и исторический след" in response.text
     assert "Обычно поддерживает" in response.text
@@ -2128,6 +2143,7 @@ def test_funder_page_renders_public_profile(monkeypatch):
     assert "Closed lab capacity grant" in response.text
     assert "Точное" in response.text
     assert ">0.91<" not in response.text
+    assert "border-bottom: 1px solid var(--line);" in response.text
     assert f'href="/opportunity/{open_item.id}?lang=ru"' in response.text
     assert f'href="/opportunity/{forecast_item.id}?lang=ru"' in response.text
     assert 'href="/?lang=ru#opportunities"' in response.text

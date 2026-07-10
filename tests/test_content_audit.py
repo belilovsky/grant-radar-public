@@ -106,6 +106,50 @@ def test_content_audit_accepts_clean_rolling_items():
     assert result.rootish_source_urls == []
 
 
+def test_content_audit_flags_tags_without_public_localization():
+    result = analyze_content(
+        coverage={
+            "enabled_sources": 1,
+            "relevant_open_items": 1,
+            "sources": [
+                {
+                    "slug": "startup",
+                    "enabled": True,
+                    "items": 1,
+                    "last_discovered_at": "2026-05-25T00:00:00+00:00",
+                }
+            ],
+        },
+        opportunities=[
+            {
+                "title": "Capacity building program",
+                "summary": (
+                    "A detailed public program summary with enough context for teams "
+                    "to understand the opportunity and verify the official source."
+                ),
+                "tags": ["rolling", "capacity_building"],
+                "source_url": "https://example.org/programs/capacity-building",
+            }
+        ],
+        forbidden_terms=[],
+        min_sources=1,
+        min_opportunities=1,
+        stale_after_days=7,
+        label_maps={
+            "ru": {"rolling": "Бессрочно"},
+            "en": {
+                "rolling": "Rolling",
+                "capacity_building": "Capacity building",
+            },
+        },
+        now=datetime(2026, 5, 25, tzinfo=UTC),
+    )
+
+    assert result.status == "needs_attention"
+    assert result.unlocalized_tags == {"ru": ["capacity_building"]}
+    assert "public tags are missing localized display labels" in result.issues
+
+
 def test_content_audit_ignores_html_entities_inside_raw_source_snippets():
     result = analyze_content(
         coverage={

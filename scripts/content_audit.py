@@ -12,6 +12,8 @@ from urllib.parse import urljoin, urlparse
 
 import httpx
 
+from api.dashboard import dashboard_copy
+
 try:
     from datetime import UTC
 except ImportError:  # pragma: no cover - Python < 3.11 compatibility
@@ -40,6 +42,7 @@ class ContentAuditResult:
     rootish_source_urls: list[str] = field(default_factory=list)
     html_entity_titles: list[str] = field(default_factory=list)
     missing_detail_status_titles: list[str] = field(default_factory=list)
+    unlocalized_tags: dict[str, list[str]] = field(default_factory=dict)
     forbidden_hits: dict[str, list[str]] = field(default_factory=dict)
     issues: list[str] = field(default_factory=list)
 
@@ -125,6 +128,18 @@ def _has_detail_contract(item: dict[str, Any]) -> bool:
     return bool(str(raw.get("detail_fetch_status") or "").strip())
 
 
+def _label_key(value: Any) -> str:
+    return str(value or "").strip().lower().replace("-", "_").replace(" ", "_")
+
+
+def _dashboard_label_maps() -> dict[str, dict[str, object]]:
+    result: dict[str, dict[str, object]] = {}
+    for lang in ("ru", "en"):
+        raw = dashboard_copy(lang).get("label_map")
+        result[lang] = dict(raw) if isinstance(raw, dict) else {}
+    return result
+
+
 def analyze_content(
     *,
     coverage: dict[str, Any],
@@ -133,6 +148,7 @@ def analyze_content(
     min_sources: int,
     min_opportunities: int,
     stale_after_days: int,
+    label_maps: dict[str, dict[str, object]] | None = None,
     now: datetime | None = None,
 ) -> ContentAuditResult:
     now = now or datetime.now(UTC)
@@ -221,6 +237,24 @@ def analyze_content(
             f"{len(missing_detail_status_titles)} domestic support items lack detail contract"
         )
 
+    unlocalized_tags: dict[str, list[str]] = {}
+    if label_maps:
+        tags = {
+            str(tag).strip()
+            for item in opportunities
+            for tag in item.get("tags") or []
+            if str(tag).strip()
+        }
+        for lang, label_map in label_maps.items():
+            normalized_labels = {_label_key(key) for key in label_map}
+            missing = sorted(
+                tag for tag in tags if _label_key(tag) not in normalized_labels
+            )
+            if missing:
+                unlocalized_tags[lang] = missing
+        if unlocalized_tags:
+            issues.append("public tags are missing localized display labels")
+
     forbidden_hits: dict[str, list[str]] = {}
     for term in forbidden_terms:
         matches = [
@@ -247,6 +281,7 @@ def analyze_content(
         rootish_source_urls=rootish_source_urls,
         html_entity_titles=html_entity_titles,
         missing_detail_status_titles=missing_detail_status_titles,
+        unlocalized_tags=unlocalized_tags,
         forbidden_hits=forbidden_hits,
         issues=issues,
     )
@@ -282,6 +317,7 @@ def run_audit(
         min_sources=min_sources,
         min_opportunities=min_opportunities,
         stale_after_days=stale_after_days,
+        label_maps=_dashboard_label_maps(),
     )
 
 

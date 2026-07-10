@@ -396,7 +396,7 @@ COPY = {
         "method_disclaimer_title": "Важно перед подачей",
         "method_disclaimer_text": (
             "Если карточка выглядит подходящей, откройте официальный источник и "
-            "проверьте дедлайн, eligibility, состав документов и способ отправки "
+            "проверьте дедлайн, критерии участия, состав документов и способ отправки "
             "заявки."
         ),
         "faq_title": "Частые вопросы",
@@ -504,7 +504,7 @@ COPY = {
         "empty_action_score": "Стандартный порог",
         "empty_action_scope": "Открыть весь индекс",
         "open_details": "Подробнее",
-        "read_more": "Официальный источник",
+        "read_more": "Открыть страницу",
         "open_rolling": "Открыто / бессрочно",
         "score_title": "Оценка релевантности по эвристикам QAZ.FUND",
         "score_exact": "Точное",
@@ -691,7 +691,70 @@ COPY = {
             "kazakhstan": "Казахстан",
             "central_asia": "Центральная Азия",
             "global": "Глобально",
+            "kz": "Казахстан",
+            "program": "Программа",
             "education": "Образование",
+            "education_organisation": "Образовательные организации",
+            "agriculture": "Сельское хозяйство",
+            "assessment": "Оценка",
+            "capacity_building": "Развитие потенциала",
+            "children": "Дети",
+            "civic": "Гражданские инициативы",
+            "cloudflare": "Cloudflare",
+            "consultancy": "Консультационные услуги",
+            "consulting": "Консалтинг",
+            "creative_industries": "Креативные индустрии",
+            "culture": "Культура",
+            "database": "Базы данных",
+            "developer_tools": "Инструменты разработчика",
+            "digital": "Цифровые решения",
+            "donor": "Донорские программы",
+            "ebrd": "ЕБРР",
+            "ecepp": "ECEPP",
+            "energy": "Энергетика",
+            "environment": "Окружающая среда",
+            "erasmus": "Erasmus+",
+            "erasmus_mundus": "Erasmus Mundus",
+            "eu": "ЕС",
+            "eu_studies": "Европейские исследования",
+            "evaluation": "Оценка проектов",
+            "federal": "Федеральные программы",
+            "finance": "Финансы",
+            "firebase": "Firebase",
+            "governance": "Управление",
+            "gpu": "GPU",
+            "health": "Здравоохранение",
+            "higher_education": "Высшее образование",
+            "human_rights": "Права человека",
+            "infrastructure": "Инфраструктура",
+            "isdb": "Исламский банк развития",
+            "it": "ИТ",
+            "jean_monnet": "Жан Моне",
+            "joint_degrees": "Совместные программы",
+            "kyrgyz": "Кыргызстан",
+            "kyrgyzstan": "Кыргызстан",
+            "mobility": "Академическая мобильность",
+            "nonprofit_required": "Только для НКО",
+            "partnership": "Партнёрство",
+            "policy": "Государственная политика",
+            "procurement": "Закупки",
+            "public_diplomacy": "Публичная дипломатия",
+            "regional_development": "Региональное развитие",
+            "research": "Исследования",
+            "security": "Безопасность",
+            "serverless": "Бессерверные технологии",
+            "sez": "СЭЗ",
+            "social_entrepreneurship": "Социальное предпринимательство",
+            "student_exchange": "Студенческий обмен",
+            "tajikistan": "Таджикистан",
+            "teacher_training": "Подготовка педагогов",
+            "technology": "Технологии",
+            "transport": "Транспорт",
+            "undp": "ПРООН",
+            "us": "США",
+            "uzbekistan": "Узбекистан",
+            "watchlist": "Мониторинг",
+            "water": "Водные ресурсы",
             "digital_skills": "Цифровые навыки",
             "development": "Развитие",
             "project_pipeline": "Портфель проектов",
@@ -1267,7 +1330,7 @@ COPY = {
         "empty_action_score": "Standard threshold",
         "empty_action_scope": "Open full index",
         "open_details": "Details",
-        "read_more": "Official source",
+        "read_more": "Open page",
         "open_rolling": "Open / Rolling",
         "score_title": "QAZ.FUND relevance score based on current heuristics",
         "score_exact": "Exact",
@@ -1450,6 +1513,82 @@ COPY = {
             "undp_procurement": "UNDP Procurement",
             "kazakhstan": "Kazakhstan",
             "central_asia": "Central Asia",
+            "global": "Global",
+            "kz": "Kazakhstan",
+            "program": "Program",
+            "education_organisation": "Education organizations",
+            "agriculture": "Agriculture",
+            "assessment": "Assessment",
+            "astana_hub": "Astana Hub",
+            "azure": "Azure",
+            "capacity_building": "Capacity building",
+            "children": "Children",
+            "civic": "Civic initiatives",
+            "cloud_credits": "Cloud credits",
+            "cloudflare": "Cloudflare",
+            "consultancy": "Consultancy",
+            "consulting": "Consulting",
+            "creative_industries": "Creative industries",
+            "culture": "Culture",
+            "database": "Databases",
+            "developer_tools": "Developer tools",
+            "development": "Development",
+            "digital": "Digital solutions",
+            "digital_skills": "Digital skills",
+            "donor": "Donor programs",
+            "ebrd": "EBRD",
+            "ecepp": "ECEPP",
+            "education": "Education",
+            "energy": "Energy",
+            "environment": "Environment",
+            "erasmus": "Erasmus+",
+            "erasmus_mundus": "Erasmus Mundus",
+            "eu": "EU",
+            "eu_studies": "EU studies",
+            "evaluation": "Evaluation",
+            "federal": "Federal programs",
+            "finance": "Finance",
+            "firebase": "Firebase",
+            "google": "Google",
+            "governance": "Governance",
+            "gpu": "GPU",
+            "health": "Health",
+            "higher_education": "Higher education",
+            "human_rights": "Human rights",
+            "infrastructure": "Infrastructure",
+            "isdb": "IsDB",
+            "it": "IT",
+            "jean_monnet": "Jean Monnet",
+            "joint_degrees": "Joint degrees",
+            "kyrgyz": "Kyrgyzstan",
+            "kyrgyzstan": "Kyrgyzstan",
+            "mobility": "Academic mobility",
+            "nonprofit_required": "Nonprofits only",
+            "opportunity_desk": "Opportunity Desk",
+            "partnership": "Partnership",
+            "policy": "Public policy",
+            "procurement": "Procurement",
+            "project_pipeline": "Project pipeline",
+            "public_diplomacy": "Public diplomacy",
+            "public_sector": "Public sector",
+            "regional_development": "Regional development",
+            "research": "Research",
+            "security": "Security",
+            "serverless": "Serverless",
+            "sez": "Special economic zones",
+            "social_entrepreneurship": "Social entrepreneurship",
+            "startup_support": "Startup support",
+            "student_exchange": "Student exchange",
+            "tajikistan": "Tajikistan",
+            "teacher_training": "Teacher training",
+            "technology": "Technology",
+            "transport": "Transport",
+            "undp": "UNDP",
+            "us": "US",
+            "uzbekistan": "Uzbekistan",
+            "watchlist": "Watchlist",
+            "water": "Water",
+            "world_bank": "World Bank",
             "media": "Media",
             "journalism": "Journalism",
             "open_data": "Open data",
@@ -5032,6 +5171,19 @@ def render_dashboard(
         ])
       }}
     ];
+    const SUPPORT_FORMAT_TAGS = [
+      "subsidy",
+      "domestic_support",
+      "state_program",
+      "preferential_financing",
+      "loan_guarantee",
+      "tax_benefit",
+      "reimbursement",
+      "leasing",
+      "employment",
+      "business_support",
+      "investment"
+    ];
     const FORMAT_PRESETS = [
       {{
         id: "all",
@@ -5041,24 +5193,16 @@ def render_dashboard(
       {{
         id: "grants",
         label: copy.format_grants,
-        matches: (item) => matchesType(item, ["grant", "contest", "fellowship"])
+        matches: (item) => matchesAnyTag(item, ["grant"])
+          || (
+            matchesType(item, ["grant", "contest", "fellowship"])
+            && !matchesAnyTag(item, SUPPORT_FORMAT_TAGS)
+          )
       }},
       {{
         id: "support",
         label: copy.format_support,
-        matches: (item) => matchesAnyTag(item, [
-          "subsidy",
-          "domestic_support",
-          "state_program",
-          "preferential_financing",
-          "loan_guarantee",
-          "tax_benefit",
-          "reimbursement",
-          "leasing",
-          "employment",
-          "business_support",
-          "investment"
-        ])
+        matches: (item) => matchesAnyTag(item, SUPPORT_FORMAT_TAGS)
       }},
       {{
         id: "accelerators",
@@ -5854,14 +5998,14 @@ def render_dashboard(
     }}
 
     function opportunityFormatLabel(item) {{
-      const supportPreset = presetById(FORMAT_PRESETS, "support");
-      if (supportPreset.matches(item)) return supportPreset.label;
-      const acceleratorsPreset = presetById(FORMAT_PRESETS, "accelerators");
-      if (acceleratorsPreset.matches(item)) return acceleratorsPreset.label;
       const tendersPreset = presetById(FORMAT_PRESETS, "tenders");
       if (tendersPreset.matches(item)) return tendersPreset.label;
+      const acceleratorsPreset = presetById(FORMAT_PRESETS, "accelerators");
+      if (acceleratorsPreset.matches(item)) return acceleratorsPreset.label;
       const grantsPreset = presetById(FORMAT_PRESETS, "grants");
       if (grantsPreset.matches(item)) return grantsPreset.label;
+      const supportPreset = presetById(FORMAT_PRESETS, "support");
+      if (supportPreset.matches(item)) return supportPreset.label;
       return humanizeLabel(item.type || "");
     }}
 
@@ -6031,6 +6175,18 @@ def render_dashboard(
       `;
     }}
 
+    function takeUniqueSpotlightPreview(items, usedKeys, count = 3) {{
+      const selected = [];
+      for (const item of items) {{
+        const key = String(item.id || item.source_url || item.title || "").trim();
+        if (!key || usedKeys.has(key)) continue;
+        usedKeys.add(key);
+        selected.push(item);
+        if (selected.length >= count) break;
+      }}
+      return selected;
+    }}
+
     function renderSpotlights() {{
       const root = $("#spotlight-grid");
       if (!root) return;
@@ -6049,6 +6205,7 @@ def render_dashboard(
         const days = daysUntilDeadline(item);
         return days !== null && days >= 0 && days <= 21;
       }});
+      const usedPreviewKeys = new Set();
       const cards = [
         {{
           tone: "brand",
@@ -6056,7 +6213,7 @@ def render_dashboard(
           title: copy.spotlight_trending_title,
           note: copy.spotlight_trending_note,
           count: trendingItems.length,
-          preview: trendingItems,
+          preview: takeUniqueSpotlightPreview(trendingItems, usedPreviewKeys),
           action: {{ view: "opportunities" }}
         }},
         {{
@@ -6065,7 +6222,7 @@ def render_dashboard(
           title: copy.spotlight_kazakhstan_title,
           note: copy.spotlight_kazakhstan_note,
           count: kazakhstanItems.length,
-          preview: kazakhstanItems,
+          preview: takeUniqueSpotlightPreview(kazakhstanItems, usedPreviewKeys),
           action: {{ view: "opportunities", region: "kazakhstan" }}
         }},
         {{
@@ -6074,7 +6231,7 @@ def render_dashboard(
           title: copy.spotlight_support_title,
           note: copy.spotlight_support_note,
           count: supportItems.length,
-          preview: supportItems,
+          preview: takeUniqueSpotlightPreview(supportItems, usedPreviewKeys),
           action: {{ view: "opportunities", format: "support", region: "kazakhstan" }}
         }},
         {{
@@ -6083,7 +6240,7 @@ def render_dashboard(
           title: copy.spotlight_deadline_title,
           note: copy.spotlight_deadline_note,
           count: deadlineItems.length,
-          preview: deadlineItems,
+          preview: takeUniqueSpotlightPreview(deadlineItems, usedPreviewKeys),
           action: {{ view: "opportunities", deadline: "soon" }}
         }}
       ].filter((card) => card.count > 0);

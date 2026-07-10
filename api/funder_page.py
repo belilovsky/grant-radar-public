@@ -414,8 +414,8 @@ def render_funder_page(
       --line: color-mix(in oklab, var(--av-color-border-default), transparent 28%);
       --muted: var(--av-color-text-secondary);
       --ink: var(--av-color-text-primary);
-      --brand: var(--av-color-primary-700);
-      --brand-soft: color-mix(in oklab, var(--brand), white 88%);
+      --brand: var(--color-accent);
+      --brand-soft: var(--color-accent-subtle);
       --radius: var(--av-radius-lg);
       --shadow: 0 12px 32px rgb(15 23 42 / 0.08);
     }}
@@ -447,10 +447,10 @@ def render_funder_page(
       display: grid;
       gap: 10px;
       padding: 14px;
-      border: 1px solid var(--line);
-      border-radius: calc(var(--radius) + 2px);
-      background: linear-gradient(180deg, color-mix(in oklab, var(--brand-soft), white 32%), var(--panel));
-      box-shadow: var(--shadow);
+      border: 0;
+      border-radius: 0;
+      background: color-mix(in oklab, var(--panel), var(--brand-soft) 18%);
+      box-shadow: none;
     }}
     .eyebrow {{
       color: var(--muted);
@@ -478,14 +478,16 @@ def render_funder_page(
     .stat-grid {{
       display: grid;
       grid-template-columns: repeat(auto-fit, minmax(118px, 1fr));
-      gap: 8px;
+      gap: 0;
     }}
     .stat {{
-      border: 1px solid var(--line);
-      border-radius: 14px;
-      background: color-mix(in oklab, var(--panel), white 10%);
+      border: 0;
+      border-left: 1px solid var(--line);
+      border-radius: 0;
+      background: transparent;
       padding: 8px 10px;
     }}
+    .stat:first-child {{ border-left: 0; }}
     .stat span {{
       display: block;
       margin-bottom: 6px;
@@ -503,6 +505,8 @@ def render_funder_page(
     }}
     .section {{
       padding-top: 14px;
+      margin-top: 14px;
+      border-top: 1px solid var(--line);
     }}
     .section h2 {{
       margin: 0 0 8px;
@@ -525,10 +529,10 @@ def render_funder_page(
       display: inline-flex;
       align-items: center;
       min-height: 28px;
-      border: 1px solid var(--line);
+      border: 0;
       border-radius: 999px;
       padding: 0 10px;
-      background: var(--panel);
+      background: var(--panel-subtle);
       color: var(--muted);
       font-size: 13px;
       font-weight: 600;
@@ -536,7 +540,6 @@ def render_funder_page(
     .meta-chip.strong {{
       background: var(--brand-soft);
       color: var(--brand);
-      border-color: color-mix(in oklab, var(--brand), white 42%);
     }}
     .meta-chip.lifecycle {{
       background: color-mix(in oklab, var(--panel-subtle), white 4%);
@@ -544,13 +547,14 @@ def render_funder_page(
     }}
     .opportunity-list {{
       display: grid;
-      gap: 10px;
+      gap: 0;
     }}
     .opportunity-card {{
-      border: 1px solid var(--line);
-      border-radius: 16px;
-      background: var(--panel);
-      padding: 10px;
+      border: 0;
+      border-bottom: 1px solid var(--line);
+      border-radius: 0;
+      background: transparent;
+      padding: 12px 4px;
     }}
     .opportunity-head {{
       display: grid;
@@ -609,7 +613,7 @@ def render_funder_page(
       min-height: 34px;
       padding: 0 12px;
       border: 1px solid transparent;
-      border-radius: 12px;
+      border-radius: var(--av-radius-md);
       background: var(--brand);
       color: white;
       text-decoration: none;
@@ -619,20 +623,21 @@ def render_funder_page(
     .button.soft {{
       background: var(--brand-soft);
       color: var(--brand);
-      border-color: color-mix(in oklab, var(--brand), white 42%);
+      border-color: transparent;
     }}
     .source-grid {{
       display: grid;
-      grid-template-columns: repeat(2, minmax(0, 1fr));
-      gap: 10px;
+      grid-template-columns: 1fr;
+      gap: 0;
     }}
     .source-link {{
       display: grid;
       gap: 4px;
-      padding: 12px;
-      border: 1px solid var(--line);
-      border-radius: 14px;
-      background: var(--panel);
+      padding: 12px 4px;
+      border: 0;
+      border-bottom: 1px solid var(--line);
+      border-radius: 0;
+      background: transparent;
       text-decoration: none;
     }}
     .source-link strong {{

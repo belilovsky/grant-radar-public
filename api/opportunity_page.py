@@ -164,6 +164,14 @@ def _format_deadline(value: date | None, lang: str, rolling_label: str) -> str:
     return value.strftime("%d.%m.%Y")
 
 
+def _score_label(score: float, copy: dict[str, object]) -> str:
+    if score >= 0.7:
+        return str(copy["score_exact"])
+    if score >= 0.5:
+        return str(copy["score_high"])
+    return str(copy["score_base"])
+
+
 def _metadata_markup(
     metadata: list[OpportunityMetadataField],
     labels: dict[str, str],
@@ -582,7 +590,7 @@ def render_opportunity_page(
     deadline_label = escape(
         _format_deadline(detail.deadline, active_lang, str(copy["open_rolling"]))
     )
-    score_label = f"{detail.score:.2f}"
+    score_label = _score_label(detail.score, copy)
     source_host = escape(_host_label(str(detail.source_url)))
     og_locale = escape(active_lang.replace("-", "_") + "_KZ", quote=True)
     canonical_url = _absolute_href(site_origin, canonical_path)
@@ -728,16 +736,10 @@ def render_opportunity_page(
       display: grid;
       gap: 14px;
       padding: 14px;
-      border: 1px solid color-mix(in oklab, var(--brand), white 78%);
-      border-radius: var(--radius);
-      background:
-        radial-gradient(circle at top left, rgb(37 99 235 / 0.14), transparent 32%),
-        linear-gradient(
-          180deg,
-          color-mix(in oklab, var(--surface), var(--brand-soft) 18%),
-          color-mix(in oklab, var(--surface), white 6%)
-        );
-      box-shadow: var(--shadow);
+      border: 0;
+      border-radius: 0;
+      background: color-mix(in oklab, var(--surface), var(--brand-soft) 18%);
+      box-shadow: none;
       margin-bottom: 16px;
     }}
     .eyebrow {{
@@ -796,10 +798,11 @@ def render_opportunity_page(
     .hero-stats {{
       display: grid;
       gap: 6px;
-      padding: 12px;
-      border: 1px solid var(--line);
-      border-radius: var(--av-radius-md);
-      background: color-mix(in oklab, var(--surface), white 20%);
+      padding: 4px 0 4px 14px;
+      border: 0;
+      border-left: 1px solid var(--line);
+      border-radius: 0;
+      background: transparent;
     }}
     .hero-stats > div {{
       display: grid;
@@ -811,10 +814,11 @@ def render_opportunity_page(
     }}
     .metric {{
       padding: 10px 12px;
-      border: 1px solid var(--line);
-      border-radius: var(--av-radius-md);
-      background: var(--surface);
-      box-shadow: var(--shadow-sm);
+      border: 0;
+      border-left: 2px solid var(--brand);
+      border-radius: 0;
+      background: transparent;
+      box-shadow: none;
     }}
     .metric span {{
       display: block;
@@ -840,7 +844,7 @@ def render_opportunity_page(
       min-height: var(--av-control-height-sm);
       padding: 0 12px;
       border-radius: 999px;
-      border: 1px solid color-mix(in oklab, var(--success), white 74%);
+      border: 0;
       background: var(--success-soft);
       color: color-mix(in oklab, var(--success), black 20%);
       font-size: var(--av-text-sm);
@@ -856,13 +860,21 @@ def render_opportunity_page(
       display: grid;
       gap: 12px;
     }}
-    .section-card,
+    .section-card {{
+      padding: 12px 0 0;
+      border: 0;
+      border-top: 1px solid var(--line);
+      border-radius: 0;
+      background: transparent;
+      box-shadow: none;
+    }}
     .sidebar-card {{
-      padding: 12px;
-      border: 1px solid var(--line);
-      border-radius: var(--av-radius-md);
-      background: var(--surface);
-      box-shadow: var(--shadow-sm);
+      padding: 4px 0 4px 14px;
+      border: 0;
+      border-left: 1px solid var(--line);
+      border-radius: 0;
+      background: transparent;
+      box-shadow: none;
     }}
     .section-card h2,
     .sidebar-card h2 {{
@@ -917,10 +929,11 @@ def render_opportunity_page(
       display: grid;
       gap: 12px;
       margin-bottom: 16px;
-      padding: 12px;
-      border: 1px solid color-mix(in oklab, var(--brand), white 78%);
-      border-radius: var(--av-radius-md);
-      background: color-mix(in oklab, var(--surface-subtle), var(--brand-soft) 14%);
+      padding: 14px 0 0;
+      border: 0;
+      border-top: 1px solid var(--line);
+      border-radius: 0;
+      background: transparent;
     }}
     .prepare-head {{
       display: grid;
@@ -949,11 +962,12 @@ def render_opportunity_page(
       display: grid;
       gap: 8px;
       min-height: 0;
-      padding: 10px;
-      border: 1px solid var(--line);
-      border-radius: var(--av-radius-md);
-      background: color-mix(in oklab, var(--surface), white 12%);
-      box-shadow: var(--shadow-xs);
+      padding: 10px 0 0;
+      border: 0;
+      border-top: 1px solid var(--line);
+      border-radius: 0;
+      background: transparent;
+      box-shadow: none;
     }}
     .prepare-index {{
       display: inline-flex;
@@ -983,11 +997,12 @@ def render_opportunity_page(
       display: grid;
       gap: 12px;
       margin-bottom: 16px;
-      padding: 12px;
-      border: 1px solid var(--line);
-      border-radius: var(--av-radius-md);
-      background: var(--surface);
-      box-shadow: var(--shadow-sm);
+      padding: 14px 0 0;
+      border: 0;
+      border-top: 1px solid var(--line);
+      border-radius: 0;
+      background: transparent;
+      box-shadow: none;
     }}
     .apply-head {{
       display: grid;
@@ -1020,10 +1035,11 @@ def render_opportunity_page(
       grid-template-columns: 34px minmax(0, 1fr);
       gap: 10px;
       align-items: start;
-      padding: 12px;
-      border: 1px solid var(--line);
-      border-radius: var(--av-radius-md);
-      background: color-mix(in oklab, var(--surface-subtle), white 20%);
+      padding: 10px 0 0;
+      border: 0;
+      border-top: 1px solid var(--line);
+      border-radius: 0;
+      background: transparent;
     }}
     .apply-index {{
       display: inline-flex;
@@ -1086,12 +1102,8 @@ def render_opportunity_page(
       padding: 10px;
       border: 1px solid var(--line);
       border-radius: var(--av-radius-md);
-      background: linear-gradient(
-        180deg,
-        color-mix(in oklab, var(--surface), white 8%),
-        color-mix(in oklab, var(--surface-subtle), white 12%)
-      );
-      box-shadow: var(--shadow-sm);
+      background: transparent;
+      box-shadow: none;
     }}
     .related-top,
     .related-meta {{
@@ -1110,8 +1122,8 @@ def render_opportunity_page(
       border-radius: 999px;
       font-size: var(--av-text-xs);
       font-weight: 700;
-      box-shadow: inset 0 0 0 1px var(--line);
-      background: color-mix(in oklab, var(--surface), white 22%);
+      box-shadow: none;
+      background: var(--surface-subtle);
       color: var(--muted);
     }}
     .related-card h3 {{
@@ -1150,6 +1162,12 @@ def render_opportunity_page(
       .related-grid {{
         grid-template-columns: 1fr;
       }}
+      .hero-stats,
+      .sidebar-card {{
+        padding: 12px 0 0;
+        border-left: 0;
+        border-top: 1px solid var(--line);
+      }}
     }}
     @media (max-width: 640px) {{
       .shell {{
@@ -1157,10 +1175,6 @@ def render_opportunity_page(
         padding: 14px 0 32px;
       }}
       .hero,
-      .prepare-section,
-      .apply-section,
-      .section-card,
-      .sidebar-card,
       .related-card {{
         padding: 12px;
       }}
