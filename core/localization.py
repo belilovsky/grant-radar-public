@@ -167,7 +167,8 @@ def _english_source_fallback(
         if _CYRILLIC_RE.search(summary):
             summary = (
                 "Official UNDP Kazakhstan procurement notice. The source is currently "
-                "published in Russian; check the official page for full terms and submission instructions."
+                "published in Russian; check the official page for full terms and "
+                "submission instructions."
             )
         return title, summary
 
