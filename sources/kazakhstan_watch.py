@@ -36,7 +36,10 @@ WATCH_PAGES = (
     WatchPage(
         url="https://kz.usembassy.gov/education-culture/grants/",
         title="U.S. Embassy Kazakhstan grants",
-        summary="Small grants and public diplomacy opportunities for Kazakhstan.",
+        summary=(
+            "Small grants and public-diplomacy opportunities for Kazakhstan. Review "
+            "official eligibility, deadlines, themes and application terms on the Embassy page."
+        ),
         tags=("grant", "public_diplomacy", "education"),
         type=OpportunityType.GRANT,
         rolling=True,
