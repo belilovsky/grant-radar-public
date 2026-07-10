@@ -49,7 +49,7 @@ ssh "$DEPLOY_HOST" "
   ready_ok=0
   for attempt in \$(seq 1 '$READY_ATTEMPTS'); do
     if docker compose --env-file '$ENV_FILE' $COMPOSE_FILES exec -T api \
-      curl -fsS '$READY_URL' >/dev/null; then
+      curl -fsS '$READY_URL' >/dev/null 2>&1; then
       ready_ok=1
       break
     fi

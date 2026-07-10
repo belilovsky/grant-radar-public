@@ -31,7 +31,7 @@ def test_deploy_script_waits_for_ready_endpoint() -> None:
     assert (
         "docker compose --env-file '$ENV_FILE' $COMPOSE_FILES exec -T api \\" in script
     )
-    assert "curl -fsS '$READY_URL' >/dev/null" in script
+    assert "curl -fsS '$READY_URL' >/dev/null 2>&1" in script
     assert "API readiness check failed after deploy." in script
 
 
