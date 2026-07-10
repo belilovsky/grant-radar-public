@@ -51,14 +51,14 @@ COPY = {
         "hero_pick_science": "Исследователям",
         "hero_pick_tenders": "Тендеры",
         "spotlight_section_eyebrow": "Подборки для старта",
-        "spotlight_section_title": "С чего начать просмотр",
+        "spotlight_section_title": "Актуально сейчас",
         "spotlight_section_description": (
-            "Живые маршруты по каталогу: горячие возможности, Казахстан в приоритете "
-            "и прикладные меры поддержки."
+            "Главные сигналы каталога: сильные совпадения, локальные меры поддержки "
+            "и ближайшие сроки."
         ),
         "spotlight_count": "В подборке: {count}",
         "spotlight_action_open": "Открыть подборку",
-        "spotlight_empty": "Подходящие карточки появятся здесь после загрузки каталога.",
+        "spotlight_empty": "В этой подборке сейчас нет активных карточек.",
         "spotlight_preview_more": "+ ещё {count}",
         "spotlight_trending_kicker": "Популярно сейчас",
         "spotlight_trending_title": "Лучшие сигналы недели",
@@ -81,14 +81,13 @@ COPY = {
             "Возможности с ближайшим сроком, которые лучше просмотреть сейчас."
         ),
         "pathways_section_eyebrow": "Маршруты по задачам",
-        "pathways_section_title": "Куда идти вашему проекту",
+        "pathways_section_title": "По типу проекта",
         "pathways_section_description": (
-            "Короткие входы для тех, кто ищет не просто список, а понятный старт "
-            "под свой тип проекта."
+            "Выберите, кому нужна поддержка, и сразу получите подходящую выдачу."
         ),
         "pathways_count": "Сейчас: {count}",
         "pathways_action_open": "Открыть направление",
-        "pathways_empty": "После обновления каталога здесь появятся подходящие карточки.",
+        "pathways_empty": "Для этого типа проекта сейчас нет активных карточек.",
         "pathway_startup_kicker": "Стартапам",
         "pathway_startup_title": "Акселераторы, гранты и облачные кредиты",
         "pathway_startup_note": (
@@ -114,22 +113,21 @@ COPY = {
             "исследования и внедрение."
         ),
         "themes_section_eyebrow": "Темы для навигации",
-        "themes_section_title": "Какой поток вам ближе",
+        "themes_section_title": "По направлению",
         "themes_section_description": (
-            "Быстрые входы по направлениям: можно сразу уйти в свою тему, не "
-            "просматривая весь каталог подряд."
+            "Откройте возможности по теме без ручного просмотра всего каталога."
         ),
         "themes_count": "Сейчас: {count}",
         "themes_action_open": "Открыть тему",
-        "themes_empty": "Подходящие карточки появятся здесь после обновления каталога.",
+        "themes_empty": "По этому направлению сейчас нет активных карточек.",
         "funder_section_eyebrow": "Фонды и доноры",
-        "funder_section_title": "Кто сейчас реально активен",
+        "funder_section_title": "Активные фонды и программы",
         "funder_section_description": (
             "Сводка по фондам и программам: где есть живые возможности, какие "
             "темы они обычно поддерживают и куда смотреть дальше."
         ),
         "funder_open_profile": "Профиль фонда",
-        "funder_empty": "Профили фондов появятся после загрузки каталога.",
+        "funder_empty": "Активные профили фондов сейчас не найдены.",
         "funder_live_now": "Живые возможности",
         "funder_overview_intro": "Обычно поддерживает гранты и программы.",
         "funder_overview_types": "Форматы: {types}.",
@@ -226,7 +224,7 @@ COPY = {
         "focus_aria": "Текущий продуктовый фокус",
         "focus_primary": "Приоритет: Казахстан и ЦА",
         "focus_secondary": "Темы: ИИ, образование, госсектор, агро, вет, эко, медиа",
-        "status_checking": "Проверяем свежесть данных",
+        "status_checking": "Каталог доступен",
         "api_docs": "API",
         "methodology_link": "Как это работает",
         "status_link": "Статус данных",
@@ -331,7 +329,9 @@ COPY = {
         ),
         "health_ok_value": "Данные актуальны",
         "health_attention_value": "Проверить",
-        "health_note_loading": "Проверяем витрину и время последнего обновления...",
+        "health_note_loading": (
+            "Данные каталога доступны. Уточняем время последнего обновления."
+        ),
         "health_note_ready": (
             "Витрина проверена {checked_at}. Последнее обновление карточек: {updated_at}."
         ),
@@ -441,13 +441,13 @@ COPY = {
         "saved_opportunity_removed": "Карточка удалена из локальных сохранённых.",
         "save_opportunity": "Сохранить",
         "unsave_opportunity": "Убрать",
-        "report_issue": "Сообщить об ошибке",
+        "report_issue": "Уточнить данные",
         "footer_owner": "QAZ.FUND — публичный навигатор возможностей. Сделано",
         "footer_disclaimer": (
             "QAZ.FUND не выдаёт гранты и не принимает заявки. Финальные условия, "
             "сроки и формы подачи проверяйте на официальном источнике."
         ),
-        "footer_support": "GitHub Issues",
+        "footer_support": "Обратная связь",
         "footer_qdev": "qdev.run",
         "view_funder": "Профиль фонда",
         "fit_label": "Кому подходит",
@@ -509,7 +509,7 @@ COPY = {
         "detail_source_status_title": "Статус источника",
         "detail_fit_good": "Скорее всего подходит",
         "detail_fit_review": "Нужна ручная проверка критериев",
-        "no_indexed_items": "Пока нет проиндексированных возможностей.",
+        "no_indexed_items": "Каталог временно не содержит доступных карточек.",
         "no_filtered_items": "По текущим фильтрам ничего не найдено.",
         "no_filtered_items_hint": (
             "Попробуйте ослабить один из фильтров — каталог сразу пересчитает выдачу."
@@ -896,14 +896,14 @@ COPY = {
         "hero_pick_science": "For researchers",
         "hero_pick_tenders": "Tenders",
         "spotlight_section_eyebrow": "Start here",
-        "spotlight_section_title": "Where to begin",
+        "spotlight_section_title": "Current opportunities",
         "spotlight_section_description": (
-            "Live routes through the catalog: strong signals, Kazakhstan-first "
-            "items and practical support programs."
+            "The catalog's strongest signals: high-fit opportunities, Kazakhstan "
+            "support measures, and approaching deadlines."
         ),
         "spotlight_count": "In view: {count}",
         "spotlight_action_open": "Open collection",
-        "spotlight_empty": "Matching items will appear here after the catalog loads.",
+        "spotlight_empty": "There are no active items in this collection right now.",
         "spotlight_preview_more": "+ {count} more",
         "spotlight_trending_kicker": "Trending now",
         "spotlight_trending_title": "Best signals this week",
@@ -926,14 +926,13 @@ COPY = {
             "Opportunities with upcoming deadlines so visitors can act in time."
         ),
         "pathways_section_eyebrow": "Routes by use case",
-        "pathways_section_title": "Where your project should start",
+        "pathways_section_title": "By project type",
         "pathways_section_description": (
-            "Short guided entry points for visitors who need a practical start, "
-            "not just another list."
+            "Choose who needs support and open a focused result set immediately."
         ),
         "pathways_count": "Now: {count}",
         "pathways_action_open": "Open route",
-        "pathways_empty": "Matching opportunities will appear here after catalog refresh.",
+        "pathways_empty": "There are no active items for this project type right now.",
         "pathway_startup_kicker": "For startups",
         "pathway_startup_title": "Accelerators, grants and cloud credits",
         "pathway_startup_note": (
@@ -957,22 +956,21 @@ COPY = {
             "For universities, labs and teams seeking funding for research and transfer."
         ),
         "themes_section_eyebrow": "Theme routes",
-        "themes_section_title": "Which stream fits your work",
+        "themes_section_title": "By focus area",
         "themes_section_description": (
-            "Quick topic-based entry points so visitors can move straight into "
-            "their lane instead of scanning the whole catalog."
+            "Open opportunities by topic without scanning the full catalog."
         ),
         "themes_count": "Now: {count}",
         "themes_action_open": "Open theme",
-        "themes_empty": "Matching cards will appear here after the catalog refreshes.",
+        "themes_empty": "There are no active items in this focus area right now.",
         "funder_section_eyebrow": "Funders",
-        "funder_section_title": "Who is active right now",
+        "funder_section_title": "Active funders and programs",
         "funder_section_description": (
             "A quick funder layer: where live opportunities exist, what they "
             "usually support, and which profiles are worth opening next."
         ),
         "funder_open_profile": "Funder profile",
-        "funder_empty": "Funder profiles will appear here after the catalog loads.",
+        "funder_empty": "No active funder profiles are available right now.",
         "funder_live_now": "Live opportunities",
         "funder_overview_intro": "Usually supports grants and support programs.",
         "funder_overview_types": "Formats: {types}.",
@@ -1073,7 +1071,7 @@ COPY = {
         "focus_secondary": (
             "Themes: AI, EdTech, GovTech, AgroTech, VetTech, EcoTech, media"
         ),
-        "status_checking": "Checking data freshness",
+        "status_checking": "Catalog available",
         "api_docs": "API",
         "methodology_link": "How it works",
         "status_link": "Data status",
@@ -1175,7 +1173,9 @@ COPY = {
         ),
         "health_ok_value": "Data is current",
         "health_attention_value": "Needs review",
-        "health_note_loading": "Checking the public feed and latest refresh time...",
+        "health_note_loading": (
+            "Catalog data is available. Confirming the latest refresh time."
+        ),
         "health_note_ready": (
             "Feed checked at {checked_at}. Latest opportunity refresh: {updated_at}."
         ),
@@ -1284,13 +1284,13 @@ COPY = {
         "saved_opportunity_removed": "Card removed from local saved items.",
         "save_opportunity": "Save",
         "unsave_opportunity": "Remove",
-        "report_issue": "Report data issue",
+        "report_issue": "Correct the data",
         "footer_owner": "QAZ.FUND is a public opportunity navigator. Built by",
         "footer_disclaimer": (
             "QAZ.FUND does not award grants or process applications. Always verify "
             "final terms, deadlines, and forms on the official source."
         ),
-        "footer_support": "GitHub Issues",
+        "footer_support": "Feedback",
         "footer_qdev": "qdev.run",
         "view_funder": "Funder profile",
         "fit_label": "Who it fits",
@@ -1351,7 +1351,7 @@ COPY = {
         "detail_source_status_title": "Source status",
         "detail_fit_good": "Likely a fit",
         "detail_fit_review": "Manual eligibility review needed",
-        "no_indexed_items": "No opportunities are indexed yet.",
+        "no_indexed_items": "The catalog currently has no available items.",
         "no_filtered_items": "No opportunities match the selected filters.",
         "no_filtered_items_hint": (
             "Try relaxing one of the filters and the catalog will recalculate right away."
@@ -2372,12 +2372,21 @@ def render_dashboard(
     .pathways-section {{
       display: grid;
       gap: var(--av-spacing-2);
-      margin-bottom: var(--av-spacing-3);
+      margin: 0;
     }}
     .themes-section {{
       display: grid;
       gap: var(--av-spacing-2);
-      margin-bottom: var(--av-spacing-3);
+      margin: 0;
+    }}
+    .discovery-grid {{
+      display: grid;
+      grid-template-columns: minmax(280px, 0.78fr) minmax(0, 1.22fr);
+      gap: var(--av-spacing-5);
+      margin-bottom: var(--av-spacing-4);
+      padding: var(--av-spacing-4) 0;
+      border-top: 1px solid var(--line-subtle);
+      border-bottom: 1px solid var(--line-subtle);
     }}
     .funder-grid {{
       display: grid;
@@ -2448,34 +2457,34 @@ def render_dashboard(
     }}
     .themes-grid {{
       display: grid;
-      grid-template-columns: repeat(3, minmax(0, 1fr));
-      gap: var(--av-spacing-2);
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: var(--av-spacing-1);
     }}
     .theme-card {{
       display: grid;
       gap: var(--av-spacing-2);
       min-height: 0;
-      padding: 12px;
+      padding: 10px 12px;
       border: 1px solid var(--line-subtle);
-      border-top: 2px solid var(--line);
-      border-radius: var(--av-radius-md);
-      background: var(--panel);
+      border-left: 2px solid var(--line);
+      border-radius: var(--av-radius-sm);
+      background: color-mix(in oklab, var(--panel), var(--panel-subtle) 16%);
       box-shadow: none;
     }}
     .theme-card[data-tone="brand"] {{
-      border-top-color: var(--brand);
+      border-left-color: var(--brand);
     }}
     .theme-card[data-tone="good"] {{
-      border-top-color: var(--good);
+      border-left-color: var(--good);
     }}
     .theme-card[data-tone="amber"] {{
-      border-top-color: var(--warn);
+      border-left-color: var(--warn);
     }}
     .theme-card[data-tone="violet"] {{
-      border-top-color: var(--accent-violet);
+      border-left-color: var(--accent-violet);
     }}
     .theme-card[data-tone="neutral"] {{
-      border-top-color: var(--line-strong);
+      border-left-color: var(--line-strong);
     }}
     .theme-head {{
       display: flex;
@@ -2508,14 +2517,14 @@ def render_dashboard(
     }}
     .theme-card h3 {{
       margin: 0;
-      font-size: 17px;
+      font-size: 15px;
       line-height: 1.24;
       letter-spacing: 0;
     }}
     .theme-note {{
       margin: 0;
       color: color-mix(in oklab, var(--muted), var(--ink) 30%);
-      font-size: var(--av-text-sm);
+      font-size: var(--av-text-xs);
       line-height: 1.42;
     }}
     .theme-footer {{
@@ -2631,31 +2640,31 @@ def render_dashboard(
     }}
     .pathways-grid {{
       display: grid;
-      grid-template-columns: repeat(2, minmax(0, 1fr));
-      gap: var(--av-spacing-2);
+      grid-template-columns: 1fr;
+      gap: var(--av-spacing-1);
     }}
     .pathway-card {{
       display: grid;
       gap: var(--av-spacing-2);
       min-height: 0;
-      padding: 12px;
+      padding: 10px 12px;
       border: 1px solid var(--line-subtle);
-      border-top: 2px solid var(--line);
-      border-radius: var(--av-radius-md);
-      background: var(--panel);
+      border-left: 2px solid var(--line);
+      border-radius: var(--av-radius-sm);
+      background: color-mix(in oklab, var(--panel), var(--panel-subtle) 16%);
       box-shadow: none;
     }}
     .pathway-card[data-tone="brand"] {{
-      border-top-color: var(--brand);
+      border-left-color: var(--brand);
     }}
     .pathway-card[data-tone="good"] {{
-      border-top-color: var(--good);
+      border-left-color: var(--good);
     }}
     .pathway-card[data-tone="amber"] {{
-      border-top-color: var(--warn);
+      border-left-color: var(--warn);
     }}
     .pathway-card[data-tone="violet"] {{
-      border-top-color: var(--accent-violet);
+      border-left-color: var(--accent-violet);
     }}
     .pathway-head {{
       display: flex;
@@ -2688,14 +2697,14 @@ def render_dashboard(
     }}
     .pathway-card h3 {{
       margin: 0;
-      font-size: 17px;
+      font-size: 15px;
       line-height: 1.22;
       letter-spacing: 0;
     }}
     .pathway-note {{
       margin: 0;
       color: color-mix(in oklab, var(--muted), var(--ink) 28%);
-      font-size: var(--av-text-sm);
+      font-size: var(--av-text-xs);
       line-height: 1.42;
     }}
     .pathway-footer {{
@@ -3999,6 +4008,48 @@ def render_dashboard(
       margin-top: var(--av-spacing-2);
     }}
     .hidden {{ display: none; }}
+    .visually-hidden {{
+      position: absolute;
+      width: 1px;
+      height: 1px;
+      padding: 0;
+      margin: -1px;
+      overflow: hidden;
+      clip: rect(0, 0, 0, 0);
+      white-space: nowrap;
+      border: 0;
+    }}
+    .async-grid[aria-busy="true"]::before,
+    .loading-state::before {{
+      content: "";
+      display: block;
+      grid-column: 1 / -1;
+      min-height: 88px;
+      border-radius: var(--av-radius-md);
+      background: linear-gradient(
+        90deg,
+        var(--panel-subtle) 20%,
+        color-mix(in oklab, var(--panel-subtle), white 45%) 50%,
+        var(--panel-subtle) 80%
+      );
+      background-size: 220% 100%;
+      animation: loading-sheen 1.2s ease-in-out infinite;
+    }}
+    .loading-state {{
+      display: block;
+      min-height: 88px;
+      padding: 0;
+      border: 0;
+      background: transparent;
+    }}
+    @keyframes loading-sheen {{
+      from {{ background-position: 100% 0; }}
+      to {{ background-position: -100% 0; }}
+    }}
+    @media (prefers-reduced-motion: reduce) {{
+      .async-grid[aria-busy="true"]::before,
+      .loading-state::before {{ animation: none; }}
+    }}
 
     @media (max-width: 980px) {{
       .hero-grid {{
@@ -4010,11 +4061,15 @@ def render_dashboard(
       .funder-grid {{
         grid-template-columns: repeat(2, minmax(0, 1fr));
       }}
+      .discovery-grid {{
+        grid-template-columns: 1fr;
+        gap: var(--av-spacing-4);
+      }}
       .themes-grid {{
         grid-template-columns: repeat(2, minmax(0, 1fr));
       }}
       .pathways-grid {{
-        grid-template-columns: repeat(2, minmax(0, 1fr));
+        grid-template-columns: 1fr;
       }}
       .method-grid,
       .faq-list {{
@@ -4232,6 +4287,9 @@ def render_dashboard(
       }}
       .funder-grid {{
         grid-template-columns: 1fr;
+      }}
+      .discovery-grid {{
+        padding-block: var(--av-spacing-3);
       }}
       .themes-grid {{
         grid-template-columns: 1fr;
@@ -4608,12 +4666,14 @@ def render_dashboard(
         <p>{escape(str(copy["spotlight_section_description"]))}</p>
       </div>
       <div
-        class="spotlight-grid"
+        class="spotlight-grid async-grid"
         id="spotlight-grid"
         data-avds-component="spotlight-grid"
+        aria-busy="true"
       ></div>
     </section>
 
+    <div class="discovery-grid" data-avds-component="discovery-grid">
     <section class="pathways-section" aria-labelledby="pathways-title">
       <div class="spotlight-copy">
         <span class="eyebrow">{escape(str(copy["pathways_section_eyebrow"]))}</span>
@@ -4621,9 +4681,10 @@ def render_dashboard(
         <p>{escape(str(copy["pathways_section_description"]))}</p>
       </div>
       <div
-        class="pathways-grid"
+        class="pathways-grid async-grid"
         id="pathways-grid"
         data-avds-component="pathways-grid"
+        aria-busy="true"
       ></div>
     </section>
 
@@ -4634,26 +4695,13 @@ def render_dashboard(
         <p>{escape(str(copy["themes_section_description"]))}</p>
       </div>
       <div
-        class="themes-grid"
+        class="themes-grid async-grid"
         id="themes-grid"
         data-avds-component="themes-grid"
+        aria-busy="true"
       ></div>
     </section>
-
-    <section class="funder-section" aria-labelledby="funders-title">
-      <div class="spotlight-copy">
-        <span class="eyebrow">{escape(str(copy["funder_section_eyebrow"]))}</span>
-        <h2 id="funders-title">{escape(str(copy["funder_section_title"]))}</h2>
-        <p>{escape(str(copy["funder_section_description"]))}</p>
-      </div>
-      <div
-        class="funder-grid"
-        id="funder-grid"
-        data-avds-component="funder-grid"
-      >
-        <div class="message">{escape(str(copy["loading_opportunities"]))}</div>
-      </div>
-    </section>
+    </div>
 
     <section class="panel primary" id="opportunities-panel" data-avds-component="panel">
       <div class="panel-head">
@@ -4865,9 +4913,10 @@ def render_dashboard(
       ></div>
       <div
         id="opportunities-message"
-        class="message"
+        class="message loading-state"
         data-avds-component="message"
-      >{escape(str(copy["loading_opportunities"]))}</div>
+        aria-label="{escape(str(copy["loading_opportunities"]), quote=True)}"
+      ><span class="visually-hidden">{escape(str(copy["loading_opportunities"]))}</span></div>
       <div id="opportunities-list" class="list" aria-live="polite"></div>
       <div id="load-more-wrap" class="list-actions hidden">
         <button
@@ -4877,6 +4926,20 @@ def render_dashboard(
           data-avds-component="button"
         >{escape(str(copy["load_more"]))}</button>
       </div>
+    </section>
+
+    <section class="funder-section" aria-labelledby="funders-title">
+      <div class="spotlight-copy">
+        <span class="eyebrow">{escape(str(copy["funder_section_eyebrow"]))}</span>
+        <h2 id="funders-title">{escape(str(copy["funder_section_title"]))}</h2>
+        <p>{escape(str(copy["funder_section_description"]))}</p>
+      </div>
+      <div
+        class="funder-grid async-grid"
+        id="funder-grid"
+        data-avds-component="funder-grid"
+        aria-busy="true"
+      ></div>
     </section>
 
     <section class="panel" id="sources-panel" data-avds-component="panel">
@@ -6375,6 +6438,7 @@ def render_dashboard(
     function renderSpotlights() {{
       const root = $("#spotlight-grid");
       if (!root) return;
+      root.setAttribute("aria-busy", "false");
       const items = spotlightBaseItems();
       if (!items.length) {{
         root.innerHTML = "";
@@ -6464,6 +6528,7 @@ def render_dashboard(
     function renderPathways() {{
       const root = $("#pathways-grid");
       if (!root) return;
+      root.setAttribute("aria-busy", "false");
       const items = spotlightBaseItems();
       if (!items.length) {{
         root.innerHTML = "";
@@ -6556,6 +6621,7 @@ def render_dashboard(
     function renderThemes() {{
       const root = $("#themes-grid");
       if (!root) return;
+      root.setAttribute("aria-busy", "false");
       const items = spotlightBaseItems();
       if (!items.length) {{
         root.innerHTML = "";
@@ -6710,6 +6776,7 @@ def render_dashboard(
     function renderFunders() {{
       const root = $("#funder-grid");
       if (!root) return;
+      root.setAttribute("aria-busy", "false");
       if (!state.funders.length) {{
         root.innerHTML = `<div class="message">${{escapeHtml(copy.funder_empty)}}</div>`;
         return;
@@ -7837,6 +7904,7 @@ def render_dashboard(
     function renderOpportunities() {{
       const list = $("#opportunities-list");
       const message = $("#opportunities-message");
+      message.removeAttribute("aria-label");
       const loadMoreWrap = $("#load-more-wrap");
       const loadMore = $("#load-more");
       const items = visibleItems();
@@ -8093,8 +8161,11 @@ def render_dashboard(
       const params = state.includeArchived
         ? "limit=5000&min_score=0&include_irrelevant=true&compact=true"
         : `limit=5000&min_score=0&deadline_after=${{today}}&compact=true`;
-      message.className = "message";
-      message.textContent = copy.loading_opportunities;
+      message.className = "message loading-state";
+      message.setAttribute("aria-label", copy.loading_opportunities);
+      message.innerHTML = `<span class="visually-hidden">${{escapeHtml(
+        copy.loading_opportunities
+      )}}</span>`;
       state.items = await fetchJson(withLang(`/opportunities?${{params}}`));
       state.lastCheckedAt = new Date().toISOString();
       resetVisibleLimit();

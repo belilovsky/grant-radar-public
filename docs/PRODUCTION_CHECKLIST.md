@@ -41,6 +41,14 @@ PYTHONPATH=. ./.venv/bin/python -m scripts.nlp_quality_audit --base-url https://
 
 ## Public UX expectations
 
+- The public page follows a stable reading order: value proposition, live
+  collections, compact audience/topic navigation, catalog, funder profiles,
+  source coverage, and methodology.
+- The catalog appears before funder profiles so a visitor reaches actionable
+  results before secondary discovery content.
+- Loading states use neutral skeletons. Public copy must not expose editorial
+  notes, draft labels, implementation language, or promises that content will
+  appear later.
 - The catalog keeps primary filters visible and places lifecycle/deadline/source
   filters under "Additional filters" / "Дополнительные фильтры".
 - Saved views and saved opportunity cards are browser-local only. They are not

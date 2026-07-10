@@ -96,23 +96,23 @@ def test_root_renders_service_landing(monkeypatch):
     assert "Дополнительные фильтры" in response.text
     assert "qdev.run" in response.text
     assert "QAZ.FUND не выдаёт гранты и не принимает заявки" in response.text
-    assert "GitHub Issues" in response.text
+    assert "Обратная связь" in response.text
     assert "qazfund-opportunities.csv" in response.text
     assert "qazfund-deadlines.ics" in response.text
     assert "grantRadarSavedOpportunities.v1" in response.text
-    assert "Сообщить об ошибке" in response.text
+    assert "Уточнить данные" in response.text
     assert "Подборки для старта" in response.text
-    assert "С чего начать просмотр" in response.text
+    assert "Актуально сейчас" in response.text
     assert "Лучшие сигналы недели" in response.text
     assert "Госсектор и субсидии" in response.text
     assert "Не тянуть с подачей" in response.text
     assert "Маршруты по задачам" in response.text
-    assert "Куда идти вашему проекту" in response.text
+    assert "По типу проекта" in response.text
     assert "Акселераторы, гранты и облачные кредиты" in response.text
     assert "Субсидии, льготы и меры поддержки РК" in response.text
     assert "Темы для навигации" in response.text
-    assert "Какой поток вам ближе" in response.text
-    assert "Кто сейчас реально активен" in response.text
+    assert "По направлению" in response.text
+    assert "Активные фонды и программы" in response.text
     assert "ИИ, облачные кредиты и цифровые навыки" in response.text
     assert "Инфраструктура, закупки и программы развития" in response.text
     assert "В фокусе сейчас" in response.text
@@ -124,11 +124,13 @@ def test_root_renders_service_landing(monkeypatch):
     assert "Приоритет: Казахстан и ЦА" in response.text
     assert '<strong id="metric-strong">0</strong>' in response.text
     assert '<strong id="metric-sources">0</strong>' in response.text
-    assert (
-        '<strong id="health-status">Проверяем свежесть данных</strong>' in response.text
-    )
+    assert '<strong id="health-status">Каталог доступен</strong>' in response.text
     assert '<strong id="health-items">0</strong>' in response.text
     assert '<strong id="health-sources">0</strong>' in response.text
+    assert 'class="discovery-grid"' in response.text
+    assert response.text.index('id="opportunities-panel"') < response.text.index(
+        'id="funders-title"'
+    )
     assert "медиа" in response.text
     assert "-webkit-line-clamp: 2;" in response.text
     assert ".hero-band" in response.text
@@ -612,16 +614,14 @@ def test_root_supports_explicit_english_dashboard(monkeypatch):
     assert "All regions" in response.text
     assert "Rolling" in response.text
     assert "Open catalog" in response.text
-    assert (
-        '<strong id="health-status">Checking data freshness</strong>' in response.text
-    )
-    assert "Where to begin" in response.text
+    assert '<strong id="health-status">Catalog available</strong>' in response.text
+    assert "Current opportunities" in response.text
     assert "Best signals this week" in response.text
     assert "Support for businesses and teams" in response.text
-    assert "Where your project should start" in response.text
+    assert "By project type" in response.text
     assert "Accelerators, grants and cloud credits" in response.text
     assert "Theme routes" in response.text
-    assert "Which stream fits your work" in response.text
+    assert "By focus area" in response.text
     assert "AI programs, cloud credits, and digital skills" in response.text
     assert "AI and digital" in response.text
     assert "Why this is worth a look" in response.text
