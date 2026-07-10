@@ -1795,42 +1795,17 @@ def render_dashboard(
       overflow: hidden;
       padding: 14px 18px 12px;
       margin-bottom: var(--av-spacing-2);
-      border: 1px solid color-mix(in oklab, var(--brand), white 78%);
-      border-radius: var(--av-radius-lg);
-      background:
-        radial-gradient(circle at top left, rgb(37 99 235 / 0.14), transparent 34%),
-        radial-gradient(circle at 82% 18%, rgb(245 158 11 / 0.13), transparent 28%),
-        linear-gradient(
-          180deg,
-          color-mix(in oklab, var(--panel), var(--brand-soft) 24%),
-          color-mix(in oklab, var(--panel), white 12%)
-        );
-      box-shadow: var(--shadow-md);
+      border: 0;
+      border-radius: 0;
+      background: color-mix(in oklab, var(--panel), var(--brand-soft) 18%);
+      box-shadow: none;
       isolation: isolate;
     }}
     .hero-band::before {{
-      content: "";
-      position: absolute;
-      inset: 0;
-      background-image:
-        linear-gradient(rgb(148 163 184 / 0.08) 1px, transparent 1px),
-        linear-gradient(90deg, rgb(148 163 184 / 0.08) 1px, transparent 1px);
-      background-size: 28px 28px;
-      mask-image: linear-gradient(180deg, rgb(0 0 0 / 0.68), transparent 78%);
-      pointer-events: none;
-      z-index: -2;
+      content: none;
     }}
     .hero-band::after {{
-      content: "";
-      position: absolute;
-      inset: auto -8% -34% auto;
-      width: 320px;
-      height: 320px;
-      border-radius: 50%;
-      background: radial-gradient(circle, rgb(37 99 235 / 0.18), transparent 70%);
-      filter: blur(12px);
-      pointer-events: none;
-      z-index: -1;
+      content: none;
     }}
     .sticky-shell {{
       position: sticky;
@@ -1846,12 +1821,13 @@ def render_dashboard(
       align-items: center;
       justify-content: space-between;
       gap: var(--av-spacing-3);
-      padding: 10px 14px;
-      border: 1px solid var(--line-subtle);
-      border-radius: var(--av-radius-md);
-      background: color-mix(in oklab, var(--bg), var(--panel) 84%);
-      box-shadow: var(--shadow-sm);
-      backdrop-filter: blur(18px);
+      padding: 8px 0;
+      border: 0;
+      border-bottom: 1px solid var(--line-subtle);
+      border-radius: 0;
+      background: color-mix(in oklab, var(--bg), transparent 8%);
+      box-shadow: none;
+      backdrop-filter: blur(12px);
     }}
     .topbar {{
       display: grid;
@@ -1973,11 +1949,12 @@ def render_dashboard(
       gap: var(--av-spacing-3);
       min-width: 0;
       align-content: start;
-      padding: 16px;
-      border: 1px solid color-mix(in oklab, var(--brand), white 72%);
-      border-radius: var(--av-radius-md);
-      background: rgb(255 255 255 / 0.58);
-      box-shadow: inset 0 1px 0 rgb(255 255 255 / 0.45);
+      padding: 8px 0 8px 20px;
+      border: 0;
+      border-left: 1px solid var(--line);
+      border-radius: 0;
+      background: transparent;
+      box-shadow: none;
     }}
     .hero-stage-eyebrow {{
       color: var(--muted);
@@ -2058,14 +2035,16 @@ def render_dashboard(
       width: 100%;
       grid-template-columns: repeat(3, minmax(0, 1fr));
       margin-bottom: 0;
-      border-color: color-mix(in oklab, var(--brand), white 78%);
-      background: rgb(255 255 255 / 0.72);
-      backdrop-filter: blur(14px);
-      border-radius: var(--av-radius-md);
+      border: 0;
+      background: transparent;
+      box-shadow: none;
+      backdrop-filter: none;
+      border-radius: 0;
     }}
     .hero-band .metric {{
       min-height: 64px;
       padding: 10px 12px;
+      border-top: 0;
     }}
     .hero-band .metric span {{
       color: color-mix(in oklab, var(--muted), var(--ink) 22%);
@@ -2108,42 +2087,24 @@ def render_dashboard(
       display: grid;
       gap: var(--av-spacing-2);
       min-height: 0;
-      padding: 12px;
-      border: 1px solid var(--line-subtle);
-      border-radius: var(--av-radius-md);
-      background: linear-gradient(
-        180deg,
-        color-mix(in oklab, var(--panel), white 10%),
-        color-mix(in oklab, var(--panel-subtle), white 12%)
-      );
-      box-shadow: var(--shadow-sm);
+      padding: 12px 8px 8px;
+      border: 0;
+      border-top: 2px solid var(--line);
+      border-radius: 0;
+      background: transparent;
+      box-shadow: none;
     }}
     .spotlight-card[data-tone="brand"] {{
-      background: linear-gradient(
-        180deg,
-        color-mix(in oklab, var(--panel), var(--brand-soft) 36%),
-        color-mix(in oklab, var(--panel-subtle), white 14%)
-      );
-      border-color: color-mix(in oklab, var(--brand), white 72%);
+      border-top-color: var(--brand);
     }}
     .spotlight-card[data-tone="good"] {{
-      border-color: color-mix(in oklab, var(--good), white 72%);
-      background: linear-gradient(
-        180deg,
-        color-mix(in oklab, var(--panel), var(--good-soft) 34%),
-        color-mix(in oklab, var(--panel-subtle), white 14%)
-      );
+      border-top-color: var(--good);
     }}
     .spotlight-card[data-tone="amber"] {{
-      border-color: color-mix(in oklab, var(--warn), white 74%);
-      background: linear-gradient(
-        180deg,
-        color-mix(in oklab, var(--panel), var(--warn-soft) 34%),
-        color-mix(in oklab, var(--panel-subtle), white 12%)
-      );
+      border-top-color: var(--warn);
     }}
     .spotlight-card[data-tone="neutral"] {{
-      border-color: color-mix(in oklab, var(--line), var(--brand) 12%);
+      border-top-color: var(--line-strong);
     }}
     .spotlight-head {{
       display: flex;
@@ -2163,16 +2124,16 @@ def render_dashboard(
       display: inline-flex;
       align-items: center;
       justify-content: center;
-      min-height: 28px;
-      padding: 0 10px;
-      border-radius: var(--av-radius-full);
-      background: rgb(255 255 255 / 0.74);
+      min-height: auto;
+      padding: 0;
+      border-radius: 0;
+      background: transparent;
       color: var(--ink);
       font-family: var(--font-mono);
       font-size: var(--av-text-xs);
       font-weight: 700;
       white-space: nowrap;
-      box-shadow: inset 0 0 0 1px var(--line-subtle);
+      box-shadow: none;
     }}
     .spotlight-card h3 {{
       margin: 0;
@@ -2259,12 +2220,8 @@ def render_dashboard(
       padding: 12px;
       border: 1px solid var(--line-subtle);
       border-radius: var(--av-radius-md);
-      background: linear-gradient(
-        180deg,
-        color-mix(in oklab, var(--panel), white 10%),
-        color-mix(in oklab, var(--panel-subtle), white 18%)
-      );
-      box-shadow: var(--shadow-sm);
+      background: transparent;
+      box-shadow: none;
     }}
     .funder-card-head {{
       display: flex;
@@ -2327,50 +2284,27 @@ def render_dashboard(
       display: grid;
       gap: var(--av-spacing-2);
       min-height: 0;
-      padding: 12px;
-      border: 1px solid var(--line-subtle);
-      border-radius: var(--av-radius-md);
-      background: linear-gradient(
-        180deg,
-        color-mix(in oklab, var(--panel), white 10%),
-        color-mix(in oklab, var(--panel-subtle), white 18%)
-      );
-      box-shadow: var(--shadow-sm);
+      padding: 12px 0;
+      border: 0;
+      border-top: 1px solid var(--line);
+      border-radius: 0;
+      background: transparent;
+      box-shadow: none;
     }}
     .theme-card[data-tone="brand"] {{
-      border-color: color-mix(in oklab, var(--brand), white 74%);
-      background: linear-gradient(
-        180deg,
-        color-mix(in oklab, var(--panel), var(--brand-soft) 26%),
-        color-mix(in oklab, var(--panel-subtle), white 16%)
-      );
+      border-top-color: var(--brand);
     }}
     .theme-card[data-tone="good"] {{
-      border-color: color-mix(in oklab, var(--good), white 72%);
-      background: linear-gradient(
-        180deg,
-        color-mix(in oklab, var(--panel), var(--good-soft) 26%),
-        color-mix(in oklab, var(--panel-subtle), white 16%)
-      );
+      border-top-color: var(--good);
     }}
     .theme-card[data-tone="amber"] {{
-      border-color: color-mix(in oklab, var(--warn), white 74%);
-      background: linear-gradient(
-        180deg,
-        color-mix(in oklab, var(--panel), var(--warn-soft) 28%),
-        color-mix(in oklab, var(--panel-subtle), white 16%)
-      );
+      border-top-color: var(--warn);
     }}
     .theme-card[data-tone="violet"] {{
-      border-color: color-mix(in oklab, var(--accent-violet), white 76%);
-      background: linear-gradient(
-        180deg,
-        color-mix(in oklab, var(--panel), var(--accent-violet-soft) 24%),
-        color-mix(in oklab, var(--panel-subtle), white 16%)
-      );
+      border-top-color: var(--accent-violet);
     }}
     .theme-card[data-tone="neutral"] {{
-      border-color: color-mix(in oklab, var(--line), var(--brand) 12%);
+      border-top-color: var(--line-strong);
     }}
     .theme-head {{
       display: flex;
@@ -2390,16 +2324,16 @@ def render_dashboard(
       display: inline-flex;
       align-items: center;
       justify-content: center;
-      min-height: 28px;
-      padding: 0 10px;
-      border-radius: var(--av-radius-full);
-      background: rgb(255 255 255 / 0.74);
+      min-height: auto;
+      padding: 0;
+      border-radius: 0;
+      background: transparent;
       color: var(--ink);
       font-family: var(--font-mono);
       font-size: var(--av-text-xs);
       font-weight: 700;
       white-space: nowrap;
-      box-shadow: inset 0 0 0 1px var(--line-subtle);
+      box-shadow: none;
     }}
     .theme-card h3 {{
       margin: 0;
@@ -2533,47 +2467,24 @@ def render_dashboard(
       display: grid;
       gap: var(--av-spacing-2);
       min-height: 0;
-      padding: 12px;
-      border: 1px solid var(--line-subtle);
-      border-radius: var(--av-radius-md);
-      background: linear-gradient(
-        180deg,
-        color-mix(in oklab, var(--panel), white 8%),
-        color-mix(in oklab, var(--panel-subtle), white 18%)
-      );
-      box-shadow: var(--shadow-sm);
+      padding: 12px 0;
+      border: 0;
+      border-top: 1px solid var(--line);
+      border-radius: 0;
+      background: transparent;
+      box-shadow: none;
     }}
     .pathway-card[data-tone="brand"] {{
-      border-color: color-mix(in oklab, var(--brand), white 74%);
-      background: linear-gradient(
-        180deg,
-        color-mix(in oklab, var(--panel), var(--brand-soft) 28%),
-        color-mix(in oklab, var(--panel-subtle), white 16%)
-      );
+      border-top-color: var(--brand);
     }}
     .pathway-card[data-tone="good"] {{
-      border-color: color-mix(in oklab, var(--good), white 72%);
-      background: linear-gradient(
-        180deg,
-        color-mix(in oklab, var(--panel), var(--good-soft) 28%),
-        color-mix(in oklab, var(--panel-subtle), white 16%)
-      );
+      border-top-color: var(--good);
     }}
     .pathway-card[data-tone="amber"] {{
-      border-color: color-mix(in oklab, var(--warn), white 74%);
-      background: linear-gradient(
-        180deg,
-        color-mix(in oklab, var(--panel), var(--warn-soft) 28%),
-        color-mix(in oklab, var(--panel-subtle), white 16%)
-      );
+      border-top-color: var(--warn);
     }}
     .pathway-card[data-tone="violet"] {{
-      border-color: color-mix(in oklab, var(--accent-violet), white 76%);
-      background: linear-gradient(
-        180deg,
-        color-mix(in oklab, var(--panel), var(--accent-violet-soft) 24%),
-        color-mix(in oklab, var(--panel-subtle), white 16%)
-      );
+      border-top-color: var(--accent-violet);
     }}
     .pathway-head {{
       display: flex;
@@ -2593,16 +2504,16 @@ def render_dashboard(
       display: inline-flex;
       align-items: center;
       justify-content: center;
-      min-height: 28px;
-      padding: 0 10px;
-      border-radius: var(--av-radius-full);
-      background: rgb(255 255 255 / 0.72);
+      min-height: auto;
+      padding: 0;
+      border-radius: 0;
+      background: transparent;
       color: var(--ink);
       font-family: var(--font-mono);
       font-size: var(--av-text-xs);
       font-weight: 700;
       white-space: nowrap;
-      box-shadow: inset 0 0 0 1px var(--line-subtle);
+      box-shadow: none;
     }}
     .pathway-card h3 {{
       margin: 0;
@@ -2683,10 +2594,10 @@ def render_dashboard(
       display: inline-flex;
       align-items: center;
       gap: 2px;
-      padding: 4px;
-      border: 1px solid var(--line);
-      border-radius: var(--av-radius-md);
-      background: var(--panel-subtle);
+      padding: 0;
+      border: 0;
+      border-radius: 0;
+      background: transparent;
     }}
     .lang-link {{
       display: inline-flex;
@@ -2702,9 +2613,9 @@ def render_dashboard(
       text-decoration: none;
     }}
     .lang-link.active {{
-      background: var(--panel);
+      background: transparent;
       color: var(--ink);
-      box-shadow: var(--shadow-xs);
+      box-shadow: inset 0 -2px 0 var(--brand);
     }}
     .toolbar {{
       display: flex;
@@ -2713,10 +2624,10 @@ def render_dashboard(
       overflow-x: auto;
       min-height: 36px;
       max-width: 100%;
-      padding: 4px;
-      border: 1px solid var(--line-subtle);
-      border-radius: var(--av-radius-md);
-      background: color-mix(in oklab, var(--panel-subtle), white 18%);
+      padding: 0;
+      border: 0;
+      border-radius: 0;
+      background: transparent;
       scrollbar-width: none;
       white-space: nowrap;
       flex: 1 1 auto;
@@ -2760,7 +2671,7 @@ def render_dashboard(
       white-space: nowrap;
       flex: 0 0 auto;
       min-height: 32px;
-      border-radius: var(--av-radius-sm);
+      border-radius: 0;
     }}
     .button.tab:hover {{
       color: var(--brand);
@@ -2769,10 +2680,10 @@ def render_dashboard(
     }}
     .button[aria-pressed="true"] {{
       border-color: transparent;
-      background: var(--panel);
+      background: transparent;
       color: var(--ink);
       font-weight: 700;
-      box-shadow: var(--shadow-xs);
+      box-shadow: inset 0 -2px 0 var(--brand);
     }}
     .button:disabled {{
       opacity: 0.5;
@@ -2798,15 +2709,14 @@ def render_dashboard(
       justify-content: start;
       margin-bottom: var(--av-spacing-2);
       align-items: stretch;
-      overflow: hidden;
-      border: 1px solid var(--line-subtle);
-      border-radius: var(--av-radius-md);
-      background: var(--panel);
-      box-shadow: var(--shadow-xs);
+      overflow: visible;
+      border: 0;
+      border-radius: 0;
+      background: transparent;
+      box-shadow: none;
     }}
     .metric {{
       border: 0;
-      border-top: 3px solid var(--brand);
       border-radius: 0;
       background: transparent;
       box-shadow: none;
@@ -2817,8 +2727,8 @@ def render_dashboard(
       align-content: center;
     }}
     .metric + .metric {{ border-left: 1px solid var(--line-subtle); }}
-    .metric.strong {{ border-top-color: var(--good); }}
-    .metric.sources {{ border-top-color: var(--warn); }}
+    .metric.strong strong {{ color: var(--good); }}
+    .metric.sources strong {{ color: var(--warn); }}
     .metric span {{
       display: block;
       color: var(--muted);
@@ -2959,10 +2869,11 @@ def render_dashboard(
       display: grid;
       gap: var(--av-spacing-1);
       margin-bottom: var(--av-spacing-2);
-      padding: 10px 12px;
-      border: 1px solid var(--line-subtle);
-      border-radius: var(--av-radius-md);
-      background: color-mix(in oklab, var(--panel), var(--panel-subtle) 20%);
+      padding: 10px 0 0;
+      border: 0;
+      border-top: 1px solid var(--line-subtle);
+      border-radius: 0;
+      background: transparent;
     }}
     .saved-views-head {{
       display: flex;
@@ -3025,7 +2936,7 @@ def render_dashboard(
       display: inline-flex;
       align-items: center;
       min-height: 24px;
-      border: 1px solid var(--badge-outline);
+      border: 0;
       border-radius: var(--av-radius-sm);
       padding: 0 7px;
       background: var(--panel-subtle);
@@ -3136,27 +3047,21 @@ def render_dashboard(
       margin-top: var(--av-spacing-3);
     }}
     .opportunity {{
-      border: 1px solid var(--line-subtle);
-      border-top: 3px solid var(--line-strong);
-      border-radius: var(--av-radius-md);
-      background: var(--panel);
-      padding: 12px;
+      border: 0;
+      border-bottom: 1px solid var(--line-subtle);
+      border-radius: 0;
+      background: transparent;
+      padding: 14px 4px;
       box-shadow: none;
       position: relative;
-      overflow: hidden;
+      overflow: visible;
       transition:
-        border-color var(--av-duration-base) var(--av-easing-emphasized),
-        box-shadow var(--av-duration-base) var(--av-easing-emphasized);
-      content-visibility: auto;
-      contain-intrinsic-size: 180px;
+        background var(--av-duration-base) var(--av-easing-emphasized),
+        color var(--av-duration-base) var(--av-easing-emphasized);
     }}
-    .opportunity.good {{ border-top-color: var(--good); }}
-    .opportunity.warn {{ border-top-color: var(--warn); }}
-    .opportunity.low {{ border-top-color: var(--line-strong); }}
     .opportunity:hover {{
-      background: color-mix(in oklab, var(--panel), var(--brand-soft) 10%);
-      border-color: var(--line);
-      box-shadow: var(--shadow-xs);
+      background: color-mix(in oklab, var(--panel), var(--brand-soft) 7%);
+      box-shadow: none;
     }}
     .opportunity-main {{
       display: grid;
@@ -3202,7 +3107,7 @@ def render_dashboard(
     .tags {{ display: flex; flex-wrap: wrap; gap: var(--av-spacing-1); }}
     .tag {{
       border-radius: var(--av-radius-sm);
-      border: 1px solid var(--badge-outline);
+      border: 0;
       background: color-mix(in oklab, var(--panel-subtle), var(--panel) 26%);
       color: var(--muted);
       padding: 2px 6px;
@@ -3233,7 +3138,7 @@ def render_dashboard(
       min-height: 22px;
       max-width: 100%;
       padding: 0 8px;
-      border: 1px solid var(--badge-outline);
+      border: 0;
       border-radius: var(--av-radius-sm);
       background: var(--panel-subtle);
       color: var(--muted);
@@ -3244,20 +3149,19 @@ def render_dashboard(
     .fit-pill.good {{
       background: var(--good-soft);
       color: var(--good);
-      border-color: color-mix(in oklab, var(--good), white 36%);
     }}
     .fit-pill.warn {{
       background: var(--warn-soft);
       color: var(--warn);
-      border-color: color-mix(in oklab, var(--warn), white 40%);
     }}
     .signal-box {{
       display: grid;
       gap: 6px;
-      padding: 8px 10px;
-      border: 1px solid var(--line-subtle);
-      border-radius: var(--av-radius-md);
-      background: color-mix(in oklab, var(--panel), var(--brand-soft) 10%);
+      padding: 4px 0 4px 10px;
+      border: 0;
+      border-left: 2px solid color-mix(in oklab, var(--brand), white 32%);
+      border-radius: 0;
+      background: transparent;
     }}
     .signal-label {{
       color: var(--muted);
@@ -3290,9 +3194,9 @@ def render_dashboard(
       min-height: 22px;
       max-width: 100%;
       padding: 0 8px;
-      border: 1px solid var(--badge-outline);
+      border: 0;
       border-radius: var(--av-radius-sm);
-      background: var(--panel);
+      background: var(--panel-subtle);
       color: var(--ink);
       font-size: var(--av-text-xs);
       font-weight: 700;
@@ -3354,7 +3258,6 @@ def render_dashboard(
     .badge.lifecycle {{
       background: var(--panel-subtle);
       color: var(--ink);
-      border-color: var(--line-subtle);
     }}
     .health-grid {{
       display: grid;
@@ -3375,20 +3278,17 @@ def render_dashboard(
       display: flex;
       align-items: center;
       gap: 0.85rem;
-      border: 1.5px solid var(--line);
-      border-radius: var(--av-radius-md);
-      padding: 0.7rem 0.9rem;
-      background: var(--panel);
+      border: 0;
+      border-bottom: 1px solid var(--line-subtle);
+      border-radius: 0;
+      padding: 0.75rem 0.25rem;
+      background: transparent;
       min-height: 58px;
       color: inherit;
       text-decoration: none;
       transition:
-        border-color var(--av-duration-base) var(--av-easing-emphasized),
-        box-shadow var(--av-duration-base) var(--av-easing-emphasized),
         background var(--av-duration-base) var(--av-easing-emphasized),
-        transform var(--av-duration-base) var(--av-easing-emphasized);
-      content-visibility: auto;
-      contain-intrinsic-size: 76px;
+        color var(--av-duration-base) var(--av-easing-emphasized);
     }}
     .source-icon {{
       width: 34px;
@@ -3429,10 +3329,9 @@ def render_dashboard(
       color: var(--av-color-red-700);
     }}
     .source-card:hover {{
-      border-color: var(--brand);
-      background: var(--brand-soft);
-      box-shadow: var(--shadow-sm);
-      transform: translateY(-1px);
+      background: color-mix(in oklab, var(--panel), var(--brand-soft) 7%);
+      box-shadow: none;
+      transform: none;
     }}
     .source-card strong {{
       display: block;
@@ -3505,7 +3404,7 @@ def render_dashboard(
       gap: var(--av-spacing-2);
       flex-wrap: wrap;
       padding-top: var(--av-spacing-2);
-      border-top: 1px solid var(--line-subtle);
+      border-top: 0;
       color: var(--muted);
       font-size: var(--av-text-xs);
     }}
@@ -3669,10 +3568,11 @@ def render_dashboard(
     .detail-fit {{
       display: grid;
       gap: var(--av-spacing-2);
-      padding: 10px;
-      border: 1px solid var(--line-subtle);
-      border-radius: var(--av-radius-md);
-      background: color-mix(in oklab, var(--panel), var(--brand-soft) 10%);
+      padding: 4px 0 4px 12px;
+      border: 0;
+      border-left: 2px solid var(--brand);
+      border-radius: 0;
+      background: transparent;
     }}
     .detail-fit h3 {{
       margin: 0;
@@ -3693,10 +3593,11 @@ def render_dashboard(
     }}
     .detail-meta-item {{
       min-width: 0;
-      padding: 10px;
-      border: 1px solid var(--line-subtle);
-      border-radius: var(--av-radius-md);
-      background: var(--panel);
+      padding: 8px 0;
+      border: 0;
+      border-bottom: 1px solid var(--line-subtle);
+      border-radius: 0;
+      background: transparent;
     }}
     .detail-meta-item span {{
       display: block;
@@ -3753,7 +3654,7 @@ def render_dashboard(
       flex-wrap: wrap;
       padding: 12px;
       border-top: 1px solid var(--line-subtle);
-      background: color-mix(in oklab, var(--panel), var(--panel-subtle) 20%);
+      background: transparent;
     }}
     .detail-footer-actions {{
       display: flex;
@@ -3762,11 +3663,11 @@ def render_dashboard(
       flex-wrap: wrap;
     }}
     .health-item {{
-      border: 1px solid var(--line-subtle);
-      border-top: 3px solid var(--brand);
-      border-radius: var(--av-radius-md);
-      padding: 12px;
-      background: var(--panel);
+      border: 0;
+      border-left: 2px solid var(--brand);
+      border-radius: 0;
+      padding: 6px 0 6px 12px;
+      background: transparent;
     }}
     .health-item span {{
       display: block;
@@ -3792,12 +3693,12 @@ def render_dashboard(
       line-height: 1.55;
     }}
     .method-card,
-    .faq-item,
-    .method-disclaimer {{
-      border: 1px solid var(--line-subtle);
-      border-radius: var(--av-radius-md);
-      background: var(--panel);
-      padding: 12px 14px;
+    .faq-item {{
+      border: 0;
+      border-top: 1px solid var(--line-subtle);
+      border-radius: 0;
+      background: transparent;
+      padding: var(--av-spacing-2) 0 0;
     }}
     .method-card h3,
     .faq-item h3,
@@ -3817,8 +3718,11 @@ def render_dashboard(
     }}
     .method-disclaimer {{
       margin-top: var(--av-spacing-3);
+      padding: 10px 0 10px 14px;
       background: color-mix(in oklab, var(--panel), var(--brand-soft) 12%);
-      border-color: color-mix(in oklab, var(--brand), white 74%);
+      border: 0;
+      border-left: 2px solid var(--brand);
+      border-radius: 0;
     }}
     .faq-list {{
       display: grid;
@@ -3852,7 +3756,9 @@ def render_dashboard(
         grid-template-columns: 1fr;
       }}
       .hero-stage {{
-        padding: 16px;
+        padding: 16px 0 0;
+        border-left: 0;
+        border-top: 1px solid var(--line);
       }}
       .sticky-bar {{
         align-items: flex-start;
@@ -3896,7 +3802,7 @@ def render_dashboard(
       .sticky-bar {{
         display: grid;
         gap: var(--av-spacing-2);
-        padding: 10px 12px;
+        padding: 8px 0;
       }}
       .topbar {{
         gap: var(--av-spacing-2);
@@ -3933,12 +3839,6 @@ def render_dashboard(
         font-size: var(--av-text-sm);
         line-height: var(--av-leading-snug);
       }}
-      .spotlight-card {{
-        min-height: 224px;
-      }}
-      .pathway-card {{
-        min-height: 214px;
-      }}
       .hero-stage-title {{
         font-size: 22px;
       }}
@@ -3970,7 +3870,7 @@ def render_dashboard(
         grid-template-columns: 32px minmax(0, 1fr) auto;
         align-items: flex-start;
         gap: 0.6rem;
-        padding: 0.75rem 0.85rem;
+        padding: 0.75rem 0.25rem;
       }}
       .source-icon {{
         grid-column: 1;
@@ -4063,15 +3963,15 @@ def render_dashboard(
       }}
       .spotlight-card {{
         min-height: 0;
-        padding: 12px;
+        padding: 12px 0;
       }}
       .theme-card {{
         min-height: 0;
-        padding: 12px;
+        padding: 12px 0;
       }}
       .pathway-card {{
         min-height: 0;
-        padding: 12px;
+        padding: 12px 0;
       }}
       .metric.sources {{
         grid-column: auto;

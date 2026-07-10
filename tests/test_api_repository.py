@@ -61,7 +61,8 @@ def test_root_renders_service_landing(monkeypatch):
     assert "font-family: var(--font-sans);" in response.text
     assert "text-transform: uppercase;" not in response.text
     assert "letter-spacing: 0.12em;" not in response.text
-    assert "border: 1.5px solid var(--line);" in response.text
+    assert "border: 1.5px solid var(--line);" not in response.text
+    assert ".source-card {" in response.text
     assert "avds-tabs-list" in response.text
     assert "avds-tabs-trigger" in response.text
     assert "avds-field" in response.text
@@ -385,7 +386,10 @@ def test_root_renders_service_landing(monkeypatch):
     )
     assert "data-opportunity-detail" in response.text
     assert "detail_meta_labels" in response.text
-    assert "content-visibility: auto;" in response.text
+    assert "content-visibility: auto;" not in response.text
+    assert "contain-intrinsic-size:" not in response.text
+    assert ".opportunity {" in response.text
+    assert "border-bottom: 1px solid var(--line-subtle);" in response.text
     assert ".signal-box" in response.text
     assert ".signal-pill" in response.text
     assert ".topic-brief" in response.text
