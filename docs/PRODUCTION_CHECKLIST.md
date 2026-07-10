@@ -22,6 +22,8 @@ historic backup filenames, and maintainer-only evidence.
 - `llms.txt` and `site-discovery.json` should expose the read-only data endpoints
   and stable query templates for machine consumers.
 - `POST /refresh` must require `GRANT_RADAR_ADMIN_TOKEN`.
+- The production compose file must not start without `POSTGRES_PASSWORD`.
+- The API container must report healthy through `GET /ready`.
 
 ## Pre-release checks
 
@@ -31,6 +33,7 @@ make ci-fast
 PYTHONPATH=. ./.venv/bin/python -m scripts.production_smoke --base-url https://example.org
 PYTHONPATH=. ./.venv/bin/python -m scripts.content_audit --base-url https://example.org
 PYTHONPATH=. ./.venv/bin/python -m scripts.nlp_quality_audit --base-url https://example.org --lang ru --limit 150
+PYTHONPATH=. ./.venv/bin/python -m scripts.nlp_quality_audit --base-url https://example.org --lang en --limit 150
 ```
 
 ## Post-release checks
@@ -51,6 +54,8 @@ curl -fsS 'https://example.org/digest?limit=5&tag=ai'
 
 - Run Alembic migrations before serving traffic.
 - Keep database backups outside the repository and verify restore regularly.
+- Create encrypted host-side dumps with `BACKUP_DIR=/var/backups/grant-radar ./scripts/backup_postgres.sh`.
+- Schedule the backup script from the private maintainer runbook only after a restore drill.
 - Monitor freshness in `/coverage`, especially zero-item and stale sources.
 - Keep deploy hosts, paths, backup archives, and incident history in a private
   maintainer runbook.

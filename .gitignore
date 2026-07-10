@@ -164,6 +164,7 @@ data/*.db
 data/*.sqlite
 data/*.sqlite3
 data/*.db-journal
+backups/
 
 # Spyder project settings
 .spyderproject

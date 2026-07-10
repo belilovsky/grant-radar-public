@@ -33,3 +33,21 @@ def test_deploy_script_waits_for_ready_endpoint() -> None:
     )
     assert "curl -fsS '$READY_URL' >/dev/null" in script
     assert "API readiness check failed after deploy." in script
+
+
+def test_production_compose_requires_password_and_checks_api_readiness() -> None:
+    base_compose = (ROOT / "docker-compose.yml").read_text()
+    production_compose = (ROOT / "docker-compose.prod.yml").read_text()
+
+    assert "http://127.0.0.1:8000/ready" in base_compose
+    assert "POSTGRES_PASSWORD must be set in .env.prod" in production_compose
+
+
+def test_backup_script_creates_rotated_postgres_dumps() -> None:
+    script = (ROOT / "scripts" / "backup_postgres.sh").read_text()
+
+    assert "pg_dump" in script
+    assert "--format=custom" in script
+    assert "KEEP_DAYS" in script
+    assert "qaz-fund-*.dump" in script
+    assert "rm -f \"$temporary_path\"" in script
