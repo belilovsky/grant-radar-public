@@ -77,7 +77,7 @@ def test_root_renders_service_landing(monkeypatch):
     assert (
         "Находите гранты, субсидии и программы поддержки для стартапов" in response.text
     )
-    assert "Один адрес вместо десятков разрозненных источников" in response.text
+    assert "Выберите задачу и сразу откройте нужную выдачу" in response.text
     assert "Открыть каталог" in response.text
     assert "Стартапам" in response.text
     assert "Субсидии РК" in response.text
@@ -85,6 +85,11 @@ def test_root_renders_service_landing(monkeypatch):
     assert "Внешний мониторинг и редакционная выборка" in response.text
     assert "Быстрый старт" in response.text
     assert "Гранты для стартапов" in response.text
+    assert response.text.index('<div class="hero-points"') < response.text.index(
+        '<section\n          class="hero-stage"'
+    )
+    assert "function pathwayPreviewMarkup" not in response.text
+    assert "function themePreviewMarkup" not in response.text
     assert "Подборки для старта" in response.text
     assert "С чего начать просмотр" in response.text
     assert "Лучшие сигналы недели" in response.text
@@ -159,6 +164,9 @@ def test_root_renders_service_landing(monkeypatch):
     )
     assert "googletagmanager.com/gtag/js?id=G-9EF720PSER" in response.text
     assert 'ym(109803011,"init"' in response.text
+    assert "a.parentNode.insertBefore(k,a);}(window,document" in response.text
+    assert '","ym"));ym(109803011,"init"' in response.text
+    assert "a.parentNode.insertBefore(k,a);}}(window,document" not in response.text
     assert 'clarity","script","x5ualin2jv"' in response.text
     assert 'type="application/ld+json"' in response.text
     assert '"@type": "FAQPage"' in response.text
@@ -207,6 +215,9 @@ def test_root_renders_service_landing(monkeypatch):
     assert "function humanizeLabel" in response.text
     assert "function metadataValue(entry)" in response.text
     assert "function formatDeadline" in response.text
+    assert "function normalizedDetailMetadata" in response.text
+    assert "return copy.score_exact" in response.text
+    assert 'aria-label="${sourceName}"' in response.text
     assert "function localDateISO" in response.text
     assert "function localRelevantBySource" in response.text
     assert "function regionalPriority" in response.text
@@ -556,7 +567,7 @@ def test_root_supports_explicit_english_dashboard(monkeypatch):
     assert "Find grants, subsidies, and support programs" in response.text
     assert "What people usually look for" in response.text
     assert "Clear theme" in response.text
-    assert "One address instead of dozens of fragmented sources" in response.text
+    assert "Choose a task and open the right results" in response.text
     assert "Priority: Kazakhstan and Central Asia" in response.text
     assert ">API</a>" in response.text
     assert "Data status" in response.text
@@ -2103,6 +2114,7 @@ def test_funder_page_renders_public_profile(monkeypatch):
     assert "Архив и исторический след" in response.text
     assert "Обычно поддерживает" in response.text
     assert "Обычно поддерживает гранты и программы." in response.text
+    assert "Форматы:" in response.text
     assert "Основные темы:" in response.text
     assert "Фокус по регионам:" in response.text
     assert "science_fund" not in response.text
@@ -2110,6 +2122,8 @@ def test_funder_page_renders_public_profile(monkeypatch):
     assert "Open science commercialization" in response.text
     assert "Pipeline university innovation program" in response.text
     assert "Closed lab capacity grant" in response.text
+    assert "Точное" in response.text
+    assert ">0.91<" not in response.text
     assert f'href="/opportunity/{open_item.id}?lang=ru"' in response.text
     assert f'href="/opportunity/{forecast_item.id}?lang=ru"' in response.text
     assert 'href="/?lang=ru#opportunities"' in response.text
@@ -2138,6 +2152,11 @@ def test_funder_labels_keep_acronyms_and_normalized_case():
         "EBRD ECEPP Procurement"
     )
     assert funder_page_module._label_value("support_rk", copy) == "Support RK"
+    assert (
+        funder_page_module._label_value("united nations development programme", copy)
+        == "Программа развития ООН (ПРООН)"
+    )
+    assert funder_page_module._label_value("dod-amraa", copy) == "DOD-AMRAA"
 
 
 def test_root_renders_initial_metrics_from_cached_items(monkeypatch):

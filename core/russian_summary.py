@@ -130,10 +130,16 @@ def russian_opportunity_title_fallback(item: Opportunity, title: str) -> str:
         "ebrd_ecepp_procurement",
     }:
         country = _country_label(" ".join([item.title, item.summary]))
-        return f"Закупка в {country}: {_procurement_focus(item)}"
+        return (
+            f"Закупка в {country}: {_procurement_focus(item)}"
+            f"{_reference_suffix(item)}"
+        )
     if source == "unicef_kazakhstan" or item.type == OpportunityType.TENDER:
         country = _country_label(" ".join([item.title, item.summary]))
-        return f"Закупочная возможность в {country}: {_procurement_focus(item)}"
+        return (
+            f"Закупочная возможность в {country}: {_procurement_focus(item)}"
+            f"{_reference_suffix(item)}"
+        )
     return cleaned
 
 
@@ -153,6 +159,20 @@ def _readable_title(title: str) -> str:
     if cleaned and _has_cyrillic(cleaned) and not _latin_heavy_ru(cleaned):
         return cleaned
     return ""
+
+
+def _reference_suffix(item: Opportunity) -> str:
+    raw = _raw(item)
+    reference = _string(raw.get("reference") or raw.get("external_id"))
+    if (
+        reference
+        and len(reference) <= 48
+        and re.fullmatch(r"[A-Za-zА-Яа-я0-9][A-Za-zА-Яа-я0-9._/-]*", reference)
+        and reference.casefold() not in item.title.casefold()
+    ):
+        return f" — {reference}"
+    compact_id = str(item.id).split("-", maxsplit=1)[0].upper()
+    return f" — № {compact_id}" if compact_id else ""
 
 
 def _procurement_focus(item: Opportunity) -> str:
@@ -215,16 +235,18 @@ def _procurement_summary(item: Opportunity) -> str:
 def _project_summary(item: Opportunity) -> str:
     title = _string(item.title)
     if item.source == "adb_kazakhstan":
+        prefix = "Проект Азиатского банка развития для Казахстана"
+        subject = "" if title.casefold() == prefix.casefold() else f": {title}"
         return (
-            "Проект Азиатского банка развития для Казахстана: "
-            f"{title}. Карточка полезна для отслеживания проектного "
+            f"{prefix}{subject}. Карточка полезна для отслеживания проектного "
             "финансирования, инфраструктуры, зеленого перехода и связанных "
             "закупок."
         )
     if item.source == "world_bank_kazakhstan":
+        prefix = "Проект Всемирного банка для Казахстана"
+        subject = "" if title.casefold() == prefix.casefold() else f": {title}"
         return (
-            "Проект Всемирного банка для Казахстана: "
-            f"{title}. Карточка показывает направление поддержки, заемщика, "
+            f"{prefix}{subject}. Карточка показывает направление поддержки, заемщика, "
             "финансирование и сроки проектного цикла."
         )
     return f"Проектная возможность для Казахстана: {title}."

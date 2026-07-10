@@ -130,12 +130,34 @@ def _overview_sentence(funder: dict[str, object], copy: dict[str, object]) -> st
     regions = _region_summary(funder, copy)
     bits = [str(copy["funder_overview_intro"])]
     if types:
-        bits.append(types)
+        bits.append(str(copy["funder_overview_types"]).format(types=types))
     if tags:
         bits.append(str(copy["funder_overview_topics"]).format(topics=tags))
     if regions:
         bits.append(str(copy["funder_overview_regions"]).format(regions=regions))
     return " ".join(bits).strip()
+
+
+def _score_label(score: float | None, copy: dict[str, object]) -> str:
+    value = float(score or 0)
+    if value >= 0.7:
+        return str(copy["score_exact"])
+    if value >= 0.5:
+        return str(copy["score_high"])
+    return str(copy["score_base"])
+
+
+def _unique_public_tags(item: Opportunity, copy: dict[str, object]) -> list[str]:
+    labels: list[str] = []
+    seen: set[str] = set()
+    for raw_tag in [item.type, *list(item.tags)]:
+        label = _label_value(raw_tag, copy)
+        normalized = label.casefold()
+        if not label or normalized in seen:
+            continue
+        seen.add(normalized)
+        labels.append(label)
+    return labels[:4]
 
 
 def _source_meta_label(source: dict[str, Any], copy: dict[str, object]) -> str:
@@ -244,27 +266,31 @@ def _opportunity_card(
     lang: str,
 ) -> str:
     lifecycle = public_lifecycle(item)
+    public_tags = _unique_public_tags(item, copy)
+    primary_format = public_tags[0] if public_tags else _label_value(item.type, copy)
     tag_markup = "".join(
-        f'<span class="meta-chip">{escape(_label_value(str(tag), copy))}</span>'
-        for tag in list(item.tags)[:3]
+        f'<span class="meta-chip">{escape(label)}</span>' for label in public_tags[1:]
     )
     href = escape(_opportunity_path(root_path, str(item.id), lang), quote=True)
     summary_text = escape(
         _clean_summary_text(item.summary, title=item.title) or str(copy["no_summary"])
     )
-    score_text = escape(f"{float(item.score or 0):.2f}")
+    score_text = escape(_score_label(item.score, copy))
     return f"""
     <article class="opportunity-card">
       <div class="opportunity-head">
         <div>
           <h3><a href="{href}">{escape(item.title)}</a></h3>
           <div class="meta-row">
-            <span class="meta-chip strong">{escape(_label_value(item.type, copy))}</span>
+            <span class="meta-chip strong">{escape(primary_format)}</span>
             <span class="meta-chip lifecycle">{escape(_lifecycle_label(lifecycle, copy))}</span>
             {tag_markup}
           </div>
         </div>
-        <span class="score">{score_text}</span>
+        <span
+          class="score"
+          title="{escape(str(copy['score_title']), quote=True)}"
+        >{score_text}</span>
       </div>
       <p>{summary_text}</p>
       <div class="card-actions">
@@ -559,8 +585,9 @@ def render_funder_page(
       display: inline-flex;
       align-items: center;
       justify-content: center;
-      min-width: 56px;
+      min-width: 72px;
       min-height: 24px;
+      padding: 0 9px;
       justify-self: start;
       border-radius: 999px;
       background: var(--brand-soft);

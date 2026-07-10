@@ -122,7 +122,8 @@ def test_russian_opportunity_title_fallback_prioritizes_water_procurement():
     expected_title = (
         "Закупка в Казахстане: " "экологические, водные или климатические задачи"
     )
-    assert title == expected_title
+    assert title.startswith(expected_title)
+    assert title.endswith(f"№ {str(item.id).split('-')[0].upper()}")
     assert "водные или климатические задачи" in summary
     assert "цифровые системы" not in summary
 

@@ -132,11 +132,11 @@ def analytics_head_html() -> str:
         )
         yandex_loader = (
             "k=e.createElement(t),a=e.getElementsByTagName(t)[0],k.async=1,"
-            "k.src=r,a.parentNode.insertBefore(k,a);}}"
+            "k.src=r,a.parentNode.insertBefore(k,a);}"
         )
         yandex_src = "https://mc.yandex.ru/metrika/tag.js" f"?id={escaped_yandex}"
         yandex_init = (
-            f'(window,document,"script","{yandex_src}","ym");'
+            f'(window,document,"script","{yandex_src}","ym"));'
             f'ym({escaped_yandex},"init",'
             "{ssr:true,webvisor:true,clickmap:true,"
             'ecommerce:"dataLayer",accurateTrackBounce:true,'

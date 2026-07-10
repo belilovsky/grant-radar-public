@@ -40,6 +40,19 @@ def _string_value(value: Any) -> str:
     return str(value).strip()
 
 
+def _remove_repeated_title_prefix(summary: str, title: str) -> str:
+    summary_text = _string_value(summary)
+    title_text = _string_value(title)
+    if not summary_text or not title_text:
+        return summary_text
+    if not summary_text.casefold().startswith(title_text.casefold()):
+        return summary_text
+    remainder = summary_text[len(title_text) :].lstrip(" :-—–.")
+    if remainder.casefold().startswith(title_text.casefold()):
+        return clean_source_summary(summary_text, title=title_text)
+    return summary_text
+
+
 def _string_list(value: Any) -> list[str]:
     if value is None:
         return []
@@ -195,10 +208,11 @@ def localize_opportunity(item: Opportunity, lang: str) -> Opportunity:
         item, localized_text(raw, content_lang, "title", fallback=item.title)
     )
     summary_item = item.model_copy(update={"title": title})
+    public_summary = russian_summary_fallback(summary_item, summary)
     return item.model_copy(
         update={
             "title": title,
-            "summary": russian_summary_fallback(summary_item, summary),
+            "summary": _remove_repeated_title_prefix(public_summary, title),
             "eligibility": localized_string_list(
                 raw,
                 content_lang,

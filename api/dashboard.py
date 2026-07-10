@@ -39,8 +39,8 @@ COPY = {
         "hero_primary_cta": "Открыть каталог",
         "hero_secondary_cta": "Стартапам",
         "hero_tertiary_cta": "Субсидии РК",
-        "hero_stage_eyebrow": "Почему сюда возвращаются",
-        "hero_stage_title": "Один адрес вместо десятков разрозненных источников",
+        "hero_stage_eyebrow": "Быстрый старт",
+        "hero_stage_title": "Выберите задачу и сразу откройте нужную выдачу",
         "hero_stage_point_one": "Официальные и отобранные источники в одной публичной витрине",
         "hero_stage_point_two": "Локальная карточка, быстрая оценка и фильтры по сроку и региону",
         "hero_stage_point_three": "Казахстан в приоритете, но без потери международных программ",
@@ -132,6 +132,7 @@ COPY = {
         "funder_empty": "Профили фондов появятся после загрузки каталога.",
         "funder_live_now": "Живые возможности",
         "funder_overview_intro": "Обычно поддерживает гранты и программы.",
+        "funder_overview_types": "Форматы: {types}.",
         "funder_overview_topics": "Основные темы: {topics}.",
         "funder_overview_regions": "Фокус по регионам: {regions}.",
         "funder_page_eyebrow": "Профиль фонда",
@@ -236,7 +237,7 @@ COPY = {
         "tab_health": "Статус",
         "metrics_aria": "Сводные метрики",
         "metric_total": "В индексе",
-        "metric_relevant": "Актуально сейчас",
+        "metric_relevant": "Актуально в индексе",
         "metric_sources": "Источники",
         "opportunities_title": "Возможности",
         "opportunities_description": (
@@ -487,7 +488,7 @@ COPY = {
         "meta_deadline_rolling": "Без срока",
         "meta_deadline_soon_days": "Через {count} дн.",
         "meta_deadline_month": "До месяца",
-        "meta_deadline_later": "Срок указан",
+        "meta_deadline_later": "Позже месяца",
         "detail_fit_title": "Быстрая оценка",
         "detail_source_status_title": "Статус источника",
         "detail_fit_good": "Скорее всего подходит",
@@ -506,6 +507,9 @@ COPY = {
         "read_more": "Официальный источник",
         "open_rolling": "Открыто / бессрочно",
         "score_title": "Оценка релевантности по эвристикам QAZ.FUND",
+        "score_exact": "Точное",
+        "score_high": "Высокое",
+        "score_base": "Базовое",
         "source_agency": "Источник: {agency}",
         "no_summary": "Источник не передал краткое описание.",
         "reload_confirm": "Перечитать live-данные из всех источников?",
@@ -761,11 +765,18 @@ COPY = {
             "qic": "QIC",
             "private_equity": "Прямые инвестиции",
             "venture": "Венчур",
+            "invitation_for_tenders_single": "Тендер",
             "grants_gov": "Grants.gov",
             "fundsforngos": "FundsforNGOs",
             "opportunity_desk": "Opportunity Desk",
             "astana_hub": "Astana Hub",
             "kazakhstan_domestic_support": "Поддержка РК",
+            "dod_amraa": "DOD-AMRAA",
+            "hhs_nih11": "HHS-NIH",
+            "united_nations_development_programme": "Программа развития ООН (ПРООН)",
+            "european_bank_for_reconstruction_and_development": (
+                "Европейский банк реконструкции и развития (ЕБРР)"
+            ),
             "kazakhstan_watch": "Мониторинг Казахстана",
             "cloudflare_startups": "Cloudflare Startups",
             "mongodb_startups": "MongoDB Startups",
@@ -794,8 +805,8 @@ COPY = {
         "hero_primary_cta": "Open catalog",
         "hero_secondary_cta": "For startups",
         "hero_tertiary_cta": "Kazakhstan support",
-        "hero_stage_eyebrow": "Why people stay here",
-        "hero_stage_title": "One address instead of dozens of fragmented sources",
+        "hero_stage_eyebrow": "Quick start",
+        "hero_stage_title": "Choose a task and open the right results",
         "hero_stage_point_one": "Official and curated sources in one public feed",
         "hero_stage_point_two": "Local detail view, fit check, and deadline and region filters",
         "hero_stage_point_three": "Kazakhstan first, without losing useful global programs",
@@ -885,6 +896,7 @@ COPY = {
         "funder_empty": "Funder profiles will appear here after the catalog loads.",
         "funder_live_now": "Live opportunities",
         "funder_overview_intro": "Usually supports grants and support programs.",
+        "funder_overview_types": "Formats: {types}.",
         "funder_overview_topics": "Main topics: {topics}.",
         "funder_overview_regions": "Regional focus: {regions}.",
         "funder_page_eyebrow": "Funder profile",
@@ -993,7 +1005,7 @@ COPY = {
         "tab_health": "Status",
         "metrics_aria": "Summary metrics",
         "metric_total": "Indexed",
-        "metric_relevant": "Relevant now",
+        "metric_relevant": "Relevant in index",
         "metric_sources": "Sources",
         "opportunities_title": "Opportunities",
         "opportunities_description": (
@@ -1239,7 +1251,7 @@ COPY = {
         "meta_deadline_rolling": "Rolling",
         "meta_deadline_soon_days": "In {count} days",
         "meta_deadline_month": "Within a month",
-        "meta_deadline_later": "Has a deadline",
+        "meta_deadline_later": "More than a month",
         "detail_fit_title": "Quick fit check",
         "detail_source_status_title": "Source status",
         "detail_fit_good": "Likely a fit",
@@ -1258,6 +1270,9 @@ COPY = {
         "read_more": "Official source",
         "open_rolling": "Open / Rolling",
         "score_title": "QAZ.FUND relevance score based on current heuristics",
+        "score_exact": "Exact",
+        "score_high": "High",
+        "score_base": "Baseline",
         "source_agency": "Source agency: {agency}",
         "no_summary": "No summary provided by source.",
         "reload_confirm": "Reload live data from all sources?",
@@ -1497,7 +1512,16 @@ COPY = {
             "qic": "QIC",
             "private_equity": "Private equity",
             "venture": "Venture",
+            "invitation_for_tenders_single": "Invitation for tenders",
             "kazakhstan_domestic_support": "KZ domestic support",
+            "dod_amraa": "DOD-AMRAA",
+            "hhs_nih11": "HHS-NIH",
+            "united_nations_development_programme": (
+                "United Nations Development Programme (UNDP)"
+            ),
+            "european_bank_for_reconstruction_and_development": (
+                "European Bank for Reconstruction and Development (EBRD)"
+            ),
         },
     },
 }
@@ -1855,16 +1879,16 @@ def render_dashboard(
     }}
     .brand h1 {{
       margin: 0;
-      font-size: clamp(20px, 2.2vw, 26px);
-      line-height: var(--av-leading-tight);
+      font-size: clamp(38px, 5.4vw, 60px);
+      line-height: 0.98;
       letter-spacing: 0;
     }}
     .brand p {{
       margin: 0;
-      max-width: 720px;
+      max-width: 760px;
       color: color-mix(in oklab, var(--ink), white 28%);
-      font-size: var(--av-text-sm);
-      line-height: 1.45;
+      font-size: var(--av-text-base);
+      line-height: 1.5;
     }}
     .focus-row {{
       display: flex;
@@ -1890,23 +1914,24 @@ def render_dashboard(
     }}
     .hero-grid {{
       display: grid;
-      grid-template-columns: minmax(0, 1.2fr) minmax(280px, 0.78fr);
-      gap: var(--av-spacing-2);
-      align-items: stretch;
-      margin-bottom: var(--av-spacing-2);
+      grid-template-columns: minmax(0, 1.12fr) minmax(300px, 0.88fr);
+      gap: var(--av-spacing-3);
+      align-items: start;
+      margin-bottom: var(--av-spacing-3);
     }}
     .hero-copy {{
       display: grid;
-      gap: var(--av-spacing-1);
+      gap: var(--av-spacing-3);
       align-content: start;
       min-width: 0;
+      padding: var(--av-spacing-2) var(--av-spacing-1) 0;
     }}
     .hero-intro {{
       margin: 0;
-      max-width: 60ch;
+      max-width: 64ch;
       color: color-mix(in oklab, var(--ink), white 20%);
-      font-size: 13px;
-      line-height: 1.4;
+      font-size: var(--av-text-base);
+      line-height: 1.55;
     }}
     .hero-actions {{
       display: flex;
@@ -1945,10 +1970,10 @@ def render_dashboard(
     }}
     .hero-stage {{
       display: grid;
-      gap: var(--av-spacing-1);
+      gap: var(--av-spacing-3);
       min-width: 0;
       align-content: start;
-      padding: 14px;
+      padding: 16px;
       border: 1px solid color-mix(in oklab, var(--brand), white 72%);
       border-radius: var(--av-radius-md);
       background: rgb(255 255 255 / 0.58);
@@ -1972,23 +1997,24 @@ def render_dashboard(
     }}
     .hero-points {{
       display: grid;
-      gap: 8px;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: var(--av-spacing-2);
     }}
     .hero-point {{
       display: grid;
-      grid-template-columns: 28px minmax(0, 1fr);
-      gap: var(--av-spacing-2);
+      grid-template-columns: 24px minmax(0, 1fr);
+      gap: var(--av-spacing-1);
       align-items: start;
       color: color-mix(in oklab, var(--ink), white 22%);
       font-size: var(--av-text-xs);
-      line-height: 1.4;
+      line-height: 1.45;
     }}
     .hero-point-index {{
       display: inline-flex;
       align-items: center;
       justify-content: center;
-      width: 28px;
-      height: 28px;
+      width: 24px;
+      height: 24px;
       border-radius: var(--av-radius-full);
       background: color-mix(in oklab, var(--panel), var(--brand-soft) 46%);
       color: var(--brand);
@@ -2003,8 +2029,8 @@ def render_dashboard(
       min-width: 0;
     }}
     .hero-pick-row {{
-      display: flex;
-      flex-wrap: wrap;
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
       gap: var(--av-spacing-1);
     }}
     .hero-pick {{
@@ -2016,6 +2042,11 @@ def render_dashboard(
       color: var(--ink);
       font-size: var(--av-text-xs);
       font-weight: 700;
+      text-align: left;
+      justify-content: flex-start;
+    }}
+    .hero-pick:last-child {{
+      grid-column: 1 / -1;
     }}
     .hero-pick:hover,
     .hero-pick:focus-visible {{
@@ -2030,6 +2061,7 @@ def render_dashboard(
       border-color: color-mix(in oklab, var(--brand), white 78%);
       background: rgb(255 255 255 / 0.72);
       backdrop-filter: blur(14px);
+      border-radius: var(--av-radius-md);
     }}
     .hero-band .metric {{
       min-height: 64px;
@@ -2631,7 +2663,7 @@ def render_dashboard(
       display: flex;
       align-items: center;
       justify-content: flex-end;
-      gap: var(--av-spacing-1);
+      gap: var(--av-spacing-3);
       flex-wrap: wrap;
     }}
     .utility-link {{
@@ -3286,8 +3318,9 @@ def render_dashboard(
       display: inline-flex;
       align-items: center;
       justify-content: center;
-      min-width: 48px;
+      min-width: 72px;
       min-height: 22px;
+      padding: 0 8px;
       border-radius: var(--av-radius-sm);
       background: var(--brand-soft);
       color: var(--brand);
@@ -4009,6 +4042,10 @@ def render_dashboard(
       .hero-copy {{
         gap: var(--av-spacing-2);
       }}
+      .hero-points {{
+        grid-template-columns: 1fr;
+        gap: var(--av-spacing-2);
+      }}
       .grid {{
         grid-template-columns: repeat(3, minmax(0, 1fr));
       }}
@@ -4062,10 +4099,7 @@ def render_dashboard(
       .hero-actions > .button.primary {{
         grid-column: 1 / -1;
       }}
-      .hero-stage {{
-        gap: var(--av-spacing-2);
-        padding-top: var(--av-spacing-2);
-      }}
+      .hero-stage {{ display: none; }}
       .hero-point {{
         font-size: var(--av-text-xs);
         line-height: 1.45;
@@ -4075,12 +4109,6 @@ def render_dashboard(
       }}
       .pathway-card h3 {{
         font-size: var(--av-text-lg);
-      }}
-      .hero-picks {{
-        display: none;
-      }}
-      .hero-stage-title {{
-        font-size: 20px;
       }}
       .hero-point {{
         grid-template-columns: 24px minmax(0, 1fr);
@@ -4111,7 +4139,7 @@ def render_dashboard(
       }}
       .brand h1 {{ font-size: 24px; }}
       .hero-band {{
-        padding: 10px 12px 8px;
+        padding: 14px 12px 10px;
       }}
       .topbar {{
         gap: var(--av-spacing-1);
@@ -4138,16 +4166,14 @@ def render_dashboard(
       .hero-pick-row > .button {{
         min-height: 34px;
       }}
-      .hero-stage {{
-        gap: var(--av-spacing-1);
-        padding-top: var(--av-spacing-1);
+      .utility-links {{
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 6px var(--av-spacing-3);
+        width: 100%;
+        justify-content: stretch;
       }}
-      .hero-point:last-child {{
-        display: none;
-      }}
-      .hero-stage-title {{
-        font-size: 17px;
-      }}
+      .utility-link:last-child {{ grid-column: 1 / -1; }}
       .status-pill {{
         min-height: var(--control-height-sm);
         justify-content: center;
@@ -4251,14 +4277,7 @@ def render_dashboard(
               data-avds-component="button"
             >{escape(str(copy["hero_tertiary_cta"]))}</button>
           </div>
-        </div>
-        <section
-          class="hero-stage"
-          aria-label="{escape(str(copy["hero_picks_label"]), quote=True)}"
-        >
-          <span class="hero-stage-eyebrow">{escape(str(copy["hero_stage_eyebrow"]))}</span>
-          <h2 class="hero-stage-title">{escape(str(copy["hero_stage_title"]))}</h2>
-          <div class="hero-points">
+          <div class="hero-points" aria-label="{escape(str(copy["hero_stage_title"]), quote=True)}">
             <div class="hero-point">
               <span class="hero-point-index">01</span>
               <span>{escape(str(copy["hero_stage_point_one"]))}</span>
@@ -4272,8 +4291,14 @@ def render_dashboard(
               <span>{escape(str(copy["hero_stage_point_three"]))}</span>
             </div>
           </div>
+        </div>
+        <section
+          class="hero-stage"
+          aria-label="{escape(str(copy["hero_picks_label"]), quote=True)}"
+        >
+          <span class="hero-stage-eyebrow">{escape(str(copy["hero_stage_eyebrow"]))}</span>
+          <h2 class="hero-stage-title">{escape(str(copy["hero_stage_title"]))}</h2>
           <div class="hero-picks">
-            <span class="filter-label">{escape(str(copy["hero_picks_label"]))}</span>
             <div class="hero-pick-row">
               <button
                 class="button hero-pick"
@@ -4865,11 +4890,6 @@ def render_dashboard(
     const COLLAPSED_SOURCES = 5;
     const SAVED_VIEW_STORAGE_KEY = "grantRadarSavedViews.v1";
     const formatNumber = new Intl.NumberFormat(copy.locale || "ru-KZ");
-    const formatScoreNumber = new Intl.NumberFormat(copy.locale || "ru-KZ", {{
-      minimumFractionDigits: 2,
-      maximumFractionDigits: 2
-    }});
-
     const $ = (selector) => document.querySelector(selector);
     const labelMap = copy.label_map || copy.labelMap || {{}};
     const escapeHtml = (value) => String(value || "").replace(/[&<>"']/g, (char) => ({{
@@ -4884,7 +4904,12 @@ def render_dashboard(
       template || ""
     );
     const text = (key, values) => interpolate(copy[key] || "", values);
-    const formatScore = (score) => formatScoreNumber.format(Number(score || 0));
+    const formatScore = (score) => {{
+      const value = Number(score || 0);
+      if (value >= 0.7) return copy.score_exact;
+      if (value >= 0.5) return copy.score_high;
+      return copy.score_base;
+    }};
     const normalizeKey = (value) => String(value || "")
       .trim()
       .toLowerCase()
@@ -5391,7 +5416,12 @@ def render_dashboard(
       const value = String(entry.value || "");
       const normalizedValue = normalizeKey(value);
       const hasMappedLabel = Boolean(labelMap[value] || labelMap[normalizedValue]);
-      if (key === "source") return humanizeLabel(value);
+      if (["deadline", "closing_date", "board_approval"].includes(key)) {{
+        return formatDeadline(value) || value;
+      }}
+      if (["source", "funder", "notice_type"].includes(key)) {{
+        return humanizeLabel(value);
+      }}
       if (
         hasMappedLabel
         && ["funder", "country", "region", "deadline_policy", "status", "notice_type"].includes(key)
@@ -5399,6 +5429,21 @@ def render_dashboard(
         return humanizeLabel(value);
       }}
       return value;
+    }}
+
+    function normalizedDetailMetadata(entries) {{
+      const seenKeys = new Set();
+      const sourceValue = entries.find((entry) => entry.key === "source")?.value || "";
+      return entries.filter((entry) => {{
+        const key = String(entry.key || "");
+        const value = String(entry.value || "");
+        if (!key || !value || seenKeys.has(key)) return false;
+        if (key === "funder" && normalizeKey(value) === normalizeKey(sourceValue)) {{
+          return false;
+        }}
+        seenKeys.add(key);
+        return true;
+      }});
     }}
 
     function detailStatusText(status) {{
@@ -5498,9 +5543,11 @@ def render_dashboard(
     function renderDetail(detail) {{
       const title = detail && detail.title ? detail.title : copy.detail_title_fallback;
       const statusText = detailStatusText(detail.detail_fetch_status);
-      const metadata = Array.isArray(detail.metadata) ? detail.metadata.filter(
-        (entry) => entry && entry.key && entry.value
-      ) : [];
+      const metadata = normalizedDetailMetadata(
+        Array.isArray(detail.metadata)
+          ? detail.metadata.filter((entry) => entry && entry.key && entry.value)
+          : []
+      );
       const sections = Array.isArray(detail.detail_sections) ? detail.detail_sections.filter(
         (section) => section && section.text
       ) : [];
@@ -6143,37 +6190,6 @@ def render_dashboard(
       root.innerHTML = cards.map(spotlightCardMarkup).join("");
     }}
 
-    function pathwayPreviewMarkup(items, totalCount) {{
-      if (!items.length) {{
-        return `<div class="spotlight-empty">${{escapeHtml(copy.pathways_empty)}}</div>`;
-      }}
-      const preview = items.slice(0, 3);
-      const moreCount = Math.max(0, totalCount - preview.length);
-      const previews = preview.map((item) => {{
-        const opportunityId = escapeHtml(item.id);
-        const cardUrl = escapeHtml(externalActionUrl(item));
-        const sourceName = humanizeLabel(item.source);
-        const metaBits = [sourceName, formatDeadline(item.deadline)].filter(Boolean);
-        return `
-          <button
-            class="spotlight-item"
-            type="button"
-            data-opportunity-detail="${{opportunityId}}"
-            data-opportunity-url="${{cardUrl}}"
-          >
-            <strong>${{escapeHtml(item.title || copy.detail_title_fallback)}}</strong>
-            <span>${{escapeHtml(metaBits.join(" • "))}}</span>
-          </button>
-        `;
-      }}).join("");
-      const more = moreCount
-        ? `<div class="spotlight-more">${{escapeHtml(
-            text("spotlight_preview_more", {{ count: formatNumber.format(moreCount) }}),
-          )}}</div>`
-        : "";
-      return `<div class="spotlight-list">${{previews}}${{more}}</div>`;
-    }}
-
     function pathwayCardMarkup(config) {{
       return `
         <article
@@ -6191,7 +6207,6 @@ def render_dashboard(
             <h3>${{escapeHtml(config.title)}}</h3>
             <p class="pathway-note">${{escapeHtml(config.note)}}</p>
           </div>
-          ${{pathwayPreviewMarkup(config.preview, config.count)}}
           <div class="pathway-footer">
             <button
               class="button slim soft"
@@ -6232,7 +6247,6 @@ def render_dashboard(
           title: copy.pathway_startup_title,
           note: copy.pathway_startup_note,
           count: startupItems.length,
-          preview: startupItems,
           action: {{ view: "opportunities", audience: "startup" }}
         }},
         {{
@@ -6241,7 +6255,6 @@ def render_dashboard(
           title: copy.pathway_business_title,
           note: copy.pathway_business_note,
           count: businessItems.length,
-          preview: businessItems,
           action: {{
             view: "opportunities",
             audience: "business",
@@ -6255,7 +6268,6 @@ def render_dashboard(
           title: copy.pathway_farmer_title,
           note: copy.pathway_farmer_note,
           count: farmerItems.length,
-          preview: farmerItems,
           action: {{ view: "opportunities", audience: "farmer" }}
         }},
         {{
@@ -6264,42 +6276,10 @@ def render_dashboard(
           title: copy.pathway_science_title,
           note: copy.pathway_science_note,
           count: scienceItems.length,
-          preview: scienceItems,
           action: {{ view: "opportunities", audience: "science" }}
         }}
       ].filter((card) => card.count > 0);
       root.innerHTML = cards.map(pathwayCardMarkup).join("");
-    }}
-
-    function themePreviewMarkup(items, totalCount) {{
-      if (!items.length) {{
-        return `<div class="spotlight-empty">${{escapeHtml(copy.themes_empty)}}</div>`;
-      }}
-      const preview = items.slice(0, 3);
-      const moreCount = Math.max(0, totalCount - preview.length);
-      const previews = preview.map((item) => {{
-        const opportunityId = escapeHtml(item.id);
-        const cardUrl = escapeHtml(externalActionUrl(item));
-        const sourceName = humanizeLabel(item.source);
-        const metaBits = [sourceName, formatDeadline(item.deadline)].filter(Boolean);
-        return `
-          <button
-            class="spotlight-item"
-            type="button"
-            data-opportunity-detail="${{opportunityId}}"
-            data-opportunity-url="${{cardUrl}}"
-          >
-            <strong>${{escapeHtml(item.title || copy.detail_title_fallback)}}</strong>
-            <span>${{escapeHtml(metaBits.join(" • "))}}</span>
-          </button>
-        `;
-      }}).join("");
-      const more = moreCount
-        ? `<div class="spotlight-more">${{escapeHtml(
-            text("spotlight_preview_more", {{ count: formatNumber.format(moreCount) }}),
-          )}}</div>`
-        : "";
-      return `<div class="spotlight-list">${{previews}}${{more}}</div>`;
     }}
 
     function themeCardMarkup(config) {{
@@ -6319,7 +6299,6 @@ def render_dashboard(
             <h3>${{escapeHtml(config.title)}}</h3>
             <p class="theme-note">${{escapeHtml(config.note)}}</p>
           </div>
-          ${{themePreviewMarkup(config.preview, config.count)}}
           <div class="theme-footer">
             <button
               class="button slim soft"
@@ -6359,7 +6338,6 @@ def render_dashboard(
           title: copy.theme_ai_title,
           note: copy.theme_ai_note,
           count: aiItems.length,
-          preview: aiItems,
           action: {{ view: "opportunities", topic: "ai" }}
         }},
         {{
@@ -6368,7 +6346,6 @@ def render_dashboard(
           title: copy.theme_agro_title,
           note: copy.theme_agro_note,
           count: agroItems.length,
-          preview: agroItems,
           action: {{ view: "opportunities", topic: "agro" }}
         }},
         {{
@@ -6377,7 +6354,6 @@ def render_dashboard(
           title: copy.theme_science_title,
           note: copy.theme_science_note,
           count: scienceItems.length,
-          preview: scienceItems,
           action: {{ view: "opportunities", topic: "science" }}
         }},
         {{
@@ -6386,7 +6362,6 @@ def render_dashboard(
           title: copy.theme_public_title,
           note: copy.theme_public_note,
           count: publicItems.length,
-          preview: publicItems,
           action: {{ view: "opportunities", topic: "public" }}
         }},
         {{
@@ -6395,7 +6370,6 @@ def render_dashboard(
           title: copy.theme_business_title,
           note: copy.theme_business_note,
           count: businessItems.length,
-          preview: businessItems,
           action: {{ view: "opportunities", topic: "business", region: "kazakhstan" }}
         }},
         {{
@@ -6404,7 +6378,6 @@ def render_dashboard(
           title: copy.theme_ngo_title,
           note: copy.theme_ngo_note,
           count: ngoItems.length,
-          preview: ngoItems,
           action: {{ view: "opportunities", topic: "ngo" }}
         }}
       ].filter((card) => card.count > 0);
@@ -6412,6 +6385,10 @@ def render_dashboard(
     }}
 
     function funderOverviewText(funder) {{
+      const types = (Array.isArray(funder.top_types) ? funder.top_types : [])
+        .slice(0, 2)
+        .map(humanizeLabel)
+        .join(", ");
       const topics = (Array.isArray(funder.top_tags) ? funder.top_tags : [])
         .slice(0, 2)
         .map(humanizeLabel)
@@ -6421,6 +6398,9 @@ def render_dashboard(
         .map(humanizeLabel)
         .join(", ");
       const bits = [copy.funder_overview_intro];
+      if (types) {{
+        bits.push(text("funder_overview_types", {{ types }}));
+      }}
       if (topics) {{
         bits.push(text("funder_overview_topics", {{ topics }}));
       }}
@@ -6443,7 +6423,7 @@ def render_dashboard(
           <div class="funder-card-head">
             <div>
               <span class="spotlight-label">${{escapeHtml(copy.funder_section_eyebrow)}}</span>
-              <h3>${{escapeHtml(funder.name || "")}}</h3>
+              <h3>${{escapeHtml(humanizeLabel(funder.name || ""))}}</h3>
             </div>
             <span class="funder-kpi">${{
               escapeHtml(copy.funder_live_now)
@@ -7324,6 +7304,7 @@ def render_dashboard(
           href="${{escapeHtml(source.base_url)}}"
           target="_blank"
           rel="noopener"
+          aria-label="${{sourceName}}"
           data-avds-component="source-card"
         >
           <span
@@ -7541,7 +7522,9 @@ def render_dashboard(
         const scoreTone = scoreClass(item.score);
         const deadline = formatDeadline(item.deadline);
         const sourceName = humanizeLabel(item.source);
-        const funderLabel = item.funder ? escapeHtml(item.funder) : escapeHtml(sourceName);
+        const funderLabel = item.funder
+          ? escapeHtml(humanizeLabel(item.funder))
+          : escapeHtml(sourceName);
         const funderHref = escapeHtml(funderPageHref(funderSlug(item)));
         const funderProfileLink = (
           `<a class="footer-funder-link" href="${{funderHref}}">`
