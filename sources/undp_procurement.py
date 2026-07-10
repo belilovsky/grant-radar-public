@@ -170,6 +170,7 @@ def _extract_notices(
     today = today or date.today()
     notices: list[UndpNotice] = []
     seen: set[str] = set()
+    seen_urls: set[str] = set()
 
     for row in ROW_RE.finditer(html):
         row_body = row.group("body")
@@ -201,12 +202,16 @@ def _extract_notices(
             continue
 
         url = urljoin(LISTING_URL, row.group("href"))
+        normalized_url = url.rstrip("/").lower()
+        if normalized_url in seen_urls:
+            continue
         query = parse_qs(urlparse(url).query)
         nego_id = (query.get("nego_id") or [""])[0]
         external_id = reference or nego_id
         if not external_id or external_id in seen:
             continue
         seen.add(external_id)
+        seen_urls.add(normalized_url)
 
         notices.append(
             UndpNotice(

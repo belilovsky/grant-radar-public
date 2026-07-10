@@ -70,6 +70,53 @@ def test_localized_summary_fallback_uses_localized_title():
     assert len(localized.summary) >= 100
 
 
+def test_english_localization_prefers_english_half_of_bilingual_undp_title():
+    item = Opportunity(
+        source="undp_procurement",
+        source_url=HttpUrl("https://example.org/undp/blue-taxonomy"),
+        type=OpportunityType.TENDER,
+        title="Разработка Голубой таксономии Казахстана/Developing Blue Taxonomy for Kazakhstan",
+        summary="Официальное уведомление/Official procurement notice.",
+        raw={"reference": "UNDP-KAZ-00738"},
+    )
+
+    localized = localize_opportunity(item, "en")
+
+    assert localized.title == "Developing Blue Taxonomy for Kazakhstan"
+    assert localized.summary == "Official procurement notice."
+
+
+def test_english_localization_uses_honest_fallback_for_russian_only_undp_notice():
+    item = Opportunity(
+        source="undp_procurement",
+        source_url=HttpUrl("https://example.org/undp/russian-only"),
+        type=OpportunityType.TENDER,
+        title="Поставка каротажной станции",
+        summary="Официальное уведомление о закупке в Казахстане.",
+        raw={"reference": "UNDP-KAZ-00719"},
+    )
+
+    localized = localize_opportunity(item, "en")
+
+    assert localized.title == "UNDP Kazakhstan procurement notice: UNDP-KAZ-00719"
+    assert "published in Russian" in localized.summary
+
+
+def test_english_localization_uses_curated_astana_hub_fallback():
+    item = Opportunity(
+        source="astana_hub",
+        source_url=HttpUrl("https://example.org/astana-hub/tech-orda"),
+        type=OpportunityType.ACCELERATOR,
+        title='Программа "Tech Orda"',
+        summary="Программа цифровых навыков для участников.",
+    )
+
+    localized = localize_opportunity(item, "en")
+
+    assert localized.title == "Tech Orda program"
+    assert localized.summary.startswith("Astana Hub digital-skills program.")
+
+
 def test_russian_procurement_title_keeps_reference_for_distinction():
     item = Opportunity(
         source="undp_procurement",

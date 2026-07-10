@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import re
 from typing import Any
 
 from core.models import Opportunity
@@ -21,6 +22,8 @@ _TRANSLATABLE_KEYS = (
     "detail_sections",
     "status_note",
 )
+_CYRILLIC_RE = re.compile(r"[А-Яа-яЁёӘәҒғҚқҢңӨөҰұҮүҺһІі]")
+_LATIN_RE = re.compile(r"[A-Za-z]")
 
 
 def normalize_content_lang(value: str | None) -> str:
@@ -106,8 +109,6 @@ def _lang_bucket(raw: dict[str, Any], lang: str) -> dict[str, Any]:
 
 
 def _localized_value(raw: dict[str, Any], lang: str, key: str) -> Any:
-    if lang == "en":
-        return None
     target = raw_localization_target(raw)
     bucket = _lang_bucket(target, lang)
     if key in bucket:
@@ -116,6 +117,67 @@ def _localized_value(raw: dict[str, Any], lang: str, key: str) -> Any:
     if direct_key in target:
         return target[direct_key]
     return None
+
+
+def _english_segment(value: str) -> str:
+    """Pick the English half of a bilingual source title when one exists."""
+    candidates = [segment.strip() for segment in re.split(r"\s*/\s*", value) if segment]
+    if not candidates:
+        return ""
+    return max(
+        candidates,
+        key=lambda candidate: (
+            len(_LATIN_RE.findall(candidate)) - len(_CYRILLIC_RE.findall(candidate)),
+            len(_LATIN_RE.findall(candidate)),
+        ),
+    )
+
+
+def _english_source_fallback(
+    item: Opportunity, title: str, summary: str
+) -> tuple[str, str]:
+    """Keep the English surface readable when an official notice is Russian-only."""
+    if not _CYRILLIC_RE.search(title) and not _CYRILLIC_RE.search(summary):
+        return title, summary
+
+    raw = item.raw if isinstance(item.raw, dict) else {}
+    title_candidate = _english_segment(title)
+    summary_candidate = _english_segment(summary)
+    if not _CYRILLIC_RE.search(title_candidate) and title_candidate:
+        title = title_candidate
+    if not _CYRILLIC_RE.search(summary_candidate) and summary_candidate:
+        summary = summary_candidate
+
+    if item.source == "astana_hub":
+        return (
+            "Tech Orda program" if _CYRILLIC_RE.search(title) else title,
+            (
+                "Astana Hub digital-skills program. Check the official source for "
+                "current eligibility and intake details."
+                if _CYRILLIC_RE.search(summary)
+                else summary
+            ),
+        )
+
+    if item.source == "undp_procurement":
+        reference = _string_value(raw.get("reference") or raw.get("external_id"))
+        if _CYRILLIC_RE.search(title):
+            suffix = f": {reference}" if reference else ""
+            title = f"UNDP Kazakhstan procurement notice{suffix}"
+        if _CYRILLIC_RE.search(summary):
+            summary = (
+                "Official UNDP Kazakhstan procurement notice. The source is currently "
+                "published in Russian; check the official page for full terms and submission instructions."
+            )
+        return title, summary
+
+    if _CYRILLIC_RE.search(title):
+        title = "Official opportunity notice"
+    if _CYRILLIC_RE.search(summary):
+        summary = (
+            "Check the official source for the original notice and current conditions."
+        )
+    return title, summary
 
 
 def _source_detail_language_matches(target: dict[str, Any], lang: str) -> bool:
@@ -206,7 +268,22 @@ def localized_section_list(
 def localize_opportunity(item: Opportunity, lang: str) -> Opportunity:
     content_lang = normalize_content_lang(lang)
     if content_lang == "en":
-        return item
+        raw = item.raw if isinstance(item.raw, dict) else {}
+        title = localized_text(raw, content_lang, "title", fallback=item.title)
+        summary = localized_text(raw, content_lang, "summary", fallback=item.summary)
+        title, summary = _english_source_fallback(item, title, summary)
+        return item.model_copy(
+            update={
+                "title": title,
+                "summary": _remove_repeated_title_prefix(summary, title),
+                "eligibility": localized_string_list(
+                    raw,
+                    content_lang,
+                    "eligibility",
+                    fallback=item.eligibility,
+                ),
+            }
+        )
     raw = item.raw if isinstance(item.raw, dict) else {}
     summary = localized_text(
         raw,

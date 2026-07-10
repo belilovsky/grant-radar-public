@@ -139,6 +139,15 @@ async def add_security_headers(
         "Permissions-Policy",
         "camera=(), microphone=(), geolocation=(), payment=()",
     )
+    if request.method in {"GET", "HEAD"} and request.url.path in {
+        "/",
+        "/coverage",
+        "/funders",
+        "/opportunities",
+    }:
+        response.headers.setdefault(
+            "Cache-Control", "public, max-age=60, stale-while-revalidate=300"
+        )
     return response
 
 
@@ -383,10 +392,14 @@ def _stored_opportunity(row: Any, *, content_lang: str = "en") -> Opportunity:
 
 def _public_dedup_key(item: Opportunity) -> str:
     raw = item.raw if isinstance(item.raw, dict) else {}
+    source_url = str(item.source_url).rstrip("/").lower()
+    if item.source == "undp_procurement" and "nego_id=" in source_url:
+        # UNDP may revise the reference number without changing the notice URL.
+        return f"{item.source}:url:{source_url}"
     external_id = str(raw.get("external_id") or raw.get("reference") or "").strip()
     if external_id:
         return f"{item.source}:{external_id.lower()}"
-    return f"{item.source}:{str(item.source_url).rstrip('/').lower()}"
+    return f"{item.source}:{source_url}"
 
 
 def _public_dedup_rank(
@@ -923,7 +936,13 @@ def _render_sitemap_xml(base_url: str) -> str:
     root_ru = _public_url_from_base(base_url, "/?lang=ru")
     root_en = _public_url_from_base(base_url, "/?lang=en")
     opportunities = sorted(
-        _cached_public_items(content_lang="en"),
+        [
+            item
+            for item in _public_scope_items(
+                _cached_public_items(content_lang="en"), include_irrelevant=False
+            )
+            if _is_open(item, date.today())
+        ],
         key=lambda item: (item.discovered_at, item.score, str(item.title).lower()),
         reverse=True,
     )

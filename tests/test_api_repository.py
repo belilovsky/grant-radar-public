@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from datetime import date, datetime, timezone
+from datetime import date, datetime, timedelta, timezone
 from uuid import uuid4
 
 from fastapi.testclient import TestClient
@@ -38,6 +38,7 @@ def test_root_renders_service_landing(monkeypatch):
     response = client.get("/")
 
     assert response.status_code == 200
+    assert response.headers["cache-control"].startswith("public, max-age=60")
     assert '<html lang="ru"' in response.text
     assert (
         "<title>QAZ.FUND — гранты и меры поддержки для Казахстана</title>"
@@ -658,6 +659,31 @@ def test_public_dedupe_prefers_latest_discovered_at_for_equal_records():
     assert deduped[0].discovered_at == newer.discovered_at
 
 
+def test_public_dedupe_uses_undp_notice_url_when_reference_changes():
+    original = Opportunity(
+        source="undp_procurement",
+        source_url="https://procurement-notices.undp.org/view_negotiation.cfm?nego_id=42",
+        type=OpportunityType.TENDER,
+        title="Climate risk expert",
+        summary="UNDP Kazakhstan procurement notice.",
+        score=0.7,
+        discovered_at=datetime(2026, 7, 1, tzinfo=timezone.utc),
+        raw={"external_id": "UNDP-KAZ-42"},
+    )
+    revised = original.model_copy(
+        update={
+            "score": 0.8,
+            "discovered_at": datetime(2026, 7, 7, tzinfo=timezone.utc),
+            "raw": {"external_id": "UNDP-KAZ-42,1"},
+        }
+    )
+
+    deduped = api_main._dedupe_public_items([original, revised], content_lang="en")
+
+    assert len(deduped) == 1
+    assert deduped[0].raw["external_id"] == "UNDP-KAZ-42,1"
+
+
 def test_marketing_endpoints_are_exposed(monkeypatch):
     _reset_api_state(monkeypatch)
     api_main._cache.extend(
@@ -865,6 +891,36 @@ def test_sitemap_reuses_single_stored_items_pass(monkeypatch):
     assert response.status_code == 200
     assert cached_response.status_code == 200
     assert calls["stored_items"] == 1
+
+
+def test_sitemap_excludes_archived_opportunities(monkeypatch):
+    _reset_api_state(monkeypatch)
+    current = Opportunity(
+        source="science_fund",
+        source_url="https://example.org/current",
+        type=OpportunityType.GRANT,
+        title="Current Kazakhstan science grant",
+        summary="Open science opportunity for Kazakhstan teams.",
+        tags=["kazakhstan", "science"],
+        deadline=date.today() + timedelta(days=20),
+        score=0.8,
+    )
+    archived = current.model_copy(
+        update={
+            "id": uuid4(),
+            "source_url": "https://example.org/archived",
+            "title": "Archived Kazakhstan science grant",
+            "deadline": date.today() - timedelta(days=1),
+        }
+    )
+    api_main._cache.extend([current, archived])
+    client = TestClient(api_main.app)
+
+    sitemap = client.get("/sitemap.xml")
+
+    assert sitemap.status_code == 200
+    assert str(current.id) in sitemap.text
+    assert str(archived.id) not in sitemap.text
 
 
 def test_security_headers_are_added(monkeypatch):

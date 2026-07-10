@@ -68,6 +68,13 @@ def test_text_quality_flags_repeated_phrase_and_latin_heavy_ru_text():
     )
     assert "repeated_phrase" in repeated
 
+    english = text_quality_flags(
+        title="Поставка оборудования",
+        summary="Официальное уведомление о закупке для участников в Казахстане.",
+        lang="en",
+    )
+    assert "cyrillic_heavy_en_text" in english
+
 
 def test_nlp_quality_audit_flags_missing_entities_and_text_issues():
     result = analyze_nlp_quality(

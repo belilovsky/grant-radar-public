@@ -234,6 +234,12 @@ def text_quality_flags(
         if words and not cyrillic_chars and len(summary_text) > 40:
             flags.append("missing_cyrillic_ru_text")
 
+    if lang == "en" and text:
+        latin_chars = len(_LATIN_RE.findall(text))
+        cyrillic_chars = len(_CYRILLIC_RE.findall(text))
+        if cyrillic_chars > 8 and cyrillic_chars > latin_chars:
+            flags.append("cyrillic_heavy_en_text")
+
     if any(
         marker in summary_text.lower()
         for marker in ("click here", "read more", "читать далее")
