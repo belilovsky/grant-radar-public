@@ -440,6 +440,7 @@ COPY = {
         "fit_deadline_soon": "Скоро закрывается",
         "fit_global": "Глобальная подача",
         "signal_label": "Почему это в фокусе",
+        "card_meta_label": "Параметры",
         "signal_support_kz": (
             "Локальная мера поддержки для команд и бизнеса в Казахстане с "
             "практическими условиями подачи."
@@ -1267,6 +1268,7 @@ COPY = {
         "fit_deadline_soon": "Closing soon",
         "fit_global": "Global application",
         "signal_label": "Why this is worth a look",
+        "card_meta_label": "Key details",
         "signal_support_kz": (
             "A local support measure for Kazakhstan-based teams and businesses "
             "with practical application mechanics."
@@ -2226,11 +2228,11 @@ def render_dashboard(
       display: grid;
       gap: var(--av-spacing-2);
       min-height: 0;
-      padding: 12px 8px 8px;
-      border: 0;
+      padding: 12px;
+      border: 1px solid var(--line-subtle);
       border-top: 2px solid var(--line);
-      border-radius: 0;
-      background: transparent;
+      border-radius: var(--av-radius-md);
+      background: var(--panel);
       box-shadow: none;
     }}
     .spotlight-card[data-tone="brand"] {{
@@ -2423,11 +2425,11 @@ def render_dashboard(
       display: grid;
       gap: var(--av-spacing-2);
       min-height: 0;
-      padding: 12px 0;
-      border: 0;
-      border-top: 1px solid var(--line);
-      border-radius: 0;
-      background: transparent;
+      padding: 12px;
+      border: 1px solid var(--line-subtle);
+      border-top: 2px solid var(--line);
+      border-radius: var(--av-radius-md);
+      background: var(--panel);
       box-shadow: none;
     }}
     .theme-card[data-tone="brand"] {{
@@ -2606,11 +2608,11 @@ def render_dashboard(
       display: grid;
       gap: var(--av-spacing-2);
       min-height: 0;
-      padding: 12px 0;
-      border: 0;
-      border-top: 1px solid var(--line);
-      border-radius: 0;
-      background: transparent;
+      padding: 12px;
+      border: 1px solid var(--line-subtle);
+      border-top: 2px solid var(--line);
+      border-radius: var(--av-radius-md);
+      background: var(--panel);
       box-shadow: none;
     }}
     .pathway-card[data-tone="brand"] {{
@@ -2930,8 +2932,12 @@ def render_dashboard(
     .filters {{
       display: grid;
       grid-template-columns: minmax(220px, 1fr) repeat(3, minmax(128px, 0.28fr));
-      gap: var(--av-spacing-1);
+      gap: 10px;
       margin-bottom: var(--av-spacing-1);
+      padding: 12px;
+      border: 1px solid var(--line-subtle);
+      border-radius: var(--av-radius-md);
+      background: var(--panel);
       align-items: end;
     }}
     .preset-grid {{
@@ -2942,21 +2948,26 @@ def render_dashboard(
     }}
     .preset-group {{
       display: grid;
-      gap: 6px;
+      align-content: start;
+      gap: 8px;
       min-width: 0;
+      padding: 10px;
+      border: 1px solid var(--line-subtle);
+      border-radius: var(--av-radius-md);
+      background: var(--panel);
     }}
     .preset-row {{
       display: flex;
       flex-wrap: wrap;
-      gap: var(--av-spacing-1);
+      gap: 4px;
       min-width: 0;
     }}
     .preset-button {{
       min-height: 30px;
       padding: 0 10px;
-      border: 1px solid var(--line);
+      border: 1px solid transparent;
       border-radius: var(--av-radius-sm);
-      background: var(--panel);
+      background: var(--panel-subtle);
       color: var(--muted);
       font-size: var(--av-text-xs);
       font-weight: 700;
@@ -2968,15 +2979,15 @@ def render_dashboard(
         box-shadow var(--av-duration-base) var(--av-easing-emphasized);
     }}
     .preset-button:hover {{
-      border-color: var(--line-strong);
-      background: var(--panel-subtle);
+      border-color: color-mix(in oklab, var(--brand), transparent 70%);
+      background: var(--brand-soft);
       color: var(--ink);
     }}
     .preset-button[aria-pressed="true"] {{
-      border-color: color-mix(in oklab, var(--brand), white 34%);
-      background: var(--brand-soft);
-      color: var(--brand);
-      box-shadow: var(--shadow-xs);
+      border-color: var(--brand);
+      background: var(--brand);
+      color: white;
+      box-shadow: none;
     }}
     .filter-block {{
       display: grid;
@@ -3006,13 +3017,12 @@ def render_dashboard(
     }}
     .saved-views {{
       display: grid;
-      gap: var(--av-spacing-1);
+      gap: 6px;
       margin-bottom: var(--av-spacing-2);
-      padding: 10px 0 0;
-      border: 0;
-      border-top: 1px solid var(--line-subtle);
-      border-radius: 0;
-      background: transparent;
+      padding: 10px 12px;
+      border: 1px solid var(--line-subtle);
+      border-radius: var(--av-radius-md);
+      background: var(--panel);
     }}
     .saved-views-head {{
       display: flex;
@@ -3062,8 +3072,8 @@ def render_dashboard(
     }}
     .saved-empty {{
       color: var(--muted);
-      font-size: var(--av-text-sm);
-      line-height: 1.55;
+      font-size: var(--av-text-xs);
+      line-height: 1.45;
     }}
     .saved-view-notice {{
       min-height: 20px;
@@ -3186,11 +3196,11 @@ def render_dashboard(
       margin-top: var(--av-spacing-3);
     }}
     .opportunity {{
-      border: 0;
-      border-bottom: 1px solid var(--line-subtle);
-      border-radius: 0;
-      background: transparent;
-      padding: 14px 4px;
+      border: 1px solid var(--line-subtle);
+      border-left: 3px solid var(--line-strong);
+      border-radius: var(--av-radius-md);
+      background: var(--panel);
+      padding: 14px 16px;
       box-shadow: none;
       position: relative;
       overflow: visible;
@@ -3202,19 +3212,34 @@ def render_dashboard(
       background: color-mix(in oklab, var(--panel), var(--brand-soft) 7%);
       box-shadow: none;
     }}
+    .opportunity.good {{ border-left-color: var(--good); }}
+    .opportunity.warn {{ border-left-color: var(--warn); }}
     .opportunity-main {{
       display: grid;
-      gap: 4px;
-    }}
-    .opportunity-top {{
-      display: grid;
-      grid-template-columns: minmax(0, 1fr) auto;
-      gap: var(--av-spacing-2);
+      grid-template-columns: minmax(0, 1fr) minmax(250px, 0.34fr);
+      gap: 18px;
       align-items: start;
     }}
+    .opportunity-content {{
+      display: grid;
+      gap: 10px;
+      min-width: 0;
+    }}
+    .opportunity-rail {{
+      display: grid;
+      align-content: start;
+      gap: 12px;
+      min-width: 0;
+      padding-left: 16px;
+      border-left: 1px solid var(--line-subtle);
+    }}
+    .opportunity-heading {{
+      display: grid;
+      gap: 8px;
+    }}
     .opportunity h3 {{
-      margin: 0 0 var(--av-spacing-2);
-      font-size: var(--av-text-base);
+      margin: 0;
+      font-size: 17px;
       font-weight: 650;
       line-height: var(--av-leading-snug);
       display: -webkit-box;
@@ -3233,7 +3258,7 @@ def render_dashboard(
       text-decoration: underline;
       text-underline-offset: 2px;
     }}
-    .opportunity p {{
+    .opportunity-summary {{
       margin: 0;
       color: var(--muted);
       font-size: var(--av-text-sm);
@@ -3296,11 +3321,16 @@ def render_dashboard(
     .signal-box {{
       display: grid;
       gap: 6px;
-      padding: 4px 0 4px 10px;
-      border: 0;
+      padding: 9px 10px;
+      border: 1px solid var(--line-subtle);
+      border-radius: var(--av-radius-sm);
+      background: var(--panel-subtle);
+    }}
+    .focus-copy {{
+      display: grid;
+      gap: 5px;
+      padding-left: 10px;
       border-left: 2px solid color-mix(in oklab, var(--brand), white 32%);
-      border-radius: 0;
-      background: transparent;
     }}
     .signal-label {{
       color: var(--muted);
@@ -3350,12 +3380,12 @@ def render_dashboard(
       text-transform: none;
     }}
     .side {{
-      min-width: 104px;
+      min-width: 0;
       display: flex;
       align-items: center;
-      justify-content: flex-end;
+      justify-content: flex-start;
       flex-wrap: wrap;
-      gap: var(--av-spacing-2);
+      gap: 6px;
     }}
     .score {{
       display: inline-flex;
@@ -3537,13 +3567,10 @@ def render_dashboard(
       transform: translateX(2px);
     }}
     .opportunity-footer {{
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      gap: var(--av-spacing-2);
-      flex-wrap: wrap;
-      padding-top: var(--av-spacing-2);
-      border-top: 0;
+      display: grid;
+      gap: 5px;
+      padding-top: 10px;
+      border-top: 1px solid var(--line-subtle);
       color: var(--muted);
       font-size: var(--av-text-xs);
     }}
@@ -3589,10 +3616,13 @@ def render_dashboard(
       opacity: 1;
     }}
     .opportunity-main,
+    .opportunity-content,
+    .opportunity-rail,
     .opportunity-footer,
     .side,
     .opportunity h3,
     .tags,
+    .focus-copy,
     .signal-box,
     .signal-pills,
     .card-actions,
@@ -4037,8 +4067,14 @@ def render_dashboard(
         margin-left: 0;
         padding-top: 4px;
       }}
-      .opportunity-top {{
+      .opportunity-main {{
         grid-template-columns: 1fr;
+      }}
+      .opportunity-rail {{
+        padding-top: 12px;
+        padding-left: 0;
+        border-top: 1px solid var(--line-subtle);
+        border-left: 0;
       }}
       .side {{
         justify-content: flex-start;
@@ -4102,15 +4138,15 @@ def render_dashboard(
       }}
       .spotlight-card {{
         min-height: 0;
-        padding: 12px 0;
+        padding: 12px;
       }}
       .theme-card {{
         min-height: 0;
-        padding: 12px 0;
+        padding: 12px;
       }}
       .pathway-card {{
         min-height: 0;
-        padding: 12px 0;
+        padding: 12px;
       }}
       .metric.sources {{
         grid-column: auto;
@@ -7604,8 +7640,8 @@ def render_dashboard(
           data-avds-component="opportunity-card"
         >
           <div class="opportunity-main">
-            <div class="opportunity-top">
-              <div>
+            <div class="opportunity-content">
+              <div class="opportunity-heading">
                 <h3>
                   <a href="${{pageUrl}}">
                     ${{cardTitle}}
@@ -7618,49 +7654,54 @@ def render_dashboard(
                   )).join("")}}
                 </div>
               </div>
-              <aside class="side">
+              <p class="opportunity-summary">${{escapeHtml(summarize(item))}}</p>
+              <div class="focus-copy">
+                <span class="signal-label">${{escapeHtml(copy.signal_label)}}</span>
+                <p class="signal-lede">${{escapeHtml(opportunitySignalText(item))}}</p>
+              </div>
+              <div class="card-actions">
+                <button
+                  class="detail-link"
+                  type="button"
+                  data-opportunity-detail="${{opportunityId}}"
+                  data-opportunity-url="${{cardUrl}}"
+                >${{escapeHtml(copy.open_details)}}</button>
+                <a
+                  class="more-link"
+                  href="${{pageUrl}}"
+                  target="_blank"
+                  rel="noopener"
+                >${{escapeHtml(copy.read_more)}}</a>
+              </div>
+            </div>
+            <aside class="opportunity-rail" aria-label="${{escapeHtml(copy.card_meta_label)}}">
+              <div class="side">
                 <span
                   class="score ${{scoreTone}}"
                   data-avds-component="score"
                   title="${{escapeHtml(copy.score_title)}}"
                 >${{formatScore(item.score)}}</span>
                 ${{badges}}
-              </aside>
-            </div>
-            <p>${{escapeHtml(summarize(item))}}</p>
-            <div class="signal-box">
-              <span class="signal-label">${{escapeHtml(copy.signal_label)}}</span>
-              <p class="signal-lede">${{escapeHtml(opportunitySignalText(item))}}</p>
-              <div class="signal-pills">
-                ${{opportunitySignalPillsMarkup(item)}}
               </div>
-            </div>
-            <div class="fit-block">
-              <span class="fit-label">${{escapeHtml(copy.fit_label)}}</span>
-              <div class="fit-pills">
-                ${{fitPillsMarkup(item)}}
+              <div class="signal-box">
+                <span class="signal-label">${{escapeHtml(copy.card_meta_label)}}</span>
+                <div class="signal-pills">
+                  ${{opportunitySignalPillsMarkup(item)}}
+                </div>
               </div>
-            </div>
-            <div class="card-actions">
-              <button
-                class="detail-link"
-                type="button"
-                data-opportunity-detail="${{opportunityId}}"
-                data-opportunity-url="${{cardUrl}}"
-              >${{escapeHtml(copy.open_details)}}</button>
-              <a
-                class="more-link"
-                href="${{pageUrl}}"
-                target="_blank"
-                rel="noopener"
-              >${{escapeHtml(copy.read_more)}}</a>
-            </div>
-            <div class="opportunity-footer">
-              <span class="footer-source">${{footerSource}}
-                <span class="footer-sep">|</span>${{funderProfileLink}}
-              </span>
-              <span class="footer-deadline">${{escapeHtml(deadline)}}</span>
-            </div>
+              <div class="fit-block">
+                <span class="fit-label">${{escapeHtml(copy.fit_label)}}</span>
+                <div class="fit-pills">
+                  ${{fitPillsMarkup(item)}}
+                </div>
+              </div>
+              <div class="opportunity-footer">
+                <span class="footer-source">${{footerSource}}
+                  <span class="footer-sep">|</span>${{funderProfileLink}}
+                </span>
+                <span class="footer-deadline">${{escapeHtml(deadline)}}</span>
+              </div>
+            </aside>
             <button
               class="opportunity-click"
               type="button"

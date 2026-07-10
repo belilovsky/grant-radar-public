@@ -401,7 +401,12 @@ def test_root_renders_service_landing(monkeypatch):
     assert "content-visibility: auto;" not in response.text
     assert "contain-intrinsic-size:" not in response.text
     assert ".opportunity {" in response.text
-    assert "border-bottom: 1px solid var(--line-subtle);" in response.text
+    assert "border-left: 3px solid var(--line-strong);" in response.text
+    assert ".opportunity-content {" in response.text
+    assert ".opportunity-rail {" in response.text
+    assert 'class="opportunity-rail"' in response.text
+    assert 'class="opportunity-summary"' in response.text
+    assert "Параметры" in response.text
     assert ".signal-box" in response.text
     assert ".signal-pill" in response.text
     assert ".topic-brief" in response.text
