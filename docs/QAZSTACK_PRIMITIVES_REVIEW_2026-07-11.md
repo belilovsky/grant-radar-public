@@ -3,10 +3,30 @@
 Scope: QAZ.FUND (`grant-radar-public`) against the current platform/QazStack
 surface in `platform-portal-git` and the QazStack registry.
 
-This is an inventory and adoption plan, not a rewrite plan. QAZ.FUND is a small
-FastAPI service with a production-safe local AV DS adapter; broad framework
-replacement would add deployment risk. Use this file to decide what to upstream
-to QazStack and what to pull back into QAZ.FUND later.
+This started as an inventory and adoption plan, then advanced into a small
+runtime integration. QAZ.FUND is still a small FastAPI service with a
+production-safe local AV DS adapter; broad framework replacement would add
+deployment risk. The implemented integration is intentionally narrow:
+QAZ.FUND installs a pinned QazStack package and uses `qazstack.opportunities`
+through an optional bridge while preserving local fallback behavior.
+
+## Implemented runtime bridge
+
+- Platform branch: `codex/qazfund-qazstack-primitives-2026-07-11`
+- QazStack commit pinned by QAZ.FUND:
+  `ece381a35a78b3b6a9afc0e71264f494ccf9d830`
+- QazStack package: `qazstack==1.6.1`
+- Shared module: `qazstack.opportunities`
+- QAZ.FUND bridge: `core/qazstack_bridge.py`
+- Active integration point: `core/geofit.py`
+
+Runtime behavior:
+
+- if `qazstack.opportunities` is installed, QAZ.FUND calls shared
+  `evaluate_geo_fit()` and combines the result with local rules;
+- if the package is absent or import fails, QAZ.FUND continues to use the
+  previous local implementation;
+- local QAZ.FUND rules remain authoritative for product-specific exclusions.
 
 ## Current QazStack registry evidence
 
@@ -33,9 +53,9 @@ The current QAZ.FUND dashboard also uses a local AV DS-compatible adapter:
 
 | Candidate | Local evidence | Why it belongs in QazStack | Status | Recommended action |
 |---|---|---|---|---|
-| Kazakhstan/Central Asia geo-fit rules | `core/geofit.py`, `tests/test_scoring.py` | Several products need Kazakhstan/Central Asia relevance gating, not only grants. The exclusion rules are already practical and test-backed. | Candidate | Extract as `qazstack/geo/fit.py` or `qazstack/analytics/relevance.py` after stabilizing public API. Keep QAZ.FUND local until QazStack package import is deploy-safe. |
+| Kazakhstan/Central Asia geo-fit rules | `core/geofit.py`, `tests/test_scoring.py`, `tests/test_qazstack_bridge.py` | Several products need Kazakhstan/Central Asia relevance gating, not only grants. The exclusion rules are already practical and test-backed. | Partly implemented | Shared base contract lives in `qazstack.opportunities.geofit`; QAZ.FUND uses it through `core/qazstack_bridge.py` while preserving local fallback and product-specific rules. |
 | Opportunity relevance scoring | `core/scoring.py`, `tests/test_scoring.py` | The weighted keyword + geography + deadline scoring is a reusable operator-ranking primitive. | Candidate | Upstream as a domain-neutral `relevance_score()` engine with product-supplied weights. Do not hard-code grant tags in the shared primitive. |
-| Source parser contract | `sources/base.py`, `sources/*`, `tests/test_parsers_async.py` | QAZ.FUND has a mature pattern for async source adapters, curated fallback, blocked-source retention and source-specific tests. | Partly covered | Align with `qazstack/collectors/source_contracts.py`. Upstream the contract shape and test fixtures, not every product source. |
+| Source parser contract | `sources/base.py`, `sources/*`, `tests/test_sources.py` | QAZ.FUND has a mature pattern for async source adapters, curated fallback, blocked-source retention and source-specific tests. | Partly implemented | `qazstack.opportunities.SourceContract` now validates shared parser metadata. QAZ.FUND exposes optional validation through `core/qazstack_bridge.validate_shared_source_contract()`. |
 | Curated fallback and retention policy | `sources/kazakhstan_watch.py`, `sources/kazakhstan_domestic.py`, parser tests | This is a reusable pattern for official sources that block automation or return temporary errors while the public route remains important. | Candidate | Add a QazStack collector policy primitive: `retain_on_fetch_error`, `detail_fetch_status`, `status_note`. |
 | Public AI/discovery surface contract | `api/main.py`, `api/public_meta.py`, `scripts/production_smoke.py`, tests for `llms.txt`, `site-discovery.json`, `/docs`, `/openapi.json` | Multiple public products need AI-readable entrypoints and smoke gates. QAZ.FUND has a compact, production-proven contract. | Candidate | Upstream a small `qazstack/seo/discovery.py` helper for `llms.txt`, `site-discovery.json`, OpenAPI/docs links and smoke markers. |
 | Operator list card anatomy | `api/dashboard.py`, `docs/AVDS_INTEGRATION.md`, `tests/test_api_repository.py` | The latest QAZ.FUND card pattern is a good AV DS operator surface: meaning left, service passport right, few actions. | Candidate | Add to AV DS/QazStack UI docs as `document-row` / `operator-passport-card`; do not move server-rendered HTML into a shared package yet. |
@@ -57,8 +77,8 @@ Do not upstream now:
 
 | QazStack primitive | Platform evidence | Fit for QAZ.FUND | Risk | Recommended action |
 |---|---|---|---|---|
-| `collectors-and-entity-pipeline` | `qazstack/primitives-registry.json` maps `grant-radar` | High. QAZ.FUND already behaves like a collector pipeline. | Medium | Start with contract alignment: make `sources/base.py` fields match QazStack collector contract names where possible. Avoid importing the package in prod until packaging/auth is stable. |
-| `tasking-and-resilience` | Registry maps `grant-radar`; local worker already uses queue/scheduler | High. Retry/circuit-breaker primitives would reduce local drift. | Medium | Adopt only after a package import smoke in Docker. First target: shared retry/backoff policy for source fetches. |
+| `collectors-and-entity-pipeline` | `qazstack/primitives-registry.json` maps `grant-radar`; `qazstack.opportunities.SourceContract` is installed in QAZ.FUND | High. QAZ.FUND already behaves like a collector pipeline. | Medium | Keep runtime parser implementations local; use shared contract validation and fixtures before moving any source adapter. |
+| `tasking-and-resilience` | Registry maps `grant-radar`; local worker already uses queue/scheduler | High. Retry/circuit-breaker primitives would reduce local drift. | Medium | Still defer shared retry/backoff runtime import until per-source smoke tests exist. |
 | `observability-and-ui` | Includes `qazstack/observability/middleware.py`, `qazstack/ui/jinja_helpers.py`, `qazstack/seo/meta.py` | Medium/high. QAZ.FUND has local meta/analytics/AVDS helpers that could align. | Medium | Pull concepts, not direct code, unless dependency packaging is available. Candidate first step: shared SEO/discovery helper. |
 | `reports-and-export` | `qazstack/reports/*`, `qazstack/export/*` | Medium. QAZ.FUND has CSV/calendar links and could later export funder/opportunity packs. | Low/medium | Add later as an operator feature: export saved collection to CSV/XLSX/report. No immediate code change. |
 | `analytics-and-kznlp` | `qazstack/kznlp/*`, `qazstack/analytics/*` | Medium. Useful for KZ/RU/EN normalization and lightweight NER. | Medium | Replace local deterministic NLP only after behavior parity tests. Current local helpers are simple and well tested. |
@@ -68,30 +88,26 @@ Do not upstream now:
 | `governance-and-audit` | `qazstack/governance/*`, `qazstack/audit/*` | Medium. Useful for source trust, run evidence and public claims. | Low/medium | Add docs-level evidence model first: source, checked_at, status, limitation. |
 | `databus-and-bus` | `qazstack/bus/*`, `qazstack/databus/*` | Low now. QAZ.FUND does not need event fanout yet. | Medium/high | Defer. Use only when QAZ.FUND becomes a data provider for QazLake/QazPipe. |
 
-## Immediate safe actions
+## Completed safe actions
 
-These can be done without changing runtime architecture:
+Completed in the QAZ.FUND / QazStack integration pass:
 
 1. Keep `docs/AVDS_INTEGRATION.md` as the active UI contract and update it when
    QAZ.FUND adopts new AV DS/QazStack operator primitives.
 2. Add this review to repo docs and test that it stays present.
-3. Open a platform-side follow-up to add QAZ.FUND's `geo-fit`,
-   `public-discovery` and `operator-passport-card` candidates to the QazStack
-   registry.
-4. Before any direct QazStack import in QAZ.FUND, require:
-   - Docker build proof;
-   - `pytest -q`;
-   - `scripts.production_smoke --base-url https://qaz.fund`;
-   - rollback path to local implementation.
+3. Add QAZ.FUND primitives to the platform-side QazStack registry.
+4. Make QazStack installable as `qazstack==1.6.1`.
+5. Add `qazstack.opportunities` as a dependency-free shared contract.
+6. Add QAZ.FUND optional runtime bridge with local fallback.
+7. Pin QAZ.FUND requirements to the tested QazStack commit.
 
 ## Decision
 
 Current recommendation:
 
-- Keep QAZ.FUND runtime local and stable for production.
-- Upstream QAZ.FUND's mature algorithms and UI patterns as documented QazStack
-  candidates first.
-- Pull QazStack primitives back only through small, test-backed slices, starting
-  with discovery/SEO helpers and collector contract alignment rather than broad
-  framework imports.
-
+- Keep QAZ.FUND runtime local and stable where product-specific rules are richer
+  than the shared primitive.
+- Use QazStack for narrow, tested shared contracts first.
+- Continue extraction only through parity fixtures and per-source smoke checks.
+- Do not replace source adapters or scoring wholesale until the shared package
+  proves exact behavior parity.

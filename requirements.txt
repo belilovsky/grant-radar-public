@@ -28,6 +28,7 @@ google-auth==2.35.0
 # utils
 structlog==24.4.0
 tenacity==9.0.0
+qazstack @ git+https://github.com/belilovsky/platform-portal.git@ece381a35a78b3b6a9afc0e71264f494ccf9d830
 
 # dev
 pytest==9.0.3
