@@ -2264,9 +2264,11 @@ def test_public_funder_index_excludes_usamraa_domestic_grants(monkeypatch):
     client = TestClient(api_main.app)
 
     funders = client.get("/funders").json()
+    legacy_response = client.get("/funder/dod-amraa", follow_redirects=False)
 
     assert all(row["slug"] != "dod-amraa" for row in funders)
-    assert client.get("/funder/dod-amraa").status_code == 404
+    assert legacy_response.status_code == 302
+    assert legacy_response.headers["location"] == "/?lang=ru&q=DOD-AMRAA"
 
 
 def test_opportunity_page_tailors_prepare_checklist_for_subsidies(monkeypatch):

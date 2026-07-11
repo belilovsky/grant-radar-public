@@ -18,7 +18,7 @@ from uuid import NAMESPACE_URL, UUID, uuid5
 
 from fastapi import Depends, FastAPI, Header, HTTPException, Query, Request, status
 from fastapi.openapi.docs import get_swagger_ui_html
-from fastapi.responses import HTMLResponse, JSONResponse, Response
+from fastapi.responses import HTMLResponse, JSONResponse, RedirectResponse, Response
 from starlette.middleware.trustedhost import TrustedHostMiddleware
 
 from api.dashboard import (
@@ -100,6 +100,9 @@ _public_items_cache_lock = threading.Lock()
 _public_items_cache: dict[str, tuple[datetime, list[Opportunity]]] = {}
 _public_scope_cache: dict[tuple[str, bool], tuple[datetime, list[Opportunity]]] = {}
 _coverage_cache: tuple[datetime, dict[str, Any]] | None = None
+LEGACY_FUNDER_REDIRECTS: dict[str, str] = {
+    "dod-amraa": "DOD-AMRAA",
+}
 _DASHBOARD_RAW_FIELDS = frozenset(
     {
         "agency",
@@ -1424,10 +1427,16 @@ async def funder_page(
     request: Request,
     funder_slug: str,
     lang: str | None = Query(None),
-) -> HTMLResponse:
+) -> Response:
     content_lang = _public_lang(lang)
     group = _funder_index(content_lang=content_lang).get(funder_slug)
     if group is None:
+        legacy_query = LEGACY_FUNDER_REDIRECTS.get(funder_slug)
+        if legacy_query:
+            return RedirectResponse(
+                url=f"/?lang={content_lang}&q={legacy_query}",
+                status_code=status.HTTP_302_FOUND,
+            )
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND)
     root_path = _root_path(request)
     site_origin = _site_origin(request, root_path)
