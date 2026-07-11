@@ -8084,7 +8084,6 @@ def render_dashboard(
         const saved = isOpportunitySaved(item.id);
         const saveLabel = saved ? copy.unsave_opportunity : copy.save_opportunity;
         const clickLabel = escapeHtml(cardTitleText);
-        const signalText = opportunitySignalText(item);
         const formatLabel = opportunityFormatLabel(item);
         const regionLabel = opportunityRegionLabel(item);
         const deadlineLabel = opportunityDeadlineLabel(item);
@@ -8156,10 +8155,6 @@ def render_dashboard(
                   <strong>${{escapeHtml(sourceName)}}</strong>
                 </div>
               </div>
-              <div class="signal-box">
-                <span class="signal-label">${{escapeHtml(copy.signal_label)}}</span>
-                <p class="operator-note">${{escapeHtml(signalText)}}</p>
-              </div>
               <div class="fit-block">
                 <span class="fit-label">${{escapeHtml(copy.fit_label)}}</span>
                 <div class="fit-pills">
@@ -8172,18 +8167,13 @@ def render_dashboard(
                   type="button"
                   data-save-opportunity="${{opportunityId}}"
                 >${{escapeHtml(saveLabel)}}</button>
+                ${{funderProfileLink}}
                 <a
                   class="more-link"
                   href="${{reportUrl}}"
                   target="_blank"
                   rel="noopener"
                 >${{escapeHtml(copy.report_issue)}}</a>
-              </div>
-              <div class="opportunity-footer">
-                <span class="footer-source">${{footerSource}}
-                  <span class="footer-sep">|</span>${{funderProfileLink}}
-                </span>
-                <span class="footer-deadline">${{escapeHtml(deadline)}}</span>
               </div>
             </aside>
             <button
