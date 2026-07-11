@@ -448,6 +448,7 @@ COPY = {
         "save_opportunity": "Сохранить",
         "unsave_opportunity": "Убрать",
         "report_issue": "Уточнить данные",
+        "open_source_short": "Источник",
         "footer_owner": "QAZ.FUND — публичный навигатор возможностей. Сделано",
         "footer_disclaimer": (
             "QAZ.FUND не выдаёт гранты и не принимает заявки. Финальные условия, "
@@ -1297,6 +1298,7 @@ COPY = {
         "save_opportunity": "Save",
         "unsave_opportunity": "Remove",
         "report_issue": "Correct the data",
+        "open_source_short": "Source",
         "footer_owner": "QAZ.FUND is a public opportunity navigator. Built by",
         "footer_disclaimer": (
             "QAZ.FUND does not award grants or process applications. Always verify "
@@ -3348,19 +3350,19 @@ def render_dashboard(
     .opportunity.warn {{ border-left-color: var(--warn); }}
     .opportunity-main {{
       display: grid;
-      grid-template-columns: minmax(0, 1fr) minmax(250px, 0.34fr);
-      gap: 18px;
+      grid-template-columns: minmax(0, 1fr) minmax(238px, 0.3fr);
+      gap: 20px;
       align-items: start;
     }}
     .opportunity-content {{
       display: grid;
-      gap: 10px;
+      gap: 11px;
       min-width: 0;
     }}
     .opportunity-rail {{
       display: grid;
       align-content: start;
-      gap: 12px;
+      gap: 10px;
       min-width: 0;
       padding-left: 16px;
       border-left: 1px solid var(--line-subtle);
@@ -3487,6 +3489,36 @@ def render_dashboard(
       display: flex;
       flex-wrap: wrap;
       gap: var(--av-spacing-1);
+    }}
+    .meta-rows {{
+      display: grid;
+      gap: 6px;
+    }}
+    .meta-row {{
+      display: grid;
+      grid-template-columns: minmax(68px, 0.42fr) minmax(0, 1fr);
+      gap: 8px;
+      align-items: baseline;
+      min-width: 0;
+      font-size: var(--av-text-xs);
+      line-height: var(--av-leading-snug);
+    }}
+    .meta-row span {{
+      color: var(--muted);
+      font-weight: 600;
+    }}
+    .meta-row strong {{
+      min-width: 0;
+      color: var(--ink);
+      font-weight: 650;
+      overflow-wrap: anywhere;
+    }}
+    .operator-note {{
+      margin: 0;
+      color: var(--muted);
+      font-size: var(--av-text-xs);
+      font-weight: 600;
+      line-height: var(--av-leading-snug);
     }}
     .signal-pill {{
       display: inline-flex;
@@ -3707,6 +3739,12 @@ def render_dashboard(
       font-size: var(--av-text-xs);
     }}
     .card-actions {{
+      display: flex;
+      align-items: center;
+      gap: var(--av-spacing-2);
+      flex-wrap: wrap;
+    }}
+    .card-actions-secondary {{
       display: flex;
       align-items: center;
       gap: var(--av-spacing-2);
@@ -8020,7 +8058,7 @@ def render_dashboard(
               tag
             ])
           ).values()
-        ).slice(0, 5);
+        ).slice(0, 4);
         const scoreTone = scoreClass(item.score);
         const deadline = formatDeadline(item.deadline);
         const sourceName = humanizeLabel(item.source);
@@ -8046,6 +8084,10 @@ def render_dashboard(
         const saved = isOpportunitySaved(item.id);
         const saveLabel = saved ? copy.unsave_opportunity : copy.save_opportunity;
         const clickLabel = escapeHtml(cardTitleText);
+        const signalText = opportunitySignalText(item);
+        const formatLabel = opportunityFormatLabel(item);
+        const regionLabel = opportunityRegionLabel(item);
+        const deadlineLabel = opportunityDeadlineLabel(item);
         return `<article
           class="opportunity avds-document-row ${{scoreTone}}"
           data-avds-component="opportunity-card"
@@ -8066,10 +8108,6 @@ def render_dashboard(
                 </div>
               </div>
               <p class="opportunity-summary">${{escapeHtml(summarize(item))}}</p>
-              <div class="focus-copy">
-                <span class="signal-label">${{escapeHtml(copy.signal_label)}}</span>
-                <p class="signal-lede">${{escapeHtml(opportunitySignalText(item))}}</p>
-              </div>
               <div class="card-actions">
                 <button
                   class="detail-link"
@@ -8079,21 +8117,16 @@ def render_dashboard(
                 >${{escapeHtml(copy.open_details)}}</button>
                 <a
                   class="more-link"
+                  href="${{cardUrl}}"
+                  target="_blank"
+                  rel="noopener"
+                >${{escapeHtml(copy.open_source_short)}}</a>
+                <a
+                  class="more-link"
                   href="${{pageUrl}}"
                   target="_blank"
                   rel="noopener"
                 >${{escapeHtml(copy.read_more)}}</a>
-                <button
-                  class="detail-link"
-                  type="button"
-                  data-save-opportunity="${{opportunityId}}"
-                >${{escapeHtml(saveLabel)}}</button>
-                <a
-                  class="more-link"
-                  href="${{reportUrl}}"
-                  target="_blank"
-                  rel="noopener"
-                >${{escapeHtml(copy.report_issue)}}</a>
               </div>
             </div>
             <aside class="opportunity-rail" aria-label="${{escapeHtml(copy.card_meta_label)}}">
@@ -8105,17 +8138,46 @@ def render_dashboard(
                 >${{formatScore(item.score)}}</span>
                 ${{badges}}
               </div>
-              <div class="signal-box">
-                <span class="signal-label">${{escapeHtml(copy.card_meta_label)}}</span>
-                <div class="signal-pills">
-                  ${{opportunitySignalPillsMarkup(item)}}
+              <div class="meta-rows" data-avds-component="opportunity-meta">
+                <div class="meta-row">
+                  <span>${{escapeHtml(copy.meta_format_label)}}</span>
+                  <strong>${{escapeHtml(formatLabel)}}</strong>
                 </div>
+                <div class="meta-row">
+                  <span>${{escapeHtml(copy.meta_region_label)}}</span>
+                  <strong>${{escapeHtml(regionLabel)}}</strong>
+                </div>
+                <div class="meta-row">
+                  <span>${{escapeHtml(copy.meta_deadline_label)}}</span>
+                  <strong>${{escapeHtml(deadlineLabel)}}</strong>
+                </div>
+                <div class="meta-row">
+                  <span>${{escapeHtml(copy.source_label)}}</span>
+                  <strong>${{escapeHtml(sourceName)}}</strong>
+                </div>
+              </div>
+              <div class="signal-box">
+                <span class="signal-label">${{escapeHtml(copy.signal_label)}}</span>
+                <p class="operator-note">${{escapeHtml(signalText)}}</p>
               </div>
               <div class="fit-block">
                 <span class="fit-label">${{escapeHtml(copy.fit_label)}}</span>
                 <div class="fit-pills">
                   ${{fitPillsMarkup(item)}}
                 </div>
+              </div>
+              <div class="card-actions-secondary">
+                <button
+                  class="detail-link"
+                  type="button"
+                  data-save-opportunity="${{opportunityId}}"
+                >${{escapeHtml(saveLabel)}}</button>
+                <a
+                  class="more-link"
+                  href="${{reportUrl}}"
+                  target="_blank"
+                  rel="noopener"
+                >${{escapeHtml(copy.report_issue)}}</a>
               </div>
               <div class="opportunity-footer">
                 <span class="footer-source">${{footerSource}}
