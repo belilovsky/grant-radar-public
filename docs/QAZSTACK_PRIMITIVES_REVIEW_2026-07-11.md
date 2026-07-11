@@ -7,25 +7,32 @@ This started as an inventory and adoption plan, then advanced into a small
 runtime integration. QAZ.FUND is still a small FastAPI service with a
 production-safe local AV DS adapter; broad framework replacement would add
 deployment risk. The implemented integration is intentionally narrow:
-QAZ.FUND installs a pinned QazStack package and uses `qazstack.opportunities`
-through an optional bridge while preserving local fallback behavior.
+QAZ.FUND uses a small vendored snapshot of `qazstack.opportunities` through an
+optional bridge while preserving local fallback behavior.
 
 ## Implemented runtime bridge
 
 - Platform branch: `codex/qazfund-qazstack-primitives-2026-07-11`
-- QazStack commit pinned by QAZ.FUND:
+- QazStack snapshot source commit:
   `ece381a35a78b3b6a9afc0e71264f494ccf9d830`
 - QazStack package: `qazstack==1.6.1`
 - Shared module: `qazstack.opportunities`
 - QAZ.FUND bridge: `core/qazstack_bridge.py`
 - Active integration point: `core/geofit.py`
+- Local snapshot path: `qazstack/opportunities/*`
+
+The first deploy attempt used a direct private GitHub package dependency. That
+is not acceptable for the production Docker build because the VPS build context
+does not have GitHub credentials and should not require them. The production
+implementation therefore vendors only the dependency-free opportunity contract
+snapshot needed by QAZ.FUND.
 
 Runtime behavior:
 
-- if `qazstack.opportunities` is installed, QAZ.FUND calls shared
-  `evaluate_geo_fit()` and combines the result with local rules;
-- if the package is absent or import fails, QAZ.FUND continues to use the
-  previous local implementation;
+- QAZ.FUND calls vendored `qazstack.opportunities.evaluate_geo_fit()` and
+  combines the result with local rules;
+- if the bridge import ever fails, QAZ.FUND continues to use the previous local
+  implementation;
 - local QAZ.FUND rules remain authoritative for product-specific exclusions.
 
 ## Current QazStack registry evidence
@@ -96,10 +103,11 @@ Completed in the QAZ.FUND / QazStack integration pass:
    QAZ.FUND adopts new AV DS/QazStack operator primitives.
 2. Add this review to repo docs and test that it stays present.
 3. Add QAZ.FUND primitives to the platform-side QazStack registry.
-4. Make QazStack installable as `qazstack==1.6.1`.
+4. Make QazStack installable as `qazstack==1.6.1` on the platform side.
 5. Add `qazstack.opportunities` as a dependency-free shared contract.
 6. Add QAZ.FUND optional runtime bridge with local fallback.
-7. Pin QAZ.FUND requirements to the tested QazStack commit.
+7. Vendor the tested dependency-free QazStack opportunities snapshot in
+   QAZ.FUND so production Docker builds do not need private GitHub access.
 
 ## Decision
 

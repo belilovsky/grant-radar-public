@@ -3,7 +3,24 @@ from __future__ import annotations
 from types import SimpleNamespace
 
 from core import geofit, qazstack_bridge
+from qazstack import __version__ as qazstack_version
+from qazstack.opportunities import OpportunityRecord, evaluate_geo_fit
 from sources.kazakhstan_watch import KazakhstanWatchParser
+
+
+def test_vendored_qazstack_opportunities_snapshot_is_importable() -> None:
+    result = evaluate_geo_fit(
+        OpportunityRecord(
+            source="test",
+            title="Kazakhstan AI education grant",
+            summary="Open to civic technology teams in Central Asia.",
+        )
+    )
+
+    assert qazstack_version == "1.6.1"
+    assert result.has_positive_signal
+    assert result.has_central_asia_signal
+    assert result.is_relevant
 
 
 def test_geo_fit_uses_shared_positive_signal_when_available(monkeypatch) -> None:
@@ -51,10 +68,7 @@ def test_geo_fit_uses_shared_low_confidence_when_available(monkeypatch) -> None:
     assert geofit.is_low_confidence_for_kazakhstan_focus({"source": "custom"})
 
 
-def test_source_contract_validation_is_optional_without_qazstack() -> None:
+def test_source_contract_validation_uses_vendored_qazstack_snapshot() -> None:
     qazstack_bridge._shared_source_contract_cls.cache_clear()
 
-    assert qazstack_bridge.validate_shared_source_contract(KazakhstanWatchParser()) in {
-        False,
-        True,
-    }
+    assert qazstack_bridge.validate_shared_source_contract(KazakhstanWatchParser())
