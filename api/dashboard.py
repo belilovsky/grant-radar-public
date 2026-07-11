@@ -3350,8 +3350,8 @@ def render_dashboard(
     .opportunity.warn {{ border-left-color: var(--warn); }}
     .opportunity-main {{
       display: grid;
-      grid-template-columns: minmax(0, 1fr) minmax(238px, 0.3fr);
-      gap: 20px;
+      grid-template-columns: minmax(0, 1fr) minmax(300px, 0.36fr);
+      gap: 18px;
       align-items: start;
     }}
     .opportunity-content {{
@@ -8080,7 +8080,6 @@ def render_dashboard(
         const opportunityId = escapeHtml(item.id);
         const cardUrl = escapeHtml(externalActionUrl(item));
         const pageUrl = escapeHtml(opportunityPageHref(item.id));
-        const reportUrl = escapeHtml(issueUrl(item));
         const saved = isOpportunitySaved(item.id);
         const saveLabel = saved ? copy.unsave_opportunity : copy.save_opportunity;
         const clickLabel = escapeHtml(cardTitleText);
@@ -8168,12 +8167,6 @@ def render_dashboard(
                   data-save-opportunity="${{opportunityId}}"
                 >${{escapeHtml(saveLabel)}}</button>
                 ${{funderProfileLink}}
-                <a
-                  class="more-link"
-                  href="${{reportUrl}}"
-                  target="_blank"
-                  rel="noopener"
-                >${{escapeHtml(copy.report_issue)}}</a>
               </div>
             </aside>
             <button
