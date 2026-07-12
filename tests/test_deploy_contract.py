@@ -41,6 +41,7 @@ def test_production_compose_requires_password_and_checks_api_readiness() -> None
 
     assert "http://127.0.0.1:8000/ready" in base_compose
     assert "POSTGRES_PASSWORD must be set in .env.prod" in production_compose
+    assert "  db:\n    env_file:" not in production_compose
 
 
 def test_worker_does_not_run_migrations_concurrently_with_api() -> None:
