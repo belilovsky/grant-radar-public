@@ -461,14 +461,15 @@ def render_funder_page(
     :root {{
       --bg: var(--av-color-background);
       --panel: var(--av-color-surface-raised);
-      --panel-subtle: color-mix(in oklab, var(--panel), var(--av-color-background) 18%);
+      --panel-subtle: color-mix(in oklab, var(--panel), var(--av-color-background) 28%);
+      --panel-wash: color-mix(in oklab, var(--panel), var(--av-color-background) 42%);
       --line: color-mix(in oklab, var(--av-color-border-default), transparent 28%);
       --muted: var(--av-color-text-secondary);
       --ink: var(--av-color-text-primary);
       --brand: var(--color-accent);
       --brand-soft: var(--color-accent-subtle);
       --radius: var(--av-radius-lg);
-      --shadow: 0 12px 32px rgb(15 23 42 / 0.08);
+      --shadow: var(--av-shadow-md);
     }}
     * {{ box-sizing: border-box; }}
     body {{
@@ -524,11 +525,13 @@ def render_funder_page(
     .hero {{
       display: grid;
       gap: 14px;
-      padding: 20px;
-      border: 0;
-      border-radius: 0;
-      background: color-mix(in oklab, var(--panel), var(--brand-soft) 18%);
-      box-shadow: none;
+      padding: 22px;
+      border: 1px solid var(--line);
+      border-radius: var(--av-radius-lg);
+      background:
+        linear-gradient(135deg, rgb(255 255 255 / 0.82), rgb(255 255 255 / 0.48)),
+        color-mix(in oklab, var(--panel), var(--brand-soft) 22%);
+      box-shadow: var(--shadow);
     }}
     .eyebrow {{
       color: var(--muted);
@@ -556,16 +559,16 @@ def render_funder_page(
     .stat-grid {{
       display: grid;
       grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
-      gap: 0;
+      gap: 10px;
     }}
     .stat {{
-      border: 0;
-      border-left: 1px solid var(--line);
-      border-radius: 0;
-      background: transparent;
-      padding: 8px 10px;
+      border: 1px solid var(--line);
+      border-left: 3px solid var(--brand);
+      border-radius: var(--av-radius-md);
+      background: rgb(255 255 255 / 0.52);
+      padding: 10px 12px;
     }}
-    .stat:first-child {{ border-left: 0; }}
+    .stat:first-child {{ border-left-width: 3px; }}
     .stat span {{
       display: block;
       margin-bottom: 6px;
@@ -607,7 +610,7 @@ def render_funder_page(
       display: inline-flex;
       align-items: center;
       min-height: 28px;
-      border: 0;
+      border: 1px solid var(--line-subtle);
       border-radius: 999px;
       padding: 0 10px;
       background: var(--panel-subtle);
@@ -635,6 +638,7 @@ def render_funder_page(
       border-radius: var(--av-radius-md);
       background: var(--panel);
       padding: 14px;
+      box-shadow: var(--av-shadow-xs);
     }}
     .opportunity-head {{
       display: grid;
@@ -704,11 +708,11 @@ def render_funder_page(
       display: grid;
       gap: 4px;
       padding: 12px 4px;
-      border: 0;
-      border-bottom: 1px solid var(--line);
-      border-radius: 0;
-      background: transparent;
+      border: 1px solid var(--line);
+      border-radius: var(--av-radius-md);
+      background: var(--panel);
       text-decoration: none;
+      box-shadow: var(--av-shadow-xs);
     }}
     .source-link strong {{
       font-size: 15px;

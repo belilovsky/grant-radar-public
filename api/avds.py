@@ -6,30 +6,30 @@ AVDS_FONT_HEAD = ""
 
 AVDS_CSS = """
     :root {
-      --button-outline: rgb(15 23 42 / 0.10);
-      --badge-outline: rgb(15 23 42 / 0.08);
+      --button-outline: rgb(30 64 175 / 0.16);
+      --badge-outline: rgb(30 64 175 / 0.12);
       --radius: 8px;
       --av-color-blue-50: #eff6ff;
       --av-color-blue-100: #dbeafe;
-      --av-color-blue-600: #2563eb;
-      --av-color-blue-700: #1d4ed8;
-      --av-color-blue-800: #1e40af;
-      --av-color-slate-25: #fafbfc;
-      --av-color-slate-50: #f8fafc;
-      --av-color-slate-75: #eef1f4;
-      --av-color-slate-100: #f1f5f9;
+      --av-color-blue-600: #315fdc;
+      --av-color-blue-700: #214bb8;
+      --av-color-blue-800: #183b94;
+      --av-color-slate-25: #fbfbf8;
+      --av-color-slate-50: #f6f7f3;
+      --av-color-slate-75: #eef1ec;
+      --av-color-slate-100: #e9eee8;
       --av-color-slate-200: #e2e8f0;
       --av-color-slate-300: #cbd5e1;
       --av-color-slate-400: #94a3b8;
       --av-color-slate-500: #64748b;
       --av-color-slate-700: #334155;
       --av-color-slate-900: #0f172a;
-      --av-color-emerald-50: #ecfdf5;
-      --av-color-emerald-100: #d1fae5;
-      --av-color-emerald-700: #047857;
-      --av-color-amber-50: #fffbeb;
-      --av-color-amber-100: #fef3c7;
-      --av-color-amber-700: #b45309;
+      --av-color-emerald-50: #edf8f2;
+      --av-color-emerald-100: #d8efe3;
+      --av-color-emerald-700: #15724e;
+      --av-color-amber-50: #fbf5e8;
+      --av-color-amber-100: #f2e5c8;
+      --av-color-amber-700: #9a6414;
       --av-color-red-50: #fef2f2;
       --av-color-red-100: #fee2e2;
       --av-color-red-600: #dc2626;
@@ -50,9 +50,9 @@ AVDS_CSS = """
       --av-radius-full: 999px;
       --av-shadow-2xs: 0 1px 1px rgb(15 23 42 / 0.03);
       --av-shadow-xs: 0 1px 2px rgb(15 23 42 / 0.04);
-      --av-shadow-sm: 0 1px 2px rgb(15 23 42 / 0.08);
-      --av-shadow-md: 0 4px 8px rgb(15 23 42 / 0.06), 0 2px 4px rgb(15 23 42 / 0.04);
-      --av-shadow-lg: 0 8px 16px rgb(15 23 42 / 0.08), 0 4px 8px rgb(15 23 42 / 0.04);
+      --av-shadow-sm: 0 1px 2px rgb(30 41 59 / 0.08);
+      --av-shadow-md: 0 10px 24px rgb(30 41 59 / 0.07), 0 2px 6px rgb(30 41 59 / 0.04);
+      --av-shadow-lg: 0 18px 40px rgb(30 41 59 / 0.10), 0 6px 14px rgb(30 41 59 / 0.05);
       --av-duration-base: 180ms;
       --av-easing-emphasized: cubic-bezier(0.2, 0, 0.1, 1);
       --motion-duration-base: var(--av-duration-base);

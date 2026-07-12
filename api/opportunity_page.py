@@ -725,6 +725,8 @@ def render_opportunity_page(
       --surface: var(--color-surface);
       --surface-subtle: var(--color-bg-subtle);
       --surface-raised: var(--color-surface-raised);
+      --surface-wash: color-mix(in oklab, var(--surface), var(--surface-subtle) 42%);
+      --accent-wash: color-mix(in oklab, var(--surface), var(--brand-soft) 24%);
       --text: var(--color-text);
       --muted: var(--color-text-muted);
       --line: var(--color-border);
@@ -792,11 +794,13 @@ def render_opportunity_page(
     .hero {{
       display: grid;
       gap: 14px;
-      padding: 14px;
-      border: 0;
-      border-radius: 0;
-      background: color-mix(in oklab, var(--surface), var(--brand-soft) 18%);
-      box-shadow: none;
+      padding: 20px;
+      border: 1px solid var(--line);
+      border-radius: var(--av-radius-lg);
+      background:
+        linear-gradient(135deg, rgb(255 255 255 / 0.82), rgb(255 255 255 / 0.5)),
+        color-mix(in oklab, var(--surface), var(--brand-soft) 22%);
+      box-shadow: var(--shadow);
       margin-bottom: 16px;
     }}
     .eyebrow {{
@@ -855,11 +859,11 @@ def render_opportunity_page(
     .hero-stats {{
       display: grid;
       gap: 6px;
-      padding: 4px 0 4px 14px;
-      border: 0;
-      border-left: 1px solid var(--line);
-      border-radius: 0;
-      background: transparent;
+      padding: 12px;
+      border: 1px solid var(--line);
+      border-left: 3px solid var(--brand);
+      border-radius: var(--av-radius-md);
+      background: rgb(255 255 255 / 0.54);
     }}
     .hero-stats > div {{
       display: grid;
@@ -871,11 +875,11 @@ def render_opportunity_page(
     }}
     .metric {{
       padding: 10px 12px;
-      border: 0;
-      border-left: 2px solid var(--brand);
-      border-radius: 0;
-      background: transparent;
-      box-shadow: none;
+      border: 1px solid var(--line);
+      border-left: 3px solid var(--brand);
+      border-radius: var(--av-radius-md);
+      background: rgb(255 255 255 / 0.56);
+      box-shadow: var(--av-shadow-xs);
     }}
     .metric span {{
       display: block;
@@ -901,7 +905,7 @@ def render_opportunity_page(
       min-height: var(--av-control-height-sm);
       padding: 0 12px;
       border-radius: 999px;
-      border: 0;
+      border: 1px solid var(--line-subtle);
       background: var(--success-soft);
       color: color-mix(in oklab, var(--success), black 20%);
       font-size: var(--av-text-sm);
@@ -920,20 +924,18 @@ def render_opportunity_page(
       gap: 12px;
     }}
     .section-card {{
-      padding: 18px 0 0;
-      border: 0;
-      border-top: 1px solid var(--line);
-      border-radius: 0;
-      background: transparent;
-      box-shadow: none;
+      padding: 16px;
+      border: 1px solid var(--line);
+      border-radius: var(--av-radius-md);
+      background: var(--surface);
+      box-shadow: var(--av-shadow-xs);
     }}
     .sidebar-card {{
-      padding: 4px 0 4px 14px;
-      border: 0;
-      border-left: 1px solid var(--line);
-      border-radius: 0;
-      background: transparent;
-      box-shadow: none;
+      padding: 14px;
+      border: 1px solid var(--line);
+      border-radius: var(--av-radius-md);
+      background: var(--surface-wash);
+      box-shadow: var(--av-shadow-xs);
     }}
     .section-card h2,
     .sidebar-card h2 {{
@@ -956,8 +958,10 @@ def render_opportunity_page(
       gap: 8px;
     }}
     .meta-item {{
-      padding: 8px 0;
-      border-top: 1px solid var(--line);
+      padding: 10px;
+      border: 1px solid var(--line-subtle);
+      border-radius: var(--av-radius-md);
+      background: var(--surface);
     }}
     .meta-item:first-child {{
       padding-top: 0;
@@ -990,11 +994,11 @@ def render_opportunity_page(
       display: grid;
       gap: 12px;
       margin-bottom: 16px;
-      padding: 14px 0 0;
-      border: 0;
-      border-top: 1px solid var(--line);
-      border-radius: 0;
-      background: transparent;
+      padding: 16px;
+      border: 1px solid var(--line);
+      border-radius: var(--av-radius-md);
+      background: var(--surface);
+      box-shadow: var(--av-shadow-xs);
     }}
     .prepare-head {{
       display: grid;
@@ -1023,11 +1027,10 @@ def render_opportunity_page(
       display: grid;
       gap: 8px;
       min-height: 0;
-      padding: 10px 0 0;
-      border: 0;
-      border-top: 1px solid var(--line);
-      border-radius: 0;
-      background: transparent;
+      padding: 12px;
+      border: 1px solid var(--line-subtle);
+      border-radius: var(--av-radius-md);
+      background: var(--surface-wash);
       box-shadow: none;
     }}
     .prepare-index {{
@@ -1058,12 +1061,11 @@ def render_opportunity_page(
       display: grid;
       gap: 12px;
       margin-bottom: 16px;
-      padding: 14px 0 0;
-      border: 0;
-      border-top: 1px solid var(--line);
-      border-radius: 0;
-      background: transparent;
-      box-shadow: none;
+      padding: 16px;
+      border: 1px solid var(--line);
+      border-radius: var(--av-radius-md);
+      background: var(--surface);
+      box-shadow: var(--av-shadow-xs);
     }}
     .apply-head {{
       display: grid;
@@ -1096,11 +1098,10 @@ def render_opportunity_page(
       grid-template-columns: 34px minmax(0, 1fr);
       gap: 10px;
       align-items: start;
-      padding: 10px 0 0;
-      border: 0;
-      border-top: 1px solid var(--line);
-      border-radius: 0;
-      background: transparent;
+      padding: 12px;
+      border: 1px solid var(--line-subtle);
+      border-radius: var(--av-radius-md);
+      background: var(--surface-wash);
     }}
     .apply-index {{
       display: inline-flex;
@@ -1163,8 +1164,8 @@ def render_opportunity_page(
       padding: 10px;
       border: 1px solid var(--line);
       border-radius: var(--av-radius-md);
-      background: transparent;
-      box-shadow: none;
+      background: var(--surface);
+      box-shadow: var(--av-shadow-xs);
     }}
     .related-top,
     .related-meta {{
