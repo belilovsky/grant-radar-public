@@ -40,6 +40,9 @@ def _transport(
                 '<span data-avds-component="source-icon"></span>'
                 '<span class="avds-source-card__arrow"></span>'
                 '<a data-avds-component="source-url"></a>'
+                '<details data-avds-component="trust-library"></details>'
+                '<button id="workspace-filter"></button>'
+                '<details id="filter-disclosure"></details>'
                 '<article class="avds-document-row"'
                 ' data-avds-component="opportunity-card"></article>'
                 "</main>"
@@ -60,6 +63,8 @@ def _transport(
                     "status": "ok",
                     "enabled_sources": 23,
                     "relevant_open_items": 44,
+                    "stale_sources": 1,
+                    "unknown_freshness_sources": 2,
                 },
             )
         if endpoint_path == "/opportunities":
@@ -180,6 +185,8 @@ def test_run_smoke_passes_for_expected_live_contract():
     assert result.health_items == 55
     assert result.ready_backend == "database"
     assert result.coverage_sources == 23
+    assert result.coverage_stale_sources == 1
+    assert result.coverage_unknown_freshness_sources == 2
     assert result.opportunities == 44
     assert all(result.dashboard_markers.values())
     assert result.english_dashboard is True

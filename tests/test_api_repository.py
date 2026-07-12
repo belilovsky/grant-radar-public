@@ -128,6 +128,7 @@ def test_root_renders_service_landing(monkeypatch):
     assert '<strong id="health-status">Каталог доступен</strong>' in response.text
     assert '<strong id="health-items">0</strong>' in response.text
     assert '<strong id="health-sources">0</strong>' in response.text
+    assert '<strong id="health-stale-sources">0</strong>' in response.text
     assert 'class="discovery-grid"' in response.text
     assert response.text.index('id="opportunities-panel"') < response.text.index(
         'data-avds-component="discovery-library"'
@@ -219,6 +220,8 @@ def test_root_renders_service_landing(monkeypatch):
     assert 'id="funder-grid"' in response.text
     assert 'id="topic-brief"' in response.text
     assert 'id="save-view"' in response.text
+    assert 'id="workspace-filter"' in response.text
+    assert 'id="filter-disclosure"' in response.text
     assert 'id="share-view"' in response.text
     assert 'id="saved-view-notice"' in response.text
     assert 'aria-label="Статус подборок"' in response.text
@@ -238,6 +241,7 @@ def test_root_renders_service_landing(monkeypatch):
     assert "function opportunityPageHref(opportunityId)" in response.text
     assert "fetchJson(withLang(`/opportunities/${opportunityId}`))" in response.text
     assert "function humanizeLabel" in response.text
+    assert "function sourceDisplayName" in response.text
     assert "function metadataValue(entry)" in response.text
     assert "function formatDeadline" in response.text
     assert "function sourceRefreshInfo" in response.text
@@ -245,6 +249,10 @@ def test_root_renders_service_landing(monkeypatch):
     assert "rankedSources.slice(0, COLLAPSED_SOURCES)" in response.text
     assert 'class="source-freshness ${refresh.tone}"' in response.text
     assert "function normalizedDetailMetadata" in response.text
+    assert "function normalizeSearchText" in response.text
+    assert "function oneEditAway" in response.text
+    assert "function matchesSearchQuery" in response.text
+    assert "SEARCH_SYNONYM_GROUPS" in response.text
     assert "return copy.score_exact" in response.text
     assert 'aria-label="${sourceName}"' in response.text
     assert "function localDateISO" in response.text
@@ -410,6 +418,10 @@ def test_root_renders_service_landing(monkeypatch):
     assert "Казахстан в приоритете" in response.text
     assert "Показать ещё" in response.text
     assert "renderSavedViews();" in response.text
+    assert "grantRadarOpportunityWorkflow.v1" in response.text
+    assert "function renderWorkspaceFilter()" in response.text
+    assert "function setOpportunityWorkflowStatus" in response.text
+    assert 'data-workflow-status="${opportunityId}"' in response.text
     assert "function setSavedViewNotice(message)" in response.text
     assert "setSavedViewNotice(copy.saved_view_saved);" in response.text
     assert "setSavedViewNotice(copy.saved_view_removed);" in response.text
@@ -1248,14 +1260,33 @@ def test_coverage_reports_source_counts(monkeypatch):
     assert data["status"] == "ok"
     assert data["items"] == 2
     assert data["enabled_sources"] >= 9
+    assert data["fresh_sources"] >= 2
+    assert data["stale_sources"] == 0
+    assert data["unknown_freshness_sources"] >= 1
     sources = {item["slug"]: item for item in data["sources"]}
     assert sources["world_bank_kazakhstan"]["items"] == 1
     assert sources["world_bank_kazakhstan"]["relevant_open_items"] == 1
+    assert sources["world_bank_kazakhstan"]["freshness_status"] == "fresh"
+    assert isinstance(sources["world_bank_kazakhstan"]["age_hours"], float)
     assert sources["eeas_kazakhstan"]["items"] == 1
     assert sources["eeas_kazakhstan"]["open_items"] == 0
     head_response = client.head("/coverage")
     assert head_response.status_code == 200
     assert head_response.headers["content-type"].startswith("application/json")
+
+
+def test_source_freshness_marks_old_and_missing_timestamps():
+    old = datetime.now(timezone.utc) - timedelta(hours=96)
+
+    assert api_main._source_freshness(None) == {
+        "freshness_status": "unknown",
+        "age_hours": None,
+    }
+    assert api_main._source_freshness(old)["freshness_status"] == "stale"
+    assert (
+        api_main._source_freshness(datetime.now(timezone.utc))["freshness_status"]
+        == "fresh"
+    )
 
 
 def test_funders_endpoint_aggregates_lifecycle(monkeypatch):
@@ -1661,7 +1692,16 @@ def test_api_returns_clean_source_raw_for_persisted_opportunity(tmp_path, monkey
     assert len(data) == 1
     assert data[0]["tags"] == ["ai", "education"]
     assert data[0]["score"] == 0.8
-    assert data[0]["raw"] == {"external_id": "RAW-1", "agency": "Example Agency"}
+    assert data[0]["raw"] == {
+        "external_id": "RAW-1",
+        "agency": "Example Agency",
+        "decision_readiness": {
+            "status": "partial",
+            "known_fields": 1,
+            "total_fields": 4,
+            "missing_fields": ["deadline", "amount", "eligibility"],
+        },
+    }
     assert "source_url" not in data[0]["raw"]
 
 
@@ -1705,6 +1745,48 @@ def test_compact_opportunities_keep_dashboard_fields_without_ingestion_payload(
         "agency": "Example Agency",
         "application_url": "https://example.org/apply",
         "deadline_policy": "rolling",
+        "decision_readiness": {
+            "status": "partial",
+            "known_fields": 2,
+            "total_fields": 4,
+            "missing_fields": ["amount", "eligibility"],
+        },
+    }
+
+
+def test_decision_readiness_marks_complete_source_facts(tmp_path, monkeypatch):
+    _reset_api_state(monkeypatch)
+    db_url = f"sqlite:///{tmp_path / 'api-decision-readiness.sqlite'}"
+    monkeypatch.setenv("GRANT_RADAR_DB_URL", db_url)
+
+    repo = SqlRepository(db_url)
+    repo.upsert(
+        Opportunity(
+            source="grants_gov",
+            source_url="https://example.org/complete-application",
+            type=OpportunityType.GRANT,
+            title="Complete application facts",
+            summary="A fully described opportunity for Kazakhstan organizations.",
+            amount_min=1000,
+            amount_max=5000,
+            deadline=date(2027, 2, 1),
+            eligibility=["Registered organizations"],
+            tags=["kazakhstan"],
+            score=0.9,
+        )
+    )
+
+    response = TestClient(api_main.app).get(
+        "/opportunities", params={"min_score": 0.5, "compact": "true"}
+    )
+
+    assert response.status_code == 200
+    readiness = response.json()[0]["raw"]["decision_readiness"]
+    assert readiness == {
+        "status": "complete",
+        "known_fields": 4,
+        "total_fields": 4,
+        "missing_fields": [],
     }
 
 
@@ -2617,6 +2699,49 @@ def test_refresh_is_disabled_without_admin_token(monkeypatch):
     response = client.post("/refresh")
 
     assert response.status_code == 404
+
+
+def test_operator_health_requires_token_and_returns_actionable_summary(monkeypatch):
+    _reset_api_state(monkeypatch)
+    monkeypatch.setenv("GRANT_RADAR_ADMIN_TOKEN", "secret")
+    api_main._cache.append(
+        Opportunity(
+            source="grants_gov",
+            source_url="https://example.org/stale-operator-item",
+            type=OpportunityType.GRANT,
+            title="Stale Central Asia grant",
+            summary="Grant for Central Asia organizations.",
+            tags=["central_asia"],
+            score=0.8,
+            discovered_at=datetime.now(timezone.utc) - timedelta(days=4),
+        )
+    )
+    api_main._clear_public_items_cache()
+    monkeypatch.setattr(
+        api_main,
+        "_operator_run_rows",
+        lambda limit=50: [
+            {
+                "id": 7,
+                "source": "pipeline",
+                "status": "error",
+                "error": "sample failure",
+            }
+        ],
+    )
+    client = TestClient(api_main.app)
+
+    assert client.get("/operator/health").status_code == 401
+    response = client.get(
+        "/operator/health", headers={"Authorization": "Bearer secret"}
+    )
+
+    assert response.status_code == 200
+    data = response.json()
+    assert data["status"] == "attention"
+    assert data["catalog_items"] == 1
+    assert data["stale_sources"][0]["slug"] == "grants_gov"
+    assert data["failed_runs"][0]["error"] == "sample failure"
 
 
 def test_refresh_rejects_bad_admin_token(monkeypatch):

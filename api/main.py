@@ -110,6 +110,7 @@ _DASHBOARD_RAW_FIELDS = frozenset(
         "application_url",
         "country",
         "deadline_policy",
+        "decision_readiness",
         "funder_slug",
         "lifecycle",
         "notice_type",
@@ -540,6 +541,29 @@ def _compact_dashboard_item(item: Opportunity) -> Opportunity:
     return item.model_copy(update={"raw": compact_raw})
 
 
+def _with_decision_readiness(item: Opportunity) -> Opportunity:
+    """Expose which application facts are present without inventing missing data."""
+    raw = item.raw if isinstance(item.raw, dict) else {}
+    present = {
+        "deadline": bool(item.deadline or raw.get("deadline_policy") == "rolling"),
+        "amount": bool(
+            item.amount_min is not None
+            or item.amount_max is not None
+            or raw.get("amount_raw")
+        ),
+        "eligibility": bool(item.eligibility or raw.get("eligibility")),
+        "application": bool(item.source_url or raw.get("application_url")),
+    }
+    missing_fields = [name for name, available in present.items() if not available]
+    readiness = {
+        "status": "complete" if not missing_fields else "partial",
+        "known_fields": sum(present.values()),
+        "total_fields": len(present),
+        "missing_fields": missing_fields,
+    }
+    return item.model_copy(update={"raw": {**raw, "decision_readiness": readiness}})
+
+
 def _find_opportunity(
     opportunity_id: UUID,
     content_lang: str = "en",
@@ -846,6 +870,7 @@ def _source_coverage(items: list[Opportunity]) -> list[dict[str, Any]]:
             (item.discovered_at for item in source_items),
             default=None,
         )
+        freshness = _source_freshness(last_seen)
         rows.append(
             {
                 "slug": slug,
@@ -857,6 +882,7 @@ def _source_coverage(items: list[Opportunity]) -> list[dict[str, Any]]:
                 "open_items": len(open_items),
                 "relevant_open_items": len(relevant_open_items),
                 "last_discovered_at": last_seen.isoformat() if last_seen else None,
+                **freshness,
             }
         )
 
@@ -868,6 +894,7 @@ def _source_coverage(items: list[Opportunity]) -> list[dict[str, Any]]:
             if is_relevant_for_kazakhstan_focus(item) and item.score >= 0.3
         ]
         last_seen = max((item.discovered_at for item in source_items), default=None)
+        freshness = _source_freshness(last_seen)
         rows.append(
             {
                 "slug": slug,
@@ -879,10 +906,25 @@ def _source_coverage(items: list[Opportunity]) -> list[dict[str, Any]]:
                 "open_items": len(open_items),
                 "relevant_open_items": len(relevant_open_items),
                 "last_discovered_at": last_seen.isoformat() if last_seen else None,
+                **freshness,
             }
         )
 
     return rows
+
+
+def _source_freshness(last_seen: datetime | None) -> dict[str, Any]:
+    """Return stable public freshness signals without exposing run errors."""
+    if last_seen is None:
+        return {"freshness_status": "unknown", "age_hours": None}
+    normalized = last_seen
+    if normalized.tzinfo is None:
+        normalized = normalized.replace(tzinfo=UTC)
+    age_hours = max(0.0, (datetime.now(UTC) - normalized).total_seconds() / 3600)
+    return {
+        "freshness_status": "stale" if age_hours > 72 else "fresh",
+        "age_hours": round(age_hours, 1),
+    }
 
 
 def _cached_coverage_payload() -> dict[str, Any]:
@@ -901,10 +943,56 @@ def _cached_coverage_payload() -> dict[str, Any]:
         "sources": source_rows,
         "enabled_sources": sum(1 for row in source_rows if row["enabled"]),
         "relevant_open_items": sum(row["relevant_open_items"] for row in source_rows),
+        "fresh_sources": sum(
+            1 for row in source_rows if row.get("freshness_status") == "fresh"
+        ),
+        "stale_sources": sum(
+            1 for row in source_rows if row.get("freshness_status") == "stale"
+        ),
+        "unknown_freshness_sources": sum(
+            1 for row in source_rows if row.get("freshness_status") == "unknown"
+        ),
     }
     with _public_items_cache_lock:
         _coverage_cache = (now, payload)
     return dict(payload)
+
+
+def _operator_run_rows(limit: int = 50) -> list[dict[str, Any]]:
+    """Read recent run metadata for the protected operator surface."""
+    repository = _configured_repository()
+    engine = getattr(repository, "engine", None)
+    if engine is None:
+        return []
+    try:
+        from sqlalchemy import MetaData, Table, select
+
+        runs = Table("runs", MetaData(), autoload_with=engine)
+        statement = select(runs).order_by(runs.c.started_at.desc()).limit(limit)
+        with engine.connect() as connection:
+            rows = connection.execute(statement).mappings().all()
+    except Exception:
+        return []
+    result: list[dict[str, Any]] = []
+    for row in rows:
+        result.append(
+            {
+                "id": row.get("id"),
+                "source": row.get("source"),
+                "status": row.get("status"),
+                "started_at": (
+                    row["started_at"].isoformat() if row.get("started_at") else None
+                ),
+                "finished_at": (
+                    row["finished_at"].isoformat() if row.get("finished_at") else None
+                ),
+                "items_seen": int(row.get("items_seen") or 0),
+                "items_new": int(row.get("items_new") or 0),
+                "items_dup": int(row.get("items_dup") or 0),
+                "error": str(row.get("error") or "").splitlines()[0][:240],
+            }
+        )
+    return result
 
 
 def _root_path(request: Request) -> str:
@@ -1401,6 +1489,38 @@ async def coverage_head() -> Response:
     return Response(status_code=200, media_type="application/json")
 
 
+@app.get("/operator/health", include_in_schema=False)
+async def operator_health(_: None = Depends(require_admin_token)) -> dict[str, Any]:
+    """Protected operational summary for source and pipeline supervision."""
+    coverage_payload = _cached_coverage_payload()
+    recent_runs = _operator_run_rows()
+    stale_sources = [
+        {
+            "slug": row.get("slug"),
+            "name": row.get("name"),
+            "last_discovered_at": row.get("last_discovered_at"),
+            "age_hours": row.get("age_hours"),
+        }
+        for row in coverage_payload.get("sources", [])
+        if row.get("freshness_status") == "stale"
+    ]
+    failed_runs = [row for row in recent_runs if row.get("status") == "error"]
+    return {
+        "status": "attention" if stale_sources or failed_runs else "ok",
+        "generated_at": datetime.now(UTC).isoformat(),
+        "catalog_items": coverage_payload.get("items", 0),
+        "relevant_open_items": coverage_payload.get("relevant_open_items", 0),
+        "enabled_sources": coverage_payload.get("enabled_sources", 0),
+        "fresh_sources": coverage_payload.get("fresh_sources", 0),
+        "stale_sources": stale_sources,
+        "unknown_freshness_sources": coverage_payload.get(
+            "unknown_freshness_sources", 0
+        ),
+        "failed_runs": failed_runs[:10],
+        "recent_runs": recent_runs[:20],
+    }
+
+
 @app.get("/funders")
 async def list_funders(
     limit: int = Query(24, ge=1, le=200),
@@ -1507,7 +1627,7 @@ async def list_opportunities(
         items = [o for o in items if o.deadline is None or o.deadline >= deadline_after]
     items.sort(key=lambda item: (item.score, item.discovered_at), reverse=True)
     results = [
-        localize_opportunity(item, content_lang)
+        _with_decision_readiness(localize_opportunity(item, content_lang))
         for item in items[offset : offset + limit]
     ]
     if compact:

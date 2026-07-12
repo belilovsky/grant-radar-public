@@ -360,6 +360,7 @@ COPY = {
         "api_status": "Поток данных",
         "stored_items": "Записей в каталоге",
         "health_sources": "Активные источники",
+        "health_stale_sources": "Устаревшие источники",
         "api_online": "Данные актуальны",
         "api_failed": "Нужна проверка данных",
         "api_error": "Ошибка загрузки данных",
@@ -452,12 +453,23 @@ COPY = {
         "saved_view_status_label": "Статус подборок",
         "saved_view_share_prompt": "Скопируйте ссылку на текущую подборку",
         "advanced_filters": "Дополнительные фильтры",
+        "mobile_filters_summary": "Настроить выдачу",
         "export_csv": "CSV",
         "export_deadlines": "Календарь",
         "saved_opportunity_saved": "Карточка сохранена локально.",
         "saved_opportunity_removed": "Карточка удалена из локальных сохранённых.",
         "save_opportunity": "Сохранить",
         "unsave_opportunity": "Убрать",
+        "workspace_filter": "Моя работа",
+        "workspace_filter_count": "Моя работа: {count}",
+        "workspace_filter_empty": "Сначала сохраните подходящую карточку.",
+        "workflow_label": "Этап работы",
+        "workflow_review": "На проверке",
+        "workflow_fit": "Подходит",
+        "workflow_preparing": "Готовим заявку",
+        "workflow_submitted": "Отправлено",
+        "workflow_result": "Получен результат",
+        "workflow_updated": "Этап карточки обновлён.",
         "report_issue": "Уточнить данные",
         "open_source_short": "Источник",
         "footer_owner": "QAZ.FUND – публичный навигатор возможностей. Сделано",
@@ -721,6 +733,7 @@ COPY = {
             "unicef_kazakhstan": "UNICEF Казахстан",
             "unesco_iite": "UNESCO IITE",
             "isdb_project_procurement": "IsDB Procurement",
+            "islamic_development_bank": "Исламский банк развития",
             "ebrd_ecepp_procurement": "EBRD ECEPP Procurement",
             "undp_procurement": "UNDP Procurement",
             "kazakhstan": "Казахстан",
@@ -869,6 +882,7 @@ COPY = {
             "opportunity_desk": "Opportunity Desk",
             "astana_hub": "Astana Hub",
             "kazakhstan_domestic_support": "Поддержка РК",
+            "kazakhstan_opportunity_watch": "Мониторинг возможностей Казахстана",
             "dod_amraa": "DOD-AMRAA",
             "hhs_nih11": "HHS-NIH",
             "united_nations_development_programme": "Программа развития ООН (ПРООН)",
@@ -1223,6 +1237,7 @@ COPY = {
         "api_status": "Data stream",
         "stored_items": "Catalog entries",
         "health_sources": "Active sources",
+        "health_stale_sources": "Stale sources",
         "api_online": "Data is current",
         "api_failed": "Data needs attention",
         "api_error": "Data load error",
@@ -1314,12 +1329,23 @@ COPY = {
         "saved_view_status_label": "Saved collection status",
         "saved_view_share_prompt": "Copy the link to the current collection",
         "advanced_filters": "Advanced filters",
+        "mobile_filters_summary": "Refine results",
         "export_csv": "CSV",
         "export_deadlines": "Calendar",
         "saved_opportunity_saved": "Card saved locally.",
         "saved_opportunity_removed": "Card removed from local saved items.",
         "save_opportunity": "Save",
         "unsave_opportunity": "Remove",
+        "workspace_filter": "My work",
+        "workspace_filter_count": "My work: {count}",
+        "workspace_filter_empty": "Save a relevant card first.",
+        "workflow_label": "Work stage",
+        "workflow_review": "Under review",
+        "workflow_fit": "Good fit",
+        "workflow_preparing": "Preparing application",
+        "workflow_submitted": "Submitted",
+        "workflow_result": "Result received",
+        "workflow_updated": "Card stage updated.",
         "report_issue": "Correct the data",
         "open_source_short": "Source",
         "footer_owner": "QAZ.FUND is a public opportunity navigator. Built by",
@@ -1579,6 +1605,7 @@ COPY = {
             "unicef_kazakhstan": "UNICEF Kazakhstan",
             "unesco_iite": "UNESCO IITE",
             "isdb_project_procurement": "IsDB Procurement",
+            "islamic_development_bank": "Islamic Development Bank",
             "ebrd_ecepp_procurement": "EBRD ECEPP Procurement",
             "undp_procurement": "UNDP Procurement",
             "kazakhstan": "Kazakhstan",
@@ -1723,6 +1750,7 @@ COPY = {
             "venture": "Venture",
             "invitation_for_tenders_single": "Invitation for tenders",
             "kazakhstan_domestic_support": "KZ domestic support",
+            "kazakhstan_opportunity_watch": "Kazakhstan opportunity watch",
             "dod_amraa": "DOD-AMRAA",
             "hhs_nih11": "HHS-NIH",
             "united_nations_development_programme": (
@@ -3063,6 +3091,8 @@ def render_dashboard(
       color: var(--muted);
       font-size: var(--av-text-sm);
     }}
+    .filter-disclosure > summary {{ display: none; }}
+    .filter-disclosure-body {{ display: contents; }}
     .filters-shell {{
       display: grid;
       gap: var(--av-spacing-2);
@@ -3242,6 +3272,11 @@ def render_dashboard(
       align-items: center;
       gap: var(--av-spacing-1);
       flex-wrap: wrap;
+    }}
+    .workspace-filter[aria-pressed="true"] {{
+      border-color: color-mix(in oklab, var(--brand), transparent 55%);
+      background: var(--brand-soft);
+      color: var(--brand);
     }}
     .saved-view-row {{
       display: flex;
@@ -3729,7 +3764,7 @@ def render_dashboard(
     }}
     .health-grid {{
       display: grid;
-      grid-template-columns: repeat(3, minmax(0, 1fr));
+      grid-template-columns: repeat(4, minmax(0, 1fr));
       gap: var(--av-spacing-2);
     }}
     .method-grid {{
@@ -3903,6 +3938,28 @@ def render_dashboard(
       align-items: center;
       gap: var(--av-spacing-2);
       flex-wrap: wrap;
+    }}
+    .workflow-control {{
+      display: grid;
+      gap: 5px;
+      padding-top: 9px;
+      border-top: 1px solid var(--line-subtle);
+    }}
+    .workflow-control span {{
+      color: var(--muted);
+      font-size: var(--av-text-xs);
+      font-weight: 600;
+    }}
+    .workflow-control select {{
+      width: 100%;
+      min-height: 32px;
+      border: 1px solid var(--line-subtle);
+      border-radius: var(--av-radius-md);
+      background: var(--panel);
+      color: var(--ink);
+      padding: 0 28px 0 9px;
+      font-size: var(--av-text-xs);
+      font-weight: 650;
     }}
     .detail-link {{
       display: inline-flex;
@@ -4398,6 +4455,40 @@ def render_dashboard(
       }}
       .topic-brief {{
         padding: 14px 16px;
+      }}
+      .filter-disclosure {{
+        margin-bottom: var(--av-spacing-2);
+        border: 1px solid var(--line-subtle);
+        border-radius: var(--av-radius-md);
+        background: var(--panel);
+      }}
+      .filter-disclosure > summary {{
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        min-height: 44px;
+        padding: 0 12px;
+        color: var(--ink);
+        cursor: pointer;
+        font-size: var(--av-text-sm);
+        font-weight: 700;
+        list-style: none;
+      }}
+      .filter-disclosure > summary::-webkit-details-marker {{ display: none; }}
+      .filter-disclosure > summary::after {{
+        content: "+";
+        color: var(--brand);
+        font-size: 18px;
+      }}
+      .filter-disclosure[open] > summary::after {{ content: "−"; }}
+      .filter-disclosure-body {{
+        display: grid;
+        gap: var(--av-spacing-2);
+        padding: 0 10px 10px;
+      }}
+      .filter-disclosure .preset-grid,
+      .filter-disclosure .filters-shell {{
+        margin-bottom: 0;
       }}
       .sticky-shell {{
         position: static;
@@ -4955,6 +5046,9 @@ def render_dashboard(
           <p id="opportunities-description">{escape(str(copy["opportunities_description"]))}</p>
         </div>
       </div>
+      <details class="filter-disclosure" id="filter-disclosure" open>
+        <summary>{escape(str(copy["mobile_filters_summary"]))}</summary>
+        <div class="filter-disclosure-body">
       <div class="preset-grid">
         <div class="preset-group" aria-label="{escape(str(copy["audience_aria"]), quote=True)}">
           <span class="filter-label">{escape(str(copy["audience_label"]))}</span>
@@ -5099,6 +5193,8 @@ def render_dashboard(
           </div>
         </details>
       </div>
+        </div>
+      </details>
       <div class="filters-meta">
         <div id="filter-summary" class="filter-summary" data-avds-component="filter-summary"></div>
         <button
@@ -5116,6 +5212,13 @@ def render_dashboard(
         <div class="saved-views-head">
           <span class="filter-label">{escape(str(copy["collections_label"]))}</span>
           <div class="saved-actions">
+            <button
+              class="text-button workspace-filter"
+              type="button"
+              id="workspace-filter"
+              aria-pressed="false"
+              data-avds-component="button"
+            >{escape(str(copy["workspace_filter"]))}</button>
             <button
               class="text-button"
               type="button"
@@ -5301,6 +5404,10 @@ def render_dashboard(
           <span>{escape(str(copy["health_sources"]))}</span>
           <strong id="health-sources">{initial_health_sources}</strong>
         </div>
+        <div class="health-item avds-stat-kpi-card" data-avds-component="health-card">
+          <span>{escape(str(copy["health_stale_sources"]))}</span>
+          <strong id="health-stale-sources">0</strong>
+        </div>
       </div>
       <p class="health-note" id="health-note">{escape(str(copy["health_note_loading"]))}</p>
     </section>
@@ -5470,6 +5577,7 @@ def render_dashboard(
       region: "all",
       deadlineMode: "all",
       includeArchived: false,
+      savedOnly: false,
       showAllSources: false,
       visibleLimit: 15,
       lastCheckedAt: "",
@@ -5490,6 +5598,29 @@ def render_dashboard(
     const COLLAPSED_SOURCES = 5;
     const SAVED_VIEW_STORAGE_KEY = "grantRadarSavedViews.v1";
     const SAVED_OPPORTUNITY_STORAGE_KEY = "grantRadarSavedOpportunities.v1";
+    const WORKFLOW_STORAGE_KEY = "grantRadarOpportunityWorkflow.v1";
+    const WORKFLOW_STATUSES = [
+      {{ id: "review", label: copy.workflow_review }},
+      {{ id: "fit", label: copy.workflow_fit }},
+      {{ id: "preparing", label: copy.workflow_preparing }},
+      {{ id: "submitted", label: copy.workflow_submitted }},
+      {{ id: "result", label: copy.workflow_result }}
+    ];
+    const SEARCH_STOP_WORDS = new Set([
+      "для", "или", "и", "в", "на", "по", "из", "the", "for", "and", "or", "in"
+    ]);
+    const SEARCH_SYNONYM_GROUPS = [
+      ["грант", "grant", "funding", "конкурс"],
+      ["субсид", "subsid", "support", "мера"],
+      ["тендер", "закуп", "procurement", "tender", "rfp"],
+      ["ферм", "агро", "сельск", "farm", "agri", "agriculture"],
+      ["нко", "ngo", "nonprofit", "civil_society"],
+      ["исслед", "наук", "research", "science"],
+      ["стартап", "startup", "accelerator", "акселератор"],
+      ["ии", "ai", "artificial_intelligence", "machine_learning"],
+      ["образован", "education", "edtech"],
+      ["медиа", "журналист", "media", "journalism"]
+    ];
     const formatNumber = new Intl.NumberFormat(copy.locale || "ru-KZ");
     const $ = (selector) => document.querySelector(selector);
     const labelMap = copy.label_map || copy.labelMap || {{}};
@@ -6352,6 +6483,13 @@ def render_dashboard(
         .join(" ");
     }}
 
+    function sourceDisplayName(source) {{
+      const slug = String(source && source.slug || "").trim();
+      const mapped = labelMap[slug] || labelMap[normalizeKey(slug)];
+      if (mapped) return String(mapped);
+      return String(source && source.name || humanizeLabel(slug));
+    }}
+
     function itemTags(item) {{
       return (Array.isArray(item.tags) ? item.tags : []).map(normalizeKey);
     }}
@@ -7046,7 +7184,7 @@ def render_dashboard(
           <div class="funder-card-head">
             <div>
               <span class="spotlight-label">${{escapeHtml(copy.funder_section_eyebrow)}}</span>
-              <h3>${{escapeHtml(humanizeLabel(funder.name || ""))}}</h3>
+              <h3>${{escapeHtml(humanizeLabel(funder.slug || funder.name || ""))}}</h3>
             </div>
             <span class="funder-kpi">${{
               escapeHtml(copy.funder_live_now)
@@ -7400,6 +7538,65 @@ def render_dashboard(
       }}
     }}
 
+    function readOpportunityWorkflow() {{
+      try {{
+        const stored = window.localStorage.getItem(WORKFLOW_STORAGE_KEY);
+        const parsed = stored ? JSON.parse(stored) : {{}};
+        return parsed && typeof parsed === "object" && !Array.isArray(parsed) ? parsed : {{}};
+      }} catch {{
+        return {{}};
+      }}
+    }}
+
+    function writeOpportunityWorkflow(workflow) {{
+      try {{
+        window.localStorage.setItem(WORKFLOW_STORAGE_KEY, JSON.stringify(workflow));
+      }} catch {{
+        // local-only workflow; ignore private-mode or quota errors
+      }}
+    }}
+
+    function workflowStatusFor(opportunityId) {{
+      const value = readOpportunityWorkflow()[String(opportunityId || "")];
+      return WORKFLOW_STATUSES.some((status) => status.id === value) ? value : "review";
+    }}
+
+    function setOpportunityWorkflowStatus(opportunityId, status) {{
+      const id = String(opportunityId || "");
+      if (!id || !WORKFLOW_STATUSES.some((entry) => entry.id === status)) return;
+      const workflow = readOpportunityWorkflow();
+      workflow[id] = status;
+      writeOpportunityWorkflow(workflow);
+      setSavedViewNotice(copy.workflow_updated);
+    }}
+
+    function removeOpportunityWorkflow(opportunityId) {{
+      const workflow = readOpportunityWorkflow();
+      delete workflow[String(opportunityId || "")];
+      writeOpportunityWorkflow(workflow);
+    }}
+
+    function workflowOptionsMarkup(opportunityId) {{
+      const active = workflowStatusFor(opportunityId);
+      return WORKFLOW_STATUSES.map((status) => (
+        `<option value="${{escapeHtml(status.id)}}"`
+        + `${{status.id === active ? " selected" : ""}}>`
+        + `${{escapeHtml(status.label)}}</option>`
+      )).join("");
+    }}
+
+    function renderWorkspaceFilter() {{
+      const button = $("#workspace-filter");
+      if (!button) return;
+      const count = readSavedOpportunities().length;
+      if (!count && state.savedOnly) state.savedOnly = false;
+      button.disabled = count === 0;
+      button.setAttribute("aria-pressed", String(state.savedOnly));
+      button.textContent = count
+        ? text("workspace_filter_count", {{ count: formatNumber.format(count) }})
+        : copy.workspace_filter;
+    }}
+
     function isOpportunitySaved(opportunityId) {{
       return readSavedOpportunities().includes(String(opportunityId || ""));
     }}
@@ -7411,9 +7608,15 @@ def render_dashboard(
       const exists = current.includes(id);
       const next = exists ? current.filter((value) => value !== id) : [id, ...current];
       writeSavedOpportunities(next);
+      if (exists) {{
+        removeOpportunityWorkflow(id);
+      }} else {{
+        setOpportunityWorkflowStatus(id, "review");
+      }}
       setSavedViewNotice(
         exists ? copy.saved_opportunity_removed : copy.saved_opportunity_saved
       );
+      renderWorkspaceFilter();
       renderOpportunities();
     }}
 
@@ -7578,6 +7781,7 @@ def render_dashboard(
         || state.region !== DEFAULT_REGION
         || state.deadlineMode !== DEFAULT_DEADLINE
         || state.includeArchived
+        || state.savedOnly
         || state.minScore !== scoreDefaultForScope();
     }}
 
@@ -7681,6 +7885,7 @@ def render_dashboard(
       state.region = DEFAULT_REGION;
       state.deadlineMode = DEFAULT_DEADLINE;
       state.includeArchived = false;
+      state.savedOnly = false;
       resetVisibleLimit();
       reloadAll();
     }}
@@ -7706,6 +7911,7 @@ def render_dashboard(
         state.region = DEFAULT_REGION;
         state.deadlineMode = DEFAULT_DEADLINE;
         state.includeArchived = false;
+        state.savedOnly = false;
       }}
       if (audience) {{
         state.audience = AUDIENCE_PRESETS.some((preset) => preset.id === audience)
@@ -7768,6 +7974,66 @@ def render_dashboard(
         raw.agency,
         raw.notice_type
       ].join(" ").toLowerCase();
+    }}
+
+    function normalizeSearchText(value) {{
+      return String(value || "")
+        .toLowerCase()
+        .replace(/ё/g, "е")
+        .normalize("NFKD")
+        .replace(/[\u0300-\u036f]/g, "")
+        .replace(/[^a-zа-я0-9]+/gi, " ")
+        .trim();
+    }}
+
+    function oneEditAway(left, right) {{
+      const a = String(left || "");
+      const b = String(right || "");
+      if (Math.abs(a.length - b.length) > 1) return false;
+      let i = 0;
+      let j = 0;
+      let edits = 0;
+      while (i < a.length && j < b.length) {{
+        if (a[i] === b[j]) {{
+          i += 1;
+          j += 1;
+          continue;
+        }}
+        edits += 1;
+        if (edits > 1) return false;
+        if (a.length > b.length) i += 1;
+        else if (b.length > a.length) j += 1;
+        else {{
+          i += 1;
+          j += 1;
+        }}
+      }}
+      return edits + Number(i < a.length || j < b.length) <= 1;
+    }}
+
+    function searchTokenGroup(token) {{
+      const group = SEARCH_SYNONYM_GROUPS.find((entries) => (
+        entries.some((entry) => token.startsWith(entry) || entry.startsWith(token))
+      ));
+      return group || [token];
+    }}
+
+    function matchesSearchQuery(item, query) {{
+      const normalizedQuery = normalizeSearchText(query);
+      if (!normalizedQuery) return true;
+      const haystack = normalizeSearchText(haystackFor(item));
+      if (haystack.includes(normalizedQuery)) return true;
+      const haystackWords = haystack.split(" ").filter(Boolean);
+      const tokens = normalizedQuery
+        .split(" ")
+        .filter((token) => token.length >= 2 && !SEARCH_STOP_WORDS.has(token));
+      return tokens.every((token) => {{
+        const group = searchTokenGroup(token);
+        if (group.some((entry) => haystack.includes(normalizeSearchText(entry)))) {{
+          return true;
+        }}
+        return token.length >= 5 && haystackWords.some((word) => oneEditAway(token, word));
+      }});
     }}
 
     function regionalPriority(item) {{
@@ -7911,7 +8177,6 @@ def render_dashboard(
     }}
 
     function visibleItems() {{
-      const query = state.query.trim().toLowerCase();
       const today = localDateISO();
       const historicalLifecycle = state.lifecycle === "closed" || state.lifecycle === "awarded";
       const audiencePreset = activeAudiencePreset();
@@ -7920,9 +8185,9 @@ def render_dashboard(
       const lifecycleFilter = activeLifecycleFilter();
       const regionFilter = activeRegionFilter();
       const deadlineFilter = activeDeadlineFilter();
+      const savedIds = state.savedOnly ? new Set(readSavedOpportunities()) : null;
       return state.items
         .filter((item) => {{
-          const haystack = haystackFor(item);
           return item.score >= state.minScore
             && (
               (state.includeArchived || historicalLifecycle)
@@ -7936,7 +8201,8 @@ def render_dashboard(
             && lifecycleFilter.matches(item)
             && regionFilter.matches(item)
             && deadlineFilter.matches(item)
-            && (!query || haystack.includes(query));
+            && (!savedIds || savedIds.has(String(item.id)))
+            && matchesSearchQuery(item, state.query);
         }})
         .slice()
         .sort(compareVisibleItems);
@@ -8095,7 +8361,7 @@ def render_dashboard(
           count: formatNumber.format(relevantCount)
         }});
         const iconVariant = sourceIconVariant(source);
-        const sourceName = escapeHtml(source.name || humanizeLabel(source.slug));
+        const sourceName = escapeHtml(sourceDisplayName(source));
         const refresh = sourceRefreshInfo(source);
         return `
         <a
@@ -8160,6 +8426,11 @@ def render_dashboard(
       const sources = state.coverage && Number.isFinite(state.coverage.enabled_sources)
         ? formatNumber.format(state.coverage.enabled_sources)
         : formatNumber.format(state.sources.length || 0);
+      const staleSources = state.coverage && Number.isFinite(state.coverage.stale_sources)
+        ? formatNumber.format(state.coverage.stale_sources)
+        : formatNumber.format(
+            state.sources.filter((source) => sourceRefreshInfo(source).tone === "is-stale").length
+          );
       const latestUpdate = state.items.reduce((latest, item) => {{
         const rank = discoveredRank(item);
         return rank > latest ? rank : latest;
@@ -8171,6 +8442,7 @@ def render_dashboard(
       $("#health-status").textContent = statusValue;
       $("#health-items").textContent = items;
       $("#health-sources").textContent = sources;
+      $("#health-stale-sources").textContent = staleSources;
       $("#health-note").textContent = latestUpdate
         ? text("health_note_ready", {{
             checked_at: checkedAt,
@@ -8257,6 +8529,11 @@ def render_dashboard(
           `<span class="summary-pill">${{escapeHtml(copy.summary_scope_all)}}</span>`
         );
       }}
+      if (state.savedOnly) {{
+        pills.push(
+          `<span class="summary-pill">${{escapeHtml(copy.workspace_filter)}}</span>`
+        );
+      }}
       if (state.minScore !== DEFAULT_SCORE) {{
         pills.push(
           `<span class="summary-pill">${{escapeHtml(
@@ -8274,6 +8551,7 @@ def render_dashboard(
       message.removeAttribute("aria-label");
       const loadMoreWrap = $("#load-more-wrap");
       const loadMore = $("#load-more");
+      renderWorkspaceFilter();
       const items = visibleItems();
       renderPresetControls();
       syncControlsFromState();
@@ -8346,6 +8624,14 @@ def render_dashboard(
         const pageUrl = escapeHtml(opportunityPageHref(item.id));
         const saved = isOpportunitySaved(item.id);
         const saveLabel = saved ? copy.unsave_opportunity : copy.save_opportunity;
+        const workflowMarkup = saved
+          ? `<label class="workflow-control">
+              <span>${{escapeHtml(copy.workflow_label)}}</span>
+              <select data-workflow-status="${{opportunityId}}">
+                ${{workflowOptionsMarkup(item.id)}}
+              </select>
+            </label>`
+          : "";
         const clickLabel = escapeHtml(cardTitleText);
         const formatLabel = opportunityFormatLabel(item);
         const regionLabel = opportunityRegionLabel(item);
@@ -8424,6 +8710,7 @@ def render_dashboard(
                   ${{fitPillsMarkup(item)}}
                 </div>
               </div>
+              ${{workflowMarkup}}
               <div class="card-actions-secondary">
                 <button
                   class="detail-link"
@@ -8493,6 +8780,17 @@ def render_dashboard(
         button.dataset.bound = "true";
         button.addEventListener("click", () => {{
           toggleSavedOpportunity(button.getAttribute("data-save-opportunity"));
+        }});
+      }});
+      const workflowControls = document.querySelectorAll("[data-workflow-status]");
+      workflowControls.forEach((control) => {{
+        if (control.dataset.bound === "true") return;
+        control.dataset.bound = "true";
+        control.addEventListener("change", () => {{
+          setOpportunityWorkflowStatus(
+            control.getAttribute("data-workflow-status"),
+            control.value
+          );
         }});
       }});
     }}
@@ -8638,7 +8936,12 @@ def render_dashboard(
     }});
 
     applyStateFromUrl();
+    const filterDisclosure = $("#filter-disclosure");
+    if (filterDisclosure && window.matchMedia("(max-width: 760px)").matches) {{
+      filterDisclosure.open = false;
+    }}
     renderSavedViews();
+    renderWorkspaceFilter();
     window.addEventListener("hashchange", syncViewFromHash);
     window.addEventListener("resize", scheduleHashViewSync);
     window.requestAnimationFrame(syncViewFromHash);
@@ -8754,6 +9057,15 @@ def render_dashboard(
     $("#clear-filters").addEventListener("click", () => {{
       if (!hasActiveFilters()) return;
       clearAllFilters();
+    }});
+    $("#workspace-filter").addEventListener("click", () => {{
+      if (!readSavedOpportunities().length) {{
+        setSavedViewNotice(copy.workspace_filter_empty);
+        return;
+      }}
+      state.savedOnly = !state.savedOnly;
+      resetVisibleLimit();
+      renderOpportunities();
     }});
     $("#save-view").addEventListener("click", saveCurrentView);
     $("#share-view").addEventListener("click", () => {{

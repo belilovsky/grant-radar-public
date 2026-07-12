@@ -27,6 +27,9 @@ DASHBOARD_MARKERS = (
     "avds-source-card__arrow",
     'data-avds-component="source-url"',
     'data-avds-component="opportunity-card"',
+    'data-avds-component="trust-library"',
+    'id="workspace-filter"',
+    'id="filter-disclosure"',
     "avds-document-row",
 )
 MARKETING_MARKERS = (
@@ -47,6 +50,8 @@ class SmokeResult:
     ready_backend: str
     coverage_sources: int
     coverage_relevant_open_items: int
+    coverage_stale_sources: int
+    coverage_unknown_freshness_sources: int
     opportunities: int
     digest_items: int
     forbidden_hits: list[str]
@@ -208,6 +213,10 @@ def run_smoke(
         ready_backend=str(ready.get("backend") or ""),
         coverage_sources=int(coverage.get("enabled_sources") or 0),
         coverage_relevant_open_items=int(coverage.get("relevant_open_items") or 0),
+        coverage_stale_sources=int(coverage.get("stale_sources") or 0),
+        coverage_unknown_freshness_sources=int(
+            coverage.get("unknown_freshness_sources") or 0
+        ),
         opportunities=len(opportunities),
         digest_items=len(digest.get("items") or []),
         forbidden_hits=forbidden_hits,
