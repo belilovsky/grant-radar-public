@@ -4226,20 +4226,34 @@ def render_dashboard(
       content: "";
       display: block;
       grid-column: 1 / -1;
-      min-height: 88px;
+      min-height: 72px;
       border-radius: var(--av-radius-md);
-      background: linear-gradient(
-        90deg,
-        var(--panel-subtle) 20%,
-        color-mix(in oklab, var(--panel-subtle), white 45%) 50%,
-        var(--panel-subtle) 80%
-      );
+      border: 1px solid var(--line-subtle);
+      background:
+        linear-gradient(
+          90deg,
+          transparent 0,
+          rgb(255 255 255 / 0.62) 50%,
+          transparent 100%
+        ) 0 0 / 220% 100%,
+        linear-gradient(var(--line-subtle) 0 0) 18px 20px / 42% 8px no-repeat,
+        linear-gradient(var(--line-subtle) 0 0) 18px 40px / 70% 7px no-repeat,
+        linear-gradient(var(--line-subtle) 0 0) calc(100% - 88px) 20px / 64px 22px no-repeat,
+        var(--panel);
       background-size: 220% 100%;
       animation: loading-sheen 1.2s ease-in-out infinite;
     }}
+    .spotlight-grid[aria-busy="true"]::before,
+    .funder-grid[aria-busy="true"]::before {{
+      min-height: 132px;
+    }}
+    .pathways-grid[aria-busy="true"]::before,
+    .themes-grid[aria-busy="true"]::before {{
+      min-height: 88px;
+    }}
     .loading-state {{
       display: block;
-      min-height: 88px;
+      min-height: 72px;
       padding: 0;
       border: 0;
       background: transparent;
@@ -5358,6 +5372,7 @@ def render_dashboard(
       health: null,
       coverage: null,
       sources: [],
+      sourcesLoaded: false,
       funders: [],
       items: [],
       sort: "priority",
@@ -7922,6 +7937,16 @@ def render_dashboard(
 
     function renderSources() {{
       const list = $("#source-list");
+      if (!state.sourcesLoaded) {{
+        list.innerHTML = (
+          `<div class="message loading-state">`
+          + `<span class="visually-hidden">${{escapeHtml(copy.loading_sources)}}</span>`
+          + `</div>`
+        );
+        $("#source-summary").textContent = copy.loading_sources;
+        $("#toggle-sources").classList.add("hidden");
+        return;
+      }}
       if (!state.sources.length) {{
         list.innerHTML = (
           `<div class="message">${{escapeHtml(copy.source_catalog_unavailable)}}</div>`
@@ -8363,6 +8388,7 @@ def render_dashboard(
         state.coverage = null;
         state.sources = await fetchJson("/sources");
       }}
+      state.sourcesLoaded = true;
       state.lastCheckedAt = new Date().toISOString();
       renderSources();
       renderHealth();
