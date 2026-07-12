@@ -295,7 +295,7 @@ class RssFeedSource(BaseSource):
 class OpportunityDeskSource(RssFeedSource):
     slug = "opportunity_desk"
     name = "Opportunity Desk"
-    base_url = "https://www.opportunitydesk.org"
+    base_url = "https://opportunitydesk.org"
     default_tags = ["global", "opportunity_desk", "grant", "fellowship"]
     default_type = OpportunityType.CONTEST
     entry_keywords = (
