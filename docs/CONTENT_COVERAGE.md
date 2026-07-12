@@ -10,7 +10,7 @@
 | IsDB project procurement | HTML listing | Central Asia development procurement | Item-level active IsDB tender coverage for Kazakhstan and neighboring Central Asia countries |
 | EBRD ECEPP procurement | HTML table | EBRD procurement notices | Item-level active ECEPP tenders filtered to Kazakhstan and neighboring Central Asia countries |
 | Erasmus+ Kazakhstan | HTML news + detail pages | Higher-education grant calls | Item-level Erasmus+ call coverage for Kazakhstani universities and organizations with action-specific deadlines |
-| Opportunity Desk | RSS | Fellowships, contests, scholarships, grants | Global bridge source with blog-post filtering |
+| Opportunity Desk | RSS main feed + grants/fellowships/competitions feeds | Fellowships, contests, scholarships, grants | Global bridge source with category-feed coverage and roundup/blog-post filtering |
 | FundsforNGOs | RSS | NGO grants, education, media, agriculture, environment, animal welfare | Donor bridge source with expanded category coverage for AgroTech, VetTech and EcoTech signals; raw categories are still not blindly trusted for scoring |
 | Kazakhstan Domestic Support | curated official page checks + local detail snapshots | Kazakhstan grants, subsidies, preferential finance, leasing, reimbursements, tax benefits and state programs | Production bridge for official domestic-support entry points with actionable detail pages: QazInnovations, Damu, Business Enbek, eGov Road Map of Business, eGov social-entrepreneurship grants, Baiterek/BGov, eGov agriculture and business-support services, gov.kz grant guidance, KazAgroFinance, Agrarian Credit Corporation, NCSTE, CISC small grants, QazIndustry, QazTrade/export.gov.kz, KazakhExport, Development Bank of Kazakhstan, Industrial Development Fund, KAZAKH INVEST, Astana Hub participant benefits and QIC fund news |
 | Kazakhstan Watch | curated page checks | Kazakhstan donor/procurement entry points | Production bridge for Embassy, EBRD, Erasmus+ and British Council pages without stable item-level adapters yet |
@@ -32,7 +32,8 @@
 
 - Short keywords such as `ai` are matched on word boundaries only.
 - RSS feeds infer tags from title and summary, not noisy site-wide category dumps.
-- Opportunity Desk blog posts without opportunity terms are skipped.
+- Opportunity Desk blog posts and roundup lists without a single actionable
+  opportunity are skipped.
 - Opportunity Desk / FundsforNGOs bridge items without Kazakhstan/Central Asia
   signal are treated as lower confidence, and out-of-region or event-only
   items such as Africa-only accelerators and conference-only trips are excluded

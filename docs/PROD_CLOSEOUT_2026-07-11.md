@@ -1,4 +1,4 @@
-# QAZ.FUND production closeout – 2026-07-11
+# QAZ.FUND production closeout – 2026-07-11 / 2026-07-12 update
 
 ## Scope
 
@@ -8,7 +8,7 @@ and public launch hardening work.
 ## Deployed revision
 
 - Branch: `codex/qazfund-audit-pass-2026-07-07`
-- Deployed commit: `cc6ce1cc7b15dca467afcd3a0cd89e0c8cf4136b`
+- Deployed commit before 2026-07-12 source follow-up: `89fef4695867225357446b4df8c0f10243ea16d1`
 - Host path: `/opt/grant-radar`
 - Public URL: `https://qaz.fund/`
 
@@ -93,3 +93,13 @@ make lint                         -> black/isort/flake8/mypy passed
   very long official source text, but it is readable and not a runtime blocker.
 - Source/funder lists intentionally show a limited first slice on the public
   page; full API/data access remains available through the public endpoints.
+
+## 2026-07-12 follow-up
+
+- UI loading states were hardened so source blocks do not show an unavailable
+  message before `/coverage` finishes.
+- Opportunity Desk was expanded from the main RSS feed to main, grants,
+  fellowships and competitions feeds, while preserving link-level dedupe.
+- Opportunity Desk roundup posts such as monthly lists of scholarships and
+  fellowships are now filtered out before they reach the applicant-facing feed.
+- Final launch plan added: `docs/FINAL_LAUNCH_PLAN_2026-07-12.md`.

@@ -49,6 +49,7 @@ from sources.kazakhstan_watch import KazakhstanWatchSource  # noqa: E402
 from sources.kazakhstan_watch import WatchPage  # noqa: E402
 from sources.rss_feeds import FUNDSFORNGOS_FEED_URLS  # noqa: E402
 from sources.rss_feeds import OPPORTUNITY_DESK_FEED_URL  # noqa: E402
+from sources.rss_feeds import OPPORTUNITY_DESK_FEED_URLS  # noqa: E402
 from sources.rss_feeds import FundsForNgosSource  # noqa: E402
 from sources.rss_feeds import OpportunityDeskSource  # noqa: E402
 from sources.startup_programs import PROGRAM_SPECS  # noqa: E402
@@ -2036,9 +2037,8 @@ async def test_internews_healthcheck_false_on_error():
 @pytest.mark.asyncio
 @respx.mock
 async def test_opportunity_desk_rss_fetch_yields_opportunities():
-    respx.get(OPPORTUNITY_DESK_FEED_URL).mock(
-        return_value=httpx.Response(200, text=RSS_FEED)
-    )
+    for url in OPPORTUNITY_DESK_FEED_URLS:
+        respx.get(url).mock(return_value=httpx.Response(200, text=RSS_FEED))
 
     items = await _collect(OpportunityDeskSource())
 
@@ -2072,14 +2072,96 @@ async def test_opportunity_desk_rss_skips_roundup_posts():
       </channel>
     </rss>
     """
-    respx.get(OPPORTUNITY_DESK_FEED_URL).mock(
-        return_value=httpx.Response(200, text=feed)
-    )
+    for url in OPPORTUNITY_DESK_FEED_URLS:
+        respx.get(url).mock(return_value=httpx.Response(200, text=feed))
 
     items = await _collect(OpportunityDeskSource())
 
     assert len(items) == 1
     assert items[0].title == "AI Fellowship for Journalists"
+
+
+@pytest.mark.asyncio
+@respx.mock
+async def test_opportunity_desk_rss_skips_global_roundup_posts():
+    feed = """<?xml version="1.0" encoding="UTF-8"?>
+    <rss version="2.0">
+      <channel>
+        <item>
+          <title>13 Global Scholarships and Fellowships Currently Open – July 2026</title>
+          <link>https://example.org/roundup</link>
+          <guid>roundup</guid>
+          <description>Here are scholarship and fellowship opportunities this month.</description>
+          <category>Our Blog</category>
+        </item>
+        <item>
+          <title>Climate Grant for NGOs</title>
+          <link>https://example.org/grant</link>
+          <guid>grant</guid>
+          <description>Deadline: 18 Aug 2026. Climate funding opportunity.</description>
+          <category>Grants</category>
+        </item>
+      </channel>
+    </rss>
+    """
+    for url in OPPORTUNITY_DESK_FEED_URLS:
+        respx.get(url).mock(return_value=httpx.Response(200, text=feed))
+
+    items = await _collect(OpportunityDeskSource())
+
+    assert len(items) == 1
+    assert items[0].title == "Climate Grant for NGOs"
+
+
+@pytest.mark.asyncio
+@respx.mock
+async def test_opportunity_desk_rss_combines_category_feeds():
+    main_feed = """<?xml version="1.0" encoding="UTF-8"?>
+    <rss version="2.0">
+      <channel>
+        <item>
+          <title>AI Fellowship for Journalists</title>
+          <link>https://example.org/shared</link>
+          <guid>shared</guid>
+          <description>Deadline: 10 Jul 2026. Media and AI opportunity.</description>
+          <category>Fellowships</category>
+        </item>
+      </channel>
+    </rss>
+    """
+    grant_feed = """<?xml version="1.0" encoding="UTF-8"?>
+    <rss version="2.0">
+      <channel>
+        <item>
+          <title>Climate Grant for NGOs</title>
+          <link>https://example.org/grant</link>
+          <guid>grant</guid>
+          <description>Deadline: 18 Aug 2026. Climate funding opportunity.</description>
+          <category>Grants</category>
+        </item>
+      </channel>
+    </rss>
+    """
+    respx.get(OPPORTUNITY_DESK_FEED_URLS[0]).mock(
+        return_value=httpx.Response(200, text=main_feed)
+    )
+    respx.get(OPPORTUNITY_DESK_FEED_URLS[1]).mock(
+        return_value=httpx.Response(200, text=grant_feed)
+    )
+    respx.get(OPPORTUNITY_DESK_FEED_URLS[2]).mock(
+        return_value=httpx.Response(200, text=main_feed)
+    )
+    respx.get(OPPORTUNITY_DESK_FEED_URLS[3]).mock(
+        return_value=httpx.Response(200, text=main_feed)
+    )
+
+    items = await _collect(OpportunityDeskSource())
+
+    assert [item.title for item in items] == [
+        "AI Fellowship for Journalists",
+        "Climate Grant for NGOs",
+    ]
+    assert "grant" in items[1].tags
 
 
 @pytest.mark.asyncio

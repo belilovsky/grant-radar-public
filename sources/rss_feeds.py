@@ -24,6 +24,12 @@ from sources.base import BaseSource
 log = structlog.get_logger()
 
 OPPORTUNITY_DESK_FEED_URL = "https://www.opportunitydesk.org/feed/"
+OPPORTUNITY_DESK_FEED_URLS = (
+    OPPORTUNITY_DESK_FEED_URL,
+    "https://www.opportunitydesk.org/category/grants/feed/",
+    "https://www.opportunitydesk.org/category/fellowships/feed/",
+    "https://www.opportunitydesk.org/category/competitions/feed/",
+)
 FUNDSFORNGOS_FEED_URLS = (
     "https://www2.fundsforngos.org/category/latest-funds-for-ngos/feed/",
     "https://www2.fundsforngos.org/category/education/feed/",
@@ -203,9 +209,15 @@ def _is_roundup_post(*, title: str, summary: str, categories: Iterable[str]) -> 
     normalized_title = title.lower().strip()
     normalized_summary = summary.lower().strip()
     normalized_categories = {value.strip().lower() for value in categories}
-    if re.match(r"^\d+\s+opportunities?\b", normalized_title):
+    if re.match(
+        r"^\d+\s+(?:global\s+)?(?:scholarships?|fellowships?|grants?|opportunities?)\b",
+        normalized_title,
+    ):
         return True
-    if "currently open" in normalized_title and "opportunit" in normalized_title:
+    if "currently open" in normalized_title and any(
+        marker in normalized_title
+        for marker in ("opportunit", "scholarship", "fellowship", "grant")
+    ):
         return True
     if "our_blog" in normalized_categories and "opportunit" in normalized_title:
         return True
@@ -300,8 +312,20 @@ class OpportunityDeskSource(RssFeedSource):
     )
     feed_configs = (
         FeedConfig(
-            url=OPPORTUNITY_DESK_FEED_URL,
+            url=OPPORTUNITY_DESK_FEED_URLS[0],
             tags=("global", "fellowship", "contest"),
+        ),
+        FeedConfig(
+            url=OPPORTUNITY_DESK_FEED_URLS[1],
+            tags=("global", "grant"),
+        ),
+        FeedConfig(
+            url=OPPORTUNITY_DESK_FEED_URLS[2],
+            tags=("global", "fellowship"),
+        ),
+        FeedConfig(
+            url=OPPORTUNITY_DESK_FEED_URLS[3],
+            tags=("global", "contest"),
         ),
     )
 
