@@ -33,6 +33,8 @@ PUBLIC_METADATA_KEYS = frozenset(
         "closing_date",
     }
 )
+SOURCE_COLLAPSE_PARAGRAPH_THRESHOLD = 4
+SOURCE_COLLAPSE_CHAR_THRESHOLD = 1600
 
 
 def _absolute_href(origin: str, path: str) -> str:
@@ -277,7 +279,11 @@ def _opportunity_schema(
 
 
 def _sections_markup(
-    detail: OpportunityDetail, fallback_heading: str, *, title: str
+    detail: OpportunityDetail,
+    fallback_heading: str,
+    *,
+    title: str,
+    expand_label: str = "",
 ) -> str:
     sections = [section for section in detail.detail_sections if section.text.strip()]
     if not sections:
@@ -289,6 +295,29 @@ def _sections_markup(
             for chunk in _paragraph_chunks(section.text)
             if chunk.strip()
         )
+        heading = escape(section.heading or fallback_heading)
+        paragraph_count = paragraphs.count("<p>")
+        should_collapse = (
+            len(section.text) >= SOURCE_COLLAPSE_CHAR_THRESHOLD
+            or paragraph_count >= SOURCE_COLLAPSE_PARAGRAPH_THRESHOLD
+        )
+        if should_collapse:
+            blocks.append(
+                """
+                <details class="section-card source-disclosure">
+                  <summary>
+                    <span class="source-disclosure-title">{heading}</span>
+                    <span class="source-disclosure-action">{action}</span>
+                  </summary>
+                  <div class="richtext">{paragraphs}</div>
+                </details>
+                """.format(
+                    heading=heading,
+                    action=escape(expand_label or fallback_heading),
+                    paragraphs=paragraphs,
+                )
+            )
+            continue
         blocks.append(
             """
             <section class="section-card">
@@ -296,7 +325,7 @@ def _sections_markup(
               <div class="richtext">{paragraphs}</div>
             </section>
             """.format(
-                heading=escape(section.heading or fallback_heading),
+                heading=heading,
                 paragraphs=paragraphs,
             )
         )
@@ -615,7 +644,10 @@ def render_opportunity_page(
         lang=active_lang,
     )
     sections_markup = _sections_markup(
-        detail, str(copy["detail_source_excerpt"]), title=title
+        detail,
+        str(copy["detail_source_excerpt"]),
+        title=title,
+        expand_label=str(copy["detail_expand_source"]),
     )
     prepare_markup = _prepare_markup(detail, copy=copy)
     apply_markup = _apply_markup(
@@ -929,6 +961,37 @@ def render_opportunity_page(
       border-radius: var(--av-radius-md);
       background: var(--surface);
       box-shadow: var(--av-shadow-xs);
+    }}
+    .source-disclosure summary {{
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      cursor: pointer;
+      list-style: none;
+    }}
+    .source-disclosure summary::-webkit-details-marker {{
+      display: none;
+    }}
+    .source-disclosure-title {{
+      font-size: 20px;
+      font-weight: 750;
+      line-height: 1.2;
+    }}
+    .source-disclosure-action {{
+      flex: 0 0 auto;
+      padding: 5px 10px;
+      border: 1px solid var(--line);
+      border-radius: 999px;
+      background: var(--surface-wash);
+      color: var(--muted);
+      font-size: var(--av-text-xs);
+      font-weight: 700;
+    }}
+    .source-disclosure[open] summary {{
+      margin-bottom: 12px;
+      padding-bottom: 12px;
+      border-bottom: 1px solid var(--line-subtle);
     }}
     .sidebar-card {{
       padding: 14px;

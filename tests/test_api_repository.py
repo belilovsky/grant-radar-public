@@ -587,6 +587,35 @@ def test_sections_markup_splits_source_wall_of_text_into_paragraphs():
     assert markup.count("<p>") >= 3
 
 
+def test_sections_markup_collapses_long_source_text():
+    sentence = (
+        "Официальный источник описывает условия программы, критерии участия, "
+        "порядок подачи и перечень документов. "
+    )
+    detail = OpportunityDetail(
+        source="science_fund",
+        source_url="https://example.org/source",
+        type=OpportunityType.GRANT,
+        title="Программа поддержки",
+        summary="Краткое описание.",
+        detail_sections=[
+            OpportunityDetailSection(heading="Выдержка с источника", text=sentence * 28)
+        ],
+    )
+
+    markup = opportunity_page_module._sections_markup(
+        detail,
+        "Описание",
+        title=detail.title,
+        expand_label="Показать выдержку",
+    )
+
+    assert '<details class="section-card source-disclosure">' in markup
+    assert '<span class="source-disclosure-title">Выдержка с источника</span>' in markup
+    assert "Показать выдержку" in markup
+    assert markup.count("<p>") >= 4
+
+
 def test_root_prefers_public_base_url_for_canonical_links(monkeypatch):
     _reset_api_state(monkeypatch)
     monkeypatch.setenv("PUBLIC_BASE_URL", "https://qaz.fund")

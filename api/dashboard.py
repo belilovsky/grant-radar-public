@@ -566,6 +566,7 @@ COPY = {
         "detail_status_unsupported_media": "Источник отдал неподдерживаемый формат",
         "detail_status_parse_error": "Не удалось корректно разобрать страницу источника",
         "detail_source_excerpt": "Выдержка с источника",
+        "detail_expand_source": "Показать выдержку",
         "prepare_section_eyebrow": "Перед подачей",
         "prepare_section_title": "Что подготовить",
         "prepare_section_description": (
@@ -1416,6 +1417,7 @@ COPY = {
         "detail_status_unsupported_media": "The source returned an unsupported format",
         "detail_status_parse_error": "The source page could not be parsed cleanly",
         "detail_source_excerpt": "Source excerpt",
+        "detail_expand_source": "Show excerpt",
         "prepare_section_eyebrow": "Before applying",
         "prepare_section_title": "What to prepare",
         "prepare_section_description": (
