@@ -325,7 +325,7 @@ def _parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--base-url", default="https://qaz.fund")
     parser.add_argument("--deadline-after", default=date.today().isoformat())
-    parser.add_argument("--min-sources", type=int, default=23)
+    parser.add_argument("--min-sources", type=int, default=26)
     parser.add_argument("--min-opportunities", type=int, default=45)
     parser.add_argument("--stale-after-days", type=int, default=7)
     parser.add_argument("--timeout", type=float, default=20.0)

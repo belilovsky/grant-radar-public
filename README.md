@@ -111,6 +111,9 @@ Current ingestion includes public programs and monitors such as:
 - `kazakhstan_watch`
 - `eeas_kazakhstan`
 - `world_bank_kazakhstan`
+- `world_bank_procurement_ca`
+- `eu_funding_tenders_ca`
+- `canada_cfli_ca`
 - `undp_procurement`
 - `adb_kazakhstan`
 - `google_cloud_startup`

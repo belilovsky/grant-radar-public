@@ -41,7 +41,9 @@ These sources are high-value because they produce directly actionable opportunit
 | Grants.gov | grants | Large upstream source for U.S.-funded opportunities | 2-3 times per week | Domestic-only notices are excluded; a search keyword becomes a public topic tag only when the visible title or summary supports it |
 | Opportunity Desk | grants / fellowships / contests | Broad global opportunities with many fellowships and scholarships | daily | RSS-backed active parser; blog posts are filtered |
 | FundsforNGOs | grants / NGO funding | Strong bridge source for donor grants, education, media, agriculture, environment and animal-welfare calls | daily | RSS-backed active parser; expanded category set now contributes AgroTech, VetTech and EcoTech signals |
-| World Bank procurement and project pages | tenders / multilateral | Major route for education and digital transformation projects | weekly | Active `world_bank_kazakhstan` JSON adapter monitors Kazakhstan project pipeline |
+| World Bank procurement and project pages | tenders / multilateral | Major route for education and digital transformation projects | daily | Active `world_bank_kazakhstan` project adapter plus `world_bank_procurement_ca` for current procurement notices across Central Asia |
+| EU Funding & Tenders Portal | grants / R&D / partnerships | Major official surface for research, innovation, digital and consortium calls | daily | Active `eu_funding_tenders_ca` API adapter; every result is marked for eligibility verification |
+| Canada Fund for Local Initiatives | local small grants | Recurring official route for locally designed civil-society projects | daily during call windows | Active `canada_cfli_ca` annual-status monitor; emits only officially open Central Asia rows |
 | ADB procurement and consulting notices | tenders / multilateral | Strong relevance in education and digital public sector | weekly | Active `adb_kazakhstan` IATI adapter monitors Kazakhstan project pipeline |
 | IsDB project procurement | tenders / development funding | Relevant for education, infrastructure, water, finance and digital capacity projects across member countries | weekly | Active `isdb_project_procurement` adapter filters active Kazakhstan/Central Asia notices |
 | EBRD ECEPP procurement | tenders / multilateral | Relevant for digital modernization, municipal infrastructure, water, transport and energy lots | weekly | Active `ebrd_ecepp_procurement` adapter filters open Kazakhstan/Central Asia notices |
@@ -205,20 +207,25 @@ Recommended parser order:
 6. Erasmus+ Kazakhstan – active `erasmus_kazakhstan`
 7. Opportunity Desk – active RSS bridge
 8. FundsforNGOs – active RSS bridge
-9. Google for Startups Cloud – active `google_cloud_startup`
-10. Google.org – active `google_org_ai_opportunity` watch monitor
-11. Microsoft for Startups – active `microsoft_founders_hub`
-12. AWS Activate – active `aws_activate`
-13. World Bank – active `world_bank_kazakhstan`
-14. EEAS Kazakhstan – active `eeas_kazakhstan`
-15. ADB – active `adb_kazakhstan`
-16. NVIDIA Inception – active `nvidia_inception`
-17. Cloudflare Startups – active `cloudflare_startups`
-18. MongoDB Startups – active `mongodb_startups`
-19. UNICEF – active `unicef_kazakhstan`
-20. UNESCO – active `unesco_iite`
-21. UNDP procurement – active `undp_procurement`
-22. country ministry pages
+9. Kazakhstan domestic support – active `kazakhstan_domestic_support`
+10. Kazakhstan source watch – active `kazakhstan_watch`
+11. Google for Startups Cloud – active `google_cloud_startup`
+12. Google.org – active `google_org_ai_opportunity` watch monitor
+13. Microsoft for Startups – active `microsoft_founders_hub`
+14. AWS Activate – active `aws_activate`
+15. World Bank projects – active `world_bank_kazakhstan`
+16. World Bank procurement – active `world_bank_procurement_ca`
+17. EU Funding & Tenders – active `eu_funding_tenders_ca`
+18. Canada CFLI – active `canada_cfli_ca`
+19. EEAS Kazakhstan – active `eeas_kazakhstan`
+20. ADB – active `adb_kazakhstan`
+21. NVIDIA Inception – active `nvidia_inception`
+22. Cloudflare Startups – active `cloudflare_startups`
+23. MongoDB Startups – active `mongodb_startups`
+24. UNICEF – active `unicef_kazakhstan`
+25. UNESCO – active `unesco_iite`
+26. UNDP procurement – active `undp_procurement`
+27. country ministry pages
 
 ## Data capture fields
 

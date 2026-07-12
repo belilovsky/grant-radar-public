@@ -255,7 +255,7 @@ def _parser() -> argparse.ArgumentParser:
         default=date.today().isoformat(),
         help="ISO date used for open-opportunity filtering.",
     )
-    parser.add_argument("--min-sources", type=int, default=23)
+    parser.add_argument("--min-sources", type=int, default=26)
     parser.add_argument("--min-opportunities", type=int, default=40)
     parser.add_argument("--min-digest-items", type=int, default=1)
     parser.add_argument("--expect-backend", default="database")

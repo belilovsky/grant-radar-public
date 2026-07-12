@@ -17,6 +17,9 @@
 | EEAS Kazakhstan | HTML listing + detail pages | Kazakhstan delegation grant calls | Item-level EU grant coverage with deadline/reference extraction |
 | UNDP procurement notices | HTML listing | UNDP procurement and tender opportunities | Active item-level parser for Kazakhstan and Central Asia-relevant notices |
 | World Bank Kazakhstan | JSON API | Kazakhstan project and procurement pipeline | Item-level multilateral project pipeline for AI, digital, education, AgroTech, EcoTech, public-sector and infrastructure signals |
+| World Bank Central Asia procurement | JSON API | Active procurement notices across the five Central Asian countries and regional programs | Item-level expressions of interest, invitations for bids, prequalification and recent general procurement notices; expired notices and contract awards are excluded |
+| EU Funding & Tenders Central Asia | official search API | Active EU calls mentioning Kazakhstan or Central Asia | Item-level grant calls with an explicit `eligibility_check_required` warning because a search match is not proof that a Kazakhstan applicant can lead or receive funding |
+| Canada Fund for Local Initiatives | official annual country table | Small grants for local organizations in Central Asia | Emits one regional opportunity only while at least one official country row is marked open with a future deadline; closed annual rounds remain visible only as source coverage |
 | ADB Kazakhstan | IATI XML | Kazakhstan project and procurement pipeline | Item-level ADB project pipeline for infrastructure, finance, AgroTech, EcoTech, governance and public-sector signals |
 | Google Cloud Startup | page monitor | Global startup cloud credits | Evergreen startup/cloud-credit opportunity for Kazakhstan-based AI/EdTech/GovTech teams |
 | Microsoft Founders Hub | page monitor | Global startup cloud credits and support | Evergreen Azure/AI startup support monitor |
@@ -60,6 +63,14 @@
   words such as `sustainable`, `rail`, or `aims`.
 - World Bank state-borrower and sovereign lending records are retained only for
   audit/full-index context; they do not enter the default applicant-facing feed.
+- World Bank procurement notices enter the feed only while their submission
+  deadline is current. General procurement notices without a deadline are kept
+  for no more than 180 days as forecast signals.
+- EU Funding & Tenders results are deduplicated across country search terms and
+  always carry an eligibility-verification warning. A Central Asia text match
+  is never presented as confirmed applicant eligibility.
+- Canada CFLI is parsed from the official country-status table. The adapter
+  publishes no opportunity when the annual Central Asia call is closed.
 - ADB item tags use word-boundary matching and only active/proposed IATI
   activities enter ingestion; closed activities stay out of the default feed.
 - Startup/cloud-credit monitors are treated as evergreen support opportunities,
@@ -124,6 +135,10 @@ Priority order for the next production round:
 2. More country ministry / procurement pages for Central Asia.
 3. Google.org detail-level partner/grantee pages beyond the current watch monitor.
 4. British Council / KOICA / GIZ item-level sources if stable official listings are available; British Council Kazakhstan is currently covered as a curated watchlist bridge because the official pages block automated fetches.
+5. UNGM-backed agency notices only after an approved API/OAuth integration; do not scrape or republish restricted listings.
+
+See [SOURCE_EXPANSION_2026-07-13.md](SOURCE_EXPANSION_2026-07-13.md) for the
+reviewed source backlog and the evidence required before enabling another adapter.
 
 Each new source should ship with:
 

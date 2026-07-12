@@ -8,9 +8,11 @@ import pytest
 from sources import PARSERS, BaseSourceParser, GrantRecord
 from sources.adb_kazakhstan import AdbKazakhstanParser
 from sources.astana_hub import AstanaHubParser
+from sources.canada_cfli import CanadaCfliCentralAsiaParser
 from sources.ebrd_ecepp import EbrdEceppProcurementParser
 from sources.eeas_kazakhstan import EeasKazakhstanParser
 from sources.erasmus_kazakhstan import ErasmusKazakhstanParser
+from sources.eu_funding_tenders import EuFundingTendersCentralAsiaParser
 from sources.google_org import GoogleOrgAiOpportunityParser
 from sources.grants_gov import GrantsGovParser
 from sources.internews import InternewsParser
@@ -30,6 +32,7 @@ from sources.undp_procurement import UndpProcurementParser
 from sources.unesco_iite import UnescoIiteParser
 from sources.unicef_kazakhstan import UnicefKazakhstanParser
 from sources.world_bank import WorldBankKazakhstanParser
+from sources.world_bank_procurement import WorldBankCentralAsiaProcurementParser
 
 PARSER_CLASSES = [
     GrantsGovParser,
@@ -44,6 +47,9 @@ PARSER_CLASSES = [
     KazakhstanWatchParser,
     EeasKazakhstanParser,
     WorldBankKazakhstanParser,
+    WorldBankCentralAsiaProcurementParser,
+    EuFundingTendersCentralAsiaParser,
+    CanadaCfliCentralAsiaParser,
     AdbKazakhstanParser,
     GoogleCloudStartupParser,
     MicrosoftFoundersHubParser,
@@ -72,6 +78,9 @@ def test_registry_contains_all_parsers():
         "kazakhstan_watch",
         "eeas_kazakhstan",
         "world_bank_kazakhstan",
+        "world_bank_procurement_ca",
+        "eu_funding_tenders_ca",
+        "canada_cfli_ca",
         "adb_kazakhstan",
         "google_cloud_startup",
         "microsoft_founders_hub",

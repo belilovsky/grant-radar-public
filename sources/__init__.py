@@ -6,9 +6,11 @@ Exposes the registered parser classes for the scheduler/ETL.
 from .adb_kazakhstan import AdbKazakhstanParser
 from .astana_hub import AstanaHubParser
 from .base import BaseSourceParser, GrantRecord
+from .canada_cfli import CanadaCfliCentralAsiaParser
 from .ebrd_ecepp import EbrdEceppProcurementParser
 from .eeas_kazakhstan import EeasKazakhstanParser
 from .erasmus_kazakhstan import ErasmusKazakhstanParser
+from .eu_funding_tenders import EuFundingTendersCentralAsiaParser
 from .google_org import GoogleOrgAiOpportunityParser
 from .grants_gov import GrantsGovParser
 from .internews import InternewsParser
@@ -28,6 +30,7 @@ from .undp_procurement import UndpProcurementParser
 from .unesco_iite import UnescoIiteParser
 from .unicef_kazakhstan import UnicefKazakhstanParser
 from .world_bank import WorldBankKazakhstanParser
+from .world_bank_procurement import WorldBankCentralAsiaProcurementParser
 
 PARSERS = {
     GrantsGovParser.slug: GrantsGovParser,
@@ -42,6 +45,9 @@ PARSERS = {
     KazakhstanWatchParser.slug: KazakhstanWatchParser,
     EeasKazakhstanParser.slug: EeasKazakhstanParser,
     WorldBankKazakhstanParser.slug: WorldBankKazakhstanParser,
+    WorldBankCentralAsiaProcurementParser.slug: WorldBankCentralAsiaProcurementParser,
+    EuFundingTendersCentralAsiaParser.slug: EuFundingTendersCentralAsiaParser,
+    CanadaCfliCentralAsiaParser.slug: CanadaCfliCentralAsiaParser,
     UndpProcurementParser.slug: UndpProcurementParser,
     AdbKazakhstanParser.slug: AdbKazakhstanParser,
     GoogleCloudStartupParser.slug: GoogleCloudStartupParser,
@@ -71,6 +77,9 @@ __all__ = [
     "KazakhstanWatchParser",
     "EeasKazakhstanParser",
     "WorldBankKazakhstanParser",
+    "WorldBankCentralAsiaProcurementParser",
+    "EuFundingTendersCentralAsiaParser",
+    "CanadaCfliCentralAsiaParser",
     "GoogleCloudStartupParser",
     "MicrosoftFoundersHubParser",
     "AwsActivateParser",
