@@ -470,10 +470,10 @@ COPY = {
         "workflow_submitted": "Отправлено",
         "workflow_result": "Получен результат",
         "workflow_updated": "Этап карточки обновлён.",
-        "workspace_backup": "Резервная копия",
+        "workspace_backup": "Экспорт",
         "workspace_backup_aria": "Экспорт и импорт локальной работы",
-        "workspace_export": "Скачать",
-        "workspace_import": "Загрузить",
+        "workspace_export": "Скачать рабочее пространство",
+        "workspace_import": "Восстановить рабочее пространство",
         "workspace_exported": "Резервная копия скачана.",
         "workspace_imported": "Рабочее пространство восстановлено.",
         "workspace_import_error": "Не удалось прочитать резервную копию.",
@@ -1364,10 +1364,10 @@ COPY = {
         "workflow_submitted": "Submitted",
         "workflow_result": "Result received",
         "workflow_updated": "Card stage updated.",
-        "workspace_backup": "Backup",
+        "workspace_backup": "Export",
         "workspace_backup_aria": "Export and import local work",
-        "workspace_export": "Download",
-        "workspace_import": "Upload",
+        "workspace_export": "Download workspace",
+        "workspace_import": "Restore workspace",
         "workspace_exported": "Workspace backup downloaded.",
         "workspace_imported": "Workspace restored.",
         "workspace_import_error": "The workspace backup could not be read.",
@@ -5317,6 +5317,12 @@ def render_dashboard(
                 role="group"
                 aria-label="{escape(str(copy["workspace_backup_aria"]), quote=True)}"
               >
+                <button class="text-button" type="button" id="export-csv">
+                  {escape(str(copy["export_csv"]))}
+                </button>
+                <button class="text-button" type="button" id="export-deadlines">
+                  {escape(str(copy["export_deadlines"]))}
+                </button>
                 <button class="text-button" type="button" id="export-workspace">
                   {escape(str(copy["workspace_export"]))}
                 </button>
@@ -5331,18 +5337,6 @@ def render_dashboard(
                 >
               </div>
             </details>
-            <button
-              class="text-button"
-              type="button"
-              id="export-csv"
-              data-avds-component="button"
-            >{escape(str(copy["export_csv"]))}</button>
-            <button
-              class="text-button"
-              type="button"
-              id="export-deadlines"
-              data-avds-component="button"
-            >{escape(str(copy["export_deadlines"]))}</button>
             <button
               class="text-button"
               type="button"
