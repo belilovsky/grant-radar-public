@@ -23,12 +23,12 @@ from sources.base import BaseSource
 
 log = structlog.get_logger()
 
-OPPORTUNITY_DESK_FEED_URL = "https://www.opportunitydesk.org/feed/"
+OPPORTUNITY_DESK_FEED_URL = "https://opportunitydesk.org/feed/"
 OPPORTUNITY_DESK_FEED_URLS = (
     OPPORTUNITY_DESK_FEED_URL,
-    "https://www.opportunitydesk.org/category/grants/feed/",
-    "https://www.opportunitydesk.org/category/fellowships/feed/",
-    "https://www.opportunitydesk.org/category/competitions/feed/",
+    "https://opportunitydesk.org/category/grants/feed/",
+    "https://opportunitydesk.org/category/fellowships/feed/",
+    "https://opportunitydesk.org/category/competitions/feed/",
 )
 FUNDSFORNGOS_FEED_URLS = (
     "https://www2.fundsforngos.org/category/latest-funds-for-ngos/feed/",
