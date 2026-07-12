@@ -128,6 +128,23 @@ def test_russian_opportunity_title_fallback_prioritizes_water_procurement():
     assert "цифровые системы" not in summary
 
 
+def test_russian_procurement_fallback_uses_structured_country():
+    item = _opp(
+        source="world_bank_procurement_ca",
+        title="Development of the payment gateway",
+        summary="Implementation and technical support services.",
+        type_=OpportunityType.TENDER,
+        raw={"external_id": "UZ-DIGITAL-01", "country": "Uzbekistan"},
+    )
+
+    title = russian_opportunity_title_fallback(item, item.title)
+    summary = russian_summary_fallback(item, item.summary)
+
+    assert title.startswith("Закупочная возможность в Узбекистане:")
+    assert "в Узбекистане" in summary
+    assert "в Казахстане" not in summary
+
+
 def test_russian_summary_fallback_expands_short_kazakhstan_watch_summary():
     item = _opp(
         source="kazakhstan_watch",

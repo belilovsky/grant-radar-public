@@ -129,13 +129,13 @@ def russian_opportunity_title_fallback(item: Opportunity, title: str) -> str:
         "isdb_project_procurement",
         "ebrd_ecepp_procurement",
     }:
-        country = _country_label(" ".join([item.title, item.summary]))
+        country = _country_label_for_item(item, item.title, item.summary)
         return (
             f"Закупка в {country}: {_procurement_focus(item)}"
             f"{_reference_suffix(item)}"
         )
     if source == "unicef_kazakhstan" or item.type == OpportunityType.TENDER:
-        country = _country_label(" ".join([item.title, item.summary]))
+        country = _country_label_for_item(item, item.title, item.summary)
         return (
             f"Закупочная возможность в {country}: {_procurement_focus(item)}"
             f"{_reference_suffix(item)}"
@@ -145,13 +145,30 @@ def russian_opportunity_title_fallback(item: Opportunity, title: str) -> str:
 
 def _country_label(text: str) -> str:
     lowered = text.lower()
+    if "central asia" in lowered or "центральн" in lowered:
+        return "Центральной Азии"
     if "kyrgyz" in lowered or "кыргыз" in lowered or "киргиз" in lowered:
         return "Кыргызстане"
     if "uzbek" in lowered or "узбе" in lowered:
         return "Узбекистане"
     if "tajik" in lowered or "таджик" in lowered:
         return "Таджикистане"
+    if "turkmen" in lowered or "туркмен" in lowered:
+        return "Туркменистане"
     return "Казахстане"
+
+
+def _country_label_for_item(item: Opportunity, *values: str) -> str:
+    raw = _raw(item)
+    country_evidence = " ".join(
+        [
+            *values,
+            _string(raw.get("country")),
+            _string(raw.get("countries")),
+            _string(raw.get("office")),
+        ]
+    )
+    return _country_label(country_evidence)
 
 
 def _readable_title(title: str) -> str:
@@ -210,7 +227,7 @@ def _procurement_summary(item: Opportunity) -> str:
     raw = _raw(item)
     reference = _string(raw.get("reference") or raw.get("external_id"))
     office = _string(raw.get("office"))
-    country = _country_label(" ".join([item.title, office, reference]))
+    country = _country_label_for_item(item, item.title, office, reference)
     title = _readable_title(item.title)
     subject = f": {title}" if title else f" по направлению «{_procurement_focus(item)}»"
     detail_hint = (
