@@ -975,6 +975,7 @@ def _operator_run_rows(limit: int = 50) -> list[dict[str, Any]]:
         return []
     result: list[dict[str, Any]] = []
     for row in rows:
+        error_text = str(row.get("error") or "").strip()
         result.append(
             {
                 "id": row.get("id"),
@@ -989,7 +990,7 @@ def _operator_run_rows(limit: int = 50) -> list[dict[str, Any]]:
                 "items_seen": int(row.get("items_seen") or 0),
                 "items_new": int(row.get("items_new") or 0),
                 "items_dup": int(row.get("items_dup") or 0),
-                "error": str(row.get("error") or "").splitlines()[0][:240],
+                "error": error_text.splitlines()[0][:240] if error_text else "",
             }
         )
     return result

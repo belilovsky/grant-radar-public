@@ -2750,6 +2750,62 @@ def test_operator_health_requires_token_and_returns_actionable_summary(monkeypat
     assert data["failed_runs"][0]["error"] == "sample failure"
 
 
+def test_operator_run_rows_accepts_success_without_error_text(monkeypatch):
+    from types import SimpleNamespace
+
+    from sqlalchemy import (
+        Column,
+        DateTime,
+        Integer,
+        MetaData,
+        String,
+        Table,
+        create_engine,
+    )
+
+    engine = create_engine("sqlite://")
+    metadata = MetaData()
+    runs = Table(
+        "runs",
+        metadata,
+        Column("id", Integer, primary_key=True),
+        Column("source", String),
+        Column("started_at", DateTime),
+        Column("finished_at", DateTime),
+        Column("status", String),
+        Column("items_seen", Integer),
+        Column("items_new", Integer),
+        Column("items_dup", Integer),
+        Column("error", String),
+    )
+    metadata.create_all(engine)
+    now = datetime.now(timezone.utc)
+    with engine.begin() as connection:
+        connection.execute(
+            runs.insert().values(
+                source="grants_gov",
+                started_at=now,
+                finished_at=now,
+                status="ok",
+                items_seen=3,
+                items_new=2,
+                items_dup=1,
+                error=None,
+            )
+        )
+    monkeypatch.setattr(
+        api_main,
+        "_configured_repository",
+        lambda: SimpleNamespace(engine=engine),
+    )
+
+    rows = api_main._operator_run_rows()
+
+    assert len(rows) == 1
+    assert rows[0]["status"] == "ok"
+    assert rows[0]["error"] == ""
+
+
 def test_refresh_rejects_bad_admin_token(monkeypatch):
     _reset_api_state(monkeypatch)
     monkeypatch.setenv("GRANT_RADAR_ADMIN_TOKEN", "secret")
