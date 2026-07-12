@@ -435,14 +435,14 @@ def render_funder_page(
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>{funder_name} - QAZ.FUND</title>
+  <title>{funder_name} – QAZ.FUND</title>
   <meta name="description" content="{overview}">
   <link rel="canonical" href="{canonical_href}">
   <link rel="alternate" hreflang="ru" href="{ru_href}">
   <link rel="alternate" hreflang="en" href="{en_href}">
   <link rel="alternate" hreflang="x-default" href="{ru_href}">
   <meta property="og:type" content="website">
-  <meta property="og:title" content="{funder_name} - QAZ.FUND">
+  <meta property="og:title" content="{funder_name} – QAZ.FUND">
   <meta property="og:description" content="{overview}">
   <meta property="og:url" content="{canonical_href}">
   <meta property="og:image" content="{social_image}">
@@ -450,7 +450,7 @@ def render_funder_page(
   <meta property="og:image:height" content="630">
   <meta property="og:locale" content="{og_locale}">
   <meta name="twitter:card" content="summary_large_image">
-  <meta name="twitter:title" content="{funder_name} - QAZ.FUND">
+  <meta name="twitter:title" content="{funder_name} – QAZ.FUND">
   <meta name="twitter:description" content="{overview}">
   <meta name="twitter:image" content="{social_image}">
   <script type="application/ld+json">{schema_json}</script>

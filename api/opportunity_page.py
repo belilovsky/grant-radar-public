@@ -588,7 +588,7 @@ def render_opportunity_page(
         copy["detail_empty"]
     )
     seo_summary = _seo_excerpt(summary) or summary
-    page_title = f"{title} - QAZ.FUND"
+    page_title = f"{title} – QAZ.FUND"
     canonical_path = _page_path(root_path, str(detail.id), active_lang)
     canonical_href = escape(_absolute_href(site_origin, canonical_path), quote=True)
     ru_href = escape(

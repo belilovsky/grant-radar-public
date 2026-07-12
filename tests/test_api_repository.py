@@ -2115,7 +2115,7 @@ def test_opportunity_page_renders_public_permalink(monkeypatch):
 
     assert response.status_code == 200
     assert '<html lang="ru"' in response.text
-    assert "<title>Цифровое ускорение Казахстана - QAZ.FUND</title>" in response.text
+    assert "<title>Цифровое ускорение Казахстана – QAZ.FUND</title>" in response.text
     assert (
         'rel="canonical" href="http://testserver/opportunity/'
         f'{item.id}?lang=ru"' in response.text
@@ -2423,7 +2423,7 @@ def test_funder_page_renders_public_profile(monkeypatch):
 
     assert response.status_code == 200
     assert '<html lang="ru"' in response.text
-    assert "<title>Фонд науки - QAZ.FUND</title>" in response.text
+    assert "<title>Фонд науки – QAZ.FUND</title>" in response.text
     assert "<h1>Фонд науки</h1>" in response.text
     assert "Профиль фонда" in response.text
     assert "--brand: var(--color-accent);" in response.text

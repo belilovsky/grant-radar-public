@@ -1,4 +1,4 @@
-# QazStack primitives review - 2026-07-11
+# QazStack primitives review – 2026-07-11
 
 Scope: QAZ.FUND (`grant-radar-public`) against the current platform/QazStack
 surface in `platform-portal-git` and the QazStack registry.
@@ -56,7 +56,7 @@ The current QAZ.FUND dashboard also uses a local AV DS-compatible adapter:
 `api/avds.py` plus `data-avds-component` markers validated by
 `scripts/production_smoke.py`.
 
-## Pass 1 - QAZ.FUND primitives to upstream into QazStack
+## Pass 1 – QAZ.FUND primitives to upstream into QazStack
 
 | Candidate | Local evidence | Why it belongs in QazStack | Status | Recommended action |
 |---|---|---|---|---|
@@ -80,7 +80,7 @@ Do not upstream now:
 - The current local `api/avds.py` token adapter as a canonical AV DS package.
   It is a safe deployment bridge, not the source of truth for AV DS.
 
-## Pass 2 - QazStack/platform primitives QAZ.FUND should adopt
+## Pass 2 – QazStack/platform primitives QAZ.FUND should adopt
 
 | QazStack primitive | Platform evidence | Fit for QAZ.FUND | Risk | Recommended action |
 |---|---|---|---|---|

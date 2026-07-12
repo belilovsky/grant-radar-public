@@ -1336,7 +1336,7 @@ async def test_erasmus_kazakhstan_fetch_yields_open_call_actions():
     assert len(items) == 4
     by_title = {item.title: item for item in items}
 
-    jean_monnet = by_title["Jean Monnet - Erasmus+ Kazakhstan"]
+    jean_monnet = by_title["Jean Monnet – Erasmus+ Kazakhstan"]
     assert jean_monnet.deadline.isoformat() == "2099-02-03"
     assert jean_monnet.funder == "European Union / Erasmus+"
     assert "jean_monnet" in jean_monnet.tags
@@ -1344,19 +1344,19 @@ async def test_erasmus_kazakhstan_fetch_yields_open_call_actions():
     assert jean_monnet.raw["article_title"].startswith("Erasmus+ 2026 Call Is Now Open")
 
     cbhe = by_title[
-        "Capacity Building in Higher Education (CBHE) - Erasmus+ Kazakhstan"
+        "Capacity Building in Higher Education (CBHE) – Erasmus+ Kazakhstan"
     ]
     assert "capacity_building" in cbhe.tags
     assert "higher_education" in cbhe.tags
 
     emjm = by_title[
         "Erasmus Mundus Joint Master Degrees (EMJM) and Erasmus Mundus Design "
-        "Measure (EMDM) - Erasmus+ Kazakhstan"
+        "Measure (EMDM) – Erasmus+ Kazakhstan"
     ]
     assert "erasmus_mundus" in emjm.tags
     assert "joint_degrees" in emjm.tags
 
-    icm = by_title["International Credit Mobility (ICM) - Erasmus+ Kazakhstan"]
+    icm = by_title["International Credit Mobility (ICM) – Erasmus+ Kazakhstan"]
     assert "mobility" in icm.tags
     assert "student_exchange" in icm.tags
 
@@ -1397,7 +1397,7 @@ async def test_erasmus_kazakhstan_fetch_parses_neighbor_deadline_actions():
     items = await _collect(ErasmusKazakhstanSource())
 
     assert len(items) == 1
-    assert items[0].title == "Jean Monnet - Erasmus+ Kazakhstan"
+    assert items[0].title == "Jean Monnet – Erasmus+ Kazakhstan"
     assert items[0].deadline.isoformat() == "2099-03-15"
     assert "jean_monnet" in items[0].tags
 

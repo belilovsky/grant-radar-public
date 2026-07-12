@@ -373,7 +373,7 @@ class ErasmusKazakhstanSource(BaseSource):
                     source=self.slug,
                     source_url=action.url,  # type: ignore[arg-type]
                     type=OpportunityType.GRANT,
-                    title=f"{action.title} - Erasmus+ Kazakhstan",
+                    title=f"{action.title} – Erasmus+ Kazakhstan",
                     summary=(
                         f"{action_summary}. Open Erasmus+ call for Kazakhstani higher "
                         f"education institutions and organizations."

@@ -314,7 +314,7 @@ def _amount_label(item: Opportunity) -> str:
     if item.amount_min is not None and item.amount_max is not None:
         if item.amount_min == item.amount_max:
             return f"{item.amount_min} {currency}".strip()
-        return f"{item.amount_min} - {item.amount_max} {currency}".strip()
+        return f"{item.amount_min} – {item.amount_max} {currency}".strip()
     if item.amount_min is not None:
         return f"from {item.amount_min} {currency}".strip()
     return f"up to {item.amount_max} {currency}".strip()

@@ -1,4 +1,4 @@
-# QAZ.FUND production closeout - 2026-07-11
+# QAZ.FUND production closeout – 2026-07-11
 
 ## Scope
 
