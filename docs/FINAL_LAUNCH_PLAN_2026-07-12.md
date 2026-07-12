@@ -35,6 +35,9 @@ why the item is shown.
 | Lightweight applicant workflow | Done | Saved cards receive a local work stage and can be isolated through `Моя работа`; state stays in the current browser. |
 | Mobile filter disclosure | Done | The complete filter set is collapsed behind one control below 760px and remains expanded on desktop. |
 | Decision-data contract | Done | Compact and full opportunity responses expose `raw.decision_readiness` with known and missing application fields. |
+| Workspace portability | Done | Local saved views, cards and work stages can be exported and restored as a validated versioned JSON backup. |
+| Detail accessibility | Done | The local detail drawer uses dialog semantics, traps keyboard focus, hides cleanly and restores focus to its trigger. |
+| Payload compression | Done | FastAPI compresses large HTML/JSON responses; the full compact catalog transferred at about 65 KB instead of 480 KB in the live check. |
 | Data relevance | Done | Low-confidence and out-of-region sources are filtered or pushed out of default feed. |
 | QazStack bridge | Done | Shared opportunity/geofit primitives vendored through a deploy-safe snapshot. |
 | AI/readability surfaces | Done | `llms.txt`, sitemap, OpenAPI, source coverage and canonical public pages are exposed. |

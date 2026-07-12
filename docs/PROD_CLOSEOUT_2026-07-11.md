@@ -8,7 +8,7 @@ and public launch hardening work.
 ## Deployed revision
 
 - Branch: `codex/qazfund-audit-pass-2026-07-07`
-- Current deployed commit: `c0f61f5a5f5535d30f2f894fe91221dd7e3f82a3`
+- Current deployed commit: `848372a0507c87527df20d6c2faa0f16b9d6a78a`
 - Host path: `/opt/grant-radar`
 - Public URL: `https://qaz.fund/`
 
@@ -85,7 +85,7 @@ Docker builds do not require private GitHub credentials.
 ## Local gates
 
 ```text
-PYTHONPATH=. .venv/bin/pytest -q  -> 374 passed
+PYTHONPATH=. .venv/bin/pytest -q  -> 375 passed
 make lint                         -> black/isort/flake8/mypy passed
 ```
 
@@ -139,3 +139,22 @@ make lint                         -> black/isort/flake8/mypy passed
 - Kazakh UI is not published partially. It requires a complete translation and
   native-language review; no configured DeepSeek key was available for this
   pass.
+
+## 2026-07-13 top-product follow-up
+
+- Large responses now use standard gzip negotiation. The full compact catalog
+  transferred at roughly 65 KB instead of 480 KB in the production check.
+- `Экспорт` groups CSV, deadline calendar and workspace backup tools, leaving
+  only the three primary work actions visible on mobile.
+- A versioned workspace backup exports and restores saved views, saved cards
+  and application stages. Import validates shape, limits record counts and
+  ignores unknown workflow states before writing local storage.
+- The detail drawer now explains data completeness from
+  `raw.decision_readiness`, for example `3 of 4` with the exact field that still
+  needs verification at the official source.
+- The drawer has dialog semantics, keyboard focus containment, background
+  inertness, Escape close and focus restoration. A closed drawer is no longer
+  exposed in the accessibility tree.
+- Live browser proof covered backup download/upload round-trip, detail focus,
+  completeness text and a 390px layout with zero horizontal overflow and no
+  console errors.
