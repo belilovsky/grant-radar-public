@@ -8,7 +8,7 @@ and public launch hardening work.
 ## Deployed revision
 
 - Branch: `codex/qazfund-audit-pass-2026-07-07`
-- Deployed commit before 2026-07-12 source follow-up: `89fef4695867225357446b4df8c0f10243ea16d1`
+- Current deployed commit: `4db57b91668b6779304cb6d239e69ab982023894`
 - Host path: `/opt/grant-radar`
 - Public URL: `https://qaz.fund/`
 
@@ -23,6 +23,8 @@ health_items: 770
 ready_backend: database
 coverage_sources: 23
 coverage_relevant_open_items: 121
+coverage_stale_sources: 1
+coverage_unknown_freshness_sources: 0
 opportunities: 121
 digest_items: 5
 forbidden_hits: []
@@ -83,7 +85,7 @@ Docker builds do not require private GitHub credentials.
 ## Local gates
 
 ```text
-PYTHONPATH=. .venv/bin/pytest -q  -> 367 passed
+PYTHONPATH=. .venv/bin/pytest -q  -> 373 passed
 make lint                         -> black/isort/flake8/mypy passed
 ```
 
@@ -103,3 +105,31 @@ make lint                         -> black/isort/flake8/mypy passed
 - Opportunity Desk roundup posts such as monthly lists of scholarships and
   fellowships are now filtered out before they reach the applicant-facing feed.
 - Final launch plan added: `docs/FINAL_LAUNCH_PLAN_2026-07-12.md`.
+
+## 2026-07-13 product-workbench follow-up
+
+- Search now tolerates common Russian/English synonyms and one-character
+  typing errors without calling an external model.
+- Saved opportunities have a local work stage: review, fit, preparation,
+  submitted and result. `Моя работа` isolates those cards without requiring an
+  account or sending applicant data to the server.
+- Mobile filters collapse into one disclosure below 760px; desktop keeps the
+  full workbench visible.
+- `/coverage` exposes explicit source freshness counts. The token-protected
+  `/operator/health` route combines stale-source evidence with recent run
+  failures for operators.
+- Opportunity JSON exposes `raw.decision_readiness`, listing which deadline,
+  amount, eligibility and application fields are known or missing.
+- The hero's catalog metric remains the global relevant-open count when the
+  user searches or filters; the match count changes only inside the catalog.
+- Live Playwright verification passed at 1440px and 390px: no horizontal
+  overflow, mobile filter disclosure closed by default, saved workflow stage
+  persisted, typo search returned results, and the console had no errors.
+
+### Deliberate boundaries
+
+- Server accounts, shared pipelines and email notifications are not simulated;
+  they require an approved authentication/privacy/retention design.
+- Kazakh UI is not published partially. It requires a complete translation and
+  native-language review; no configured DeepSeek key was available for this
+  pass.

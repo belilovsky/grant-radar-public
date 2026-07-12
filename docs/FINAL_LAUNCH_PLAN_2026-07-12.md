@@ -29,7 +29,12 @@ why the item is shown.
 | Mobile/Fold usability | Done | Checked 390px and fold-like widths for horizontal overflow. |
 | Progressive disclosure | Done | Discovery and trust sections stay available without extending the default workbench path. |
 | Source trust signals | Done | Sources are ranked by useful open coverage and display their latest successful refresh date. |
+| Source freshness control | Done | Public coverage reports fresh/stale/unknown source counts; protected `/operator/health` adds recent failed-run evidence. |
 | Match explanation | Done | The advanced precision control now explains what the heuristic does and what must be verified. |
+| Search tolerance | Done | Search supports common RU/EN synonyms and one-character typos without a model dependency. |
+| Lightweight applicant workflow | Done | Saved cards receive a local work stage and can be isolated through `Моя работа`; state stays in the current browser. |
+| Mobile filter disclosure | Done | The complete filter set is collapsed behind one control below 760px and remains expanded on desktop. |
+| Decision-data contract | Done | Compact and full opportunity responses expose `raw.decision_readiness` with known and missing application fields. |
 | Data relevance | Done | Low-confidence and out-of-region sources are filtered or pushed out of default feed. |
 | QazStack bridge | Done | Shared opportunity/geofit primitives vendored through a deploy-safe snapshot. |
 | AI/readability surfaces | Done | `llms.txt`, sitemap, OpenAPI, source coverage and canonical public pages are exposed. |
@@ -44,8 +49,17 @@ items after public launch.
 |---|---|---|
 | P1 | Source freshness variance | Monitor sources that occasionally fetch 0 records and add source-specific fallbacks only when repeated. |
 | P1 | Opportunity Desk bridge depth | Keep main/category RSS feeds enabled; review first production refresh after deploy. |
-| P2 | Operator workflow | Add saved collections/account state only after real operator feedback. |
+| P2 | Server-side accounts and notifications | Add only after approving authentication, privacy, retention and delivery rules. The current saved workflow is deliberately local-only. |
+| P2 | Kazakh locale | Add only with a complete dictionary, source-content policy and native-language review. No partial or machine-only locale is published. |
 | P2 | API docs localization | Keep Swagger developer-facing; localize only if API becomes a public product surface. |
+
+## Known data boundary
+
+The index does not invent fields absent from official sources. On the 2026-07-13
+open-scope audit every item had a source/application route, while award amount,
+structured eligibility and exact deadlines were not available for every record.
+Consumers should read `raw.decision_readiness.missing_fields` and verify final
+conditions on `source_url`.
 
 ## Safe final pass order
 
