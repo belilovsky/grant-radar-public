@@ -471,9 +471,9 @@ Allowed values:
 
 Suggested meaning:
 
-- `p1` — direct fit and actionable now
-- `p2` — relevant but partner-dependent or uncertain
-- `p3` — weak fit or watchlist only
+- `p1` – direct fit and actionable now
+- `p2` – relevant but partner-dependent or uncertain
+- `p3` – weak fit or watchlist only
 
 ### urgency_bucket
 

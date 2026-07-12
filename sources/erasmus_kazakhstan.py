@@ -280,7 +280,7 @@ def _extract_actions(
             if not raw_title:
                 continue
             title = raw_title
-            summary = summary_source.replace(raw_title, "", 1).strip(" -–—:")
+            summary = summary_source.replace(raw_title, "", 1).strip(" -–\u2014:")
             if not title or not action_url:
                 continue
             if action_url in seen:

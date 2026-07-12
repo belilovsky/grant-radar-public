@@ -48,12 +48,12 @@ ROLLING_HINTS = (
     "terms of reference",
 )
 DEADLINE_RE = re.compile(
-    r"(?:deadline|apply by|closes?)\s*[:—-]?\s*"
+    r"(?:deadline|apply by|closes?)\s*[:\u2014–-]?\s*"
     r"(?P<d>\d{1,2})\s+(?P<m>jan|feb|mar|apr|may|jun|jul|aug|sep|oct|nov|dec)[a-z]*\s+(?P<y>\d{4})",
     re.IGNORECASE,
 )
 DEADLINE_DOTTED_RE = re.compile(
-    r"(?:deadline|apply by|closes?)\s*[:—-]?\s*"
+    r"(?:deadline|apply by|closes?)\s*[:\u2014–-]?\s*"
     r"(?P<d>\d{1,2})[.\-/](?P<m>\d{1,2})[.\-/](?P<y>\d{4})",
     re.IGNORECASE,
 )

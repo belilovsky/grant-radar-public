@@ -1,4 +1,4 @@
-"""grants.gov — выборка открытых grant opportunities.
+"""grants.gov – выборка открытых grant opportunities.
 
 Использует публичный search REST endpoint:
   POST https://api.grants.gov/v1/api/search2

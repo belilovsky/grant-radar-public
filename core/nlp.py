@@ -154,7 +154,7 @@ def _strip_title_prefix(text: str, title: str) -> str:
     patterns = []
     for candidate in sorted(set(candidates), key=len, reverse=True):
         prefix = r"\s+".join(re.escape(token) for token in candidate.split())
-        patterns.append(re.compile(rf"^\s*{prefix}\s*[:\-–—.]?\s*", re.IGNORECASE))
+        patterns.append(re.compile(rf"^\s*{prefix}\s*[:\-–\u2014.]?\s*", re.IGNORECASE))
     cleaned = text
     for _ in range(3):
         match = next(

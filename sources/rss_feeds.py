@@ -36,19 +36,19 @@ FUNDSFORNGOS_FEED_URLS = (
 
 DEADLINE_PATTERNS = (
     re.compile(
-        r"(?:deadline|apply by|closes?|closing date)\s*[:—-]?\s*"
+        r"(?:deadline|apply by|closes?|closing date)\s*[:\u2014–-]?\s*"
         r"(?P<d>\d{1,2})\s+(?P<m>jan|feb|mar|apr|may|jun|jul|aug|sep|oct|nov|dec)"
         r"[a-z]*\s+(?P<y>\d{4})",
         re.IGNORECASE,
     ),
     re.compile(
-        r"(?:deadline|apply by|closes?|closing date)\s*[:—-]?\s*"
+        r"(?:deadline|apply by|closes?|closing date)\s*[:\u2014–-]?\s*"
         r"(?P<m>jan|feb|mar|apr|may|jun|jul|aug|sep|oct|nov|dec)[a-z]*"
         r"\s+(?P<d>\d{1,2}),?\s+(?P<y>\d{4})",
         re.IGNORECASE,
     ),
     re.compile(
-        r"(?:deadline|apply by|closes?|closing date)\s*[:—-]?\s*"
+        r"(?:deadline|apply by|closes?|closing date)\s*[:\u2014–-]?\s*"
         r"(?P<d>\d{1,2})[-./](?P<m>jan|feb|mar|apr|may|jun|jul|aug|sep|oct|nov|dec)"
         r"[a-z]*[-./](?P<y>\d{4})",
         re.IGNORECASE,

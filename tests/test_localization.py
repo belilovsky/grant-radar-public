@@ -146,7 +146,7 @@ def test_russian_procurement_title_keeps_reference_for_distinction():
     localized = localize_opportunity(item, "ru")
 
     assert localized.title == (
-        "Закупка в Казахстане: консультационные услуги — UNDP-KAZ-00723"
+        "Закупка в Казахстане: консультационные услуги – UNDP-KAZ-00723"
     )
 
 
@@ -216,7 +216,7 @@ def test_russian_localization_removes_leading_clause_before_repeated_title():
         title=base_title,
         summary="Временное описание.",
     )
-    generated_title = f"{base_title} — № {str(item.id).split('-')[0].upper()}"
+    generated_title = f"{base_title} – № {str(item.id).split('-')[0].upper()}"
     item = item.model_copy(
         update={
             "title": generated_title,

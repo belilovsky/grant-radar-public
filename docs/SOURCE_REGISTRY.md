@@ -28,7 +28,7 @@ Geographic scope:
 
 ## Source tiers
 
-### Tier 1 — Must monitor continuously
+### Tier 1 – Must monitor continuously
 
 These sources are high-value because they produce directly actionable opportunities or recurring programs.
 
@@ -50,7 +50,7 @@ These sources are high-value because they produce directly actionable opportunit
 | UNESCO calls and participation programs | grants / partnerships | Good fit for education, AI literacy, teacher training | weekly | Active `unesco_iite` item-level announcements parser |
 | UNDP procurement and challenges | tenders / innovation | Useful for public sector and DPI-related pilots | weekly | Active `undp_procurement` parser on country notices |
 
-### Tier 2 — Strong strategic sources
+### Tier 2 – Strong strategic sources
 
 These are highly relevant but less predictable or more partnership-dependent.
 
@@ -72,7 +72,7 @@ These are highly relevant but less predictable or more partnership-dependent.
 | Kazakhstan Watch | donor / procurement watchlist | High relevance entry points for Kazakhstan grants, tenders, and donor calls | daily | Curated page-level bridge for sources without stable item-level APIs/parsers; retains blocked official pages with curated titles instead of CDN error text |
 | EEAS Kazakhstan | grants / EU delegation | Direct EU grant calls for Kazakhstan civil society and governance programs | daily | Active `eeas_kazakhstan` adapter extracts grant cards, deadlines, references and detail metadata |
 
-### Tier 3 — Opportunistic / edge sources
+### Tier 3 – Opportunistic / edge sources
 
 These sources are worth tracking but should not dominate the pipeline.
 
@@ -189,35 +189,35 @@ Each item should later receive a score across these dimensions:
 
 Simple early-stage scoring recommendation:
 
-- `P1` — direct fit, open now, actionable
-- `P2` — relevant but partner-dependent or less certain
-- `P3` — weak fit, informational, or future watchlist
+- `P1` – direct fit, open now, actionable
+- `P2` – relevant but partner-dependent or less certain
+- `P3` – weak fit, informational, or future watchlist
 
 ## Parser roadmap
 
 Recommended parser order:
 
-1. Grants.gov — active
-2. Astana Hub — active
-3. Internews — active
-4. IsDB project procurement — active `isdb_project_procurement`
-5. EBRD ECEPP procurement — active `ebrd_ecepp_procurement`
-6. Erasmus+ Kazakhstan — active `erasmus_kazakhstan`
-7. Opportunity Desk — active RSS bridge
-8. FundsforNGOs — active RSS bridge
-9. Google for Startups Cloud — active `google_cloud_startup`
-10. Google.org — active `google_org_ai_opportunity` watch monitor
-11. Microsoft for Startups — active `microsoft_founders_hub`
-12. AWS Activate — active `aws_activate`
-13. World Bank — active `world_bank_kazakhstan`
-14. EEAS Kazakhstan — active `eeas_kazakhstan`
-15. ADB — active `adb_kazakhstan`
-16. NVIDIA Inception — active `nvidia_inception`
-17. Cloudflare Startups — active `cloudflare_startups`
-18. MongoDB Startups — active `mongodb_startups`
-19. UNICEF — active `unicef_kazakhstan`
-20. UNESCO — active `unesco_iite`
-21. UNDP procurement — active `undp_procurement`
+1. Grants.gov – active
+2. Astana Hub – active
+3. Internews – active
+4. IsDB project procurement – active `isdb_project_procurement`
+5. EBRD ECEPP procurement – active `ebrd_ecepp_procurement`
+6. Erasmus+ Kazakhstan – active `erasmus_kazakhstan`
+7. Opportunity Desk – active RSS bridge
+8. FundsforNGOs – active RSS bridge
+9. Google for Startups Cloud – active `google_cloud_startup`
+10. Google.org – active `google_org_ai_opportunity` watch monitor
+11. Microsoft for Startups – active `microsoft_founders_hub`
+12. AWS Activate – active `aws_activate`
+13. World Bank – active `world_bank_kazakhstan`
+14. EEAS Kazakhstan – active `eeas_kazakhstan`
+15. ADB – active `adb_kazakhstan`
+16. NVIDIA Inception – active `nvidia_inception`
+17. Cloudflare Startups – active `cloudflare_startups`
+18. MongoDB Startups – active `mongodb_startups`
+19. UNICEF – active `unicef_kazakhstan`
+20. UNESCO – active `unesco_iite`
+21. UNDP procurement – active `undp_procurement`
 22. country ministry pages
 
 ## Data capture fields

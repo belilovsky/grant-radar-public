@@ -5,10 +5,10 @@ This document describes the repository / persistence layer used by the grant-rad
 ## Components
 
 - `core/persistence.py`
-  - `compute_fingerprint(record)` — stable dedup key (`source:external_id`, fallback to `url:` or sha1 over `repr`).
-  - `Repository` (Protocol) — `exists`, `upsert`, `all`, `size`, `clear`.
-  - `InMemoryRepository` — thread-safe dict-backed implementation, used by tests / dev.
-  - `DedupProcessor(repo, inner=...)` — async processor wrapping an inner callable; deduplicates and persists each record once.
+  - `compute_fingerprint(record)` – stable dedup key (`source:external_id`, fallback to `url:` or sha1 over `repr`).
+  - `Repository` (Protocol) – `exists`, `upsert`, `all`, `size`, `clear`.
+  - `InMemoryRepository` – thread-safe dict-backed implementation, used by tests / dev.
+  - `DedupProcessor(repo, inner=...)` – async processor wrapping an inner callable; deduplicates and persists each record once.
 - `core/db.py`
   - SQLAlchemy `Base`, `OpportunityRow` ORM model, `SqlRepository` implementation.
 - `core/repository_factory.py`
@@ -61,9 +61,9 @@ runner = build_default_runner(queue, repository=repo)
 
 ## Testing
 
-- `tests/test_persistence.py` — fingerprints, in-memory repo, dedup processor.
-- `tests/test_db_repository.py` — `SqlRepository` insert/upsert/exists/clear, `make_repository` resolution. Skipped automatically when SQLAlchemy is not installed (`pytest.importorskip("sqlalchemy")`).
-- `tests/test_runner_factory.py` — end-to-end pipeline through `FetchQueue -> PipelineRunner -> DedupProcessor -> Repository` with both in-memory and `sqlite:///:memory:` backends.
+- `tests/test_persistence.py` – fingerprints, in-memory repo, dedup processor.
+- `tests/test_db_repository.py` – `SqlRepository` insert/upsert/exists/clear, `make_repository` resolution. Skipped automatically when SQLAlchemy is not installed (`pytest.importorskip("sqlalchemy")`).
+- `tests/test_runner_factory.py` – end-to-end pipeline through `FetchQueue -> PipelineRunner -> DedupProcessor -> Repository` with both in-memory and `sqlite:///:memory:` backends.
 
 ## Migration plan
 
@@ -115,8 +115,8 @@ schema.
 
 | Индекс | Колонка | unique |
 | --- | --- | --- |
-| `ix_opportunities_source` | `source` | — |
-| `ix_opportunities_deadline` | `deadline` | — |
+| `ix_opportunities_source` | `source` | – |
+| `ix_opportunities_deadline` | `deadline` | – |
 | `ix_opportunities_dedup_key` | `dedup_key` | ✅ |
 
 The unique `dedup_key` index enforces deduplication at the database layer, so

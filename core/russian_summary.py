@@ -170,9 +170,9 @@ def _reference_suffix(item: Opportunity) -> str:
         and re.fullmatch(r"[A-Za-zА-Яа-я0-9][A-Za-zА-Яа-я0-9._/-]*", reference)
         and reference.casefold() not in item.title.casefold()
     ):
-        return f" — {reference}"
+        return f" – {reference}"
     compact_id = str(item.id).split("-", maxsplit=1)[0].upper()
-    return f" — № {compact_id}" if compact_id else ""
+    return f" – № {compact_id}" if compact_id else ""
 
 
 def _procurement_focus(item: Opportunity) -> str:

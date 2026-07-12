@@ -68,7 +68,7 @@ CARD_RE = re.compile(
 )
 TITLE_RE = re.compile(r"<title[^>]*>(?P<title>.*?)</title>", re.IGNORECASE | re.DOTALL)
 DEADLINE_RE = re.compile(
-    r"(?:до|deadline|дедлайн)\s*[:—-]?\s*(\d{1,2})[.\-/](\d{1,2})[.\-/](\d{2,4})",
+    r"(?:до|deadline|дедлайн)\s*[:\u2014–-]?\s*(\d{1,2})[.\-/](\d{1,2})[.\-/](\d{2,4})",
     re.IGNORECASE,
 )
 MONTHS = {

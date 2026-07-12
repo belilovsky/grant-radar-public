@@ -41,9 +41,10 @@ def test_root_renders_service_landing(monkeypatch):
     assert response.headers["cache-control"].startswith("public, max-age=60")
     assert '<html lang="ru"' in response.text
     assert (
-        "<title>QAZ.FUND — гранты и меры поддержки для Казахстана</title>"
+        "<title>QAZ.FUND – гранты и меры поддержки для Казахстана</title>"
         in response.text
     )
+    assert "\u2014" not in response.text
     assert "fonts.googleapis.com" not in response.text
     assert '--av-font-sans: Arial, "Helvetica Neue", Helvetica' in response.text
     assert 'data-avds="grant-radar"' in response.text
@@ -167,7 +168,7 @@ def test_root_renders_service_landing(monkeypatch):
     )
     assert 'property="og:type" content="website"' in response.text
     assert (
-        'property="og:title" content="QAZ.FUND — гранты и меры поддержки '
+        'property="og:title" content="QAZ.FUND – гранты и меры поддержки '
         'для Казахстана"' in response.text
     )
     assert 'property="og:url" content="http://testserver/?lang=ru"' in response.text
@@ -622,9 +623,10 @@ def test_root_supports_explicit_english_dashboard(monkeypatch):
     assert response.status_code == 200
     assert '<html lang="en"' in response.text
     assert (
-        "<title>QAZ.FUND — funding and support programs for Kazakhstan</title>"
+        "<title>QAZ.FUND – funding and support programs for Kazakhstan</title>"
         in response.text
     )
+    assert "\u2014" not in response.text
     assert (
         "Public funding navigator for grants, subsidies, accelerators" in response.text
     )

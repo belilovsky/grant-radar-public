@@ -1,7 +1,7 @@
 """Domain models for grant-radar.
 
 Pydantic-модели используются внутри pipeline,
-SQLAlchemy ORM-модели — в storage.py.
+SQLAlchemy ORM-модели – в storage.py.
 """
 
 from __future__ import annotations

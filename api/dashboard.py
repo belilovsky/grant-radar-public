@@ -20,9 +20,9 @@ COPY = {
     "ru": {
         "lang": "ru",
         "locale": "ru-KZ",
-        "title": "QAZ.FUND — гранты и меры поддержки для Казахстана",
+        "title": "QAZ.FUND – гранты и меры поддержки для Казахстана",
         "meta_description": (
-            "QAZ.FUND — публичный навигатор по грантам, субсидиям, акселераторам "
+            "QAZ.FUND – публичный навигатор по грантам, субсидиям, акселераторам "
             "и программам поддержки для Казахстана."
         ),
         "eyebrow": "Казахстанский навигатор",
@@ -449,7 +449,7 @@ COPY = {
         "unsave_opportunity": "Убрать",
         "report_issue": "Уточнить данные",
         "open_source_short": "Источник",
-        "footer_owner": "QAZ.FUND — публичный навигатор возможностей. Сделано",
+        "footer_owner": "QAZ.FUND – публичный навигатор возможностей. Сделано",
         "footer_disclaimer": (
             "QAZ.FUND не выдаёт гранты и не принимает заявки. Финальные условия, "
             "сроки и формы подачи проверяйте на официальном источнике."
@@ -519,7 +519,7 @@ COPY = {
         "no_indexed_items": "Каталог временно не содержит доступных карточек.",
         "no_filtered_items": "По текущим фильтрам ничего не найдено.",
         "no_filtered_items_hint": (
-            "Попробуйте ослабить один из фильтров — каталог сразу пересчитает выдачу."
+            "Попробуйте ослабить один из фильтров – каталог сразу пересчитает выдачу."
         ),
         "empty_action_clear": "Сбросить всё",
         "empty_action_region": "Все регионы",
@@ -872,7 +872,7 @@ COPY = {
     "en": {
         "lang": "en",
         "locale": "en-KZ",
-        "title": "QAZ.FUND — funding and support programs for Kazakhstan",
+        "title": "QAZ.FUND – funding and support programs for Kazakhstan",
         "meta_description": (
             "QAZ.FUND is a public funding navigator for grants, subsidies, "
             "accelerators, and support programs in Kazakhstan."
@@ -7321,9 +7321,9 @@ def render_dashboard(
     }}
 
     function formatDateTime(value) {{
-      if (!value) return "—";
+      if (!value) return "–";
       const parsed = new Date(value);
-      if (Number.isNaN(parsed.getTime())) return "—";
+      if (Number.isNaN(parsed.getTime())) return "–";
       return new Intl.DateTimeFormat(copy.locale || "ru-KZ", {{
         day: "numeric",
         month: "short",
@@ -7903,7 +7903,7 @@ def render_dashboard(
       const checkedAt = formatDateTime(state.lastCheckedAt);
       const updatedAt = latestUpdate
         ? formatDateTime(new Date(latestUpdate).toISOString())
-        : "—";
+        : "–";
       $("#health-status").textContent = statusValue;
       $("#health-items").textContent = items;
       $("#health-sources").textContent = sources;
