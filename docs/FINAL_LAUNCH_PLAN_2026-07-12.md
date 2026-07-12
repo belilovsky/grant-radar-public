@@ -27,6 +27,9 @@ why the item is shown.
 | Visual quality | Done | Calmer palette, cleaner cards, restored useful panels, reduced decorative borders. |
 | Loading states | Done | Sources and async grids now show explicit loading states before fallback messages. |
 | Mobile/Fold usability | Done | Checked 390px and fold-like widths for horizontal overflow. |
+| Progressive disclosure | Done | Discovery and trust sections stay available without extending the default workbench path. |
+| Source trust signals | Done | Sources are ranked by useful open coverage and display their latest successful refresh date. |
+| Match explanation | Done | The advanced precision control now explains what the heuristic does and what must be verified. |
 | Data relevance | Done | Low-confidence and out-of-region sources are filtered or pushed out of default feed. |
 | QazStack bridge | Done | Shared opportunity/geofit primitives vendored through a deploy-safe snapshot. |
 | AI/readability surfaces | Done | `llms.txt`, sitemap, OpenAPI, source coverage and canonical public pages are exposed. |
@@ -41,9 +44,7 @@ items after public launch.
 |---|---|---|
 | P1 | Source freshness variance | Monitor sources that occasionally fetch 0 records and add source-specific fallbacks only when repeated. |
 | P1 | Opportunity Desk bridge depth | Keep main/category RSS feeds enabled; review first production refresh after deploy. |
-| P1 | Long official text on detail pages | Add collapsible official-text sections if users report excessive scrolling. |
 | P2 | Operator workflow | Add saved collections/account state only after real operator feedback. |
-| P2 | Source confidence explanation | Add a short tooltip or help row for exact/strong/basic relevance labels if users ask. |
 | P2 | API docs localization | Keep Swagger developer-facing; localize only if API becomes a public product surface. |
 
 ## Safe final pass order

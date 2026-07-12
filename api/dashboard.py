@@ -316,6 +316,10 @@ COPY = {
         "score_option_03": "Базовое совпадение",
         "score_option_05": "Высокое совпадение",
         "score_option_07": "Только точные",
+        "score_help": (
+            "Оценка учитывает регион, тему, формат и признаки подходящей аудитории. "
+            "Финальные условия всегда сверяйте у источника."
+        ),
         "all_sources": "Все источники",
         "clear_filters": "Сбросить фильтры",
         "loading_opportunities": "Загружаем возможности...",
@@ -328,6 +332,13 @@ COPY = {
         "loading_sources": "Загружаем покрытие источников...",
         "show_all_sources": "Показать все источники",
         "show_fewer_sources": "Показать меньше",
+        "trust_library_summary": "Источники и прозрачность",
+        "trust_library_description": (
+            "Покрытие, свежесть данных, активные фонды и методология."
+        ),
+        "source_refresh_title": "Последнее успешное обновление источника",
+        "source_refresh_value": "Обновлено {date}",
+        "source_refresh_unknown": "Дата обновления не указана",
         "health_title": "Статус данных",
         "health_description": (
             "Показываем, что каталог доступен и сколько источников сейчас участвует "
@@ -1169,6 +1180,10 @@ COPY = {
         "score_option_03": "Baseline match",
         "score_option_05": "High match",
         "score_option_07": "Exact match first",
+        "score_help": (
+            "The estimate considers region, topic, format, and audience fit. "
+            "Always verify final terms with the official source."
+        ),
         "all_sources": "All sources",
         "clear_filters": "Clear filters",
         "loading_opportunities": "Loading opportunities...",
@@ -1180,6 +1195,13 @@ COPY = {
         "loading_sources": "Loading source coverage...",
         "show_all_sources": "Show all sources",
         "show_fewer_sources": "Show fewer",
+        "trust_library_summary": "Sources and transparency",
+        "trust_library_description": (
+            "Coverage, data freshness, active funders, and methodology."
+        ),
+        "source_refresh_title": "Latest successful source refresh",
+        "source_refresh_value": "Updated {date}",
+        "source_refresh_unknown": "Refresh date unavailable",
         "health_title": "Data status",
         "health_description": (
             "Shows whether the catalog is reachable and how many sources are "
@@ -2404,14 +2426,16 @@ def render_dashboard(
       gap: var(--av-spacing-5);
       padding-top: var(--av-spacing-3);
     }}
-    .discovery-library {{
+    .discovery-library,
+    .trust-library {{
       margin: var(--av-spacing-4) 0;
       padding: 0 12px;
       border: 1px solid var(--line-subtle);
       border-radius: var(--av-radius-md);
       background: var(--panel-wash);
     }}
-    .discovery-library > summary {{
+    .discovery-library > summary,
+    .trust-library > summary {{
       display: flex;
       align-items: baseline;
       justify-content: space-between;
@@ -2423,8 +2447,10 @@ def render_dashboard(
       font-weight: 700;
       list-style: none;
     }}
-    .discovery-library > summary::-webkit-details-marker {{ display: none; }}
-    .discovery-library > summary::after {{
+    .discovery-library > summary::-webkit-details-marker,
+    .trust-library > summary::-webkit-details-marker {{ display: none; }}
+    .discovery-library > summary::after,
+    .trust-library > summary::after {{
       content: "+";
       flex: 0 0 auto;
       color: var(--brand);
@@ -2432,19 +2458,30 @@ def render_dashboard(
       font-weight: 500;
       line-height: 1;
     }}
-    .discovery-library[open] > summary::after {{ content: "−"; }}
-    .discovery-library > summary:focus-visible {{
+    .discovery-library[open] > summary::after,
+    .trust-library[open] > summary::after {{ content: "−"; }}
+    .discovery-library > summary:focus-visible,
+    .trust-library > summary:focus-visible {{
       outline: 2px solid var(--focus-ring);
       outline-offset: -2px;
     }}
-    .discovery-library-description {{
+    .discovery-library-description,
+    .trust-library-description {{
       color: var(--muted);
       font-size: var(--av-text-xs);
       font-weight: 500;
       text-align: right;
     }}
-    .discovery-library-body {{
+    .discovery-library-body,
+    .trust-library-body {{
       padding: 0 0 var(--av-spacing-4);
+    }}
+    .trust-library-body {{
+      display: grid;
+      gap: var(--av-spacing-4);
+    }}
+    .trust-library-body > section {{
+      margin: 0;
     }}
     .funder-grid {{
       display: grid;
@@ -3089,6 +3126,14 @@ def render_dashboard(
     }}
     .advanced-filters .filters {{
       grid-template-columns: repeat(5, minmax(138px, 1fr));
+    }}
+    .filter-help {{
+      display: block;
+      margin-top: 6px;
+      color: var(--muted);
+      font-size: var(--av-text-xs);
+      font-weight: 500;
+      line-height: 1.35;
     }}
     .preset-grid {{
       display: grid;
@@ -3779,6 +3824,26 @@ def render_dashboard(
       line-height: 1.2;
       min-width: 0;
       overflow-wrap: anywhere;
+    }}
+    .source-freshness {{
+      display: inline-flex;
+      align-items: center;
+      min-height: 22px;
+      padding: 0 7px;
+      border-radius: var(--av-radius-full);
+      background: var(--good-soft);
+      color: var(--good);
+      font-size: 11px;
+      font-weight: 700;
+      white-space: nowrap;
+    }}
+    .source-freshness.is-stale {{
+      background: var(--warn-soft);
+      color: var(--warn);
+    }}
+    .source-freshness.is-unknown {{
+      background: var(--panel-subtle);
+      color: var(--muted);
     }}
     .source-url {{
       flex: 0 1 180px;
@@ -4507,10 +4572,12 @@ def render_dashboard(
       .discovery-grid {{
         padding-block: var(--av-spacing-3);
       }}
-      .discovery-library > summary {{
+      .discovery-library > summary,
+      .trust-library > summary {{
         min-height: 48px;
       }}
-      .discovery-library-description {{
+      .discovery-library-description,
+      .trust-library-description {{
         display: none;
       }}
       .themes-grid {{
@@ -5016,6 +5083,7 @@ def render_dashboard(
                 <option value="0.5">{escape(str(copy["score_option_05"]))}</option>
                 <option value="0.7">{escape(str(copy["score_option_07"]))}</option>
               </select>
+              <span class="filter-help">{escape(str(copy["score_help"]))}</span>
             </label>
             <label class="filter-block" for="source-filter">
               <span class="filter-label">{escape(str(copy["source_label"]))}</span>
@@ -5160,6 +5228,18 @@ def render_dashboard(
       </div>
     </details>
 
+    <details
+      class="trust-library"
+      id="trust-library"
+      data-avds-component="trust-library"
+    >
+      <summary>
+        <span>{escape(str(copy["trust_library_summary"]))}</span>
+        <span class="trust-library-description">
+          {escape(str(copy["trust_library_description"]))}
+        </span>
+      </summary>
+      <div class="trust-library-body">
     <section class="funder-section" aria-labelledby="funders-title">
       <div class="spotlight-copy">
         <span class="eyebrow">{escape(str(copy["funder_section_eyebrow"]))}</span>
@@ -5269,6 +5349,8 @@ def render_dashboard(
         </article>
       </div>
     </section>
+      </div>
+    </details>
     <footer class="site-footer" data-avds-component="site-footer">
       <p>
         {escape(str(copy["footer_owner"]))}
@@ -7463,6 +7545,28 @@ def render_dashboard(
       }}).format(parsed);
     }}
 
+    function sourceRefreshInfo(source) {{
+      const value = source && (
+        source.last_discovered_at || source.last_refreshed_at || source.updated_at
+      );
+      if (!value) {{
+        return {{ label: copy.source_refresh_unknown, tone: "is-unknown" }};
+      }}
+      const parsed = new Date(value);
+      if (Number.isNaN(parsed.getTime())) {{
+        return {{ label: copy.source_refresh_unknown, tone: "is-unknown" }};
+      }}
+      const date = new Intl.DateTimeFormat(copy.locale || "ru-KZ", {{
+        day: "numeric",
+        month: "short"
+      }}).format(parsed);
+      const ageHours = Math.max(0, Date.now() - parsed.getTime()) / 3600000;
+      return {{
+        label: text("source_refresh_value", {{ date }}),
+        tone: ageHours > 72 ? "is-stale" : ""
+      }};
+    }}
+
     function hasActiveFilters() {{
       return Boolean(state.query.trim())
         || state.sort !== DEFAULT_SORT
@@ -7957,9 +8061,24 @@ def render_dashboard(
         return;
       }}
       const localRelevantCounts = localRelevantBySource();
+      const rankedSources = state.sources.slice().sort((left, right) => {{
+        const leftLocal = localRelevantCounts.get(left.slug);
+        const rightLocal = localRelevantCounts.get(right.slug);
+        const leftRelevant = Number.isFinite(leftLocal)
+          ? leftLocal
+          : Number(left.relevant_open_items || 0);
+        const rightRelevant = Number.isFinite(rightLocal)
+          ? rightLocal
+          : Number(right.relevant_open_items || 0);
+        return (
+          rightRelevant - leftRelevant
+          || Number(right.items || 0) - Number(left.items || 0)
+          || String(left.name || left.slug).localeCompare(String(right.name || right.slug))
+        );
+      }});
       const sources = state.showAllSources
-        ? state.sources
-        : state.sources.slice(0, COLLAPSED_SOURCES);
+        ? rankedSources
+        : rankedSources.slice(0, COLLAPSED_SOURCES);
       list.innerHTML = sources.map((source) => {{
         const items = Number.isFinite(source.items) ? source.items : null;
         const relevant = Number.isFinite(source.relevant_open_items)
@@ -7977,6 +8096,7 @@ def render_dashboard(
         }});
         const iconVariant = sourceIconVariant(source);
         const sourceName = escapeHtml(source.name || humanizeLabel(source.slug));
+        const refresh = sourceRefreshInfo(source);
         return `
         <a
           class="source-card avds-source-card"
@@ -8004,6 +8124,10 @@ def render_dashboard(
             <div class="source-meta" data-avds-component="source-meta">
               ${{sourceBadge(source)}}
               <span class="source-note">${{escapeHtml(sourceContextLabel(source))}}</span>
+              <span
+                class="source-freshness ${{refresh.tone}}"
+                title="${{escapeHtml(copy.source_refresh_title)}}"
+              >${{escapeHtml(refresh.label)}}</span>
             </div>
           </div>
           <span
@@ -8442,6 +8566,8 @@ def render_dashboard(
       sources: "#sources-panel",
       health: "#health-panel"
     }};
+    const trustLibrary = $("#trust-library");
+    const trustHashes = new Set(["sources-panel", "health-panel", "methodology-panel"]);
     const viewButtons = document.querySelectorAll("[data-view]");
 
     function setActiveView(view) {{
@@ -8457,6 +8583,9 @@ def render_dashboard(
       const selector = viewTargets[view] || viewTargets.opportunities;
       const target = document.querySelector(selector);
       if (!target) return;
+      if (view === "sources" || view === "health") {{
+        trustLibrary.open = true;
+      }}
       const shouldScroll = options.scroll !== false;
       setActiveView(view);
       const nextHash = `#${{view}}`;
@@ -8476,6 +8605,9 @@ def render_dashboard(
       const view = window.location.hash.replace("#", "");
       if (viewTargets[view]) {{
         goToView(view, options);
+      }} else if (trustHashes.has(view)) {{
+        trustLibrary.open = true;
+        setActiveView("sources");
       }} else {{
         setActiveView("opportunities");
       }}
@@ -8494,6 +8626,14 @@ def render_dashboard(
     viewButtons.forEach((button) => {{
       button.addEventListener("click", () => {{
         goToView(button.dataset.view);
+      }});
+    }});
+    document.querySelectorAll(
+      'a[href="#methodology-panel"], a[href="#health-panel"]'
+    ).forEach((link) => {{
+      link.addEventListener("click", () => {{
+        trustLibrary.open = true;
+        setActiveView("sources");
       }});
     }});
 

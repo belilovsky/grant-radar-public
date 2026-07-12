@@ -135,6 +135,12 @@ def test_root_renders_service_landing(monkeypatch):
     assert response.text.index(
         'data-avds-component="discovery-library"'
     ) < response.text.index('id="funders-title"')
+    assert 'data-avds-component="trust-library"' in response.text
+    assert "Источники и прозрачность" in response.text
+    assert response.text.index(
+        'data-avds-component="trust-library"'
+    ) < response.text.index('id="funders-title"')
+    assert "Оценка учитывает регион, тему, формат" in response.text
     assert "медиа" in response.text
     assert "-webkit-line-clamp: 2;" in response.text
     assert ".hero-band" in response.text
@@ -234,6 +240,10 @@ def test_root_renders_service_landing(monkeypatch):
     assert "function humanizeLabel" in response.text
     assert "function metadataValue(entry)" in response.text
     assert "function formatDeadline" in response.text
+    assert "function sourceRefreshInfo" in response.text
+    assert "source.last_discovered_at" in response.text
+    assert "rankedSources.slice(0, COLLAPSED_SOURCES)" in response.text
+    assert 'class="source-freshness ${refresh.tone}"' in response.text
     assert "function normalizedDetailMetadata" in response.text
     assert "return copy.score_exact" in response.text
     assert 'aria-label="${sourceName}"' in response.text
@@ -409,6 +419,8 @@ def test_root_renders_service_landing(monkeypatch):
     assert 'aria-pressed="true"' in response.text
     assert "goToView(button.dataset.view)" in response.text
     assert "function goToView(view, options = {})" in response.text
+    assert 'const trustLibrary = $("#trust-library");' in response.text
+    assert "trustLibrary.open = true;" in response.text
     assert "function syncViewFromHash" in response.text
     assert "function scheduleHashViewSync" in response.text
     assert "const shouldScroll = options.scroll !== false;" in response.text
