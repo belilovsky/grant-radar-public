@@ -123,7 +123,9 @@ def test_root_renders_service_landing(monkeypatch):
     assert "Локальные субсидии и меры РК" in response.text
     assert "Убрать тему" in response.text
     assert "Приоритет: Казахстан и ЦА" in response.text
-    assert '<strong id="metric-strong">0</strong>' in response.text
+    assert (
+        '<strong id="metric-strong" data-catalog-count="0">0</strong>' in response.text
+    )
     assert '<strong id="metric-sources">0</strong>' in response.text
     assert '<strong id="health-status">Каталог доступен</strong>' in response.text
     assert '<strong id="health-items">0</strong>' in response.text
@@ -222,6 +224,8 @@ def test_root_renders_service_landing(monkeypatch):
     assert 'id="save-view"' in response.text
     assert 'id="workspace-filter"' in response.text
     assert 'id="filter-disclosure"' in response.text
+    assert 'id="metric-strong" data-catalog-count=' in response.text
+    assert "state.coverage.relevant_open_items" in response.text
     assert 'id="share-view"' in response.text
     assert 'id="saved-view-notice"' in response.text
     assert 'aria-label="Статус подборок"' in response.text
@@ -2632,7 +2636,9 @@ def test_root_renders_initial_metrics_from_cached_items(monkeypatch):
 
     assert response.status_code == 200
     assert '<strong id="metric-total">2</strong>' in response.text
-    assert '<strong id="metric-strong">1</strong>' in response.text
+    assert (
+        '<strong id="metric-strong" data-catalog-count="1">1</strong>' in response.text
+    )
     assert '<strong id="metric-sources">2</strong>' in response.text
     assert '<strong id="health-items">2</strong>' in response.text
     assert '<strong id="health-sources">2</strong>' in response.text

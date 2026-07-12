@@ -4975,7 +4975,7 @@ def render_dashboard(
         </div>
         <div class="metric strong avds-stat-kpi-card" data-avds-component="metric-card">
           <span>{escape(str(copy["metric_relevant"]))}</span>
-          <strong id="metric-strong">{relevant_items}</strong>
+          <strong id="metric-strong" data-catalog-count="{relevant_items}">{relevant_items}</strong>
         </div>
         <div class="metric sources avds-stat-kpi-card" data-avds-component="metric-card">
           <span>{escape(str(copy["metric_sources"]))}</span>
@@ -8268,7 +8268,11 @@ def render_dashboard(
     }}
 
     function renderMetrics() {{
-      const highPriority = visibleItems().length;
+      const baselineRelevant = Number($("#metric-strong").dataset.catalogCount || 0);
+      const highPriority = state.coverage
+        && Number.isFinite(state.coverage.relevant_open_items)
+        ? state.coverage.relevant_open_items
+        : baselineRelevant;
       const sourceCount = new Set(state.items.map((item) => item.source)).size;
       $("#metric-total").textContent = formatNumber.format(
         state.health ? state.health.items : state.items.length
