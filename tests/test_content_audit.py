@@ -106,6 +106,48 @@ def test_content_audit_accepts_clean_rolling_items():
     assert result.rootish_source_urls == []
 
 
+def test_content_audit_allows_closed_seasonal_source_without_items():
+    result = analyze_content(
+        coverage={
+            "enabled_sources": 2,
+            "relevant_open_items": 1,
+            "sources": [
+                {
+                    "slug": "active_source",
+                    "enabled": True,
+                    "items": 1,
+                    "last_discovered_at": "2026-07-13T00:00:00+00:00",
+                },
+                {
+                    "slug": "canada_cfli_ca",
+                    "enabled": True,
+                    "items": 0,
+                    "last_discovered_at": None,
+                },
+            ],
+        },
+        opportunities=[
+            {
+                "title": "Central Asia innovation support",
+                "summary": (
+                    "Current support opportunity with a verified official source, "
+                    "clear regional scope and an explicit rolling deadline policy."
+                ),
+                "tags": ["rolling", "central_asia"],
+                "source_url": "https://example.org/opportunities/current-call",
+            }
+        ],
+        forbidden_terms=[],
+        min_sources=2,
+        min_opportunities=1,
+        stale_after_days=7,
+        now=datetime(2026, 7, 13, tzinfo=UTC),
+    )
+
+    assert result.status == "ok"
+    assert result.zero_item_sources == []
+
+
 def test_content_audit_flags_tags_without_public_localization():
     result = analyze_content(
         coverage={

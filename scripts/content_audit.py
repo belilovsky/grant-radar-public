@@ -27,6 +27,9 @@ DEFAULT_FORBIDDEN_TERMS = (
     "Technical Difficulties",
 )
 
+# Seasonal monitors are healthy while their official annual window is closed.
+EXPECTED_EMPTY_SOURCE_SLUGS = frozenset({"canada_cfli_ca"})
+
 
 @dataclass(frozen=True)
 class ContentAuditResult:
@@ -161,7 +164,11 @@ def analyze_content(
     for row in source_rows:
         slug = str(row.get("slug") or "")
         items = int(row.get("items") or 0)
-        if row.get("enabled") and items == 0:
+        if (
+            row.get("enabled")
+            and items == 0
+            and slug not in EXPECTED_EMPTY_SOURCE_SLUGS
+        ):
             zero_item_sources.append(slug)
         last_seen = _parse_datetime(row.get("last_discovered_at"))
         if row.get("enabled") and items > 0 and last_seen and last_seen < stale_cutoff:
