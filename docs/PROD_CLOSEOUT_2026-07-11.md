@@ -8,7 +8,7 @@ and public launch hardening work.
 ## Deployed revision
 
 - Branch: `codex/qazfund-audit-pass-2026-07-07`
-- Current deployed commit: `4db57b91668b6779304cb6d239e69ab982023894`
+- Current deployed commit: `c0f61f5a5f5535d30f2f894fe91221dd7e3f82a3`
 - Host path: `/opt/grant-radar`
 - Public URL: `https://qaz.fund/`
 
@@ -85,7 +85,7 @@ Docker builds do not require private GitHub credentials.
 ## Local gates
 
 ```text
-PYTHONPATH=. .venv/bin/pytest -q  -> 373 passed
+PYTHONPATH=. .venv/bin/pytest -q  -> 374 passed
 make lint                         -> black/isort/flake8/mypy passed
 ```
 
@@ -118,6 +118,12 @@ make lint                         -> black/isort/flake8/mypy passed
 - `/coverage` exposes explicit source freshness counts. The token-protected
   `/operator/health` route combines stale-source evidence with recent run
   failures for operators.
+- A production-only admin token is configured on the VPS; its value is not
+  stored in Git or printed in the closeout. The protected route reports 22
+  fresh sources and one source requiring attention at closeout time.
+- PostgreSQL no longer receives the full `.env.prod` payload. Its production
+  container gets only the explicitly declared `POSTGRES_*` variables, so an
+  unrelated API secret change no longer forces a database recreation.
 - Opportunity JSON exposes `raw.decision_readiness`, listing which deadline,
   amount, eligibility and application fields are known or missing.
 - The hero's catalog metric remains the global relevant-open count when the
