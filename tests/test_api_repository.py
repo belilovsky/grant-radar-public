@@ -101,6 +101,12 @@ def test_root_renders_service_landing(monkeypatch):
     assert "qazfund-opportunities.csv" in response.text
     assert "qazfund-deadlines.ics" in response.text
     assert "grantRadarSavedOpportunities.v1" in response.text
+    assert 'id="workspace-backup"' in response.text
+    assert 'id="export-workspace"' in response.text
+    assert 'id="import-workspace"' in response.text
+    assert "function exportWorkspace" in response.text
+    assert "function sanitizeWorkspacePayload" in response.text
+    assert "function importWorkspace" in response.text
     assert "Уточнить данные" in response.text
     assert "Подборки для старта" in response.text
     assert "Актуально сейчас" in response.text
@@ -226,6 +232,12 @@ def test_root_renders_service_landing(monkeypatch):
     assert 'id="filter-disclosure"' in response.text
     assert 'id="metric-strong" data-catalog-count=' in response.text
     assert "state.coverage.relevant_open_items" in response.text
+    assert 'id="detail-readiness"' in response.text
+    assert "function renderDetailReadiness" in response.text
+    assert 'role="dialog"' in response.text
+    assert 'aria-modal="true"' in response.text
+    assert ".detail-drawer[hidden]" in response.text
+    assert '$("#main-content").inert = true;' in response.text
     assert 'id="share-view"' in response.text
     assert 'id="saved-view-notice"' in response.text
     assert 'aria-label="Статус подборок"' in response.text
@@ -517,7 +529,7 @@ def test_docs_supports_english_return_link(monkeypatch):
     _reset_api_state(monkeypatch)
     client = TestClient(api_main.app)
 
-    response = client.get("/docs?lang=en")
+    response = client.get("/docs?lang=en", headers={"Accept-Encoding": "identity"})
 
     assert response.status_code == 200
     assert 'href="/?lang=en"' in response.text
@@ -2642,6 +2654,32 @@ def test_root_renders_initial_metrics_from_cached_items(monkeypatch):
     assert '<strong id="metric-sources">2</strong>' in response.text
     assert '<strong id="health-items">2</strong>' in response.text
     assert '<strong id="health-sources">2</strong>' in response.text
+
+
+def test_large_opportunity_response_supports_gzip(monkeypatch):
+    _reset_api_state(monkeypatch)
+    api_main._cache.append(
+        Opportunity(
+            source="astana_hub",
+            source_url="https://example.org/large-gzip-response",
+            type=OpportunityType.ACCELERATOR,
+            title="Large catalog response",
+            summary="Central Asia opportunity details. " * 120,
+            tags=["kazakhstan", "startup"],
+            score=0.9,
+        )
+    )
+    client = TestClient(api_main.app)
+
+    response = client.get(
+        "/opportunities",
+        params={"include_irrelevant": True},
+        headers={"Accept-Encoding": "gzip"},
+    )
+
+    assert response.status_code == 200
+    assert response.headers["content-encoding"] == "gzip"
+    assert response.json()[0]["title"] == "Large catalog response"
 
 
 def test_opportunity_page_prefers_public_base_url(monkeypatch):

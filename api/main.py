@@ -19,6 +19,7 @@ from uuid import NAMESPACE_URL, UUID, uuid5
 from fastapi import Depends, FastAPI, Header, HTTPException, Query, Request, status
 from fastapi.openapi.docs import get_swagger_ui_html
 from fastapi.responses import HTMLResponse, JSONResponse, RedirectResponse, Response
+from starlette.middleware.gzip import GZipMiddleware
 from starlette.middleware.trustedhost import TrustedHostMiddleware
 
 from api.dashboard import (
@@ -191,6 +192,7 @@ def _allowed_hosts() -> list[str]:
 
 
 app.add_middleware(TrustedHostMiddleware, allowed_hosts=_allowed_hosts())
+app.add_middleware(GZipMiddleware, minimum_size=1_000, compresslevel=5)
 
 
 def _admin_token() -> str:

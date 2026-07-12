@@ -470,6 +470,13 @@ COPY = {
         "workflow_submitted": "Отправлено",
         "workflow_result": "Получен результат",
         "workflow_updated": "Этап карточки обновлён.",
+        "workspace_backup": "Резервная копия",
+        "workspace_backup_aria": "Экспорт и импорт локальной работы",
+        "workspace_export": "Скачать",
+        "workspace_import": "Загрузить",
+        "workspace_exported": "Резервная копия скачана.",
+        "workspace_imported": "Рабочее пространство восстановлено.",
+        "workspace_import_error": "Не удалось прочитать резервную копию.",
         "report_issue": "Уточнить данные",
         "open_source_short": "Источник",
         "footer_owner": "QAZ.FUND – публичный навигатор возможностей. Сделано",
@@ -580,6 +587,17 @@ COPY = {
         "detail_open_source": "Открыть источник",
         "detail_open_application": "Открыть подачу",
         "detail_meta_title": "Параметры",
+        "detail_readiness_title": "Полнота данных",
+        "detail_readiness_complete": "Подтверждены все {total} ключевых поля.",
+        "detail_readiness_partial": (
+            "Подтверждено {known} из {total}. На источнике проверьте: {missing}."
+        ),
+        "detail_missing_labels": {
+            "deadline": "срок",
+            "amount": "сумму",
+            "eligibility": "требования к заявителю",
+            "application": "путь подачи",
+        },
         "detail_sections_title": "Текст и выдержки",
         "detail_status_ok": "Описание и ключевые поля собраны с официального источника",
         "detail_status_structured_only": "Показываем краткое описание и структурированные поля",
@@ -1346,6 +1364,13 @@ COPY = {
         "workflow_submitted": "Submitted",
         "workflow_result": "Result received",
         "workflow_updated": "Card stage updated.",
+        "workspace_backup": "Backup",
+        "workspace_backup_aria": "Export and import local work",
+        "workspace_export": "Download",
+        "workspace_import": "Upload",
+        "workspace_exported": "Workspace backup downloaded.",
+        "workspace_imported": "Workspace restored.",
+        "workspace_import_error": "The workspace backup could not be read.",
         "report_issue": "Correct the data",
         "open_source_short": "Source",
         "footer_owner": "QAZ.FUND is a public opportunity navigator. Built by",
@@ -1456,6 +1481,17 @@ COPY = {
         "detail_open_source": "Open source",
         "detail_open_application": "Open application",
         "detail_meta_title": "Key fields",
+        "detail_readiness_title": "Data completeness",
+        "detail_readiness_complete": "All {total} key fields are confirmed.",
+        "detail_readiness_partial": (
+            "{known} of {total} fields confirmed. Verify at source: {missing}."
+        ),
+        "detail_missing_labels": {
+            "deadline": "deadline",
+            "amount": "amount",
+            "eligibility": "applicant eligibility",
+            "application": "application route",
+        },
         "detail_sections_title": "Text and excerpts",
         "detail_status_ok": "Description and key fields were collected from the official source",
         "detail_status_structured_only": "Showing the stored summary and structured fields",
@@ -3278,6 +3314,35 @@ def render_dashboard(
       background: var(--brand-soft);
       color: var(--brand);
     }}
+    .workspace-backup {{
+      position: relative;
+    }}
+    .workspace-backup > summary {{
+      list-style: none;
+      cursor: pointer;
+    }}
+    .workspace-backup > summary::-webkit-details-marker {{ display: none; }}
+    .workspace-backup-menu {{
+      position: absolute;
+      z-index: 24;
+      top: calc(100% + 6px);
+      right: 0;
+      display: grid;
+      min-width: 168px;
+      padding: 6px;
+      border: 1px solid var(--line-subtle);
+      border-radius: var(--av-radius-md);
+      background: var(--panel);
+      box-shadow: 0 12px 30px rgb(15 23 42 / 0.14);
+    }}
+    .workspace-backup-menu .text-button {{
+      justify-content: flex-start;
+      width: 100%;
+      min-height: 34px;
+      padding: 0 9px;
+      border-radius: var(--av-radius-sm);
+      cursor: pointer;
+    }}
     .saved-view-row {{
       display: flex;
       flex-wrap: wrap;
@@ -4117,6 +4182,10 @@ def render_dashboard(
       opacity: 1;
       pointer-events: auto;
     }}
+    .detail-backdrop[hidden],
+    .detail-drawer[hidden] {{
+      display: none;
+    }}
     .detail-drawer {{
       position: fixed;
       inset: 0 0 0 auto;
@@ -4188,6 +4257,24 @@ def render_dashboard(
     .detail-fit p {{
       margin: 0;
       color: var(--ink);
+      font-size: var(--av-text-sm);
+      line-height: var(--av-leading-snug);
+    }}
+    .detail-readiness {{
+      display: grid;
+      gap: 5px;
+      padding: 10px 12px;
+      border-radius: var(--av-radius-md);
+      background: var(--panel-wash);
+    }}
+    .detail-readiness h3 {{
+      margin: 0;
+      font-size: var(--av-text-sm);
+      line-height: var(--av-leading-snug);
+    }}
+    .detail-readiness p {{
+      margin: 0;
+      color: var(--muted);
       font-size: var(--av-text-sm);
       line-height: var(--av-leading-snug);
     }}
@@ -4849,6 +4936,7 @@ def render_dashboard(
 <body>
   <main
     class="shell"
+    id="main-content"
     data-api-base="{base}"
     data-lang="{escape(active_lang, quote=True)}"
     data-avds-component="admin-shell"
@@ -5219,6 +5307,30 @@ def render_dashboard(
               aria-pressed="false"
               data-avds-component="button"
             >{escape(str(copy["workspace_filter"]))}</button>
+            <details class="workspace-backup" id="workspace-backup">
+              <summary
+                class="text-button"
+                aria-label="{escape(str(copy["workspace_backup_aria"]), quote=True)}"
+              >{escape(str(copy["workspace_backup"]))}</summary>
+              <div
+                class="workspace-backup-menu"
+                role="group"
+                aria-label="{escape(str(copy["workspace_backup_aria"]), quote=True)}"
+              >
+                <button class="text-button" type="button" id="export-workspace">
+                  {escape(str(copy["workspace_export"]))}
+                </button>
+                <label class="text-button" for="import-workspace">
+                  {escape(str(copy["workspace_import"]))}
+                </label>
+                <input
+                  class="visually-hidden"
+                  type="file"
+                  id="import-workspace"
+                  accept="application/json,.json"
+                >
+              </div>
+            </details>
             <button
               class="text-button"
               type="button"
@@ -5487,6 +5599,8 @@ def render_dashboard(
   <aside
     class="detail-drawer"
     id="detail-drawer"
+    role="dialog"
+    aria-modal="true"
     hidden
     aria-hidden="true"
     aria-label="{escape(str(copy["detail_panel_label"]), quote=True)}"
@@ -5510,6 +5624,10 @@ def render_dashboard(
         <h3>{escape(str(copy["detail_fit_title"]))}</h3>
         <p id="detail-fit-summary">{escape(str(copy["detail_fit_review"]))}</p>
         <div class="fit-pills" id="detail-fit-pills"></div>
+      </div>
+      <div class="detail-readiness hidden" id="detail-readiness">
+        <h3>{escape(str(copy["detail_readiness_title"]))}</h3>
+        <p id="detail-readiness-text"></p>
       </div>
       <div class="detail-meta hidden" id="detail-meta">
         <h3>{escape(str(copy["detail_meta_title"]))}</h3>
@@ -5583,7 +5701,8 @@ def render_dashboard(
       lastCheckedAt: "",
       detailId: "",
       detailFallbackUrl: "",
-      detailItem: null
+      detailItem: null,
+      detailTrigger: null
     }};
     const DEFAULT_SORT = "priority";
     const DEFAULT_SCORE = 0.3;
@@ -6224,29 +6343,64 @@ def render_dashboard(
       root.classList.remove("hidden");
     }}
 
+    function renderDetailReadiness(item) {{
+      const root = $("#detail-readiness");
+      const target = $("#detail-readiness-text");
+      const readiness = item && item.raw && item.raw.decision_readiness;
+      if (!readiness || !Number.isFinite(Number(readiness.total_fields))) {{
+        root.classList.add("hidden");
+        target.textContent = "";
+        return;
+      }}
+      const known = Number(readiness.known_fields || 0);
+      const total = Number(readiness.total_fields || 0);
+      const missingLabels = copy.detail_missing_labels || {{}};
+      const missing = (Array.isArray(readiness.missing_fields)
+        ? readiness.missing_fields
+        : []
+      ).map((key) => missingLabels[key] || humanizeLabel(key));
+      target.textContent = missing.length
+        ? text("detail_readiness_partial", {{
+            known: formatNumber.format(known),
+            total: formatNumber.format(total),
+            missing: missing.join(", ")
+          }})
+        : text("detail_readiness_complete", {{ total: formatNumber.format(total) }});
+      root.classList.remove("hidden");
+    }}
+
     function openDetailShell() {{
+      state.detailTrigger = document.activeElement instanceof HTMLElement
+        ? document.activeElement
+        : null;
       document.body.classList.add("modal-open");
+      $("#main-content").inert = true;
       $("#detail-backdrop").hidden = false;
       $("#detail-drawer").hidden = false;
       window.requestAnimationFrame(() => {{
         $("#detail-backdrop").classList.add("open");
         $("#detail-drawer").classList.add("open");
+        $("#detail-close").focus();
       }});
       $("#detail-drawer").setAttribute("aria-hidden", "false");
     }}
 
     function closeDetailShell() {{
+      const trigger = state.detailTrigger;
       state.detailId = "";
       state.detailFallbackUrl = "";
       state.detailItem = null;
+      state.detailTrigger = null;
       $("#detail-backdrop").classList.remove("open");
       $("#detail-drawer").classList.remove("open");
       $("#detail-drawer").setAttribute("aria-hidden", "true");
       document.body.classList.remove("modal-open");
+      $("#main-content").inert = false;
       window.setTimeout(() => {{
         if ($("#detail-drawer").classList.contains("open")) return;
         $("#detail-backdrop").hidden = true;
         $("#detail-drawer").hidden = true;
+        if (trigger && document.contains(trigger)) trigger.focus();
       }}, 180);
     }}
 
@@ -6256,6 +6410,7 @@ def render_dashboard(
       $("#detail-empty").textContent = copy.detail_loading;
       $("#detail-empty").classList.remove("hidden");
       renderDetailFit(state.detailItem);
+      renderDetailReadiness(state.detailItem);
       $("#detail-meta").classList.add("hidden");
       $("#detail-sections").classList.add("hidden");
       $("#detail-meta-grid").innerHTML = "";
@@ -6271,6 +6426,7 @@ def render_dashboard(
       $("#detail-empty").textContent = copy.detail_error;
       $("#detail-empty").classList.remove("hidden");
       renderDetailFit(state.detailItem);
+      renderDetailReadiness(state.detailItem);
       $("#detail-meta").classList.add("hidden");
       $("#detail-sections").classList.add("hidden");
       $("#detail-open-source").setAttribute("href", state.detailFallbackUrl || "#");
@@ -6297,6 +6453,7 @@ def render_dashboard(
       );
       $("#detail-open-page").setAttribute("href", opportunityPageHref(detail.id));
       renderDetailFit(detail);
+      renderDetailReadiness(state.detailItem || detail);
 
       const applicationButton = $("#detail-open-application");
       if (detail.application_url) {{
@@ -7637,6 +7794,74 @@ def render_dashboard(
       window.URL.revokeObjectURL(url);
     }}
 
+    function exportWorkspace() {{
+      const payload = {{
+        version: 1,
+        exported_at: new Date().toISOString(),
+        saved_views: readSavedViews(),
+        saved_opportunities: readSavedOpportunities(),
+        workflow: readOpportunityWorkflow()
+      }};
+      const stamp = new Date().toISOString().slice(0, 10);
+      downloadText(
+        `qazfund-workspace-${{stamp}}.json`,
+        JSON.stringify(payload, null, 2),
+        "application/json;charset=utf-8"
+      );
+      setSavedViewNotice(copy.workspace_exported);
+      $("#workspace-backup").open = false;
+    }}
+
+    function sanitizeWorkspacePayload(payload) {{
+      if (!payload || typeof payload !== "object" || Number(payload.version) !== 1) {{
+        throw new Error("unsupported workspace backup");
+      }}
+      const savedOpportunities = Array.isArray(payload.saved_opportunities)
+        ? Array.from(new Set(payload.saved_opportunities.map(String))).slice(0, 200)
+        : [];
+      const savedIds = new Set(savedOpportunities);
+      const savedViews = (Array.isArray(payload.saved_views) ? payload.saved_views : [])
+        .filter((view) => view && typeof view === "object" && view.query)
+        .map((view) => ({{
+          name: String(view.name || copy.saved_view_default_name).slice(0, 120),
+          query: String(view.query).slice(0, 2_000)
+        }}))
+        .slice(0, 8);
+      const workflow = {{}};
+      const sourceWorkflow = payload.workflow && typeof payload.workflow === "object"
+        ? payload.workflow
+        : {{}};
+      Object.entries(sourceWorkflow).forEach(([id, status]) => {{
+        if (
+          savedIds.has(String(id))
+          && WORKFLOW_STATUSES.some((entry) => entry.id === status)
+        ) {{
+          workflow[String(id)] = status;
+        }}
+      }});
+      return {{ savedViews, savedOpportunities, workflow }};
+    }}
+
+    async function importWorkspace(file) {{
+      if (!file) return;
+      try {{
+        const payload = sanitizeWorkspacePayload(JSON.parse(await file.text()));
+        writeSavedViews(payload.savedViews);
+        writeSavedOpportunities(payload.savedOpportunities);
+        writeOpportunityWorkflow(payload.workflow);
+        state.savedOnly = false;
+        renderSavedViews();
+        renderWorkspaceFilter();
+        renderOpportunities();
+        setSavedViewNotice(copy.workspace_imported);
+      }} catch {{
+        setSavedViewNotice(copy.workspace_import_error);
+      }} finally {{
+        $("#import-workspace").value = "";
+        $("#workspace-backup").open = false;
+      }}
+    }}
+
     function exportVisibleCsv() {{
       const rows = visibleItems();
       const header = [
@@ -8952,8 +9177,25 @@ def render_dashboard(
     $("#detail-close").addEventListener("click", closeDetailShell);
     $("#detail-backdrop").addEventListener("click", closeDetailShell);
     window.addEventListener("keydown", (event) => {{
-      if (event.key === "Escape" && !$("#detail-drawer").hidden) {{
+      const drawer = $("#detail-drawer");
+      if (drawer.hidden) return;
+      if (event.key === "Escape") {{
         closeDetailShell();
+        return;
+      }}
+      if (event.key !== "Tab") return;
+      const focusable = Array.from(drawer.querySelectorAll(
+        'a[href]:not(.hidden), button:not([disabled]), select:not([disabled]), [tabindex="0"]'
+      )).filter((element) => !element.hidden);
+      if (!focusable.length) return;
+      const first = focusable[0];
+      const last = focusable[focusable.length - 1];
+      if (event.shiftKey && document.activeElement === first) {{
+        event.preventDefault();
+        last.focus();
+      }} else if (!event.shiftKey && document.activeElement === last) {{
+        event.preventDefault();
+        first.focus();
       }}
     }});
 
@@ -9070,6 +9312,10 @@ def render_dashboard(
       state.savedOnly = !state.savedOnly;
       resetVisibleLimit();
       renderOpportunities();
+    }});
+    $("#export-workspace").addEventListener("click", exportWorkspace);
+    $("#import-workspace").addEventListener("change", (event) => {{
+      importWorkspace(event.target.files && event.target.files[0]);
     }});
     $("#save-view").addEventListener("click", saveCurrentView);
     $("#share-view").addEventListener("click", () => {{
