@@ -3031,7 +3031,9 @@ def render_dashboard(
       padding: 14px;
       border: 1px solid var(--line);
       border-radius: var(--av-radius-lg);
-      background: var(--panel);
+      background:
+        linear-gradient(180deg, rgb(255 255 255 / 0.68), rgb(255 255 255 / 0.34)),
+        var(--panel-wash);
       box-shadow: var(--shadow-xs);
     }}
     .filters {{
@@ -3055,10 +3057,14 @@ def render_dashboard(
     .advanced-filters > summary {{
       display: inline-flex;
       width: fit-content;
-      min-height: 30px;
+      min-height: 32px;
       align-items: center;
       gap: 6px;
-      color: var(--muted);
+      padding: 0 10px;
+      border: 1px solid var(--line-subtle);
+      border-radius: var(--av-radius-full);
+      background: var(--panel);
+      color: var(--ink);
       cursor: pointer;
       font-size: var(--av-text-sm);
       font-weight: 650;
@@ -3072,7 +3078,9 @@ def render_dashboard(
     }}
     .advanced-filters[open] > summary {{
       margin-bottom: 8px;
-      color: var(--ink);
+      border-color: color-mix(in oklab, var(--brand), white 46%);
+      background: var(--brand-soft);
+      color: var(--brand);
     }}
     .advanced-filters[open] > summary::after {{
       transform: rotate(180deg);
@@ -3134,12 +3142,23 @@ def render_dashboard(
       gap: 6px;
     }}
     .filter-label {{
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
       color: var(--muted);
       font-family: var(--font-sans);
       font-size: var(--av-text-xs);
       font-weight: 600;
       letter-spacing: 0;
       text-transform: none;
+    }}
+    .filter-label::before {{
+      content: "";
+      width: 6px;
+      height: 6px;
+      border-radius: var(--av-radius-full);
+      background: color-mix(in oklab, var(--brand), transparent 40%);
+      box-shadow: 0 0 0 3px color-mix(in oklab, var(--brand-soft), transparent 36%);
     }}
     .filters-meta {{
       display: flex;
@@ -3159,10 +3178,10 @@ def render_dashboard(
       display: grid;
       gap: 6px;
       margin-bottom: var(--av-spacing-2);
-      padding: 0;
-      border: 0;
-      border-radius: 0;
-      background: transparent;
+      padding: 10px 12px;
+      border: 1px solid var(--line-subtle);
+      border-radius: var(--av-radius-md);
+      background: var(--panel);
     }}
     .saved-views-head {{
       display: flex;
@@ -3259,7 +3278,7 @@ def render_dashboard(
       min-height: var(--control-height);
       border: 1px solid var(--line);
       border-radius: var(--av-radius-md);
-      background: var(--panel);
+      background: rgb(255 255 255 / 0.82);
       padding: 0 var(--av-spacing-3);
       color: var(--ink);
       outline: 0;
@@ -3368,7 +3387,7 @@ def render_dashboard(
     .opportunity-rail {{
       display: grid;
       align-content: start;
-      gap: 10px;
+      gap: 12px;
       min-width: 0;
       padding: 12px;
       border: 1px solid var(--line-subtle);
@@ -3500,16 +3519,56 @@ def render_dashboard(
     }}
     .meta-rows {{
       display: grid;
-      gap: 6px;
+      gap: 8px;
     }}
     .meta-row {{
       display: grid;
-      grid-template-columns: minmax(68px, 0.42fr) minmax(0, 1fr);
-      gap: 8px;
-      align-items: baseline;
+      grid-template-columns: 18px minmax(68px, 0.42fr) minmax(0, 1fr);
+      gap: 7px;
+      align-items: center;
       min-width: 0;
       font-size: var(--av-text-xs);
       line-height: var(--av-leading-snug);
+    }}
+    .meta-row::before {{
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 18px;
+      height: 18px;
+      border-radius: var(--av-radius-sm);
+      background: var(--panel);
+      color: var(--muted);
+      font-size: 11px;
+      font-weight: 700;
+      box-shadow: inset 0 0 0 1px var(--line-subtle);
+    }}
+    .meta-row:nth-child(1)::before {{
+      content: "";
+      background:
+        linear-gradient(currentColor 0 0) 50% 40% / 9px 2px no-repeat,
+        linear-gradient(currentColor 0 0) 50% 62% / 9px 2px no-repeat,
+        var(--panel);
+    }}
+    .meta-row:nth-child(2)::before {{
+      content: "";
+      border-radius: var(--av-radius-full);
+      background:
+        radial-gradient(circle at 50% 50%, currentColor 0 2px, transparent 2.5px),
+        var(--panel);
+    }}
+    .meta-row:nth-child(3)::before {{
+      content: "";
+      border-radius: var(--av-radius-full);
+      background:
+        conic-gradient(currentColor 0 25%, transparent 0 100%),
+        var(--panel);
+    }}
+    .meta-row:nth-child(4)::before {{
+      content: "";
+      background:
+        linear-gradient(135deg, transparent 42%, currentColor 43% 57%, transparent 58%),
+        var(--panel);
     }}
     .meta-row span {{
       color: var(--muted);
@@ -3563,6 +3622,7 @@ def render_dashboard(
       display: inline-flex;
       align-items: center;
       justify-content: center;
+      gap: 5px;
       min-width: 72px;
       min-height: 24px;
       padding: 0 8px;
@@ -3572,6 +3632,14 @@ def render_dashboard(
       font-family: var(--font-mono);
       font-size: var(--av-text-xs);
       font-weight: 700;
+    }}
+    .score::before {{
+      content: "";
+      width: 7px;
+      height: 7px;
+      border-radius: var(--av-radius-full);
+      background: currentColor;
+      opacity: 0.76;
     }}
     .score.good {{ background: var(--good-soft); color: var(--good); }}
     .score.warn {{ background: var(--warn-soft); color: var(--warn); }}
@@ -3583,6 +3651,7 @@ def render_dashboard(
       display: inline-flex;
       align-items: center;
       justify-content: center;
+      gap: 5px;
       min-height: 24px;
       width: max-content;
       max-width: 100%;
@@ -3593,6 +3662,14 @@ def render_dashboard(
       color: var(--brand);
       font-size: var(--av-text-xs);
       font-weight: 700;
+    }}
+    .badge::before {{
+      content: "";
+      width: 6px;
+      height: 6px;
+      border-radius: var(--av-radius-full);
+      background: currentColor;
+      opacity: 0.7;
     }}
     .badge.watchlist {{ background: var(--good-soft); color: var(--good); }}
     .badge.regional {{
@@ -3761,6 +3838,9 @@ def render_dashboard(
       flex-wrap: wrap;
     }}
     .detail-link {{
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
       min-height: var(--control-height-sm);
       border: 1px solid transparent;
       border-radius: var(--av-radius-md);
@@ -3770,6 +3850,20 @@ def render_dashboard(
       font-weight: 600;
       padding: 0;
       cursor: pointer;
+    }}
+    .detail-link::before {{
+      content: "i";
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 16px;
+      height: 16px;
+      border-radius: var(--av-radius-full);
+      background: var(--brand-soft);
+      color: var(--brand);
+      font-size: 11px;
+      font-weight: 800;
+      line-height: 1;
     }}
     .detail-link:hover,
     .detail-link:focus-visible {{
@@ -3862,10 +3956,23 @@ def render_dashboard(
       text-underline-offset: 2px;
     }}
     .more-link {{
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
       color: var(--brand);
       font-size: var(--av-text-sm);
       font-weight: 600;
       text-decoration: none;
+    }}
+    .more-link::before {{
+      content: "";
+      width: 12px;
+      height: 12px;
+      border-radius: 3px;
+      box-shadow:
+        inset 0 0 0 1.5px currentColor,
+        4px -4px 0 -3px currentColor;
+      opacity: 0.72;
     }}
     .more-link:hover,
     .more-link:focus-visible {{
