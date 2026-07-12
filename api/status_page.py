@@ -1,0 +1,215 @@
+"""Public source-status page for QAZ.FUND."""
+
+from __future__ import annotations
+
+from datetime import datetime
+from html import escape
+from typing import Any
+from urllib.parse import urlparse
+
+COPY = {
+    "ru": {
+        "title": "Статус источников – QAZ.FUND",
+        "eyebrow": "Прозрачность данных",
+        "heading": "Статус источников",
+        "intro": (
+            "Показываем покрытие и свежесть подключённых источников. "
+            "Карточки всегда нужно сверять с официальной страницей программы."
+        ),
+        "back": "Вернуться в каталог",
+        "sources": "Подключено",
+        "fresh": "Свежие",
+        "stale": "Требуют внимания",
+        "unknown": "Без отметки",
+        "source": "Источник",
+        "coverage": "Записей / актуально",
+        "updated": "Последняя запись",
+        "state": "Состояние",
+        "fresh_label": "Свежий",
+        "stale_label": "Требует внимания",
+        "unknown_label": "Нет данных",
+        "empty": "Подключённые источники пока не найдены.",
+        "disclaimer": (
+            "Статус отражает время последней обнаруженной записи, а не юридическую "
+            "актуальность каждой программы."
+        ),
+    },
+    "en": {
+        "title": "Source status – QAZ.FUND",
+        "eyebrow": "Data transparency",
+        "heading": "Source status",
+        "intro": (
+            "Coverage and freshness of connected sources. Always verify each "
+            "opportunity against the official program page."
+        ),
+        "back": "Back to catalog",
+        "sources": "Connected",
+        "fresh": "Fresh",
+        "stale": "Needs attention",
+        "unknown": "Unknown",
+        "source": "Source",
+        "coverage": "Records / current",
+        "updated": "Latest record",
+        "state": "State",
+        "fresh_label": "Fresh",
+        "stale_label": "Needs attention",
+        "unknown_label": "No data",
+        "empty": "No connected sources are available yet.",
+        "disclaimer": (
+            "Freshness reflects the latest discovered record, not the legal "
+            "validity of every program."
+        ),
+    },
+}
+
+
+def _date_label(value: Any, lang: str) -> str:
+    if not value:
+        return "–"
+    try:
+        parsed = datetime.fromisoformat(str(value).replace("Z", "+00:00"))
+    except ValueError:
+        return str(value)
+    if lang == "en":
+        return parsed.strftime("%b %d, %Y %H:%M UTC")
+    return parsed.strftime("%d.%m.%Y %H:%M UTC")
+
+
+def _host(value: Any) -> str:
+    return (urlparse(str(value or "")).hostname or "").removeprefix("www.")
+
+
+def render_status_page(
+    *,
+    coverage: dict[str, Any],
+    lang: str,
+    root_path: str = "",
+    site_origin: str = "",
+) -> str:
+    active_lang = lang if lang in COPY else "ru"
+    copy = COPY[active_lang]
+    base = root_path.rstrip("/")
+    catalog_href = f"{base}/?lang={active_lang}" if base else f"/?lang={active_lang}"
+    status_path = (
+        f"{base}/status?lang={active_lang}" if base else f"/status?lang={active_lang}"
+    )
+    canonical = (
+        f"{site_origin.rstrip('/')}{status_path}" if site_origin else status_path
+    )
+    sources = [row for row in coverage.get("sources", []) if row.get("enabled")]
+    sources.sort(
+        key=lambda row: (
+            {"stale": 0, "unknown": 1, "fresh": 2}.get(
+                str(row.get("freshness_status")), 1
+            ),
+            -int(row.get("relevant_open_items") or 0),
+            str(row.get("name") or row.get("slug") or ""),
+        )
+    )
+    state_labels = {
+        "fresh": copy["fresh_label"],
+        "stale": copy["stale_label"],
+        "unknown": copy["unknown_label"],
+    }
+    rows = "".join(f"""
+        <tr>
+          <td>
+            <strong>{escape(str(row.get("name") or row.get("slug") or ""))}</strong>
+            <span>{escape(_host(row.get("base_url")))}</span>
+          </td>
+          <td>{int(row.get("items") or 0)} / {int(row.get("relevant_open_items") or 0)}</td>
+          <td>{escape(_date_label(row.get("last_discovered_at"), active_lang))}</td>
+          <td><span class="state state--{escape(str(row.get("freshness_status") or "unknown"))}">
+            {escape(str(state_labels.get(str(row.get("freshness_status")), copy["unknown_label"])))}
+          </span></td>
+        </tr>
+        """ for row in sources)
+    if not rows:
+        rows = (
+            f'<tr><td colspan="4" class="empty">{escape(str(copy["empty"]))}</td></tr>'
+        )
+
+    return f"""<!doctype html>
+<html lang="{active_lang}" data-avds="grant-radar" data-av-theme="light">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{escape(str(copy["title"]))}</title>
+  <meta name="description" content="{escape(str(copy["intro"]), quote=True)}">
+  <link rel="canonical" href="{escape(canonical, quote=True)}">
+  <style>
+    :root {{ color-scheme: light; --ink:#12213d; --muted:#60708a; --line:#dfe6ef;
+      --panel:#fff; --wash:#f6f8fb; --brand:#2055c7; --good:#087f5b; --warn:#a15c00; }}
+    * {{ box-sizing:border-box; }}
+    body {{ margin:0; background:var(--wash); color:var(--ink);
+      font-family:Arial,"Helvetica Neue",sans-serif; }}
+    a {{ color:var(--brand); }}
+    main {{ width:min(1120px,calc(100% - 32px)); margin:0 auto; padding:32px 0 56px; }}
+    .back {{ display:inline-flex; margin-bottom:24px; font-weight:700; text-decoration:none; }}
+    .hero {{ padding:24px; border:1px solid var(--line); border-radius:8px;
+      background:var(--panel); }}
+    .eyebrow {{ color:var(--brand); font-size:12px; font-weight:700; }}
+    h1 {{ margin:8px 0; font-size:clamp(28px,4vw,44px); letter-spacing:0; }}
+    .hero p {{ max-width:760px; margin:0; color:var(--muted); line-height:1.6; }}
+    .metrics {{ display:grid; grid-template-columns:repeat(4,minmax(0,1fr));
+      gap:10px; margin:16px 0; }}
+    .metric {{ padding:14px 16px; border:1px solid var(--line); border-radius:8px;
+      background:var(--panel); }}
+    .metric span {{ display:block; color:var(--muted); font-size:12px; }}
+    .metric strong {{ display:block; margin-top:5px; font-size:24px; }}
+    .table-wrap {{ overflow-x:auto; border:1px solid var(--line); border-radius:8px;
+      background:var(--panel); }}
+    table {{ width:100%; border-collapse:collapse; }}
+    th,td {{ padding:13px 16px; border-bottom:1px solid var(--line); text-align:left;
+      vertical-align:middle; }}
+    th {{ color:var(--muted); font-size:12px; }}
+    td {{ font-size:14px; }}
+    td strong,td span {{ display:block; }}
+    td > span:not(.state) {{ margin-top:3px; color:var(--muted); font-size:12px; }}
+    tr:last-child td {{ border-bottom:0; }}
+    .state {{ display:inline-flex; width:max-content; padding:4px 8px;
+      border-radius:999px; background:#eef2f7; font-size:12px; font-weight:700; }}
+    .state--fresh {{ background:#e9f8f1; color:var(--good); }}
+    .state--stale {{ background:#fff2df; color:var(--warn); }}
+    .note {{ margin:14px 2px 0; color:var(--muted); font-size:13px; line-height:1.5; }}
+    .empty {{ color:var(--muted); text-align:center; }}
+    @media (max-width:720px) {{
+      main {{ width:min(100% - 20px,1120px); padding-top:16px; }}
+      .hero {{ padding:18px; }}
+      .metrics {{ grid-template-columns:repeat(2,minmax(0,1fr)); }}
+      th:nth-child(3),td:nth-child(3) {{ display:none; }}
+      th,td {{ padding:11px 10px; }}
+    }}
+  </style>
+</head>
+<body>
+  <main>
+    <a class="back" href="{escape(catalog_href, quote=True)}">← {escape(str(copy["back"]))}</a>
+    <section class="hero">
+      <span class="eyebrow">{escape(str(copy["eyebrow"]))}</span>
+      <h1>{escape(str(copy["heading"]))}</h1>
+      <p>{escape(str(copy["intro"]))}</p>
+    </section>
+    <section class="metrics" aria-label="Summary">
+      <div class="metric"><span>{escape(str(copy["sources"]))}</span>
+        <strong>{int(coverage.get("enabled_sources") or 0)}</strong></div>
+      <div class="metric"><span>{escape(str(copy["fresh"]))}</span>
+        <strong>{int(coverage.get("fresh_sources") or 0)}</strong></div>
+      <div class="metric"><span>{escape(str(copy["stale"]))}</span>
+        <strong>{int(coverage.get("stale_sources") or 0)}</strong></div>
+      <div class="metric"><span>{escape(str(copy["unknown"]))}</span>
+        <strong>{int(coverage.get("unknown_freshness_sources") or 0)}</strong></div>
+    </section>
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>{escape(str(copy["source"]))}</th>
+          <th>{escape(str(copy["coverage"]))}</th>
+          <th>{escape(str(copy["updated"]))}</th>
+          <th>{escape(str(copy["state"]))}</th></tr></thead>
+        <tbody>{rows}</tbody>
+      </table>
+    </div>
+    <p class="note">{escape(str(copy["disclaimer"]))}</p>
+  </main>
+</body>
+</html>"""

@@ -165,6 +165,7 @@ def test_root_renders_service_landing(monkeypatch):
     assert ">API</a>" in response.text
     assert "Статус данных" in response.text
     assert 'href="/docs?lang=ru"' in response.text
+    assert 'href="/status?lang=ru"' in response.text
     assert 'href="/?lang=ru"' in response.text
     assert 'href="/?lang=en"' in response.text
     assert 'name="yandex-verification" content="01df12ab51cd6b70"' in response.text
@@ -844,13 +845,14 @@ def test_marketing_endpoints_are_exposed(monkeypatch):
     assert "API docs: http://testserver/docs" in llms.text
     assert "OpenAPI schema: http://testserver/openapi.json" in llms.text
     assert "Site discovery JSON: http://testserver/site-discovery.json" in llms.text
+    assert "Source status page: http://testserver/status" in llms.text
     assert "Coverage JSON: http://testserver/coverage" in llms.text
     assert "Opportunities JSON: http://testserver/opportunities" in llms.text
     assert "Opportunity detail JSON: /opportunities/{id}?lang=ru|en" in llms.text
     assert "Digest JSON: http://testserver/digest" in llms.text
     assert "Opportunity page: /opportunity/{id}?lang=ru|en" in llms.text
     assert "Funder page: /funder/{slug}?lang=ru|en" in llms.text
-    assert "Opportunities filters: limit, min_score, deadline_after" in llms.text
+    assert "Opportunities filters: q, source, lifecycle, region, tag" in llms.text
     llms_head = client.head("/llms.txt")
     assert llms_head.status_code == 200
     assert llms_head.headers["content-type"].startswith("text/plain")
@@ -866,10 +868,12 @@ def test_marketing_endpoints_are_exposed(monkeypatch):
         "llms": "http://testserver/llms.txt",
         "api_docs": "http://testserver/docs",
         "openapi": "http://testserver/openapi.json",
+        "source_status": "http://testserver/status",
         "languages": ["ru", "en"],
         "routes": {
             "home": "/?lang={lang}",
             "coverage": "/coverage",
+            "source_status": "/status?lang={lang}",
             "opportunities": "/opportunities?lang={lang}",
             "opportunity_api": "/opportunities/{id}?lang={lang}",
             "opportunity": "/opportunity/{id}?lang={lang}",
@@ -887,6 +891,13 @@ def test_marketing_endpoints_are_exposed(monkeypatch):
                 "&deadline_after={yyyy-mm-dd}"
             ),
             "opportunities_by_tag": "/opportunities?lang=ru&limit=50&tag={tag}",
+            "opportunities_search": "/opportunities?lang=ru&limit=50&q={query}",
+            "opportunities_by_source": (
+                "/opportunities?lang=ru&limit=50&source={source}"
+            ),
+            "opportunities_by_lifecycle": (
+                "/opportunities?lang=ru&limit=50&lifecycle={lifecycle}"
+            ),
             "digest_ai": "/digest?lang=ru&limit=5&tag=ai",
         },
         "capabilities": [
@@ -894,6 +905,7 @@ def test_marketing_endpoints_are_exposed(monkeypatch):
             "public funder pages",
             "machine-readable opportunity api",
             "machine-readable source coverage",
+            "public source freshness status",
             "official source links",
             "read-only public catalog",
         ],
@@ -1291,6 +1303,54 @@ def test_coverage_reports_source_counts(monkeypatch):
     assert head_response.headers["content-type"].startswith("application/json")
 
 
+def test_public_status_page_renders_coverage_without_operator_details(monkeypatch):
+    _reset_api_state(monkeypatch)
+    monkeypatch.setenv("PUBLIC_BASE_URL", "https://qaz.fund")
+    api_main._cache.append(
+        Opportunity(
+            source="world_bank_kazakhstan",
+            source_url="https://example.org/status-item",
+            type=OpportunityType.GRANT,
+            title="Kazakhstan digital grant",
+            summary="Digital program for Kazakhstan.",
+            tags=["kazakhstan", "digital"],
+            deadline=date.today() + timedelta(days=30),
+            score=0.8,
+        )
+    )
+    client = TestClient(api_main.app)
+
+    response = client.get("/status?lang=ru")
+
+    assert response.status_code == 200
+    assert response.headers["cache-control"].startswith("public, max-age=60")
+    assert "Статус источников" in response.text
+    assert "World Bank Kazakhstan" in response.text
+    assert 'rel="canonical" href="https://qaz.fund/status?lang=ru"' in response.text
+    assert "error" not in response.text.lower()
+    assert client.head("/status?lang=en").status_code == 200
+
+
+def test_operator_page_is_noindex_and_never_embeds_admin_token(monkeypatch):
+    _reset_api_state(monkeypatch)
+    monkeypatch.setenv("GRANT_RADAR_ADMIN_TOKEN", "server-only-secret")
+    client = TestClient(api_main.app)
+
+    response = client.get("/operator?lang=ru")
+
+    assert response.status_code == 200
+    assert response.headers["cache-control"] == "no-store"
+    assert response.headers["x-robots-tag"] == "noindex, nofollow"
+    assert 'name="robots" content="noindex,nofollow"' in response.text
+    assert "Контроль источников" in response.text
+    assert "X-Grant-Radar-Admin-Token" in response.text
+    assert "sessionStorage" in response.text
+    assert "server-only-secret" not in response.text
+    head_response = client.head("/operator?lang=en")
+    assert head_response.status_code == 200
+    assert head_response.headers["cache-control"] == "no-store"
+
+
 def test_source_freshness_marks_old_and_missing_timestamps():
     old = datetime.now(timezone.utc) - timedelta(hours=96)
 
@@ -1478,6 +1538,67 @@ def test_api_lists_persisted_opportunities_when_database_is_configured(
         item["title"]
         != "AI3 Action Institute - Artificial Intelligence for American Indians"
         for item in paged_data
+    )
+
+
+def test_opportunities_support_server_search_filters_and_count_headers(monkeypatch):
+    _reset_api_state(monkeypatch)
+    api_main._cache.extend(
+        [
+            Opportunity(
+                source="astana_hub",
+                source_url="https://example.org/kazakhstan-ai-accelerator",
+                type=OpportunityType.ACCELERATOR,
+                title="Kazakhstan AI accelerator",
+                summary="Acceleration program for local startups.",
+                tags=["kazakhstan", "ai", "startup"],
+                deadline=date.today() + timedelta(days=40),
+                score=0.9,
+            ),
+            Opportunity(
+                source="internews",
+                source_url="https://example.org/central-asia-media",
+                type=OpportunityType.GRANT,
+                title="Central Asia media grant",
+                summary="Media support for Central Asia organizations.",
+                tags=["central_asia", "media"],
+                deadline=date.today() + timedelta(days=5),
+                score=0.8,
+            ),
+            Opportunity(
+                source="grants_gov",
+                source_url="https://example.org/global-award",
+                type=OpportunityType.GRANT,
+                title="Completed global award",
+                summary="Historical award notice.",
+                tags=["global"],
+                score=0.4,
+                raw={"status": "Awarded"},
+            ),
+        ]
+    )
+    client = TestClient(api_main.app)
+    params = {
+        "q": "AI accelerator",
+        "source": "astana_hub",
+        "lifecycle": "open",
+        "region": "kazakhstan",
+        "include_irrelevant": True,
+    }
+
+    response = client.get("/opportunities", params=params)
+
+    assert response.status_code == 200
+    assert [item["title"] for item in response.json()] == ["Kazakhstan AI accelerator"]
+    assert response.headers["x-total-count"] == "1"
+    assert response.headers["x-result-count"] == "1"
+
+    head_response = client.head("/opportunities", params=params)
+    assert head_response.status_code == 200
+    assert head_response.headers["x-total-count"] == "1"
+    assert head_response.headers["x-result-count"] == "1"
+    assert (
+        client.get("/opportunities", params={"lifecycle": "invalid"}).status_code == 422
     )
 
 

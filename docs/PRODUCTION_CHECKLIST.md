@@ -17,6 +17,9 @@ historic backup filenames, and maintainer-only evidence.
 - `GET` and `HEAD /health` are public.
 - `GET` and `HEAD /ready` are public and must not expose secrets.
 - `GET /coverage`, `GET /opportunities`, and `GET /digest` are public.
+- `GET` and `HEAD /status` render public source freshness without run errors.
+- `GET` and `HEAD /operator` render a noindex/no-store token entry shell.
+- `GET /operator/health` must require `GRANT_RADAR_ADMIN_TOKEN`.
 - `GET` and `HEAD /opportunity/{id}` render public opportunity pages.
 - `GET` and `HEAD /funder/{slug}` render public funder pages.
 - `GET` and `HEAD /opportunities/{id}` return public opportunity detail availability.
@@ -76,6 +79,8 @@ curl -fsSI https://example.org/ready
 curl -fsSI https://example.org/favicon.ico
 curl -fsS https://example.org/llms.txt
 curl -fsS https://example.org/site-discovery.json
+curl -fsSI 'https://example.org/status?lang=ru'
+curl -fsSI 'https://example.org/operator?lang=ru'
 curl -fsSI https://example.org/docs
 curl -fsS 'https://example.org/opportunities?limit=3&min_score=0.5'
 curl -fsSI 'https://example.org/opportunities/<uuid>?lang=ru'

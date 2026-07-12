@@ -131,6 +131,10 @@ def run_smoke(
         llms = _get_text(client, base_url, "/llms.txt")
         docs = _get_text(client, base_url, "/docs")
         docs_head = _head(client, base_url, "/docs")
+        status_page = _get_text(client, base_url, "/status?lang=ru")
+        status_head = _head(client, base_url, "/status?lang=ru")
+        operator_page = _get_text(client, base_url, "/operator?lang=ru")
+        operator_head = _head(client, base_url, "/operator?lang=ru")
         discovery = _get_json(client, base_url, "/site-discovery.json")
 
     _require(health.get("status") == "ok", "health status is not ok")
@@ -179,12 +183,25 @@ def run_smoke(
         "docs_brand": "QAZ.FUND API" in docs,
         "docs_openapi": "/openapi.json" in docs,
         "docs_head": docs_head.headers.get("content-type", "").startswith("text/html"),
+        "status_page": "Статус источников" in status_page,
+        "status_head": status_head.headers.get("content-type", "").startswith(
+            "text/html"
+        ),
+        "operator_shell": (
+            "Контроль источников" in operator_page
+            and "X-Grant-Radar-Admin-Token" in operator_page
+            and 'content="noindex,nofollow"' in operator_page
+        ),
+        "operator_noindex": "noindex"
+        in operator_head.headers.get("x-robots-tag", "").lower(),
         "site_discovery_openapi": str(discovery.get("openapi") or "")
         == _url(base_url, "/openapi.json"),
         "site_discovery_llms": str(discovery.get("llms") or "")
         == _url(base_url, "/llms.txt"),
         "site_discovery_docs": str(discovery.get("api_docs") or "")
         == _url(base_url, "/docs"),
+        "site_discovery_status": str(discovery.get("source_status") or "")
+        == _url(base_url, "/status"),
         "site_discovery_coverage": str(
             (discovery.get("data_endpoints") or {}).get("coverage") or ""
         )

@@ -106,6 +106,7 @@ def _transport(
                     f"- API docs: {public_root}/docs\n"
                     f"- OpenAPI schema: {public_root}/openapi.json\n"
                     f"- Site discovery JSON: {public_root}/site-discovery.json\n"
+                    f"- Source status page: {public_root}/status\n"
                     f"- Coverage JSON: {public_root}/coverage\n"
                     f"- Opportunities JSON: {public_root}/opportunities\n"
                     f"- Digest JSON: {public_root}/digest\n"
@@ -120,6 +121,25 @@ def _transport(
                 ),
                 headers={"content-type": "text/html; charset=utf-8"},
             )
+        if endpoint_path == "/status" or path == "/status":
+            return httpx.Response(
+                200,
+                text="<html><body><h1>Статус источников</h1></body></html>",
+                headers={"content-type": "text/html; charset=utf-8"},
+            )
+        if endpoint_path == "/operator" or path == "/operator":
+            return httpx.Response(
+                200,
+                text=(
+                    '<html><head><meta name="robots" content="noindex,nofollow">'
+                    "</head><body><h1>Контроль источников</h1>"
+                    "X-Grant-Radar-Admin-Token</body></html>"
+                ),
+                headers={
+                    "content-type": "text/html; charset=utf-8",
+                    "x-robots-tag": "noindex, nofollow",
+                },
+            )
         if endpoint_path == "/site-discovery.json" or path == "/site-discovery.json":
             return httpx.Response(
                 200,
@@ -131,6 +151,7 @@ def _transport(
                     "llms": f"{public_root}/llms.txt",
                     "api_docs": f"{public_root}/docs",
                     "openapi": f"{public_root}/openapi.json",
+                    "source_status": f"{public_root}/status",
                     "languages": ["ru", "en"],
                     "routes": {
                         "home": "/?lang={lang}",

@@ -30,6 +30,8 @@ why the item is shown.
 | Progressive disclosure | Done | Discovery and trust sections stay available without extending the default workbench path. |
 | Source trust signals | Done | Sources are ranked by useful open coverage and display their latest successful refresh date. |
 | Source freshness control | Done | Public coverage reports fresh/stale/unknown source counts; protected `/operator/health` adds recent failed-run evidence. |
+| Source status surface | Done | `/status` presents public source freshness; `/operator` reads the protected health contract without placing its token in HTML or the URL. |
+| Server-side catalog queries | Done | `/opportunities` supports text, source, lifecycle and region filters and returns total/result count headers. |
 | Match explanation | Done | The advanced precision control now explains what the heuristic does and what must be verified. |
 | Search tolerance | Done | Search supports common RU/EN synonyms and one-character typos without a model dependency. |
 | Lightweight applicant workflow | Done | Saved cards receive a local work stage and can be isolated through `Моя работа`; state stays in the current browser. |
@@ -86,7 +88,7 @@ conditions on `source_url`.
 
 QAZ.FUND can be considered public-demo-ready when:
 
-- `/`, `/docs`, `/llms.txt`, `/site-discovery.json`, representative
+- `/`, `/status`, `/operator`, `/docs`, `/llms.txt`, `/site-discovery.json`, representative
   `/opportunity/*` and `/funder/*` routes return 200/expected redirects;
 - the home page loads catalog data without permanent loading or empty states;
 - mobile width has no horizontal overflow;

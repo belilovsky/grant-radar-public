@@ -1946,6 +1946,12 @@ def render_dashboard(
         else f"/docs?lang={active_lang}"
     )
     docs_href = escape(docs_path, quote=True)
+    status_path = (
+        f"{base_raw}/status?lang={active_lang}"
+        if base_raw
+        else f"/status?lang={active_lang}"
+    )
+    status_href = escape(status_path, quote=True)
     ru_href = escape(_root_href(base_raw, "ru"), quote=True)
     en_href = escape(_root_href(base_raw, "en"), quote=True)
     canonical_path = _root_href(base_raw, active_lang)
@@ -5104,7 +5110,7 @@ def render_dashboard(
               <a class="utility-link" href="#methodology-panel"
                 >{escape(str(copy["methodology_link"]))}</a
               >
-              <a class="utility-link" href="#health-panel">{escape(str(copy["status_link"]))}</a>
+              <a class="utility-link" href="{status_href}">{escape(str(copy["status_link"]))}</a>
             </div>
             <div class="lang-switch" role="group" aria-label="{language_switch_label}">
               <a

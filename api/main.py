@@ -28,9 +28,11 @@ from api.dashboard import (
     render_dashboard,
 )
 from api.funder_page import render_funder_page
+from api.operator_page import render_operator_page
 from api.opportunity_detail import build_opportunity_detail
 from api.opportunity_page import render_opportunity_page
 from api.public_meta import OG_IMAGE_SVG
+from api.status_page import render_status_page
 from core.geofit import (
     is_excluded_for_kazakhstan_focus,
     is_relevant_for_kazakhstan_focus,
@@ -655,6 +657,30 @@ def _funder_region_tokens(item: Opportunity) -> set[str]:
     if not regions:
         regions.add("global")
     return regions
+
+
+def _opportunity_search_blob(item: Opportunity) -> str:
+    """Build a deterministic text index from public opportunity fields."""
+    raw = item.raw if isinstance(item.raw, dict) else {}
+    values: list[Any] = [
+        item.title,
+        item.summary,
+        item.funder,
+        item.source,
+        *item.tags,
+        *item.eligibility,
+    ]
+    for key in ("page_title", "listing_title", "reference", "agency", "country"):
+        values.append(raw.get(key))
+    return _normalized_token(" ".join(str(value or "") for value in values))
+
+
+def _matches_opportunity_query(item: Opportunity, query: str) -> bool:
+    tokens = [token for token in _normalized_token(query).split(" ") if token]
+    if not tokens:
+        return True
+    blob = _opportunity_search_blob(item)
+    return all(token in blob for token in tokens)
 
 
 def _funder_tag_tokens(item: Opportunity) -> list[str]:
@@ -1293,6 +1319,7 @@ async def llms_txt(request: Request) -> Response:
     docs = _public_url(request, root_path, "/docs")
     openapi_url = _public_url(request, root_path, "/openapi.json")
     discovery = _public_url(request, root_path, "/site-discovery.json")
+    status_page = _public_url(request, root_path, "/status")
     coverage = _public_url(request, root_path, "/coverage")
     opportunities = _public_url(request, root_path, "/opportunities")
     digest = _public_url(request, root_path, "/digest")
@@ -1312,6 +1339,7 @@ async def llms_txt(request: Request) -> Response:
                 f"- API docs: {docs}",
                 f"- OpenAPI schema: {openapi_url}",
                 f"- Site discovery JSON: {discovery}",
+                f"- Source status page: {status_page}",
                 "",
                 "## Public data endpoints",
                 f"- Coverage JSON: {coverage}",
@@ -1325,8 +1353,8 @@ async def llms_txt(request: Request) -> Response:
                 "",
                 "## Query hints",
                 (
-                    "- Opportunities filters: limit, min_score, deadline_after, "
-                    "tag, format, region, audience, topic, source, lang"
+                    "- Opportunities filters: q, source, lifecycle, region, tag, "
+                    "min_score, deadline_before, deadline_after, limit, offset, lang"
                 ),
                 "- Digest filters: limit, min_score, tag, lang",
                 "",
@@ -1363,6 +1391,7 @@ async def site_discovery(request: Request) -> Response:
     docs = _public_url(request, root_path, "/docs")
     openapi_url = _public_url(request, root_path, "/openapi.json")
     llms = _public_url(request, root_path, "/llms.txt")
+    status_page = _public_url(request, root_path, "/status")
     coverage = _public_url(request, root_path, "/coverage")
     opportunities = _public_url(request, root_path, "/opportunities")
     digest = _public_url(request, root_path, "/digest")
@@ -1374,10 +1403,12 @@ async def site_discovery(request: Request) -> Response:
         "llms": llms,
         "api_docs": docs,
         "openapi": openapi_url,
+        "source_status": status_page,
         "languages": ["ru", "en"],
         "routes": {
             "home": "/?lang={lang}",
             "coverage": "/coverage",
+            "source_status": "/status?lang={lang}",
             "opportunities": "/opportunities?lang={lang}",
             "opportunity_api": "/opportunities/{id}?lang={lang}",
             "opportunity": "/opportunity/{id}?lang={lang}",
@@ -1395,6 +1426,13 @@ async def site_discovery(request: Request) -> Response:
                 "&deadline_after={yyyy-mm-dd}"
             ),
             "opportunities_by_tag": "/opportunities?lang=ru&limit=50&tag={tag}",
+            "opportunities_search": "/opportunities?lang=ru&limit=50&q={query}",
+            "opportunities_by_source": (
+                "/opportunities?lang=ru&limit=50&source={source}"
+            ),
+            "opportunities_by_lifecycle": (
+                "/opportunities?lang=ru&limit=50&lifecycle={lifecycle}"
+            ),
             "digest_ai": "/digest?lang=ru&limit=5&tag=ai",
         },
         "capabilities": [
@@ -1402,6 +1440,7 @@ async def site_discovery(request: Request) -> Response:
             "public funder pages",
             "machine-readable opportunity api",
             "machine-readable source coverage",
+            "public source freshness status",
             "official source links",
             "read-only public catalog",
         ],
@@ -1490,6 +1529,35 @@ async def coverage() -> dict[str, Any]:
 async def coverage_head() -> Response:
     await coverage()
     return Response(status_code=200, media_type="application/json")
+
+
+@app.api_route("/status", methods=["GET", "HEAD"], include_in_schema=False)
+async def public_status_page(request: Request) -> HTMLResponse:
+    """Render a public, cacheable source-freshness view."""
+    root_path = _root_path(request)
+    active_lang = _public_lang(str(request.query_params.get("lang") or "").strip())
+    response = HTMLResponse(
+        render_status_page(
+            coverage=_cached_coverage_payload(),
+            lang=active_lang,
+            root_path=root_path,
+            site_origin=_site_origin(request, root_path),
+        )
+    )
+    response.headers["Cache-Control"] = "public, max-age=60, stale-while-revalidate=300"
+    return response
+
+
+@app.api_route("/operator", methods=["GET", "HEAD"], include_in_schema=False)
+async def operator_page(request: Request) -> HTMLResponse:
+    """Render the noindex operator shell without embedding credentials."""
+    active_lang = _public_lang(str(request.query_params.get("lang") or "").strip())
+    response = HTMLResponse(
+        render_operator_page(lang=active_lang, root_path=_root_path(request))
+    )
+    response.headers["Cache-Control"] = "no-store"
+    response.headers["X-Robots-Tag"] = "noindex, nofollow"
+    return response
 
 
 @app.get("/operator/health", include_in_schema=False)
@@ -1607,7 +1675,18 @@ async def refresh(_: None = Depends(require_admin_token)) -> dict:
 
 @app.get("/opportunities", response_model=list[Opportunity])
 async def list_opportunities(
+    response: Response,
     tag: str | None = Query(None),
+    q: str | None = Query(None, max_length=200),
+    source: str | None = Query(None, max_length=120),
+    lifecycle: str | None = Query(
+        None,
+        pattern="^(open|closing_soon|rolling|forecast|closed|awarded)$",
+    ),
+    region: str | None = Query(
+        None,
+        pattern="^(kazakhstan|central_asia|global)$",
+    ),
     min_score: float = Query(0.0, ge=0.0, le=1.0),
     deadline_before: date | None = None,
     deadline_after: date | None = None,
@@ -1623,16 +1702,32 @@ async def list_opportunities(
     )
     if tag:
         items = [o for o in items if tag.lower() in (t.lower() for t in o.tags)]
+    if q:
+        items = [item for item in items if _matches_opportunity_query(item, q)]
+    if source:
+        normalized_source = _normalized_token(source)
+        items = [
+            item
+            for item in items
+            if _normalized_token(item.source) == normalized_source
+        ]
+    if lifecycle:
+        items = [item for item in items if public_lifecycle(item) == lifecycle]
+    if region:
+        items = [item for item in items if region in _funder_region_tokens(item)]
     items = [o for o in items if o.score >= min_score]
     if deadline_before:
         items = [o for o in items if o.deadline and o.deadline <= deadline_before]
     if deadline_after:
         items = [o for o in items if o.deadline is None or o.deadline >= deadline_after]
+    total_count = len(items)
     items.sort(key=lambda item: (item.score, item.discovered_at), reverse=True)
     results = [
         _with_decision_readiness(localize_opportunity(item, content_lang))
         for item in items[offset : offset + limit]
     ]
+    response.headers["X-Total-Count"] = str(total_count)
+    response.headers["X-Result-Count"] = str(len(results))
     if compact:
         return [_compact_dashboard_item(item) for item in results]
     return results
@@ -1641,6 +1736,16 @@ async def list_opportunities(
 @app.head("/opportunities", include_in_schema=False)
 async def list_opportunities_head(
     tag: str | None = Query(None),
+    q: str | None = Query(None, max_length=200),
+    source: str | None = Query(None, max_length=120),
+    lifecycle: str | None = Query(
+        None,
+        pattern="^(open|closing_soon|rolling|forecast|closed|awarded)$",
+    ),
+    region: str | None = Query(
+        None,
+        pattern="^(kazakhstan|central_asia|global)$",
+    ),
     min_score: float = Query(0.0, ge=0.0, le=1.0),
     deadline_before: date | None = None,
     deadline_after: date | None = None,
@@ -1650,8 +1755,14 @@ async def list_opportunities_head(
     lang: str | None = Query(None),
     compact: bool = Query(False),
 ) -> Response:
+    metadata_response = Response()
     await list_opportunities(
+        response=metadata_response,
         tag=tag,
+        q=q,
+        source=source,
+        lifecycle=lifecycle,
+        region=region,
         min_score=min_score,
         deadline_before=deadline_before,
         deadline_after=deadline_after,
@@ -1661,7 +1772,14 @@ async def list_opportunities_head(
         lang=lang,
         compact=compact,
     )
-    return Response(status_code=200, media_type="application/json")
+    return Response(
+        status_code=200,
+        media_type="application/json",
+        headers={
+            "X-Total-Count": metadata_response.headers.get("X-Total-Count", "0"),
+            "X-Result-Count": metadata_response.headers.get("X-Result-Count", "0"),
+        },
+    )
 
 
 @app.get("/opportunities/{opportunity_id}", response_model=OpportunityDetail)
