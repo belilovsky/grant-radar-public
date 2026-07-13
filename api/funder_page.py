@@ -109,12 +109,7 @@ def _region_summary(funder: dict[str, object], copy: dict[str, object]) -> str:
 
 
 def _tag_summary(funder: dict[str, object], copy: dict[str, object]) -> str:
-    labels = [
-        _label_value(str(tag), copy)
-        for tag in _object_list(funder.get("top_tags"))[:3]
-        if str(tag).strip()
-    ]
-    return ", ".join(labels)
+    return ", ".join(_public_topic_labels(funder, copy)[:3])
 
 
 def _type_summary(funder: dict[str, object], copy: dict[str, object]) -> str:
@@ -124,6 +119,30 @@ def _type_summary(funder: dict[str, object], copy: dict[str, object]) -> str:
         if str(kind).strip()
     ]
     return ", ".join(labels)
+
+
+def _public_topic_labels(
+    funder: dict[str, object], copy: dict[str, object]
+) -> list[str]:
+    """Keep funder themes distinct from already displayed opportunity formats."""
+
+    type_labels = {
+        _label_value(kind, copy).casefold()
+        for kind in _object_list(funder.get("top_types"))
+        if str(kind).strip()
+    }
+    labels: list[str] = []
+    seen: set[str] = set()
+    for tag in _object_list(funder.get("top_tags")):
+        if not str(tag).strip():
+            continue
+        label = _label_value(str(tag), copy)
+        normalized = label.casefold()
+        if not label or normalized in type_labels or normalized in seen:
+            continue
+        seen.add(normalized)
+        labels.append(label)
+    return labels
 
 
 def _overview_sentence(funder: dict[str, object], copy: dict[str, object]) -> str:
@@ -356,8 +375,8 @@ def render_funder_page(
     overview = escape(_overview_sentence(funder, copy))
     og_locale = escape(active_lang.replace("-", "_") + "_KZ", quote=True)
     tag_chips = "".join(
-        f'<span class="topic-chip">{escape(_label_value(str(tag), copy))}</span>'
-        for tag in _object_list(funder.get("top_tags"))[:5]
+        f'<span class="topic-chip">{escape(label)}</span>'
+        for label in _public_topic_labels(funder, copy)[:5]
     )
     source_cards = "".join(f"""
         <a

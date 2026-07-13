@@ -238,14 +238,12 @@ def _procurement_summary(item: Opportunity) -> str:
         suffix = f" Номер закупки: {reference}." if reference else ""
         return f"Закупка ПРООН в {country}{subject}.{suffix}{detail_hint}"
     if item.source == "isdb_project_procurement":
-        suffix = f" Формат: {raw.get('notice_type')}." if raw.get("notice_type") else ""
         return (
             f"Закупка или консультационный конкурс IsDB в {country}"
-            f"{subject}.{suffix}{detail_hint}"
+            f"{subject}.{detail_hint}"
         )
     if item.source == "ebrd_ecepp_procurement":
-        suffix = f" Формат: {raw.get('notice_type')}." if raw.get("notice_type") else ""
-        return f"Открытая закупка ЕБРР ECEPP в {country}{subject}.{suffix}{detail_hint}"
+        return f"Открытая закупка ЕБРР ECEPP в {country}{subject}.{detail_hint}"
     return f"Закупочная возможность в {country}{subject}.{detail_hint}"
 
 

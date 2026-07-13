@@ -128,6 +128,22 @@ def test_russian_opportunity_title_fallback_prioritizes_water_procurement():
     assert "цифровые системы" not in summary
 
 
+def test_russian_procurement_summary_hides_raw_notice_type():
+    item = _opp(
+        source="ebrd_ecepp_procurement",
+        title="Digital systems procurement",
+        summary="Invitation for tenders.",
+        type_=OpportunityType.TENDER,
+        raw={"notice_type": "Invitation For Tenders Single"},
+    )
+
+    summary = russian_summary_fallback(item, item.summary)
+
+    assert "Invitation For Tenders Single" not in summary
+    assert "Формат:" not in summary
+    assert "Проверьте техническое задание" in summary
+
+
 def test_russian_procurement_fallback_uses_structured_country():
     item = _opp(
         source="world_bank_procurement_ca",

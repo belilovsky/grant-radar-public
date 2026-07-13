@@ -2761,6 +2761,20 @@ def test_funder_labels_keep_acronyms_and_normalized_case():
     assert funder_page_module._label_value("dod-amraa", copy) == "DOD-AMRAA"
 
 
+def test_funder_topics_do_not_repeat_opportunity_format():
+    copy = dashboard_copy("ru")
+    funder = {
+        "top_types": [OpportunityType.TENDER],
+        "top_tags": ["tender", "ebrd", "ecepp", "tender"],
+    }
+
+    assert funder_page_module._public_topic_labels(funder, copy) == ["ЕБРР", "ECEPP"]
+    assert funder_page_module._overview_sentence(funder, copy) == (
+        "Обычно поддерживает гранты и программы. Форматы: Тендер. "
+        "Основные темы: ЕБРР, ECEPP."
+    )
+
+
 def test_root_renders_initial_metrics_from_cached_items(monkeypatch):
     _reset_api_state(monkeypatch)
     api_main._cache.extend(
