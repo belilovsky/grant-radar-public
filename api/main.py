@@ -618,14 +618,19 @@ def _find_opportunity(
     opportunity_id: UUID,
     content_lang: str = "en",
 ) -> Opportunity | None:
-    return next(
-        (
-            item
-            for item in _cached_public_items(content_lang=content_lang)
-            if item.id == opportunity_id
-        ),
-        None,
-    )
+    requested_lang = _public_lang(content_lang)
+    for candidate_lang in dict.fromkeys((requested_lang, "en", "ru")):
+        match = next(
+            (
+                item
+                for item in _cached_public_items(content_lang=candidate_lang)
+                if item.id == opportunity_id
+            ),
+            None,
+        )
+        if match is not None:
+            return match
+    return None
 
 
 def _is_active_item(item: Opportunity) -> bool:
@@ -1324,6 +1329,7 @@ async def opportunity_page(
     detail = await build_opportunity_detail(
         localize_opportunity(item, content_lang),
         lang=content_lang,
+        allow_remote_fetch=False,
     )
     return HTMLResponse(
         render_opportunity_page(
@@ -1840,6 +1846,7 @@ async def get_opportunity_detail(
     return await build_opportunity_detail(
         localize_opportunity(item, content_lang),
         lang=content_lang,
+        allow_remote_fetch=False,
     )
 
 

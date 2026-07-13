@@ -119,6 +119,31 @@ async def test_amount_metadata_is_grouped_and_localized():
 
 
 @pytest.mark.asyncio
+async def test_public_detail_can_skip_remote_source_fetch(monkeypatch):
+    item = Opportunity(
+        source="example",
+        source_url="https://slow.example.org/funding",
+        type=OpportunityType.GRANT,
+        title="Structured public opportunity",
+        summary="A complete local summary for the public page.",
+    )
+
+    async def unexpected_fetch(*args, **kwargs):
+        raise AssertionError("public detail must not fetch a remote source")
+
+    monkeypatch.setattr(detail_api, "_fetch_remote_detail", unexpected_fetch)
+
+    detail = await detail_api.build_opportunity_detail(
+        item,
+        lang="ru",
+        allow_remote_fetch=False,
+    )
+
+    assert detail.detail_fetch_status == "structured_only"
+    assert detail.summary == item.summary
+
+
+@pytest.mark.asyncio
 async def test_build_opportunity_detail_uses_persisted_detail_payload():
     item = Opportunity(
         source="eeas_kazakhstan",

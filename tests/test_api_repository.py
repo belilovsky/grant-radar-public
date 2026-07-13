@@ -1976,6 +1976,34 @@ def test_public_items_cache_reuses_loaded_items_until_invalidated(monkeypatch):
     assert calls["count"] == 2
 
 
+def test_find_opportunity_falls_back_across_language_dedupe_models(monkeypatch):
+    _reset_api_state(monkeypatch)
+    english = Opportunity(
+        id=uuid4(),
+        source="sample",
+        source_url="https://example.org/shared",
+        type=OpportunityType.GRANT,
+        title="English record",
+        summary="Shared opportunity for Kazakhstan teams.",
+        tags=["kazakhstan"],
+        raw={"external_id": "SHARED-1"},
+    )
+    russian = english.model_copy(
+        update={
+            "id": uuid4(),
+            "title": "Русская запись",
+        }
+    )
+
+    def fake_public_items(content_lang: str = "en"):
+        return [english] if content_lang == "en" else [russian]
+
+    monkeypatch.setattr(api_main, "_cached_public_items", fake_public_items)
+
+    assert api_main._find_opportunity(english.id, content_lang="ru") == english
+    assert api_main._find_opportunity(russian.id, content_lang="en") == russian
+
+
 def test_public_scope_cache_reuses_expensive_geography_filter(monkeypatch):
     _reset_api_state(monkeypatch)
     calls = {"count": 0}

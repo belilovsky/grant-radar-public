@@ -765,12 +765,20 @@ async def build_opportunity_detail(
     item: Opportunity,
     *,
     lang: str = "en",
+    allow_remote_fetch: bool = True,
 ) -> OpportunityDetail:
     content_lang = normalize_content_lang(lang)
     raw = item.raw if isinstance(item.raw, dict) else {}
     application_url = _safe_url(raw.get("application_url"))
     structured_sections = _structured_sections(item, lang=content_lang)
-    remote = await _fetch_remote_detail(item, lang=content_lang)
+    if allow_remote_fetch:
+        remote = await _fetch_remote_detail(item, lang=content_lang)
+    else:
+        remote = _detail_from_raw(
+            raw,
+            lang=content_lang,
+            source_url=str(item.source_url),
+        ) or {"detail_fetch_status": "structured_only"}
     has_localized_remote = has_localized_content(
         raw,
         content_lang,
