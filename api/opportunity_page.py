@@ -33,6 +33,7 @@ PUBLIC_METADATA_KEYS = frozenset(
         "closing_date",
     }
 )
+HERO_METADATA_KEYS = frozenset({"source", "funder", "deadline"})
 SOURCE_COLLAPSE_PARAGRAPH_THRESHOLD = 4
 SOURCE_COLLAPSE_CHAR_THRESHOLD = 1600
 
@@ -637,11 +638,27 @@ def render_opportunity_page(
     metadata_labels = (
         raw_metadata_labels if isinstance(raw_metadata_labels, dict) else {}
     )
+    secondary_metadata = [
+        entry for entry in detail.metadata if entry.key not in HERO_METADATA_KEYS
+    ]
     metadata_markup = _metadata_markup(
-        detail.metadata,
+        secondary_metadata,
         metadata_labels,
         copy,
         lang=active_lang,
+    )
+    content_grid_class = (
+        "content-grid" if metadata_markup else "content-grid content-grid--single"
+    )
+    sidebar_markup = (
+        f"""
+      <aside class="sidebar-card">
+        <h2>{escape(str(copy["detail_meta_title"]))}</h2>
+        <div class="meta-grid">{metadata_markup}</div>
+      </aside>
+        """
+        if metadata_markup
+        else ""
     )
     sections_markup = _sections_markup(
         detail,
@@ -950,6 +967,9 @@ def render_opportunity_page(
       align-items: start;
       padding-top: 18px;
       border-top: 1px solid var(--line);
+    }}
+    .content-grid--single {{
+      grid-template-columns: minmax(0, 1fr);
     }}
     .section-stack {{
       display: grid;
@@ -1383,15 +1403,12 @@ def render_opportunity_page(
 
     <div class="pills">{eligibility_markup}</div>
 
-    <section class="content-grid">
+    <section class="{content_grid_class}">
       <div class="section-stack">
         {sections_markup}
         {empty_markup}
       </div>
-      <aside class="sidebar-card">
-        <h2>{escape(str(copy["detail_meta_title"]))}</h2>
-        <div class="meta-grid">{metadata_markup}</div>
-      </aside>
+      {sidebar_markup}
     </section>
     {prepare_markup}
     {apply_markup}

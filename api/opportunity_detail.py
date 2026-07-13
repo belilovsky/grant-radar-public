@@ -307,20 +307,40 @@ def _append_metadata(
     items.append(OpportunityMetadataField(key=key, value=normalized))
 
 
-def _amount_label(item: Opportunity) -> str:
+def _amount_number(value: Any, lang: str) -> str:
+    try:
+        normalized = f"{value:,.2f}".rstrip("0").rstrip(".")
+    except (TypeError, ValueError):
+        normalized = _clean_text(str(value))
+    if lang == "ru":
+        return normalized.replace(",", "\u202f")
+    return normalized
+
+
+def _amount_label(item: Opportunity, *, lang: str) -> str:
     if item.amount_min is None and item.amount_max is None:
         return ""
     currency = _clean_text(item.currency or "")
+    minimum = (
+        _amount_number(item.amount_min, lang) if item.amount_min is not None else ""
+    )
+    maximum = (
+        _amount_number(item.amount_max, lang) if item.amount_max is not None else ""
+    )
     if item.amount_min is not None and item.amount_max is not None:
         if item.amount_min == item.amount_max:
-            return f"{item.amount_min} {currency}".strip()
-        return f"{item.amount_min} – {item.amount_max} {currency}".strip()
+            return f"{minimum} {currency}".strip()
+        return f"{minimum} – {maximum} {currency}".strip()
     if item.amount_min is not None:
-        return f"from {item.amount_min} {currency}".strip()
-    return f"up to {item.amount_max} {currency}".strip()
+        prefix = "от" if lang == "ru" else "from"
+        return f"{prefix} {minimum} {currency}".strip()
+    prefix = "до" if lang == "ru" else "up to"
+    return f"{prefix} {maximum} {currency}".strip()
 
 
-def _metadata_fields(item: Opportunity) -> list[OpportunityMetadataField]:
+def _metadata_fields(
+    item: Opportunity, *, lang: str = "en"
+) -> list[OpportunityMetadataField]:
     raw = item.raw if isinstance(item.raw, dict) else {}
     fields: list[OpportunityMetadataField] = []
     _append_metadata(fields, "source", item.source)
@@ -330,7 +350,7 @@ def _metadata_fields(item: Opportunity) -> list[OpportunityMetadataField]:
     )
     _append_metadata(fields, "deadline_raw", raw.get("deadline_raw"))
     _append_metadata(fields, "deadline_policy", raw.get("deadline_policy"))
-    _append_metadata(fields, "amount", _amount_label(item))
+    _append_metadata(fields, "amount", _amount_label(item, lang=lang))
     _append_metadata(fields, "amount_raw", raw.get("amount_raw"))
     _append_metadata(fields, "project_id", raw.get("project_id"))
     _append_metadata(fields, "reference", raw.get("reference"))
@@ -784,5 +804,5 @@ async def build_opportunity_detail(
         detail_fetched_at=remote.get("detail_fetched_at"),
         detail_text=detail_text,
         detail_sections=merged_sections,
-        metadata=_metadata_fields(item),
+        metadata=_metadata_fields(item, lang=content_lang),
     )

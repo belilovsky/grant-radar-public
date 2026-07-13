@@ -86,6 +86,9 @@ def render_operator_page(*, lang: str, root_path: str = "") -> str:
     body {{ margin:0; background:var(--wash); color:var(--ink);
       font-family:Arial,"Helvetica Neue",sans-serif; }}
     button,input {{ font:inherit; }}
+    .visually-hidden {{ position:absolute; width:1px; height:1px; padding:0;
+      margin:-1px; overflow:hidden; clip:rect(0,0,0,0); white-space:nowrap;
+      border:0; }}
     main {{ width:min(1180px,calc(100% - 32px)); margin:auto; padding:28px 0 56px; }}
     .top {{ display:flex; justify-content:space-between; gap:16px;
       align-items:flex-start; margin-bottom:18px; }}
@@ -142,6 +145,8 @@ def render_operator_page(*, lang: str, root_path: str = "") -> str:
     </header>
     <section class="auth" id="auth">
       <form id="auth-form">
+        <input class="visually-hidden" type="text" name="username"
+          value="operator" autocomplete="username" tabindex="-1" aria-hidden="true">
         <input id="token" type="password" autocomplete="current-password"
           placeholder="{escape(str(copy["token"]), quote=True)}"
           aria-label="{escape(str(copy["token"]), quote=True)}" required>

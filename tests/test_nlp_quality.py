@@ -49,6 +49,18 @@ def test_clean_source_summary_removes_read_more_noise():
     assert clean_source_summary("Program details. Read more Call") == "Program details."
 
 
+def test_clean_source_summary_removes_source_prefix_and_repeated_agency_name():
+    title = "Закупка в Казахстане: цифровые системы – 45087023"
+    summary = (
+        "Открытая закупка ЕБРР ЕБРР ЕБРР в Казахстане: "
+        f"{title}. Проверьте техническое задание и срок подачи."
+    )
+
+    assert clean_source_summary(summary, title=title) == (
+        "Проверьте техническое задание и срок подачи."
+    )
+
+
 def test_text_quality_flags_repeated_phrase_and_latin_heavy_ru_text():
     flags = text_quality_flags(
         title="Субсидии на животноводство",

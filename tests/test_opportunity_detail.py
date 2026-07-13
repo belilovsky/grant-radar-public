@@ -96,6 +96,29 @@ def test_drop_host_specific_navigation_section_for_agrocredit():
 
 
 @pytest.mark.asyncio
+async def test_amount_metadata_is_grouped_and_localized():
+    item = Opportunity(
+        source="example",
+        source_url="https://example.org/funding",
+        type=OpportunityType.GRANT,
+        title="Startup credits",
+        summary="Support for eligible startups.",
+        amount_max=35000,
+        currency="USD",
+    )
+
+    ru_detail = await detail_api.build_opportunity_detail(item, lang="ru")
+    en_detail = await detail_api.build_opportunity_detail(item, lang="en")
+
+    assert next(
+        field.value for field in ru_detail.metadata if field.key == "amount"
+    ) == ("до 35 000 USD")
+    assert next(
+        field.value for field in en_detail.metadata if field.key == "amount"
+    ) == ("up to 35,000 USD")
+
+
+@pytest.mark.asyncio
 async def test_build_opportunity_detail_uses_persisted_detail_payload():
     item = Opportunity(
         source="eeas_kazakhstan",

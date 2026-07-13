@@ -213,6 +213,10 @@ cython_debug/
 tempCodeRunnerFile.py
 .mcp.json
 
+# Local browser-audit artifacts
+.playwright-cli/
+output/playwright/
+
 # Ruff stuff:
 .ruff_cache/
 

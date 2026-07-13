@@ -4625,13 +4625,16 @@ def render_dashboard(
         flex: 1 1 auto;
       }}
       .topbar-actions {{
-        width: 100%;
-        justify-items: stretch;
+        width: auto;
+        display: flex;
+        align-items: center;
+        justify-content: flex-end;
+        gap: var(--av-spacing-2);
       }}
       .sticky-actions {{
         width: 100%;
         display: flex;
-        align-items: flex-start;
+        align-items: center;
         justify-content: space-between;
         gap: var(--av-spacing-2);
       }}
@@ -4892,16 +4895,23 @@ def render_dashboard(
         min-height: 34px;
       }}
       .utility-links {{
-        display: grid;
-        grid-template-columns: repeat(2, minmax(0, 1fr));
-        gap: 6px var(--av-spacing-3);
-        width: 100%;
-        justify-content: stretch;
+        display: flex;
+        gap: 6px var(--av-spacing-2);
+        width: auto;
+        justify-content: flex-start;
       }}
-      .utility-link:last-child {{ grid-column: 1 / -1; }}
+      .sticky-actions {{
+        display: grid;
+        grid-template-columns: 1fr;
+        align-items: start;
+      }}
+      .topbar-actions {{
+        width: 100%;
+        justify-content: space-between;
+      }}
       .status-pill {{
         min-height: var(--control-height-sm);
-        justify-content: center;
+        justify-content: flex-start;
       }}
       .lang-link {{
         min-width: 38px;

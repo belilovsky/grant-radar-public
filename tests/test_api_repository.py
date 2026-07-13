@@ -483,6 +483,25 @@ def test_root_renders_service_landing(monkeypatch):
     assert 'href="/opportunities?limit=20"' not in response.text
 
 
+def test_browser_404_is_branded_while_api_404_stays_json(monkeypatch):
+    _reset_api_state(monkeypatch)
+    client = TestClient(api_main.app)
+
+    browser_response = client.get(
+        "/missing-public-page?lang=en",
+        headers={"Accept": "text/html"},
+    )
+    api_response = client.get(f"/opportunities/{uuid4()}")
+
+    assert browser_response.status_code == 404
+    assert browser_response.headers["content-type"].startswith("text/html")
+    assert browser_response.headers["x-robots-tag"] == "noindex, follow"
+    assert "This page does not exist" in browser_response.text
+    assert 'href="/?lang=en"' in browser_response.text
+    assert api_response.status_code == 404
+    assert api_response.headers["content-type"].startswith("application/json")
+
+
 def test_root_rejects_untrusted_host_header(monkeypatch):
     _reset_api_state(monkeypatch)
     client = TestClient(api_main.app)
@@ -1345,6 +1364,8 @@ def test_operator_page_is_noindex_and_never_embeds_admin_token(monkeypatch):
     assert "Контроль источников" in response.text
     assert "X-Grant-Radar-Admin-Token" in response.text
     assert "sessionStorage" in response.text
+    assert 'autocomplete="username"' in response.text
+    assert 'autocomplete="current-password"' in response.text
     assert "server-only-secret" not in response.text
     head_response = client.head("/operator?lang=en")
     assert head_response.status_code == 200
@@ -2463,7 +2484,7 @@ def test_opportunity_page_hides_duplicate_source_funder_metadata(monkeypatch):
         type=OpportunityType.TENDER,
         title="UNESCO consultancy notice",
         summary="Consultancy procurement notice.",
-        funder="unesco_iite",
+        funder="UNESCO IITE",
         deadline=date(2026, 7, 13),
         tags=["unesco", "education", "consultancy"],
         score=0.72,
@@ -2474,7 +2495,8 @@ def test_opportunity_page_hides_duplicate_source_funder_metadata(monkeypatch):
     response = client.get(f"/opportunity/{item.id}", params={"lang": "ru"})
 
     assert response.status_code == 200
-    assert response.text.count("<span>Источник</span>") == 1
+    assert "<strong>UNESCO IITE</strong>" in response.text
+    assert '<aside class="sidebar-card">' not in response.text
     assert "<span>Фонд</span>" not in response.text
     assert "<strong>13.07.2026</strong>" in response.text
 

@@ -18,6 +18,11 @@ _REPEATED_BRIDGE_RE = re.compile(
     r"(?:и|или|and|or)\s+(?P=phrase)\b",
     re.IGNORECASE,
 )
+_REPEATED_WORD_RE = re.compile(
+    r"\b(?P<word>[A-Za-zА-Яа-яӘәҒғҚқҢңӨөҰұҮүҺһІіЁё][\w.-]{1,})\b"
+    r"(?:\s+(?P=word)\b)+",
+    re.IGNORECASE,
+)
 
 _SUPPORT_TYPE_PATTERNS = {
     "grant": (
@@ -170,6 +175,23 @@ def _strip_title_prefix(text: str, title: str) -> str:
     return cleaned
 
 
+def _strip_title_after_source_prefix(text: str, title: str) -> str:
+    """Drop a repeated card title after a short source-generated prefix."""
+
+    title_tokens = " ".join(str(title or "").split()).strip(" -:;,.")
+    if not title_tokens:
+        return text
+    title_pattern = r"\s+".join(re.escape(token) for token in title_tokens.split())
+    match = re.search(title_pattern, text[:420], re.IGNORECASE)
+    if match is None:
+        return text
+    prefix = text[: match.start()].rstrip()
+    remainder = text[match.end() :].lstrip(" -:;,.")
+    if not prefix.endswith(":") or len(remainder) < 20:
+        return text
+    return remainder
+
+
 def clean_source_summary(text: str, *, title: str = "") -> str:
     """Remove source UI fragments that should not leak into public summaries."""
 
@@ -179,6 +201,8 @@ def clean_source_summary(text: str, *, title: str = "") -> str:
     cleaned = re.split(r"\b(?:Читать далее|Read more)\b", normalized, maxsplit=1)[
         0
     ].strip(" -:;,")
+    cleaned = _REPEATED_WORD_RE.sub(r"\g<word>", cleaned)
+    cleaned = _strip_title_after_source_prefix(cleaned, title)
     return _strip_title_prefix(cleaned, title).strip(" -:;,")
 
 

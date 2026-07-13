@@ -19,6 +19,7 @@ from uuid import NAMESPACE_URL, UUID, uuid5
 from fastapi import Depends, FastAPI, Header, HTTPException, Query, Request, status
 from fastapi.openapi.docs import get_swagger_ui_html
 from fastapi.responses import HTMLResponse, JSONResponse, RedirectResponse, Response
+from starlette.exceptions import HTTPException as StarletteHTTPException
 from starlette.middleware.gzip import GZipMiddleware
 from starlette.middleware.trustedhost import TrustedHostMiddleware
 
@@ -27,6 +28,7 @@ from api.dashboard import (
     GOOGLE_SITE_VERIFICATION_FILENAME,
     render_dashboard,
 )
+from api.error_page import render_not_found_page
 from api.funder_page import render_funder_page
 from api.operator_page import render_operator_page
 from api.opportunity_detail import build_opportunity_detail
@@ -90,6 +92,50 @@ app = FastAPI(
     docs_url=None,
     redoc_url=None,
 )
+
+_MACHINE_ROUTE_PREFIXES = (
+    "/coverage",
+    "/digest",
+    "/funders",
+    "/health",
+    "/openapi.json",
+    "/opportunities",
+    "/operator/health",
+    "/ready",
+    "/refresh",
+    "/site-discovery.json",
+    "/sources",
+)
+
+
+@app.exception_handler(StarletteHTTPException)
+async def public_http_exception_page(
+    request: Request,
+    exc: StarletteHTTPException,
+) -> Response:
+    """Keep API errors structured while giving browser 404s a useful exit."""
+
+    accepts_html = "text/html" in request.headers.get("accept", "").lower()
+    is_machine_route = request.url.path.startswith(_MACHINE_ROUTE_PREFIXES)
+    if (
+        exc.status_code != status.HTTP_404_NOT_FOUND
+        or not accepts_html
+        or is_machine_route
+    ):
+        return JSONResponse(
+            {"detail": exc.detail},
+            status_code=exc.status_code,
+            headers=exc.headers,
+        )
+    active_lang = _public_lang(str(request.query_params.get("lang") or ""))
+    response = HTMLResponse(
+        render_not_found_page(lang=active_lang, root_path=_root_path(request)),
+        status_code=exc.status_code,
+        headers=exc.headers,
+    )
+    response.headers["X-Robots-Tag"] = "noindex, follow"
+    return response
+
 
 # in-memory cache на M0
 _cache: list[Opportunity] = []
