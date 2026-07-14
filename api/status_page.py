@@ -7,6 +7,8 @@ from html import escape
 from typing import Any
 from urllib.parse import urlparse
 
+from api.avds import AVDS_CSS, AVDS_FONT_HEAD
+
 COPY = {
     "ru": {
         "title": "Статус источников – QAZ.FUND",
@@ -130,75 +132,105 @@ def render_status_page(
         )
 
     return f"""<!doctype html>
-<html lang="{active_lang}" data-avds="grant-radar" data-av-theme="light">
+<html lang="{active_lang}" data-avds="grant-radar" data-av-theme="light" data-theme="light">
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>{escape(str(copy["title"]))}</title>
   <meta name="description" content="{escape(str(copy["intro"]), quote=True)}">
   <link rel="canonical" href="{escape(canonical, quote=True)}">
+  {AVDS_FONT_HEAD}
   <style>
-    :root {{ color-scheme: light; --ink:#12213d; --muted:#60708a; --line:#dfe6ef;
-      --panel:#fff; --wash:#f6f8fb; --brand:#2055c7; --good:#087f5b; --warn:#a15c00; }}
+    {AVDS_CSS}
+    :root {{
+      color-scheme: light;
+      --ink: var(--color-text);
+      --muted: var(--color-text-muted);
+      --line: var(--color-border);
+      --line-subtle: var(--color-border-subtle);
+      --panel: var(--color-surface);
+      --panel-subtle: var(--color-bg-subtle);
+      --wash: var(--color-bg);
+      --brand: var(--color-accent);
+      --brand-soft: var(--color-accent-subtle);
+      --good: var(--color-success);
+      --good-soft: var(--color-success-subtle);
+      --warn: var(--color-warning);
+      --warn-soft: var(--color-warning-subtle);
+    }}
     * {{ box-sizing:border-box; }}
     body {{ margin:0; background:var(--wash); color:var(--ink);
-      font-family:Arial,"Helvetica Neue",sans-serif; }}
+      font-family:var(--av-font-sans); font-size:var(--av-text-base); }}
     a {{ color:var(--brand); }}
-    main {{ width:min(1120px,calc(100% - 32px)); margin:0 auto; padding:32px 0 56px; }}
-    .back {{ display:inline-flex; margin-bottom:24px; font-weight:700; text-decoration:none; }}
-    .hero {{ padding:24px; border:1px solid var(--line); border-radius:8px;
-      background:var(--panel); }}
-    .eyebrow {{ color:var(--brand); font-size:12px; font-weight:700; }}
-    h1 {{ margin:8px 0; font-size:clamp(28px,4vw,44px); letter-spacing:0; }}
-    .hero p {{ max-width:760px; margin:0; color:var(--muted); line-height:1.6; }}
-    .metrics {{ display:grid; grid-template-columns:repeat(4,minmax(0,1fr));
-      gap:10px; margin:16px 0; }}
-    .metric {{ padding:14px 16px; border:1px solid var(--line); border-radius:8px;
-      background:var(--panel); }}
+    main {{ width:min(var(--av-container-dashboard),calc(100% - 32px)); margin:0 auto;
+      padding:16px 0 40px; }}
+    .back {{ display:inline-flex; min-height:32px; align-items:center; margin-bottom:10px;
+      font-weight:700; text-decoration:none; }}
+    .overview {{ display:grid; grid-template-columns:minmax(0,1.25fr) minmax(420px,.75fr);
+      gap:0; margin-bottom:12px; border:1px solid var(--line); border-radius:var(--av-radius-md);
+      background:var(--panel); box-shadow:var(--av-shadow-xs); }}
+    .hero {{ padding:16px 18px; }}
+    .eyebrow {{ color:var(--brand); font-size:var(--av-text-xs); font-weight:700; }}
+    h1 {{ margin:5px 0; font-size:clamp(28px,3vw,36px); line-height:1.05; letter-spacing:0; }}
+    .hero p {{ max-width:720px; margin:0; color:var(--muted); line-height:1.5; }}
+    .metrics {{ display:grid; grid-template-columns:repeat(2,minmax(0,1fr));
+      align-content:stretch; margin:12px 12px 12px 0; border-left:1px solid var(--line); }}
+    .metric {{ display:grid; align-content:center; padding:10px 14px;
+      border-bottom:1px solid var(--line-subtle); background:transparent; }}
     .metric span {{ display:block; color:var(--muted); font-size:12px; }}
-    .metric strong {{ display:block; margin-top:5px; font-size:24px; }}
+    .metric strong {{ display:block; margin-top:3px; font-size:22px; line-height:1; }}
     .table-wrap {{ overflow-x:auto; border:1px solid var(--line); border-radius:8px;
       background:var(--panel); }}
     table {{ width:100%; border-collapse:collapse; }}
-    th,td {{ padding:13px 16px; border-bottom:1px solid var(--line); text-align:left;
+    th,td {{ padding:10px 14px; border-bottom:1px solid var(--line-subtle); text-align:left;
       vertical-align:middle; }}
-    th {{ color:var(--muted); font-size:12px; }}
+    th {{ position:sticky; top:0; z-index:1; color:var(--muted); background:var(--panel);
+      font-size:12px; font-weight:700; }}
     td {{ font-size:14px; }}
+    tbody tr:hover {{ background:color-mix(in oklab,var(--panel),var(--brand-soft) 10%); }}
     td strong,td span {{ display:block; }}
     td > span:not(.state) {{ margin-top:3px; color:var(--muted); font-size:12px; }}
     tr:last-child td {{ border-bottom:0; }}
-    .state {{ display:inline-flex; width:max-content; padding:4px 8px;
-      border-radius:999px; background:#eef2f7; font-size:12px; font-weight:700; }}
-    .state--fresh {{ background:#e9f8f1; color:var(--good); }}
-    .state--stale {{ background:#fff2df; color:var(--warn); }}
+    .state {{ display:inline-flex; width:max-content; min-height:24px; align-items:center;
+      padding:2px 8px;
+      border-radius:999px; background:var(--panel-subtle); font-size:12px; font-weight:700; }}
+    .state--fresh {{ background:var(--good-soft); color:var(--good); }}
+    .state--stale {{ background:var(--warn-soft); color:var(--warn); }}
     .note {{ margin:14px 2px 0; color:var(--muted); font-size:13px; line-height:1.5; }}
     .empty {{ color:var(--muted); text-align:center; }}
+    @media (max-width:860px) {{
+      .overview {{ grid-template-columns:1fr; }}
+      .metrics {{ margin:0 12px 12px; border-top:1px solid var(--line); border-left:0; }}
+    }}
     @media (max-width:720px) {{
-      main {{ width:min(100% - 20px,1120px); padding-top:16px; }}
-      .hero {{ padding:18px; }}
+      main {{ width:min(100% - 20px,var(--av-container-dashboard)); padding-top:10px; }}
+      .hero {{ padding:14px; }}
       .metrics {{ grid-template-columns:repeat(2,minmax(0,1fr)); }}
       th:nth-child(3),td:nth-child(3) {{ display:none; }}
-      th,td {{ padding:11px 10px; }}
+      th,td {{ padding:9px 8px; }}
+      h1 {{ font-size:28px; }}
     }}
   </style>
 </head>
 <body>
   <main>
     <a class="back" href="{escape(catalog_href, quote=True)}">← {escape(str(copy["back"]))}</a>
-    <section class="hero">
-      <span class="eyebrow">{escape(str(copy["eyebrow"]))}</span>
-      <h1>{escape(str(copy["heading"]))}</h1>
-      <p>{escape(str(copy["intro"]))}</p>
-    </section>
-    <section class="metrics" aria-label="Summary">
-      <div class="metric"><span>{escape(str(copy["sources"]))}</span>
-        <strong>{int(coverage.get("enabled_sources") or 0)}</strong></div>
-      <div class="metric"><span>{escape(str(copy["fresh"]))}</span>
-        <strong>{int(coverage.get("fresh_sources") or 0)}</strong></div>
-      <div class="metric"><span>{escape(str(copy["stale"]))}</span>
-        <strong>{int(coverage.get("stale_sources") or 0)}</strong></div>
-      <div class="metric"><span>{escape(str(copy["unknown"]))}</span>
-        <strong>{int(coverage.get("unknown_freshness_sources") or 0)}</strong></div>
+    <section class="overview">
+      <div class="hero">
+        <span class="eyebrow">{escape(str(copy["eyebrow"]))}</span>
+        <h1>{escape(str(copy["heading"]))}</h1>
+        <p>{escape(str(copy["intro"]))}</p>
+      </div>
+      <div class="metrics" aria-label="Summary">
+        <div class="metric"><span>{escape(str(copy["sources"]))}</span>
+          <strong>{int(coverage.get("enabled_sources") or 0)}</strong></div>
+        <div class="metric"><span>{escape(str(copy["fresh"]))}</span>
+          <strong>{int(coverage.get("fresh_sources") or 0)}</strong></div>
+        <div class="metric"><span>{escape(str(copy["stale"]))}</span>
+          <strong>{int(coverage.get("stale_sources") or 0)}</strong></div>
+        <div class="metric"><span>{escape(str(copy["unknown"]))}</span>
+          <strong>{int(coverage.get("unknown_freshness_sources") or 0)}</strong></div>
+      </div>
     </section>
     <div class="table-wrap">
       <table>

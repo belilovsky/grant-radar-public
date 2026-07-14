@@ -478,13 +478,13 @@ def render_funder_page(
   <style>
     {AVDS_CSS}
     :root {{
-      --bg: var(--av-color-background);
-      --panel: var(--av-color-surface-raised);
+      --bg: var(--color-bg);
+      --panel: var(--color-surface);
       --panel-subtle: color-mix(in oklab, var(--panel), var(--av-color-background) 28%);
       --panel-wash: color-mix(in oklab, var(--panel), var(--av-color-background) 42%);
-      --line: color-mix(in oklab, var(--av-color-border-default), transparent 28%);
-      --muted: var(--av-color-text-secondary);
-      --ink: var(--av-color-text-primary);
+      --line: var(--color-border);
+      --muted: var(--color-text-muted);
+      --ink: var(--color-text);
       --brand: var(--color-accent);
       --brand-soft: var(--color-accent-subtle);
       --radius: var(--av-radius-lg);
@@ -499,9 +499,9 @@ def render_funder_page(
     }}
     a {{ color: inherit; }}
     .shell {{
-      width: min(1180px, calc(100% - 32px));
+      width: min(var(--av-container-dashboard), calc(100% - 32px));
       margin: 0 auto;
-      padding: 20px 0 40px;
+      padding: 16px 0 36px;
     }}
     .back-link {{
       display: inline-flex;
@@ -543,15 +543,15 @@ def render_funder_page(
     }}
     .hero {{
       display: grid;
-      gap: 14px;
-      padding: 22px;
+      grid-template-columns: minmax(0, 1fr) minmax(280px, 0.52fr);
+      gap: 10px 20px;
+      padding: 18px;
       border: 1px solid var(--line);
-      border-radius: var(--av-radius-lg);
-      background:
-        linear-gradient(135deg, rgb(255 255 255 / 0.82), rgb(255 255 255 / 0.48)),
-        color-mix(in oklab, var(--panel), var(--brand-soft) 22%);
-      box-shadow: var(--shadow);
+      border-radius: var(--av-radius-md);
+      background: var(--panel);
+      box-shadow: var(--av-shadow-xs);
     }}
+    .hero > .eyebrow {{ grid-column: 1 / -1; }}
     .eyebrow {{
       color: var(--muted);
       font-family: var(--av-font-sans, Arial, sans-serif);
@@ -564,7 +564,7 @@ def render_funder_page(
       margin: 0;
       font-family: var(--av-font-sans, Arial, sans-serif);
       max-width: 20ch;
-      font-size: clamp(26px, 3vw, 38px);
+      font-size: clamp(27px, 2.6vw, 36px);
       line-height: 1.08;
       text-wrap: balance;
     }}
@@ -577,17 +577,21 @@ def render_funder_page(
     }}
     .stat-grid {{
       display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
-      gap: 10px;
+      grid-column: 2;
+      grid-row: 2 / span 2;
+      grid-template-columns: repeat(2, minmax(120px, 1fr));
+      gap: 0;
+      align-self: stretch;
+      border-left: 1px solid var(--line);
+      padding-left: 16px;
     }}
     .stat {{
-      border: 1px solid var(--line);
-      border-left: 3px solid var(--brand);
-      border-radius: var(--av-radius-md);
-      background: rgb(255 255 255 / 0.52);
-      padding: 10px 12px;
+      border: 0;
+      border-bottom: 1px solid var(--line);
+      border-radius: 0;
+      background: transparent;
+      padding: 8px 10px;
     }}
-    .stat:first-child {{ border-left-width: 3px; }}
     .stat span {{
       display: block;
       margin-bottom: 6px;
@@ -599,13 +603,13 @@ def render_funder_page(
       text-transform: none;
     }}
     .stat strong {{
-      font-size: 16px;
+      font-size: 20px;
       line-height: 1.05;
       font-family: var(--av-font-sans, Arial, sans-serif);
     }}
     .section {{
-      padding-top: 22px;
-      margin-top: 22px;
+      padding-top: 18px;
+      margin-top: 18px;
       border-top: 1px solid var(--line);
     }}
     .section h2 {{
@@ -647,27 +651,30 @@ def render_funder_page(
     }}
     .opportunity-list {{
       display: grid;
-      grid-template-columns: repeat(2, minmax(0, 1fr));
-      gap: 12px;
+      grid-template-columns: 1fr;
+      gap: 6px;
     }}
     .opportunity-card {{
       display: grid;
+      grid-template-columns: minmax(260px, 1.25fr) minmax(260px, 0.9fr) auto;
+      gap: 14px;
+      align-items: center;
       align-content: start;
       border: 1px solid var(--line);
       border-radius: var(--av-radius-md);
       background: var(--panel);
-      padding: 14px;
-      box-shadow: var(--av-shadow-xs);
+      padding: 12px 14px;
+      box-shadow: none;
     }}
     .opportunity-head {{
       display: grid;
       grid-template-columns: 1fr;
       gap: 8px;
       align-items: start;
-      margin-bottom: 8px;
+      margin-bottom: 0;
     }}
     .opportunity-card h3 {{
-      margin: 0 0 8px;
+      margin: 0 0 6px;
       font-size: 16px;
       line-height: 1.25;
     }}
@@ -696,8 +703,9 @@ def render_funder_page(
       display: flex;
       flex-wrap: wrap;
       gap: 8px;
-      margin-top: 10px;
+      margin-top: 0;
       align-self: end;
+      justify-content: flex-end;
     }}
     .button {{
       display: inline-flex;
@@ -726,12 +734,13 @@ def render_funder_page(
     .source-link {{
       display: grid;
       gap: 4px;
-      padding: 12px 4px;
-      border: 1px solid var(--line);
-      border-radius: var(--av-radius-md);
-      background: var(--panel);
+      padding: 10px 2px;
+      border: 0;
+      border-bottom: 1px solid var(--line);
+      border-radius: 0;
+      background: transparent;
       text-decoration: none;
-      box-shadow: var(--av-shadow-xs);
+      box-shadow: none;
     }}
     .source-link strong {{
       font-size: 15px;
@@ -761,9 +770,21 @@ def render_funder_page(
     .site-footer p {{ margin: 0; }}
     .site-footer a {{ color: var(--ink); font-weight: 700; }}
     @media (max-width: 900px) {{
+      .hero {{ grid-template-columns: 1fr; }}
+      .stat-grid {{
+        grid-column: auto;
+        grid-row: auto;
+        border-left: 0;
+        border-top: 1px solid var(--line);
+        padding: 10px 0 0;
+      }}
       .opportunity-list {{
         grid-template-columns: 1fr;
       }}
+      .opportunity-card {{
+        grid-template-columns: 1fr;
+      }}
+      .card-actions {{ justify-content: flex-start; }}
       .source-grid {{
         grid-template-columns: repeat(2, minmax(0, 1fr));
       }}

@@ -322,10 +322,10 @@ def test_root_renders_service_landing(monkeypatch):
     assert "Попробуйте ослабить один из фильтров" in response.text
     assert "Сбросить всё" in response.text
     assert "Открыть весь индекс" in response.text
-    assert "Подробнее" in response.text
-    assert "Официальный источник" not in response.text
-    assert "Открыть страницу" in response.text
-    assert '"read_more": "Открыть страницу"' in response.text
+    assert "Быстрый просмотр" in response.text
+    assert "Официальный источник" in response.text
+    assert "Полная карточка" in response.text
+    assert '"read_more": "Полная карточка"' in response.text
     assert '"kz": "Казахстан"' in response.text
     assert '"program": "Программа"' in response.text
     assert '"education_organisation": "Образовательные организации"' in response.text
@@ -464,7 +464,7 @@ def test_root_renders_service_landing(monkeypatch):
     assert "content-visibility: auto;" not in response.text
     assert "contain-intrinsic-size:" not in response.text
     assert ".opportunity {" in response.text
-    assert "border-left: 3px solid var(--line-strong);" in response.text
+    assert "border-left: 2px solid var(--line-strong);" in response.text
     assert ".opportunity-content {" in response.text
     assert ".opportunity-rail {" in response.text
     assert 'class="opportunity-rail"' in response.text
@@ -674,6 +674,44 @@ def test_sections_markup_collapses_long_source_text():
     assert '<span class="source-disclosure-title">Выдержка с источника</span>' in markup
     assert "Показать выдержку" in markup
     assert markup.count("<p>") >= 4
+
+
+def test_sections_markup_removes_duplicate_and_taxonomy_only_sections():
+    summary = "Программа поддерживает образовательные команды из Казахстана."
+    detail = OpportunityDetail(
+        source="science_fund",
+        source_url="https://example.org/source",
+        type=OpportunityType.GRANT,
+        title="Образовательная программа",
+        summary=summary,
+        eligibility=["education_organization"],
+        detail_sections=[
+            OpportunityDetailSection(heading="Обзор", text=summary),
+            OpportunityDetailSection(
+                heading="Обзор",
+                text=f"{summary} Читать далее на странице программы.",
+            ),
+            OpportunityDetailSection(
+                heading="Кто может подать заявку",
+                text="education_organization",
+            ),
+            OpportunityDetailSection(
+                heading="",
+                text="Служебная выдержка с навигацией официального сайта.",
+            ),
+        ],
+    )
+
+    markup = opportunity_page_module._sections_markup(
+        detail,
+        "Выдержка с источника",
+        title=detail.title,
+        expand_label="Показать выдержку",
+    )
+
+    assert markup.count(">Обзор<") == 1
+    assert "education organization" not in markup
+    assert '<details class="section-card source-disclosure">' in markup
 
 
 def test_root_prefers_public_base_url_for_canonical_links(monkeypatch):
@@ -1344,6 +1382,8 @@ def test_public_status_page_renders_coverage_without_operator_details(monkeypatc
     assert response.status_code == 200
     assert response.headers["cache-control"].startswith("public, max-age=60")
     assert "Статус источников" in response.text
+    assert 'data-av-theme="light" data-theme="light"' in response.text
+    assert "--av-container-dashboard: 1280px" in response.text
     assert "World Bank Kazakhstan" in response.text
     assert 'rel="canonical" href="https://qaz.fund/status?lang=ru"' in response.text
     assert "error" not in response.text.lower()
@@ -1362,6 +1402,7 @@ def test_operator_page_is_noindex_and_never_embeds_admin_token(monkeypatch):
     assert response.headers["x-robots-tag"] == "noindex, nofollow"
     assert 'name="robots" content="noindex,nofollow"' in response.text
     assert "Контроль источников" in response.text
+    assert 'data-av-theme="light" data-theme="light"' in response.text
     assert "X-Grant-Radar-Admin-Token" in response.text
     assert "sessionStorage" in response.text
     assert 'autocomplete="username"' in response.text
