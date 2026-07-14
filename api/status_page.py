@@ -35,6 +35,7 @@ COPY = {
             "Статус отражает время последней обнаруженной записи, а не юридическую "
             "актуальность каждой программы."
         ),
+        "summary_aria": "Сводка состояния источников",
     },
     "en": {
         "title": "Source status – QAZ.FUND",
@@ -61,6 +62,7 @@ COPY = {
             "Freshness reflects the latest discovered record, not the legal "
             "validity of every program."
         ),
+        "summary_aria": "Source status summary",
     },
 }
 
@@ -221,7 +223,7 @@ def render_status_page(
         <h1>{escape(str(copy["heading"]))}</h1>
         <p>{escape(str(copy["intro"]))}</p>
       </div>
-      <div class="metrics" aria-label="Summary">
+      <div class="metrics" aria-label="{escape(str(copy["summary_aria"]), quote=True)}">
         <div class="metric"><span>{escape(str(copy["sources"]))}</span>
           <strong>{int(coverage.get("enabled_sources") or 0)}</strong></div>
         <div class="metric"><span>{escape(str(copy["fresh"]))}</span>

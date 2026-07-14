@@ -211,11 +211,13 @@ def test_root_renders_service_landing(monkeypatch):
         'name="twitter:image" content="http://testserver/og-image.svg"' in response.text
     )
     assert "googletagmanager.com/gtag/js?id=G-9EF720PSER" in response.text
-    assert 'ym(109803011,"init"' in response.text
-    assert "a.parentNode.insertBefore(k,a);}(window,document" in response.text
-    assert '","ym"));ym(109803011,"init"' in response.text
-    assert "a.parentNode.insertBefore(k,a);}}(window,document" not in response.text
-    assert 'clarity","script","x5ualin2jv"' in response.text
+    assert 'window.ym("109803011","init"' in response.text
+    assert "https://www.clarity.ms/tag/x5ualin2jv" in response.text
+    assert "const startAnalytics = () =>" in response.text
+    assert 'navigator.doNotTrack === "1"' in response.text
+    assert "navigator.globalPrivacyControl === true" in response.text
+    assert "window.setTimeout(startAnalytics, 20000)" in response.text
+    assert 'script async src="https://www.googletagmanager.com' not in response.text
     assert 'type="application/ld+json"' in response.text
     assert '"@type": "FAQPage"' in response.text
     assert '"@type": "CollectionPage"' in response.text
@@ -400,6 +402,7 @@ def test_root_renders_service_landing(monkeypatch):
     assert "function applyEmptyAction(actionId)" in response.text
     assert "function applyHeroAction(button)" in response.text
     assert 'data-avds-component="fit-pill"' in response.text
+    assert "color: color-mix(in oklab, var(--muted), var(--ink) 18%);" in response.text
     assert 'href="#methodology-panel"' in response.text
     assert 'id="methodology-panel"' in response.text
     assert "Как мы собираем и показываем данные" in response.text
@@ -514,6 +517,7 @@ def test_browser_404_is_branded_while_api_404_stays_json(monkeypatch):
     assert browser_response.headers["content-type"].startswith("text/html")
     assert browser_response.headers["x-robots-tag"] == "noindex, follow"
     assert "This page does not exist" in browser_response.text
+    assert 'meta name="description"' in browser_response.text
     assert 'href="/?lang=en"' in browser_response.text
     assert api_response.status_code == 404
     assert api_response.headers["content-type"].startswith("application/json")
@@ -557,6 +561,11 @@ def test_docs_exposes_swagger_with_return_link(monkeypatch):
     assert head_response.headers["content-type"].startswith("text/html")
     assert "QAZ.FUND API" in response.text
     assert "SwaggerUIBundle" in response.text
+    assert '<html lang="ru">' in response.text
+    assert '<span class="qazfund-docs-title">Документация API</span>' in response.text
+    assert '<main id="swagger-ui"></main>' in response.text
+    assert 'meta name="description"' in response.text
+    assert 'rel="canonical" href="http://testserver/docs?lang=ru"' in response.text
     assert 'href="/?lang=ru"' in response.text
     assert "Вернуться на сайт" in response.text
     assert "url: '/openapi.json'" in response.text
@@ -569,6 +578,9 @@ def test_docs_supports_english_return_link(monkeypatch):
     response = client.get("/docs?lang=en", headers={"Accept-Encoding": "identity"})
 
     assert response.status_code == 200
+    assert '<html lang="en">' in response.text
+    assert '<span class="qazfund-docs-title">API documentation</span>' in response.text
+    assert 'rel="canonical" href="http://testserver/docs?lang=en"' in response.text
     assert 'href="/?lang=en"' in response.text
     assert "Back to site" in response.text
     assert response.headers["content-length"] == str(len(response.content))
@@ -1443,6 +1455,7 @@ def test_public_status_page_renders_coverage_without_operator_details(monkeypatc
     assert response.status_code == 200
     assert response.headers["cache-control"].startswith("public, max-age=60")
     assert "Статус источников" in response.text
+    assert 'aria-label="Сводка состояния источников"' in response.text
     assert 'data-av-theme="light" data-theme="light"' in response.text
     assert "--av-container-dashboard: 1280px" in response.text
     assert "World Bank Kazakhstan" in response.text
