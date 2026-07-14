@@ -248,6 +248,19 @@ def test_root_renders_service_landing(monkeypatch):
     assert 'id="save-view"' in response.text
     assert 'id="workspace-filter"' in response.text
     assert 'id="filter-disclosure"' in response.text
+    audience_presets = response.text.split('id="audience-presets"', 1)[1].split(
+        "</div>", 1
+    )[0]
+    format_presets = response.text.split('id="format-presets"', 1)[1].split(
+        "</div>", 1
+    )[0]
+    topic_presets = response.text.split('id="topic-presets"', 1)[1].split("</div>", 1)[
+        0
+    ]
+    assert audience_presets.count("<button") == 6
+    assert format_presets.count("<button") == 5
+    assert topic_presets.count("<button") == 7
+    assert 'data-preset-id="all" aria-pressed="true"' in audience_presets
     assert 'id="metric-strong" data-catalog-count=' in response.text
     assert "state.coverage.relevant_open_items" in response.text
     assert 'id="detail-readiness"' in response.text

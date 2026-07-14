@@ -2123,6 +2123,55 @@ def render_dashboard(
     lang_ru_current = ' aria-current="true"' if active_lang == "ru" else ""
     lang_en_current = ' aria-current="true"' if active_lang == "en" else ""
 
+    def initial_preset_buttons(
+        kind: str,
+        presets: tuple[tuple[str, str], ...],
+    ) -> str:
+        return "".join(
+            (
+                '<button class="preset-button" type="button" '
+                f'data-preset-kind="{kind}" data-preset-id="{preset_id}" '
+                f'aria-pressed="{str(preset_id == "all").lower()}" '
+                'data-avds-component="preset-button">'
+                f"{escape(str(copy[label_key]))}</button>"
+            )
+            for preset_id, label_key in presets
+        )
+
+    initial_audience_presets = initial_preset_buttons(
+        "audience",
+        (
+            ("all", "audience_all"),
+            ("startup", "audience_startup"),
+            ("business", "audience_business"),
+            ("farmer", "audience_farmer"),
+            ("ngo", "audience_ngo"),
+            ("science", "audience_science"),
+        ),
+    )
+    initial_format_presets = initial_preset_buttons(
+        "format",
+        (
+            ("all", "format_all"),
+            ("grants", "format_grants"),
+            ("support", "format_support"),
+            ("accelerators", "format_accelerators"),
+            ("tenders", "format_tenders"),
+        ),
+    )
+    initial_topic_presets = initial_preset_buttons(
+        "topic",
+        (
+            ("all", "topic_all"),
+            ("ai", "topic_ai"),
+            ("agro", "topic_agro"),
+            ("science", "topic_science"),
+            ("public", "topic_public"),
+            ("ngo", "topic_ngo"),
+            ("business", "topic_business"),
+        ),
+    )
+
     return f"""<!doctype html>
 <html lang="{html_lang}" {html_theme_attrs}>
 <head>
@@ -5387,7 +5436,7 @@ def render_dashboard(
             class="preset-row"
             id="audience-presets"
             data-avds-component="preset-row"
-          ></div>
+          >{initial_audience_presets}</div>
         </div>
         <div class="preset-group" aria-label="{escape(str(copy["format_aria"]), quote=True)}">
           <span class="filter-label">{escape(str(copy["format_label"]))}</span>
@@ -5395,7 +5444,7 @@ def render_dashboard(
             class="preset-row"
             id="format-presets"
             data-avds-component="preset-row"
-          ></div>
+          >{initial_format_presets}</div>
         </div>
         <div class="preset-group" aria-label="{escape(str(copy["topic_aria"]), quote=True)}">
           <span class="filter-label">{escape(str(copy["topic_label"]))}</span>
@@ -5403,7 +5452,7 @@ def render_dashboard(
             class="preset-row"
             id="topic-presets"
             data-avds-component="preset-row"
-          ></div>
+          >{initial_topic_presets}</div>
         </div>
       </div>
       <div
