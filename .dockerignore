@@ -21,6 +21,7 @@ data/*.db-journal
 *.pyd
 *.swp
 .DS_Store
+**/._*
 
 htmlcov/
 dist/
