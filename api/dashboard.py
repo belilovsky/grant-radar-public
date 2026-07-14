@@ -37,19 +37,17 @@ COPY = {
             "обхода десятков сайтов."
         ),
         "hero_primary_cta": "Открыть каталог",
-        "hero_secondary_cta": "Стартапам",
-        "hero_tertiary_cta": "Субсидии РК",
-        "hero_stage_eyebrow": "Быстрый старт",
-        "hero_stage_title": "Выберите задачу и сразу откройте нужную выдачу",
-        "hero_stage_point_one": "Официальные и отобранные источники в одной публичной витрине",
-        "hero_stage_point_two": "Локальная карточка, быстрая оценка и фильтры по сроку и региону",
-        "hero_stage_point_three": "Казахстан в приоритете, но без потери международных программ",
-        "hero_picks_label": "Быстрый старт",
-        "hero_pick_startup": "Гранты для стартапов",
-        "hero_pick_business": "Поддержка бизнеса",
-        "hero_pick_farmer": "Фермерам",
-        "hero_pick_science": "Исследователям",
-        "hero_pick_tenders": "Тендеры",
+        "hero_stage_eyebrow": "Рабочие сценарии",
+        "hero_stage_title": "Что нужно сделать сейчас?",
+        "hero_stage_point_one": "Отфильтруйте каталог и сохраните ссылку на точную выдачу",
+        "hero_stage_point_two": "Скопируйте рабочую справку с источником и полями для проверки",
+        "hero_stage_point_three": "Выгрузите таблицу или добавьте ближайшие сроки в календарь",
+        "hero_picks_label": "Рабочие сценарии",
+        "hero_pick_startup": "Найти поддержку",
+        "hero_pick_business": "Проверить программу",
+        "hero_pick_farmer": "Сроки до месяца",
+        "hero_pick_science": "Господдержка РК",
+        "hero_pick_tenders": "Тендеры и закупки",
         "spotlight_section_eyebrow": "Подборки для старта",
         "spotlight_section_title": "Актуально сейчас",
         "spotlight_section_description": (
@@ -417,6 +415,31 @@ COPY = {
             "проверьте дедлайн, критерии участия, состав документов и способ отправки "
             "заявки."
         ),
+        "role_guide_title": "Как использовать QAZ.FUND в работе",
+        "role_guide_description": (
+            "Одни и те же данные можно быстро превратить в проверяемую подборку, "
+            "редакционную справку или служебный материал."
+        ),
+        "role_analyst_title": "Аналитику",
+        "role_analyst_text": (
+            "Зафиксируйте фильтры ссылкой, сравните поля и выгрузите выдачу в CSV."
+        ),
+        "role_journalist_title": "Журналисту",
+        "role_journalist_text": (
+            "Скопируйте справку из карточки, укажите официальный источник и дату проверки."
+        ),
+        "role_editor_title": "Редактору",
+        "role_editor_text": (
+            "Отделите подтверждённые поля от того, что ещё нужно сверить перед публикацией."
+        ),
+        "role_lawyer_title": "Юристу",
+        "role_lawyer_text": (
+            "Проверьте актуальную редакцию условий, заявителя, документы, срок и канал подачи."
+        ),
+        "role_official_title": "Госслужащему",
+        "role_official_text": (
+            "Соберите воспроизводимую подборку по РК, выгрузите таблицу и календарь сроков."
+        ),
         "faq_title": "Частые вопросы",
         "faq_q1": "QAZ.FUND сам выдает гранты?",
         "faq_a1": (
@@ -440,11 +463,11 @@ COPY = {
             "субсидия, но по смыслу полезны той же аудитории. Мы показываем их, "
             "если они действительно подходят по задаче."
         ),
-        "collections_label": "Подборки",
-        "collections_aria": "Сохранённые подборки и ссылки для повторного просмотра",
-        "collections_empty": "Сохраните текущий набор фильтров, чтобы быстро возвращаться к нему.",
-        "save_view": "Сохранить подборку",
-        "share_view": "Скопировать ссылку",
+        "collections_label": "Рабочие подборки",
+        "collections_aria": "Сохранённые фильтры и инструменты для повторной работы",
+        "collections_empty": "Сохраните текущие фильтры, чтобы быстро вернуться к этой выдаче.",
+        "save_view": "Сохранить фильтры",
+        "share_view": "Поделиться выдачей",
         "saved_view_saved": "Подборка сохранена локально.",
         "saved_view_removed": "Подборка удалена.",
         "saved_view_shared": "Ссылка на текущую подборку скопирована.",
@@ -454,14 +477,14 @@ COPY = {
         "saved_view_share_prompt": "Скопируйте ссылку на текущую подборку",
         "advanced_filters": "Дополнительные фильтры",
         "mobile_filters_summary": "Настроить выдачу",
-        "export_csv": "CSV",
-        "export_deadlines": "Календарь",
+        "export_csv": "Таблица CSV",
+        "export_deadlines": "Сроки в календарь",
         "saved_opportunity_saved": "Карточка сохранена локально.",
         "saved_opportunity_removed": "Карточка удалена из локальных сохранённых.",
         "save_opportunity": "Сохранить",
         "unsave_opportunity": "Убрать",
-        "workspace_filter": "Моя работа",
-        "workspace_filter_count": "Моя работа: {count}",
+        "workspace_filter": "Сохранённые",
+        "workspace_filter_count": "Сохранённые: {count}",
         "workspace_filter_empty": "Сначала сохраните подходящую карточку.",
         "workflow_label": "Этап работы",
         "workflow_review": "На проверке",
@@ -470,10 +493,10 @@ COPY = {
         "workflow_submitted": "Отправлено",
         "workflow_result": "Получен результат",
         "workflow_updated": "Этап карточки обновлён.",
-        "workspace_backup": "Экспорт",
-        "workspace_backup_aria": "Экспорт и импорт локальной работы",
-        "workspace_export": "Скачать рабочее пространство",
-        "workspace_import": "Восстановить рабочее пространство",
+        "workspace_backup": "Выгрузить",
+        "workspace_backup_aria": "Выгрузка данных и резервная копия локальной работы",
+        "workspace_export": "Резервная копия",
+        "workspace_import": "Восстановить копию",
         "workspace_exported": "Резервная копия скачана.",
         "workspace_imported": "Рабочее пространство восстановлено.",
         "workspace_import_error": "Не удалось прочитать резервную копию.",
@@ -591,6 +614,44 @@ COPY = {
         "detail_readiness_complete": "Подтверждены все {total} ключевых поля.",
         "detail_readiness_partial": (
             "Подтверждено {known} из {total}. На источнике проверьте: {missing}."
+        ),
+        "detail_copy_brief": "Скопировать справку",
+        "detail_copy_brief_done": "Рабочая справка скопирована.",
+        "detail_copy_brief_prompt": "Скопируйте рабочую справку",
+        "detail_brief_heading": "QAZ.FUND – рабочая справка",
+        "detail_brief_summary": "Кратко",
+        "detail_brief_source": "Организатор или источник",
+        "detail_brief_format": "Формат",
+        "detail_brief_region": "Регион",
+        "detail_brief_deadline": "Срок",
+        "detail_brief_amount": "Сумма",
+        "detail_brief_official_url": "Официальный источник",
+        "detail_brief_application_url": "Подача",
+        "detail_brief_caveat": (
+            "Проверить на официальном источнике: действующие условия, право на "
+            "участие, документы, срок и канал подачи."
+        ),
+        "verification_eyebrow": "Проверка и передача",
+        "verification_title": "Перед использованием карточки",
+        "verification_description": (
+            "Карточка подходит для первичного анализа и рабочей справки, но не "
+            "подтверждает право на участие и не заменяет официальные условия."
+        ),
+        "verification_eligibility_title": "Право на участие",
+        "verification_eligibility_text": (
+            "Сверьте тип заявителя, юрисдикцию, ограничения и требуемый опыт."
+        ),
+        "verification_terms_title": "Действующие условия",
+        "verification_terms_text": (
+            "Проверьте последнюю редакцию, срок, сумму и способ отправки заявки."
+        ),
+        "verification_procurement_title": "Закупочная документация",
+        "verification_procurement_text": (
+            "Для тендеров отдельно проверьте лоты, квалификацию, приложения и изменения."
+        ),
+        "verification_publication_title": "Публикация и служебная записка",
+        "verification_publication_text": (
+            "Укажите официальный источник и дату фактической проверки сведений."
         ),
         "detail_missing_labels": {
             "deadline": "срок",
@@ -939,19 +1000,17 @@ COPY = {
             "dozens of separate sites by hand."
         ),
         "hero_primary_cta": "Open catalog",
-        "hero_secondary_cta": "For startups",
-        "hero_tertiary_cta": "Kazakhstan support",
-        "hero_stage_eyebrow": "Quick start",
-        "hero_stage_title": "Choose a task and open the right results",
-        "hero_stage_point_one": "Official and curated sources in one public feed",
-        "hero_stage_point_two": "Local detail view, fit check, and deadline and region filters",
-        "hero_stage_point_three": "Kazakhstan first, without losing useful global programs",
-        "hero_picks_label": "Quick start",
-        "hero_pick_startup": "Startup grants",
-        "hero_pick_business": "Business support",
-        "hero_pick_farmer": "For farmers",
-        "hero_pick_science": "For researchers",
-        "hero_pick_tenders": "Tenders",
+        "hero_stage_eyebrow": "Workflows",
+        "hero_stage_title": "What do you need to do now?",
+        "hero_stage_point_one": "Filter the catalog and save a link to the exact result set",
+        "hero_stage_point_two": "Copy a working brief with its source and verification fields",
+        "hero_stage_point_three": "Export a table or add the nearest deadlines to your calendar",
+        "hero_picks_label": "Workflows",
+        "hero_pick_startup": "Find support",
+        "hero_pick_business": "Check a program",
+        "hero_pick_farmer": "Deadlines this month",
+        "hero_pick_science": "Kazakhstan support",
+        "hero_pick_tenders": "Tenders and procurement",
         "spotlight_section_eyebrow": "Start here",
         "spotlight_section_title": "Current opportunities",
         "spotlight_section_description": (
@@ -1317,6 +1376,31 @@ COPY = {
             "If a card looks relevant, open the official source and verify the "
             "deadline, eligibility, required documents, and submission route."
         ),
+        "role_guide_title": "How to use QAZ.FUND at work",
+        "role_guide_description": (
+            "Turn the same source data into a reproducible selection, an editorial "
+            "brief, or a working note."
+        ),
+        "role_analyst_title": "For analysts",
+        "role_analyst_text": (
+            "Save filters as a link, compare structured fields, and export results to CSV."
+        ),
+        "role_journalist_title": "For journalists",
+        "role_journalist_text": (
+            "Copy the card brief and record the official source and verification date."
+        ),
+        "role_editor_title": "For editors",
+        "role_editor_text": (
+            "Separate confirmed fields from details that still need checking before publication."
+        ),
+        "role_lawyer_title": "For legal review",
+        "role_lawyer_text": (
+            "Check the current terms, applicant type, documents, deadline, and submission route."
+        ),
+        "role_official_title": "For public-sector teams",
+        "role_official_text": (
+            "Build a reproducible Kazakhstan selection and export a table and deadline calendar."
+        ),
         "faq_title": "FAQ",
         "faq_q1": "Does QAZ.FUND award grants itself?",
         "faq_a1": (
@@ -1340,11 +1424,11 @@ COPY = {
             "but are still useful to the same audience. We keep them visible when "
             "they genuinely match the task."
         ),
-        "collections_label": "Collections",
-        "collections_aria": "Saved collections and shareable links",
-        "collections_empty": "Save the current filter set so you can jump back to it later.",
-        "save_view": "Save collection",
-        "share_view": "Copy link",
+        "collections_label": "Working selections",
+        "collections_aria": "Saved filters and tools for repeat work",
+        "collections_empty": "Save the current filters to return to this result set later.",
+        "save_view": "Save filters",
+        "share_view": "Share results",
         "saved_view_saved": "Collection saved locally.",
         "saved_view_removed": "Collection removed.",
         "saved_view_shared": "Copied a link to the current collection.",
@@ -1354,14 +1438,14 @@ COPY = {
         "saved_view_share_prompt": "Copy the link to the current collection",
         "advanced_filters": "Advanced filters",
         "mobile_filters_summary": "Refine results",
-        "export_csv": "CSV",
-        "export_deadlines": "Calendar",
+        "export_csv": "CSV table",
+        "export_deadlines": "Deadlines to calendar",
         "saved_opportunity_saved": "Card saved locally.",
         "saved_opportunity_removed": "Card removed from local saved items.",
         "save_opportunity": "Save",
         "unsave_opportunity": "Remove",
-        "workspace_filter": "My work",
-        "workspace_filter_count": "My work: {count}",
+        "workspace_filter": "Saved items",
+        "workspace_filter_count": "Saved items: {count}",
         "workspace_filter_empty": "Save a relevant card first.",
         "workflow_label": "Work stage",
         "workflow_review": "Under review",
@@ -1371,9 +1455,9 @@ COPY = {
         "workflow_result": "Result received",
         "workflow_updated": "Card stage updated.",
         "workspace_backup": "Export",
-        "workspace_backup_aria": "Export and import local work",
-        "workspace_export": "Download workspace",
-        "workspace_import": "Restore workspace",
+        "workspace_backup_aria": "Export data and back up local work",
+        "workspace_export": "Workspace backup",
+        "workspace_import": "Restore backup",
         "workspace_exported": "Workspace backup downloaded.",
         "workspace_imported": "Workspace restored.",
         "workspace_import_error": "The workspace backup could not be read.",
@@ -1491,6 +1575,44 @@ COPY = {
         "detail_readiness_complete": "All {total} key fields are confirmed.",
         "detail_readiness_partial": (
             "{known} of {total} fields confirmed. Verify at source: {missing}."
+        ),
+        "detail_copy_brief": "Copy working brief",
+        "detail_copy_brief_done": "Working brief copied.",
+        "detail_copy_brief_prompt": "Copy the working brief",
+        "detail_brief_heading": "QAZ.FUND – working brief",
+        "detail_brief_summary": "Summary",
+        "detail_brief_source": "Organizer or source",
+        "detail_brief_format": "Format",
+        "detail_brief_region": "Region",
+        "detail_brief_deadline": "Deadline",
+        "detail_brief_amount": "Amount",
+        "detail_brief_official_url": "Official source",
+        "detail_brief_application_url": "Application",
+        "detail_brief_caveat": (
+            "Verify at the official source: current terms, eligibility, required "
+            "documents, deadline, and submission route."
+        ),
+        "verification_eyebrow": "Verification and handoff",
+        "verification_title": "Before using this card",
+        "verification_description": (
+            "The card supports initial analysis and working briefs, but does not "
+            "confirm eligibility or replace the official terms."
+        ),
+        "verification_eligibility_title": "Eligibility",
+        "verification_eligibility_text": (
+            "Confirm applicant type, jurisdiction, restrictions, and required experience."
+        ),
+        "verification_terms_title": "Current terms",
+        "verification_terms_text": (
+            "Check the latest version, deadline, amount, and submission route."
+        ),
+        "verification_procurement_title": "Procurement documents",
+        "verification_procurement_text": (
+            "For tenders, check lots, qualifications, attachments, and amendments separately."
+        ),
+        "verification_publication_title": "Publication and internal notes",
+        "verification_publication_text": (
+            "Record the official source and the date when the information was verified."
         ),
         "detail_missing_labels": {
             "deadline": "deadline",
@@ -3881,6 +4003,49 @@ def render_dashboard(
       grid-template-columns: repeat(3, minmax(0, 1fr));
       gap: var(--av-spacing-3);
     }}
+    .role-guide {{
+      display: grid;
+      gap: var(--av-spacing-3);
+      margin-top: var(--av-spacing-4);
+      padding-top: var(--av-spacing-4);
+      border-top: 1px solid var(--line-subtle);
+    }}
+    .role-guide-head {{
+      display: grid;
+      gap: 4px;
+      max-width: 72ch;
+    }}
+    .role-guide-head h3 {{
+      margin: 0;
+      font-size: var(--av-text-xl);
+      line-height: 1.2;
+    }}
+    .role-guide-head p {{
+      margin: 0;
+      color: var(--muted);
+      font-size: var(--av-text-sm);
+      line-height: 1.5;
+    }}
+    .role-list {{
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      column-gap: var(--av-spacing-5);
+    }}
+    .role-item {{
+      display: grid;
+      grid-template-columns: minmax(100px, 0.34fr) minmax(0, 1fr);
+      gap: var(--av-spacing-3);
+      padding: 10px 0;
+      border-top: 1px solid var(--line-subtle);
+    }}
+    .role-item h4,
+    .role-item p {{
+      margin: 0;
+      font-size: var(--av-text-sm);
+      line-height: 1.45;
+    }}
+    .role-item h4 {{ font-weight: 700; }}
+    .role-item p {{ color: var(--muted); }}
     .source-grid {{
       display: grid;
       grid-template-columns: 1fr;
@@ -4682,8 +4847,13 @@ def render_dashboard(
       .health-grid,
       .source-grid,
       .method-grid,
-      .faq-list {{
+      .faq-list,
+      .role-list {{
         grid-template-columns: 1fr;
+      }}
+      .role-item {{
+        grid-template-columns: 1fr;
+        gap: 2px;
       }}
       .preset-grid,
       .filters,
@@ -4853,15 +5023,30 @@ def render_dashboard(
         flex-wrap: wrap;
         gap: var(--av-spacing-1);
       }}
-      .hero-actions,
-      .hero-pick-row {{
+      .hero-actions {{ display: block; }}
+      .hero-actions > .button.primary {{ width: 100%; }}
+      .hero-stage {{
         display: grid;
-        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 6px;
+        padding: 10px 0 0;
       }}
-      .hero-actions > .button.primary {{
-        grid-column: 1 / -1;
+      .hero-stage-title {{ font-size: 16px; }}
+      .hero-pick-row {{
+        display: flex;
+        gap: 6px;
+        overflow-x: auto;
+        padding-bottom: 4px;
+        scroll-snap-type: x proximity;
+        scrollbar-width: none;
       }}
-      .hero-stage {{ display: none; }}
+      .hero-pick-row::-webkit-scrollbar {{ display: none; }}
+      .hero-pick {{
+        flex: 0 0 auto;
+        min-height: 38px;
+        white-space: nowrap;
+        scroll-snap-align: start;
+      }}
+      .hero-pick:last-child {{ grid-column: auto; }}
       .hero-point {{
         font-size: var(--av-text-xs);
         line-height: 1.45;
@@ -5042,24 +5227,6 @@ def render_dashboard(
               data-hero-view="opportunities"
               data-avds-component="button"
             >{escape(str(copy["hero_primary_cta"]))}</button>
-            <button
-              class="button soft"
-              type="button"
-              data-hero-reset="true"
-              data-hero-view="opportunities"
-              data-hero-audience="startup"
-              data-hero-format="grants"
-              data-avds-component="button"
-            >{escape(str(copy["hero_secondary_cta"]))}</button>
-            <button
-              class="button subtle"
-              type="button"
-              data-hero-reset="true"
-              data-hero-view="opportunities"
-              data-hero-format="support"
-              data-hero-region="kazakhstan"
-              data-avds-component="button"
-            >{escape(str(copy["hero_tertiary_cta"]))}</button>
           </div>
           <div class="hero-points" aria-label="{escape(str(copy["hero_stage_title"]), quote=True)}">
             <div class="hero-point">
@@ -5089,8 +5256,6 @@ def render_dashboard(
                 type="button"
                 data-hero-reset="true"
                 data-hero-view="opportunities"
-                data-hero-audience="startup"
-                data-hero-format="grants"
                 data-avds-component="button"
               >{escape(str(copy["hero_pick_startup"]))}</button>
               <button
@@ -5098,9 +5263,7 @@ def render_dashboard(
                 type="button"
                 data-hero-reset="true"
                 data-hero-view="opportunities"
-                data-hero-audience="business"
-                data-hero-format="support"
-                data-hero-region="kazakhstan"
+                data-hero-focus="search"
                 data-avds-component="button"
               >{escape(str(copy["hero_pick_business"]))}</button>
               <button
@@ -5108,7 +5271,8 @@ def render_dashboard(
                 type="button"
                 data-hero-reset="true"
                 data-hero-view="opportunities"
-                data-hero-audience="farmer"
+                data-hero-deadline="month"
+                data-hero-sort="deadline"
                 data-avds-component="button"
               >{escape(str(copy["hero_pick_farmer"]))}</button>
               <button
@@ -5116,7 +5280,8 @@ def render_dashboard(
                 type="button"
                 data-hero-reset="true"
                 data-hero-view="opportunities"
-                data-hero-audience="science"
+                data-hero-format="support"
+                data-hero-region="kazakhstan"
                 data-avds-component="button"
               >{escape(str(copy["hero_pick_science"]))}</button>
               <button
@@ -5125,6 +5290,8 @@ def render_dashboard(
                 data-hero-reset="true"
                 data-hero-view="opportunities"
                 data-hero-format="tenders"
+                data-hero-topic="public"
+                data-hero-region="kazakhstan"
                 data-avds-component="button"
               >{escape(str(copy["hero_pick_tenders"]))}</button>
             </div>
@@ -5619,6 +5786,34 @@ def render_dashboard(
         <strong>{escape(str(copy["method_disclaimer_title"]))}</strong>
         <p>{escape(str(copy["method_disclaimer_text"]))}</p>
       </div>
+      <section class="role-guide" data-avds-component="role-guide">
+        <div class="role-guide-head">
+          <h3>{escape(str(copy["role_guide_title"]))}</h3>
+          <p>{escape(str(copy["role_guide_description"]))}</p>
+        </div>
+        <div class="role-list">
+          <article class="role-item">
+            <h4>{escape(str(copy["role_analyst_title"]))}</h4>
+            <p>{escape(str(copy["role_analyst_text"]))}</p>
+          </article>
+          <article class="role-item">
+            <h4>{escape(str(copy["role_journalist_title"]))}</h4>
+            <p>{escape(str(copy["role_journalist_text"]))}</p>
+          </article>
+          <article class="role-item">
+            <h4>{escape(str(copy["role_editor_title"]))}</h4>
+            <p>{escape(str(copy["role_editor_text"]))}</p>
+          </article>
+          <article class="role-item">
+            <h4>{escape(str(copy["role_lawyer_title"]))}</h4>
+            <p>{escape(str(copy["role_lawyer_text"]))}</p>
+          </article>
+          <article class="role-item">
+            <h4>{escape(str(copy["role_official_title"]))}</h4>
+            <p>{escape(str(copy["role_official_text"]))}</p>
+          </article>
+        </div>
+      </section>
       <div class="faq-list" data-avds-component="faq-list">
         <article class="faq-item">
           <h3>{escape(str(copy["faq_q1"]))}</h3>
@@ -8193,6 +8388,8 @@ def render_dashboard(
       const topic = button.getAttribute("data-hero-topic");
       const region = button.getAttribute("data-hero-region");
       const deadline = button.getAttribute("data-hero-deadline");
+      const sort = button.getAttribute("data-hero-sort");
+      const focus = button.getAttribute("data-hero-focus");
       const view = button.getAttribute("data-hero-view") || "opportunities";
       if (shouldReset) {{
         state.query = "";
@@ -8233,9 +8430,23 @@ def render_dashboard(
           ? deadline
           : DEFAULT_DEADLINE;
       }}
+      if (sort) {{
+        state.sort = SORT_OPTIONS.some((option) => option.id === sort)
+          ? sort
+          : DEFAULT_SORT;
+      }}
       resetVisibleLimit();
       renderOpportunities();
       goToView(view);
+      if (focus === "search") {{
+        const disclosure = $("#filter-disclosure");
+        const search = $("#search");
+        if (disclosure) disclosure.open = true;
+        window.requestAnimationFrame(() => {{
+          search?.focus();
+          search?.scrollIntoView({{ behavior: "auto", block: "center" }});
+        }});
+      }}
     }}
 
     function localDateISO(date = new Date()) {{
@@ -9205,6 +9416,14 @@ def render_dashboard(
       }} else if (trustHashes.has(view)) {{
         trustLibrary.open = true;
         setActiveView("sources");
+        if (options.scroll !== false) {{
+          window.requestAnimationFrame(() => {{
+            document.getElementById(view)?.scrollIntoView({{
+              behavior: "auto",
+              block: "start"
+            }});
+          }});
+        }}
       }} else {{
         setActiveView("opportunities");
       }}

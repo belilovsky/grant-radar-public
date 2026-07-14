@@ -14,6 +14,7 @@ from core.models import (
     Opportunity,
     OpportunityDetail,
     OpportunityDetailSection,
+    OpportunityMetadataField,
     OpportunityType,
 )
 from sources.base import GrantRecord
@@ -81,14 +82,18 @@ def test_root_renders_service_landing(monkeypatch):
     assert (
         "Находите гранты, субсидии и программы поддержки для стартапов" in response.text
     )
-    assert "Выберите задачу и сразу откройте нужную выдачу" in response.text
+    assert "Что нужно сделать сейчас?" in response.text
     assert "Открыть каталог" in response.text
-    assert "Стартапам" in response.text
-    assert "Субсидии РК" in response.text
     assert "Прямое подключение к официальному источнику" in response.text
     assert "Внешний мониторинг и редакционная выборка" in response.text
-    assert "Быстрый старт" in response.text
-    assert "Гранты для стартапов" in response.text
+    assert "Рабочие сценарии" in response.text
+    assert "Найти поддержку" in response.text
+    assert "Проверить программу" in response.text
+    assert "Сроки до месяца" in response.text
+    assert "Господдержка РК" in response.text
+    assert "Тендеры и закупки" in response.text
+    assert 'data-hero-focus="search"' in response.text
+    assert 'data-hero-sort="deadline"' in response.text
     assert response.text.index('<div class="hero-points"') < response.text.index(
         '<section\n          class="hero-stage"'
     )
@@ -108,6 +113,16 @@ def test_root_renders_service_landing(monkeypatch):
     assert "function sanitizeWorkspacePayload" in response.text
     assert "function importWorkspace" in response.text
     assert "Уточнить данные" in response.text
+    assert "Рабочие подборки" in response.text
+    assert "Сохранить фильтры" in response.text
+    assert "Поделиться выдачей" in response.text
+    assert "Сроки в календарь" in response.text
+    assert "Как использовать QAZ.FUND в работе" in response.text
+    assert "Аналитику" in response.text
+    assert "Журналисту" in response.text
+    assert "Редактору" in response.text
+    assert "Юристу" in response.text
+    assert "Госслужащему" in response.text
     assert "Подборки для старта" in response.text
     assert "Актуально сейчас" in response.text
     assert "Лучшие сигналы недели" in response.text
@@ -414,7 +429,8 @@ def test_root_renders_service_landing(monkeypatch):
     assert 'data-empty-action="' in response.text
     assert 'data-hero-view="opportunities"' in response.text
     assert 'data-hero-reset="true"' in response.text
-    assert 'data-hero-audience="startup"' in response.text
+    assert 'data-hero-focus="search"' in response.text
+    assert 'data-hero-deadline="month"' in response.text
     assert 'data-hero-format="support"' in response.text
     assert "data-hero-topic" in response.text
     assert 'data-avds-component="spotlight-grid"' in response.text
@@ -453,6 +469,7 @@ def test_root_renders_service_landing(monkeypatch):
     assert "function syncViewFromHash" in response.text
     assert "function scheduleHashViewSync" in response.text
     assert "const shouldScroll = options.scroll !== false;" in response.text
+    assert "document.getElementById(view)?.scrollIntoView" in response.text
     assert "syncViewFromHash({ scroll: false })" in response.text
     assert "function scheduleOpportunityRender" in response.text
     assert (
@@ -714,6 +731,40 @@ def test_sections_markup_removes_duplicate_and_taxonomy_only_sections():
     assert '<details class="section-card source-disclosure">' in markup
 
 
+def test_working_brief_uses_only_available_fields_and_keeps_source_boundary():
+    detail = OpportunityDetail(
+        source="kazakhstan_domestic",
+        source_url="https://example.kz/program",
+        application_url="https://example.kz/program/apply",
+        type=OpportunityType.GRANT,
+        title="Программа поддержки бизнеса",
+        summary="Поддержка проектов в Казахстане.",
+        metadata=[
+            OpportunityMetadataField(key="region", value="kazakhstan"),
+            OpportunityMetadataField(key="amount", value="10 000 000 KZT"),
+        ],
+    )
+    copy = dashboard_copy("ru")
+
+    brief = opportunity_page_module._working_brief(
+        detail,
+        title=detail.title,
+        summary=detail.summary,
+        source_label="Официальная программа",
+        format_label="Грант",
+        deadline_label="Без срока",
+        copy=copy,
+    )
+
+    assert "QAZ.FUND – рабочая справка" in brief
+    assert "Организатор или источник: Официальная программа" in brief
+    assert "Регион: Казахстан" in brief
+    assert "Сумма: 10 000 000 KZT" in brief
+    assert "Официальный источник: https://example.kz/program" in brief
+    assert "Подача: https://example.kz/program/apply" in brief
+    assert "Проверить на официальном источнике" in brief
+
+
 def test_root_prefers_public_base_url_for_canonical_links(monkeypatch):
     _reset_api_state(monkeypatch)
     monkeypatch.setenv("PUBLIC_BASE_URL", "https://qaz.fund")
@@ -760,7 +811,17 @@ def test_root_supports_explicit_english_dashboard(monkeypatch):
     assert "Find grants, subsidies, and support programs" in response.text
     assert "What people usually look for" in response.text
     assert "Clear theme" in response.text
-    assert "Choose a task and open the right results" in response.text
+    assert "What do you need to do now?" in response.text
+    assert "Find support" in response.text
+    assert "Check a program" in response.text
+    assert "Deadlines this month" in response.text
+    assert "Tenders and procurement" in response.text
+    assert "How to use QAZ.FUND at work" in response.text
+    assert "For analysts" in response.text
+    assert "For journalists" in response.text
+    assert "For editors" in response.text
+    assert "For legal review" in response.text
+    assert "For public-sector teams" in response.text
     assert "Priority: Kazakhstan and Central Asia" in response.text
     assert ">API</a>" in response.text
     assert "Data status" in response.text
@@ -2477,6 +2538,17 @@ def test_opportunity_page_renders_public_permalink(monkeypatch):
     assert "Проверьте критерии" in response.text
     assert "Соберите проектную заявку" in response.text
     assert "Как подать" in response.text
+    assert "Скопировать справку" in response.text
+    assert 'id="copy-working-brief"' in response.text
+    assert 'id="copy-working-brief-status"' in response.text
+    assert "Рабочая справка скопирована." in response.text
+    assert "Перед использованием карточки" in response.text
+    assert "Право на участие" in response.text
+    assert "Закупочная документация" in response.text
+    assert "Публикация и служебная записка" in response.text
+    assert "не подтверждает право на участие" in response.text
+    assert "QAZ.FUND – рабочая справка" in response.text
+    assert "Проверить на официальном источнике" in response.text
     assert "Откройте страницу подачи" in response.text
     assert "Сверьте критерии" in response.text
     assert (
@@ -2643,6 +2715,10 @@ def test_opportunity_page_tailors_prepare_checklist_for_subsidies(monkeypatch):
     assert response.status_code == 200
     assert 'aria-label="Breadcrumbs"' in response.text
     assert "What to prepare" in response.text
+    assert "Copy working brief" in response.text
+    assert "Before using this card" in response.text
+    assert "Procurement documents" in response.text
+    assert "does not confirm eligibility" in response.text
     assert "Prepare local documents" in response.text
     assert "Check company status, digital signature, tax status" in response.text
     assert "Check current terms" in response.text
