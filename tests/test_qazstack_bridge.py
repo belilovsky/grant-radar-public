@@ -4,7 +4,8 @@ from datetime import date
 from types import SimpleNamespace
 
 from core import geofit, qazstack_bridge
-from qazstack import SNAPSHOT_COMMIT, __version__ as qazstack_version
+from qazstack import SNAPSHOT_COMMIT
+from qazstack import __version__ as qazstack_version
 from qazstack.opportunities import OpportunityRecord, evaluate_geo_fit
 from sources.kazakhstan_watch import KazakhstanWatchParser
 
@@ -18,8 +19,8 @@ def test_vendored_qazstack_opportunities_snapshot_is_importable() -> None:
         )
     )
 
-    assert qazstack_version == "1.22.1"
-    assert SNAPSHOT_COMMIT == "3ccd651f"
+    assert qazstack_version == "1.24.0"
+    assert SNAPSHOT_COMMIT == "31cada06"
     assert result.has_positive_signal
     assert result.has_central_asia_signal
     assert result.is_relevant

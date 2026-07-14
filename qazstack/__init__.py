@@ -1,8 +1,8 @@
 """Vendored QazStack primitives used by QAZ.FUND.
 
 Behavior-parity snapshot derived from ``belilovsky/qazstack`` commit
-``3ccd651f``. Product-specific policy remains in QAZ.FUND.
+``31cada06``. Product-specific policy remains in QAZ.FUND.
 """
 
-__version__ = "1.22.1"
-SNAPSHOT_COMMIT = "3ccd651f"
+__version__ = "1.24.0"
+SNAPSHOT_COMMIT = "31cada06"
