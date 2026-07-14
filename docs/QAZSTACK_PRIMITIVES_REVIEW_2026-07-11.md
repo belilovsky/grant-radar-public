@@ -19,9 +19,10 @@ optional bridge while preserving local fallback behavior.
   deterministic internal/public lifecycle values.
 - QAZ.FUND consumes lifecycle through the optional bridge and keeps its local
   implementation as a fail-safe.
-- QazCompute branch `codex/qazfund-compute-profile-20260715` provides
-  `opportunity_enrich.v1`; results remain shadow-only and cannot alter public
-  summaries until a benchmark explicitly promotes `decision_ready`.
+- QazCompute branch `codex/qazfund-compute-profile-20260715`, commit
+  `9460264`, provides `opportunity_enrich.v1`; results remain shadow-only and
+  cannot alter public summaries until a benchmark explicitly promotes
+  `decision_ready`.
 - Direct provider credentials were removed from the QAZ.FUND enrichment path.
 
 ## Implemented runtime bridge

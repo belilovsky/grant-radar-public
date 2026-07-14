@@ -4,6 +4,9 @@ QAZ.FUND uses `opportunity_enrich.v1` as an optional, operator-controlled
 shadow profile. Provider credentials stay in QazCompute; QAZ.FUND receives only
 the versioned result contract through a service credential.
 
+Profile source: `belilovsky/qazcompute` commit `9460264` on branch
+`codex/qazfund-compute-profile-20260715`.
+
 ## Runtime boundary
 
 - QAZ.FUND sends one opportunity at a time to
