@@ -2177,6 +2177,11 @@ def render_dashboard(
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
+  <script>
+    if (window.matchMedia("(max-width: 760px)").matches) {{
+      document.documentElement.dataset.compactFilters = "true";
+    }}
+  </script>
   <title>{escape(str(copy["title"]))}</title>
   <meta name="description" content="{escape(str(copy["meta_description"]), quote=True)}">
   <meta name="yandex-verification" content="{YANDEX_SITE_VERIFICATION_TOKEN}">
@@ -4821,6 +4826,10 @@ def render_dashboard(
         font-size: 18px;
       }}
       .filter-disclosure[open] > summary::after {{ content: "−"; }}
+      html[data-compact-filters="true"]
+        .filter-disclosure[open] > summary::after {{ content: "+"; }}
+      html[data-compact-filters="true"]
+        .filter-disclosure[open] > .filter-disclosure-body {{ display: none; }}
       .filter-disclosure-body {{
         display: grid;
         gap: var(--av-spacing-2);
@@ -9507,6 +9516,7 @@ def render_dashboard(
     if (filterDisclosure && window.matchMedia("(max-width: 760px)").matches) {{
       filterDisclosure.open = false;
     }}
+    document.documentElement.removeAttribute("data-compact-filters");
     renderSavedViews();
     renderWorkspaceFilter();
     window.addEventListener("hashchange", syncViewFromHash);

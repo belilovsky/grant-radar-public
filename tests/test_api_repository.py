@@ -248,6 +248,11 @@ def test_root_renders_service_landing(monkeypatch):
     assert 'id="save-view"' in response.text
     assert 'id="workspace-filter"' in response.text
     assert 'id="filter-disclosure"' in response.text
+    assert 'document.documentElement.dataset.compactFilters = "true";' in response.text
+    assert 'html[data-compact-filters="true"]' in response.text
+    assert 'document.documentElement.removeAttribute("data-compact-filters");' in (
+        response.text
+    )
     audience_presets = response.text.split('id="audience-presets"', 1)[1].split(
         "</div>", 1
     )[0]
