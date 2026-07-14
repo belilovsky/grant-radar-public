@@ -554,6 +554,84 @@ def _apply_markup(
     )
 
 
+def _verification_markup(copy: dict[str, object]) -> str:
+    items = (
+        ("verification_eligibility_title", "verification_eligibility_text"),
+        ("verification_terms_title", "verification_terms_text"),
+        ("verification_procurement_title", "verification_procurement_text"),
+        ("verification_publication_title", "verification_publication_text"),
+    )
+    item_markup = "".join(
+        """
+        <li class="verification-item">
+          <strong>{title}</strong>
+          <span>{text}</span>
+        </li>
+        """.format(
+            title=escape(str(copy[title_key])),
+            text=escape(str(copy[text_key])),
+        )
+        for title_key, text_key in items
+    )
+    return """
+    <section class="verification-section">
+      <div class="verification-head">
+        <span class="eyebrow">{eyebrow}</span>
+        <h2>{title}</h2>
+        <p>{description}</p>
+      </div>
+      <ul class="verification-list">{items}</ul>
+    </section>
+    """.format(
+        eyebrow=escape(str(copy["verification_eyebrow"])),
+        title=escape(str(copy["verification_title"])),
+        description=escape(str(copy["verification_description"])),
+        items=item_markup,
+    )
+
+
+def _detail_metadata_value(detail: OpportunityDetail, *keys: str) -> str:
+    wanted = set(keys)
+    for entry in detail.metadata:
+        if entry.key in wanted and str(entry.value or "").strip():
+            return str(entry.value).strip()
+    return ""
+
+
+def _working_brief(
+    detail: OpportunityDetail,
+    *,
+    title: str,
+    summary: str,
+    source_label: str,
+    format_label: str,
+    deadline_label: str,
+    copy: dict[str, object],
+) -> str:
+    region = _detail_metadata_value(detail, "region", "country")
+    amount = _detail_metadata_value(detail, "amount", "amount_raw")
+    lines = [
+        str(copy["detail_brief_heading"]),
+        title,
+        "",
+        f'{copy["detail_brief_summary"]}: {summary}',
+        f'{copy["detail_brief_source"]}: {source_label}',
+        f'{copy["detail_brief_format"]}: {format_label}',
+    ]
+    if region:
+        lines.append(f'{copy["detail_brief_region"]}: {_label_value(region, copy)}')
+    lines.append(f'{copy["detail_brief_deadline"]}: {deadline_label}')
+    if amount:
+        lines.append(f'{copy["detail_brief_amount"]}: {amount}')
+    lines.append(f'{copy["detail_brief_official_url"]}: {detail.source_url}')
+    if detail.application_url:
+        lines.append(
+            f'{copy["detail_brief_application_url"]}: {detail.application_url}'
+        )
+    lines.extend(("", str(copy["detail_brief_caveat"])))
+    return "\n".join(lines)
+
+
 def _related_markup(
     related_items: list[tuple[Opportunity, str]],
     *,
@@ -697,18 +775,42 @@ def render_opportunity_page(
         has_application_url=bool(application_href),
         copy=copy,
     )
+    verification_markup = _verification_markup(copy)
     related_markup = _related_markup(
         related_items or [],
         lang=active_lang,
         root_path=root_path,
         copy=copy,
     )
-    source_label = escape(detail.funder or _label_value(detail.source, copy))
-    deadline_label = escape(
-        _format_deadline(detail.deadline, active_lang, str(copy["open_rolling"]))
+    source_text = detail.funder or _label_value(detail.source, copy)
+    deadline_text = _format_deadline(
+        detail.deadline,
+        active_lang,
+        str(copy["open_rolling"]),
     )
+    format_text = _label_value(detail.type, copy)
+    source_label = escape(source_text)
+    deadline_label = escape(deadline_text)
     source_host = escape(_host_label(str(detail.source_url)))
-    format_label = escape(_label_value(detail.type, copy))
+    format_label = escape(format_text)
+    working_brief = _working_brief(
+        detail,
+        title=title,
+        summary=summary,
+        source_label=source_text,
+        format_label=format_text,
+        deadline_label=deadline_text,
+        copy=copy,
+    )
+    working_brief_json = json.dumps(working_brief, ensure_ascii=False).replace(
+        "<", "\\u003c"
+    )
+    brief_done_json = json.dumps(
+        str(copy["detail_copy_brief_done"]), ensure_ascii=False
+    )
+    brief_prompt_json = json.dumps(
+        str(copy["detail_copy_brief_prompt"]), ensure_ascii=False
+    )
     og_locale = escape(active_lang.replace("-", "_") + "_KZ", quote=True)
     canonical_url = _absolute_href(site_origin, canonical_path)
     catalog_url = _absolute_href(site_origin, _catalog_path(root_path, active_lang))
@@ -919,6 +1021,7 @@ def render_opportunity_page(
       border: 1px solid var(--line);
       background: var(--surface);
       font-weight: 600;
+      cursor: pointer;
     }}
     .button.primary {{
       border-color: color-mix(in oklab, var(--brand), black 12%);
@@ -1103,6 +1206,58 @@ def render_opportunity_page(
       border-radius: var(--av-radius-md);
       background: var(--surface-subtle);
       color: var(--muted);
+    }}
+    .hero-action-status {{
+      min-height: 18px;
+      margin: 6px 0 0;
+      color: var(--success);
+      font-size: var(--av-text-xs);
+      font-weight: 600;
+    }}
+    .verification-section {{
+      display: grid;
+      gap: 12px;
+      padding: 18px 0;
+      border-bottom: 1px solid var(--line);
+    }}
+    .verification-head {{
+      display: grid;
+      gap: 6px;
+      max-width: 760px;
+    }}
+    .verification-head h2 {{
+      margin: 0;
+      font-size: clamp(17px, 2vw, 21px);
+      line-height: 1.16;
+    }}
+    .verification-head p {{
+      margin: 0;
+      color: color-mix(in oklab, var(--text), var(--muted) 28%);
+      font-size: var(--av-text-sm);
+      line-height: 1.46;
+    }}
+    .verification-list {{
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 0 20px;
+      margin: 0;
+      padding: 0;
+      list-style: none;
+    }}
+    .verification-item {{
+      display: grid;
+      gap: 3px;
+      padding: 10px 0;
+      border-top: 1px solid var(--line-subtle);
+    }}
+    .verification-item strong {{
+      font-size: var(--av-text-sm);
+      line-height: 1.35;
+    }}
+    .verification-item span {{
+      color: var(--muted);
+      font-size: var(--av-text-sm);
+      line-height: 1.48;
     }}
     .prepare-section {{
       display: grid;
@@ -1353,7 +1508,8 @@ def render_opportunity_page(
       .content-grid,
       .prepare-grid,
       .apply-list,
-      .related-grid {{
+      .related-grid,
+      .verification-list {{
         grid-template-columns: 1fr;
       }}
       .content-grid--single .section-stack {{ grid-template-columns: 1fr; }}
@@ -1423,11 +1579,15 @@ def render_opportunity_page(
             <a class="button primary" href="{source_href}" target="_blank" rel="noopener">
               {escape(str(copy["detail_open_source"]))}
             </a>
+            <button class="button slim" type="button" id="copy-working-brief">
+              {escape(str(copy["detail_copy_brief"]))}
+            </button>
             <a class="button slim" href="{catalog_href}">
               {escape(str(copy["detail_all_opportunities"]))}
             </a>
             {application_button}
           </div>
+          <p class="hero-action-status" id="copy-working-brief-status" aria-live="polite"></p>
         </div>
         <aside class="hero-stats">
           <div>
@@ -1458,6 +1618,7 @@ def render_opportunity_page(
       </div>
       {sidebar_markup}
     </section>
+    {verification_markup}
     {prepare_markup}
     {apply_markup}
     {related_markup}
@@ -1469,5 +1630,23 @@ def render_opportunity_page(
       <p>{escape(str(copy["footer_disclaimer"]))}</p>
     </footer>
   </main>
+  <script>
+    (() => {{
+      const button = document.getElementById("copy-working-brief");
+      const status = document.getElementById("copy-working-brief-status");
+      const brief = {working_brief_json};
+      const doneMessage = {brief_done_json};
+      const promptLabel = {brief_prompt_json};
+      button?.addEventListener("click", async () => {{
+        try {{
+          if (!navigator.clipboard || !window.isSecureContext) throw new Error("clipboard");
+          await navigator.clipboard.writeText(brief);
+          status.textContent = doneMessage;
+        }} catch {{
+          window.prompt(promptLabel, brief);
+        }}
+      }});
+    }})();
+  </script>
 </body>
 </html>"""
