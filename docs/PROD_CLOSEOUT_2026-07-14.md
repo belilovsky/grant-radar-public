@@ -9,8 +9,9 @@ database schema or ingestion behavior.
 
 ## Release
 
-- Release PR: `#1` (`codex/qazfund-visual-density-20260714`).
-- Deployed code revision: `1220545b280098ceb4b406c1f01c799e9c722178`.
+- Release PR: `#1` (`codex/qazfund-visual-density-20260714`), merged.
+- Release merge and deployed application revision:
+  `006d41fd43bb1094761e7e84e39fc73de70ecb4e`.
 - Public URL: `https://qaz.fund/`.
 - Runtime: API, PostgreSQL and Redis healthy; worker running.
 
@@ -32,7 +33,7 @@ the Astana Hub funder profile, public source status, operator shell and branded
 
 - Full tests: `401 passed`.
 - Black, isort, Flake8 and mypy: passed.
-- GitHub Actions `Verify` run `#30`: passed.
+- GitHub Actions `Verify` runs `#30` and `#31`: passed.
 - Production smoke: `status=ok`.
 - Indexed records: `818`.
 - Relevant open opportunities: `149`.
