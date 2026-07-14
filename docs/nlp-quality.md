@@ -3,7 +3,7 @@
 Grant Radar uses two layers for text quality:
 
 1. deterministic QA helpers in `core/nlp.py`;
-2. optional DeepSeek enrichment through `scripts/deepseek_enrich_content.py`.
+2. optional QazCompute enrichment through `scripts/deepseek_enrich_content.py`.
 
 The deterministic layer is intentionally conservative. It extracts coarse
 entities for audit and routing:
@@ -35,16 +35,17 @@ runs; inspect the JSON report and treat `latin_heavy_ru_text`,
 `missing_cyrillic_ru_text`, `repeated_phrase`, and `short_summary` as content
 backlog candidates.
 
-## DeepSeek dry-run
+## QazCompute dry-run
 
-Use this when `DEEPSEEK_API_KEY` is available in the runtime environment:
+Set `QAZCOMPUTE_URL` and the service credential `QAZCOMPUTE_API_KEY`. Provider
+credentials remain inside QazCompute and must not be copied into QAZ.FUND.
 
 ```bash
 PYTHONPATH=. ./.venv/bin/python -m scripts.deepseek_enrich_content \
   --limit 20
 ```
 
-Without provider credentials, verify DB access and rule-based enrichment only:
+Without the service credential, verify DB access and rule-based enrichment only:
 
 ```bash
 PYTHONPATH=. ./.venv/bin/python -m scripts.deepseek_enrich_content \
@@ -65,7 +66,9 @@ PYTHONPATH=. ./.venv/bin/python -m scripts.deepseek_enrich_content \
 This writes `raw.i18n.*.nlp` metadata only. It does not overwrite public Russian
 summaries by default.
 
-To replace Russian summaries from DeepSeek output, add `--apply-summary`:
+`--apply-summary` only accepts a response with `decision_ready=true`. Current
+model and local-rule profiles are deliberately shadow-only, so public summaries
+remain unchanged until a product benchmark promotes the contract.
 
 ```bash
 PYTHONPATH=. ./.venv/bin/python -m scripts.deepseek_enrich_content \
@@ -74,8 +77,9 @@ PYTHONPATH=. ./.venv/bin/python -m scripts.deepseek_enrich_content \
   --apply-summary
 ```
 
-Use `--apply-summary` in small batches and rerun `scripts/nlp_quality_audit.py`
-after each batch.
+Run the audit after each applied batch. Never treat HTTP 200 as proof that the
+result is publication-ready; persist and inspect `runtime.quality_tier` and
+`runtime.decision_ready`.
 
 ## Current production state
 
@@ -90,6 +94,5 @@ The final 2026-06-08 production audit on `https://qaz.fund` is clean:
 - a separate source-link/content pass also reported no rootish source URLs and
   no forbidden content hits.
 
-The next safe step is optional, not a release blocker: run DeepSeek enrichment
-in small batches once the `DEEPSEEK_API_KEY` is present in the production
-environment, then rerun the audit before applying summaries publicly.
+The next safe step is a shadow QazCompute batch. It may enrich internal metadata,
+but it cannot replace public summaries until the benchmark gate is recorded.

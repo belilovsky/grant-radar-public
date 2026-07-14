@@ -1,6 +1,7 @@
 """Reusable opportunity-radar contracts for QAZ.FUND."""
 
 from .geofit import GeoFitResult, evaluate_geo_fit
+from .lifecycle import normalized_opportunity_status, public_lifecycle
 from .models import OpportunityRecord, SourceContract
 
 __all__ = [
@@ -8,4 +9,6 @@ __all__ = [
     "OpportunityRecord",
     "SourceContract",
     "evaluate_geo_fit",
+    "normalized_opportunity_status",
+    "public_lifecycle",
 ]

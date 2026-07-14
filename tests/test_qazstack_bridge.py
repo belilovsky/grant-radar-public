@@ -1,9 +1,10 @@
 from __future__ import annotations
 
+from datetime import date
 from types import SimpleNamespace
 
 from core import geofit, qazstack_bridge
-from qazstack import __version__ as qazstack_version
+from qazstack import SNAPSHOT_COMMIT, __version__ as qazstack_version
 from qazstack.opportunities import OpportunityRecord, evaluate_geo_fit
 from sources.kazakhstan_watch import KazakhstanWatchParser
 
@@ -17,7 +18,8 @@ def test_vendored_qazstack_opportunities_snapshot_is_importable() -> None:
         )
     )
 
-    assert qazstack_version == "1.6.1"
+    assert qazstack_version == "1.22.1"
+    assert SNAPSHOT_COMMIT == "3ccd651f"
     assert result.has_positive_signal
     assert result.has_central_asia_signal
     assert result.is_relevant
@@ -72,3 +74,27 @@ def test_source_contract_validation_uses_vendored_qazstack_snapshot() -> None:
     qazstack_bridge._shared_source_contract_cls.cache_clear()
 
     assert qazstack_bridge.validate_shared_source_contract(KazakhstanWatchParser())
+
+
+def test_shared_lifecycle_contract_is_available() -> None:
+    item = SimpleNamespace(
+        opportunity_status=None,
+        deadline=date(2026, 7, 20),
+        tags=[],
+        raw={},
+    )
+
+    assert (
+        qazstack_bridge.shared_normalized_status(
+            item,
+            today=date(2026, 7, 15),
+        )
+        == "closing_soon"
+    )
+    assert (
+        qazstack_bridge.shared_public_lifecycle(
+            item,
+            today=date(2026, 7, 15),
+        )
+        == "closing_soon"
+    )
