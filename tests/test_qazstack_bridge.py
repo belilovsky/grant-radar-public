@@ -19,8 +19,8 @@ def test_vendored_qazstack_opportunities_snapshot_is_importable() -> None:
         )
     )
 
-    assert qazstack_version == "1.24.0"
-    assert SNAPSHOT_COMMIT == "31cada06"
+    assert qazstack_version == "1.26.0"
+    assert SNAPSHOT_COMMIT == "5b165528"
     assert result.has_positive_signal
     assert result.has_central_asia_signal
     assert result.is_relevant

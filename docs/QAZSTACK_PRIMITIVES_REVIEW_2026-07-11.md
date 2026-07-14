@@ -13,8 +13,8 @@ optional bridge while preserving local fallback behavior.
 ## Update 2026-07-15
 
 - Canonical QazStack branch:
-  `codex/qazfund-opportunity-contract-20260715`, commit `31cada06`, version
-  `1.24.0`.
+  `codex/qazfund-opportunity-contract-20260715`, commit `5b165528`, version
+  `1.26.0`.
 - Shared contracts now cover source metadata, explainable geo-fit and
   deterministic internal/public lifecycle values.
 - QAZ.FUND consumes lifecycle through the optional bridge and keeps its local
@@ -28,8 +28,8 @@ optional bridge while preserving local fallback behavior.
 ## Implemented runtime bridge
 
 - QazStack branch: `codex/qazfund-opportunity-contract-20260715`
-- QazStack snapshot source commit: `31cada06`
-- QazStack package: `qazstack==1.24.0`
+- QazStack snapshot source commit: `5b165528`
+- QazStack package: `qazstack==1.26.0`
 - Shared module: `qazstack.opportunities`
 - QAZ.FUND bridge: `core/qazstack_bridge.py`
 - Active integration points: `core/geofit.py` and
@@ -120,7 +120,7 @@ Completed in the QAZ.FUND / QazStack integration pass:
    QAZ.FUND adopts new AV DS/QazStack operator primitives.
 2. Add this review to repo docs and test that it stays present.
 3. Add QAZ.FUND primitives to the platform-side QazStack registry.
-4. Make QazStack installable as `qazstack==1.24.0` on the platform side.
+4. Make QazStack installable as `qazstack==1.26.0` on the platform side.
 5. Add `qazstack.opportunities` as a dependency-free shared contract.
 6. Add QAZ.FUND optional runtime bridge with local fallback.
 7. Vendor the tested dependency-free QazStack opportunities snapshot in
