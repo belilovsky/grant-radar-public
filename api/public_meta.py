@@ -2,8 +2,8 @@
 
 from __future__ import annotations
 
+import json
 import os
-from html import escape
 
 DEFAULT_GA4_ID = "G-9EF720PSER"
 DEFAULT_YANDEX_METRICA_ID = "109803011"
@@ -106,58 +106,64 @@ def analytics_head_html() -> str:
     ga4_id = _env_value("PUBLIC_GA4_MEASUREMENT_ID", DEFAULT_GA4_ID)
     yandex_id = _env_value("PUBLIC_YANDEX_METRICA_ID", DEFAULT_YANDEX_METRICA_ID)
     clarity_id = _env_value("PUBLIC_CLARITY_PROJECT_ID", DEFAULT_CLARITY_PROJECT_ID)
-    parts: list[str] = []
+    loaders: list[str] = []
     if ga4_id:
-        escaped_ga4 = escape(ga4_id, quote=True)
-        ga4_src = "https://www.googletagmanager.com/gtag/js" f"?id={escaped_ga4}"
-        ga4_bootstrap = (
+        ga4_json = json.dumps(ga4_id).replace("<", "\\u003c")
+        ga4_src_json = json.dumps(
+            f"https://www.googletagmanager.com/gtag/js?id={ga4_id}"
+        ).replace("<", "\\u003c")
+        loaders.append(
             "window.dataLayer=window.dataLayer||[];"
-            "function gtag(){dataLayer.push(arguments);}"
-            'gtag("js",new Date());'
-            f'gtag("config","{escaped_ga4}");'
-        )
-        parts.extend(
-            [
-                f'  <script async src="{ga4_src}"></script>',
-                f"  <script>{ga4_bootstrap}</script>",
-            ]
+            "window.gtag=window.gtag||function(){window.dataLayer.push(arguments);};"
+            'window.gtag("js",new Date());'
+            f'window.gtag("config",{ga4_json});'
+            f"loadScript({ga4_src_json});"
         )
     if yandex_id:
-        escaped_yandex = escape(yandex_id, quote=True)
-        yandex_bootstrap = (
-            "  <script>(function(m,e,t,r,i,k,a){m[i]=m[i]||function(){"
-            "(m[i].a=m[i].a||[]).push(arguments)};"
-            "m[i].l=1*new Date();for(var j=0;j<document.scripts.length;j++){"
-            "if(document.scripts[j].src===r){return;}}"
-        )
-        yandex_loader = (
-            "k=e.createElement(t),a=e.getElementsByTagName(t)[0],k.async=1,"
-            "k.src=r,a.parentNode.insertBefore(k,a);}"
-        )
-        yandex_src = "https://mc.yandex.ru/metrika/tag.js" f"?id={escaped_yandex}"
-        yandex_init = (
-            f'(window,document,"script","{yandex_src}","ym"));'
-            f'ym({escaped_yandex},"init",'
+        yandex_json = json.dumps(yandex_id).replace("<", "\\u003c")
+        yandex_src_json = json.dumps(
+            f"https://mc.yandex.ru/metrika/tag.js?id={yandex_id}"
+        ).replace("<", "\\u003c")
+        loaders.append(
+            "window.ym=window.ym||function(){"
+            "(window.ym.a=window.ym.a||[]).push(arguments);};"
+            "window.ym.l=Date.now();"
+            f"loadScript({yandex_src_json});"
+            f'window.ym({yandex_json},"init",'
             "{ssr:true,webvisor:true,clickmap:true,"
             'ecommerce:"dataLayer",accurateTrackBounce:true,'
-            "trackLinks:true});</script>"
+            "trackLinks:true});"
         )
-        parts.append((f"{yandex_bootstrap}{yandex_loader}" f"{yandex_init}"))
     if clarity_id:
-        escaped_clarity = escape(clarity_id, quote=True)
-        clarity_bootstrap = (
-            "  <script>(function(c,l,a,r,i,t,y){c[a]=c[a]||function(){"
-            "(c[a].q=c[a].q||[]).push(arguments)};"
-            "t=l.createElement(r);t.async=1;"
-            't.src="https://www.clarity.ms/tag/"+i;'
-            "y=l.getElementsByTagName(r)[0];"
+        clarity_src_json = json.dumps(
+            f"https://www.clarity.ms/tag/{clarity_id}"
+        ).replace("<", "\\u003c")
+        loaders.append(
+            "window.clarity=window.clarity||function(){"
+            "(window.clarity.q=window.clarity.q||[]).push(arguments);};"
+            f"loadScript({clarity_src_json});"
         )
-        parts.append(
-            (
-                f"{clarity_bootstrap}"
-                f"y.parentNode.insertBefore(t,y);}})"
-                f'(window,document,"clarity","script","{escaped_clarity}");'
-                "</script>"
-            )
-        )
-    return "\n".join(parts)
+    if not loaders:
+        return ""
+    loader_body = "".join(loaders)
+    return f"""  <script>
+  (() => {{
+    let analyticsStarted = false;
+    const loadScript = (src) => {{
+      const script = document.createElement("script");
+      script.async = true;
+      script.src = src;
+      document.head.appendChild(script);
+    }};
+    const startAnalytics = () => {{
+      if (analyticsStarted) return;
+      if (navigator.doNotTrack === "1" || navigator.globalPrivacyControl === true) return;
+      analyticsStarted = true;
+      {loader_body}
+    }};
+    ["pointerdown", "keydown", "touchstart"].forEach((eventName) => {{
+      window.addEventListener(eventName, startAnalytics, {{ once: true, passive: true }});
+    }});
+    window.setTimeout(startAnalytics, 20000);
+  }})();
+  </script>"""

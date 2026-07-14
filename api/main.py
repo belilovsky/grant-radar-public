@@ -1286,23 +1286,85 @@ async def swagger_docs(request: Request) -> HTMLResponse:
     docs_lang = _public_lang(str(request.query_params.get("lang") or "").strip())
     home_href = f"{root_path}/?lang={docs_lang}" if root_path else f"/?lang={docs_lang}"
     openapi_href = f"{root_path}/openapi.json" if root_path else "/openapi.json"
+    docs_copy = {
+        "ru": {
+            "back": "Вернуться на сайт",
+            "heading": "Документация API",
+            "description": (
+                "Интерактивное описание публичного API QAZ.FUND для каталогов, "
+                "источников, возможностей и статуса данных."
+            ),
+        },
+        "en": {
+            "back": "Back to site",
+            "heading": "API documentation",
+            "description": (
+                "Interactive reference for the public QAZ.FUND API covering the "
+                "catalog, sources, opportunities, and data status."
+            ),
+        },
+    }[docs_lang]
+    canonical_href = _public_url(request, root_path, f"/docs?lang={docs_lang}")
     swagger = get_swagger_ui_html(
         openapi_url=openapi_href,
         title="QAZ.FUND API",
         swagger_favicon_url=f"{root_path}/favicon.ico" if root_path else "/favicon.ico",
     )
-    back_label = "Back to site" if docs_lang == "en" else "Вернуться на сайт"
-    back_link = (
-        '<div style="padding:16px 20px 0; font-family:system-ui,-apple-system,sans-serif;">'
+    page_header = (
+        '<header class="qazfund-docs-header">'
         f'<a href="{escape(home_href, quote=True)}" '
-        'style="display:inline-flex; align-items:center; gap:8px; '
-        'text-decoration:none; font-weight:600; color:#0f172a;">'
-        f"← {escape(back_label)}</a></div>"
+        f'aria-label="{escape(str(docs_copy["back"]), quote=True)}">'
+        f'← {escape(str(docs_copy["back"]))}</a>'
+        f'<span class="qazfund-docs-title">{escape(str(docs_copy["heading"]))}</span>'
+        "</header>"
     )
+    head_markup = f"""
+  <meta name="description" content="{escape(str(docs_copy["description"]), quote=True)}">
+  <link rel="canonical" href="{escape(canonical_href, quote=True)}">
+  <style>
+    .qazfund-docs-header {{
+      max-width: 1460px;
+      margin: 0 auto;
+      padding: 16px 20px 0;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    }}
+    .qazfund-docs-header a {{
+      color: inherit;
+      font-weight: 650;
+      text-decoration: none;
+    }}
+    .qazfund-docs-title {{
+      margin: 0;
+      color: inherit;
+      font-size: 14px;
+      line-height: 1.3;
+    }}
+    .qazfund-docs-header a:focus-visible {{
+      outline: 2px solid currentColor;
+      outline-offset: 4px;
+    }}
+    @media (max-width: 520px) {{
+      .qazfund-docs-header {{ align-items: flex-start; padding-inline: 16px; }}
+      .qazfund-docs-title {{ max-width: 15ch; text-align: right; }}
+    }}
+  </style>
+"""
     raw_body = (
         swagger.body.tobytes() if isinstance(swagger.body, memoryview) else swagger.body
     )
-    body = raw_body.decode("utf-8").replace("<body>", f"<body>{back_link}", 1)
+    body = raw_body.decode("utf-8")
+    body = body.replace("<html>", f'<html lang="{docs_lang}">', 1)
+    body = body.replace("<head>", f"<head>{head_markup}", 1)
+    body = body.replace("<body>", f"<body>{page_header}", 1)
+    body = body.replace(
+        '<div id="swagger-ui">\n    </div>',
+        '<main id="swagger-ui"></main>',
+        1,
+    )
     headers = dict(swagger.headers)
     headers.pop("content-length", None)
     return HTMLResponse(body, status_code=swagger.status_code, headers=headers)

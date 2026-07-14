@@ -43,6 +43,7 @@ def render_not_found_page(*, lang: str, root_path: str = "") -> str:
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="robots" content="noindex,follow">
+  <meta name="description" content="{escape(copy["text"], quote=True)}">
   <title>{escape(copy["title"])}</title>
 {AVDS_FONT_HEAD}
   <style>

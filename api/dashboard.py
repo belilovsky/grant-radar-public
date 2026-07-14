@@ -3774,7 +3774,7 @@ def render_dashboard(
       border: 0;
       border-radius: var(--av-radius-sm);
       background: var(--panel-subtle);
-      color: var(--muted);
+      color: color-mix(in oklab, var(--muted), var(--ink) 18%);
       font-size: var(--av-text-xs);
       font-weight: 700;
       overflow-wrap: anywhere;
