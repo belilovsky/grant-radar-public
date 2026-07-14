@@ -478,7 +478,7 @@ COPY = {
         "workspace_imported": "Рабочее пространство восстановлено.",
         "workspace_import_error": "Не удалось прочитать резервную копию.",
         "report_issue": "Уточнить данные",
-        "open_source_short": "Источник",
+        "open_source_short": "Официальный источник",
         "footer_owner": "QAZ.FUND – публичный навигатор возможностей. Сделано",
         "footer_disclaimer": (
             "QAZ.FUND не выдаёт гранты и не принимает заявки. Финальные условия, "
@@ -556,8 +556,8 @@ COPY = {
         "empty_action_deadline": "Любые сроки",
         "empty_action_score": "Стандартный порог",
         "empty_action_scope": "Открыть весь индекс",
-        "open_details": "Подробнее",
-        "read_more": "Открыть страницу",
+        "open_details": "Быстрый просмотр",
+        "read_more": "Полная карточка",
         "open_rolling": "Открыто / бессрочно",
         "score_title": "Оценка релевантности по эвристикам QAZ.FUND",
         "score_exact": "Точное",
@@ -1378,7 +1378,7 @@ COPY = {
         "workspace_imported": "Workspace restored.",
         "workspace_import_error": "The workspace backup could not be read.",
         "report_issue": "Correct the data",
-        "open_source_short": "Source",
+        "open_source_short": "Official source",
         "footer_owner": "QAZ.FUND is a public opportunity navigator. Built by",
         "footer_disclaimer": (
             "QAZ.FUND does not award grants or process applications. Always verify "
@@ -1455,8 +1455,8 @@ COPY = {
         "empty_action_deadline": "Any timing",
         "empty_action_score": "Standard threshold",
         "empty_action_scope": "Open full index",
-        "open_details": "Details",
-        "read_more": "Open page",
+        "open_details": "Quick view",
+        "read_more": "Full card",
         "open_rolling": "Open / Rolling",
         "score_title": "QAZ.FUND relevance score based on current heuristics",
         "score_exact": "Exact",
@@ -2081,19 +2081,17 @@ def render_dashboard(
     .shell {{
       width: min(var(--container-max), calc(100% - 28px));
       margin: 0 auto;
-      padding: var(--av-spacing-3) 0 var(--av-spacing-6);
+      padding: var(--av-spacing-3) 0 var(--av-spacing-8);
     }}
     .hero-band {{
       position: relative;
       overflow: hidden;
-      padding: 18px 20px 16px;
+      padding: 16px 18px 0;
       margin-bottom: var(--av-spacing-3);
       border: 1px solid var(--line-subtle);
-      border-radius: var(--av-radius-lg);
-      background:
-        linear-gradient(135deg, rgb(255 255 255 / 0.82), rgb(255 255 255 / 0.48)),
-        color-mix(in oklab, var(--panel), var(--brand-soft) 22%);
-      box-shadow: var(--shadow-sm);
+      border-radius: var(--av-radius-md);
+      background: var(--panel);
+      box-shadow: var(--shadow-xs);
       isolation: isolate;
     }}
     .hero-band::before {{
@@ -2118,7 +2116,7 @@ def render_dashboard(
       gap: var(--av-spacing-3);
       padding: 8px 10px;
       border: 1px solid var(--line-subtle);
-      border-radius: var(--av-radius-lg);
+      border-radius: var(--av-radius-md);
       background: color-mix(in oklab, var(--panel), transparent 8%);
       box-shadow: var(--shadow-xs);
       backdrop-filter: blur(12px);
@@ -2149,11 +2147,12 @@ def render_dashboard(
     }}
     .brand h1 {{
       margin: 0;
-      font-size: clamp(38px, 5.4vw, 60px);
-      line-height: 0.98;
+      font-size: clamp(32px, 3.5vw, 44px);
+      line-height: 1;
       letter-spacing: 0;
     }}
     .brand p {{
+      display: none;
       margin: 0;
       max-width: 760px;
       color: color-mix(in oklab, var(--ink), white 28%);
@@ -2161,7 +2160,7 @@ def render_dashboard(
       line-height: 1.5;
     }}
     .focus-row {{
-      display: flex;
+      display: none;
       flex-wrap: wrap;
       gap: var(--av-spacing-2);
       align-items: flex-start;
@@ -2184,8 +2183,8 @@ def render_dashboard(
     }}
     .hero-grid {{
       display: grid;
-      grid-template-columns: minmax(0, 1.12fr) minmax(300px, 0.88fr);
-      gap: var(--av-spacing-3);
+      grid-template-columns: minmax(0, 1fr) minmax(480px, 0.72fr);
+      gap: var(--av-spacing-4);
       align-items: start;
       margin-bottom: var(--av-spacing-3);
     }}
@@ -2243,11 +2242,12 @@ def render_dashboard(
       gap: var(--av-spacing-3);
       min-width: 0;
       align-content: start;
-      padding: 14px;
-      border: 1px solid color-mix(in oklab, var(--line), var(--brand) 12%);
-      border-radius: var(--av-radius-md);
-      background: rgb(255 255 255 / 0.58);
-      box-shadow: inset 0 1px 0 rgb(255 255 255 / 0.58);
+      padding: 4px 0 4px var(--av-spacing-4);
+      border: 0;
+      border-left: 1px solid var(--line-subtle);
+      border-radius: 0;
+      background: transparent;
+      box-shadow: none;
     }}
     .hero-stage-eyebrow {{
       color: var(--muted);
@@ -2266,7 +2266,7 @@ def render_dashboard(
       letter-spacing: 0;
     }}
     .hero-points {{
-      display: grid;
+      display: none;
       grid-template-columns: repeat(3, minmax(0, 1fr));
       gap: var(--av-spacing-2);
     }}
@@ -2300,7 +2300,7 @@ def render_dashboard(
     }}
     .hero-pick-row {{
       display: grid;
-      grid-template-columns: repeat(2, minmax(0, 1fr));
+      grid-template-columns: repeat(3, minmax(0, 1fr));
       gap: var(--av-spacing-1);
     }}
     .hero-pick {{
@@ -2316,7 +2316,7 @@ def render_dashboard(
       justify-content: flex-start;
     }}
     .hero-pick:last-child {{
-      grid-column: 1 / -1;
+      grid-column: auto;
     }}
     .hero-pick:hover,
     .hero-pick:focus-visible {{
@@ -2328,11 +2328,12 @@ def render_dashboard(
       width: 100%;
       grid-template-columns: repeat(3, minmax(0, 1fr));
       margin-bottom: 0;
-      border: 1px solid color-mix(in oklab, var(--line-subtle), white 18%);
-      background: rgb(255 255 255 / 0.48);
-      box-shadow: inset 0 1px 0 rgb(255 255 255 / 0.5);
+      border: 0;
+      border-top: 1px solid var(--line-subtle);
+      background: transparent;
+      box-shadow: none;
       backdrop-filter: none;
-      border-radius: var(--av-radius-md);
+      border-radius: 0;
     }}
     .hero-band .metric {{
       min-height: 64px;
@@ -3046,6 +3047,7 @@ def render_dashboard(
       opacity: 0.5;
       cursor: not-allowed;
     }}
+    #clear-filters:disabled {{ display: none; }}
     .button:focus-visible,
     .field:focus-visible,
     .text-button:focus-visible,
@@ -3150,14 +3152,13 @@ def render_dashboard(
     .filters-shell {{
       display: grid;
       gap: var(--av-spacing-2);
-      margin-bottom: var(--av-spacing-3);
-      padding: 14px;
+      margin-bottom: var(--av-spacing-2);
+      padding: 10px 12px 12px;
       border: 1px solid var(--line);
-      border-radius: var(--av-radius-lg);
-      background:
-        linear-gradient(180deg, rgb(255 255 255 / 0.68), rgb(255 255 255 / 0.34)),
-        var(--panel-wash);
-      box-shadow: var(--shadow-xs);
+      border-top: 0;
+      border-radius: 0 0 var(--av-radius-md) var(--av-radius-md);
+      background: var(--panel);
+      box-shadow: none;
     }}
     .filters {{
       display: grid;
@@ -3222,18 +3223,27 @@ def render_dashboard(
     .preset-grid {{
       display: grid;
       grid-template-columns: repeat(3, minmax(0, 1fr));
-      gap: var(--av-spacing-1);
-      margin-bottom: var(--av-spacing-1);
+      gap: 0;
+      margin-bottom: 0;
+      padding: 10px 12px;
+      border: 1px solid var(--line);
+      border-radius: var(--av-radius-md) var(--av-radius-md) 0 0;
+      background: var(--panel);
     }}
     .preset-group {{
       display: grid;
       align-content: start;
-      gap: 8px;
+      gap: 6px;
       min-width: 0;
-      padding: 10px;
-      border: 1px solid var(--line);
-      border-radius: var(--av-radius-md);
-      background: var(--panel-wash);
+      padding: 0 12px;
+      border: 0;
+      border-radius: 0;
+      background: transparent;
+    }}
+    .preset-group:first-child {{ padding-left: 0; }}
+    .preset-group:last-child {{ padding-right: 0; }}
+    .preset-group + .preset-group {{
+      border-left: 1px solid var(--line-subtle);
     }}
     .preset-row {{
       display: flex;
@@ -3309,10 +3319,11 @@ def render_dashboard(
       display: grid;
       gap: 6px;
       margin-bottom: var(--av-spacing-2);
-      padding: 10px 12px;
-      border: 1px solid var(--line-subtle);
-      border-radius: var(--av-radius-md);
-      background: var(--panel);
+      padding: 8px 2px;
+      border: 0;
+      border-bottom: 1px solid var(--line-subtle);
+      border-radius: 0;
+      background: transparent;
     }}
     .saved-views-head {{
       display: flex;
@@ -3366,6 +3377,7 @@ def render_dashboard(
       flex-wrap: wrap;
       gap: var(--av-spacing-1);
     }}
+    .saved-view-row:has(.saved-empty) {{ display: none; }}
     .saved-view-pill {{
       display: inline-flex;
       align-items: center;
@@ -3521,11 +3533,11 @@ def render_dashboard(
     }}
     .opportunity {{
       border: 1px solid var(--line);
-      border-left: 3px solid var(--line-strong);
+      border-left: 2px solid var(--line-strong);
       border-radius: var(--av-radius-md);
       background: var(--panel);
-      padding: 16px 18px;
-      box-shadow: var(--shadow-xs);
+      padding: 13px 14px;
+      box-shadow: none;
       position: relative;
       overflow: visible;
       transition:
@@ -3540,32 +3552,38 @@ def render_dashboard(
     .opportunity.warn {{ border-left-color: var(--warn); }}
     .opportunity-main {{
       display: grid;
-      grid-template-columns: minmax(0, 1fr) minmax(300px, 0.36fr);
-      gap: 20px;
+      grid-template-columns: minmax(0, 1fr) minmax(420px, 0.46fr);
+      gap: 14px;
       align-items: start;
     }}
     .opportunity-content {{
       display: grid;
-      gap: 11px;
+      gap: 8px;
       min-width: 0;
     }}
     .opportunity-rail {{
       display: grid;
+      grid-template-columns: minmax(150px, 0.8fr) minmax(190px, 1fr);
+      grid-template-areas:
+        "status meta"
+        "fit meta"
+        "actions meta";
       align-content: start;
-      gap: 12px;
+      gap: 8px;
       min-width: 0;
-      padding: 12px;
-      border: 1px solid var(--line-subtle);
-      border-radius: var(--av-radius-md);
-      background: var(--panel-wash);
+      padding: 1px 0 1px 14px;
+      border: 0;
+      border-left: 1px solid var(--line-subtle);
+      border-radius: 0;
+      background: transparent;
     }}
     .opportunity-heading {{
       display: grid;
-      gap: 8px;
+      gap: 6px;
     }}
     .opportunity h3 {{
       margin: 0;
-      font-size: 17px;
+      font-size: 16px;
       font-weight: 650;
       line-height: var(--av-leading-snug);
       display: -webkit-box;
@@ -3606,7 +3624,10 @@ def render_dashboard(
       line-height: 1.4;
     }}
     .fit-block {{
-      display: grid;
+      grid-area: fit;
+      display: flex;
+      align-items: center;
+      flex-wrap: wrap;
       gap: 6px;
     }}
     .fit-label {{
@@ -3683,13 +3704,15 @@ def render_dashboard(
       gap: var(--av-spacing-1);
     }}
     .meta-rows {{
+      grid-area: meta;
       display: grid;
-      gap: 8px;
+      grid-template-columns: 1fr;
+      gap: 5px;
     }}
     .meta-row {{
       display: grid;
-      grid-template-columns: 18px minmax(68px, 0.42fr) minmax(0, 1fr);
-      gap: 7px;
+      grid-template-columns: 18px minmax(0, 1fr);
+      gap: 6px;
       align-items: center;
       min-width: 0;
       font-size: var(--av-text-xs);
@@ -3736,10 +3759,12 @@ def render_dashboard(
         var(--panel);
     }}
     .meta-row span {{
+      grid-column: 2;
       color: var(--muted);
       font-weight: 600;
     }}
     .meta-row strong {{
+      grid-column: 2;
       min-width: 0;
       color: var(--ink);
       font-weight: 650;
@@ -3776,6 +3801,7 @@ def render_dashboard(
       text-transform: none;
     }}
     .side {{
+      grid-area: status;
       min-width: 0;
       display: flex;
       align-items: center;
@@ -4017,15 +4043,17 @@ def render_dashboard(
       flex-wrap: wrap;
     }}
     .card-actions-secondary {{
+      grid-area: actions;
       display: flex;
       align-items: center;
       gap: var(--av-spacing-2);
       flex-wrap: wrap;
     }}
     .workflow-control {{
+      grid-column: 1 / -1;
       display: grid;
       gap: 5px;
-      padding-top: 9px;
+      padding-top: 7px;
       border-top: 1px solid var(--line-subtle);
     }}
     .workflow-control span {{
@@ -4048,7 +4076,7 @@ def render_dashboard(
       display: inline-flex;
       align-items: center;
       gap: 5px;
-      min-height: var(--control-height-sm);
+      min-height: 28px;
       border: 1px solid transparent;
       border-radius: var(--av-radius-md);
       background: transparent;
@@ -4059,18 +4087,7 @@ def render_dashboard(
       cursor: pointer;
     }}
     .detail-link::before {{
-      content: "i";
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-      width: 16px;
-      height: 16px;
-      border-radius: var(--av-radius-full);
-      background: var(--brand-soft);
-      color: var(--brand);
-      font-size: 11px;
-      font-weight: 800;
-      line-height: 1;
+      content: none;
     }}
     .detail-link:hover,
     .detail-link:focus-visible {{
@@ -4172,14 +4189,7 @@ def render_dashboard(
       text-decoration: none;
     }}
     .more-link::before {{
-      content: "";
-      width: 12px;
-      height: 12px;
-      border-radius: 3px;
-      box-shadow:
-        inset 0 0 0 1.5px currentColor,
-        4px -4px 0 -3px currentColor;
-      opacity: 0.72;
+      content: none;
     }}
     .more-link:hover,
     .more-link:focus-visible {{
@@ -4500,6 +4510,8 @@ def render_dashboard(
       .hero-grid {{
         grid-template-columns: 1fr;
       }}
+      .hero-pick-row {{ grid-template-columns: repeat(2, minmax(0, 1fr)); }}
+      .hero-pick:last-child {{ grid-column: 1 / -1; }}
       .spotlight-grid {{
         grid-template-columns: repeat(2, minmax(0, 1fr));
       }}
@@ -4542,11 +4554,20 @@ def render_dashboard(
       .advanced-filters .filters {{
         grid-template-columns: 1fr 1fr;
       }}
+      .preset-group {{ padding: 8px 10px; }}
+      .preset-group:first-child {{ padding-left: 0; }}
+      .preset-group:last-child {{ padding-right: 0; }}
       .filters .filter-block:first-child {{
         grid-column: 1 / -1;
       }}
       .health-grid {{
         grid-template-columns: repeat(2, minmax(0, 1fr));
+      }}
+      .opportunity-main {{ grid-template-columns: 1fr; }}
+      .opportunity-rail {{
+        padding: 10px 0 0;
+        border: 0;
+        border-top: 1px solid var(--line-subtle);
       }}
     }}
 
@@ -4670,6 +4691,16 @@ def render_dashboard(
       .advanced-filters .filters {{
         grid-template-columns: 1fr;
       }}
+      .preset-grid {{ padding-block: 4px; }}
+      .preset-group,
+      .preset-group:first-child,
+      .preset-group:last-child {{
+        padding: 8px 0;
+      }}
+      .preset-group + .preset-group {{
+        border-left: 0;
+        border-top: 1px solid var(--line-subtle);
+      }}
       .panel {{
         padding-top: var(--av-spacing-5);
         margin-top: var(--av-spacing-5);
@@ -4711,9 +4742,16 @@ def render_dashboard(
         grid-template-columns: 1fr;
       }}
       .opportunity-rail {{
-        padding: 12px;
-        border: 1px solid var(--line-subtle);
+        padding: 10px 0 0;
+        border: 0;
+        border-top: 1px solid var(--line-subtle);
       }}
+      .meta-rows {{ grid-template-columns: 1fr; }}
+      .meta-row {{
+        grid-template-columns: 18px minmax(68px, 0.42fr) minmax(0, 1fr);
+      }}
+      .meta-row span,
+      .meta-row strong {{ grid-column: auto; }}
       .side {{
         justify-content: flex-start;
         min-width: 0;
@@ -4859,6 +4897,16 @@ def render_dashboard(
       .health-item {{
         min-width: 0;
       }}
+      .opportunity-rail {{
+        grid-template-columns: 1fr;
+        grid-template-areas:
+          "status"
+          "meta"
+          "fit"
+          "actions";
+      }}
+      .saved-actions .workspace-backup,
+      .saved-actions .workspace-filter:disabled {{ display: none; }}
     }}
 
     @media (max-width: 480px) {{

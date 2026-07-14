@@ -5,6 +5,8 @@ from __future__ import annotations
 import json
 from html import escape
 
+from api.avds import AVDS_CSS, AVDS_FONT_HEAD
+
 COPY = {
     "ru": {
         "title": "Операторский контроль – QAZ.FUND",
@@ -72,47 +74,56 @@ def render_operator_page(*, lang: str, root_path: str = "") -> str:
     copy_json = json.dumps(copy, ensure_ascii=False)
     endpoint_json = json.dumps(health_path, ensure_ascii=False)
     return f"""<!doctype html>
-<html lang="{active_lang}" data-avds="grant-radar" data-av-theme="light">
+<html lang="{active_lang}" data-avds="grant-radar" data-av-theme="light" data-theme="light">
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="robots" content="noindex,nofollow">
   <title>{escape(str(copy["title"]))}</title>
+  {AVDS_FONT_HEAD}
   <style>
-    :root {{ --ink:#12213d; --muted:#60708a; --line:#dfe6ef; --panel:#fff;
-      --wash:#f6f8fb; --brand:#2055c7; --good:#087f5b; --warn:#a15c00;
-      --bad:#b42318; }}
+    {AVDS_CSS}
+    :root {{ --ink:var(--color-text); --muted:var(--color-text-muted);
+      --line:var(--color-border); --line-subtle:var(--color-border-subtle);
+      --panel:var(--color-surface); --wash:var(--color-bg); --brand:var(--color-accent);
+      --brand-soft:var(--color-accent-subtle); --good:var(--color-success);
+      --warn:var(--color-warning); --bad:var(--color-danger); }}
     * {{ box-sizing:border-box; }}
     body {{ margin:0; background:var(--wash); color:var(--ink);
-      font-family:Arial,"Helvetica Neue",sans-serif; }}
+      font-family:var(--av-font-sans); font-size:var(--av-text-base); }}
     button,input {{ font:inherit; }}
     .visually-hidden {{ position:absolute; width:1px; height:1px; padding:0;
       margin:-1px; overflow:hidden; clip:rect(0,0,0,0); white-space:nowrap;
       border:0; }}
-    main {{ width:min(1180px,calc(100% - 32px)); margin:auto; padding:28px 0 56px; }}
+    main {{ width:min(var(--av-container-dashboard),calc(100% - 32px)); margin:auto;
+      padding:16px 0 40px; }}
     .top {{ display:flex; justify-content:space-between; gap:16px;
-      align-items:flex-start; margin-bottom:18px; }}
-    h1 {{ margin:0 0 6px; font-size:clamp(26px,4vw,40px); }}
+      align-items:flex-start; margin-bottom:12px; }}
+    h1 {{ margin:0 0 4px; font-size:clamp(27px,3vw,36px); line-height:1.05; }}
     p {{ margin:0; color:var(--muted); line-height:1.5; }}
     a {{ color:var(--brand); font-weight:700; text-decoration:none; }}
-    .auth,.panel {{ padding:18px; border:1px solid var(--line); border-radius:8px;
+    .auth,.panel {{ padding:14px; border:1px solid var(--line); border-radius:var(--av-radius-md);
       background:var(--panel); }}
+    .auth {{ max-width:720px; }}
     .auth form {{ display:grid; grid-template-columns:1fr auto; gap:10px; margin-top:14px; }}
-    input {{ min-height:44px; padding:0 12px; border:1px solid var(--line);
-      border-radius:6px; color:var(--ink); }}
-    button {{ min-height:42px; padding:0 16px; border:0; border-radius:6px;
+    input {{ min-height:var(--av-control-height-md); padding:0 12px; border:1px solid var(--line);
+      border-radius:var(--av-radius-md); color:var(--ink); }}
+    button {{ min-height:var(--av-control-height-md); padding:0 16px; border:0;
+      border-radius:var(--av-radius-md);
       background:var(--brand); color:#fff; font-weight:700; cursor:pointer; }}
-    button.secondary {{ background:#edf2ff; color:var(--brand); }}
+    button.secondary {{ background:var(--brand-soft); color:var(--brand); }}
     .hint {{ margin-top:9px; font-size:12px; }}
     .message {{ margin:14px 0; color:var(--muted); }}
     .message.bad {{ color:var(--bad); }}
     .dashboard[hidden],.auth[hidden] {{ display:none; }}
     .metrics {{ display:grid; grid-template-columns:repeat(5,minmax(0,1fr));
-      gap:10px; margin:14px 0; }}
-    .metric {{ padding:14px; border:1px solid var(--line); border-radius:8px;
+      gap:0; margin:12px 0; border:1px solid var(--line); border-radius:var(--av-radius-md);
       background:var(--panel); }}
+    .metric {{ padding:10px 12px; border:0; border-left:1px solid var(--line-subtle);
+      background:transparent; }}
+    .metric:first-child {{ border-left:0; }}
     .metric span {{ display:block; color:var(--muted); font-size:12px; }}
-    .metric strong {{ display:block; margin-top:5px; font-size:24px; }}
+    .metric strong {{ display:block; margin-top:3px; font-size:22px; }}
     .grid {{ display:grid; grid-template-columns:minmax(0,1fr) minmax(0,2fr);
       gap:14px; }}
     h2 {{ margin:0 0 12px; font-size:18px; }}
@@ -130,7 +141,7 @@ def render_operator_page(*, lang: str, root_path: str = "") -> str:
     .status-error {{ color:var(--bad); }}
     .status-running {{ color:var(--warn); }}
     @media(max-width:760px) {{
-      main {{ width:min(100% - 20px,1180px); padding-top:16px; }}
+      main {{ width:min(100% - 20px,var(--av-container-dashboard)); padding-top:10px; }}
       .top,.grid {{ display:grid; grid-template-columns:1fr; }}
       .metrics {{ grid-template-columns:repeat(2,minmax(0,1fr)); }}
       .auth form {{ grid-template-columns:1fr; }}

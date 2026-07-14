@@ -290,16 +290,42 @@ def _sections_markup(
     if not sections:
         return ""
     blocks = []
+    seen_sections: list[tuple[str, str]] = []
     for section in sections:
+        if detail.eligibility and len(section.text) < 96 and "_" in section.text:
+            continue
+        normalized_heading = re.sub(
+            r"\W+", " ", (section.heading or fallback_heading).casefold()
+        ).strip()
+        normalized_text = re.sub(r"\W+", " ", section.text.casefold()).strip()
+        if any(
+            normalized_heading == seen_heading
+            and (
+                normalized_text.startswith(seen_text)
+                or seen_text.startswith(normalized_text)
+            )
+            for seen_heading, seen_text in seen_sections
+            if normalized_text and seen_text
+        ):
+            continue
+        if normalized_text:
+            seen_sections.append((normalized_heading, normalized_text))
         paragraphs = "".join(
-            f"<p>{escape(_clean_summary_text(chunk, title=title) or chunk.strip())}</p>"
+            "<p>"
+            + escape(
+                (_clean_summary_text(chunk, title=title) or chunk.strip()).replace(
+                    "_", " "
+                )
+            )
+            + "</p>"
             for chunk in _paragraph_chunks(section.text)
             if chunk.strip()
         )
         heading = escape(section.heading or fallback_heading)
         paragraph_count = paragraphs.count("<p>")
         should_collapse = (
-            len(section.text) >= SOURCE_COLLAPSE_CHAR_THRESHOLD
+            not section.heading.strip()
+            or len(section.text) >= SOURCE_COLLAPSE_CHAR_THRESHOLD
             or paragraph_count >= SOURCE_COLLAPSE_PARAGRAPH_THRESHOLD
         )
         if should_collapse:
@@ -786,7 +812,7 @@ def render_opportunity_page(
       --success-soft: var(--color-success-subtle);
       --radius: var(--av-radius-lg);
       --shadow: var(--shadow-md);
-      --container-max: min(980px, calc(100% - 32px));
+      --container-max: min(1180px, calc(100% - 32px));
     }}
     * {{ box-sizing: border-box; }}
     body {{
@@ -801,7 +827,7 @@ def render_opportunity_page(
     .shell {{
       width: var(--container-max);
       margin: 0 auto;
-      padding: 20px 0 40px;
+      padding: 16px 0 36px;
     }}
     .topbar {{
       display: flex;
@@ -842,15 +868,13 @@ def render_opportunity_page(
     }}
     .hero {{
       display: grid;
-      gap: 14px;
-      padding: 20px;
+      gap: 12px;
+      padding: 18px;
       border: 1px solid var(--line);
-      border-radius: var(--av-radius-lg);
-      background:
-        linear-gradient(135deg, rgb(255 255 255 / 0.82), rgb(255 255 255 / 0.5)),
-        color-mix(in oklab, var(--surface), var(--brand-soft) 22%);
-      box-shadow: var(--shadow);
-      margin-bottom: 16px;
+      border-radius: var(--av-radius-md);
+      background: var(--surface);
+      box-shadow: var(--av-shadow-xs);
+      margin-bottom: 12px;
     }}
     .eyebrow {{
       color: var(--muted);
@@ -862,9 +886,9 @@ def render_opportunity_page(
     }}
     .hero h1 {{
       margin: 0;
-      max-width: 24ch;
-      font-size: clamp(26px, 3.4vw, 38px);
-      line-height: 1.08;
+      max-width: 30ch;
+      font-size: clamp(27px, 2.8vw, 36px);
+      line-height: 1.06;
       text-wrap: balance;
     }}
     .summary {{
@@ -876,8 +900,8 @@ def render_opportunity_page(
     }}
     .hero-grid {{
       display: grid;
-      grid-template-columns: minmax(0, 1.55fr) minmax(220px, 0.75fr);
-      gap: 12px;
+      grid-template-columns: minmax(0, 1.7fr) minmax(230px, 0.62fr);
+      gap: 18px;
       align-items: start;
     }}
     .hero-actions {{
@@ -907,12 +931,12 @@ def render_opportunity_page(
     }}
     .hero-stats {{
       display: grid;
-      gap: 6px;
-      padding: 12px;
-      border: 1px solid var(--line);
-      border-left: 3px solid var(--brand);
-      border-radius: var(--av-radius-md);
-      background: rgb(255 255 255 / 0.54);
+      gap: 8px;
+      padding: 2px 0 2px 16px;
+      border: 0;
+      border-left: 1px solid var(--line);
+      border-radius: 0;
+      background: transparent;
     }}
     .hero-stats > div {{
       display: grid;
@@ -946,7 +970,7 @@ def render_opportunity_page(
       display: flex;
       flex-wrap: wrap;
       gap: 6px;
-      margin-bottom: 16px;
+      margin-bottom: 12px;
     }}
     .pill {{
       display: inline-flex;
@@ -963,24 +987,30 @@ def render_opportunity_page(
     .content-grid {{
       display: grid;
       grid-template-columns: minmax(0, 1.4fr) minmax(260px, 0.8fr);
-      gap: 24px;
+      gap: 18px;
       align-items: start;
-      padding-top: 18px;
+      padding-top: 14px;
       border-top: 1px solid var(--line);
     }}
     .content-grid--single {{
       grid-template-columns: minmax(0, 1fr);
     }}
+    .content-grid--single .section-stack {{
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      column-gap: 24px;
+    }}
+    .content-grid--single .source-disclosure {{ grid-column: 1 / -1; }}
     .section-stack {{
       display: grid;
-      gap: 12px;
+      gap: 0;
     }}
     .section-card {{
-      padding: 16px;
-      border: 1px solid var(--line);
-      border-radius: var(--av-radius-md);
-      background: var(--surface);
-      box-shadow: var(--av-shadow-xs);
+      padding: 14px 0;
+      border: 0;
+      border-bottom: 1px solid var(--line);
+      border-radius: 0;
+      background: transparent;
+      box-shadow: none;
     }}
     .source-disclosure summary {{
       display: flex;
@@ -1014,11 +1044,11 @@ def render_opportunity_page(
       border-bottom: 1px solid var(--line-subtle);
     }}
     .sidebar-card {{
-      padding: 14px;
-      border: 1px solid var(--line);
+      padding: 12px;
+      border: 1px solid var(--line-subtle);
       border-radius: var(--av-radius-md);
-      background: var(--surface-wash);
-      box-shadow: var(--av-shadow-xs);
+      background: var(--surface);
+      box-shadow: none;
     }}
     .section-card h2,
     .sidebar-card h2 {{
@@ -1041,10 +1071,11 @@ def render_opportunity_page(
       gap: 8px;
     }}
     .meta-item {{
-      padding: 10px;
-      border: 1px solid var(--line-subtle);
-      border-radius: var(--av-radius-md);
-      background: var(--surface);
+      padding: 8px 0;
+      border: 0;
+      border-bottom: 1px solid var(--line-subtle);
+      border-radius: 0;
+      background: transparent;
     }}
     .meta-item:first-child {{
       padding-top: 0;
@@ -1075,13 +1106,14 @@ def render_opportunity_page(
     }}
     .prepare-section {{
       display: grid;
-      gap: 12px;
-      margin-bottom: 16px;
-      padding: 16px;
-      border: 1px solid var(--line);
-      border-radius: var(--av-radius-md);
-      background: var(--surface);
-      box-shadow: var(--av-shadow-xs);
+      gap: 10px;
+      margin-bottom: 0;
+      padding: 18px 0;
+      border: 0;
+      border-bottom: 1px solid var(--line);
+      border-radius: 0;
+      background: transparent;
+      box-shadow: none;
     }}
     .prepare-head {{
       display: grid;
@@ -1104,24 +1136,26 @@ def render_opportunity_page(
     .prepare-grid {{
       display: grid;
       grid-template-columns: repeat(4, minmax(0, 1fr));
-      gap: 10px;
+      gap: 0;
     }}
     .prepare-card {{
       display: grid;
-      gap: 8px;
+      gap: 6px;
       min-height: 0;
-      padding: 12px;
-      border: 1px solid var(--line-subtle);
-      border-radius: var(--av-radius-md);
-      background: var(--surface-wash);
+      padding: 6px 14px;
+      border: 0;
+      border-left: 1px solid var(--line-subtle);
+      border-radius: 0;
+      background: transparent;
       box-shadow: none;
     }}
+    .prepare-card:first-child {{ border-left: 0; padding-left: 0; }}
     .prepare-index {{
       display: inline-flex;
       align-items: center;
       justify-content: center;
-      width: 34px;
-      height: 28px;
+      width: 28px;
+      height: 24px;
       border-radius: 999px;
       background: var(--brand);
       color: white;
@@ -1142,13 +1176,14 @@ def render_opportunity_page(
     }}
     .apply-section {{
       display: grid;
-      gap: 12px;
-      margin-bottom: 16px;
-      padding: 16px;
-      border: 1px solid var(--line);
-      border-radius: var(--av-radius-md);
-      background: var(--surface);
-      box-shadow: var(--av-shadow-xs);
+      gap: 10px;
+      margin-bottom: 0;
+      padding: 18px 0;
+      border: 0;
+      border-bottom: 1px solid var(--line);
+      border-radius: 0;
+      background: transparent;
+      box-shadow: none;
     }}
     .apply-head {{
       display: grid;
@@ -1171,27 +1206,29 @@ def render_opportunity_page(
     .apply-list {{
       display: grid;
       grid-template-columns: repeat(4, minmax(0, 1fr));
-      gap: 10px;
+      gap: 0;
       padding: 0;
       margin: 0;
       list-style: none;
     }}
     .apply-step {{
       display: grid;
-      grid-template-columns: 34px minmax(0, 1fr);
-      gap: 10px;
+      grid-template-columns: 28px minmax(0, 1fr);
+      gap: 8px;
       align-items: start;
-      padding: 12px;
-      border: 1px solid var(--line-subtle);
-      border-radius: var(--av-radius-md);
-      background: var(--surface-wash);
+      padding: 6px 14px;
+      border: 0;
+      border-left: 1px solid var(--line-subtle);
+      border-radius: 0;
+      background: transparent;
     }}
+    .apply-step:first-child {{ border-left: 0; padding-left: 0; }}
     .apply-index {{
       display: inline-flex;
       align-items: center;
       justify-content: center;
-      width: 34px;
-      height: 28px;
+      width: 28px;
+      height: 24px;
       border-radius: 999px;
       background: color-mix(in oklab, var(--success), black 8%);
       color: white;
@@ -1248,7 +1285,7 @@ def render_opportunity_page(
       border: 1px solid var(--line);
       border-radius: var(--av-radius-md);
       background: var(--surface);
-      box-shadow: var(--av-shadow-xs);
+      box-shadow: none;
     }}
     .related-top,
     .related-meta {{
@@ -1319,12 +1356,23 @@ def render_opportunity_page(
       .related-grid {{
         grid-template-columns: 1fr;
       }}
+      .content-grid--single .section-stack {{ grid-template-columns: 1fr; }}
       .hero-stats,
       .sidebar-card {{
         padding: 12px 0 0;
         border-left: 0;
         border-top: 1px solid var(--line);
       }}
+      .prepare-card,
+      .prepare-card:first-child,
+      .apply-step,
+      .apply-step:first-child {{
+        padding: 10px 0;
+        border-left: 0;
+        border-top: 1px solid var(--line-subtle);
+      }}
+      .prepare-card:first-child,
+      .apply-step:first-child {{ border-top: 0; }}
     }}
     @media (max-width: 640px) {{
       .shell {{
