@@ -12,13 +12,13 @@ from collections.abc import AsyncIterator, Iterable
 from dataclasses import dataclass
 from datetime import date, datetime
 from email.utils import parsedate_to_datetime
-from html import unescape
 from typing import Any
 
 import feedparser
 import structlog
 
 from core.models import Opportunity, OpportunityType
+from core.source_text import clean_source_text as _clean_text
 from sources.base import BaseSource
 
 log = structlog.get_logger()
@@ -115,11 +115,6 @@ THEME_KEYWORDS = {
 class FeedConfig:
     url: str
     tags: tuple[str, ...]
-
-
-def _clean_text(value: str) -> str:
-    without_tags = re.sub(r"<[^>]+>", " ", value or "")
-    return re.sub(r"\s+", " ", unescape(without_tags)).strip()
 
 
 def _clean_summary(value: str) -> str:

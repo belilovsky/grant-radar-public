@@ -19,6 +19,9 @@ from uuid import NAMESPACE_URL, UUID, uuid5
 from fastapi import Depends, FastAPI, Header, HTTPException, Query, Request, status
 from fastapi.openapi.docs import get_swagger_ui_html
 from fastapi.responses import HTMLResponse, JSONResponse, RedirectResponse, Response
+from qazstack.content import diversify_ranked_items
+from qazstack.evidence import count_evidence_states, resolve_public_evidence_state
+from qazstack.export import ndjson_response
 from starlette.exceptions import HTTPException as StarletteHTTPException
 from starlette.middleware.gzip import GZipMiddleware
 from starlette.middleware.trustedhost import TrustedHostMiddleware
@@ -1024,11 +1027,16 @@ def _cached_coverage_payload() -> dict[str, Any]:
         if cached is not None and now - cached[0] < _PUBLIC_ITEMS_CACHE_TTL:
             return dict(cached[1])
 
-    source_rows = _source_coverage(_cached_public_items())
+    public_items = _cached_public_items()
+    source_rows = _source_coverage(public_items)
     payload = {
         "status": "ok",
-        "items": len(_cached_public_items()),
+        "items": len(public_items),
         "sources": source_rows,
+        "evidence_states": count_evidence_states(
+            resolve_public_evidence_state(direct_source_url=item.source_url)
+            for item in public_items
+        ),
         "enabled_sources": sum(1 for row in source_rows if row["enabled"]),
         "relevant_open_items": sum(row["relevant_open_items"] for row in source_rows),
         "fresh_sources": sum(
@@ -1452,6 +1460,7 @@ async def llms_txt(request: Request) -> Response:
     status_page = _public_url(request, root_path, "/status")
     coverage = _public_url(request, root_path, "/coverage")
     opportunities = _public_url(request, root_path, "/opportunities")
+    opportunities_ndjson = _public_url(request, root_path, "/opportunities.ndjson")
     digest = _public_url(request, root_path, "/digest")
     return Response(
         "\n".join(
@@ -1477,6 +1486,7 @@ async def llms_txt(request: Request) -> Response:
                 "## Public data endpoints",
                 f"- Coverage JSON: {coverage}",
                 f"- Opportunities JSON: {opportunities}",
+                f"- Opportunities NDJSON: {opportunities_ndjson}",
                 "- Opportunity detail JSON: /opportunities/{id}?lang=ru|en",
                 f"- Digest JSON: {digest}",
                 "",
@@ -1509,6 +1519,10 @@ async def llms_txt(request: Request) -> Response:
                     "- Do not invent eligibility, deadlines, or award amounts "
                     "beyond the published page content."
                 ),
+                (
+                    "- evidence_state=sourced means that a direct public source link "
+                    "is present; it does not mean independent verification."
+                ),
                 "",
             ]
         ),
@@ -1527,6 +1541,7 @@ async def site_discovery(request: Request) -> Response:
     status_page = _public_url(request, root_path, "/status")
     coverage = _public_url(request, root_path, "/coverage")
     opportunities = _public_url(request, root_path, "/opportunities")
+    opportunities_ndjson = _public_url(request, root_path, "/opportunities.ndjson")
     digest = _public_url(request, root_path, "/digest")
     ecosystem = _public_url(request, root_path, "/.well-known/qdev-ecosystem.json")
     qazstack_contract = _public_url(
@@ -1555,6 +1570,7 @@ async def site_discovery(request: Request) -> Response:
             "coverage": "/coverage",
             "source_status": "/status?lang={lang}",
             "opportunities": "/opportunities?lang={lang}",
+            "opportunities_ndjson": "/opportunities.ndjson?lang={lang}",
             "opportunity_api": "/opportunities/{id}?lang={lang}",
             "opportunity": "/opportunity/{id}?lang={lang}",
             "funder": "/funder/{slug}?lang={lang}",
@@ -1563,6 +1579,7 @@ async def site_discovery(request: Request) -> Response:
         "data_endpoints": {
             "coverage": coverage,
             "opportunities": opportunities,
+            "opportunities_ndjson": opportunities_ndjson,
             "digest": digest,
         },
         "query_templates": {
@@ -1578,12 +1595,16 @@ async def site_discovery(request: Request) -> Response:
             "opportunities_by_lifecycle": (
                 "/opportunities?lang=ru&limit=50&lifecycle={lifecycle}"
             ),
+            "opportunities_ai_export": (
+                "/opportunities.ndjson?lang=ru&limit=500&min_score=0.3"
+            ),
             "digest_ai": "/digest?lang=ru&limit=5&tag=ai",
         },
         "capabilities": [
             "public opportunity pages",
             "public funder pages",
             "machine-readable opportunity api",
+            "cache-aware ndjson export",
             "machine-readable source coverage",
             "public source freshness status",
             "official source links",
@@ -1910,6 +1931,67 @@ async def list_opportunities(
     return results
 
 
+@app.get("/opportunities.ndjson", include_in_schema=True)
+async def export_opportunities_ndjson(
+    request: Request,
+    tag: str | None = Query(None),
+    q: str | None = Query(None, max_length=200),
+    source: str | None = Query(None, max_length=120),
+    lifecycle: str | None = Query(
+        None,
+        pattern="^(open|closing_soon|rolling|forecast|closed|awarded)$",
+    ),
+    region: str | None = Query(
+        None,
+        pattern="^(kazakhstan|central_asia|global)$",
+    ),
+    min_score: float = Query(0.0, ge=0.0, le=1.0),
+    deadline_before: date | None = None,
+    deadline_after: date | None = None,
+    include_irrelevant: bool = False,
+    limit: int = Query(500, ge=1, le=5000),
+    offset: int = Query(0, ge=0),
+    lang: str | None = Query(None),
+) -> Response:
+    """Export the filtered public catalog as cache-aware newline-delimited JSON."""
+
+    metadata_response = Response()
+    items = await list_opportunities(
+        response=metadata_response,
+        tag=tag,
+        q=q,
+        source=source,
+        lifecycle=lifecycle,
+        region=region,
+        min_score=min_score,
+        deadline_before=deadline_before,
+        deadline_after=deadline_after,
+        include_irrelevant=include_irrelevant,
+        limit=limit,
+        offset=offset,
+        lang=lang,
+        compact=False,
+    )
+    rows: list[dict[str, Any]] = []
+    for item in items:
+        row = item.model_dump(mode="json")
+        row["evidence_state"] = resolve_public_evidence_state(
+            direct_source_url=item.source_url
+        ).value
+        rows.append(row)
+    last_modified = max(
+        (item.discovered_at for item in items),
+        default=None,
+    )
+    return ndjson_response(
+        request,
+        rows,
+        filename="qazfund-opportunities.ndjson",
+        last_modified=last_modified,
+        prefix="qazfund-opportunities",
+    )
+
+
 @app.head("/opportunities", include_in_schema=False)
 async def list_opportunities_head(
     tag: str | None = Query(None),
@@ -2005,12 +2087,24 @@ async def digest(
     items = [item for item in items if item.score >= min_score]
     items.sort(key=lambda item: (item.score, item.discovered_at), reverse=True)
 
+    diversified = diversify_ranked_items(
+        items,
+        key=lambda item: item.source,
+        max_per_key=2,
+        limit=limit,
+    )
+    if len(diversified) < limit:
+        selected = {item.id for item in diversified}
+        diversified.extend(item for item in items if item.id not in selected)
+
     generated_at = datetime.now(UTC)
     return Digest(
         generated_at=generated_at,
         period_from=generated_at - timedelta(days=1),
         period_to=generated_at,
-        items=[localize_opportunity(item, content_lang) for item in items[:limit]],
+        items=[
+            localize_opportunity(item, content_lang) for item in diversified[:limit]
+        ],
         channel="api",
     )
 

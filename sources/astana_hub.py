@@ -9,11 +9,11 @@ from __future__ import annotations
 import re
 from collections.abc import AsyncIterator
 from datetime import date, datetime
-from html import unescape
 
 import structlog
 
 from core.models import Opportunity, OpportunityType
+from core.source_text import clean_source_text as _clean_text
 from sources.base import BaseSource
 
 log = structlog.get_logger()
@@ -136,10 +136,6 @@ TEXTUAL_DEADLINE_PATTERNS = (
         re.IGNORECASE,
     ),
 )
-
-
-def _clean_text(value: str) -> str:
-    return re.sub(r"\s+", " ", unescape(re.sub(r"<[^>]+>", " ", value))).strip()
 
 
 def _parse_month_token(token: str) -> int | None:

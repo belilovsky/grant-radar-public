@@ -9,13 +9,13 @@ from __future__ import annotations
 import re
 from collections.abc import AsyncIterator, Iterable
 from dataclasses import dataclass
-from html import unescape
 from typing import Any
 
 import httpx
 import structlog
 
 from core.models import Opportunity, OpportunityType
+from core.source_text import clean_plain_source_text as _clean_text
 from sources.base import BaseSource
 
 log = structlog.get_logger()
@@ -110,10 +110,6 @@ WATCH_PAGES = (
 )
 
 ACTIVE_WATCH_URLS = frozenset(page.url for page in WATCH_PAGES)
-
-
-def _clean_text(value: str) -> str:
-    return re.sub(r"\s+", " ", unescape(value or "")).strip()
 
 
 def _html_title(html: str) -> str | None:

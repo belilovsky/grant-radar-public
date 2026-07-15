@@ -75,6 +75,15 @@ def _transport(
                     for _ in range(44)
                 ],
             )
+        if endpoint_path == "/opportunities.ndjson":
+            return httpx.Response(
+                200,
+                text=(
+                    '{"title":"Kazakhstan AI grant","source":"world_bank_kazakhstan",'
+                    '"evidence_state":"sourced"}\n'
+                ),
+                headers={"content-type": "application/x-ndjson"},
+            )
         if endpoint_path == "/digest":
             return httpx.Response(200, json={"items": [{"title": "AI digest"}]})
         if endpoint_path == "/robots.txt" or path == "/robots.txt":
@@ -115,6 +124,7 @@ def _transport(
                     f"- Source status page: {public_root}/status\n"
                     f"- Coverage JSON: {public_root}/coverage\n"
                     f"- Opportunities JSON: {public_root}/opportunities\n"
+                    f"- Opportunities NDJSON: {public_root}/opportunities.ndjson\n"
                     f"- Digest JSON: {public_root}/digest\n"
                 ),
             )
@@ -170,6 +180,7 @@ def _transport(
                         "home": "/?lang={lang}",
                         "coverage": "/coverage",
                         "opportunities": "/opportunities?lang={lang}",
+                        "opportunities_ndjson": "/opportunities.ndjson?lang={lang}",
                         "opportunity_api": "/opportunities/{id}?lang={lang}",
                         "opportunity": "/opportunity/{id}?lang={lang}",
                         "funder": "/funder/{slug}?lang={lang}",
@@ -178,6 +189,7 @@ def _transport(
                     "data_endpoints": {
                         "coverage": f"{public_root}/coverage",
                         "opportunities": f"{public_root}/opportunities",
+                        "opportunities_ndjson": (f"{public_root}/opportunities.ndjson"),
                         "digest": f"{public_root}/digest",
                     },
                     "query_templates": {
@@ -203,7 +215,7 @@ def _transport(
                 200,
                 json={
                     "schema_version": "qazstack-consumer-v1",
-                    "qazstack_version": "1.35.0",
+                    "qazstack_version": "1.37.2",
                     "integration_mode": "python-package",
                 },
             )
@@ -250,6 +262,7 @@ def test_run_smoke_passes_for_expected_live_contract():
     assert result.coverage_stale_sources == 1
     assert result.coverage_unknown_freshness_sources == 2
     assert result.opportunities == 44
+    assert result.ndjson_items == 1
     assert all(result.dashboard_markers.values())
     assert result.english_dashboard is True
     assert all(result.discovery_surfaces.values())

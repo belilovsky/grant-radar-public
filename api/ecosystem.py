@@ -7,11 +7,11 @@ from typing import Any
 from qazstack import __version__ as qazstack_version
 from qazstack.contracts import validate_consumer_contract
 
-QAZSTACK_SOURCE_REVISION = "189c9bd62041394a255f4608dba904263e5e66e8"
+QAZSTACK_SOURCE_REVISION = "b401122feb0ab7fd7e4b1d84b9b6ea8ded20071b"
 QAZSTACK_SCHEMA_DIGEST = (
     "sha256:6ca8e38c09315d02993e3600b7a05dc23d695cd152545f8a970566e303fc158c"
 )
-QAZSTACK_VERIFIED_AT = "2026-07-15T12:00:04Z"
+QAZSTACK_VERIFIED_AT = "2026-07-15T14:21:32Z"
 AVDS_PACKAGE = "@sgeo/ui-kit"
 AVDS_VERSION = "4.3.2"
 
@@ -33,12 +33,16 @@ def qazstack_consumer_contract(origin: str) -> dict[str, Any]:
         "source_revision": QAZSTACK_SOURCE_REVISION,
         "primitives": [
             "collectors-and-entity-pipeline",
+            "content-api",
             "core-foundation",
+            "reports-and-export",
         ],
         "evidence": {
             "source_files": [
                 "core/qazstack_bridge.py",
+                "core/source_text.py",
                 "requirements-prod.txt",
+                "tests/test_qazstack_adoption.py",
                 "tests/test_qazstack_bridge.py",
             ],
             "test_commands": [
@@ -53,7 +57,7 @@ def qazstack_consumer_contract(origin: str) -> dict[str, Any]:
             "environment": "production",
             "source_revision": QAZSTACK_SOURCE_REVISION,
             "schema_digest": QAZSTACK_SCHEMA_DIGEST,
-            "checked_by": "qazfund-production-smoke",
+            "checked_by": "qazfund-release-gate",
         },
         "owner": "qdev-platform",
         "notes": (
@@ -139,6 +143,7 @@ def ecosystem_manifest(origin: str) -> dict[str, Any]:
     """Describe implemented and deliberately deferred ecosystem boundaries."""
 
     opportunities = _url(origin, "/opportunities")
+    opportunities_ndjson = _url(origin, "/opportunities.ndjson")
     return {
         "schema_version": "qdev-ecosystem-integration-v1",
         "project": {
@@ -155,9 +160,17 @@ def ecosystem_manifest(origin: str) -> dict[str, Any]:
         },
         "data_plane": {
             "read_only_feed": opportunities,
+            "machine_export": opportunities_ndjson,
             "format": "application/json",
+            "formats": ["application/json", "application/x-ndjson"],
             "pagination": {"limit": "1..5000", "offset": "integer >= 0"},
             "provenance_fields": ["source", "source_url", "discovered_at"],
+            "machine_export_fields": [
+                "source",
+                "source_url",
+                "discovered_at",
+                "evidence_state",
+            ],
             "write_api": False,
         },
         "integrations": {
