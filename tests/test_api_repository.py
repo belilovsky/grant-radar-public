@@ -52,6 +52,7 @@ def test_root_renders_service_landing(monkeypatch):
     assert 'data-av-theme="light"' in response.text
     assert "--av-color-background" in response.text
     assert "--av-control-height-md" in response.text
+    assert "--av-control-height-lg: 44px;" in response.text
     assert "--av-card-padding-md" in response.text
     assert "--av-font-serif" in response.text
     assert "--button-outline" in response.text
@@ -67,6 +68,10 @@ def test_root_renders_service_landing(monkeypatch):
     assert "letter-spacing: 0.12em;" not in response.text
     assert "border: 1.5px solid var(--line);" not in response.text
     assert ".source-card {" in response.text
+    assert "min-height: var(--av-control-height-lg);" in response.text
+    assert ".utility-link {" in response.text
+    message_css = response.text.split(".message {", 1)[1].split("}", 1)[0]
+    assert "color: color-mix(in oklab, var(--muted), var(--ink) 18%);" in message_css
     assert "avds-tabs-list" in response.text
     assert "avds-tabs-trigger" in response.text
     assert "avds-field" in response.text
@@ -598,6 +603,13 @@ def test_docs_exposes_swagger_with_return_link(monkeypatch):
     assert 'href="/?lang=ru"' in response.text
     assert "Вернуться на сайт" in response.text
     assert "url: '/openapi.json'" in response.text
+    assert ".swagger-ui .opblock .opblock-summary" in response.text
+    assert ".swagger-ui .opblock-control-arrow" in response.text
+    assert "min-height: var(--av-control-height-lg);" in response.text
+    assert ".swagger-ui .opblock.opblock-get .opblock-summary-method" in response.text
+    assert ".swagger-ui .info .url" in response.text
+    assert ".swagger-ui .json-schema-2020-12-expand-deep-button" in response.text
+    assert '"deepLinking": false' in response.text
 
 
 def test_docs_supports_english_return_link(monkeypatch):
@@ -1579,6 +1591,8 @@ def test_public_status_page_renders_coverage_without_operator_details(monkeypatc
     assert 'class="status-topbar"' in response.text
     assert 'class="lang-switch"' in response.text
     assert 'href="/status?lang=en"' in response.text
+    assert "min-height:var(--av-control-height-lg);" in response.text
+    assert ".status-topbar .back" in response.text
     assert "--av-container-dashboard: 1280px" in response.text
     assert "World Bank Kazakhstan" in response.text
     assert "Последняя проверка" in response.text
@@ -1608,6 +1622,9 @@ def test_operator_page_is_noindex_and_never_embeds_admin_token(monkeypatch):
     assert "sessionStorage" in response.text
     assert 'autocomplete="username"' in response.text
     assert 'autocomplete="current-password"' in response.text
+    assert ".auth-controls > :is(input, button)" in response.text
+    assert ".catalog-link" in response.text
+    assert "min-height: var(--av-control-height-lg);" in response.text
     assert "server-only-secret" not in response.text
     head_response = client.head("/operator?lang=en")
     assert head_response.status_code == 200
@@ -2746,6 +2763,8 @@ def test_opportunity_page_renders_public_permalink(monkeypatch):
     assert 'href="/?lang=ru#opportunities"' in response.text
     assert 'aria-label="Навигационная цепочка"' in response.text
     assert 'class="hero-fact hero-fact--source"' in response.text
+    assert ".hero-actions .button" in response.text
+    assert "min-height: var(--av-control-height-lg);" in response.text
     hero_actions = response.text.split('<div class="hero-actions">', 1)[1].split(
         "</div>", 1
     )[0]
@@ -3037,6 +3056,7 @@ def test_funder_page_renders_public_profile(monkeypatch):
     assert "--brand: var(--color-accent);" in response.text
     assert "--av-color-primary-700" not in response.text
     assert "Живые и рабочие возможности" in response.text
+    assert "min-height: var(--av-control-height-lg);" in response.text
     assert "Архив и исторический след" in response.text
     assert (
         "Профиль построен по опубликованным программам и объявлениям." in response.text

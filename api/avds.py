@@ -60,6 +60,7 @@ AVDS_CSS = """
       --av-container-dashboard: 1280px;
       --av-control-height-sm: 32px;
       --av-control-height-md: 36px;
+      --av-control-height-lg: 44px;
       --av-card-padding-sm: 10px;
       --av-card-padding-md: 12px;
       --av-section-gap: 24px;

@@ -168,11 +168,16 @@ def render_operator_page(*, lang: str, root_path: str = "") -> str:
     .status-error {{ color:var(--bad); }}
     .status-running {{ color:var(--warn); }}
     @media(max-width:760px) {{
+      .auth-controls > :is(input, button),
+      .lang-switch a,
+      .catalog-link {{ min-height: var(--av-control-height-lg); }}
+      .lang-switch a {{ min-width: var(--av-control-height-lg); }}
       main {{ width:min(100% - 20px,var(--av-container-dashboard)); padding-top:10px; }}
       .operator-topbar {{ align-items:flex-start; }}
       .operator-brand {{ display:grid; gap:2px; }}
       .operator-tools {{ gap:6px; }}
       .catalog-link {{ font-size:0; }}
+      .catalog-link {{ min-width:var(--av-control-height-lg); justify-content:center; }}
       .catalog-link::before {{ content:"←"; font-size:18px; }}
       .intro-grid,.grid {{ grid-template-columns:1fr; gap:16px; padding:18px 0; }}
       .metrics {{ grid-template-columns:repeat(2,minmax(0,1fr)); }}
