@@ -58,5 +58,27 @@ reference evidence.
 
 ## Final verification
 
-Final command results and production evidence are appended after CI and release
-verification.
+- Local quality gate: Black, isort, Flake8, and mypy passed; mypy checked 63
+  source files.
+- Test suite: 410 passed. The single warning is an upstream FastAPI TestClient
+  deprecation notice about a future `httpx2` migration.
+- `compileall`, `pip check`, all pre-commit hooks, shell syntax, documentation
+  links, and `git diff --check`: passed.
+- `pip-audit`: no known vulnerabilities after the Starlette update. The
+  vendored QazStack wheel is not published on PyPI and is checksum-verified by
+  the repository contract instead.
+- GitHub Actions `Quality and tests`: passed for pull request #14.
+- Pull request #14 merged into `main` as revision
+  `e954b9e7ab3a45920b3b72f94b03a59c5357a3df`.
+- The documented conservative deploy completed without `rsync --delete` at
+  `2026-07-15T16:10:50Z`.
+- Production API, PostgreSQL, and Redis reported healthy; the worker reported
+  running. The API image reports Starlette 1.3.1.
+- Post-release smoke: database readiness, 26 sources, 155 relevant open items,
+  zero stale sources, JSON/NDJSON/digest surfaces, both public languages, and
+  machine-discovery contracts passed.
+- Content audit: zero issues across 155 public opportunities.
+- NLP quality audit: zero issues across 150 Russian and 150 English records.
+
+The only deliberately deferred item is the staged decomposition of
+`api/dashboard.py`; it is maintainability work, not a known runtime defect.
