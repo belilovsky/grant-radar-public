@@ -1388,6 +1388,7 @@ async def swagger_docs(request: Request) -> HTMLResponse:
         openapi_url=openapi_href,
         title="QAZ.FUND API",
         swagger_favicon_url=f"{root_path}/favicon.ico" if root_path else "/favicon.ico",
+        swagger_ui_parameters={"deepLinking": False},
     )
     page_header = (
         '<header class="qazfund-docs-header">'
@@ -1456,7 +1457,35 @@ async def swagger_docs(request: Request) -> HTMLResponse:
       border-block: 1px solid var(--color-border);
     }}
     .swagger-ui .opblock-tag {{ border-bottom-color: var(--color-border); }}
+    .swagger-ui .info .title small pre,
+    .swagger-ui .info .title .version-stamp pre,
+    .swagger-ui .info .url,
+    .swagger-ui .info .base-url,
+    .swagger-ui .info .base-url a,
+    .swagger-ui .json-schema-2020-12-expand-deep-button {{
+      color: var(--color-text);
+    }}
+    .swagger-ui .opblock.opblock-get .opblock-summary-method {{
+      background: var(--av-color-blue-700);
+      color: var(--av-color-white);
+    }}
+    .swagger-ui .opblock.opblock-post .opblock-summary-method {{
+      background: var(--av-color-emerald-700);
+      color: var(--av-color-white);
+    }}
     @media (max-width: 520px) {{
+      .qazfund-docs-header a,
+      .swagger-ui .opblock .opblock-summary,
+      .swagger-ui .opblock-summary-control,
+      .swagger-ui .opblock-control-arrow,
+      .swagger-ui .expand-operation,
+      .swagger-ui .models-control,
+      .swagger-ui .json-schema-2020-12-accordion,
+      .swagger-ui .json-schema-2020-12-expand-deep-button {{
+        min-height: var(--av-control-height-lg);
+      }}
+      .swagger-ui .opblock-control-arrow,
+      .swagger-ui .expand-operation {{ min-width: var(--av-control-height-lg); }}
       .qazfund-docs-header {{ align-items: flex-start; padding-inline: 16px; }}
       .qazfund-docs-title {{ max-width: 15ch; text-align: right; }}
     }}

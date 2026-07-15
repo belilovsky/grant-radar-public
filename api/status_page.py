@@ -219,6 +219,14 @@ def render_status_page(
       .metrics {{ margin:0 12px 12px; border-top:1px solid var(--line); border-left:0; }}
     }}
     @media (max-width:720px) {{
+      .lang-switch a {{
+        display:inline-flex;
+        align-items:center;
+        justify-content:center;
+        min-width:var(--av-control-height-lg);
+        min-height:var(--av-control-height-lg);
+      }}
+      .status-topbar .back {{ min-height:var(--av-control-height-lg); }}
       main {{ width:min(100% - 20px,var(--av-container-dashboard)); padding-top:10px; }}
       .hero {{ padding:14px; }}
       .metrics {{ grid-template-columns:repeat(2,minmax(0,1fr)); }}

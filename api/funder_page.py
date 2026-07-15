@@ -790,6 +790,10 @@ def render_funder_page(
       }}
     }}
     @media (max-width: 640px) {{
+      .button,
+      .lang-switch a,
+      .back-link {{ min-height: var(--av-control-height-lg); }}
+      .lang-switch a {{ min-width: var(--av-control-height-lg); }}
       .shell {{
         width: min(100%, calc(100% - 24px));
         padding-top: 16px;

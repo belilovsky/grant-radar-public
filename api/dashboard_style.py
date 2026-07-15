@@ -1535,7 +1535,7 @@ DASHBOARD_CSS = r"""    :root {
       min-height: auto;
       display: flex;
       align-items: center;
-      color: var(--muted);
+      color: color-mix(in oklab, var(--muted), var(--ink) 18%);
       border: 1px dashed var(--line-strong);
       border-radius: var(--av-radius-md);
       padding: 8px 10px;
@@ -2667,6 +2667,25 @@ DASHBOARD_CSS = r"""    :root {
     }
 
     @media (max-width: 760px) {
+      .button,
+      .button.slim,
+      .button.tab,
+      .field,
+      .text-button,
+      .preset-button,
+      .detail-link,
+      .advanced-filters > summary,
+      .workflow-control select {
+        min-height: var(--av-control-height-lg);
+      }
+      .toolbar { min-height: var(--av-control-height-lg); }
+      .utility-link {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        min-width: var(--av-control-height-lg);
+        min-height: var(--av-control-height-lg);
+      }
       .shell {
         width: min(100% - 24px, var(--container-max));
         padding-top: var(--av-spacing-2);
@@ -2988,7 +3007,7 @@ DASHBOARD_CSS = r"""    :root {
       .hero-pick-row::-webkit-scrollbar { display: none; }
       .hero-pick {
         flex: 0 0 auto;
-        min-height: 38px;
+        min-height: var(--av-control-height-lg);
         white-space: nowrap;
         scroll-snap-align: start;
       }
@@ -3016,7 +3035,7 @@ DASHBOARD_CSS = r"""    :root {
         grid-template-columns: repeat(2, minmax(0, 1fr));
       }
       .preset-button {
-        min-height: 34px;
+        min-height: var(--av-control-height-lg);
         text-align: left;
       }
       .focus-chip {
@@ -3071,7 +3090,7 @@ DASHBOARD_CSS = r"""    :root {
       }
       .hero-actions > .button,
       .hero-pick-row > .button {
-        min-height: 34px;
+        min-height: var(--av-control-height-lg);
       }
       .utility-links {
         display: flex;
@@ -3093,8 +3112,8 @@ DASHBOARD_CSS = r"""    :root {
         justify-content: flex-start;
       }
       .lang-link {
-        min-width: 38px;
-        min-height: var(--control-height-sm);
+        min-width: var(--av-control-height-lg);
+        min-height: var(--av-control-height-lg);
       }
       .metric {
         min-height: 62px;

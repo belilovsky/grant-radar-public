@@ -1536,6 +1536,9 @@ def render_opportunity_page(
       .apply-step:first-child {{ border-top: 0; }}
     }}
     @media (max-width: 640px) {{
+      .hero-actions .button,
+      .lang-switch a {{ min-height: var(--av-control-height-lg); }}
+      .lang-switch a {{ min-width: var(--av-control-height-lg); }}
       .shell {{
         width: min(100%, calc(100% - 24px));
         padding: 14px 0 32px;
