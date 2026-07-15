@@ -109,9 +109,15 @@ def test_root_renders_service_landing(monkeypatch):
     assert 'id="workspace-backup"' in response.text
     assert 'id="export-workspace"' in response.text
     assert 'id="import-workspace"' in response.text
+    assert 'id="workspace-queue"' in response.text
+    assert 'id="workspace-queue-list"' in response.text
+    assert 'data-avds-component="workspace-queue-item"' in response.text
     assert "function exportWorkspace" in response.text
     assert "function sanitizeWorkspacePayload" in response.text
     assert "function importWorkspace" in response.text
+    assert "function renderWorkspaceQueue" in response.text
+    assert "workspace_action_preparing" in response.text
+    assert "Сохраняется только в этом браузере." in response.text
     assert "Уточнить данные" in response.text
     assert "Рабочие подборки" in response.text
     assert "Сохранить фильтры" in response.text
@@ -879,6 +885,9 @@ def test_root_supports_explicit_english_dashboard(monkeypatch):
     assert "Load more" in response.text
     assert 'aria-label="Saved collection status"' in response.text
     assert "Copy the link to the current collection" in response.text
+    assert "Next actions" in response.text
+    assert "Stored only in this browser." in response.text
+    assert "Check the criteria on the official source." in response.text
 
 
 def test_root_head_is_available(monkeypatch):
