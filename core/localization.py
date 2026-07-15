@@ -144,6 +144,16 @@ def _english_source_fallback(
             "page for eligibility, available funding, submission documents and the "
             "current deadline."
         )
+    if item.source == "world_bank_procurement_ca" and len(summary) < 80:
+        raw = item.raw if isinstance(item.raw, dict) else {}
+        country = _string_value(raw.get("country"))
+        project = _string_value(raw.get("project_name"))
+        location = f" for {country}" if country else ""
+        project_context = f" under the {project} project" if project else ""
+        summary = (
+            f"World Bank procurement notice{location}{project_context}. "
+            "Review the official notice for scope, eligibility and the submission deadline."
+        )
     if not _CYRILLIC_RE.search(title) and not _CYRILLIC_RE.search(summary):
         return title, summary
 
