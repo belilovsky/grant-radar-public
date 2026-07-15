@@ -37,3 +37,10 @@ def test_prod_requirements_exclude_dev_and_browser_tooling():
 
     for package in excluded:
         assert f"{package}==" not in requirements
+
+
+def test_qazstack_runtime_dependencies_are_pinned():
+    requirements = (ROOT / "requirements-prod.txt").read_text()
+
+    for package in ("asyncpg", "jinja2", "python-multipart"):
+        assert f"{package}==" in requirements

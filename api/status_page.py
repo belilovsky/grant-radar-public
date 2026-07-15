@@ -25,15 +25,15 @@ COPY = {
         "unknown": "Без отметки",
         "source": "Источник",
         "coverage": "Записей / актуально",
-        "updated": "Последняя запись",
+        "updated": "Последняя проверка",
         "state": "Состояние",
         "fresh_label": "Свежий",
         "stale_label": "Требует внимания",
         "unknown_label": "Нет данных",
         "empty": "Подключённые источники пока не найдены.",
         "disclaimer": (
-            "Статус отражает время последней обнаруженной записи, а не юридическую "
-            "актуальность каждой программы."
+            "Статус отражает время последней успешной проверки или обнаруженной "
+            "записи, а не юридическую актуальность каждой программы."
         ),
         "summary_aria": "Сводка состояния источников",
     },
@@ -52,15 +52,15 @@ COPY = {
         "unknown": "Unknown",
         "source": "Source",
         "coverage": "Records / current",
-        "updated": "Latest record",
+        "updated": "Latest check",
         "state": "State",
         "fresh_label": "Fresh",
         "stale_label": "Needs attention",
         "unknown_label": "No data",
         "empty": "No connected sources are available yet.",
         "disclaimer": (
-            "Freshness reflects the latest discovered record, not the legal "
-            "validity of every program."
+            "Freshness reflects the latest successful check or discovered record, "
+            "not the legal validity of every program."
         ),
         "summary_aria": "Source status summary",
     },
@@ -122,7 +122,9 @@ def render_status_page(
             <span>{escape(_host(row.get("base_url")))}</span>
           </td>
           <td>{int(row.get("items") or 0)} / {int(row.get("relevant_open_items") or 0)}</td>
-          <td>{escape(_date_label(row.get("last_discovered_at"), active_lang))}</td>
+          <td>{escape(_date_label(
+              row.get("last_checked_at") or row.get("last_discovered_at"), active_lang
+          ))}</td>
           <td><span class="state state--{escape(str(row.get("freshness_status") or "unknown"))}">
             {escape(str(state_labels.get(str(row.get("freshness_status")), copy["unknown_label"])))}
           </span></td>

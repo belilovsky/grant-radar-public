@@ -13,7 +13,7 @@ import os
 import pytest
 
 from core.fetch_queue import FetchQueue
-from core.runner_factory import build_default_runner
+from core.runner_factory import build_default_runner, build_run_recorder_factory
 
 
 class _StubRepo:
@@ -40,6 +40,7 @@ def test_no_recorder_when_db_url_missing(monkeypatch):
     queue = FetchQueue()
     runner = build_default_runner(queue, repository=_StubRepo())
     assert runner.run_recorder is None
+    assert build_run_recorder_factory() is None
 
 
 def test_explicit_recorder_overrides_auto_detection(monkeypatch):
@@ -89,3 +90,9 @@ def test_auto_recorder_attaches_when_runs_table_exists(tmp_path, monkeypatch):
     queue = FetchQueue()
     runner = build_default_runner(queue, repository=_StubRepo())
     assert runner.run_recorder is not None
+
+    factory = build_run_recorder_factory()
+    assert factory is not None
+    first = factory("grants_gov")
+    second = factory("canada_cfli_ca")
+    assert first._engine is second._engine

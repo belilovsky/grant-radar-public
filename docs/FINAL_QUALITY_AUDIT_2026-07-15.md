@@ -82,3 +82,16 @@ reference evidence.
 
 The only deliberately deferred item is the staged decomposition of
 `api/dashboard.py`; it is maintainability work, not a known runtime defect.
+
+## Follow-up – 2026-07-15
+
+The dedicated follow-up completed the deferred decomposition without changing
+the rendered page. Localized copy now lives in `api/dashboard_copy.py`, static
+dashboard CSS in `api/dashboard_style.py`, and rendering and interaction logic
+remain in `api/dashboard.py`. Before and after RU/EN renders had identical byte
+lengths and SHA-256 digests.
+
+The same change set records successful per-source fetch cycles in the existing
+`runs` table. This makes an empty but successfully checked source observable
+without inventing a record or a timestamp. The current plan and conditional
+product backlog are maintained in `REMAINING_WORK_PLAN_2026-07-15.md`.
