@@ -68,10 +68,6 @@ make lint
 docker build -f Dockerfile.prod -t qazfund:qazstack-1.37.2 .
 ```
 
-Production completion still requires the documented deploy, `/ready`, NDJSON
-ETag smoke and the full `scripts.production_smoke` run. Local green does not
-prove production rollout.
-
 Local result for this change set:
 
 - QazStack wheel checksum: passed;
@@ -80,3 +76,19 @@ Local result for this change set:
 - local HTTP check: NDJSON, `llms.txt` and evidence counters responded;
 - production Docker build: not run locally because the Docker CLI is not
   installed on this workstation; CI/deploy must keep this as a blocking gate.
+
+Production result on 2026-07-15:
+
+- GitHub `Verify` completed successfully for PR `#12`;
+- merge commit `03ce6b1eadf14f1ee423c5947d2ad5763dbd40cf` was deployed through
+  the documented conservative deploy script;
+- the production container build and `/ready` check passed;
+- the full smoke against `https://qaz.fund` passed with `155` relevant open
+  opportunities from `26` connected sources;
+- the NDJSON export returned `application/x-ndjson`, an ETag and `304` for a
+  matching `If-None-Match` request;
+- the public consumer contract reported QazStack `1.37.2` and the expected
+  source revision.
+
+Local green remains a separate gate and must never be treated as proof of a
+future production rollout.
