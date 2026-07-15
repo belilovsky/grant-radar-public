@@ -96,5 +96,9 @@ curl -fsS 'https://example.org/digest?limit=5&tag=ai'
 - Create encrypted host-side dumps with `BACKUP_DIR=/var/backups/grant-radar ./scripts/backup_postgres.sh`.
 - Schedule the backup script from the private maintainer runbook only after a restore drill.
 - Monitor freshness in `/coverage`, especially zero-item and stale sources.
+- Source freshness uses the newest successful per-source check or discovered
+  record. After a first deployment of source-run recording, allow one real
+  worker cycle before expecting a zero-item source to move from `unknown` to
+  `fresh`; never backfill that timestamp manually.
 - Keep deploy hosts, paths, backup archives, and incident history in a private
   maintainer runbook.

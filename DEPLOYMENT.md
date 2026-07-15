@@ -44,6 +44,10 @@ starts. In the standard Compose layout the API is the single migration owner;
 the worker skips migrations to avoid a concurrent Alembic run. Disable the
 behavior for other one-off jobs with `GRANT_RADAR_SKIP_MIGRATIONS=1`.
 
+The worker records one `runs` row per source cycle using the existing schema.
+This is also the freshness evidence for sources that return no records. Do not
+seed or update these rows manually: a successful real fetch cycle is the gate.
+
 ## Reverse proxy
 
 Put the API behind a reverse proxy that forwards the public host to the
