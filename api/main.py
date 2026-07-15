@@ -26,6 +26,7 @@ from starlette.exceptions import HTTPException as StarletteHTTPException
 from starlette.middleware.gzip import GZipMiddleware
 from starlette.middleware.trustedhost import TrustedHostMiddleware
 
+from api.avds import AVDS_CSS
 from api.dashboard import (
     GOOGLE_SITE_VERIFICATION_CONTENT,
     GOOGLE_SITE_VERIFICATION_FILENAME,
@@ -1400,15 +1401,22 @@ async def swagger_docs(request: Request) -> HTMLResponse:
   <meta name="description" content="{escape(str(docs_copy["description"]), quote=True)}">
   <link rel="canonical" href="{escape(canonical_href, quote=True)}">
   <style>
+    {AVDS_CSS}
+    html, body {{
+      margin: 0;
+      background: var(--color-bg);
+      color: var(--color-text);
+      font-family: var(--av-font-sans);
+    }}
     .qazfund-docs-header {{
-      max-width: 1460px;
+      max-width: var(--av-container-dashboard);
       margin: 0 auto;
-      padding: 16px 20px 0;
+      padding: 14px 20px;
       display: flex;
       align-items: center;
       justify-content: space-between;
       gap: 16px;
-      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      border-bottom: 1px solid var(--color-border);
     }}
     .qazfund-docs-header a {{
       color: inherit;
@@ -1420,11 +1428,34 @@ async def swagger_docs(request: Request) -> HTMLResponse:
       color: inherit;
       font-size: 14px;
       line-height: 1.3;
+      font-weight: 700;
     }}
     .qazfund-docs-header a:focus-visible {{
       outline: 2px solid currentColor;
       outline-offset: 4px;
     }}
+    .swagger-ui {{
+      max-width: var(--av-container-dashboard);
+      margin: 0 auto;
+      font-family: var(--av-font-sans);
+      color: var(--color-text);
+    }}
+    .swagger-ui .info {{ margin: 24px 0; }}
+    .swagger-ui .info .title,
+    .swagger-ui .opblock-tag,
+    .swagger-ui .opblock-summary-method,
+    .swagger-ui button,
+    .swagger-ui input,
+    .swagger-ui select,
+    .swagger-ui textarea {{ font-family: var(--av-font-sans); }}
+    .swagger-ui .scheme-container {{
+      margin: 0 0 16px;
+      padding: 12px 0;
+      background: transparent;
+      box-shadow: none;
+      border-block: 1px solid var(--color-border);
+    }}
+    .swagger-ui .opblock-tag {{ border-bottom-color: var(--color-border); }}
     @media (max-width: 520px) {{
       .qazfund-docs-header {{ align-items: flex-start; padding-inline: 16px; }}
       .qazfund-docs-title {{ max-width: 15ch; text-align: right; }}
@@ -1435,8 +1466,13 @@ async def swagger_docs(request: Request) -> HTMLResponse:
         swagger.body.tobytes() if isinstance(swagger.body, memoryview) else swagger.body
     )
     body = raw_body.decode("utf-8")
-    body = body.replace("<html>", f'<html lang="{docs_lang}">', 1)
-    body = body.replace("<head>", f"<head>{head_markup}", 1)
+    body = body.replace(
+        "<html>",
+        f'<html lang="{docs_lang}" data-avds="grant-radar" '
+        'data-av-theme="light" data-theme="light">',
+        1,
+    )
+    body = body.replace("</head>", f"{head_markup}</head>", 1)
     body = body.replace("<body>", f"<body>{page_header}", 1)
     body = body.replace(
         '<div id="swagger-ui">\n    </div>',

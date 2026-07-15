@@ -53,14 +53,17 @@ def render_not_found_page(*, lang: str, root_path: str = "") -> str:
       margin: 0;
       min-height: 100vh;
       display: grid;
-      place-items: center;
-      padding: 24px;
+      grid-template-rows: 1fr auto;
+      place-items: stretch;
+      padding: 0;
       background: var(--color-bg);
       color: var(--color-text);
       font-family: var(--av-font-sans);
     }}
     main {{
-      width: min(620px, 100%);
+      align-self: center;
+      justify-self: center;
+      width: min(620px, calc(100% - 48px));
       padding: clamp(24px, 6vw, 48px);
       border: 1px solid var(--color-border-subtle);
       border-radius: var(--av-radius-lg);
@@ -83,7 +86,7 @@ def render_not_found_page(*, lang: str, root_path: str = "") -> str:
       color: var(--color-text-muted);
       line-height: 1.65;
     }}
-    a {{
+    .primary-action {{
       display: inline-flex;
       align-items: center;
       min-height: var(--av-control-height-md);
@@ -95,7 +98,7 @@ def render_not_found_page(*, lang: str, root_path: str = "") -> str:
       font-weight: 700;
       text-decoration: none;
     }}
-    a:focus-visible {{ outline: 0; box-shadow: var(--color-focus-ring); }}
+    .primary-action:focus-visible {{ outline: 0; box-shadow: var(--color-focus-ring); }}
   </style>
 </head>
 <body>
@@ -103,7 +106,7 @@ def render_not_found_page(*, lang: str, root_path: str = "") -> str:
     <span class="eyebrow">{escape(copy["eyebrow"])}</span>
     <h1>{escape(copy["heading"])}</h1>
     <p>{escape(copy["text"])}</p>
-    <a href="{escape(catalog_href, quote=True)}">{escape(copy["action"])}</a>
+    <a class="primary-action" href="{escape(catalog_href, quote=True)}">{escape(copy["action"])}</a>
   </main>
 </body>
 </html>"""

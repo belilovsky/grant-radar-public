@@ -543,6 +543,9 @@ def test_browser_404_is_branded_while_api_404_stays_json(monkeypatch):
     assert "This page does not exist" in browser_response.text
     assert 'meta name="description"' in browser_response.text
     assert 'href="/?lang=en"' in browser_response.text
+    assert 'class="primary-action"' in browser_response.text
+    assert ".primary-action {" in browser_response.text
+    assert "grid-template-rows: 1fr auto;" in browser_response.text
     assert api_response.status_code == 404
     assert api_response.headers["content-type"].startswith("application/json")
 
@@ -585,9 +588,11 @@ def test_docs_exposes_swagger_with_return_link(monkeypatch):
     assert head_response.headers["content-type"].startswith("text/html")
     assert "QAZ.FUND API" in response.text
     assert "SwaggerUIBundle" in response.text
-    assert '<html lang="ru">' in response.text
+    assert '<html lang="ru" data-avds="grant-radar"' in response.text
     assert '<span class="qazfund-docs-title">Документация API</span>' in response.text
     assert '<main id="swagger-ui"></main>' in response.text
+    assert 'data-avds="grant-radar" data-av-theme="light"' in response.text
+    assert "--av-color-primary: var(--av-color-blue-700);" in response.text
     assert 'meta name="description"' in response.text
     assert 'rel="canonical" href="http://testserver/docs?lang=ru"' in response.text
     assert 'href="/?lang=ru"' in response.text
@@ -602,7 +607,7 @@ def test_docs_supports_english_return_link(monkeypatch):
     response = client.get("/docs?lang=en", headers={"Accept-Encoding": "identity"})
 
     assert response.status_code == 200
-    assert '<html lang="en">' in response.text
+    assert '<html lang="en" data-avds="grant-radar"' in response.text
     assert '<span class="qazfund-docs-title">API documentation</span>' in response.text
     assert 'rel="canonical" href="http://testserver/docs?lang=en"' in response.text
     assert 'href="/?lang=en"' in response.text
@@ -1571,6 +1576,9 @@ def test_public_status_page_renders_coverage_without_operator_details(monkeypatc
     assert "Статус источников" in response.text
     assert 'aria-label="Сводка состояния источников"' in response.text
     assert 'data-av-theme="light" data-theme="light"' in response.text
+    assert 'class="status-topbar"' in response.text
+    assert 'class="lang-switch"' in response.text
+    assert 'href="/status?lang=en"' in response.text
     assert "--av-container-dashboard: 1280px" in response.text
     assert "World Bank Kazakhstan" in response.text
     assert "Последняя проверка" in response.text
@@ -1592,6 +1600,10 @@ def test_operator_page_is_noindex_and_never_embeds_admin_token(monkeypatch):
     assert 'name="robots" content="noindex,nofollow"' in response.text
     assert "Контроль источников" in response.text
     assert 'data-av-theme="light" data-theme="light"' in response.text
+    assert 'class="operator-brand"' in response.text
+    assert '<label for="token">Операторский токен</label>' in response.text
+    assert 'class="lang-switch"' in response.text
+    assert 'href="/operator?lang=en"' in response.text
     assert "X-Grant-Radar-Admin-Token" in response.text
     assert "sessionStorage" in response.text
     assert 'autocomplete="username"' in response.text
@@ -2733,7 +2745,11 @@ def test_opportunity_page_renders_public_permalink(monkeypatch):
     assert 'href="https://example.org/apply/P179204-page"' in response.text
     assert 'href="/?lang=ru#opportunities"' in response.text
     assert 'aria-label="Навигационная цепочка"' in response.text
-    assert "Все возможности" in response.text
+    assert 'class="hero-fact hero-fact--source"' in response.text
+    hero_actions = response.text.split('<div class="hero-actions">', 1)[1].split(
+        "</div>", 1
+    )[0]
+    assert 'href="/?lang=ru#opportunities"' not in hero_actions
     assert (
         'class="button primary" href="https://example.org/project/P179204-page"'
         in response.text
@@ -3022,8 +3038,9 @@ def test_funder_page_renders_public_profile(monkeypatch):
     assert "--av-color-primary-700" not in response.text
     assert "Живые и рабочие возможности" in response.text
     assert "Архив и исторический след" in response.text
-    assert "Обычно поддерживает" in response.text
-    assert "Обычно поддерживает гранты и программы." in response.text
+    assert (
+        "Профиль построен по опубликованным программам и объявлениям." in response.text
+    )
     assert "Форматы:" in response.text
     assert "Основные темы:" in response.text
     assert "Фокус по регионам:" in response.text
@@ -3080,7 +3097,8 @@ def test_funder_topics_do_not_repeat_opportunity_format():
 
     assert funder_page_module._public_topic_labels(funder, copy) == ["ЕБРР", "ECEPP"]
     assert funder_page_module._overview_sentence(funder, copy) == (
-        "Обычно поддерживает гранты и программы. Форматы: Тендер. "
+        "Профиль построен по опубликованным программам и объявлениям. "
+        "Форматы: Тендер. "
         "Основные темы: ЕБРР, ECEPP."
     )
 

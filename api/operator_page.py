@@ -10,6 +10,8 @@ from api.avds import AVDS_CSS, AVDS_FONT_HEAD
 COPY = {
     "ru": {
         "title": "Операторский контроль – QAZ.FUND",
+        "brand_context": "Операторский контур",
+        "eyebrow": "Состояние конвейера",
         "heading": "Контроль источников",
         "intro": "Техническое состояние сборщиков и последние запуски.",
         "token": "Операторский токен",
@@ -37,6 +39,8 @@ COPY = {
     },
     "en": {
         "title": "Operator control – QAZ.FUND",
+        "brand_context": "Operator workspace",
+        "eyebrow": "Pipeline status",
         "heading": "Source control",
         "intro": "Collector health and recent pipeline runs.",
         "token": "Operator token",
@@ -70,9 +74,13 @@ def render_operator_page(*, lang: str, root_path: str = "") -> str:
     copy = COPY[active_lang]
     base = root_path.rstrip("/")
     catalog_href = f"{base}/?lang={active_lang}" if base else f"/?lang={active_lang}"
+    ru_href = f"{base}/operator?lang=ru" if base else "/operator?lang=ru"
+    en_href = f"{base}/operator?lang=en" if base else "/operator?lang=en"
     health_path = f"{base}/operator/health" if base else "/operator/health"
     copy_json = json.dumps(copy, ensure_ascii=False)
     endpoint_json = json.dumps(health_path, ensure_ascii=False)
+    ru_current = ' aria-current="page"' if active_lang == "ru" else ""
+    en_current = ' aria-current="page"' if active_lang == "en" else ""
     return f"""<!doctype html>
 <html lang="{active_lang}" data-avds="grant-radar" data-av-theme="light" data-theme="light">
 <head>
@@ -97,15 +105,30 @@ def render_operator_page(*, lang: str, root_path: str = "") -> str:
       border:0; }}
     main {{ width:min(var(--av-container-dashboard),calc(100% - 32px)); margin:auto;
       padding:16px 0 40px; }}
-    .top {{ display:flex; justify-content:space-between; gap:16px;
-      align-items:flex-start; margin-bottom:12px; }}
-    h1 {{ margin:0 0 4px; font-size:clamp(27px,3vw,36px); line-height:1.05; }}
+    .operator-topbar {{ display:flex; align-items:center; justify-content:space-between;
+      gap:16px; margin-bottom:18px; }}
+    .operator-brand {{ display:inline-flex; align-items:baseline; gap:10px; color:var(--ink);
+      font-size:17px; font-weight:800; letter-spacing:0; }}
+    .operator-brand span {{ color:var(--muted); font-size:12px; font-weight:650; }}
+    .operator-tools {{ display:flex; align-items:center; gap:14px; }}
+    .lang-switch {{ display:inline-flex; align-items:center; gap:4px; }}
+    .lang-switch a {{ min-width:34px; padding:6px 8px; border-bottom:2px solid transparent;
+      color:var(--muted); text-align:center; font-size:12px; }}
+    .lang-switch a[aria-current="page"] {{ border-bottom-color:var(--brand); color:var(--ink); }}
+    .catalog-link {{ min-height:32px; display:inline-flex; align-items:center; }}
+    .intro-grid {{ display:grid; grid-template-columns:minmax(0,1fr) minmax(360px,520px);
+      gap:28px; align-items:center; padding:24px 0; border-top:1px solid var(--line);
+      border-bottom:1px solid var(--line); }}
+    .eyebrow {{ display:block; margin-bottom:6px; color:var(--brand); font-size:12px;
+      font-weight:700; }}
+    h1 {{ max-width:18ch; margin:0 0 6px; font-size:clamp(27px,3vw,36px); line-height:1.05; }}
     p {{ margin:0; color:var(--muted); line-height:1.5; }}
     a {{ color:var(--brand); font-weight:700; text-decoration:none; }}
     .auth,.panel {{ padding:14px; border:1px solid var(--line); border-radius:var(--av-radius-md);
       background:var(--panel); }}
-    .auth {{ max-width:720px; }}
-    .auth form {{ display:grid; grid-template-columns:1fr auto; gap:10px; margin-top:14px; }}
+    .auth form {{ display:grid; gap:7px; }}
+    .auth label {{ color:var(--muted); font-size:12px; font-weight:700; }}
+    .auth-controls {{ display:grid; grid-template-columns:1fr auto; gap:10px; }}
     input {{ min-height:var(--av-control-height-md); padding:0 12px; border:1px solid var(--line);
       border-radius:var(--av-radius-md); color:var(--ink); }}
     button {{ min-height:var(--av-control-height-md); padding:0 16px; border:0;
@@ -113,9 +136,13 @@ def render_operator_page(*, lang: str, root_path: str = "") -> str:
       background:var(--brand); color:#fff; font-weight:700; cursor:pointer; }}
     button.secondary {{ background:var(--brand-soft); color:var(--brand); }}
     .hint {{ margin-top:9px; font-size:12px; }}
-    .message {{ margin:14px 0; color:var(--muted); }}
+    .message {{ min-height:20px; margin:10px 0 0; color:var(--muted); }}
     .message.bad {{ color:var(--bad); }}
     .dashboard[hidden],.auth[hidden] {{ display:none; }}
+    .dashboard {{ padding-top:14px; }}
+    .dashboard-toolbar {{ display:flex; align-items:center; justify-content:space-between;
+      gap:12px; }}
+    .dashboard-toolbar .message {{ margin:0; }}
     .metrics {{ display:grid; grid-template-columns:repeat(5,minmax(0,1fr));
       gap:0; margin:12px 0; border:1px solid var(--line); border-radius:var(--av-radius-md);
       background:var(--panel); }}
@@ -142,35 +169,64 @@ def render_operator_page(*, lang: str, root_path: str = "") -> str:
     .status-running {{ color:var(--warn); }}
     @media(max-width:760px) {{
       main {{ width:min(100% - 20px,var(--av-container-dashboard)); padding-top:10px; }}
-      .top,.grid {{ display:grid; grid-template-columns:1fr; }}
+      .operator-topbar {{ align-items:flex-start; }}
+      .operator-brand {{ display:grid; gap:2px; }}
+      .operator-tools {{ gap:6px; }}
+      .catalog-link {{ font-size:0; }}
+      .catalog-link::before {{ content:"←"; font-size:18px; }}
+      .intro-grid,.grid {{ grid-template-columns:1fr; gap:16px; padding:18px 0; }}
       .metrics {{ grid-template-columns:repeat(2,minmax(0,1fr)); }}
-      .auth form {{ grid-template-columns:1fr; }}
+      .auth-controls {{ grid-template-columns:1fr; }}
+      .dashboard-toolbar {{ align-items:flex-start; }}
     }}
   </style>
 </head>
 <body>
   <main>
-    <header class="top">
-      <div><h1>{escape(str(copy["heading"]))}</h1><p>{escape(str(copy["intro"]))}</p></div>
-      <a href="{escape(catalog_href, quote=True)}">{escape(str(copy["back"]))}</a>
+    <header>
+      <div class="operator-topbar">
+        <a class="operator-brand" href="{escape(catalog_href, quote=True)}">
+          QAZ.FUND <span>{escape(str(copy["brand_context"]))}</span>
+        </a>
+        <div class="operator-tools">
+          <nav class="lang-switch" aria-label="Language">
+            <a href="{escape(ru_href, quote=True)}" lang="ru"{ru_current}>RU</a>
+            <a href="{escape(en_href, quote=True)}" lang="en"{en_current}>EN</a>
+          </nav>
+          <a class="catalog-link" href="{escape(catalog_href, quote=True)}">
+            {escape(str(copy["back"]))}
+          </a>
+        </div>
+      </div>
+      <div class="intro-grid">
+        <div>
+          <span class="eyebrow">{escape(str(copy["eyebrow"]))}</span>
+          <h1>{escape(str(copy["heading"]))}</h1>
+          <p>{escape(str(copy["intro"]))}</p>
+        </div>
+        <section class="auth" id="auth">
+          <form id="auth-form">
+            <input class="visually-hidden" type="text" name="username"
+              value="operator" autocomplete="username" tabindex="-1" aria-hidden="true">
+            <label for="token">{escape(str(copy["token"]))}</label>
+            <div class="auth-controls">
+              <input id="token" type="password" autocomplete="current-password"
+                placeholder="{escape(str(copy["token"]), quote=True)}" required>
+              <button type="submit">{escape(str(copy["connect"]))}</button>
+            </div>
+          </form>
+          <p class="hint">{escape(str(copy["hint"]))}</p>
+          <p class="message" id="auth-message" aria-live="polite"></p>
+        </section>
+      </div>
     </header>
-    <section class="auth" id="auth">
-      <form id="auth-form">
-        <input class="visually-hidden" type="text" name="username"
-          value="operator" autocomplete="username" tabindex="-1" aria-hidden="true">
-        <input id="token" type="password" autocomplete="current-password"
-          placeholder="{escape(str(copy["token"]), quote=True)}"
-          aria-label="{escape(str(copy["token"]), quote=True)}" required>
-        <button type="submit">{escape(str(copy["connect"]))}</button>
-      </form>
-      <p class="hint">{escape(str(copy["hint"]))}</p>
-      <p class="message" id="auth-message" aria-live="polite"></p>
-    </section>
     <section class="dashboard" id="dashboard" hidden>
-      <button class="secondary" type="button" id="disconnect">
-        {escape(str(copy["disconnect"]))}
-      </button>
-      <p class="message" id="message" aria-live="polite">{escape(str(copy["loading"]))}</p>
+      <div class="dashboard-toolbar">
+        <p class="message" id="message" aria-live="polite">{escape(str(copy["loading"]))}</p>
+        <button class="secondary" type="button" id="disconnect">
+          {escape(str(copy["disconnect"]))}
+        </button>
+      </div>
       <div class="metrics" id="metrics"></div>
       <div class="grid">
         <section class="panel">
