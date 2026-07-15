@@ -183,9 +183,10 @@ def _application_url(html_fragment: str) -> str | None:
     for match in LINK_RE.finditer(html_fragment):
         label = _clean_text(match.group("label")).lower()
         href = match.group("href").strip()
-        if "proposal" in label or "bid" in label or "drive.google.com" in href:
-            if href.startswith("http"):
-                return href
+        if (
+            "proposal" in label or "bid" in label or "drive.google.com" in href
+        ) and href.startswith("http"):
+            return href
     for match in MARKDOWN_LINK_RE.finditer(html_fragment):
         label = _clean_text(match.group("label")).lower()
         href = match.group("href").strip()

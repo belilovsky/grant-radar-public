@@ -48,10 +48,11 @@ def _remove_repeated_title_prefix(summary: str, title: str) -> str:
     title_text = _string_value(title)
     if not summary_text or not title_text:
         return summary_text
-    candidates = [title_text]
-    for separator in (" – ", " \u2014 "):
-        if separator in title_text:
-            candidates.append(title_text.split(separator, maxsplit=1)[0])
+    candidates = [title_text] + [
+        title_text.split(separator, maxsplit=1)[0]
+        for separator in (" – ", " \u2014 ")
+        if separator in title_text
+    ]
     for candidate in candidates:
         if ":" in candidate:
             leading_clause = candidate.split(":", maxsplit=1)[0].strip()

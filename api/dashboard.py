@@ -1980,7 +1980,7 @@ def _absolute_href(origin: str, path: str) -> str:
     clean_origin = origin.rstrip("/")
     if not path:
         return clean_origin or "/"
-    if path.startswith("http://") or path.startswith("https://"):
+    if path.startswith(("http://", "https://")):
         return path
     return f"{clean_origin}{path}" if clean_origin else path
 
