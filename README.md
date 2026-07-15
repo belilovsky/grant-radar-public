@@ -31,9 +31,12 @@ The main public endpoints are:
 
 - `GET /health`
 - `GET /ready`
+- `GET /sources`
 - `GET /coverage`
 - `GET /status?lang=ru|en`
+- `GET /funders`
 - `GET /opportunities`
+- `GET /opportunities.ndjson`
 - `GET /opportunities/{opportunity_id}`
 - `GET /opportunity/{opportunity_id}?lang=ru|en`
 - `GET /funder/{funder_slug}?lang=ru|en`
@@ -46,9 +49,10 @@ The main public endpoints are:
 - `GET /site-discovery.json`
 - `GET /operator` (noindex operator shell; token is never embedded in HTML)
 - `GET /operator/health` (requires `GRANT_RADAR_ADMIN_TOKEN`)
+- `POST /refresh` (requires `GRANT_RADAR_ADMIN_TOKEN`)
 
 For machine consumers, `llms.txt` and `site-discovery.json` publish the public
-entry points, read-only JSON endpoints, and supported query templates.
+entry points, read-only JSON/NDJSON endpoints, and supported query templates.
 
 ## Quick start
 
