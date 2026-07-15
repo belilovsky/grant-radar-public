@@ -13,7 +13,9 @@ def test_qazstack_release_dependency_is_imported_outside_the_worktree() -> None:
     """QAZ.FUND consumes the released package, not a copied source snapshot."""
 
     assert qazstack_version == "1.35.0"
-    assert not Path(qazstack.__file__).resolve().is_relative_to(Path.cwd())
+    package_path = Path(qazstack.__file__).resolve()
+    assert "site-packages" in package_path.parts
+    assert not package_path.is_relative_to(Path.cwd() / "qazstack")
 
 
 def test_docker_context_excludes_removed_qazstack_source_snapshot() -> None:

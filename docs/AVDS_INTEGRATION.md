@@ -1,8 +1,8 @@
-# AV Design System integration
+# AV DS 4 integration
 
 Grant Radar has a server-rendered FastAPI dashboard, so it does not depend on
-private `@av-ds/*` packages at runtime. The production-safe contract is a local
-adapter in `api/avds.py`.
+the React-only `@sgeo/ui-kit` package at runtime. The production-safe contract
+is a local server-rendered adapter in `api/avds.py`, aligned to AV DS 4.3.2.
 
 ## Contract
 
@@ -13,8 +13,8 @@ adapter in `api/avds.py`.
 - The local token subset also includes product-density primitives for this
   operational surface: dashboard container width, compact/regular control
   heights, card padding, section gap and a shared focus ring.
-- The adapter follows the AV DS 3.7 token names used in the shared UI kit where
-  this static FastAPI surface needs them: `--font-sans`, `--font-serif`,
+- The adapter follows the AV DS 4 semantic token roles used in the shared UI kit
+  where this static FastAPI surface needs them: `--font-sans`, `--font-serif`,
   `--font-mono`, `--button-outline`, `--badge-outline`, `--shadow-*`,
   `--radius`, `--motion-*`, and semantic border aliases.
 - Dashboard CSS maps the local AV DS variables into the shared semantic names
@@ -35,6 +35,10 @@ adapter in `api/avds.py`.
   live release gate, so production deploys fail smoke if the rendered page
   loses `data-avds="grant-radar"`, `data-av-theme="light"`, the default
   Russian shell markers, or the current AV DS component markers.
+- `/.well-known/avds-ui-contract.json` publishes the machine-readable AV DS 4
+  compatibility boundary. It intentionally reports
+  `direct_package_import: false` through the ecosystem manifest; the SSR adapter
+  must not be mistaken for a React package import.
 
 ## Why local adapter
 
@@ -43,6 +47,7 @@ frontend packages during production deploy would make the service dependent on
 registry credentials. The adapter keeps the visual contract aligned with AV DS
 while preserving a simple, reproducible Docker build.
 
-If the shared AV DS package becomes available in this deploy environment, the
-adapter can be replaced by importing the packaged tokens while keeping the same
-semantic variables and `data-avds-component` markers.
+The adapter should be replaced only if AV DS publishes a framework-neutral CSS
+artifact suitable for a Python-only image. Until then, parity is maintained by
+semantic roles, component-family mapping, visual tests and production smoke,
+not by copying React component source.
