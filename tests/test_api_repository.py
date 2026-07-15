@@ -1542,6 +1542,7 @@ def test_public_status_page_renders_coverage_without_operator_details(monkeypatc
     assert 'data-av-theme="light" data-theme="light"' in response.text
     assert "--av-container-dashboard: 1280px" in response.text
     assert "World Bank Kazakhstan" in response.text
+    assert "Последняя проверка" in response.text
     assert 'rel="canonical" href="https://qaz.fund/status?lang=ru"' in response.text
     assert "error" not in response.text.lower()
     assert client.head("/status?lang=en").status_code == 200
@@ -1582,6 +1583,42 @@ def test_source_freshness_marks_old_and_missing_timestamps():
         api_main._source_freshness(datetime.now(timezone.utc))["freshness_status"]
         == "fresh"
     )
+
+
+def test_source_coverage_uses_successful_empty_source_check(monkeypatch):
+    _reset_api_state(monkeypatch)
+    checked_at = datetime.now(timezone.utc) - timedelta(hours=2)
+    rows = api_main._source_coverage([], {"canada_cfli_ca": checked_at})
+    source = next(row for row in rows if row["slug"] == "canada_cfli_ca")
+
+    assert source["items"] == 0
+    assert source["last_discovered_at"] is None
+    assert source["last_checked_at"] == checked_at.isoformat()
+    assert source["freshness_basis"] == "source_check"
+    assert source["freshness_status"] == "fresh"
+
+
+def test_source_coverage_prefers_newer_successful_check(monkeypatch):
+    _reset_api_state(monkeypatch)
+    discovered_at = datetime.now(timezone.utc) - timedelta(days=5)
+    checked_at = datetime.now(timezone.utc) - timedelta(hours=1)
+    item = Opportunity(
+        source="world_bank_kazakhstan",
+        source_url="https://example.org/old-record",
+        type=OpportunityType.GRANT,
+        title="Older indexed record",
+        summary="Previously indexed Kazakhstan opportunity.",
+        tags=["kazakhstan"],
+        discovered_at=discovered_at,
+    )
+
+    rows = api_main._source_coverage([item], {"world_bank_kazakhstan": checked_at})
+    source = next(row for row in rows if row["slug"] == "world_bank_kazakhstan")
+
+    assert source["last_discovered_at"] == discovered_at.isoformat()
+    assert source["last_checked_at"] == checked_at.isoformat()
+    assert source["freshness_basis"] == "source_check"
+    assert source["freshness_status"] == "fresh"
 
 
 def test_funders_endpoint_aggregates_lifecycle(monkeypatch):
@@ -2244,9 +2281,10 @@ def test_coverage_cache_reuses_source_aggregation(monkeypatch):
         score=0.8,
     )
 
-    def fake_coverage(items):
+    def fake_coverage(items, source_checks):
         calls["count"] += 1
         assert items == [item]
+        assert source_checks == {}
         return [
             {
                 "slug": "grants_gov",
@@ -3240,6 +3278,8 @@ def test_operator_run_rows_accepts_success_without_error_text(monkeypatch):
     assert len(rows) == 1
     assert rows[0]["status"] == "ok"
     assert rows[0]["error"] == ""
+    checks = api_main._latest_successful_source_checks()
+    assert checks["grants_gov"].replace(tzinfo=timezone.utc) == now
 
 
 def test_refresh_rejects_bad_admin_token(monkeypatch):

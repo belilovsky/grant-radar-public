@@ -14,7 +14,7 @@ import os
 import signal
 from collections.abc import Iterable
 from dataclasses import dataclass
-from typing import Any, Optional
+from typing import Any, Callable, Optional
 
 from sources import PARSERS, BaseSourceParser
 
@@ -45,11 +45,14 @@ class SourceScheduler:
         configs: Iterable[ScheduleConfig] | None = None,
         queue: Optional[FetchQueue] = None,
         parsers: Iterable[BaseSourceParser] | None = None,
+        recorder_factory: Callable[[str], Any | None] | None = None,
     ):
         self.configs = list(configs or [])
         self.queue = queue
         self.parsers = list(parsers or [])
+        self.recorder_factory = recorder_factory
         self._tasks: list[asyncio.Task] = []
+        self._owned_parsers: list[BaseSourceParser] = []
         self._stop = asyncio.Event()
 
     async def _iter_records(self, parser: BaseSourceParser):
@@ -66,11 +69,7 @@ class SourceScheduler:
     async def _run_parser(self, parser: BaseSourceParser, interval: int) -> None:
         while not self._stop.is_set():
             try:
-                count = 0
-                async for record in self._iter_records(parser):
-                    count += 1
-                    if self.queue is not None:
-                        await self.queue.put(record)
+                count = await self._fetch_once(parser)
                 logger.info("parser=%s fetched=%d", parser.name, count)
             except Exception:
                 logger.exception("parser=%s failed", parser.name)
@@ -78,6 +77,54 @@ class SourceScheduler:
                 await asyncio.wait_for(self._stop.wait(), timeout=interval)
             except asyncio.TimeoutError:
                 continue
+
+    async def _fetch_once(self, parser: BaseSourceParser) -> int:
+        source = str(getattr(parser, "slug", "") or parser.name)
+        recorder = None
+        run_id = None
+        if self.recorder_factory is not None:
+            try:
+                recorder = self.recorder_factory(source)
+                run_id = recorder.start() if recorder is not None else None
+            except Exception:
+                logger.exception("source_recorder_start_failed source=%s", source)
+                recorder = None
+                run_id = None
+
+        count = 0
+        errors = 0
+        status = "ok"
+        try:
+            async for record in self._iter_records(parser):
+                count += 1
+                if self.queue is not None:
+                    await self.queue.put(record)
+        except asyncio.CancelledError:
+            status = "cancelled"
+            raise
+        except Exception:
+            errors = 1
+            status = "error"
+            if recorder is not None and run_id is not None:
+                try:
+                    recorder.record_error(run_id)
+                except Exception:
+                    logger.exception(
+                        "source_recorder_record_error_failed source=%s", source
+                    )
+            raise
+        finally:
+            if recorder is not None and run_id is not None:
+                try:
+                    recorder.finish(
+                        run_id,
+                        processed=count,
+                        errors=errors,
+                        status=status,
+                    )
+                except Exception:
+                    logger.exception("source_recorder_finish_failed source=%s", source)
+        return count
 
     async def start(self) -> None:
         for cfg in self.configs:
@@ -88,27 +135,40 @@ class SourceScheduler:
                 logger.warning("unknown source: %s", cfg.source)
                 continue
             parser = cls()  # type: ignore[abstract]
+            self._owned_parsers.append(parser)
             self._tasks.append(
                 asyncio.create_task(self._run_parser(parser, cfg.interval_seconds))
             )
 
     async def _run_once_async(self) -> None:
         parser_instances = list(self.parsers)
+        owned_parsers: list[BaseSourceParser] = []
         if not parser_instances:
             for cfg in self.configs:
                 if not cfg.enabled:
                     continue
                 cls = PARSERS.get(cfg.source)
                 if cls is not None:
-                    parser_instances.append(cls())  # type: ignore[abstract]
+                    parser = cls()  # type: ignore[abstract]
+                    parser_instances.append(parser)
+                    owned_parsers.append(parser)
 
-        for parser in parser_instances:
+        try:
+            for parser_instance in parser_instances:
+                try:
+                    await self._fetch_once(parser_instance)
+                except Exception:
+                    logger.exception("parser=%s failed", parser_instance.name)
+        finally:
+            await self._close_parsers(owned_parsers)
+
+    @staticmethod
+    async def _close_parsers(parsers: Iterable[BaseSourceParser]) -> None:
+        for parser in parsers:
             try:
-                async for record in self._iter_records(parser):
-                    if self.queue is not None:
-                        await self.queue.put(record)
+                await parser.close()
             except Exception:
-                logger.exception("parser=%s failed", parser.name)
+                logger.exception("parser_close_failed parser=%s", parser.name)
 
     def run_once(self):
         try:
@@ -126,6 +186,8 @@ class SourceScheduler:
                 await t
             except (asyncio.CancelledError, Exception):
                 pass
+        await self._close_parsers(self._owned_parsers)
+        self._owned_parsers.clear()
 
 
 def build_default_configs() -> list[ScheduleConfig]:
@@ -152,11 +214,15 @@ def build_default_configs() -> list[ScheduleConfig]:
 
 async def run_worker() -> None:
     """Run scheduler and pipeline until SIGTERM/SIGINT."""
-    from .runner_factory import build_default_runner
+    from .runner_factory import build_default_runner, build_run_recorder_factory
 
     queue = FetchQueue()
     runner = build_default_runner(queue, idle_timeout=1.0, source="worker")
-    scheduler = SourceScheduler(build_default_configs(), queue=queue)
+    scheduler = SourceScheduler(
+        build_default_configs(),
+        queue=queue,
+        recorder_factory=build_run_recorder_factory(),
+    )
 
     stop_event = asyncio.Event()
     loop = asyncio.get_running_loop()

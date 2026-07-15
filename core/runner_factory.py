@@ -51,6 +51,22 @@ def _maybe_build_recorder(source: str = "pipeline") -> Optional[RunRecorder]:
     return RunRecorder(engine=engine, source=source)
 
 
+def build_run_recorder_factory() -> Callable[[str], RunRecorder] | None:
+    """Build one shared-engine recorder factory for per-source fetch runs."""
+
+    db_url = os.environ.get("GRANT_RADAR_DB_URL")
+    if not db_url:
+        return None
+    try:
+        from .db import get_engine
+
+        engine = get_engine(db_url)
+    except Exception:
+        logger.debug("source_run_recorder_engine_unavailable - skipping recorder")
+        return None
+    return lambda source: RunRecorder(engine=engine, source=source)
+
+
 def build_default_runner(
     queue: FetchQueue,
     *,
@@ -86,4 +102,4 @@ def build_default_runner(
     )
 
 
-__all__ = ["build_default_runner"]
+__all__ = ["build_default_runner", "build_run_recorder_factory"]

@@ -7,7 +7,7 @@ import re
 import threading
 import unicodedata
 from collections import Counter
-from collections.abc import Awaitable, Callable, Iterable
+from collections.abc import Awaitable, Callable, Iterable, Mapping
 from contextlib import asynccontextmanager, suppress
 from datetime import date, datetime, timedelta, timezone
 from functools import lru_cache
@@ -944,8 +944,12 @@ def _related_opportunities(
     return related
 
 
-def _source_coverage(items: list[Opportunity]) -> list[dict[str, Any]]:
+def _source_coverage(
+    items: list[Opportunity],
+    source_checks: Mapping[str, datetime] | None = None,
+) -> list[dict[str, Any]]:
     today = date.today()
+    source_checks = source_checks or {}
     by_source: dict[str, list[Opportunity]] = {}
     for item in items:
         by_source.setdefault(item.source, []).append(item)
@@ -963,7 +967,15 @@ def _source_coverage(items: list[Opportunity]) -> list[dict[str, Any]]:
             (item.discovered_at for item in source_items),
             default=None,
         )
-        freshness = _source_freshness(last_seen)
+        last_checked = source_checks.get(slug)
+        freshness_at = _newest_timestamp(last_seen, last_checked)
+        freshness = _source_freshness(freshness_at)
+        normalized_last_seen = _normalized_utc(last_seen)
+        normalized_last_checked = _normalized_utc(last_checked)
+        uses_source_check = normalized_last_checked is not None and (
+            normalized_last_seen is None
+            or normalized_last_checked >= normalized_last_seen
+        )
         rows.append(
             {
                 "slug": slug,
@@ -975,6 +987,12 @@ def _source_coverage(items: list[Opportunity]) -> list[dict[str, Any]]:
                 "open_items": len(open_items),
                 "relevant_open_items": len(relevant_open_items),
                 "last_discovered_at": last_seen.isoformat() if last_seen else None,
+                "last_checked_at": (last_checked.isoformat() if last_checked else None),
+                "freshness_basis": (
+                    "source_check"
+                    if uses_source_check
+                    else "discovered_record" if last_seen is not None else "unknown"
+                ),
                 **freshness,
             }
         )
@@ -999,6 +1017,8 @@ def _source_coverage(items: list[Opportunity]) -> list[dict[str, Any]]:
                 "open_items": len(open_items),
                 "relevant_open_items": len(relevant_open_items),
                 "last_discovered_at": last_seen.isoformat() if last_seen else None,
+                "last_checked_at": None,
+                "freshness_basis": "discovered_record" if last_seen else "unknown",
                 **freshness,
             }
         )
@@ -1006,17 +1026,57 @@ def _source_coverage(items: list[Opportunity]) -> list[dict[str, Any]]:
     return rows
 
 
+def _normalized_utc(value: datetime | None) -> datetime | None:
+    if value is None:
+        return None
+    return value if value.tzinfo is not None else value.replace(tzinfo=UTC)
+
+
+def _newest_timestamp(
+    left: datetime | None,
+    right: datetime | None,
+) -> datetime | None:
+    values = [value for value in map(_normalized_utc, (left, right)) if value]
+    return max(values, default=None)
+
+
 def _source_freshness(last_seen: datetime | None) -> dict[str, Any]:
     """Return stable public freshness signals without exposing run errors."""
     if last_seen is None:
         return {"freshness_status": "unknown", "age_hours": None}
-    normalized = last_seen
-    if normalized.tzinfo is None:
-        normalized = normalized.replace(tzinfo=UTC)
+    normalized = _normalized_utc(last_seen)
+    assert normalized is not None
     age_hours = max(0.0, (datetime.now(UTC) - normalized).total_seconds() / 3600)
     return {
         "freshness_status": "stale" if age_hours > 72 else "fresh",
         "age_hours": round(age_hours, 1),
+    }
+
+
+def _latest_successful_source_checks() -> dict[str, datetime]:
+    """Return latest successful parser checks without exposing run errors."""
+
+    repository = _configured_repository()
+    engine = getattr(repository, "engine", None)
+    if engine is None:
+        return {}
+    try:
+        from sqlalchemy import MetaData, Table, func, select
+
+        runs = Table("runs", MetaData(), autoload_with=engine)
+        statement = (
+            select(runs.c.source, func.max(runs.c.finished_at).label("checked_at"))
+            .where(runs.c.status == "ok", runs.c.source.in_(tuple(PARSERS)))
+            .group_by(runs.c.source)
+        )
+        with engine.connect() as connection:
+            rows = connection.execute(statement).mappings().all()
+    except Exception:
+        return {}
+    return {
+        str(row["source"]): row["checked_at"]
+        for row in rows
+        if isinstance(row.get("checked_at"), datetime)
     }
 
 
@@ -1030,7 +1090,7 @@ def _cached_coverage_payload() -> dict[str, Any]:
             return dict(cached[1])
 
     public_items = _cached_public_items()
-    source_rows = _source_coverage(public_items)
+    source_rows = _source_coverage(public_items, _latest_successful_source_checks())
     payload = {
         "status": "ok",
         "items": len(public_items),
@@ -1769,6 +1829,7 @@ async def operator_health(_: None = Depends(require_admin_token)) -> dict[str, A
             "slug": row.get("slug"),
             "name": row.get("name"),
             "last_discovered_at": row.get("last_discovered_at"),
+            "last_checked_at": row.get("last_checked_at"),
             "age_hours": row.get("age_hours"),
         }
         for row in coverage_payload.get("sources", [])
