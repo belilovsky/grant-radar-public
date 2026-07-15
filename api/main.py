@@ -732,9 +732,11 @@ def _opportunity_search_blob(item: Opportunity) -> str:
         item.source,
         *item.tags,
         *item.eligibility,
+        *(
+            raw.get(key)
+            for key in ("page_title", "listing_title", "reference", "agency", "country")
+        ),
     ]
-    for key in ("page_title", "listing_title", "reference", "agency", "country"):
-        values.append(raw.get(key))
     return _normalized_token(" ".join(str(value or "") for value in values))
 
 
@@ -1093,8 +1095,7 @@ def _operator_run_rows(limit: int = 50) -> list[dict[str, Any]]:
 
 
 def _root_path(request: Request) -> str:
-    root_path = str(request.scope.get("root_path") or "").rstrip("/")
-    return root_path
+    return str(request.scope.get("root_path") or "").rstrip("/")
 
 
 def _site_origin(request: Request, root_path: str) -> str:
@@ -1115,7 +1116,7 @@ def _public_root_base(request: Request, root_path: str) -> str:
 
 
 def _public_url(request: Request, root_path: str, path: str) -> str:
-    if path.startswith("http://") or path.startswith("https://"):
+    if path.startswith(("http://", "https://")):
         return path
     base = _public_root_base(request, root_path).rstrip("/")
     if not path.startswith("/"):
@@ -1124,7 +1125,7 @@ def _public_url(request: Request, root_path: str, path: str) -> str:
 
 
 def _public_url_from_base(base: str, path: str) -> str:
-    if path.startswith("http://") or path.startswith("https://"):
+    if path.startswith(("http://", "https://")):
         return path
     if not path.startswith("/"):
         path = f"/{path}"

@@ -216,9 +216,7 @@ def _is_roundup_post(*, title: str, summary: str, categories: Iterable[str]) -> 
         return True
     if "our_blog" in normalized_categories and "opportunit" in normalized_title:
         return True
-    if normalized_summary.startswith("here are"):
-        return True
-    return False
+    return normalized_summary.startswith("here are")
 
 
 class RssFeedSource(BaseSource):

@@ -693,14 +693,12 @@ def _is_noise_chunk(text: str) -> bool:
     hits = sum(1 for phrase in DETAIL_NOISE_PHRASES if phrase in normalized)
     if hits >= 3:
         return True
-    if (
+    return (
         len(normalized) > 400
         and hits >= 2
         and normalized.count(".") <= 2
         and normalized.count(":") <= 1
-    ):
-        return True
-    return False
+    )
 
 
 def _extract_detail_sections(html: str) -> tuple[list[dict[str, str]], bool]:

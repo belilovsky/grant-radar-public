@@ -10,7 +10,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
         build-essential curl ca-certificates \
     && rm -rf /var/lib/apt/lists/*
 
-COPY requirements.txt ./
+COPY requirements.txt requirements-prod.txt ./
 COPY vendor/qazstack-1.37.2-py3-none-any.whl vendor/qazstack-1.37.2-py3-none-any.whl
 RUN pip install --upgrade pip && pip install -r requirements.txt
 
