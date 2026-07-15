@@ -44,6 +44,21 @@ def _normalize_list(value: Any) -> list[str]:
     return [str(item).strip() for item in value if str(item).strip()][:12]
 
 
+def _normalize_evidence(value: Any) -> list[dict[str, str]]:
+    if not isinstance(value, list):
+        return []
+    normalized: list[dict[str, str]] = []
+    for item in value[:30]:
+        if not isinstance(item, dict):
+            continue
+        field = _string(item.get("field"))[:120]
+        evidence_value = _string(item.get("value"))[:500]
+        quote = _string(item.get("quote"))[:500]
+        if field and evidence_value and quote:
+            normalized.append({"field": field, "value": evidence_value, "quote": quote})
+    return normalized
+
+
 def normalize_enrichment_payload(payload: dict[str, Any]) -> dict[str, Any]:
     summary_ru = _string(payload.get("summary_ru"))
     entities = payload.get("entities")
@@ -70,6 +85,7 @@ def normalize_enrichment_payload(payload: dict[str, Any]) -> dict[str, Any]:
         "summary_ru": summary_ru,
         "entities": normalized_entities,
         "quality_flags": flags,
+        "evidence": _normalize_evidence(payload.get("evidence")),
     }
     if not summary_ru:
         result.pop("summary_ru")
@@ -172,6 +188,7 @@ def summary_is_decision_ready(enrichment: dict[str, Any]) -> bool:
     runtime = enrichment.get("runtime")
     return bool(
         enrichment.get("summary_ru")
+        and enrichment.get("evidence")
         and isinstance(runtime, dict)
         and runtime.get("status") == "available"
         and runtime.get("quality_tier") == "estimated"
@@ -199,7 +216,7 @@ async def _run(args: argparse.Namespace) -> int:
     compute_url = (
         args.compute_url or os.environ.get("QAZCOMPUTE_URL") or DEFAULT_QAZCOMPUTE_URL
     ).strip()
-    api_key = (args.api_key or os.environ.get("QAZCOMPUTE_API_KEY") or "").strip()
+    api_key = (os.environ.get("QAZCOMPUTE_API_KEY") or "").strip()
     if not api_key and not args.no_provider:
         print(
             "error: QAZCOMPUTE_API_KEY is not set; use --no-provider for heuristic run",
@@ -324,7 +341,6 @@ async def _run(args: argparse.Namespace) -> int:
 def _parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--url", default=None)
-    parser.add_argument("--api-key", default=None)
     parser.add_argument("--compute-url", default=None)
     parser.add_argument("--limit", type=int, default=10)
     parser.add_argument("--offset", type=int, default=0)

@@ -6,7 +6,11 @@ from types import SimpleNamespace
 import httpx
 import pytest
 
-from scripts.deepseek_enrich_content import call_qazcompute, summary_is_decision_ready
+from scripts.deepseek_enrich_content import (
+    _parser,
+    call_qazcompute,
+    summary_is_decision_ready,
+)
 
 
 def test_qazcompute_enrichment_preserves_decision_metadata() -> None:
@@ -31,7 +35,13 @@ def test_qazcompute_enrichment_preserves_decision_metadata() -> None:
                         "summary_ru": "Описание возможности.",
                         "entities": {"regions": ["kazakhstan"]},
                         "quality_flags": [],
-                        "evidence": [],
+                        "evidence": [
+                            {
+                                "field": "regions",
+                                "value": "kazakhstan",
+                                "quote": "Open for teams in Kazakhstan.",
+                            }
+                        ],
                     }
                 ],
             },
@@ -58,6 +68,13 @@ def test_qazcompute_enrichment_preserves_decision_metadata() -> None:
 
     assert result["summary_ru"] == "Описание возможности."
     assert result["entities"] == {"regions": ["kazakhstan"]}
+    assert result["evidence"] == [
+        {
+            "field": "regions",
+            "value": "kazakhstan",
+            "quote": "Open for teams in Kazakhstan.",
+        }
+    ]
     assert result["runtime"] == {
         "schema_version": "opportunity_enrich.v1",
         "status": "available",
@@ -138,6 +155,9 @@ def test_qazcompute_enrichment_rejects_mismatched_item_id() -> None:
 def test_public_summary_requires_explicit_decision_readiness() -> None:
     enrichment = {
         "summary_ru": "Описание возможности.",
+        "evidence": [
+            {"field": "summary", "value": "supported", "quote": "Source quote"}
+        ],
         "runtime": {
             "status": "available",
             "quality_tier": "estimated",
@@ -157,6 +177,9 @@ def test_public_summary_requires_explicit_decision_readiness() -> None:
 def test_public_summary_rejects_degraded_runtime_even_with_ready_flag() -> None:
     enrichment = {
         "summary_ru": "Описание возможности.",
+        "evidence": [
+            {"field": "summary", "value": "supported", "quote": "Source quote"}
+        ],
         "runtime": {
             "status": "degraded",
             "quality_tier": "degraded",
@@ -165,6 +188,25 @@ def test_public_summary_rejects_degraded_runtime_even_with_ready_flag() -> None:
     }
 
     assert not summary_is_decision_ready(enrichment)
+
+
+def test_public_summary_requires_source_evidence() -> None:
+    enrichment = {
+        "summary_ru": "Описание возможности.",
+        "evidence": [],
+        "runtime": {
+            "status": "available",
+            "quality_tier": "estimated",
+            "decision_ready": True,
+        },
+    }
+
+    assert not summary_is_decision_ready(enrichment)
+
+
+def test_operator_cli_does_not_accept_service_credentials() -> None:
+    with pytest.raises(SystemExit):
+        _parser().parse_args(["--api-key", "secret"])
 
 
 @pytest.mark.parametrize(

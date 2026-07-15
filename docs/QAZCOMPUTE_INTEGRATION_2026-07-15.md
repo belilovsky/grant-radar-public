@@ -20,11 +20,13 @@ QAZ.FUND must keep this integration disabled in production.
   provenance and decision-readiness type are validated before metadata is
   accepted.
 - Runtime status, provider, model, quality tier, fallback reason, omitted
-  capabilities and decision readiness are persisted with the enrichment.
+  capabilities, bounded source evidence and decision readiness are persisted
+  with the enrichment.
 - Degraded local-rule output may enrich internal audit metadata but does not
   fabricate summaries or semantic entities.
 - Public Russian copy can change only when the response contains a non-empty
-  summary and explicit `decision_ready=true`.
+  summary, bounded source evidence, `available` runtime status, `estimated`
+  quality and explicit `decision_ready=true`.
 
 The current QazCompute candidate always reports `decision_ready=false`,
 including when an LLM provider is available. Therefore this integration cannot
@@ -32,8 +34,9 @@ alter public summaries before its release.
 
 ## Operator use
 
-Configure `QAZCOMPUTE_URL` and `QAZCOMPUTE_API_KEY`; do not put provider keys in
-the QAZ.FUND environment. Start with a dry run:
+Configure `QAZCOMPUTE_URL` and `QAZCOMPUTE_API_KEY` through the service
+environment; the command line intentionally does not accept credentials. Do
+not put provider keys in the QAZ.FUND environment. Start with a dry run:
 
 ```bash
 PYTHONPATH=. ./.venv/bin/python -m scripts.deepseek_enrich_content --limit 20
