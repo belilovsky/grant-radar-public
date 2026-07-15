@@ -145,4 +145,10 @@ AVDS_CSS = """
       --shadow-md: var(--av-shadow-md);
       --shadow-lg: var(--av-shadow-lg);
     }
+
+    :where(a, button, input, select, summary):focus-visible {
+      outline: 2px solid var(--color-accent);
+      outline-offset: 2px;
+      border-radius: var(--av-radius-sm);
+    }
 """

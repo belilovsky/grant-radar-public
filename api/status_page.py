@@ -94,12 +94,16 @@ def render_status_page(
     copy = COPY[active_lang]
     base = root_path.rstrip("/")
     catalog_href = f"{base}/?lang={active_lang}" if base else f"/?lang={active_lang}"
+    ru_href = f"{base}/status?lang=ru" if base else "/status?lang=ru"
+    en_href = f"{base}/status?lang=en" if base else "/status?lang=en"
     status_path = (
         f"{base}/status?lang={active_lang}" if base else f"/status?lang={active_lang}"
     )
     canonical = (
         f"{site_origin.rstrip('/')}{status_path}" if site_origin else status_path
     )
+    ru_current = ' aria-current="page"' if active_lang == "ru" else ""
+    en_current = ' aria-current="page"' if active_lang == "en" else ""
     sources = [row for row in coverage.get("sources", []) if row.get("enabled")]
     sources.sort(
         key=lambda row: (
@@ -170,6 +174,14 @@ def render_status_page(
       padding:16px 0 40px; }}
     .back {{ display:inline-flex; min-height:32px; align-items:center; margin-bottom:10px;
       font-weight:700; text-decoration:none; }}
+    .status-topbar {{ display:flex; align-items:center; justify-content:space-between;
+      gap:12px; margin-bottom:10px; }}
+    .status-topbar .back {{ margin-bottom:0; }}
+    .lang-switch {{ display:inline-flex; align-items:center; gap:4px; }}
+    .lang-switch a {{ min-width:34px; padding:6px 8px; border-bottom:2px solid transparent;
+      color:var(--muted); text-align:center; text-decoration:none; font-size:12px;
+      font-weight:700; }}
+    .lang-switch a[aria-current="page"] {{ border-bottom-color:var(--brand); color:var(--ink); }}
     .overview {{ display:grid; grid-template-columns:minmax(0,1.25fr) minmax(420px,.75fr);
       gap:0; margin-bottom:12px; border:1px solid var(--line); border-radius:var(--av-radius-md);
       background:var(--panel); box-shadow:var(--av-shadow-xs); }}
@@ -210,15 +222,29 @@ def render_status_page(
       main {{ width:min(100% - 20px,var(--av-container-dashboard)); padding-top:10px; }}
       .hero {{ padding:14px; }}
       .metrics {{ grid-template-columns:repeat(2,minmax(0,1fr)); }}
-      th:nth-child(3),td:nth-child(3) {{ display:none; }}
-      th,td {{ padding:9px 8px; }}
+      thead {{ display:none; }}
+      tbody, tr, td {{ display:block; }}
+      tr {{ display:grid; grid-template-columns:minmax(0,1fr) auto; gap:7px 12px;
+        padding:10px; border-bottom:1px solid var(--line-subtle); }}
+      tr:last-child {{ border-bottom:0; }}
+      td {{ padding:0; border:0; }}
+      td:first-child {{ grid-column:1 / -1; }}
+      td:nth-child(3) {{ display:none; }}
+      td:nth-child(2) {{ align-self:center; font-variant-numeric:tabular-nums; }}
+      td:nth-child(4) {{ justify-self:end; }}
       h1 {{ font-size:28px; }}
     }}
   </style>
 </head>
 <body>
   <main>
-    <a class="back" href="{escape(catalog_href, quote=True)}">← {escape(str(copy["back"]))}</a>
+    <div class="status-topbar">
+      <a class="back" href="{escape(catalog_href, quote=True)}">← {escape(str(copy["back"]))}</a>
+      <nav class="lang-switch" aria-label="Language">
+        <a href="{escape(ru_href, quote=True)}" lang="ru"{ru_current}>RU</a>
+        <a href="{escape(en_href, quote=True)}" lang="en"{en_current}>EN</a>
+      </nav>
+    </div>
     <section class="overview">
       <div class="hero">
         <span class="eyebrow">{escape(str(copy["eyebrow"]))}</span>

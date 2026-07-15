@@ -123,7 +123,9 @@ COPY = {
         "funder_live_now": "Живые возможности",
         "funder_total_items": "Всего в индексе",
         "funder_next_deadline": "Ближайший срок",
-        "funder_overview_intro": "Обычно поддерживает гранты и программы.",
+        "funder_overview_intro": (
+            "Профиль построен по опубликованным программам и объявлениям."
+        ),
         "funder_overview_types": "Форматы: {types}.",
         "funder_overview_topics": "Основные темы: {topics}.",
         "funder_overview_regions": "Фокус по регионам: {regions}.",
@@ -1098,7 +1100,9 @@ COPY = {
         "funder_live_now": "Live opportunities",
         "funder_total_items": "Total indexed",
         "funder_next_deadline": "Nearest deadline",
-        "funder_overview_intro": "Usually supports grants and support programs.",
+        "funder_overview_intro": (
+            "This profile is built from published programs and announcements."
+        ),
         "funder_overview_types": "Formats: {types}.",
         "funder_overview_topics": "Main topics: {topics}.",
         "funder_overview_regions": "Regional focus: {regions}.",

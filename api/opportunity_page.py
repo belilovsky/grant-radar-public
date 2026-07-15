@@ -1519,6 +1519,11 @@ def render_opportunity_page(
         border-left: 0;
         border-top: 1px solid var(--line);
       }}
+      .hero-stats {{
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        gap: 10px 14px;
+      }}
+      .hero-stats > div:first-child {{ grid-column: 1 / -1; }}
       .prepare-card,
       .prepare-card:first-child,
       .apply-step,
@@ -1543,7 +1548,21 @@ def render_opportunity_page(
         font-size: 25px;
       }}
       .summary {{
-        font-size: 13px;
+        font-size: 14px;
+      }}
+      .hero-actions {{
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+      }}
+      .hero-actions .button {{ width: 100%; }}
+      .hero-actions .primary {{ grid-column: 1 / -1; }}
+      .hero-stats {{
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+      }}
+      .hero-stats > div:first-child {{ display: none; }}
+      .hero-stats > div:nth-child(2) {{ grid-column: 1 / -1; }}
+      .hero-stats strong {{
+        font-size: 14px;
       }}
       .prepare-head h2,
       .apply-head h2,
@@ -1582,9 +1601,6 @@ def render_opportunity_page(
             <button class="button slim" type="button" id="copy-working-brief">
               {escape(str(copy["detail_copy_brief"]))}
             </button>
-            <a class="button slim" href="{catalog_href}">
-              {escape(str(copy["detail_all_opportunities"]))}
-            </a>
             {application_button}
           </div>
           <p class="hero-action-status" id="copy-working-brief-status" aria-live="polite"></p>
@@ -1593,15 +1609,15 @@ def render_opportunity_page(
           <div>
             <span class="eyebrow">{escape(str(copy["detail_meta_title"]))}</span>
           </div>
-          <div>
+          <div class="hero-fact hero-fact--source">
             <strong>{source_label}</strong>
             <div class="status-note">{source_host}</div>
           </div>
-          <div>
+          <div class="hero-fact hero-fact--deadline">
             <strong>{deadline_label}</strong>
             <div class="status-note">{deadline_meta_label}</div>
           </div>
-          <div>
+          <div class="hero-fact hero-fact--format">
             <strong>{format_label}</strong>
             <div class="status-note">{escape(str(copy["meta_format_label"]))}</div>
           </div>
