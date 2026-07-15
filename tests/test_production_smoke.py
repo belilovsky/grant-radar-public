@@ -106,6 +106,12 @@ def _transport(
                     f"- API docs: {public_root}/docs\n"
                     f"- OpenAPI schema: {public_root}/openapi.json\n"
                     f"- Site discovery JSON: {public_root}/site-discovery.json\n"
+                    f"- Ecosystem integration JSON: "
+                    f"{public_root}/.well-known/qdev-ecosystem.json\n"
+                    f"- QazStack consumer contract: "
+                    f"{public_root}/.well-known/qazstack-consumer.json\n"
+                    f"- AV DS 4 UI contract: "
+                    f"{public_root}/.well-known/avds-ui-contract.json\n"
                     f"- Source status page: {public_root}/status\n"
                     f"- Coverage JSON: {public_root}/coverage\n"
                     f"- Opportunities JSON: {public_root}/opportunities\n"
@@ -152,6 +158,13 @@ def _transport(
                     "api_docs": f"{public_root}/docs",
                     "openapi": f"{public_root}/openapi.json",
                     "source_status": f"{public_root}/status",
+                    "ecosystem": (f"{public_root}/.well-known/qdev-ecosystem.json"),
+                    "contracts": {
+                        "qazstack": (
+                            f"{public_root}/.well-known/qazstack-consumer.json"
+                        ),
+                        "avds4": (f"{public_root}/.well-known/avds-ui-contract.json"),
+                    },
                     "languages": ["ru", "en"],
                     "routes": {
                         "home": "/?lang={lang}",
@@ -183,6 +196,34 @@ def _transport(
                         "official source links",
                         "read-only public catalog",
                     ],
+                },
+            )
+        if endpoint_path == "/.well-known/qazstack-consumer.json":
+            return httpx.Response(
+                200,
+                json={
+                    "schema_version": "qazstack-consumer-v1",
+                    "qazstack_version": "1.35.0",
+                    "integration_mode": "python-package",
+                },
+            )
+        if endpoint_path == "/.well-known/avds-ui-contract.json":
+            return httpx.Response(
+                200,
+                json={
+                    "schema_version": "avds-ui-contract-v1",
+                    "avds_source": {"version": "4.3.2"},
+                },
+            )
+        if endpoint_path == "/.well-known/qdev-ecosystem.json":
+            return httpx.Response(
+                200,
+                json={
+                    "schema_version": "qdev-ecosystem-integration-v1",
+                    "integrations": {
+                        "qazstack": {"status": "runtime-proven"},
+                        "qazlake": {"direct_write": False},
+                    },
                 },
             )
         return httpx.Response(404, json={"detail": "not found"})

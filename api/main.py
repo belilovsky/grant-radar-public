@@ -28,6 +28,11 @@ from api.dashboard import (
     GOOGLE_SITE_VERIFICATION_FILENAME,
     render_dashboard,
 )
+from api.ecosystem import (
+    avds_ui_contract,
+    ecosystem_manifest,
+    qazstack_consumer_contract,
+)
 from api.error_page import render_not_found_page
 from api.funder_page import render_funder_page
 from api.operator_page import render_operator_page
@@ -94,6 +99,7 @@ app = FastAPI(
 )
 
 _MACHINE_ROUTE_PREFIXES = (
+    "/.well-known",
     "/coverage",
     "/digest",
     "/funders",
@@ -196,6 +202,9 @@ async def add_security_headers(
     )
     if request.method in {"GET", "HEAD"} and request.url.path in {
         "/",
+        "/.well-known/avds-ui-contract.json",
+        "/.well-known/qazstack-consumer.json",
+        "/.well-known/qdev-ecosystem.json",
         "/coverage",
         "/funders",
         "/opportunities",
@@ -1433,6 +1442,13 @@ async def llms_txt(request: Request) -> Response:
     docs = _public_url(request, root_path, "/docs")
     openapi_url = _public_url(request, root_path, "/openapi.json")
     discovery = _public_url(request, root_path, "/site-discovery.json")
+    ecosystem = _public_url(request, root_path, "/.well-known/qdev-ecosystem.json")
+    qazstack_contract = _public_url(
+        request, root_path, "/.well-known/qazstack-consumer.json"
+    )
+    avds_contract = _public_url(
+        request, root_path, "/.well-known/avds-ui-contract.json"
+    )
     status_page = _public_url(request, root_path, "/status")
     coverage = _public_url(request, root_path, "/coverage")
     opportunities = _public_url(request, root_path, "/opportunities")
@@ -1453,6 +1469,9 @@ async def llms_txt(request: Request) -> Response:
                 f"- API docs: {docs}",
                 f"- OpenAPI schema: {openapi_url}",
                 f"- Site discovery JSON: {discovery}",
+                f"- Ecosystem integration JSON: {ecosystem}",
+                f"- QazStack consumer contract: {qazstack_contract}",
+                f"- AV DS 4 UI contract: {avds_contract}",
                 f"- Source status page: {status_page}",
                 "",
                 "## Public data endpoints",
@@ -1509,6 +1528,13 @@ async def site_discovery(request: Request) -> Response:
     coverage = _public_url(request, root_path, "/coverage")
     opportunities = _public_url(request, root_path, "/opportunities")
     digest = _public_url(request, root_path, "/digest")
+    ecosystem = _public_url(request, root_path, "/.well-known/qdev-ecosystem.json")
+    qazstack_contract = _public_url(
+        request, root_path, "/.well-known/qazstack-consumer.json"
+    )
+    avds_contract = _public_url(
+        request, root_path, "/.well-known/avds-ui-contract.json"
+    )
     payload = {
         "site": "QAZ.FUND",
         "type": "public-funding-navigator",
@@ -1518,6 +1544,11 @@ async def site_discovery(request: Request) -> Response:
         "api_docs": docs,
         "openapi": openapi_url,
         "source_status": status_page,
+        "ecosystem": ecosystem,
+        "contracts": {
+            "qazstack": qazstack_contract,
+            "avds4": avds_contract,
+        },
         "languages": ["ru", "en"],
         "routes": {
             "home": "/?lang={lang}",
@@ -1557,9 +1588,41 @@ async def site_discovery(request: Request) -> Response:
             "public source freshness status",
             "official source links",
             "read-only public catalog",
+            "qdev ecosystem contract",
         ],
     }
     return JSONResponse(payload)
+
+
+@app.api_route(
+    "/.well-known/qazstack-consumer.json",
+    methods=["GET", "HEAD"],
+    include_in_schema=False,
+)
+async def public_qazstack_consumer_contract(request: Request) -> Response:
+    root_path = _root_path(request)
+    origin = _public_root_base(request, root_path)
+    return JSONResponse(qazstack_consumer_contract(origin))
+
+
+@app.api_route(
+    "/.well-known/avds-ui-contract.json",
+    methods=["GET", "HEAD"],
+    include_in_schema=False,
+)
+async def public_avds_ui_contract() -> Response:
+    return JSONResponse(avds_ui_contract())
+
+
+@app.api_route(
+    "/.well-known/qdev-ecosystem.json",
+    methods=["GET", "HEAD"],
+    include_in_schema=False,
+)
+async def public_ecosystem_manifest(request: Request) -> Response:
+    root_path = _root_path(request)
+    origin = _public_root_base(request, root_path)
+    return JSONResponse(ecosystem_manifest(origin))
 
 
 @app.api_route("/favicon.ico", methods=["GET", "HEAD"], include_in_schema=False)

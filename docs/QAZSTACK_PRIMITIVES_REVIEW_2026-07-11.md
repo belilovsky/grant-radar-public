@@ -23,33 +23,33 @@ This started as an inventory and adoption plan, then advanced into a small
 runtime integration. QAZ.FUND is still a small FastAPI service with a
 production-safe local AV DS adapter; broad framework replacement would add
 deployment risk. The implemented integration is intentionally narrow:
-QAZ.FUND uses a small vendored snapshot of `qazstack.opportunities` through an
-optional bridge while preserving local fallback behavior.
+QAZ.FUND imports the released `qazstack.opportunities` contracts from the
+installed 1.35.0 wheel while preserving product-owned policy.
 
 ## Implemented runtime bridge
 
-- Platform branch: `codex/qazfund-qazstack-primitives-2026-07-11`
-- QazStack snapshot source commit:
-  `ece381a35a78b3b6a9afc0e71264f494ccf9d830`
-- QazStack package: `qazstack==1.6.1`
+- QazStack release source commit:
+  `189c9bd62041394a255f4608dba904263e5e66e8`
+- QazStack package: `qazstack==1.35.0`
 - Shared module: `qazstack.opportunities`
 - QAZ.FUND bridge: `core/qazstack_bridge.py`
-- Active integration point: `core/geofit.py`
-- Local snapshot path: `qazstack/opportunities/*`
+- Active integration point: source-contract validation in the parser layer
+- Runtime contract: `/.well-known/qazstack-consumer.json`
 
 The first deploy attempt used a direct private GitHub package dependency. That
 is not acceptable for the production Docker build because the VPS build context
 does not have GitHub credentials and should not require them. The production
-implementation therefore vendors only the dependency-free opportunity contract
-snapshot needed by QAZ.FUND.
+implementation therefore installs a checksum-pinned release wheel from
+`vendor/`; it does not carry or import a QazStack source snapshot.
 
 Runtime behavior:
 
-- QAZ.FUND calls vendored `qazstack.opportunities.evaluate_geo_fit()` and
-  combines the result with local rules;
-- if the bridge import ever fails, QAZ.FUND continues to use the previous local
-  implementation;
-- local QAZ.FUND rules remain authoritative for product-specific exclusions.
+- QAZ.FUND validates parser metadata with
+  `qazstack.opportunities.SourceContract`;
+- `tests/test_qazstack_bridge.py` proves the module is imported from
+  `site-packages`, not a repository source copy;
+- local QAZ.FUND rules remain authoritative for Kazakhstan/Central Asia fit and
+  product-specific exclusions.
 
 ## Current QazStack registry evidence
 

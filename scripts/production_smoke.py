@@ -136,6 +136,13 @@ def run_smoke(
         operator_page = _get_text(client, base_url, "/operator?lang=ru")
         operator_head = _head(client, base_url, "/operator?lang=ru")
         discovery = _get_json(client, base_url, "/site-discovery.json")
+        qazstack_contract = _get_json(
+            client, base_url, "/.well-known/qazstack-consumer.json"
+        )
+        avds_contract = _get_json(
+            client, base_url, "/.well-known/avds-ui-contract.json"
+        )
+        ecosystem = _get_json(client, base_url, "/.well-known/qdev-ecosystem.json")
 
     _require(health.get("status") == "ok", "health status is not ok")
     _require(ready.get("status") == "ok", "ready status is not ok")
@@ -180,6 +187,10 @@ def run_smoke(
         "llms_opportunities": (
             f"Opportunities JSON: {_url(base_url, '/opportunities')}" in llms
         ),
+        "llms_ecosystem": (
+            f"Ecosystem integration JSON: "
+            f"{_url(base_url, '/.well-known/qdev-ecosystem.json')}" in llms
+        ),
         "docs_brand": "QAZ.FUND API" in docs,
         "docs_openapi": "/openapi.json" in docs,
         "docs_head": docs_head.headers.get("content-type", "").startswith("text/html"),
@@ -210,6 +221,32 @@ def run_smoke(
             (discovery.get("data_endpoints") or {}).get("opportunities") or ""
         )
         == _url(base_url, "/opportunities"),
+        "site_discovery_qazstack": str(
+            (discovery.get("contracts") or {}).get("qazstack") or ""
+        )
+        == _url(base_url, "/.well-known/qazstack-consumer.json"),
+        "site_discovery_avds4": str(
+            (discovery.get("contracts") or {}).get("avds4") or ""
+        )
+        == _url(base_url, "/.well-known/avds-ui-contract.json"),
+        "qazstack_contract": (
+            qazstack_contract.get("schema_version") == "qazstack-consumer-v1"
+            and qazstack_contract.get("qazstack_version") == "1.35.0"
+            and qazstack_contract.get("integration_mode") == "python-package"
+        ),
+        "avds4_contract": (
+            avds_contract.get("schema_version") == "avds-ui-contract-v1"
+            and (avds_contract.get("avds_source") or {}).get("version") == "4.3.2"
+        ),
+        "ecosystem_contract": (
+            ecosystem.get("schema_version") == "qdev-ecosystem-integration-v1"
+            and (ecosystem.get("integrations") or {}).get("qazstack", {}).get("status")
+            == "runtime-proven"
+            and (ecosystem.get("integrations") or {})
+            .get("qazlake", {})
+            .get("direct_write")
+            is False
+        ),
     }
     missing_discovery = [
         marker for marker, present in discovery_status.items() if not present
