@@ -16,7 +16,6 @@ from collections.abc import AsyncIterator, Iterable
 from dataclasses import dataclass
 from datetime import datetime, timezone
 from decimal import Decimal
-from html import unescape
 from pathlib import Path
 from typing import Any
 from urllib.parse import urlparse
@@ -26,6 +25,7 @@ import structlog
 from bs4 import BeautifulSoup
 
 from core.models import Opportunity, OpportunityType
+from core.source_text import clean_plain_source_text as _clean_text
 from sources.base import BaseSource
 
 log = structlog.get_logger()
@@ -629,10 +629,6 @@ DOMESTIC_PROGRAMS = (
 )
 
 ACTIVE_DOMESTIC_URLS = frozenset(program.url for program in DOMESTIC_PROGRAMS)
-
-
-def _clean_text(value: str) -> str:
-    return re.sub(r"\s+", " ", unescape(value or "")).strip()
 
 
 def _detect_detail_language(text: str, html: str = "") -> str:

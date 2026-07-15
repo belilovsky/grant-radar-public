@@ -11,12 +11,12 @@ from __future__ import annotations
 import re
 from collections.abc import AsyncIterator
 from datetime import datetime
-from html import unescape
 
 import structlog
 
 from core.geofit import is_relevant_for_kazakhstan_focus
 from core.models import Opportunity, OpportunityType
+from core.source_text import clean_plain_source_text as _clean_text
 from sources.base import BaseSource
 
 log = structlog.get_logger()
@@ -33,10 +33,6 @@ KEYWORDS = [
     "environment",
     "climate",
 ]
-
-
-def _clean_text(value: object) -> str:
-    return unescape(str(value or "")).strip()
 
 
 def _keyword_is_visible(keyword: str, *values: str) -> bool:

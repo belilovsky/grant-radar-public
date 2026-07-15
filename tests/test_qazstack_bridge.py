@@ -12,7 +12,7 @@ from sources.kazakhstan_watch import KazakhstanWatchParser
 def test_qazstack_release_dependency_is_imported_outside_the_worktree() -> None:
     """QAZ.FUND consumes the released package, not a copied source snapshot."""
 
-    assert qazstack_version == "1.35.0"
+    assert qazstack_version == "1.37.2"
     package_path = Path(qazstack.__file__).resolve()
     assert "site-packages" in package_path.parts
     assert not package_path.is_relative_to(Path.cwd() / "qazstack")

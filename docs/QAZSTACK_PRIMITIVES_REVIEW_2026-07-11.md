@@ -1,5 +1,14 @@
 # QazStack primitives review – 2026-07-11
 
+## Update - 2026-07-15 (QazStack 1.37.2)
+
+The second adoption pass is documented in
+`docs/QAZSTACK_ADOPTION_2026-07-15.md`. QAZ.FUND now consumes stable shared
+source/content normalization, evidence-state, result-diversification and
+cache-aware NDJSON export helpers. Product scoring, geo-fit, localization and
+source fallback policy remain local. The older 1.35.0 notes below are retained
+as release history.
+
 ## Update – 2026-07-15
 
 The former source snapshot was removed from this repository. QAZ.FUND now

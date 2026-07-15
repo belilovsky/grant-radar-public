@@ -11,7 +11,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     && rm -rf /var/lib/apt/lists/*
 
 COPY requirements.txt ./
-COPY vendor/qazstack-1.35.0-py3-none-any.whl vendor/qazstack-1.35.0-py3-none-any.whl
+COPY vendor/qazstack-1.37.2-py3-none-any.whl vendor/qazstack-1.37.2-py3-none-any.whl
 RUN pip install --upgrade pip && pip install -r requirements.txt
 
 COPY . .

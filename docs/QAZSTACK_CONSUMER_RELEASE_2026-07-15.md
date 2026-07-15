@@ -8,9 +8,9 @@ GitHub checkout during container builds.
 
 ## Runtime dependency
 
-- Release: `qazstack v1.35.0`.
-- Artifact: `vendor/qazstack-1.35.0-py3-none-any.whl`.
-- Integrity manifest: `vendor/qazstack-1.35.0.sha256`.
+- Release: `qazstack v1.37.2`.
+- Artifact: `vendor/qazstack-1.37.2-py3-none-any.whl`.
+- Integrity manifest: `vendor/qazstack-1.37.2.sha256`.
 - Install paths: `requirements.txt`, `requirements-prod.txt`, `Dockerfile`,
   and `Dockerfile.prod`.
 
@@ -19,9 +19,14 @@ from `site-packages`, not from a copied `qazstack/` source directory.
 
 ## Boundary
 
-QazStack owns the product-neutral `OpportunityRecord` and `SourceContract`.
-QAZ.FUND owns all collection adapters, source schedules, editorial copy,
-Kazakhstan/Central Asia relevance rules, exclusions and publication decisions.
+QazStack owns product-neutral opportunity/source contracts, source URL and
+content normalization, evidence-state projection, ranking composition and
+machine-export helpers. QAZ.FUND owns all collection adapters, source
+schedules, editorial copy, Kazakhstan/Central Asia relevance rules, weights,
+exclusions and publication decisions.
+
+The adopted runtime surfaces and deferred primitives are recorded in
+`docs/QAZSTACK_ADOPTION_2026-07-15.md`.
 
 ## Why the wheel is in the repository
 

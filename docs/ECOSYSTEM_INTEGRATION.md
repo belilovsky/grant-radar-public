@@ -16,7 +16,7 @@ prove.
 
 | System | Runtime status | Boundary |
 | --- | --- | --- |
-| QazStack 1.35.0 | `runtime-proven` | QAZ.FUND imports the released wheel and uses the neutral opportunity/source contracts. Product relevance policy stays local. |
+| QazStack 1.37.2 | `runtime-proven` | QAZ.FUND uses neutral contracts, source/content normalization, evidence states, diversified listing and machine-export helpers. Product relevance policy stays local. |
 | AV DS 4.3.2 | `adapter-aligned` | FastAPI pages use a local SSR adapter mapped to AV DS component families. No React package import is claimed. |
 | QazPipe | `interface-ready` | QazPipe can pull the public `/opportunities` API with stable pagination and provenance. Activation remains consumer-controlled. |
 | QazLake | `brokered-via-qazpipe` | Public records may be archived through QazPipe. QAZ.FUND never writes directly into QazLake tables. |
@@ -32,7 +32,8 @@ prove.
 - `/site-discovery.json` – public routes, query templates and contracts.
 - `/llms.txt` – compact discovery guidance for AI systems.
 - `/openapi.json` – executable API contract.
-- `/opportunities` – read-only, paginated public data plane.
+- `/opportunities` - read-only, paginated public JSON data plane.
+- `/opportunities.ndjson` - filtered, cache-aware stream for AI and data consumers.
 
 ## Data ownership
 
@@ -51,7 +52,8 @@ must never enter the public feed. Public records sent downstream retain at least
 
 1. A source adapter is implemented and tested in QAZ.FUND.
 2. The parser output is validated against the released QazStack source contract.
-3. Product-specific scoring, deduplication and localization remain local.
+3. Product-specific scoring and localization remain local; neutral URL
+   canonicalization and text cleanup come from the pinned QazStack release.
 4. Public API, discovery contracts and production smoke are updated together.
 5. QazPipe ingestion is enabled only with a dry run, idempotency proof and a
    named QazLake record contract.
