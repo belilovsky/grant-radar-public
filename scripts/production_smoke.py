@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import re
 from dataclasses import asdict, dataclass
 from datetime import date
 from typing import Any
@@ -45,6 +46,7 @@ class SmokeError(RuntimeError):
 @dataclass(frozen=True)
 class SmokeResult:
     base_url: str
+    release_revision: str
     deadline_after: str
     health_items: int
     ready_backend: str
@@ -116,6 +118,7 @@ def run_smoke(
         dashboard_en_html = dashboard_en.text
 
         health = _get_json(client, base_url, "/health")
+        release = _get_json(client, base_url, "/.well-known/release.json")
         ready = _get_json(client, base_url, "/ready")
         coverage = _get_json(client, base_url, "/coverage")
         opportunities = _get_json(
@@ -155,6 +158,11 @@ def run_smoke(
         ecosystem = _get_json(client, base_url, "/.well-known/qdev-ecosystem.json")
 
     _require(health.get("status") == "ok", "health status is not ok")
+    _require(
+        release.get("service") == "qaz-fund"
+        and bool(re.fullmatch(r"[0-9a-f]{40}", str(release.get("revision") or ""))),
+        "release metadata is missing",
+    )
     _require(ready.get("status") == "ok", "ready status is not ok")
     if expect_backend:
         _require(
@@ -212,6 +220,10 @@ def run_smoke(
             f"Ecosystem integration JSON: "
             f"{_url(base_url, '/.well-known/qdev-ecosystem.json')}" in llms
         ),
+        "llms_release": (
+            f"Release metadata JSON: "
+            f"{_url(base_url, '/.well-known/release.json')}" in llms
+        ),
         "docs_brand": "QAZ.FUND API" in docs,
         "docs_openapi": "/openapi.json" in docs,
         "docs_head": docs_head.headers.get("content-type", "").startswith("text/html"),
@@ -234,6 +246,8 @@ def run_smoke(
         == _url(base_url, "/docs"),
         "site_discovery_status": str(discovery.get("source_status") or "")
         == _url(base_url, "/status"),
+        "site_discovery_release": str(discovery.get("release") or "")
+        == _url(base_url, "/.well-known/release.json"),
         "site_discovery_coverage": str(
             (discovery.get("data_endpoints") or {}).get("coverage") or ""
         )
@@ -287,6 +301,7 @@ def run_smoke(
 
     return SmokeResult(
         base_url=base_url.rstrip("/"),
+        release_revision=str(release.get("revision") or ""),
         deadline_after=deadline_after,
         health_items=int(health.get("items") or 0),
         ready_backend=str(ready.get("backend") or ""),

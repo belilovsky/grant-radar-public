@@ -55,5 +55,26 @@ release inputs and are not committed.
 
 ## Release state
 
-Pending GitHub CI, merge, documented conservative deploy, and production smoke.
-No production status is inferred from the local checks above.
+Pull request `#16` passed GitHub Actions and was merged as
+`bcd81456bbf91ab3b82af319260cbdd4ce0cce66`.
+
+The documented conservative deploy completed without `rsync --delete` at
+`2026-07-15T17:51:42Z` on the application origin. The public TLS/edge host and
+the application origin are separate infrastructure roles; their private
+addresses remain outside this public repository.
+
+Production verification through `https://qaz.fund`:
+
+- API, PostgreSQL, and Redis: healthy; worker: running.
+- Readiness backend: `database`; indexed records: 831.
+- Sources: 26 fresh, 0 stale, 0 with unknown freshness.
+- Relevant open opportunities: 155; NDJSON sample: 20; digest: 5.
+- Content audit: 155 opportunities, 0 issues.
+- NLP audit: 150 RU and 150 EN records, 0 issues.
+- Dashboard, status, API/discovery, QazStack, AV DS 4, and ecosystem contracts:
+  passed.
+- Chromium at 1440x1000 and 390x844: no console errors or warnings.
+
+The release exposed one operational gap: readiness on a target host did not
+prove that the public reverse proxy actually used that host. The follow-up
+release adds exact public revision attestation to the deploy gate.
