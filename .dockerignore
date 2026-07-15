@@ -1,6 +1,9 @@
 .git
 .github
 .venv
+# A non-destructive rsync deploy can leave the removed source snapshot behind.
+# The release wheel in vendor/ is the only QazStack code allowed in an image.
+qazstack/
 __pycache__/
 .pytest_cache/
 .mypy_cache/

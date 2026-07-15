@@ -16,6 +16,14 @@ def test_qazstack_release_dependency_is_imported_outside_the_worktree() -> None:
     assert not Path(qazstack.__file__).resolve().is_relative_to(Path.cwd())
 
 
+def test_docker_context_excludes_removed_qazstack_source_snapshot() -> None:
+    """A non-destructive deploy cannot shadow the installed release wheel."""
+
+    dockerignore = Path(".dockerignore").read_text(encoding="utf-8")
+
+    assert "qazstack/" in dockerignore.splitlines()
+
+
 def test_geo_fit_keeps_product_rules_local() -> None:
     """Kazakhstan relevance remains a QAZ.FUND editorial decision."""
 
