@@ -74,6 +74,20 @@ PYTHONPATH=. ./.venv/bin/python -m scripts.nlp_quality_audit --base-url https://
 PYTHONPATH=. ./.venv/bin/python -m scripts.nlp_quality_audit --base-url https://example.org --lang en --limit 150
 ```
 
+For a production release, set both the private deployment target and the public
+URL. The deploy helper refuses to claim success until the public route reports
+the exact Git revision that was just built:
+
+```bash
+DEPLOY_HOST=deploy@example.org \
+PUBLIC_URL=https://example.org \
+bash scripts/deploy_qaz_fund.sh
+```
+
+Use `REQUIRE_PUBLIC_VERIFY=0` only for an intentionally private staging target.
+It must not be used for the public QAZ.FUND release. This distinction matters
+when TLS/edge and application origin are separate hosts.
+
 After deploy:
 
 ```bash
@@ -108,4 +122,6 @@ without `--delete`. If you intentionally want rsync to remove files on the
 target, opt in explicitly with `RSYNC_DELETE=1`. The script also waits for the
 API container to answer `GET /ready` before it prints a successful deploy
 result; tune this with `READY_URL`, `READY_ATTEMPTS`, and `READY_DELAY` if the
-runtime shape changes.
+runtime shape changes. It also injects `APP_REVISION` and `APP_DEPLOYED_AT` into
+the containers and verifies `/.well-known/release.json` through `PUBLIC_URL`.
+That endpoint is also linked from `site-discovery.json` for machine consumers.

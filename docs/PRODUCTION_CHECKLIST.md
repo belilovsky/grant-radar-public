@@ -74,6 +74,7 @@ PYTHONPATH=. ./.venv/bin/python -m scripts.nlp_quality_audit --base-url https://
 
 ```bash
 curl -fsS https://example.org/health
+curl -fsS https://example.org/.well-known/release.json
 curl -fsS https://example.org/ready
 curl -fsSI https://example.org/ready
 curl -fsSI https://example.org/favicon.ico
@@ -92,6 +93,9 @@ curl -fsS 'https://example.org/digest?limit=5&tag=ai'
 ## Operational notes
 
 - Run Alembic migrations before serving traffic.
+- Set `PUBLIC_URL` for every public deploy. A green container readiness check is
+  insufficient when edge and application origin are separate; the deploy must
+  verify the exact revision through the public route.
 - Keep database backups outside the repository and verify restore regularly.
 - Create encrypted host-side dumps with `BACKUP_DIR=/var/backups/grant-radar ./scripts/backup_postgres.sh`.
 - Schedule the backup script from the private maintainer runbook only after a restore drill.

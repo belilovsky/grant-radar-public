@@ -1512,6 +1512,7 @@ async def llms_txt(request: Request) -> Response:
     openapi_url = _public_url(request, root_path, "/openapi.json")
     discovery = _public_url(request, root_path, "/site-discovery.json")
     ecosystem = _public_url(request, root_path, "/.well-known/qdev-ecosystem.json")
+    release = _public_url(request, root_path, "/.well-known/release.json")
     qazstack_contract = _public_url(
         request, root_path, "/.well-known/qazstack-consumer.json"
     )
@@ -1540,6 +1541,7 @@ async def llms_txt(request: Request) -> Response:
                 f"- OpenAPI schema: {openapi_url}",
                 f"- Site discovery JSON: {discovery}",
                 f"- Ecosystem integration JSON: {ecosystem}",
+                f"- Release metadata JSON: {release}",
                 f"- QazStack consumer contract: {qazstack_contract}",
                 f"- AV DS 4 UI contract: {avds_contract}",
                 f"- Source status page: {status_page}",
@@ -1605,6 +1607,7 @@ async def site_discovery(request: Request) -> Response:
     opportunities_ndjson = _public_url(request, root_path, "/opportunities.ndjson")
     digest = _public_url(request, root_path, "/digest")
     ecosystem = _public_url(request, root_path, "/.well-known/qdev-ecosystem.json")
+    release = _public_url(request, root_path, "/.well-known/release.json")
     qazstack_contract = _public_url(
         request, root_path, "/.well-known/qazstack-consumer.json"
     )
@@ -1621,6 +1624,7 @@ async def site_discovery(request: Request) -> Response:
         "openapi": openapi_url,
         "source_status": status_page,
         "ecosystem": ecosystem,
+        "release": release,
         "contracts": {
             "qazstack": qazstack_contract,
             "avds4": avds_contract,
@@ -1705,6 +1709,28 @@ async def public_ecosystem_manifest(request: Request) -> Response:
     root_path = _root_path(request)
     origin = _public_root_base(request, root_path)
     return JSONResponse(ecosystem_manifest(origin))
+
+
+@app.api_route(
+    "/.well-known/release.json",
+    methods=["GET", "HEAD"],
+    include_in_schema=False,
+)
+async def public_release_metadata() -> Response:
+    """Expose the immutable revision needed for end-to-end deploy proof."""
+
+    configured_revision = os.environ.get("APP_REVISION", "").strip().lower()
+    revision = (
+        configured_revision
+        if re.fullmatch(r"[0-9a-f]{40}", configured_revision)
+        else "development"
+    )
+    payload = {
+        "service": "qaz-fund",
+        "revision": revision,
+        "deployed_at": os.environ.get("APP_DEPLOYED_AT", "").strip() or None,
+    }
+    return JSONResponse(payload, headers={"Cache-Control": "no-store"})
 
 
 @app.api_route("/favicon.ico", methods=["GET", "HEAD"], include_in_schema=False)

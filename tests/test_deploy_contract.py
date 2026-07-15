@@ -35,6 +35,18 @@ def test_deploy_script_waits_for_ready_endpoint() -> None:
     assert "API readiness check failed after deploy." in script
 
 
+def test_deploy_script_verifies_the_public_revision() -> None:
+    script = (ROOT / "scripts" / "deploy_qaz_fund.sh").read_text()
+    production_compose = (ROOT / "docker-compose.prod.yml").read_text()
+
+    assert 'REQUIRE_PUBLIC_VERIFY="${REQUIRE_PUBLIC_VERIFY:-1}"' in script
+    assert 'PUBLIC_URL="${PUBLIC_URL:-}"' in script
+    assert "/.well-known/release.json?revision=$REVISION" in script
+    assert 'if [[ "$public_revision" != "$REVISION" ]]; then' in script
+    assert "APP_REVISION: ${APP_REVISION:-development}" in production_compose
+    assert "APP_DEPLOYED_AT: ${APP_DEPLOYED_AT:-}" in production_compose
+
+
 def test_production_compose_requires_password_and_checks_api_readiness() -> None:
     base_compose = (ROOT / "docker-compose.yml").read_text()
     production_compose = (ROOT / "docker-compose.prod.yml").read_text()

@@ -18,6 +18,8 @@ services:
     env_file:
       - .env.prod
     environment:
+      APP_DEPLOYED_AT: ${APP_DEPLOYED_AT:-}
+      APP_REVISION: ${APP_REVISION:-development}
       DATABASE_URL: ${DATABASE_URL:-postgresql+psycopg://grantradar:${POSTGRES_PASSWORD:-changeme}@db:5432/grantradar}
       GRANT_RADAR_DB_URL: ${GRANT_RADAR_DB_URL:-postgresql+psycopg://grantradar:${POSTGRES_PASSWORD:-changeme}@db:5432/grantradar}
       PUBLIC_BASE_URL: ${PUBLIC_BASE_URL:-https://example.org}
@@ -31,6 +33,8 @@ services:
     env_file:
       - .env.prod
     environment:
+      APP_DEPLOYED_AT: ${APP_DEPLOYED_AT:-}
+      APP_REVISION: ${APP_REVISION:-development}
       DATABASE_URL: ${DATABASE_URL:-postgresql+psycopg://grantradar:${POSTGRES_PASSWORD:-changeme}@db:5432/grantradar}
       GRANT_RADAR_DB_URL: ${GRANT_RADAR_DB_URL:-postgresql+psycopg://grantradar:${POSTGRES_PASSWORD:-changeme}@db:5432/grantradar}
       PUBLIC_BASE_URL: ${PUBLIC_BASE_URL:-https://example.org}

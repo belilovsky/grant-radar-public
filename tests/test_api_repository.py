@@ -1007,6 +1007,9 @@ def test_marketing_endpoints_are_exposed(monkeypatch):
         "http://testserver/.well-known/qdev-ecosystem.json"
     ) in llms.text
     assert (
+        "Release metadata JSON: " "http://testserver/.well-known/release.json"
+    ) in llms.text
+    assert (
         "QazStack consumer contract: "
         "http://testserver/.well-known/qazstack-consumer.json"
     ) in llms.text
@@ -1040,6 +1043,7 @@ def test_marketing_endpoints_are_exposed(monkeypatch):
         "openapi": "http://testserver/openapi.json",
         "source_status": "http://testserver/status",
         "ecosystem": "http://testserver/.well-known/qdev-ecosystem.json",
+        "release": "http://testserver/.well-known/release.json",
         "contracts": {
             "qazstack": ("http://testserver/.well-known/qazstack-consumer.json"),
             "avds4": "http://testserver/.well-known/avds-ui-contract.json",
@@ -1127,6 +1131,15 @@ def test_marketing_endpoints_are_exposed(monkeypatch):
     )
     assert client.head("/.well-known/qdev-ecosystem.json").status_code == 200
 
+    release = client.get("/.well-known/release.json")
+    assert release.status_code == 200
+    assert release.json() == {
+        "service": "qaz-fund",
+        "revision": "development",
+        "deployed_at": None,
+    }
+    assert release.headers["cache-control"] == "no-store"
+    assert client.head("/.well-known/release.json").status_code == 200
     favicon = client.get("/favicon.ico")
     assert favicon.status_code == 200
     assert favicon.headers["content-type"].startswith("image/svg+xml")
@@ -1160,6 +1173,24 @@ def test_marketing_endpoints_are_exposed(monkeypatch):
         '<xhtml:link rel="alternate" hreflang="en" href="http://testserver/'
         'funder/science-fund?lang=en" />'
     ) in sitemap.text
+
+
+def test_release_metadata_accepts_only_an_immutable_git_revision(monkeypatch):
+    _reset_api_state(monkeypatch)
+    monkeypatch.setenv("APP_REVISION", "A" * 40)
+    monkeypatch.setenv("APP_DEPLOYED_AT", "2026-07-15T17:51:42Z")
+    client = TestClient(api_main.app)
+
+    release = client.get("/.well-known/release.json")
+
+    assert release.json() == {
+        "service": "qaz-fund",
+        "revision": "a" * 40,
+        "deployed_at": "2026-07-15T17:51:42Z",
+    }
+
+    monkeypatch.setenv("APP_REVISION", "not-a-release")
+    assert client.get("/.well-known/release.json").json()["revision"] == ("development")
 
 
 def test_marketing_endpoints_prefer_public_base_url(monkeypatch):

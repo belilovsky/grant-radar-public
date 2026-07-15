@@ -51,6 +51,15 @@ def _transport(
             return httpx.Response(200, text=html)
         if endpoint_path == "/health":
             return httpx.Response(200, json={"status": "ok", "items": 55})
+        if endpoint_path == "/.well-known/release.json":
+            return httpx.Response(
+                200,
+                json={
+                    "service": "qaz-fund",
+                    "revision": "a" * 40,
+                    "deployed_at": "2026-07-15T00:00:00Z",
+                },
+            )
         if endpoint_path == "/ready":
             return httpx.Response(
                 200,
@@ -117,6 +126,8 @@ def _transport(
                     f"- Site discovery JSON: {public_root}/site-discovery.json\n"
                     f"- Ecosystem integration JSON: "
                     f"{public_root}/.well-known/qdev-ecosystem.json\n"
+                    f"- Release metadata JSON: "
+                    f"{public_root}/.well-known/release.json\n"
                     f"- QazStack consumer contract: "
                     f"{public_root}/.well-known/qazstack-consumer.json\n"
                     f"- AV DS 4 UI contract: "
@@ -168,6 +179,7 @@ def _transport(
                     "api_docs": f"{public_root}/docs",
                     "openapi": f"{public_root}/openapi.json",
                     "source_status": f"{public_root}/status",
+                    "release": f"{public_root}/.well-known/release.json",
                     "ecosystem": (f"{public_root}/.well-known/qdev-ecosystem.json"),
                     "contracts": {
                         "qazstack": (
@@ -257,6 +269,7 @@ def test_run_smoke_passes_for_expected_live_contract():
     )
 
     assert result.health_items == 55
+    assert result.release_revision == "a" * 40
     assert result.ready_backend == "database"
     assert result.coverage_sources == 23
     assert result.coverage_stale_sources == 1
