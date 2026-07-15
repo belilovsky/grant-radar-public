@@ -4,11 +4,11 @@ from __future__ import annotations
 
 import re
 from collections.abc import AsyncIterator
-from html import unescape
 
 import structlog
 
 from core.models import Opportunity, OpportunityType
+from core.source_text import clean_source_text as _clean_text
 from sources.base import BaseSource
 
 log = structlog.get_logger()
@@ -16,11 +16,6 @@ log = structlog.get_logger()
 GOOGLE_ORG_KNOWLEDGE_URL = (
     "https://www.google.org/intl/en_us/knowledge-skills-and-learning/"
 )
-
-
-def _clean_text(value: str) -> str:
-    without_tags = re.sub(r"<[^>]+>", " ", value or "")
-    return re.sub(r"\s+", " ", unescape(without_tags)).strip()
 
 
 def _html_title(html: str) -> str | None:

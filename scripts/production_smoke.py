@@ -53,6 +53,7 @@ class SmokeResult:
     coverage_stale_sources: int
     coverage_unknown_freshness_sources: int
     opportunities: int
+    ndjson_items: int
     digest_items: int
     forbidden_hits: list[str]
     dashboard_markers: dict[str, bool]
@@ -125,6 +126,15 @@ def run_smoke(
                 f"&deadline_after={deadline_after}"
             ),
         )
+        ndjson_response = client.get(
+            _url(base_url, "/opportunities.ndjson?limit=20&min_score=0.3")
+        )
+        ndjson_response.raise_for_status()
+        ndjson_items = [
+            json.loads(line)
+            for line in ndjson_response.text.splitlines()
+            if line.strip()
+        ]
         digest = _get_json(client, base_url, "/digest?limit=5&tag=ai")
         robots = _get_text(client, base_url, "/robots.txt")
         sitemap = _get_text(client, base_url, "/sitemap.xml")
@@ -136,6 +146,13 @@ def run_smoke(
         operator_page = _get_text(client, base_url, "/operator?lang=ru")
         operator_head = _head(client, base_url, "/operator?lang=ru")
         discovery = _get_json(client, base_url, "/site-discovery.json")
+        qazstack_contract = _get_json(
+            client, base_url, "/.well-known/qazstack-consumer.json"
+        )
+        avds_contract = _get_json(
+            client, base_url, "/.well-known/avds-ui-contract.json"
+        )
+        ecosystem = _get_json(client, base_url, "/.well-known/qdev-ecosystem.json")
 
     _require(health.get("status") == "ok", "health status is not ok")
     _require(ready.get("status") == "ok", "ready status is not ok")
@@ -151,6 +168,14 @@ def run_smoke(
     _require(
         len(opportunities) >= min_opportunities,
         "opportunity count is below production threshold",
+    )
+    _require(bool(ndjson_items), "NDJSON export is empty")
+    _require(
+        all(
+            item.get("evidence_state") in {"verified", "sourced"}
+            for item in ndjson_items
+        ),
+        "NDJSON export contains records without public evidence state",
     )
     _require(
         len(digest.get("items") or []) >= min_digest_items,
@@ -179,6 +204,13 @@ def run_smoke(
         "llms_coverage": f"Coverage JSON: {_url(base_url, '/coverage')}" in llms,
         "llms_opportunities": (
             f"Opportunities JSON: {_url(base_url, '/opportunities')}" in llms
+        ),
+        "llms_opportunities_ndjson": (
+            f"Opportunities NDJSON: {_url(base_url, '/opportunities.ndjson')}" in llms
+        ),
+        "llms_ecosystem": (
+            f"Ecosystem integration JSON: "
+            f"{_url(base_url, '/.well-known/qdev-ecosystem.json')}" in llms
         ),
         "docs_brand": "QAZ.FUND API" in docs,
         "docs_openapi": "/openapi.json" in docs,
@@ -210,6 +242,36 @@ def run_smoke(
             (discovery.get("data_endpoints") or {}).get("opportunities") or ""
         )
         == _url(base_url, "/opportunities"),
+        "site_discovery_opportunities_ndjson": str(
+            (discovery.get("data_endpoints") or {}).get("opportunities_ndjson") or ""
+        )
+        == _url(base_url, "/opportunities.ndjson"),
+        "site_discovery_qazstack": str(
+            (discovery.get("contracts") or {}).get("qazstack") or ""
+        )
+        == _url(base_url, "/.well-known/qazstack-consumer.json"),
+        "site_discovery_avds4": str(
+            (discovery.get("contracts") or {}).get("avds4") or ""
+        )
+        == _url(base_url, "/.well-known/avds-ui-contract.json"),
+        "qazstack_contract": (
+            qazstack_contract.get("schema_version") == "qazstack-consumer-v1"
+            and qazstack_contract.get("qazstack_version") == "1.37.2"
+            and qazstack_contract.get("integration_mode") == "python-package"
+        ),
+        "avds4_contract": (
+            avds_contract.get("schema_version") == "avds-ui-contract-v1"
+            and (avds_contract.get("avds_source") or {}).get("version") == "4.3.2"
+        ),
+        "ecosystem_contract": (
+            ecosystem.get("schema_version") == "qdev-ecosystem-integration-v1"
+            and (ecosystem.get("integrations") or {}).get("qazstack", {}).get("status")
+            == "runtime-proven"
+            and (ecosystem.get("integrations") or {})
+            .get("qazlake", {})
+            .get("direct_write")
+            is False
+        ),
     }
     missing_discovery = [
         marker for marker, present in discovery_status.items() if not present
@@ -235,6 +297,7 @@ def run_smoke(
             coverage.get("unknown_freshness_sources") or 0
         ),
         opportunities=len(opportunities),
+        ndjson_items=len(ndjson_items),
         digest_items=len(digest.get("items") or []),
         forbidden_hits=forbidden_hits,
         dashboard_markers=marker_status,

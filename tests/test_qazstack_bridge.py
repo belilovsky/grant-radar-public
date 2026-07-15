@@ -1,51 +1,40 @@
 from __future__ import annotations
 
 from datetime import date
+from pathlib import Path
 from types import SimpleNamespace
 
-from core import geofit, qazstack_bridge
-from qazstack import SNAPSHOT_COMMIT
+import qazstack
 from qazstack import __version__ as qazstack_version
-from qazstack.opportunities import OpportunityRecord, evaluate_geo_fit
+
+from core import geofit, qazstack_bridge
 from sources.kazakhstan_watch import KazakhstanWatchParser
 
 
-def test_vendored_qazstack_opportunities_snapshot_is_importable() -> None:
-    result = evaluate_geo_fit(
-        OpportunityRecord(
-            source="test",
-            title="Kazakhstan AI education grant",
-            summary="Open to civic technology teams in Central Asia.",
-        )
-    )
+def test_qazstack_release_dependency_is_imported_outside_the_worktree() -> None:
+    """QAZ.FUND consumes the released package, not a copied source snapshot."""
 
-    assert qazstack_version == "1.26.0"
-    assert SNAPSHOT_COMMIT == "5b165528"
-    assert result.has_positive_signal
-    assert result.has_central_asia_signal
-    assert result.is_relevant
+    assert qazstack_version == "1.37.2"
+    package_path = Path(qazstack.__file__).resolve()
+    assert "site-packages" in package_path.parts
+    assert not package_path.is_relative_to(Path.cwd() / "qazstack")
 
 
-def test_geo_fit_uses_shared_positive_signal_when_available(monkeypatch) -> None:
-    monkeypatch.setattr(
-        geofit,
-        "evaluate_shared_geo_fit",
-        lambda item: SimpleNamespace(
-            has_positive_signal=True,
-            has_central_asia_signal=False,
-            exclusion_reason=None,
-            low_confidence=False,
-        ),
-    )
+def test_docker_context_excludes_removed_qazstack_source_snapshot() -> None:
+    """A non-destructive deploy cannot shadow the installed release wheel."""
 
-    assert geofit.has_positive_geo_signal({"title": "Untyped opportunity"})
+    dockerignore = Path(".dockerignore").read_text(encoding="utf-8")
+
+    assert "qazstack/" in dockerignore.splitlines()
 
 
-def test_geo_fit_keeps_local_fallback_when_shared_package_is_absent(
-    monkeypatch,
-) -> None:
-    monkeypatch.setattr(geofit, "evaluate_shared_geo_fit", lambda item: None)
+def test_geo_fit_keeps_product_rules_local() -> None:
+    """Kazakhstan relevance remains a QAZ.FUND editorial decision."""
 
+    assert geofit.has_positive_geo_signal({"title": "Kazakhstan AI education grant"})
+
+
+def test_geo_fit_keeps_local_kazakhstan_rules() -> None:
     item = {
         "source": "grants_gov",
         "title": "AI education grant",
@@ -56,28 +45,19 @@ def test_geo_fit_keeps_local_fallback_when_shared_package_is_absent(
     assert not geofit.is_low_confidence_for_kazakhstan_focus(item)
 
 
-def test_geo_fit_uses_shared_low_confidence_when_available(monkeypatch) -> None:
-    monkeypatch.setattr(
-        geofit,
-        "evaluate_shared_geo_fit",
-        lambda item: SimpleNamespace(
-            has_positive_signal=False,
-            has_central_asia_signal=False,
-            exclusion_reason=None,
-            low_confidence=True,
-        ),
-    )
+def test_geo_fit_keeps_local_low_confidence_policy() -> None:
+    """A global bridge without a regional signal remains low-confidence."""
 
-    assert geofit.is_low_confidence_for_kazakhstan_focus({"source": "custom"})
+    assert geofit.is_low_confidence_for_kazakhstan_focus({"source": "opportunity_desk"})
 
 
-def test_source_contract_validation_uses_vendored_qazstack_snapshot() -> None:
+def test_source_contract_validation_uses_packaged_qazstack_release() -> None:
     qazstack_bridge._shared_source_contract_cls.cache_clear()
 
     assert qazstack_bridge.validate_shared_source_contract(KazakhstanWatchParser())
 
 
-def test_shared_lifecycle_contract_is_available() -> None:
+def test_packaged_release_falls_back_when_lifecycle_is_not_released() -> None:
     item = SimpleNamespace(
         opportunity_status=None,
         deadline=date(2026, 7, 20),
@@ -85,17 +65,33 @@ def test_shared_lifecycle_contract_is_available() -> None:
         raw={},
     )
 
+    qazstack_bridge._shared_lifecycle_functions.cache_clear()
+
     assert (
-        qazstack_bridge.shared_normalized_status(
-            item,
-            today=date(2026, 7, 15),
-        )
+        qazstack_bridge.shared_normalized_status(item, today=date(2026, 7, 15)) is None
+    )
+    assert (
+        qazstack_bridge.shared_public_lifecycle(item, today=date(2026, 7, 15)) is None
+    )
+
+
+def test_bridge_uses_lifecycle_after_a_compatible_release(monkeypatch) -> None:
+    item = SimpleNamespace(deadline=date(2026, 7, 20), tags=[], raw={})
+
+    monkeypatch.setattr(
+        qazstack_bridge,
+        "_shared_lifecycle_functions",
+        lambda: (
+            lambda _item, today=None: "closing_soon",
+            lambda _item, today=None: "closing_soon",
+        ),
+    )
+
+    assert (
+        qazstack_bridge.shared_normalized_status(item, today=date(2026, 7, 15))
         == "closing_soon"
     )
     assert (
-        qazstack_bridge.shared_public_lifecycle(
-            item,
-            today=date(2026, 7, 15),
-        )
+        qazstack_bridge.shared_public_lifecycle(item, today=date(2026, 7, 15))
         == "closing_soon"
     )

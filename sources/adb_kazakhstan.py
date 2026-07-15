@@ -11,6 +11,7 @@ import structlog
 from lxml import etree as ET
 
 from core.models import Opportunity, OpportunityType
+from core.source_text import clean_plain_source_text as _clean_text
 from sources.base import BaseSource
 
 log = structlog.get_logger()
@@ -100,10 +101,6 @@ def _secure_xml_parser() -> ET.XMLParser:
         no_network=True,
         huge_tree=False,
     )
-
-
-def _clean_text(value: str | None) -> str:
-    return re.sub(r"\s+", " ", value or "").strip()
 
 
 def _unique(values: Iterable[str]) -> list[str]:

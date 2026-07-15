@@ -493,6 +493,20 @@ COPY = {
         "workflow_submitted": "Отправлено",
         "workflow_result": "Получен результат",
         "workflow_updated": "Этап карточки обновлён.",
+        "workspace_queue_title": "Следующие действия",
+        "workspace_queue_aria": "Очередь действий по сохранённым возможностям",
+        "workspace_queue_local": "Сохраняется только в этом браузере.",
+        "workspace_queue_empty": "В текущем каталоге нет активных сохранённых карточек.",
+        "workspace_queue_more": "Ещё в работе: {count}",
+        "workspace_action_review": "Проверьте критерии на официальном источнике.",
+        "workspace_action_fit": "Подтвердите соответствие требованиям и срок.",
+        "workspace_action_preparing": "Соберите пакет и зафиксируйте срок подачи.",
+        "workspace_action_submitted": "Сохраните подтверждение и следите за условиями.",
+        "workspace_action_result": "Зафиксируйте результат по этой возможности.",
+        "workspace_deadline_today": "Срок сегодня",
+        "workspace_deadline_days": "Срок через {count} дн.",
+        "workspace_deadline_date": "Срок: {date}",
+        "workspace_deadline_rolling": "Постоянный приём",
         "workspace_backup": "Выгрузить",
         "workspace_backup_aria": "Выгрузка данных и резервная копия локальной работы",
         "workspace_export": "Резервная копия",
@@ -1454,6 +1468,20 @@ COPY = {
         "workflow_submitted": "Submitted",
         "workflow_result": "Result received",
         "workflow_updated": "Card stage updated.",
+        "workspace_queue_title": "Next actions",
+        "workspace_queue_aria": "Action queue for saved opportunities",
+        "workspace_queue_local": "Stored only in this browser.",
+        "workspace_queue_empty": "There are no active saved cards in the current catalogue.",
+        "workspace_queue_more": "Still in progress: {count}",
+        "workspace_action_review": "Check the criteria on the official source.",
+        "workspace_action_fit": "Confirm eligibility and the deadline.",
+        "workspace_action_preparing": "Assemble the package and record the deadline.",
+        "workspace_action_submitted": "Keep the confirmation and monitor the terms.",
+        "workspace_action_result": "Record the outcome for this opportunity.",
+        "workspace_deadline_today": "Due today",
+        "workspace_deadline_days": "Due in {count} days",
+        "workspace_deadline_date": "Due: {date}",
+        "workspace_deadline_rolling": "Rolling application",
         "workspace_backup": "Export",
         "workspace_backup_aria": "Export data and back up local work",
         "workspace_export": "Workspace backup",
@@ -1952,7 +1980,7 @@ def _absolute_href(origin: str, path: str) -> str:
     clean_origin = origin.rstrip("/")
     if not path:
         return clean_origin or "/"
-    if path.startswith("http://") or path.startswith("https://"):
+    if path.startswith(("http://", "https://")):
         return path
     return f"{clean_origin}{path}" if clean_origin else path
 
@@ -3554,6 +3582,86 @@ def render_dashboard(
       gap: var(--av-spacing-1);
     }}
     .saved-view-row:has(.saved-empty) {{ display: none; }}
+    .workspace-queue {{
+      display: grid;
+      gap: var(--av-spacing-2);
+      margin: 0 0 var(--av-spacing-3);
+      padding: 12px;
+      border: 1px solid var(--line-subtle);
+      border-radius: var(--av-radius-md);
+      background: var(--panel-subtle);
+    }}
+    .workspace-queue[hidden] {{ display: none; }}
+    .workspace-queue-head {{
+      display: flex;
+      align-items: baseline;
+      justify-content: space-between;
+      gap: var(--av-spacing-2);
+      flex-wrap: wrap;
+    }}
+    .workspace-queue-title {{
+      margin: 0;
+      color: var(--ink);
+      font-size: var(--av-text-sm);
+      font-weight: 750;
+    }}
+    .workspace-queue-local {{
+      color: var(--muted);
+      font-size: var(--av-text-xs);
+      line-height: 1.35;
+    }}
+    .workspace-queue-list {{
+      display: grid;
+      gap: 6px;
+    }}
+    .workspace-queue-item {{
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) auto;
+      align-items: center;
+      gap: 8px 12px;
+      padding: 8px 0;
+      border-top: 1px solid var(--line-subtle);
+    }}
+    .workspace-queue-item:first-child {{
+      padding-top: 0;
+      border-top: 0;
+    }}
+    .workspace-queue-copy {{
+      display: grid;
+      gap: 3px;
+      min-width: 0;
+    }}
+    .workspace-queue-name {{
+      overflow: hidden;
+      color: var(--ink);
+      font-size: var(--av-text-sm);
+      font-weight: 700;
+      line-height: 1.3;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }}
+    .workspace-queue-action {{
+      color: var(--muted);
+      font-size: var(--av-text-xs);
+      line-height: 1.35;
+    }}
+    .workspace-queue-meta {{
+      display: inline-flex;
+      align-items: center;
+      justify-content: flex-end;
+      gap: 6px;
+      color: var(--muted);
+      font-size: var(--av-text-xs);
+      font-weight: 650;
+      text-align: right;
+      white-space: nowrap;
+    }}
+    .workspace-queue-deadline.is-urgent {{ color: var(--warn); }}
+    .workspace-queue-more {{
+      color: var(--muted);
+      font-size: var(--av-text-xs);
+      font-weight: 600;
+    }}
     .saved-view-pill {{
       display: inline-flex;
       align-items: center;
@@ -4995,6 +5103,18 @@ def render_dashboard(
       .saved-actions {{
         width: 100%;
       }}
+      .workspace-queue {{
+        padding: 10px;
+      }}
+      .workspace-queue-item {{
+        grid-template-columns: 1fr;
+        gap: 6px;
+      }}
+      .workspace-queue-meta {{
+        justify-content: flex-start;
+        text-align: left;
+        white-space: normal;
+      }}
       .health-grid {{
         grid-template-columns: 1fr;
       }}
@@ -5662,6 +5782,19 @@ def render_dashboard(
           aria-label="{escape(str(copy["saved_view_status_label"]), quote=True)}"
         ></div>
       </div>
+      <section
+        class="workspace-queue"
+        id="workspace-queue"
+        aria-label="{escape(str(copy["workspace_queue_aria"]), quote=True)}"
+        hidden
+      >
+        <div class="workspace-queue-head">
+          <h2 class="workspace-queue-title">{escape(str(copy["workspace_queue_title"]))}</h2>
+          <span class="workspace-queue-local">{escape(str(copy["workspace_queue_local"]))}</span>
+        </div>
+        <div class="workspace-queue-list" id="workspace-queue-list"></div>
+        <span class="workspace-queue-more" id="workspace-queue-more"></span>
+      </section>
       <div
         id="topic-brief"
         class="topic-brief hidden"
@@ -6041,6 +6174,7 @@ def render_dashboard(
     const SAVED_VIEW_STORAGE_KEY = "grantRadarSavedViews.v1";
     const SAVED_OPPORTUNITY_STORAGE_KEY = "grantRadarSavedOpportunities.v1";
     const WORKFLOW_STORAGE_KEY = "grantRadarOpportunityWorkflow.v1";
+    const WORKSPACE_QUEUE_LIMIT = 3;
     const WORKFLOW_STATUSES = [
       {{ id: "review", label: copy.workflow_review }},
       {{ id: "fit", label: copy.workflow_fit }},
@@ -8048,6 +8182,7 @@ def render_dashboard(
       workflow[id] = status;
       writeOpportunityWorkflow(workflow);
       setSavedViewNotice(copy.workflow_updated);
+      renderWorkspaceQueue();
     }}
 
     function removeOpportunityWorkflow(opportunityId) {{
@@ -8075,6 +8210,106 @@ def render_dashboard(
       button.textContent = count
         ? text("workspace_filter_count", {{ count: formatNumber.format(count) }})
         : copy.workspace_filter;
+    }}
+
+    function workspaceActionFor(status) {{
+      const actions = {{
+        review: copy.workspace_action_review,
+        fit: copy.workspace_action_fit,
+        preparing: copy.workspace_action_preparing,
+        submitted: copy.workspace_action_submitted,
+        result: copy.workspace_action_result
+      }};
+      return actions[status] || actions.review;
+    }}
+
+    function workspaceDeadlineFor(item) {{
+      const days = daysUntilDeadline(item);
+      if (days === null) {{
+        return {{ label: copy.workspace_deadline_rolling, urgent: false, rank: 2 }};
+      }}
+      if (days <= 0) {{
+        return {{ label: copy.workspace_deadline_today, urgent: true, rank: 0 }};
+      }}
+      if (days <= 7) {{
+        return {{
+          label: text("workspace_deadline_days", {{ count: formatNumber.format(days) }}),
+          urgent: true,
+          rank: 0
+        }};
+      }}
+      return {{
+        label: text("workspace_deadline_date", {{ date: formatDeadline(item.deadline) }}),
+        urgent: false,
+        rank: 1
+      }};
+    }}
+
+    function workspaceQueueItems() {{
+      const savedIds = new Set(readSavedOpportunities());
+      const workflowRank = {{ preparing: 0, fit: 1, review: 2, submitted: 3, result: 4 }};
+      return state.items
+        .filter((item) => savedIds.has(String(item.id)))
+        .slice()
+        .sort((left, right) => {{
+          const leftDeadline = workspaceDeadlineFor(left);
+          const rightDeadline = workspaceDeadlineFor(right);
+          const leftWorkflow = workflowStatusFor(left.id);
+          const rightWorkflow = workflowStatusFor(right.id);
+          return (
+            leftDeadline.rank - rightDeadline.rank
+            || deadlineRank(left) - deadlineRank(right)
+            || (workflowRank[leftWorkflow] ?? 99) - (workflowRank[rightWorkflow] ?? 99)
+            || comparePriorityItems(left, right)
+          );
+        }});
+    }}
+
+    function renderWorkspaceQueue() {{
+      const queue = $("#workspace-queue");
+      const list = $("#workspace-queue-list");
+      const more = $("#workspace-queue-more");
+      if (!queue || !list || !more) return;
+      if (!state.savedOnly) {{
+        queue.hidden = true;
+        list.innerHTML = "";
+        more.textContent = "";
+        return;
+      }}
+      const items = workspaceQueueItems();
+      queue.hidden = false;
+      if (!items.length) {{
+        list.innerHTML = `<span class="workspace-queue-action">${{escapeHtml(
+          copy.workspace_queue_empty
+        )}}</span>`;
+        more.textContent = "";
+        return;
+      }}
+      const visible = items.slice(0, WORKSPACE_QUEUE_LIMIT);
+      list.innerHTML = visible.map((item) => {{
+        const status = workflowStatusFor(item.id);
+        const statusLabel = WORKFLOW_STATUSES.find((entry) => entry.id === status)?.label
+          || copy.workflow_review;
+        const deadline = workspaceDeadlineFor(item);
+        return `<article class="workspace-queue-item" data-avds-component="workspace-queue-item">
+          <div class="workspace-queue-copy">
+            <a class="workspace-queue-name" href="${{escapeHtml(opportunityPageHref(item.id))}}">
+              ${{escapeHtml(item.title)}}
+            </a>
+            <span class="workspace-queue-action">${{escapeHtml(workspaceActionFor(status))}}</span>
+          </div>
+          <div class="workspace-queue-meta">
+            <span>${{escapeHtml(statusLabel)}}</span>
+            <span class="workspace-queue-deadline${{deadline.urgent ? " is-urgent" : ""}}">
+              ${{escapeHtml(deadline.label)}}
+            </span>
+          </div>
+        </article>`;
+      }}).join("");
+      const remaining = items.length - visible.length;
+      more.textContent = remaining
+        ? text("workspace_queue_more", {{ count: formatNumber.format(remaining) }})
+        : "";
     }}
 
     function isOpportunitySaved(opportunityId) {{
@@ -9120,6 +9355,7 @@ def render_dashboard(
       const loadMoreWrap = $("#load-more-wrap");
       const loadMore = $("#load-more");
       renderWorkspaceFilter();
+      renderWorkspaceQueue();
       const items = visibleItems();
       renderPresetControls();
       syncControlsFromState();

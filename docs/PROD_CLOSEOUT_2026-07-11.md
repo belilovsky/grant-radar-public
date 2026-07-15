@@ -1,5 +1,13 @@
 # QAZ.FUND production closeout – 2026-07-11 / 2026-07-12 update
 
+## Update – 2026-07-15
+
+The `qazstack==1.6.1` source snapshot described below was superseded by the
+released QazStack `1.37.2` wheel. The current build consumes the wheel from
+`vendor/qazstack-1.37.2-py3-none-any.whl`; the matching SHA-256 manifest is
+stored next to it. The historical section remains for the 2026-07-11 audit
+record and must not be read as the current production integration state.
+
 ## Scope
 
 Final production pass after the QazStack primitive bridge, operator UI cleanup

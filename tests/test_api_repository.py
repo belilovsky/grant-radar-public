@@ -109,9 +109,15 @@ def test_root_renders_service_landing(monkeypatch):
     assert 'id="workspace-backup"' in response.text
     assert 'id="export-workspace"' in response.text
     assert 'id="import-workspace"' in response.text
+    assert 'id="workspace-queue"' in response.text
+    assert 'id="workspace-queue-list"' in response.text
+    assert 'data-avds-component="workspace-queue-item"' in response.text
     assert "function exportWorkspace" in response.text
     assert "function sanitizeWorkspacePayload" in response.text
     assert "function importWorkspace" in response.text
+    assert "function renderWorkspaceQueue" in response.text
+    assert "workspace_action_preparing" in response.text
+    assert "Сохраняется только в этом браузере." in response.text
     assert "Уточнить данные" in response.text
     assert "Рабочие подборки" in response.text
     assert "Сохранить фильтры" in response.text
@@ -879,6 +885,9 @@ def test_root_supports_explicit_english_dashboard(monkeypatch):
     assert "Load more" in response.text
     assert 'aria-label="Saved collection status"' in response.text
     assert "Copy the link to the current collection" in response.text
+    assert "Next actions" in response.text
+    assert "Stored only in this browser." in response.text
+    assert "Check the criteria on the official source." in response.text
 
 
 def test_root_head_is_available(monkeypatch):
@@ -993,14 +1002,27 @@ def test_marketing_endpoints_are_exposed(monkeypatch):
     assert "API docs: http://testserver/docs" in llms.text
     assert "OpenAPI schema: http://testserver/openapi.json" in llms.text
     assert "Site discovery JSON: http://testserver/site-discovery.json" in llms.text
+    assert (
+        "Ecosystem integration JSON: "
+        "http://testserver/.well-known/qdev-ecosystem.json"
+    ) in llms.text
+    assert (
+        "QazStack consumer contract: "
+        "http://testserver/.well-known/qazstack-consumer.json"
+    ) in llms.text
+    assert (
+        "AV DS 4 UI contract: " "http://testserver/.well-known/avds-ui-contract.json"
+    ) in llms.text
     assert "Source status page: http://testserver/status" in llms.text
     assert "Coverage JSON: http://testserver/coverage" in llms.text
     assert "Opportunities JSON: http://testserver/opportunities" in llms.text
+    assert "Opportunities NDJSON: http://testserver/opportunities.ndjson" in llms.text
     assert "Opportunity detail JSON: /opportunities/{id}?lang=ru|en" in llms.text
     assert "Digest JSON: http://testserver/digest" in llms.text
     assert "Opportunity page: /opportunity/{id}?lang=ru|en" in llms.text
     assert "Funder page: /funder/{slug}?lang=ru|en" in llms.text
     assert "Opportunities filters: q, source, lifecycle, region, tag" in llms.text
+    assert "evidence_state=sourced means that a direct public source link" in llms.text
     llms_head = client.head("/llms.txt")
     assert llms_head.status_code == 200
     assert llms_head.headers["content-type"].startswith("text/plain")
@@ -1017,12 +1039,18 @@ def test_marketing_endpoints_are_exposed(monkeypatch):
         "api_docs": "http://testserver/docs",
         "openapi": "http://testserver/openapi.json",
         "source_status": "http://testserver/status",
+        "ecosystem": "http://testserver/.well-known/qdev-ecosystem.json",
+        "contracts": {
+            "qazstack": ("http://testserver/.well-known/qazstack-consumer.json"),
+            "avds4": "http://testserver/.well-known/avds-ui-contract.json",
+        },
         "languages": ["ru", "en"],
         "routes": {
             "home": "/?lang={lang}",
             "coverage": "/coverage",
             "source_status": "/status?lang={lang}",
             "opportunities": "/opportunities?lang={lang}",
+            "opportunities_ndjson": "/opportunities.ndjson?lang={lang}",
             "opportunity_api": "/opportunities/{id}?lang={lang}",
             "opportunity": "/opportunity/{id}?lang={lang}",
             "funder": "/funder/{slug}?lang={lang}",
@@ -1031,6 +1059,7 @@ def test_marketing_endpoints_are_exposed(monkeypatch):
         "data_endpoints": {
             "coverage": "http://testserver/coverage",
             "opportunities": "http://testserver/opportunities",
+            "opportunities_ndjson": "http://testserver/opportunities.ndjson",
             "digest": "http://testserver/digest",
         },
         "query_templates": {
@@ -1046,21 +1075,57 @@ def test_marketing_endpoints_are_exposed(monkeypatch):
             "opportunities_by_lifecycle": (
                 "/opportunities?lang=ru&limit=50&lifecycle={lifecycle}"
             ),
+            "opportunities_ai_export": (
+                "/opportunities.ndjson?lang=ru&limit=500&min_score=0.3"
+            ),
             "digest_ai": "/digest?lang=ru&limit=5&tag=ai",
         },
         "capabilities": [
             "public opportunity pages",
             "public funder pages",
             "machine-readable opportunity api",
+            "cache-aware ndjson export",
             "machine-readable source coverage",
             "public source freshness status",
             "official source links",
             "read-only public catalog",
+            "qdev ecosystem contract",
         ],
     }
     discovery_head = client.head("/site-discovery.json")
     assert discovery_head.status_code == 200
     assert discovery_head.headers["content-type"].startswith("application/json")
+
+    qazstack_contract = client.get("/.well-known/qazstack-consumer.json")
+    assert qazstack_contract.status_code == 200
+    assert qazstack_contract.json()["schema_version"] == "qazstack-consumer-v1"
+    assert qazstack_contract.json()["qazstack_version"] == "1.37.2"
+    assert qazstack_contract.json()["integration_mode"] == "python-package"
+    assert qazstack_contract.json()["evidence"]["environment"] == "production"
+    assert client.head("/.well-known/qazstack-consumer.json").status_code == 200
+
+    avds_contract = client.get("/.well-known/avds-ui-contract.json")
+    assert avds_contract.status_code == 200
+    assert avds_contract.json()["schema_version"] == "avds-ui-contract-v1"
+    assert avds_contract.json()["avds_source"] == {
+        "site": "https://ui.qdev.run",
+        "package": "@sgeo/ui-kit",
+        "version": "4.3.2",
+    }
+    assert client.head("/.well-known/avds-ui-contract.json").status_code == 200
+
+    ecosystem = client.get("/.well-known/qdev-ecosystem.json")
+    assert ecosystem.status_code == 200
+    ecosystem_payload = ecosystem.json()
+    assert ecosystem_payload["integrations"]["qazstack"]["status"] == ("runtime-proven")
+    assert ecosystem_payload["integrations"]["qazlake"]["direct_write"] is False
+    assert ecosystem_payload["integrations"]["qazgeo"]["status"] == (
+        "deferred-no-geometry"
+    )
+    assert ecosystem_payload["integrations"]["qazcompute"]["status"] == (
+        "candidate-not-enabled"
+    )
+    assert client.head("/.well-known/qdev-ecosystem.json").status_code == 200
 
     favicon = client.get("/favicon.ico")
     assert favicon.status_code == 200

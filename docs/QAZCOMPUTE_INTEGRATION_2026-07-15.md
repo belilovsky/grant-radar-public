@@ -4,15 +4,21 @@ QAZ.FUND uses `opportunity_enrich.v1` as an optional, operator-controlled
 shadow profile. Provider credentials stay in QazCompute; QAZ.FUND receives only
 the versioned result contract through a service credential.
 
-Profile source: `belilovsky/qazcompute` commit `9460264` on branch
-`codex/qazfund-compute-profile-20260715`.
+Profile source: `belilovsky/qazcompute` commit `08f5eb1` on branch
+`codex/qazfund-compute-profile-20260715` (PR #30).
+
+The implementation passes the full local QazCompute suite (141 tests), lint and
+format gates. GitHub Actions did not start because of the repository owner's
+billing/spending-limit gate. Until hosted CI succeeds and PR #30 is merged,
+QAZ.FUND must keep this integration disabled in production.
 
 ## Runtime boundary
 
 - QAZ.FUND sends one opportunity at a time to
   `/api/v1/tasks/opportunity-enrich` with `X-Caller: qaz-fund`.
-- The response schema and returned opportunity id are validated before any
-  metadata is accepted.
+- The response schema, returned opportunity id, runtime status, quality tier,
+  provenance and decision-readiness type are validated before metadata is
+  accepted.
 - Runtime status, provider, model, quality tier, fallback reason, omitted
   capabilities and decision readiness are persisted with the enrichment.
 - Degraded local-rule output may enrich internal audit metadata but does not
@@ -20,9 +26,9 @@ Profile source: `belilovsky/qazcompute` commit `9460264` on branch
 - Public Russian copy can change only when the response contains a non-empty
   summary and explicit `decision_ready=true`.
 
-The current QazCompute profile always reports `decision_ready=false`, including
-when an LLM provider is available. Therefore this integration cannot alter
-public summaries in its current release.
+The current QazCompute candidate always reports `decision_ready=false`,
+including when an LLM provider is available. Therefore this integration cannot
+alter public summaries before its release.
 
 ## Operator use
 

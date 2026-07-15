@@ -21,6 +21,8 @@ from dataclasses import dataclass, field
 from types import SimpleNamespace
 from typing import Any, Dict, Iterable, Optional, Protocol
 
+from qazstack.source import canonicalize_source_url
+
 
 def compute_fingerprint(record: Any) -> str:
     """Compute a stable fingerprint for any record-like object/dict.
@@ -54,7 +56,8 @@ def compute_fingerprint(record: Any) -> str:
 
     url = _get("url")
     if url:
-        return f"url:{url}"
+        canonical_url = canonicalize_source_url(url)
+        return f"url:{canonical_url or url}"
 
     return "sha256:" + hashlib.sha256(repr(record).encode("utf-8")).hexdigest()
 

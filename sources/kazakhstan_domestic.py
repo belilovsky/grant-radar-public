@@ -16,7 +16,6 @@ from collections.abc import AsyncIterator, Iterable
 from dataclasses import dataclass
 from datetime import datetime, timezone
 from decimal import Decimal
-from html import unescape
 from pathlib import Path
 from typing import Any
 from urllib.parse import urlparse
@@ -26,6 +25,7 @@ import structlog
 from bs4 import BeautifulSoup
 
 from core.models import Opportunity, OpportunityType
+from core.source_text import clean_plain_source_text as _clean_text
 from sources.base import BaseSource
 
 log = structlog.get_logger()
@@ -631,10 +631,6 @@ DOMESTIC_PROGRAMS = (
 ACTIVE_DOMESTIC_URLS = frozenset(program.url for program in DOMESTIC_PROGRAMS)
 
 
-def _clean_text(value: str) -> str:
-    return re.sub(r"\s+", " ", unescape(value or "")).strip()
-
-
 def _detect_detail_language(text: str, html: str = "") -> str:
     soup_lang = ""
     try:
@@ -697,14 +693,12 @@ def _is_noise_chunk(text: str) -> bool:
     hits = sum(1 for phrase in DETAIL_NOISE_PHRASES if phrase in normalized)
     if hits >= 3:
         return True
-    if (
+    return (
         len(normalized) > 400
         and hits >= 2
         and normalized.count(".") <= 2
         and normalized.count(":") <= 1
-    ):
-        return True
-    return False
+    )
 
 
 def _extract_detail_sections(html: str) -> tuple[list[dict[str, str]], bool]:

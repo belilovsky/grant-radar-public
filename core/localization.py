@@ -48,10 +48,11 @@ def _remove_repeated_title_prefix(summary: str, title: str) -> str:
     title_text = _string_value(title)
     if not summary_text or not title_text:
         return summary_text
-    candidates = [title_text]
-    for separator in (" – ", " \u2014 "):
-        if separator in title_text:
-            candidates.append(title_text.split(separator, maxsplit=1)[0])
+    candidates = [title_text] + [
+        title_text.split(separator, maxsplit=1)[0]
+        for separator in (" – ", " \u2014 ")
+        if separator in title_text
+    ]
     for candidate in candidates:
         if ":" in candidate:
             leading_clause = candidate.split(":", maxsplit=1)[0].strip()
@@ -143,6 +144,16 @@ def _english_source_fallback(
             f"Official EEAS Kazakhstan call: {title.rstrip('.')}. Review the source "
             "page for eligibility, available funding, submission documents and the "
             "current deadline."
+        )
+    if item.source == "world_bank_procurement_ca" and len(summary) < 80:
+        raw = item.raw if isinstance(item.raw, dict) else {}
+        country = _string_value(raw.get("country"))
+        project = _string_value(raw.get("project_name"))
+        location = f" for {country}" if country else ""
+        project_context = f" under the {project} project" if project else ""
+        summary = (
+            f"World Bank procurement notice{location}{project_context}. "
+            "Review the official notice for scope, eligibility and the submission deadline."
         )
     if not _CYRILLIC_RE.search(title) and not _CYRILLIC_RE.search(summary):
         return title, summary

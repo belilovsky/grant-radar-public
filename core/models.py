@@ -12,6 +12,7 @@ from enum import Enum
 from uuid import UUID, uuid4
 
 from pydantic import BaseModel, Field, HttpUrl
+from qazstack.source import canonicalize_source_url
 
 
 class StrEnum(str, Enum):
@@ -57,7 +58,8 @@ class Opportunity(BaseModel):
         external_id = str(raw.get("external_id") or raw.get("reference") or "").strip()
         if external_id:
             return f"{self.source}:{external_id}"
-        return f"{self.source}:{self.source_url}"
+        canonical_url = canonicalize_source_url(self.source_url)
+        return f"{self.source}:{canonical_url or self.source_url}"
 
     @property
     def url(self) -> str:

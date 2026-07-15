@@ -21,7 +21,7 @@ def test_qazcompute_enrichment_preserves_decision_metadata() -> None:
                 "status": "available",
                 "provider": "llm_gateway",
                 "model": "test-model",
-                "quality_tier": "model_unvalidated",
+                "quality_tier": "estimated",
                 "decision_ready": False,
                 "fallback_reason": None,
                 "omitted_capabilities": [],
@@ -63,7 +63,7 @@ def test_qazcompute_enrichment_preserves_decision_metadata() -> None:
         "status": "available",
         "provider": "llm_gateway",
         "model": "test-model",
-        "quality_tier": "model_unvalidated",
+        "quality_tier": "estimated",
         "decision_ready": False,
         "fallback_reason": None,
         "omitted_capabilities": [],
@@ -109,7 +109,7 @@ def test_qazcompute_enrichment_rejects_mismatched_item_id() -> None:
                     "status": "degraded",
                     "provider": "local_rules",
                     "model": "shadow",
-                    "quality_tier": "shadow",
+                    "quality_tier": "degraded",
                     "decision_ready": False,
                     "results": [{"id": "another-opportunity"}],
                 },
@@ -138,9 +138,114 @@ def test_qazcompute_enrichment_rejects_mismatched_item_id() -> None:
 def test_public_summary_requires_explicit_decision_readiness() -> None:
     enrichment = {
         "summary_ru": "Описание возможности.",
-        "runtime": {"decision_ready": False},
+        "runtime": {
+            "status": "available",
+            "quality_tier": "estimated",
+            "decision_ready": False,
+        },
     }
 
     assert not summary_is_decision_ready(enrichment)
-    enrichment["runtime"] = {"decision_ready": True}
+    enrichment["runtime"] = {
+        "status": "available",
+        "quality_tier": "estimated",
+        "decision_ready": True,
+    }
     assert summary_is_decision_ready(enrichment)
+
+
+def test_public_summary_rejects_degraded_runtime_even_with_ready_flag() -> None:
+    enrichment = {
+        "summary_ru": "Описание возможности.",
+        "runtime": {
+            "status": "degraded",
+            "quality_tier": "degraded",
+            "decision_ready": True,
+        },
+    }
+
+    assert not summary_is_decision_ready(enrichment)
+
+
+@pytest.mark.parametrize(
+    ("field", "value", "message"),
+    [
+        ("status", "unknown", "invalid runtime status"),
+        ("quality_tier", "shadow", "invalid quality tier"),
+        ("decision_ready", "false", "invalid decision-ready flag"),
+    ],
+)
+def test_qazcompute_enrichment_rejects_invalid_runtime_metadata(
+    field: str,
+    value: object,
+    message: str,
+) -> None:
+    payload = {
+        "schema_version": "opportunity_enrich.v1",
+        "status": "available",
+        "provider": "llm_gateway",
+        "model": "test-model",
+        "quality_tier": "estimated",
+        "decision_ready": False,
+        "results": [{"id": "opp-1"}],
+    }
+    payload[field] = value
+
+    async def run() -> None:
+        transport = httpx.MockTransport(
+            lambda _request: httpx.Response(200, json=payload)
+        )
+        async with httpx.AsyncClient(transport=transport) as client:
+            await call_qazcompute(
+                client=client,
+                api_key="secret",
+                base_url="https://compute.example",
+                item=SimpleNamespace(
+                    id="opp-1",
+                    title="Grant",
+                    summary="Summary",
+                    source="example",
+                    tags=[],
+                    eligibility=[],
+                ),
+                detail_text="",
+            )
+
+    with pytest.raises(ValueError, match=message):
+        asyncio.run(run())
+
+
+def test_qazcompute_enrichment_rejects_degraded_publication_readiness() -> None:
+    async def run() -> None:
+        transport = httpx.MockTransport(
+            lambda _request: httpx.Response(
+                200,
+                json={
+                    "schema_version": "opportunity_enrich.v1",
+                    "status": "degraded",
+                    "provider": "local_rules",
+                    "model": "opportunity-rules-v1",
+                    "quality_tier": "degraded",
+                    "decision_ready": True,
+                    "results": [{"id": "opp-1"}],
+                },
+            )
+        )
+        async with httpx.AsyncClient(transport=transport) as client:
+            await call_qazcompute(
+                client=client,
+                api_key="secret",
+                base_url="https://compute.example",
+                item=SimpleNamespace(
+                    id="opp-1",
+                    title="Grant",
+                    summary="Summary",
+                    source="example",
+                    tags=[],
+                    eligibility=[],
+                ),
+                detail_text="",
+            )
+
+    with pytest.raises(ValueError, match="inconsistent publication readiness"):
+        asyncio.run(run())

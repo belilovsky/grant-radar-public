@@ -6,12 +6,12 @@ import re
 from collections.abc import AsyncIterator, Iterable
 from dataclasses import dataclass
 from datetime import date, datetime
-from html import unescape
 from urllib.parse import parse_qs, urljoin, urlparse
 
 import structlog
 
 from core.models import Opportunity, OpportunityType
+from core.source_text import clean_source_text as _clean_text
 from sources.base import BaseSource
 
 log = structlog.get_logger()
@@ -103,11 +103,6 @@ class UndpNotice:
     process: str
     deadline: date | None
     url: str
-
-
-def _clean_text(value: str) -> str:
-    without_tags = re.sub(r"<[^>]+>", " ", value or "")
-    return re.sub(r"\s+", " ", unescape(without_tags)).strip()
 
 
 def _normalize_label(value: str) -> str:

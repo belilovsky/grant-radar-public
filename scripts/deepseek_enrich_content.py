@@ -29,6 +29,9 @@ from core.nlp import extract_rule_based_entities, text_quality_flags
 
 DEFAULT_QAZCOMPUTE_URL = "http://127.0.0.1:8201"
 OPPORTUNITY_ENRICH_PATH = "/api/v1/tasks/opportunity-enrich"
+OPPORTUNITY_ENRICH_SCHEMA = "opportunity_enrich.v1"
+VALID_RUNTIME_STATUSES = frozenset({"available", "degraded"})
+VALID_QUALITY_TIERS = frozenset({"estimated", "degraded"})
 
 
 def _string(value: Any) -> str:
@@ -76,6 +79,39 @@ def normalize_enrichment_payload(payload: dict[str, Any]) -> dict[str, Any]:
 normalize_deepseek_payload = normalize_enrichment_payload
 
 
+def _validated_runtime(payload: dict[str, Any]) -> dict[str, Any]:
+    status = payload.get("status")
+    quality_tier = payload.get("quality_tier")
+    decision_ready = payload.get("decision_ready")
+    provider = _string(payload.get("provider"))
+    model = _string(payload.get("model"))
+    if status not in VALID_RUNTIME_STATUSES:
+        raise ValueError("QazCompute returned an invalid runtime status")
+    if quality_tier not in VALID_QUALITY_TIERS:
+        raise ValueError("QazCompute returned an invalid quality tier")
+    if not isinstance(decision_ready, bool):
+        raise ValueError("QazCompute returned an invalid decision-ready flag")
+    if not provider or not model:
+        raise ValueError("QazCompute returned incomplete runtime provenance")
+    if decision_ready and (status != "available" or quality_tier == "degraded"):
+        raise ValueError("QazCompute returned inconsistent publication readiness")
+
+    fallback_reason = payload.get("fallback_reason")
+    if fallback_reason is not None and not isinstance(fallback_reason, str):
+        raise ValueError("QazCompute returned an invalid fallback reason")
+
+    return {
+        "schema_version": OPPORTUNITY_ENRICH_SCHEMA,
+        "status": status,
+        "provider": provider,
+        "model": model,
+        "quality_tier": quality_tier,
+        "decision_ready": decision_ready,
+        "fallback_reason": fallback_reason,
+        "omitted_capabilities": _normalize_list(payload.get("omitted_capabilities")),
+    }
+
+
 async def call_qazcompute(
     *,
     client: httpx.AsyncClient,
@@ -92,7 +128,7 @@ async def call_qazcompute(
             "X-Caller": "qaz-fund",
         },
         json={
-            "schema_version": "opportunity_enrich.v1",
+            "schema_version": OPPORTUNITY_ENRICH_SCHEMA,
             "allow_degraded": True,
             "items": [
                 {
@@ -111,7 +147,7 @@ async def call_qazcompute(
     payload = response.json()
     if (
         not isinstance(payload, dict)
-        or payload.get("schema_version") != "opportunity_enrich.v1"
+        or payload.get("schema_version") != OPPORTUNITY_ENRICH_SCHEMA
     ):
         raise ValueError(
             "QazCompute returned an invalid opportunity enrichment contract"
@@ -126,16 +162,7 @@ async def call_qazcompute(
     if str(results[0].get("id") or "") != str(item.id):
         raise ValueError("QazCompute returned a mismatched opportunity id")
     normalized = normalize_enrichment_payload(cast(dict[str, Any], results[0]))
-    normalized["runtime"] = {
-        "schema_version": payload["schema_version"],
-        "status": str(payload.get("status") or "degraded"),
-        "provider": str(payload.get("provider") or "unknown"),
-        "model": str(payload.get("model") or "unknown"),
-        "quality_tier": str(payload.get("quality_tier") or "unknown"),
-        "decision_ready": bool(payload.get("decision_ready")),
-        "fallback_reason": payload.get("fallback_reason"),
-        "omitted_capabilities": _normalize_list(payload.get("omitted_capabilities")),
-    }
+    normalized["runtime"] = _validated_runtime(payload)
     return normalized
 
 
@@ -146,6 +173,8 @@ def summary_is_decision_ready(enrichment: dict[str, Any]) -> bool:
     return bool(
         enrichment.get("summary_ru")
         and isinstance(runtime, dict)
+        and runtime.get("status") == "available"
+        and runtime.get("quality_tier") == "estimated"
         and runtime.get("decision_ready") is True
     )
 

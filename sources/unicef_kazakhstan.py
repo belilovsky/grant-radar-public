@@ -6,13 +6,13 @@ import re
 from collections.abc import AsyncIterator, Iterable
 from dataclasses import dataclass
 from datetime import date, datetime
-from html import unescape
 from typing import Any, cast
 from urllib.parse import urljoin
 
 import structlog
 
 from core.models import Opportunity, OpportunityType
+from core.source_text import clean_source_text as _clean_text
 from sources.base import BaseSource
 
 log = structlog.get_logger()
@@ -112,11 +112,6 @@ class UnicefTender:
     application_url: str | None
 
 
-def _clean_text(value: str) -> str:
-    without_tags = re.sub(r"<[^>]+>", " ", value or "")
-    return re.sub(r"\s+", " ", unescape(without_tags)).strip()
-
-
 def _unique(values: Iterable[str]) -> list[str]:
     seen: set[str] = set()
     out: list[str] = []
@@ -188,9 +183,10 @@ def _application_url(html_fragment: str) -> str | None:
     for match in LINK_RE.finditer(html_fragment):
         label = _clean_text(match.group("label")).lower()
         href = match.group("href").strip()
-        if "proposal" in label or "bid" in label or "drive.google.com" in href:
-            if href.startswith("http"):
-                return href
+        if (
+            "proposal" in label or "bid" in label or "drive.google.com" in href
+        ) and href.startswith("http"):
+            return href
     for match in MARKDOWN_LINK_RE.finditer(html_fragment):
         label = _clean_text(match.group("label")).lower()
         href = match.group("href").strip()

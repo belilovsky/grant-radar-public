@@ -283,9 +283,7 @@ def _needs_fallback(text: str) -> bool:
     cleaned = clean_source_summary(text)
     if not cleaned:
         return True
-    if _latin_heavy_ru(cleaned):
-        return True
-    return False
+    return bool(_latin_heavy_ru(cleaned))
 
 
 def russian_summary_fallback(item: Opportunity, summary: str) -> str:
