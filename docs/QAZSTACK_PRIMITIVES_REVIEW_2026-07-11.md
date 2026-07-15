@@ -1,5 +1,21 @@
 # QazStack primitives review – 2026-07-11
 
+## Update – 2026-07-15
+
+The former source snapshot was removed from this repository. QAZ.FUND now
+installs the immutable `qazstack-1.35.0-py3-none-any.whl` release dependency
+from `vendor/`; its SHA-256 is verified in the repository and the production
+Dockerfiles install the same wheel. The release carries the neutral
+`qazstack.opportunities` contracts. Kazakhstan/Central Asia relevance rules
+remain product-owned in `core/geofit.py` and are no longer presented as a
+shared QazStack primitive.
+
+The wheel is intentionally carried with the product while QazStack remains a
+private repository and the production host has no package-registry credential.
+It is a reproducible release dependency, not a source checkout. A future
+internal package registry may replace this delivery mechanism without changing
+the QAZ.FUND contract boundary.
+
 Scope: QAZ.FUND (`grant-radar-public`) against the current platform/QazStack
 surface in `platform-portal-git` and the QazStack registry.
 

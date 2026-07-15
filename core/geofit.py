@@ -7,8 +7,6 @@ import re
 from collections.abc import Iterable
 from typing import Any
 
-from core.qazstack_bridge import evaluate_shared_geo_fit
-
 CENTRAL_ASIA_GEO_PATTERNS = (
     r"\bkazakhstan\b",
     r"\bcentral[\s_-]+asia\b",
@@ -277,9 +275,6 @@ def _matches_any(text: str, patterns: Iterable[str]) -> bool:
 
 
 def has_positive_geo_signal(item: Any) -> bool:
-    shared = evaluate_shared_geo_fit(item)
-    if shared is not None and shared.has_positive_signal:
-        return True
     text = _text(item, include_raw=False, include_tags=False)
     return any(
         re.search(pattern, text, re.IGNORECASE) for pattern in POSITIVE_GEO_PATTERNS
@@ -287,9 +282,6 @@ def has_positive_geo_signal(item: Any) -> bool:
 
 
 def has_central_asia_geo_signal(item: Any) -> bool:
-    shared = evaluate_shared_geo_fit(item)
-    if shared is not None and shared.has_central_asia_signal:
-        return True
     text = _text(item, include_raw=False, include_tags=False)
     return any(
         re.search(pattern, text, re.IGNORECASE) for pattern in CENTRAL_ASIA_GEO_PATTERNS
@@ -299,8 +291,6 @@ def has_central_asia_geo_signal(item: Any) -> bool:
 def exclusion_reason(item: Any) -> str | None:
     source = str(_get(item, "source") or "").lower()
     text = _text(item, include_raw=True, include_tags=True)
-    shared = evaluate_shared_geo_fit(item)
-
     if source == "world_bank_kazakhstan":
         borrower = _raw_text_value(item, "borrower")
         lending = _raw_text_value(item, "lendinginstr")
@@ -352,8 +342,6 @@ def exclusion_reason(item: Any) -> str | None:
     for value in HARD_EXCLUSION_RAW_VALUES:
         if value.lower() in raw_text.lower():
             return value
-    if shared is not None and shared.exclusion_reason:
-        return shared.exclusion_reason
     return None
 
 
@@ -362,9 +350,6 @@ def is_excluded_for_kazakhstan_focus(item: Any) -> bool:
 
 
 def is_low_confidence_for_kazakhstan_focus(item: Any) -> bool:
-    shared = evaluate_shared_geo_fit(item)
-    if shared is not None and shared.low_confidence:
-        return True
     source = str(_get(item, "source") or "").lower()
     return source in LOW_CONFIDENCE_SOURCE_SLUGS and not has_central_asia_geo_signal(
         item
