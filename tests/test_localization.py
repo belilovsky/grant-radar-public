@@ -133,6 +133,27 @@ def test_english_localization_expands_short_eeas_summary():
     assert len(localized.summary) >= 120
 
 
+def test_english_localization_expands_short_world_bank_procurement_summary():
+    item = Opportunity(
+        source="world_bank_procurement_ca",
+        source_url=HttpUrl("https://example.org/world-bank/notice"),
+        type=OpportunityType.TENDER,
+        title="Learning and communication specialist",
+        summary="Tajikistan Digital Foundations Project. Learning and communication specialist",
+        raw={
+            "country": "Tajikistan",
+            "project_name": "Tajikistan Digital Foundations Project",
+        },
+    )
+
+    localized = localize_opportunity(item, "en")
+
+    assert localized.summary.startswith("World Bank procurement notice for Tajikistan")
+    assert "Tajikistan Digital Foundations Project" in localized.summary
+    assert "submission deadline" in localized.summary
+    assert len(localized.summary) >= 120
+
+
 def test_russian_procurement_title_keeps_reference_for_distinction():
     item = Opportunity(
         source="undp_procurement",
