@@ -5,6 +5,14 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[1]
 
 
+def test_dev_requirements_reuse_runtime_requirements():
+    requirements = (ROOT / "requirements.txt").read_text()
+    dockerfile = (ROOT / "Dockerfile").read_text()
+
+    assert "-r requirements-prod.txt" in requirements
+    assert "COPY requirements.txt requirements-prod.txt ./" in dockerfile
+
+
 def test_prod_image_uses_runtime_requirements():
     dockerfile = (ROOT / "Dockerfile.prod").read_text()
 
