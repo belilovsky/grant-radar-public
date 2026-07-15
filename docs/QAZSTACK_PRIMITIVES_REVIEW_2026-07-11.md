@@ -6,18 +6,15 @@ The second adoption pass is documented in
 `docs/QAZSTACK_ADOPTION_2026-07-15.md`. QAZ.FUND now consumes stable shared
 source/content normalization, evidence-state, result-diversification and
 cache-aware NDJSON export helpers. Product scoring, geo-fit, localization and
-source fallback policy remain local. The older 1.35.0 notes below are retained
-as release history.
+source fallback policy remain local. Earlier snapshot-based integration notes
+are preserved only in dated closeout evidence and are not the current runtime
+contract.
 
-## Update – 2026-07-15
-
-The former source snapshot was removed from this repository. QAZ.FUND now
-installs the immutable `qazstack-1.35.0-py3-none-any.whl` release dependency
-from `vendor/`; its SHA-256 is verified in the repository and the production
-Dockerfiles install the same wheel. The release carries the neutral
-`qazstack.opportunities` contracts. Kazakhstan/Central Asia relevance rules
-remain product-owned in `core/geofit.py` and are no longer presented as a
-shared QazStack primitive.
+The former source snapshot was removed from this repository. QAZ.FUND installs
+the immutable `qazstack-1.37.2-py3-none-any.whl` release dependency from
+`vendor/`; its SHA-256 is verified in the repository and the production
+Dockerfiles install the same wheel. Kazakhstan/Central Asia relevance rules
+remain product-owned in `core/geofit.py`.
 
 The wheel is intentionally carried with the product while QazStack remains a
 private repository and the production host has no package-registry credential.
@@ -32,14 +29,26 @@ This started as an inventory and adoption plan, then advanced into a small
 runtime integration. QAZ.FUND is still a small FastAPI service with a
 production-safe local AV DS adapter; broad framework replacement would add
 deployment risk. The implemented integration is intentionally narrow:
-QAZ.FUND imports the released `qazstack.opportunities` contracts from the
-installed 1.35.0 wheel while preserving product-owned policy.
+QAZ.FUND imports released contracts from the installed 1.37.2 wheel while
+preserving product-owned policy.
+
+## Staged follow-ups - 2026-07-15
+
+- QazStack PR #33 merged the neutral lifecycle helper after release 1.37.2.
+  QAZ.FUND can consume it after the next compatible package release and keeps
+  its tested local implementation until then.
+- QazCompute PR #30, head `08f5eb1`, provides `opportunity_enrich.v1`; its
+  hosted CI is blocked by the GitHub account billing gate, so the profile is
+  code-ready but not runtime-enabled or release-proven.
+- QAZ.FUND accepts optional lifecycle and compute integration only through
+  explicit fallback and decision-readiness gates.
+- Direct provider credentials were removed from the QAZ.FUND enrichment path.
 
 ## Implemented runtime bridge
 
 - QazStack release source commit:
-  `189c9bd62041394a255f4608dba904263e5e66e8`
-- QazStack package: `qazstack==1.35.0`
+  `b401122feb0ab7fd7e4b1d84b9b6ea8ded20071b`
+- QazStack package: `qazstack==1.37.2`
 - Shared module: `qazstack.opportunities`
 - QAZ.FUND bridge: `core/qazstack_bridge.py`
 - Active integration point: source-contract validation in the parser layer
@@ -59,6 +68,11 @@ Runtime behavior:
   `site-packages`, not a repository source copy;
 - local QAZ.FUND rules remain authoritative for Kazakhstan/Central Asia fit and
   product-specific exclusions.
+- the lifecycle bridge returns no shared result until a compatible package is
+  released, so the local implementation remains authoritative;
+- QazCompute enrichment is operator-controlled and may write auditable metadata
+  only while `decision_ready=false`; see
+  `docs/QAZCOMPUTE_INTEGRATION_2026-07-15.md`.
 
 ## Current QazStack registry evidence
 
@@ -85,7 +99,7 @@ The current QAZ.FUND dashboard also uses a local AV DS-compatible adapter:
 
 | Candidate | Local evidence | Why it belongs in QazStack | Status | Recommended action |
 |---|---|---|---|---|
-| Kazakhstan/Central Asia geo-fit rules | `core/geofit.py`, `tests/test_scoring.py`, `tests/test_qazstack_bridge.py` | Several products need Kazakhstan/Central Asia relevance gating, not only grants. The exclusion rules are already practical and test-backed. | Partly implemented | Shared base contract lives in `qazstack.opportunities.geofit`; QAZ.FUND uses it through `core/qazstack_bridge.py` while preserving local fallback and product-specific rules. |
+| Kazakhstan/Central Asia geo-fit rules | `core/geofit.py`, `tests/test_scoring.py`, `tests/test_qazstack_bridge.py` | The rules contain product-specific inclusion and exclusion policy. | Keep product-owned | Reuse only a future configurable evidence contract; do not move QAZ.FUND's source and geography decisions into QazStack. |
 | Opportunity relevance scoring | `core/scoring.py`, `tests/test_scoring.py` | The weighted keyword + geography + deadline scoring is a reusable operator-ranking primitive. | Candidate | Upstream as a domain-neutral `relevance_score()` engine with product-supplied weights. Do not hard-code grant tags in the shared primitive. |
 | Source parser contract | `sources/base.py`, `sources/*`, `tests/test_sources.py` | QAZ.FUND has a mature pattern for async source adapters, curated fallback, blocked-source retention and source-specific tests. | Partly implemented | `qazstack.opportunities.SourceContract` now validates shared parser metadata. QAZ.FUND exposes optional validation through `core/qazstack_bridge.validate_shared_source_contract()`. |
 | Curated fallback and retention policy | `sources/kazakhstan_watch.py`, `sources/kazakhstan_domestic.py`, parser tests | This is a reusable pattern for official sources that block automation or return temporary errors while the public route remains important. | Candidate | Add a QazStack collector policy primitive: `retain_on_fetch_error`, `detail_fetch_status`, `status_note`. |
@@ -128,11 +142,15 @@ Completed in the QAZ.FUND / QazStack integration pass:
    QAZ.FUND adopts new AV DS/QazStack operator primitives.
 2. Add this review to repo docs and test that it stays present.
 3. Add QAZ.FUND primitives to the platform-side QazStack registry.
-4. Make QazStack installable as `qazstack==1.6.1` on the platform side.
-5. Add `qazstack.opportunities` as a dependency-free shared contract.
-6. Add QAZ.FUND optional runtime bridge with local fallback.
-7. Vendor the tested dependency-free QazStack opportunities snapshot in
-   QAZ.FUND so production Docker builds do not need private GitHub access.
+4. Install checksum-pinned QazStack 1.37.2 from the vendored release wheel.
+5. Use `qazstack.opportunities.SourceContract` as the dependency-free parser
+   metadata contract.
+6. Keep lifecycle adoption optional with a deterministic local fallback until
+   the shared helper reaches a package release.
+7. Exclude repository source snapshots so production cannot shadow the wheel.
+8. Stage optional enrichment through the versioned QazCompute profile without
+   copying provider keys into QAZ.FUND; do not enable it before upstream CI and
+   runtime smoke are green.
 
 ## Decision
 

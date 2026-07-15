@@ -17,6 +17,18 @@ def _shared_source_contract_cls():
     return SourceContract
 
 
+@lru_cache(maxsize=1)
+def _shared_lifecycle_functions():
+    try:
+        from qazstack.opportunities import (
+            normalized_opportunity_status,
+            public_lifecycle,
+        )
+    except (AttributeError, ImportError):
+        return None
+    return normalized_opportunity_status, public_lifecycle
+
+
 def validate_shared_source_contract(parser: Any) -> bool:
     """Validate parser metadata against the packaged QazStack contract."""
 
@@ -30,3 +42,23 @@ def validate_shared_source_contract(parser: Any) -> bool:
     )
     contract.validate()
     return True
+
+
+def shared_normalized_status(item: Any, *, today: Any = None) -> str | None:
+    """Return QazStack's normalized status when the snapshot is available."""
+
+    functions = _shared_lifecycle_functions()
+    if functions is None:
+        return None
+    normalized_status, _ = functions
+    return str(normalized_status(item, today=today))
+
+
+def shared_public_lifecycle(item: Any, *, today: Any = None) -> str | None:
+    """Return QazStack's public lifecycle when the snapshot is available."""
+
+    functions = _shared_lifecycle_functions()
+    if functions is None:
+        return None
+    _, lifecycle = functions
+    return str(lifecycle(item, today=today))

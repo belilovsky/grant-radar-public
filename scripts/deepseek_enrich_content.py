@@ -1,7 +1,10 @@
-"""Backfill DeepSeek NLP enrichment into opportunity raw payloads.
+"""Backfill decision-safe QazCompute enrichment into opportunity payloads.
 
 The script is intentionally operator-controlled: it writes only with --apply and
-keeps the current public title/summary untouched unless --apply-summary is set.
+keeps public text untouched unless a benchmarked response is decision-ready.
+
+The legacy module name is preserved for operator compatibility. Provider access
+is centralized through QazCompute; this script no longer accepts provider keys.
 """
 
 from __future__ import annotations
@@ -24,28 +27,15 @@ from core.db import OpportunityRow, SqlRepository
 from core.localization import raw_localization_target
 from core.nlp import extract_rule_based_entities, text_quality_flags
 
-DEFAULT_DEEPSEEK_URL = "https://api.deepseek.com/chat/completions"
-DEFAULT_DEEPSEEK_MODEL = "deepseek-chat"
+DEFAULT_QAZCOMPUTE_URL = "http://127.0.0.1:8201"
+OPPORTUNITY_ENRICH_PATH = "/api/v1/tasks/opportunity-enrich"
+OPPORTUNITY_ENRICH_SCHEMA = "opportunity_enrich.v1"
+VALID_RUNTIME_STATUSES = frozenset({"available", "degraded"})
+VALID_QUALITY_TIERS = frozenset({"estimated", "degraded"})
 
 
 def _string(value: Any) -> str:
     return "" if value is None else str(value).strip()
-
-
-def _json_object(text: str) -> dict[str, Any]:
-    text = text.strip()
-    if text.startswith("```"):
-        text = text.strip("`").strip()
-        if text.lower().startswith("json"):
-            text = text[4:].strip()
-    start = text.find("{")
-    end = text.rfind("}")
-    if start == -1 or end == -1 or end <= start:
-        raise ValueError("DeepSeek response does not contain a JSON object")
-    payload = json.loads(text[start : end + 1])
-    if not isinstance(payload, dict):
-        raise ValueError("DeepSeek response JSON is not an object")
-    return payload
 
 
 def _normalize_list(value: Any) -> list[str]:
@@ -54,7 +44,22 @@ def _normalize_list(value: Any) -> list[str]:
     return [str(item).strip() for item in value if str(item).strip()][:12]
 
 
-def normalize_deepseek_payload(payload: dict[str, Any]) -> dict[str, Any]:
+def _normalize_evidence(value: Any) -> list[dict[str, str]]:
+    if not isinstance(value, list):
+        return []
+    normalized: list[dict[str, str]] = []
+    for item in value[:30]:
+        if not isinstance(item, dict):
+            continue
+        field = _string(item.get("field"))[:120]
+        evidence_value = _string(item.get("value"))[:500]
+        quote = _string(item.get("quote"))[:500]
+        if field and evidence_value and quote:
+            normalized.append({"field": field, "value": evidence_value, "quote": quote})
+    return normalized
+
+
+def normalize_enrichment_payload(payload: dict[str, Any]) -> dict[str, Any]:
     summary_ru = _string(payload.get("summary_ru"))
     entities = payload.get("entities")
     entities = entities if isinstance(entities, dict) else {}
@@ -80,73 +85,115 @@ def normalize_deepseek_payload(payload: dict[str, Any]) -> dict[str, Any]:
         "summary_ru": summary_ru,
         "entities": normalized_entities,
         "quality_flags": flags,
+        "evidence": _normalize_evidence(payload.get("evidence")),
     }
     if not summary_ru:
         result.pop("summary_ru")
     return result
 
 
-def _prompt_payload(item: Any, detail_text: str) -> list[dict[str, str]]:
-    content = {
-        "title": item.title,
-        "summary": item.summary,
-        "source": item.source,
-        "source_url": str(item.source_url),
-        "tags": item.tags,
-        "eligibility": item.eligibility,
-        "detail_text": detail_text[:6000],
+normalize_deepseek_payload = normalize_enrichment_payload
+
+
+def _validated_runtime(payload: dict[str, Any]) -> dict[str, Any]:
+    status = payload.get("status")
+    quality_tier = payload.get("quality_tier")
+    decision_ready = payload.get("decision_ready")
+    provider = _string(payload.get("provider"))
+    model = _string(payload.get("model"))
+    if status not in VALID_RUNTIME_STATUSES:
+        raise ValueError("QazCompute returned an invalid runtime status")
+    if quality_tier not in VALID_QUALITY_TIERS:
+        raise ValueError("QazCompute returned an invalid quality tier")
+    if not isinstance(decision_ready, bool):
+        raise ValueError("QazCompute returned an invalid decision-ready flag")
+    if not provider or not model:
+        raise ValueError("QazCompute returned incomplete runtime provenance")
+    if decision_ready and (status != "available" or quality_tier == "degraded"):
+        raise ValueError("QazCompute returned inconsistent publication readiness")
+
+    fallback_reason = payload.get("fallback_reason")
+    if fallback_reason is not None and not isinstance(fallback_reason, str):
+        raise ValueError("QazCompute returned an invalid fallback reason")
+
+    return {
+        "schema_version": OPPORTUNITY_ENRICH_SCHEMA,
+        "status": status,
+        "provider": provider,
+        "model": model,
+        "quality_tier": quality_tier,
+        "decision_ready": decision_ready,
+        "fallback_reason": fallback_reason,
+        "omitted_capabilities": _normalize_list(payload.get("omitted_capabilities")),
     }
-    return [
-        {
-            "role": "system",
-            "content": (
-                "You enrich grant/support opportunities for Kazakhstan users. "
-                "Return strict JSON only. Do not invent facts. Use Russian for "
-                "summary_ru. Extract concise entities from the provided text."
-            ),
-        },
-        {
-            "role": "user",
-            "content": (
-                "Return JSON with keys: summary_ru, entities, quality_flags. "
-                "entities keys: funders, programs, countries, regions, sectors, "
-                "support_types, audiences, eligibility, deadlines.\n\n"
-                f"{json.dumps(content, ensure_ascii=False)}"
-            ),
-        },
-    ]
 
 
-async def call_deepseek(
+async def call_qazcompute(
     *,
     client: httpx.AsyncClient,
     api_key: str,
-    model: str,
-    url: str,
+    base_url: str,
     item: Any,
     detail_text: str,
 ) -> dict[str, Any]:
+    url = f"{base_url.rstrip('/')}{OPPORTUNITY_ENRICH_PATH}"
     response = await client.post(
         url,
         headers={
-            "Authorization": f"Bearer {api_key}",
-            "Content-Type": "application/json",
+            "X-API-Key": api_key,
+            "X-Caller": "qaz-fund",
         },
         json={
-            "model": model,
-            "messages": _prompt_payload(item, detail_text),
-            "temperature": 0.1,
-            "response_format": {"type": "json_object"},
+            "schema_version": OPPORTUNITY_ENRICH_SCHEMA,
+            "allow_degraded": True,
+            "items": [
+                {
+                    "id": str(item.id),
+                    "title": item.title,
+                    "summary": item.summary,
+                    "detail_text": detail_text[:100_000],
+                    "source": item.source,
+                    "tags": item.tags,
+                    "eligibility": item.eligibility,
+                }
+            ],
         },
     )
     response.raise_for_status()
     payload = response.json()
-    content = (
-        ((payload.get("choices") or [{}])[0].get("message") or {}).get("content")
-        if isinstance(payload, dict)
-        else ""
+    if (
+        not isinstance(payload, dict)
+        or payload.get("schema_version") != OPPORTUNITY_ENRICH_SCHEMA
+    ):
+        raise ValueError(
+            "QazCompute returned an invalid opportunity enrichment contract"
+        )
+    results = payload.get("results")
+    if (
+        not isinstance(results, list)
+        or len(results) != 1
+        or not isinstance(results[0], dict)
+    ):
+        raise ValueError("QazCompute returned an invalid result count")
+    if str(results[0].get("id") or "") != str(item.id):
+        raise ValueError("QazCompute returned a mismatched opportunity id")
+    normalized = normalize_enrichment_payload(cast(dict[str, Any], results[0]))
+    normalized["runtime"] = _validated_runtime(payload)
+    return normalized
+
+
+def summary_is_decision_ready(enrichment: dict[str, Any]) -> bool:
+    """Return whether a computed summary may replace public copy."""
+
+    runtime = enrichment.get("runtime")
+    return bool(
+        enrichment.get("summary_ru")
+        and enrichment.get("evidence")
+        and isinstance(runtime, dict)
+        and runtime.get("status") == "available"
+        and runtime.get("quality_tier") == "estimated"
+        and runtime.get("decision_ready") is True
     )
-    return normalize_deepseek_payload(_json_object(str(content or "")))
 
 
 async def _row_detail_text(row: OpportunityRow) -> tuple[Any, str]:
@@ -166,10 +213,13 @@ async def _run(args: argparse.Namespace) -> int:
         print("error: database URL is required", file=sys.stderr)
         return 2
 
-    api_key = (args.api_key or os.environ.get("DEEPSEEK_API_KEY") or "").strip()
+    compute_url = (
+        args.compute_url or os.environ.get("QAZCOMPUTE_URL") or DEFAULT_QAZCOMPUTE_URL
+    ).strip()
+    api_key = (os.environ.get("QAZCOMPUTE_API_KEY") or "").strip()
     if not api_key and not args.no_provider:
         print(
-            "error: DEEPSEEK_API_KEY is not set; use --no-provider for heuristic run",
+            "error: QAZCOMPUTE_API_KEY is not set; use --no-provider for heuristic run",
             file=sys.stderr,
         )
         return 2
@@ -213,11 +263,10 @@ async def _run(args: argparse.Namespace) -> int:
                         "quality_flags": heuristic_flags,
                     }
                 else:
-                    enrichment = await call_deepseek(
+                    enrichment = await call_qazcompute(
                         client=client,
                         api_key=api_key,
-                        model=args.model,
-                        url=args.endpoint,
+                        base_url=compute_url,
                         item=item,
                         detail_text=detail_text,
                     )
@@ -244,17 +293,22 @@ async def _run(args: argparse.Namespace) -> int:
                 updated_raw = deepcopy(row_raw)
                 target = raw_localization_target(updated_raw)
                 target["nlp"] = {
-                    "provider": "heuristic" if args.no_provider else "deepseek",
-                    "model": None if args.no_provider else args.model,
+                    "provider": "heuristic" if args.no_provider else "qazcompute",
                     "enriched_at": datetime.now(timezone.utc).isoformat(),
                     **enrichment,
                 }
-                if args.apply_summary and enrichment.get("summary_ru"):
+                if args.apply_summary and summary_is_decision_ready(enrichment):
                     i18n = dict(target.get("i18n") or {})
                     ru = dict(i18n.get("ru") or {})
                     ru["summary"] = enrichment["summary_ru"]
                     i18n["ru"] = ru
                     target["i18n"] = i18n
+                elif args.apply_summary and enrichment.get("summary_ru"):
+                    print(
+                        f"[{index}/{len(rows)}] summary blocked: "
+                        "QazCompute result is not decision-ready",
+                        file=sys.stderr,
+                    )
 
                 if updated_raw == row_raw:
                     print(f"[{index}/{len(rows)}] skip {row.id}")
@@ -287,9 +341,7 @@ async def _run(args: argparse.Namespace) -> int:
 def _parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--url", default=None)
-    parser.add_argument("--api-key", default=None)
-    parser.add_argument("--endpoint", default=DEFAULT_DEEPSEEK_URL)
-    parser.add_argument("--model", default=DEFAULT_DEEPSEEK_MODEL)
+    parser.add_argument("--compute-url", default=None)
     parser.add_argument("--limit", type=int, default=10)
     parser.add_argument("--offset", type=int, default=0)
     parser.add_argument("--timeout", type=float, default=45.0)

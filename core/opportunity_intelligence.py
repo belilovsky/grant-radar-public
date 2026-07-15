@@ -7,6 +7,7 @@ from datetime import date
 from typing import Any
 
 from core.models import Opportunity
+from core.qazstack_bridge import shared_normalized_status, shared_public_lifecycle
 
 _FORECAST_TERMS = (
     "forecast",
@@ -105,6 +106,9 @@ def is_rolling_item(item: Opportunity) -> bool:
 
 
 def normalized_opportunity_status(item: Opportunity, today: date | None = None) -> str:
+    shared = shared_normalized_status(item, today=today)
+    if shared is not None:
+        return shared
     today = today or date.today()
     status_blob = _status_blob(item)
     tags = _normalized_tags(item)
@@ -134,6 +138,9 @@ def normalized_opportunity_status(item: Opportunity, today: date | None = None) 
 
 
 def public_lifecycle(item: Opportunity, today: date | None = None) -> str:
+    shared = shared_public_lifecycle(item, today=today)
+    if shared is not None:
+        return shared
     status = normalized_opportunity_status(item, today=today)
     if is_awarded_item(item):
         return "awarded"

@@ -1,6 +1,8 @@
 from __future__ import annotations
 
+from datetime import date
 from pathlib import Path
+from types import SimpleNamespace
 
 import qazstack
 from qazstack import __version__ as qazstack_version
@@ -53,3 +55,43 @@ def test_source_contract_validation_uses_packaged_qazstack_release() -> None:
     qazstack_bridge._shared_source_contract_cls.cache_clear()
 
     assert qazstack_bridge.validate_shared_source_contract(KazakhstanWatchParser())
+
+
+def test_packaged_release_falls_back_when_lifecycle_is_not_released() -> None:
+    item = SimpleNamespace(
+        opportunity_status=None,
+        deadline=date(2026, 7, 20),
+        tags=[],
+        raw={},
+    )
+
+    qazstack_bridge._shared_lifecycle_functions.cache_clear()
+
+    assert (
+        qazstack_bridge.shared_normalized_status(item, today=date(2026, 7, 15)) is None
+    )
+    assert (
+        qazstack_bridge.shared_public_lifecycle(item, today=date(2026, 7, 15)) is None
+    )
+
+
+def test_bridge_uses_lifecycle_after_a_compatible_release(monkeypatch) -> None:
+    item = SimpleNamespace(deadline=date(2026, 7, 20), tags=[], raw={})
+
+    monkeypatch.setattr(
+        qazstack_bridge,
+        "_shared_lifecycle_functions",
+        lambda: (
+            lambda _item, today=None: "closing_soon",
+            lambda _item, today=None: "closing_soon",
+        ),
+    )
+
+    assert (
+        qazstack_bridge.shared_normalized_status(item, today=date(2026, 7, 15))
+        == "closing_soon"
+    )
+    assert (
+        qazstack_bridge.shared_public_lifecycle(item, today=date(2026, 7, 15))
+        == "closing_soon"
+    )
