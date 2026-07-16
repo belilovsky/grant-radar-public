@@ -65,8 +65,25 @@ Date: 2026-07-16.
 - Shell syntax, local Markdown links, tracked duplicate/empty-file checks and
   `git diff --check`: passed.
 - Docker Compose config and image build could not run locally because Docker CLI
-  is not installed on this Mac. They remain mandatory CI/deploy gates.
-- Production smoke and content/NLP audit results are added after deployment.
+  is not installed on this Mac. The production host subsequently validated the
+  Compose config and built both images successfully.
+- Hosted CI `Quality and tests` passed for PR #20 before merge.
+- Merged revision `d5bb5c0f769fcf54ce6694128d2a709692003790` was deployed by
+  `scripts/deploy_qaz_fund.sh` without rsync deletion. The public release endpoint
+  reported the exact revision; API health was `healthy` and the worker was
+  `running` with no recent error/traceback records.
+- Production `pip check` and the removed-package import audit passed. Compose
+  config validation passed against the server-local production environment.
+- The obsolete Redis container was re-checked after rollout (`0` keys, one
+  audit client), then stopped and removed. PostgreSQL, API and worker remained
+  healthy; no image or database object was removed.
+- Production smoke passed with database backend, 26 sources, 155 relevant open
+  opportunities, zero stale or unknown-freshness sources and all AI/discovery
+  surfaces present.
+- Content audit passed with no issues. RU and EN NLP audits each checked 150
+  records with zero text issues and zero missing entity sets.
+- Public `/`, `/health`, `/ready`, `/favicon.ico`, `/llms.txt`,
+  `/site-discovery.json` and `/.well-known/release.json` all returned HTTP 200.
 
 ## Known risks and next cleanup batch
 
