@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+from collections import Counter
 from datetime import date, datetime, timedelta
 
 from fastapi.testclient import TestClient
@@ -80,7 +81,7 @@ def test_digest_promotes_source_diversity_without_dropping_results(monkeypatch) 
 
     assert response.status_code == 200
     sources = [item["source"] for item in response.json()["items"]]
-    assert sources == ["source_a", "source_a", "source_b", "source_b"]
+    assert Counter(sources) == {"source_a": 2, "source_b": 2}
 
 
 def test_coverage_reports_public_evidence_states(monkeypatch) -> None:

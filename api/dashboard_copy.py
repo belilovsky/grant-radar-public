@@ -295,20 +295,20 @@ COPY = {
         "deadline_filter_rolling": "Бессрочные",
         "sort_label": "Сортировка",
         "sort_aria": "Порядок показа возможностей",
-        "sort_priority": "Лучшее совпадение",
+        "sort_priority": "По приоритету действий",
         "sort_deadline": "Ближайший дедлайн",
         "sort_updated": "Недавно обновленные",
-        "min_score_label": "Точность совпадения",
-        "min_score_aria": "Точность совпадения",
+        "min_score_label": "Релевантность каталога",
+        "min_score_aria": "Минимальная релевантность каталога",
         "source_label": "Источник",
         "source_aria": "Источник",
         "all_scores": "Все результаты",
-        "score_option_03": "Базовое совпадение",
-        "score_option_05": "Высокое совпадение",
-        "score_option_07": "Только точные",
+        "score_option_03": "Базовая релевантность",
+        "score_option_05": "Хорошая релевантность",
+        "score_option_07": "Высокая релевантность",
         "score_help": (
-            "Оценка учитывает регион, тему, формат и признаки подходящей аудитории. "
-            "Финальные условия всегда сверяйте у источника."
+            "Оценка учитывает регион и тему, а порядок – ещё и доступный срок. "
+            "Это не вероятность одобрения; условия сверяйте с первоисточником."
         ),
         "all_sources": "Все источники",
         "clear_filters": "Сбросить фильтры",
@@ -376,11 +376,11 @@ COPY = {
         "summary_region": "Регион: {value}",
         "summary_deadline": "Срок: {value}",
         "summary_sort": "Сортировка: {value}",
-        "summary_score": "Точность: {value}",
+        "summary_score": "Релевантность: {value}",
         "summary_scope_all": "Включая архив",
         "methodology_title": "Как мы собираем и показываем данные",
         "methodology_description": (
-            "Коротко объясняем, откуда берется каталог, что означает совпадение и "
+            "Коротко объясняем, откуда берется каталог, что означает релевантность и "
             "что нужно обязательно перепроверять перед подачей."
         ),
         "method_card_sources_title": "Источники и обновление",
@@ -391,9 +391,9 @@ COPY = {
         ),
         "method_card_relevance_title": "Почему карточка показана",
         "method_card_relevance_text": (
-            "Порядок выдачи учитывает Казахстан и Центральную Азию, тему, формат, "
-            "дедлайн и признаки того, кому программа подходит. Это рабочая "
-            "эвристика, а не юридическая классификация."
+            "Релевантность учитывает регион и тему; порядок – ещё и доступный срок. "
+            "Компоненты ограничены и объяснимы. Это не вероятность одобрения и не "
+            "юридическое заключение."
         ),
         "method_card_trust_title": "Что считать финальной версией",
         "method_card_trust_text": (
@@ -588,10 +588,10 @@ COPY = {
         "open_details": "Быстрый просмотр",
         "read_more": "Полная карточка",
         "open_rolling": "Открыто / бессрочно",
-        "score_title": "Оценка релевантности по эвристикам QAZ.FUND",
-        "score_exact": "Точное",
-        "score_high": "Высокое",
-        "score_base": "Базовое",
+        "score_title": "Объяснимая релевантность каталога; не вероятность одобрения",
+        "score_exact": "Высокая",
+        "score_high": "Хорошая",
+        "score_base": "Базовая",
         "source_agency": "Источник: {agency}",
         "no_summary": "Источник не передал краткое описание.",
         "reload_confirm": "Перечитать live-данные из всех источников?",
@@ -1274,20 +1274,20 @@ COPY = {
         "deadline_filter_rolling": "Rolling",
         "sort_label": "Sort",
         "sort_aria": "Opportunity order",
-        "sort_priority": "Best match",
+        "sort_priority": "Action priority",
         "sort_deadline": "Nearest deadline",
         "sort_updated": "Recently updated",
-        "min_score_label": "Match precision",
-        "min_score_aria": "Match precision",
+        "min_score_label": "Catalog relevance",
+        "min_score_aria": "Minimum catalog relevance",
         "source_label": "Source",
         "source_aria": "Source",
         "all_scores": "All results",
-        "score_option_03": "Baseline match",
-        "score_option_05": "High match",
-        "score_option_07": "Exact match first",
+        "score_option_03": "Baseline relevance",
+        "score_option_05": "Good relevance",
+        "score_option_07": "High relevance",
         "score_help": (
-            "The estimate considers region, topic, format, and audience fit. "
-            "Always verify final terms with the official source."
+            "The estimate considers region and topic; ordering also uses deadline "
+            "runway. It is not an award probability; verify the official source."
         ),
         "all_sources": "All sources",
         "clear_filters": "Clear filters",
@@ -1354,12 +1354,12 @@ COPY = {
         "summary_region": "Region: {value}",
         "summary_deadline": "Timing: {value}",
         "summary_sort": "Sort: {value}",
-        "summary_score": "Precision: {value}",
+        "summary_score": "Relevance: {value}",
         "summary_scope_all": "Including archive",
         "methodology_title": "How we collect and present data",
         "methodology_description": (
-            "A short explanation of where the catalog comes from, what match "
-            "precision means, and what you should still verify before applying."
+            "A short explanation of where the catalog comes from, what relevance "
+            "means, and what you should still verify before applying."
         ),
         "method_card_sources_title": "Sources and refresh",
         "method_card_sources_text": (
@@ -1369,9 +1369,9 @@ COPY = {
         ),
         "method_card_relevance_title": "Why an item is shown",
         "method_card_relevance_text": (
-            "Ordering considers Kazakhstan and Central Asia, topic, format, "
-            "deadline, and signals about who the program fits. It is a working "
-            "heuristic, not a legal classification."
+            "Relevance considers region and topic; ordering also uses deadline "
+            "runway. Components are bounded and explainable. This is not an award "
+            "probability or legal classification."
         ),
         "method_card_trust_title": "What counts as final",
         "method_card_trust_text": (
@@ -1564,9 +1564,9 @@ COPY = {
         "open_details": "Quick view",
         "read_more": "Full card",
         "open_rolling": "Open / Rolling",
-        "score_title": "QAZ.FUND relevance score based on current heuristics",
-        "score_exact": "Exact",
-        "score_high": "High",
+        "score_title": "Explainable catalog relevance; not an award probability",
+        "score_exact": "High",
+        "score_high": "Good",
         "score_base": "Baseline",
         "source_agency": "Source agency: {agency}",
         "no_summary": "No summary provided by source.",

@@ -1,93 +1,133 @@
-"""Простое правила-based скоринг релевантности.
-
-0.0..1.0. На первом этапе – ключевые слова + буст по региону и deadline.
-Позже можно заменить на LLM-rerank.
-"""
+"""Deterministic, explainable relevance and action-priority scoring."""
 
 from __future__ import annotations
 
 import re
+from dataclasses import asdict, dataclass
 from datetime import date
+from typing import Any
 
 from core.geofit import (
+    exclusion_reason,
     has_positive_geo_signal,
-    is_excluded_for_kazakhstan_focus,
     is_low_confidence_for_kazakhstan_focus,
 )
 from core.models import Opportunity
+from core.opportunity_intelligence import is_rolling_item
 
-THEMATIC_WEIGHTS = {
-    "ai": 0.30,
-    "artificial intelligence": 0.30,
-    "machine learning": 0.25,
-    "agrotech": 0.20,
-    "agritech": 0.20,
-    "agriculture": 0.18,
-    "food systems": 0.18,
-    "irrigation": 0.15,
-    "livestock": 0.18,
-    "vettech": 0.20,
-    "veterinary": 0.20,
-    "animal health": 0.20,
-    "zoonotic": 0.18,
-    "ecotech": 0.20,
-    "cleantech": 0.20,
-    "climate tech": 0.20,
-    "environment": 0.18,
-    "biodiversity": 0.18,
-    "circular economy": 0.18,
-    "waste management": 0.16,
-    "water resilience": 0.16,
-    "media": 0.20,
-    "journalism": 0.20,
-    "open data": 0.20,
-    "govtech": 0.25,
-    "governance": 0.20,
-    "edtech": 0.20,
-    "education": 0.15,
-    "democracy": 0.15,
-    "anti-corruption": 0.20,
-    "transparency": 0.20,
-    "data journalism": 0.25,
-    "digital skills": 0.20,
-    "stem": 0.15,
-    "startup": 0.15,
-    "accelerator": 0.15,
-    "program": 0.10,
-    "technology": 0.10,
-    "it hub": 0.10,
-    "innovation": 0.10,
-    "innovation grant": 0.20,
-    "commercialization": 0.15,
-    "subsidy": 0.10,
-    "sme": 0.10,
-    "business support": 0.10,
-    "domestic support": 0.10,
-    "state program": 0.08,
-    "reimbursement": 0.08,
-    "preferential financing": 0.10,
-    "leasing": 0.08,
-    "tax benefit": 0.08,
-    "loan guarantee": 0.08,
-    "venture": 0.08,
-    "private equity": 0.08,
-    "export": 0.08,
-    "industry": 0.08,
-    "investment": 0.08,
-    "civic": 0.15,
+MODEL_VERSION = "qazfund-relevance-v2"
+PUBLIC_RELEVANCE_THRESHOLD = 0.3
+LOW_CONFIDENCE_CAP = PUBLIC_RELEVANCE_THRESHOLD - 0.01
+THEMATIC_COMPONENT_CAP = 0.56
+SUMMARY_ONLY_WEIGHT = 0.55
+
+# Synonyms are grouped so one concept is never counted repeatedly. Weights express
+# public-catalog relevance, not a probability of award or legal eligibility.
+THEME_GROUPS: dict[str, tuple[float, tuple[str, ...]]] = {
+    "ai": (0.28, ("ai", "artificial intelligence", "machine learning")),
+    "digital_infrastructure": (
+        0.22,
+        ("cloud", "cloud credit", "cloud credits", "digitalization"),
+    ),
+    "agriculture_food": (
+        0.24,
+        ("agrotech", "agritech", "agriculture", "food systems", "irrigation"),
+    ),
+    "animal_health": (
+        0.22,
+        ("livestock", "vettech", "veterinary", "animal health", "zoonotic"),
+    ),
+    "climate_environment": (
+        0.22,
+        (
+            "ecotech",
+            "cleantech",
+            "climate tech",
+            "environment",
+            "biodiversity",
+            "circular economy",
+            "waste management",
+            "water resilience",
+        ),
+    ),
+    "media_civic": (
+        0.22,
+        ("media", "journalism", "data journalism", "civic", "open data"),
+    ),
+    "governance": (
+        0.20,
+        ("govtech", "governance", "democracy", "anti-corruption", "transparency"),
+    ),
+    "education_skills": (
+        0.18,
+        ("edtech", "education", "digital skills", "stem"),
+    ),
+    "startup_innovation": (
+        0.18,
+        (
+            "startup",
+            "accelerator",
+            "it hub",
+            "innovation",
+            "innovation grant",
+            "commercialization",
+        ),
+    ),
+    "business_support": (
+        0.20,
+        (
+            "subsidy",
+            "sme",
+            "business support",
+            "domestic support",
+            "state program",
+            "reimbursement",
+            "preferential financing",
+            "leasing",
+            "tax benefit",
+            "loan guarantee",
+        ),
+    ),
+    "finance_growth": (
+        0.14,
+        ("venture", "private equity", "export", "industry", "investment"),
+    ),
 }
 
-REGION_BOOST = {
-    "kazakhstan": 0.20,
-    "central asia": 0.20,
-    "kz": 0.15,
-    "cis": 0.10,
-    "eurasia": 0.08,
+KAZAKHSTAN_TERMS = ("kazakhstan", "казахстан", "қазақстан", "kz")
+CENTRAL_ASIA_TERMS = (
+    "central asia",
+    "central asian",
+    "центральная азия",
+    "центральной азии",
+    "орталық азия",
+)
+REGIONAL_TERMS = ("cis", "eurasia", "uzbekistan", "kyrgyzstan", "tajikistan")
+GLOBAL_TERMS = ("global", "worldwide", "international", "all countries")
+LOCAL_SOURCE_SLUGS = {
+    "astana_hub",
+    "eeas_kazakhstan",
+    "kazakhstan_domestic_support",
+    "kazakhstan_watch",
+    "unesco_iite",
 }
 
-SOURCE_BOOST = {
-    "astana_hub": 0.15,
-}
+
+@dataclass(frozen=True)
+class ScoreBreakdown:
+    """Auditable score components returned by the deterministic v2 model."""
+
+    model_version: str
+    thematic: float
+    geographic: float
+    source_context: float
+    deadline_actionability: float
+    relevance: float
+    priority: float
+    matched_themes: tuple[str, ...]
+    geography: str
+    confidence: str
+    exclusion_reason: str | None
 
 
 def _contains_keyword(text: str, keyword: str) -> bool:
@@ -96,37 +136,118 @@ def _contains_keyword(text: str, keyword: str) -> bool:
     return re.search(pattern, text) is not None
 
 
-def score(opp: Opportunity, today: date | None = None) -> float:
+def _primary_theme_text(opp: Opportunity) -> str:
+    return f"{opp.title} {' '.join(opp.tags)}".lower()
+
+
+def _thematic_component(opp: Opportunity) -> tuple[float, tuple[str, ...]]:
+    primary_text = _primary_theme_text(opp)
+    summary_text = str(opp.summary or "").lower()
+    matches: list[str] = []
+    total = 0.0
+    for name, (weight, terms) in THEME_GROUPS.items():
+        if any(_contains_keyword(primary_text, term) for term in terms):
+            matches.append(name)
+            total += weight
+        elif any(_contains_keyword(summary_text, term) for term in terms):
+            matches.append(name)
+            total += weight * SUMMARY_ONLY_WEIGHT
+    return round(min(THEMATIC_COMPONENT_CAP, total), 4), tuple(matches)
+
+
+def _geographic_component(opp: Opportunity, text: str) -> tuple[float, str]:
+    source = str(opp.source or "").lower()
+    if source in LOCAL_SOURCE_SLUGS or any(
+        _contains_keyword(text, term) for term in KAZAKHSTAN_TERMS
+    ):
+        return 0.30, "kazakhstan"
+    if any(_contains_keyword(text, term) for term in CENTRAL_ASIA_TERMS):
+        return 0.24, "central_asia"
+    if any(_contains_keyword(text, term) for term in REGIONAL_TERMS):
+        return 0.08, "regional"
+    if has_positive_geo_signal(opp) or any(
+        _contains_keyword(text, term) for term in GLOBAL_TERMS
+    ):
+        return 0.10, "global"
+    return 0.0, "unspecified"
+
+
+def _deadline_actionability(opp: Opportunity, today: date) -> tuple[float, str]:
+    if is_rolling_item(opp):
+        return 0.04, "rolling"
+    if opp.deadline is None:
+        return 0.0, "unknown"
+    days = (opp.deadline - today).days
+    if days < 0:
+        return 0.0, "closed"
+    if days <= 2:
+        return 0.02, "very_short_runway"
+    if days <= 7:
+        return 0.05, "short_runway"
+    if days <= 21:
+        return 0.10, "actionable"
+    if days <= 45:
+        return 0.08, "planned"
+    if days <= 90:
+        return 0.05, "longer_horizon"
+    return 0.02, "future"
+
+
+def score_breakdown(opp: Opportunity, today: date | None = None) -> ScoreBreakdown:
+    """Calculate bounded relevance and a separate action-priority score."""
+
     today = today or date.today()
-    text = f"{opp.title} {opp.summary} {' '.join(opp.tags)}".lower()
-    s = 0.0
+    text = f"{_primary_theme_text(opp)} {opp.summary}".lower()
+    thematic, matched_themes = _thematic_component(opp)
+    geographic, geography = _geographic_component(opp, text)
+    source_context = 0.06 if str(opp.source).lower() in LOCAL_SOURCE_SLUGS else 0.0
+    deadline_actionability, _ = _deadline_actionability(opp, today)
+    reason = exclusion_reason(opp)
+    low_confidence = is_low_confidence_for_kazakhstan_focus(opp)
 
-    for kw, w in THEMATIC_WEIGHTS.items():
-        if _contains_keyword(text, kw):
-            s += w
+    relevance = round(min(1.0, thematic + geographic + source_context), 4)
+    confidence = "supported"
+    if reason is not None:
+        relevance = 0.0
+        confidence = "excluded"
+    elif low_confidence:
+        relevance = min(relevance, LOW_CONFIDENCE_CAP)
+        confidence = "review_required"
 
-    for kw, w in REGION_BOOST.items():
-        if _contains_keyword(text, kw):
-            s += w
+    priority = round(min(1.0, relevance * 0.90 + deadline_actionability), 4)
+    if confidence in {"excluded", "review_required"}:
+        priority = min(priority, relevance)
 
-    s += SOURCE_BOOST.get(opp.source, 0.0)
+    return ScoreBreakdown(
+        model_version=MODEL_VERSION,
+        thematic=thematic,
+        geographic=geographic,
+        source_context=source_context,
+        deadline_actionability=deadline_actionability,
+        relevance=relevance,
+        priority=priority,
+        matched_themes=matched_themes,
+        geography=geography,
+        confidence=confidence,
+        exclusion_reason=reason,
+    )
 
-    if has_positive_geo_signal(opp):
-        s += 0.05
 
-    if is_excluded_for_kazakhstan_focus(opp):
-        s -= 0.85
-    elif is_low_confidence_for_kazakhstan_focus(opp):
-        s -= 0.25
+def score(opp: Opportunity, today: date | None = None) -> float:
+    """Return catalog relevance, not award probability or legal eligibility."""
 
-    # deadline urgency: больше за ближайшие дедлайны (но не просроченные)
-    if opp.deadline:
-        days = (opp.deadline - today).days
-        if 0 <= days <= 14:
-            s += 0.15
-        elif 14 < days <= 60:
-            s += 0.08
-        elif days < 0:
-            s -= 0.20
+    return score_breakdown(opp, today=today).relevance
 
-    return max(0.0, min(1.0, s))
+
+def priority_score(opp: Opportunity, today: date | None = None) -> float:
+    """Return action priority using relevance plus bounded deadline runway."""
+
+    return score_breakdown(opp, today=today).priority
+
+
+def ranking_payload(opp: Opportunity, today: date | None = None) -> dict[str, Any]:
+    """Return a JSON-safe explanation for public and operator interfaces."""
+
+    payload = asdict(score_breakdown(opp, today=today))
+    payload["matched_themes"] = list(payload["matched_themes"])
+    return payload
