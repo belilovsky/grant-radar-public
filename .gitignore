@@ -216,6 +216,7 @@ tempCodeRunnerFile.py
 # Local browser-audit artifacts
 .playwright-cli/
 output/playwright/
+output/ranking-evaluation/
 
 # Ruff stuff:
 .ruff_cache/
