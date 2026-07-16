@@ -44,6 +44,8 @@ rsync -a \
   "$ROOT_DIR/" "$DEST_DIR/"
 
 git -C "$DEST_DIR" init -b main >/dev/null
+git -C "$DEST_DIR" config user.name "${EXPORT_GIT_AUTHOR_NAME:-QAZ.FUND exporter}"
+git -C "$DEST_DIR" config user.email "${EXPORT_GIT_AUTHOR_EMAIL:-export@qaz.fund}"
 git -C "$DEST_DIR" add .
 git -C "$DEST_DIR" commit -m "Initial public release" >/dev/null
 

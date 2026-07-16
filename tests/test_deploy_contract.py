@@ -90,6 +90,7 @@ def test_public_export_accepts_destination_from_environment(tmp_path: Path) -> N
         **os.environ,
         "DEST_DIR": str(destination),
         "FORCE_OVERWRITE": "1",
+        "GIT_CONFIG_GLOBAL": os.devnull,
     }
 
     result = subprocess.run(
@@ -104,3 +105,10 @@ def test_public_export_accepts_destination_from_environment(tmp_path: Path) -> N
     assert result.returncode == 0, result.stderr
     assert (destination / ".git").is_dir()
     assert (destination / "docs" / "cleanup" / "README.md").is_file()
+    author = subprocess.run(
+        ["git", "-C", str(destination), "log", "-1", "--format=%an <%ae>"],
+        check=True,
+        capture_output=True,
+        text=True,
+    )
+    assert author.stdout.strip() == "QAZ.FUND exporter <export@qaz.fund>"
