@@ -3241,21 +3241,22 @@ DASHBOARD_CSS = r"""    :root {
       }
       .hero-stage-title { font-size: 16px; }
       .hero-pick-row {
-        display: flex;
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
         gap: 6px;
-        overflow-x: auto;
-        padding-bottom: 4px;
-        scroll-snap-type: x proximity;
-        scrollbar-width: none;
+        overflow: visible;
+        padding-bottom: 0;
       }
-      .hero-pick-row::-webkit-scrollbar { display: none; }
       .hero-pick {
-        flex: 0 0 auto;
         min-height: var(--av-control-height-lg);
-        white-space: nowrap;
-        scroll-snap-align: start;
+        min-width: 0;
+        padding: 6px 8px;
+        white-space: normal;
+        text-align: center;
+        justify-content: center;
+        line-height: 1.2;
       }
-      .hero-pick:last-child { grid-column: auto; }
+      .hero-pick:last-child { grid-column: 1 / -1; }
       .hero-point {
         font-size: var(--av-text-xs);
         line-height: 1.45;

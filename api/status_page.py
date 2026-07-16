@@ -125,21 +125,27 @@ def render_status_page(
         "stale": copy["stale_label"],
         "unknown": copy["unknown_label"],
     }
-    rows = "".join(f"""
-        <tr>
-          <td>
-            <strong>{escape(str(row.get("name") or row.get("slug") or ""))}</strong>
-            <span>{escape(_host(row.get("base_url")))}</span>
-          </td>
-          <td>{int(row.get("items") or 0)} / {int(row.get("relevant_open_items") or 0)}</td>
-          <td>{escape(_date_label(
-              row.get("last_checked_at") or row.get("last_discovered_at"), active_lang
-          ))}</td>
-          <td><span class="state state--{escape(str(row.get("freshness_status") or "unknown"))}">
-            {escape(str(state_labels.get(str(row.get("freshness_status")), copy["unknown_label"])))}
-          </span></td>
-        </tr>
-        """ for row in sources)
+    rendered_rows = []
+    for row in sources:
+        last_checked = _date_label(
+            row.get("last_checked_at") or row.get("last_discovered_at"), active_lang
+        )
+        freshness = str(row.get("freshness_status") or "unknown")
+        mobile_updated = f'{copy["updated"]}: {last_checked}'
+        rendered_rows.append(f"""
+            <tr>
+              <td>
+                <strong>{escape(str(row.get("name") or row.get("slug") or ""))}</strong>
+                <span>{escape(_host(row.get("base_url")))}</span>
+                <span class="mobile-updated">{escape(mobile_updated)}</span>
+              </td>
+              <td>{int(row.get("items") or 0)} / {int(row.get("relevant_open_items") or 0)}</td>
+              <td>{escape(last_checked)}</td>
+              <td><span class="state state--{escape(freshness)}">
+                {escape(str(state_labels.get(freshness, copy["unknown_label"])))}</span></td>
+            </tr>
+            """)
+    rows = "".join(rendered_rows)
     if not rows:
         rows = (
             f'<tr><td colspan="4" class="empty">{escape(str(copy["empty"]))}</td></tr>'
@@ -212,6 +218,7 @@ def render_status_page(
     tbody tr:hover {{ background:color-mix(in oklab,var(--panel),var(--brand-soft) 10%); }}
     td strong,td span {{ display:block; }}
     td > span:not(.state) {{ margin-top:3px; color:var(--muted); font-size:12px; }}
+    .mobile-updated {{ display:none; }}
     tr:last-child td {{ border-bottom:0; }}
     .state {{ display:inline-flex; width:max-content; min-height:24px; align-items:center;
       padding:2px 8px;
@@ -251,6 +258,7 @@ def render_status_page(
       td {{ padding:0; border:0; }}
       td:first-child {{ grid-column:1 / -1; }}
       td:nth-child(3) {{ display:none; }}
+      .mobile-updated {{ display:block; }}
       td:nth-child(2) {{ align-self:center; font-variant-numeric:tabular-nums; }}
       td:nth-child(4) {{ justify-self:end; }}
       h1 {{ font-size:28px; }}
