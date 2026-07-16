@@ -5,10 +5,6 @@ services:
     ports:
       - "127.0.0.1:5435:5432"
 
-  redis:
-    ports:
-      - "127.0.0.1:6381:6379"
-
   api:
     build:
       context: .

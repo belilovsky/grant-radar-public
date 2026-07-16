@@ -6,6 +6,7 @@ import re
 from collections.abc import AsyncIterator
 from datetime import date
 from decimal import Decimal
+from typing import ClassVar
 from urllib.parse import urljoin
 
 import structlog
@@ -51,7 +52,7 @@ class CanadaCfliCentralAsiaSource(BaseSource):
     slug = "canada_cfli_ca"
     name = "Canada Fund for Local Initiatives Central Asia"
     base_url = CFLI_INDEX_URL
-    default_tags = [
+    default_tags: ClassVar[list[str]] = [
         "central_asia",
         "grant",
         "ngo",

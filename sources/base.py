@@ -17,7 +17,7 @@ import abc
 from collections.abc import AsyncIterator
 from dataclasses import dataclass, field
 from datetime import date
-from typing import Any
+from typing import Any, ClassVar
 
 import httpx
 import structlog
@@ -77,10 +77,9 @@ class BaseSourceParser(abc.ABC):
         self._log = log.bind(source=self.name)
 
     @abc.abstractmethod
-    async def fetch(self) -> AsyncIterator[GrantRecord | Opportunity]:
+    def fetch(self) -> AsyncIterator[GrantRecord | Opportunity]:
         """Yield normalized records from the source."""
         raise NotImplementedError
-        yield  # type: ignore[unreachable]
 
     async def healthcheck(self) -> bool:
         try:
@@ -103,7 +102,7 @@ class BaseSource(BaseSourceParser):
     slug: str
     name: str
     base_url: str
-    default_tags: list[str] = []
+    default_tags: ClassVar[list[str]] = []
 
     def __init__(self, client: httpx.AsyncClient | None = None) -> None:
         self.client = client or httpx.AsyncClient(
@@ -115,7 +114,6 @@ class BaseSource(BaseSourceParser):
         )
 
     @abc.abstractmethod
-    async def fetch(self) -> AsyncIterator[Opportunity]:
+    def fetch(self) -> AsyncIterator[Opportunity]:
         """Выдаёт новые Opportunity из источника."""
         raise NotImplementedError
-        yield  # type: ignore[unreachable]

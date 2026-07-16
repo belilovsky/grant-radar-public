@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+import os
+import subprocess
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -70,3 +72,43 @@ def test_backup_script_creates_rotated_postgres_dumps() -> None:
     assert "KEEP_DAYS" in script
     assert "qaz-fund-*.dump" in script
     assert 'rm -f "$temporary_path"' in script
+
+
+def test_public_export_rejects_destructive_destination_paths() -> None:
+    script = (ROOT / "scripts" / "export_public_repo.sh").read_text()
+
+    assert 'DEST_DIR="$($PYTHON_BIN -c' in script
+    assert 'if [[ "$DEST_DIR" == "/"' in script
+    assert '|| "$DEST_DIR" == "$ROOT_DIR"/*' in script
+    assert 'rm -rf -- "$DEST_DIR"' in script
+    assert '--exclude "docs/cleanup"' not in script
+
+
+def test_public_export_accepts_destination_from_environment(tmp_path: Path) -> None:
+    destination = tmp_path / "public-export"
+    environment = {
+        **os.environ,
+        "DEST_DIR": str(destination),
+        "FORCE_OVERWRITE": "1",
+        "GIT_CONFIG_GLOBAL": os.devnull,
+    }
+
+    result = subprocess.run(
+        ["bash", str(ROOT / "scripts" / "export_public_repo.sh")],
+        cwd=ROOT,
+        env=environment,
+        check=False,
+        capture_output=True,
+        text=True,
+    )
+
+    assert result.returncode == 0, result.stderr
+    assert (destination / ".git").is_dir()
+    assert (destination / "docs" / "cleanup" / "README.md").is_file()
+    author = subprocess.run(
+        ["git", "-C", str(destination), "log", "-1", "--format=%an <%ae>"],
+        check=True,
+        capture_output=True,
+        text=True,
+    )
+    assert author.stdout.strip() == "QAZ.FUND exporter <export@qaz.fund>"

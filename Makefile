@@ -5,7 +5,7 @@ PY_MODULES ?= api/ core/ sources/ tests/ scripts/ alembic/
 MYPY_MODULES ?= api/ core/ sources/ scripts/
 COMPOSE ?= $(shell if command -v docker-compose >/dev/null 2>&1; then echo docker-compose; elif command -v docker >/dev/null 2>&1; then echo "docker compose"; else echo docker-compose; fi)
 
-.PHONY: help bootstrap bootstrap-reset playwright-install export-public-repo dev dev-logs dev-down lint format test test-cov db-shell redis-cli build build-prod install-hooks db-init db-reset test-db ci ci-fast ci-local smoke-prod content-audit db-upgrade db-downgrade db-revision db-migrate migrate translate-ru
+.PHONY: help bootstrap bootstrap-reset playwright-install export-public-repo dev dev-logs dev-down lint format test test-cov db-shell build build-prod install-hooks db-init db-reset test-db ci ci-fast ci-local smoke-prod content-audit db-upgrade db-downgrade db-revision db-migrate migrate translate-ru
 
 help:
 	@echo "Available commands:"
@@ -16,12 +16,11 @@ help:
 	@echo "  make dev              - Start development environment"
 	@echo "  make dev-logs         - View development logs"
 	@echo "  make dev-down         - Stop development environment"
-	@echo "  make lint             - Check code quality (Black, isort, Flake8, mypy)"
+	@echo "  make lint             - Check formatting, types and dead code"
 	@echo "  make format           - Auto-format code (Black, isort)"
 	@echo "  make test             - Run tests with pytest"
 	@echo "  make test-cov         - Run tests with coverage report"
 	@echo "  make db-shell         - Access PostgreSQL shell"
-	@echo "  make redis-cli        - Access Redis CLI"
 	@echo "  make build            - Build Docker image (dev)"
 	@echo "  make build-prod       - Build production Docker image"
 	@echo "  make install-hooks    - Install pre-commit git hooks"
@@ -56,7 +55,6 @@ dev:
 	@echo "✅ Development environment started"
 	@echo "   API: http://localhost:8000"
 	@echo "   PostgreSQL: localhost:5434 (user: grantradar)"
-	@echo "   Redis: localhost:6380"
 
 dev-logs:
 	$(COMPOSE) -f docker-compose.yml -f docker-compose.dev.yml logs -f
@@ -74,6 +72,8 @@ lint:
 	$(PYTHON) -m flake8 $(PY_MODULES) --max-line-length=100
 	@echo "Running mypy..."
 	$(PYTHON) -m mypy $(MYPY_MODULES) --ignore-missing-imports
+	@echo "Running dead-code checks..."
+	$(PYTHON) -m vulture $(PY_MODULES) --min-confidence 80
 
 format:
 	@echo "Running Black..."
@@ -89,9 +89,6 @@ test-cov:
 
 db-shell:
 	$(COMPOSE) -f docker-compose.yml -f docker-compose.dev.yml exec db psql -U grantradar -d grantradar
-
-redis-cli:
-	$(COMPOSE) -f docker-compose.yml -f docker-compose.dev.yml exec redis redis-cli
 
 build:
 	$(COMPOSE) build api

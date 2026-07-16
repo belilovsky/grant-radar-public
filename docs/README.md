@@ -6,9 +6,9 @@
 - [DEVELOPMENT_MODEL.md](DEVELOPMENT_MODEL.md)
 - [PRODUCTION_CHECKLIST.md](PRODUCTION_CHECKLIST.md)
 - [PERSISTENCE.md](PERSISTENCE.md)
-- [FINAL_QUALITY_AUDIT_2026-07-15.md](FINAL_QUALITY_AUDIT_2026-07-15.md)
-- [REMAINING_WORK_PLAN_2026-07-15.md](REMAINING_WORK_PLAN_2026-07-15.md)
-- [FINAL_TAIL_CLOSEOUT_2026-07-15.md](FINAL_TAIL_CLOSEOUT_2026-07-15.md)
+- [CONTENT_COVERAGE.md](CONTENT_COVERAGE.md)
+- [SOURCE_REGISTRY.md](SOURCE_REGISTRY.md)
+- [Cleanup and legacy decisions](cleanup/README.md)
 
 ## Product and data
 
@@ -31,10 +31,7 @@
 
 ## Release evidence
 
-These documents are retained as dated evidence. Current operating instructions
-remain in `PRODUCTION_CHECKLIST.md` and the repository-level `DEPLOYMENT.md`.
-
-- [FINAL_LAUNCH_PLAN_2026-07-12.md](FINAL_LAUNCH_PLAN_2026-07-12.md)
-- [PROD_CLOSEOUT_2026-07-11.md](PROD_CLOSEOUT_2026-07-11.md)
-- [PROD_CLOSEOUT_2026-07-13.md](PROD_CLOSEOUT_2026-07-13.md)
-- [PROD_CLOSEOUT_2026-07-14.md](PROD_CLOSEOUT_2026-07-14.md)
+Historical release reports are retained under
+[archive/releases](archive/releases/README.md). They are evidence snapshots,
+not operating instructions. Current production procedures remain in
+`PRODUCTION_CHECKLIST.md` and the repository-level `DEPLOYMENT.md`.

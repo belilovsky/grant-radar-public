@@ -5,7 +5,7 @@ from __future__ import annotations
 import json
 from collections.abc import AsyncIterator
 from datetime import date, datetime
-from typing import Any
+from typing import Any, ClassVar
 from urllib.parse import quote
 
 import structlog
@@ -70,7 +70,7 @@ class EuFundingTendersCentralAsiaSource(BaseSource):
         "https://ec.europa.eu/info/funding-tenders/opportunities/portal/"
         "screen/opportunities/calls-for-proposals"
     )
-    default_tags = [
+    default_tags: ClassVar[list[str]] = [
         "central_asia",
         "eu",
         "grant",

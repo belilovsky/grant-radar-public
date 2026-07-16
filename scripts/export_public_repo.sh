@@ -2,8 +2,16 @@
 set -euo pipefail
 
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
-DEST_DIR="${1:-$ROOT_DIR/../grant-radar-public}"
+DEST_DIR="${1:-${DEST_DIR:-$ROOT_DIR/../grant-radar-public}}"
 FORCE_OVERWRITE="${FORCE_OVERWRITE:-0}"
+PYTHON_BIN="${PYTHON_BIN:-python3}"
+
+DEST_DIR="$($PYTHON_BIN -c 'import os, sys; print(os.path.abspath(os.path.expanduser(sys.argv[1])))' "$DEST_DIR")"
+
+if [[ "$DEST_DIR" == "/" || "$DEST_DIR" == "$ROOT_DIR" || "$DEST_DIR" == "$ROOT_DIR"/* ]]; then
+  echo "Refusing unsafe export destination: $DEST_DIR" >&2
+  exit 2
+fi
 
 if [[ -e "$DEST_DIR" && "$FORCE_OVERWRITE" != "1" ]]; then
   echo "Destination already exists: $DEST_DIR" >&2
@@ -11,7 +19,7 @@ if [[ -e "$DEST_DIR" && "$FORCE_OVERWRITE" != "1" ]]; then
   exit 2
 fi
 
-rm -rf "$DEST_DIR"
+rm -rf -- "$DEST_DIR"
 mkdir -p "$DEST_DIR"
 
 rsync -a \
@@ -32,11 +40,12 @@ rsync -a \
   --exclude "data/*.sqlite" \
   --exclude "data/*.sqlite3" \
   --exclude "data/*.db-journal" \
-  --exclude "docs/cleanup" \
   --exclude "CONTEXT.md" \
   "$ROOT_DIR/" "$DEST_DIR/"
 
 git -C "$DEST_DIR" init -b main >/dev/null
+git -C "$DEST_DIR" config user.name "${EXPORT_GIT_AUTHOR_NAME:-QAZ.FUND exporter}"
+git -C "$DEST_DIR" config user.email "${EXPORT_GIT_AUTHOR_EMAIL:-export@qaz.fund}"
 git -C "$DEST_DIR" add .
 git -C "$DEST_DIR" commit -m "Initial public release" >/dev/null
 

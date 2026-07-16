@@ -88,7 +88,6 @@ Local surfaces:
 
 - API: `http://localhost:8000`
 - PostgreSQL: `localhost:5434`
-- Redis: `localhost:6380`
 
 Useful commands:
 

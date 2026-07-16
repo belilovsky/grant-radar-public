@@ -6,6 +6,7 @@ import re
 from collections.abc import AsyncIterator, Iterable
 from dataclasses import dataclass
 from datetime import date, datetime
+from typing import ClassVar
 from urllib.parse import parse_qs, urljoin, urlparse
 
 import structlog
@@ -227,7 +228,7 @@ class UndpProcurementSource(BaseSource):
     slug = "undp_procurement"
     name = "UNDP Procurement"
     base_url = LISTING_URL
-    default_tags = [
+    default_tags: ClassVar[list[str]] = [
         "central_asia",
         "undp",
         "procurement",

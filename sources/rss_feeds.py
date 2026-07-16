@@ -12,7 +12,7 @@ from collections.abc import AsyncIterator, Iterable
 from dataclasses import dataclass
 from datetime import date, datetime
 from email.utils import parsedate_to_datetime
-from typing import Any
+from typing import Any, ClassVar
 
 import feedparser
 import structlog
@@ -289,7 +289,12 @@ class OpportunityDeskSource(RssFeedSource):
     slug = "opportunity_desk"
     name = "Opportunity Desk"
     base_url = "https://opportunitydesk.org"
-    default_tags = ["global", "opportunity_desk", "grant", "fellowship"]
+    default_tags: ClassVar[list[str]] = [
+        "global",
+        "opportunity_desk",
+        "grant",
+        "fellowship",
+    ]
     default_type = OpportunityType.CONTEST
     entry_keywords = (
         "accelerator",
@@ -327,7 +332,7 @@ class FundsForNgosSource(RssFeedSource):
     slug = "fundsforngos"
     name = "FundsforNGOs"
     base_url = "https://www2.fundsforngos.org"
-    default_tags = ["global", "ngo", "grant", "donor"]
+    default_tags: ClassVar[list[str]] = ["global", "ngo", "grant", "donor"]
     feed_configs = (
         FeedConfig(
             url=FUNDSFORNGOS_FEED_URLS[0],

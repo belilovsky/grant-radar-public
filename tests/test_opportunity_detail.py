@@ -128,7 +128,7 @@ async def test_public_detail_can_skip_remote_source_fetch(monkeypatch):
         summary="A complete local summary for the public page.",
     )
 
-    async def unexpected_fetch(*args, **kwargs):
+    async def unexpected_fetch(*_args, **_kwargs):
         raise AssertionError("public detail must not fetch a remote source")
 
     monkeypatch.setattr(detail_api, "_fetch_remote_detail", unexpected_fetch)

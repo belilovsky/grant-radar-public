@@ -7,10 +7,6 @@ services:
     ports:
       - "${DB_BIND_HOST:-127.0.0.1}:${DB_BIND_PORT:-5432}:5432"
 
-  redis:
-    ports:
-      - "${REDIS_BIND_HOST:-127.0.0.1}:${REDIS_BIND_PORT:-6379}:6379"
-
   api:
     build:
       context: .

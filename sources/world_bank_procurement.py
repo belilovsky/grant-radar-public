@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from collections.abc import AsyncIterator
 from datetime import date, datetime, timedelta
-from typing import Any
+from typing import Any, ClassVar
 
 import structlog
 
@@ -94,7 +94,7 @@ class WorldBankCentralAsiaProcurementSource(BaseSource):
     slug = "world_bank_procurement_ca"
     name = "World Bank Central Asia procurement"
     base_url = "https://projects.worldbank.org/en/projects-operations/procurement"
-    default_tags = [
+    default_tags: ClassVar[list[str]] = [
         "central_asia",
         "world_bank",
         "tender",

@@ -6,7 +6,7 @@ import re
 from collections.abc import AsyncIterator, Iterable
 from datetime import date
 from decimal import Decimal, InvalidOperation
-from typing import Any
+from typing import Any, ClassVar
 
 import structlog
 
@@ -130,7 +130,7 @@ class WorldBankKazakhstanSource(BaseSource):
         "https://projects.worldbank.org/en/projects-operations/projects-list"
         "?countrycode_exact=KZ"
     )
-    default_tags = [
+    default_tags: ClassVar[list[str]] = [
         "kazakhstan",
         "central_asia",
         "world_bank",

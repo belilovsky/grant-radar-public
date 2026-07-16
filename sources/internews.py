@@ -9,6 +9,7 @@ from __future__ import annotations
 import re
 from collections.abc import AsyncIterator
 from datetime import date, datetime
+from typing import ClassVar
 
 import structlog
 from lxml import etree as ET
@@ -124,7 +125,7 @@ class InternewsSource(BaseSource):
     slug = "internews"
     name = "Internews"
     base_url = "https://internews.org"
-    default_tags = ["international", "internews", "media"]
+    default_tags: ClassVar[list[str]] = ["international", "internews", "media"]
 
     async def fetch(self) -> AsyncIterator[Opportunity]:
         try:

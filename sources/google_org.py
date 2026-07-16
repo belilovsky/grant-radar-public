@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import re
 from collections.abc import AsyncIterator
+from typing import ClassVar
 
 import structlog
 
@@ -31,7 +32,7 @@ class GoogleOrgAiOpportunitySource(BaseSource):
     slug = "google_org_ai_opportunity"
     name = "Google.org AI Opportunity Fund"
     base_url = GOOGLE_ORG_KNOWLEDGE_URL
-    default_tags = [
+    default_tags: ClassVar[list[str]] = [
         "global",
         "central_asia_eligible",
         "ai",

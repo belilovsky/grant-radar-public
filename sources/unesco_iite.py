@@ -6,6 +6,7 @@ import re
 from collections.abc import AsyncIterator, Iterable
 from datetime import date
 from html import unescape
+from typing import ClassVar
 from urllib.parse import urljoin
 
 import structlog
@@ -221,7 +222,12 @@ class UnescoIiteSource(BaseSource):
     slug = "unesco_iite"
     name = "UNESCO IITE announcements"
     base_url = UNESCO_IITE_ANNOUNCEMENTS_URL
-    default_tags = ["global", "central_asia_eligible", "unesco", "education"]
+    default_tags: ClassVar[list[str]] = [
+        "global",
+        "central_asia_eligible",
+        "unesco",
+        "education",
+    ]
 
     async def fetch(self) -> AsyncIterator[Opportunity]:
         try:

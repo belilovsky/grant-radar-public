@@ -9,6 +9,7 @@ from __future__ import annotations
 import re
 from collections.abc import AsyncIterator
 from datetime import date, datetime
+from typing import ClassVar
 
 import structlog
 
@@ -161,7 +162,7 @@ class AstanaHubSource(BaseSource):
     slug = "astana_hub"
     name = "Astana Hub"
     base_url = "https://astanahub.com"
-    default_tags = ["kz", "astana_hub", "program"]
+    default_tags: ClassVar[list[str]] = ["kz", "astana_hub", "program"]
 
     async def fetch(self) -> AsyncIterator[Opportunity]:
         try:

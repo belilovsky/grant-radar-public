@@ -5,7 +5,6 @@ services:
     environment:
       DATABASE_URL: postgresql+psycopg://grantradar:${POSTGRES_PASSWORD:-changeme}@db:5432/grantradar
       GRANT_RADAR_DB_URL: postgresql+psycopg://grantradar:${POSTGRES_PASSWORD:-changeme}@db:5432/grantradar
-      REDIS_URL: redis://redis:6379/0
     volumes:
       - .:/app
     ports:
@@ -18,7 +17,6 @@ services:
     environment:
       DATABASE_URL: postgresql+psycopg://grantradar:${POSTGRES_PASSWORD:-changeme}@db:5432/grantradar
       GRANT_RADAR_DB_URL: postgresql+psycopg://grantradar:${POSTGRES_PASSWORD:-changeme}@db:5432/grantradar
-      REDIS_URL: redis://redis:6379/0
     volumes:
       - .:/app
 
@@ -27,9 +25,3 @@ services:
       - .env.dev
     ports:
       - "127.0.0.1:5434:5432"
-
-  redis:
-    env_file:
-      - .env.dev
-    ports:
-      - "127.0.0.1:6380:6379"
