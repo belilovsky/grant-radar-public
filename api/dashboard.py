@@ -252,9 +252,13 @@ def render_dashboard(
 <html lang="{html_lang}" {html_theme_attrs}>
 <head>
   <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#f8fafc">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="default">
+  <meta name="apple-mobile-web-app-title" content="QAZ.FUND">
   <script>
-    if (window.matchMedia("(max-width: 760px)").matches) {{
+    if (window.matchMedia("(max-width: 820px)").matches) {{
       document.documentElement.dataset.compactFilters = "true";
     }}
   </script>
@@ -292,6 +296,39 @@ def render_dashboard(
     data-lang="{escape(active_lang, quote=True)}"
     data-avds-component="admin-shell"
   >
+    <header class="mobile-app-bar" data-avds-component="mobile-app-bar">
+      <a class="mobile-app-brand" href="{canonical_href}" aria-label="QAZ.FUND">
+        <strong>QAZ.FUND</strong>
+        <span>{escape(str(copy["mobile_app_tagline"]))}</span>
+      </a>
+      <div class="mobile-app-actions">
+        <div class="mobile-lang-switch" role="group" aria-label="{language_switch_label}">
+          <a class="{lang_ru_class}" href="{ru_href}" hreflang="ru" lang="ru"
+            {lang_ru_current}>RU</a>
+          <a class="{lang_en_class}" href="{en_href}" hreflang="en" lang="en"
+            {lang_en_current}>EN</a>
+        </div>
+        <button
+          class="mobile-icon-button"
+          type="button"
+          id="mobile-filter-trigger"
+          aria-label="{escape(str(copy["mobile_open_filters"]), quote=True)}"
+          aria-controls="filter-disclosure"
+          aria-expanded="false"
+        >
+          <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+            <path d="M4 21v-7m0-4V3m8 18v-9m0-4V3m8 18v-5m0-4V3M1 14h6m2-6h6m2 8h6" />
+          </svg>
+        </button>
+      </div>
+    </header>
+    <button
+      class="mobile-filter-backdrop"
+      id="mobile-filter-backdrop"
+      type="button"
+      aria-label="{escape(str(copy["mobile_close_filters"]), quote=True)}"
+      hidden
+    ></button>
     <section class="hero-band" data-avds-component="hero-band">
       <header class="topbar" data-avds-component="topbar">
         <div class="brand">
@@ -616,6 +653,11 @@ def render_dashboard(
       </div>
         </div>
       </details>
+      <div class="mobile-filter-sheet-actions">
+        <button class="button primary" type="button" id="mobile-filter-done">
+          {escape(str(copy["mobile_show_results"]))}
+        </button>
+      </div>
       <div class="filters-meta">
         <div id="filter-summary" class="filter-summary" data-avds-component="filter-summary"></div>
         <button
@@ -956,6 +998,40 @@ def render_dashboard(
         </a>
       </p>
     </footer>
+    <nav
+      class="mobile-app-nav"
+      aria-label="{escape(str(copy["mobile_app_navigation"]), quote=True)}"
+      data-avds-component="mobile-app-navigation"
+    >
+      <button class="mobile-nav-item" type="button" data-mobile-view="opportunities"
+        aria-pressed="true">
+        <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+          <rect x="3" y="7" width="18" height="13" rx="2" />
+          <path d="M8 7V5a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2M3 12h18M10 12v2h4v-2" />
+        </svg>
+        <span>{escape(str(copy["mobile_catalog"]))}</span>
+      </button>
+      <button class="mobile-nav-item" type="button" data-mobile-view="sources" aria-pressed="false">
+        <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+          <ellipse cx="12" cy="5" rx="8" ry="3" />
+          <path d="M4 5v6c0 1.7 3.6 3 8 3s8-1.3 8-3V5M4 11v6c0 1.7 3.6 3 8 3s8-1.3 8-3v-6" />
+        </svg>
+        <span>{escape(str(copy["mobile_sources"]))}</span>
+      </button>
+      <button class="mobile-nav-item" type="button" data-mobile-action="saved" aria-pressed="false">
+        <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+          <path d="M6 3h12a1 1 0 0 1 1 1v17l-7-4-7 4V4a1 1 0 0 1 1-1Z" />
+        </svg>
+        <span>{escape(str(copy["mobile_saved"]))}</span>
+      </button>
+      <button class="mobile-nav-item" type="button" data-mobile-action="filters"
+        aria-pressed="false">
+        <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+          <path d="M4 21v-7m0-4V3m8 18v-9m0-4V3m8 18v-5m0-4V3M1 14h6m2-6h6m2 8h6" />
+        </svg>
+        <span>{escape(str(copy["mobile_filters"]))}</span>
+      </button>
+    </nav>
   </main>
 
   <div
@@ -3122,6 +3198,7 @@ def render_dashboard(
       button.textContent = count
         ? text("workspace_filter_count", {{ count: formatNumber.format(count) }})
         : copy.workspace_filter;
+      syncMobileNavigation();
     }}
 
     function workspaceActionFor(status) {{
@@ -4589,6 +4666,29 @@ def render_dashboard(
     const trustHashes = new Set(["sources-panel", "health-panel", "methodology-panel"]);
     const viewButtons = document.querySelectorAll("[data-view]");
 
+    function syncMobileNavigation(activeView = "") {{
+      const resolvedView = activeView || (
+        window.location.hash.replace("#", "") === "sources" ? "sources" : "opportunities"
+      );
+      document.querySelectorAll("[data-mobile-view]").forEach((button) => {{
+        button.setAttribute(
+          "aria-pressed",
+          String(!state.savedOnly && button.dataset.mobileView === resolvedView)
+        );
+      }});
+      const savedButton = document.querySelector('[data-mobile-action="saved"]');
+      if (savedButton) {{
+        savedButton.setAttribute("aria-pressed", String(state.savedOnly));
+      }}
+      const filtersButton = document.querySelector('[data-mobile-action="filters"]');
+      if (filtersButton) {{
+        filtersButton.setAttribute(
+          "aria-pressed",
+          String(document.body.classList.contains("filter-sheet-open"))
+        );
+      }}
+    }}
+
     function setActiveView(view) {{
       viewButtons.forEach((button) => {{
         button.setAttribute(
@@ -4596,6 +4696,7 @@ def render_dashboard(
           String(button.dataset.view === view)
         );
       }});
+      syncMobileNavigation(view);
     }}
 
     function goToView(view, options = {{}}) {{
@@ -4655,6 +4756,77 @@ def render_dashboard(
         goToView(button.dataset.view);
       }});
     }});
+
+    const appShellMedia = window.matchMedia("(max-width: 820px)");
+    const mobileFilterTrigger = $("#mobile-filter-trigger");
+    const mobileFilterBackdrop = $("#mobile-filter-backdrop");
+
+    function openMobileFilterSheet() {{
+      const disclosure = $("#filter-disclosure");
+      if (!disclosure) return;
+      if (!appShellMedia.matches) {{
+        disclosure.open = true;
+        disclosure.scrollIntoView({{ behavior: "auto", block: "start" }});
+        window.requestAnimationFrame(() => $("#search")?.focus());
+        return;
+      }}
+      disclosure.open = true;
+      document.body.classList.add("filter-sheet-open");
+      mobileFilterBackdrop.hidden = false;
+      window.requestAnimationFrame(() => {{
+        mobileFilterBackdrop.classList.add("is-open");
+        disclosure.querySelector("summary")?.focus();
+      }});
+      mobileFilterTrigger.setAttribute("aria-expanded", "true");
+      syncMobileNavigation();
+    }}
+
+    function closeMobileFilterSheet({{ restoreFocus = true }} = {{}}) {{
+      const disclosure = $("#filter-disclosure");
+      document.body.classList.remove("filter-sheet-open");
+      mobileFilterBackdrop.classList.remove("is-open");
+      mobileFilterBackdrop.hidden = true;
+      if (appShellMedia.matches && disclosure) disclosure.open = false;
+      mobileFilterTrigger.setAttribute("aria-expanded", "false");
+      syncMobileNavigation();
+      if (restoreFocus) mobileFilterTrigger.focus();
+    }}
+
+    function openMobileSavedItems() {{
+      goToView("opportunities", {{ scroll: false }});
+      const workspaceButton = $("#workspace-filter");
+      if (readSavedOpportunities().length) {{
+        if (!state.savedOnly) workspaceButton.click();
+        $("#opportunities-panel").scrollIntoView({{ behavior: "auto", block: "start" }});
+      }} else {{
+        setSavedViewNotice(copy.workspace_filter_empty);
+        $("#saved-views").scrollIntoView({{ behavior: "auto", block: "center" }});
+      }}
+      syncMobileNavigation("opportunities");
+    }}
+
+    document.querySelectorAll("[data-mobile-view]").forEach((button) => {{
+      button.addEventListener("click", () => {{
+        state.savedOnly = false;
+        renderWorkspaceFilter();
+        renderOpportunities();
+        goToView(button.dataset.mobileView);
+      }});
+    }});
+    document.querySelector('[data-mobile-action="saved"]')?.addEventListener(
+      "click",
+      openMobileSavedItems
+    );
+    document.querySelector('[data-mobile-action="filters"]')?.addEventListener(
+      "click",
+      openMobileFilterSheet
+    );
+    mobileFilterTrigger.addEventListener("click", openMobileFilterSheet);
+    mobileFilterBackdrop.addEventListener("click", () => closeMobileFilterSheet());
+    $("#mobile-filter-done").addEventListener("click", () => {{
+      closeMobileFilterSheet({{ restoreFocus: false }});
+      $("#opportunities-list").scrollIntoView({{ behavior: "auto", block: "start" }});
+    }});
     document.querySelectorAll(
       'a[href="#methodology-panel"], a[href="#health-panel"]'
     ).forEach((link) => {{
@@ -4666,9 +4838,18 @@ def render_dashboard(
 
     applyStateFromUrl();
     const filterDisclosure = $("#filter-disclosure");
-    if (filterDisclosure && window.matchMedia("(max-width: 760px)").matches) {{
+    if (filterDisclosure && appShellMedia.matches) {{
       filterDisclosure.open = false;
     }}
+    filterDisclosure?.querySelector("summary")?.addEventListener("click", (event) => {{
+      if (!appShellMedia.matches) return;
+      event.preventDefault();
+      if (document.body.classList.contains("filter-sheet-open")) {{
+        closeMobileFilterSheet();
+      }} else {{
+        openMobileFilterSheet();
+      }}
+    }});
     document.documentElement.removeAttribute("data-compact-filters");
     renderSavedViews();
     renderWorkspaceFilter();
@@ -4678,6 +4859,33 @@ def render_dashboard(
     $("#detail-close").addEventListener("click", closeDetailShell);
     $("#detail-backdrop").addEventListener("click", closeDetailShell);
     window.addEventListener("keydown", (event) => {{
+      if (document.body.classList.contains("filter-sheet-open")) {{
+        if (event.key === "Escape") {{
+          closeMobileFilterSheet();
+          return;
+        }}
+        if (event.key === "Tab") {{
+          const disclosure = $("#filter-disclosure");
+          const focusable = Array.from(
+            disclosure.querySelectorAll(
+              "summary, button:not([disabled]), input:not([disabled]), "
+              + "select:not([disabled]), a[href]"
+            )
+          ).filter((element) => !element.hidden);
+          if (focusable.length) {{
+            const first = focusable[0];
+            const last = focusable[focusable.length - 1];
+            if (event.shiftKey && document.activeElement === first) {{
+              event.preventDefault();
+              last.focus();
+            }} else if (!event.shiftKey && document.activeElement === last) {{
+              event.preventDefault();
+              first.focus();
+            }}
+          }}
+        }}
+        return;
+      }}
       const drawer = $("#detail-drawer");
       if (drawer.hidden) return;
       if (event.key === "Escape") {{
