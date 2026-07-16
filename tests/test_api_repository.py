@@ -262,11 +262,25 @@ def test_root_renders_service_landing(monkeypatch):
     assert 'id="save-view"' in response.text
     assert 'id="workspace-filter"' in response.text
     assert 'id="filter-disclosure"' in response.text
+    assert 'window.matchMedia("(max-width: 820px)")' in response.text
     assert 'document.documentElement.dataset.compactFilters = "true";' in response.text
     assert 'html[data-compact-filters="true"]' in response.text
     assert 'document.documentElement.removeAttribute("data-compact-filters");' in (
         response.text
     )
+    assert 'data-avds-component="mobile-app-bar"' in response.text
+    assert 'data-avds-component="mobile-app-navigation"' in response.text
+    assert 'data-mobile-view="opportunities"' in response.text
+    assert 'data-mobile-view="sources"' in response.text
+    assert 'data-mobile-action="saved"' in response.text
+    assert 'data-mobile-action="filters"' in response.text
+    assert 'id="mobile-filter-trigger"' in response.text
+    assert 'id="mobile-filter-backdrop"' in response.text
+    assert 'id="mobile-filter-done"' in response.text
+    assert "function openMobileFilterSheet" in response.text
+    assert "function closeMobileFilterSheet" in response.text
+    assert "env(safe-area-inset-bottom)" in response.text
+    assert "body.filter-sheet-open" in response.text
     audience_presets = response.text.split('id="audience-presets"', 1)[1].split(
         "</div>", 1
     )[0]
@@ -527,9 +541,9 @@ def test_root_renders_service_landing(monkeypatch):
     assert ".signal-pill" in response.text
     assert ".topic-brief" in response.text
     assert ".topic-brief-chip" in response.text
-    assert "@media (max-width: 760px)" in response.text
-    assert "position: static;" in response.text
-    assert "backdrop-filter: none;" in response.text
+    assert "@media (max-width: 820px)" in response.text
+    assert ".sticky-shell {\n        display: none;" in response.text
+    assert "backdrop-filter: blur(18px);" in response.text
     assert 'window.addEventListener("hashchange", syncViewFromHash)' in response.text
     assert 'window.addEventListener("resize", scheduleHashViewSync)' in response.text
     assert "window.requestAnimationFrame(syncViewFromHash)" in response.text
