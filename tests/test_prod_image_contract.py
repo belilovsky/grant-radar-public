@@ -44,3 +44,48 @@ def test_qazstack_runtime_dependencies_are_pinned():
 
     for package in ("asyncpg", "jinja2", "python-multipart"):
         assert f"{package}==" in requirements
+
+
+def test_runtime_requirements_exclude_removed_integrations():
+    requirements = (ROOT / "requirements-prod.txt").read_text()
+    removed = (
+        "apscheduler",
+        "celery",
+        "google-api-python-client",
+        "google-auth",
+        "python-telegram-bot",
+        "redis",
+        "tenacity",
+    )
+
+    for package in removed:
+        assert f"{package}==" not in requirements
+
+
+def test_runtime_requirements_declare_direct_tls_dependency():
+    requirements = (ROOT / "requirements-prod.txt").read_text()
+
+    assert "certifi==" in requirements
+
+
+def test_dev_requirements_use_current_browser_and_test_client_tooling():
+    requirements = (ROOT / "requirements.txt").read_text()
+
+    assert "httpx2==2.7.0" in requirements
+    assert "playwright==1.61.0" in requirements
+    assert "vulture==2.16" in requirements
+    assert "ruff==" not in requirements
+
+
+def test_compose_does_not_require_the_removed_redis_runtime():
+    compose_files = (
+        ROOT / "docker-compose.yml",
+        ROOT / "docker-compose.dev.yml",
+        ROOT / "docker-compose.staging.yml",
+        ROOT / "docker-compose.prod.yml",
+    )
+
+    for path in compose_files:
+        compose = path.read_text()
+        assert "REDIS_URL" not in compose
+        assert "  redis:" not in compose

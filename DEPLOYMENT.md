@@ -9,7 +9,6 @@ separate maintainer runbook.
 - Docker and Docker Compose
 - Python 3.12+
 - A PostgreSQL database
-- A Redis instance
 - A public base URL for the dashboard
 
 ## Environment
@@ -28,7 +27,8 @@ Set at minimum:
 - `PUBLIC_BASE_URL`
 - `GRANT_RADAR_ADMIN_TOKEN`
 
-Optional integrations such as Telegram or Sentry can stay empty until needed.
+Optional integrations must be added only together with the code path that uses
+them; unused service credentials do not belong in the runtime environment.
 
 ## Container deployment
 
