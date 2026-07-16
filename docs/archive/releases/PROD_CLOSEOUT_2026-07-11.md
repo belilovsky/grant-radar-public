@@ -112,7 +112,7 @@ make lint                         -> black/isort/flake8/mypy passed
   fellowships and competitions feeds, while preserving link-level dedupe.
 - Opportunity Desk roundup posts such as monthly lists of scholarships and
   fellowships are now filtered out before they reach the applicant-facing feed.
-- Final launch plan added: `docs/FINAL_LAUNCH_PLAN_2026-07-12.md`.
+- Final launch plan added: `FINAL_LAUNCH_PLAN_2026-07-12.md`.
 
 ## 2026-07-13 product-workbench follow-up
 
