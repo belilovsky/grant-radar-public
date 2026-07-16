@@ -17,7 +17,7 @@ from dataclasses import dataclass
 from datetime import datetime, timezone
 from decimal import Decimal
 from pathlib import Path
-from typing import Any
+from typing import Any, ClassVar
 from urllib.parse import urlparse
 
 import httpx
@@ -904,20 +904,20 @@ async def _qazindustry_ca_bundle_path() -> str:
         intermediate_pem = ssl.DER_cert_to_PEM_cert(cert_bytes)
 
     base_bundle = Path(certifi.where()).read_text(encoding="utf-8")
-    bundle = tempfile.NamedTemporaryFile(
+    with tempfile.NamedTemporaryFile(
         mode="w",
         encoding="utf-8",
         prefix="grant-radar-qazindustry-ca-",
         suffix=".pem",
         delete=False,
-    )
-    with bundle:
+    ) as bundle:
         bundle.write(base_bundle)
         bundle.write("\n")
         bundle.write(intermediate_pem)
         bundle.write("\n")
-    _QAZINDUSTRY_CA_BUNDLE_PATH = bundle.name
-    return bundle.name
+        bundle_path = bundle.name
+    _QAZINDUSTRY_CA_BUNDLE_PATH = bundle_path
+    return bundle_path
 
 
 def _looks_like_unhydrated_govkz_shell(url: str, html: str) -> bool:
@@ -952,7 +952,11 @@ class KazakhstanDomesticSupportSource(BaseSource):
     slug = "kazakhstan_domestic_support"
     name = "Kazakhstan domestic support"
     base_url = "https://egov.kz/"
-    default_tags = ["kazakhstan", "domestic_support", "state_program"]
+    default_tags: ClassVar[list[str]] = [
+        "kazakhstan",
+        "domestic_support",
+        "state_program",
+    ]
     programs = DOMESTIC_PROGRAMS
 
     def _opportunity(

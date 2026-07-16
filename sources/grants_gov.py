@@ -11,6 +11,7 @@ from __future__ import annotations
 import re
 from collections.abc import AsyncIterator
 from datetime import datetime
+from typing import ClassVar
 
 import structlog
 
@@ -49,7 +50,7 @@ class GrantsGovSource(BaseSource):
     slug = "grants_gov"
     name = "Grants.gov (US Federal)"
     base_url = "https://www.grants.gov"
-    default_tags = ["us", "federal", "grant"]
+    default_tags: ClassVar[list[str]] = ["us", "federal", "grant"]
 
     async def fetch(self) -> AsyncIterator[Opportunity]:
         for kw in KEYWORDS:

@@ -6,6 +6,7 @@ import re
 from collections.abc import AsyncIterator, Iterable
 from datetime import date
 from decimal import Decimal, InvalidOperation
+from typing import ClassVar
 
 import structlog
 from lxml import etree as ET
@@ -237,7 +238,7 @@ class AdbKazakhstanSource(BaseSource):
     slug = "adb_kazakhstan"
     name = "ADB Kazakhstan projects"
     base_url = "https://data.adb.org/dataset/adb-projects-kazakhstan"
-    default_tags = [
+    default_tags: ClassVar[list[str]] = [
         "kazakhstan",
         "central_asia",
         "adb",

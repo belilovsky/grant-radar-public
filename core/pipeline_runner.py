@@ -32,9 +32,7 @@ Processor = Callable[[GrantRecord], Awaitable[None]]
 
 class _AwaitableNoop:
     def __await__(self):
-        if False:
-            yield None
-        return None
+        return iter(())
 
 
 def _record_external_id(record: Any) -> str:

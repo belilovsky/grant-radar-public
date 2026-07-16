@@ -9,7 +9,7 @@ from __future__ import annotations
 import re
 from collections.abc import AsyncIterator, Iterable
 from dataclasses import dataclass
-from typing import Any
+from typing import Any, ClassVar
 
 import httpx
 import structlog
@@ -161,7 +161,7 @@ class KazakhstanWatchSource(BaseSource):
     slug = "kazakhstan_watch"
     name = "Kazakhstan opportunity watch"
     base_url = "https://qaz.fund/"
-    default_tags = ["kazakhstan", "central_asia", "watchlist"]
+    default_tags: ClassVar[list[str]] = ["kazakhstan", "central_asia", "watchlist"]
     pages = WATCH_PAGES
 
     def _opportunity(

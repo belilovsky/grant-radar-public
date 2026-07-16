@@ -6,6 +6,7 @@ import re
 from collections.abc import AsyncIterator, Iterable
 from dataclasses import dataclass
 from datetime import date, datetime
+from typing import ClassVar
 from urllib.parse import urljoin
 
 import structlog
@@ -190,7 +191,12 @@ class IsdbProjectProcurementSource(BaseSource):
     slug = "isdb_project_procurement"
     name = "IsDB Procurement"
     base_url = "https://www.isdb.org/project-procurement/pproc-front"
-    default_tags = ["central_asia", "isdb", "tender", "procurement"]
+    default_tags: ClassVar[list[str]] = [
+        "central_asia",
+        "isdb",
+        "tender",
+        "procurement",
+    ]
 
     async def fetch(self) -> AsyncIterator[Opportunity]:
         seen: set[str] = set()

@@ -43,7 +43,7 @@ class _Parser:
     closed = False
 
     async def fetch(self):
-        if False:
+        if self.closed:
             yield GrantRecord(
                 source=self.slug,
                 external_id="unused",
@@ -60,9 +60,14 @@ class _FailingParser(_Parser):
     slug = "failing_source"
 
     async def fetch(self):
+        if self.closed:
+            yield GrantRecord(
+                source=self.slug,
+                external_id="unused",
+                title="Unused",
+                url="https://example.org/unused",
+            )
         raise RuntimeError("source failed")
-        if False:
-            yield  # pragma: no cover
 
 
 class _CloseFailingParser(_Parser):

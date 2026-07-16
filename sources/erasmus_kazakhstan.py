@@ -6,6 +6,7 @@ import re
 from collections.abc import AsyncIterator, Iterable
 from dataclasses import dataclass
 from datetime import date
+from typing import ClassVar
 from urllib.parse import urljoin
 
 import structlog
@@ -319,7 +320,13 @@ class ErasmusKazakhstanSource(BaseSource):
     slug = "erasmus_kazakhstan"
     name = "Erasmus+ Kazakhstan calls"
     base_url = ERASMUS_NEWS_URL
-    default_tags = ["kazakhstan", "central_asia", "eu", "erasmus", "higher_education"]
+    default_tags: ClassVar[list[str]] = [
+        "kazakhstan",
+        "central_asia",
+        "eu",
+        "erasmus",
+        "higher_education",
+    ]
 
     async def fetch(self) -> AsyncIterator[Opportunity]:
         today = date.today()

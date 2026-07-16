@@ -6,7 +6,7 @@ import re
 from collections.abc import AsyncIterator, Iterable
 from dataclasses import dataclass
 from datetime import date, datetime
-from typing import Any, cast
+from typing import Any, ClassVar, cast
 from urllib.parse import urljoin
 
 import structlog
@@ -287,7 +287,7 @@ class UnicefKazakhstanSource(BaseSource):
     slug = "unicef_kazakhstan"
     name = "UNICEF Kazakhstan tenders"
     base_url = UNICEF_KAZAKHSTAN_TENDERS_URL
-    default_tags = [
+    default_tags: ClassVar[list[str]] = [
         "kazakhstan",
         "central_asia",
         "unicef",

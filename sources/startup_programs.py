@@ -11,6 +11,7 @@ import re
 from collections.abc import AsyncIterator, Iterable
 from dataclasses import dataclass
 from decimal import Decimal
+from typing import ClassVar
 
 import structlog
 
@@ -147,7 +148,12 @@ def _unique(values: Iterable[str]) -> list[str]:
 
 class StartupProgramSource(BaseSource):
     program: StartupProgramSpec
-    default_tags = ["global", "central_asia_eligible", "startup_support", "rolling"]
+    default_tags: ClassVar[list[str]] = [
+        "global",
+        "central_asia_eligible",
+        "startup_support",
+        "rolling",
+    ]
 
     async def fetch(self) -> AsyncIterator[Opportunity]:
         try:
