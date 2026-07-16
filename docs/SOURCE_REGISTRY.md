@@ -36,7 +36,7 @@ These sources are high-value because they produce directly actionable opportunit
 |---|---|---|---|---|
 | Google for Startups | accelerator / startup support | Relevant for AI startups and regional founder programs | weekly | Active `google_cloud_startup` monitor covers the cloud-credit program; track MENA / MENAT cohorts next |
 | Google.org | grants / philanthropy | Relevant through nonprofit or government partners | weekly | Active `google_org_ai_opportunity` watch monitor; item-level partner/grantee pages next |
-| Microsoft for Startups / Founders Hub | cloud credits / startup support | High-probability infrastructure support | weekly | Active `microsoft_founders_hub` monitor |
+| Microsoft for Startups / Founders Hub | cloud credits / startup support | Established infrastructure support route | weekly | Active `microsoft_founders_hub` monitor |
 | AWS Activate | cloud credits | Fastest non-dilutive infrastructure support | weekly | Active `aws_activate` monitor |
 | Grants.gov | grants | Large upstream source for U.S.-funded opportunities | 2-3 times per week | Domestic-only notices are excluded; a search keyword becomes a public topic tag only when the visible title or summary supports it |
 | Opportunity Desk | grants / fellowships / contests | Broad global opportunities with many fellowships and scholarships | daily | RSS-backed active parser; blog posts are filtered |

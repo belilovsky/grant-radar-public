@@ -7,7 +7,7 @@ from core.geofit import (
     is_relevant_for_kazakhstan_focus,
 )
 from core.models import Opportunity, OpportunityType
-from core.scoring import score
+from core.scoring import priority_score, ranking_payload, score, score_breakdown
 
 
 def _opp(
@@ -27,6 +27,109 @@ def test_short_ai_keyword_does_not_match_inside_words():
     opp = _opp("Submit applications for creative residencies")
 
     assert score(opp, today=date(2026, 5, 22)) == 0.0
+
+
+def test_theme_synonyms_count_as_one_signal():
+    one_term = _opp(
+        "AI grant for Kazakhstan",
+        tags=["kazakhstan", "ai"],
+    )
+    repeated_concept = _opp(
+        "AI and artificial intelligence grant for Kazakhstan",
+        summary="Machine learning and AI support.",
+        tags=["kazakhstan", "artificial_intelligence", "machine_learning"],
+    )
+
+    assert score(repeated_concept, today=date(2026, 5, 22)) == score(
+        one_term, today=date(2026, 5, 22)
+    )
+
+
+def test_summary_only_theme_evidence_is_discounted():
+    primary = _opp(
+        "Kazakhstan AI support",
+        tags=["kazakhstan", "ai"],
+    )
+    summary_only = _opp(
+        "Kazakhstan support call",
+        summary="The call supports artificial intelligence projects.",
+        tags=["kazakhstan"],
+    )
+
+    assert score(summary_only, today=date(2026, 5, 22)) < score(
+        primary, today=date(2026, 5, 22)
+    )
+    assert score(summary_only, today=date(2026, 5, 22)) == 0.454
+
+
+def test_hard_exclusion_cannot_be_overridden_by_many_theme_matches():
+    opp = _opp(
+        "AI agriculture climate media education startup grant for US citizens",
+        summary=(
+            "Artificial intelligence, machine learning, journalism, govtech, "
+            "agritech, animal health and cleantech support for United States only."
+        ),
+        tags=["ai", "media", "education", "startup", "agriculture"],
+    )
+    opp.source = "grants_gov"
+
+    breakdown = score_breakdown(opp, today=date(2026, 5, 22))
+
+    assert breakdown.relevance == 0.0
+    assert breakdown.priority == 0.0
+    assert breakdown.exclusion_reason is not None
+
+
+def test_low_confidence_external_match_stays_below_public_threshold():
+    opp = _opp(
+        "AI agriculture climate media education startup grant",
+        summary="Global innovation support with no local eligibility evidence.",
+        tags=["ai", "agriculture", "climate", "media", "education", "startup"],
+    )
+    opp.source = "opportunity_desk"
+
+    breakdown = score_breakdown(opp, today=date(2026, 5, 22))
+
+    assert breakdown.confidence == "review_required"
+    assert breakdown.relevance < 0.3
+    assert breakdown.priority < 0.3
+
+
+def test_deadline_actionability_is_separate_from_relevance():
+    base = _opp(
+        "Kazakhstan AI support",
+        tags=["kazakhstan", "ai"],
+    )
+    actionable = base.model_copy(update={"deadline": date(2026, 6, 5)})
+    nearly_closed = base.model_copy(update={"deadline": date(2026, 5, 23)})
+
+    assert score(base, today=date(2026, 5, 22)) == score(
+        actionable, today=date(2026, 5, 22)
+    )
+    assert priority_score(actionable, today=date(2026, 5, 22)) > priority_score(
+        nearly_closed, today=date(2026, 5, 22)
+    )
+    assert priority_score(actionable, today=date(2026, 5, 22)) > priority_score(
+        base, today=date(2026, 5, 22)
+    )
+
+
+def test_ranking_payload_is_bounded_explainable_and_versioned():
+    opp = _opp(
+        "Kazakhstan AI accelerator",
+        summary="Artificial intelligence support for local startups.",
+        tags=["kazakhstan", "ai", "startup"],
+    )
+    opp.deadline = date(2026, 6, 10)
+
+    payload = ranking_payload(opp, today=date(2026, 5, 22))
+
+    assert payload["model_version"] == "qazfund-relevance-v2"
+    assert 0.0 <= payload["relevance"] <= 1.0
+    assert 0.0 <= payload["priority"] <= 1.0
+    assert payload["priority"] >= payload["relevance"] * 0.9
+    assert payload["matched_themes"] == ["ai", "startup_innovation"]
+    assert payload["geography"] == "kazakhstan"
 
 
 def test_ai_and_central_asia_match_on_word_boundaries():

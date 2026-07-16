@@ -3790,8 +3790,13 @@ def render_dashboard(
     }}
 
     function comparePriorityItems(left, right) {{
+      const leftRanking = left && left.raw && left.raw.ranking;
+      const rightRanking = right && right.raw && right.raw.ranking;
+      const leftPriority = Number(leftRanking && leftRanking.priority);
+      const rightPriority = Number(rightRanking && rightRanking.priority);
       return (
-        regionalPriority(right) - regionalPriority(left)
+        (Number.isFinite(rightPriority) ? rightPriority : Number(right.score || 0))
+          - (Number.isFinite(leftPriority) ? leftPriority : Number(left.score || 0))
         || Number(right.score || 0) - Number(left.score || 0)
         || deadlineRank(left) - deadlineRank(right)
         || discoveredRank(right) - discoveredRank(left)

@@ -62,6 +62,7 @@ from core.opportunity_intelligence import (
 from core.persistence import Repository
 from core.pipeline import run_all
 from core.repository_factory import make_repository
+from core.scoring import priority_score, ranking_payload
 from core.scoring import score as score_opportunity
 from sources import PARSERS
 from sources.kazakhstan_domestic import (
@@ -176,6 +177,7 @@ _DASHBOARD_RAW_FIELDS = frozenset(
         "opportunity_status",
         "project_status",
         "projectstatusdisplay",
+        "ranking",
         "region",
         "status",
         "status_raw",
@@ -455,7 +457,9 @@ def _stored_opportunity(row: Any, *, content_lang: str = "en") -> Opportunity:
     )
     opportunity.opportunity_status = opportunity.opportunity_status or normalized_status
     opportunity.lifecycle = opportunity.lifecycle or public_lifecycle(opportunity)
-    opportunity.score = max(opportunity.score, score_opportunity(opportunity))
+    # Recompute with the current deterministic model so persisted scores from an
+    # older release cannot silently survive a methodology change.
+    opportunity.score = score_opportunity(opportunity)
     return opportunity
 
 
@@ -604,7 +608,11 @@ def _compact_dashboard_item(item: Opportunity) -> Opportunity:
     return item.model_copy(update={"raw": compact_raw})
 
 
-def _with_decision_readiness(item: Opportunity) -> Opportunity:
+def _with_decision_readiness(
+    item: Opportunity,
+    *,
+    ranking_subject: Opportunity | None = None,
+) -> Opportunity:
     """Expose which application facts are present without inventing missing data."""
     raw = item.raw if isinstance(item.raw, dict) else {}
     present = {
@@ -624,7 +632,15 @@ def _with_decision_readiness(item: Opportunity) -> Opportunity:
         "total_fields": len(present),
         "missing_fields": missing_fields,
     }
-    return item.model_copy(update={"raw": {**raw, "decision_readiness": readiness}})
+    return item.model_copy(
+        update={
+            "raw": {
+                **raw,
+                "decision_readiness": readiness,
+                "ranking": ranking_payload(ranking_subject or item),
+            }
+        }
+    )
 
 
 def _find_opportunity(
@@ -817,7 +833,14 @@ def _build_funder_index(items: Iterable[Opportunity]) -> dict[str, dict[str, Any
 
     for group in groups.values():
         items = cast(list[Opportunity], group["items"])
-        items.sort(key=lambda row: (row.score, row.discovered_at), reverse=True)
+        items.sort(
+            key=lambda row: (
+                priority_score(row, today=today),
+                row.score,
+                row.discovered_at,
+            ),
+            reverse=True,
+        )
         total_items = len(items)
         group["total_items"] = total_items
         group["avg_score"] = (
@@ -890,6 +913,29 @@ def _related_reason_key(target: Opportunity, candidate: Opportunity) -> str:
     return "related_reason_format"
 
 
+def _related_relevance(target: Opportunity, candidate: Opportunity) -> float:
+    """Return normalized item similarity without pretending personalization."""
+
+    target_tokens = _similarity_tokens(target)
+    candidate_tokens = _similarity_tokens(candidate)
+    union = target_tokens | candidate_tokens
+    jaccard = len(target_tokens & candidate_tokens) / len(union) if union else 0.0
+    same_funder = bool(
+        _normalized_token(target.funder)
+        and _normalized_token(target.funder) == _normalized_token(candidate.funder)
+    )
+    same_type = target.type == candidate.type
+    same_source = target.source == candidate.source
+    value = (
+        jaccard * 0.40
+        + float(same_funder) * 0.30
+        + float(same_type) * 0.15
+        + float(same_source) * 0.10
+        + float(candidate.score or 0.0) * 0.05
+    )
+    return round(min(1.0, value), 4)
+
+
 def _related_opportunities(
     target: Opportunity,
     *,
@@ -897,40 +943,34 @@ def _related_opportunities(
     limit: int = 3,
 ) -> list[tuple[Opportunity, str]]:
     today = date.today()
-    target_tokens = _similarity_tokens(target)
-    target_funder = _normalized_token(target.funder)
     rows: list[tuple[float, Opportunity]] = []
     for candidate in _cached_public_items(content_lang=lang):
         if candidate.id == target.id or not _is_open(candidate, today):
             continue
-        candidate_tokens = _similarity_tokens(candidate)
-        overlap = len(target_tokens & candidate_tokens)
-        same_source = candidate.source == target.source
-        same_type = candidate.type == target.type
-        same_funder = (
-            target_funder and _normalized_token(candidate.funder) == target_funder
-        )
-        score = float(candidate.score)
-        if same_source:
-            score += 4.0
-        if same_funder:
-            score += 2.5
-        if same_type:
-            score += 1.4
-        score += min(overlap, 4) * 0.85
-        if not same_source and not same_funder and overlap == 0 and not same_type:
+        related_score = _related_relevance(target, candidate)
+        if related_score < 0.20:
             continue
-        if score < 1.4:
-            continue
-        rows.append((score, candidate))
+        rows.append((related_score, candidate))
     rows.sort(
         key=lambda row: (row[0], row[1].score, row[1].discovered_at),
         reverse=True,
     )
 
+    diversified_candidates = diversify_ranked_items(
+        [candidate for _, candidate in rows],
+        key=lambda item: item.source,
+        max_per_key=1,
+        limit=limit,
+    )
+    if len(diversified_candidates) < limit:
+        selected_ids = {item.id for item in diversified_candidates}
+        diversified_candidates.extend(
+            candidate for _, candidate in rows if candidate.id not in selected_ids
+        )
+
     related: list[tuple[Opportunity, str]] = []
     seen: set[UUID] = set()
-    for _, candidate in rows:
+    for candidate in diversified_candidates:
         if candidate.id in seen:
             continue
         seen.add(candidate.id)
@@ -2072,9 +2112,20 @@ async def list_opportunities(
     if deadline_after:
         items = [o for o in items if o.deadline is None or o.deadline >= deadline_after]
     total_count = len(items)
-    items.sort(key=lambda item: (item.score, item.discovered_at), reverse=True)
+    today = date.today()
+    items.sort(
+        key=lambda item: (
+            priority_score(item, today=today),
+            item.score,
+            item.discovered_at,
+        ),
+        reverse=True,
+    )
     results = [
-        _with_decision_readiness(localize_opportunity(item, content_lang))
+        _with_decision_readiness(
+            localize_opportunity(item, content_lang),
+            ranking_subject=item,
+        )
         for item in items[offset : offset + limit]
     ]
     response.headers["X-Total-Count"] = str(total_count)
@@ -2238,7 +2289,14 @@ async def digest(
             item for item in items if tag.lower() in (t.lower() for t in item.tags)
         ]
     items = [item for item in items if item.score >= min_score]
-    items.sort(key=lambda item: (item.score, item.discovered_at), reverse=True)
+    items.sort(
+        key=lambda item: (
+            priority_score(item, today=today),
+            item.score,
+            item.discovered_at,
+        ),
+        reverse=True,
+    )
 
     diversified = diversify_ranked_items(
         items,

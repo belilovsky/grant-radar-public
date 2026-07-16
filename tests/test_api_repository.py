@@ -175,7 +175,10 @@ def test_root_renders_service_landing(monkeypatch):
     assert response.text.index(
         'data-avds-component="trust-library"'
     ) < response.text.index('id="funders-title"')
-    assert "Оценка учитывает регион, тему, формат" in response.text
+    assert "Оценка учитывает регион и тему" in response.text
+    assert "Это не вероятность одобрения" in response.text
+    assert "По приоритету действий" in response.text
+    assert "Точность совпадения" not in response.text
     assert "медиа" in response.text
     assert "-webkit-line-clamp: 2;" in response.text
     assert ".hero-band" in response.text
@@ -323,6 +326,7 @@ def test_root_renders_service_landing(monkeypatch):
     assert "function regionalPriority" in response.text
     assert "function regionalBadgeLabel" in response.text
     assert "function comparePriorityItems" in response.text
+    assert "regionalPriority(right) - regionalPriority(left)" not in response.text
     assert "function compareDeadlineItems" in response.text
     assert "function compareUpdatedItems" in response.text
     assert "labelMap[normalizedKey]" in response.text
@@ -1918,6 +1922,40 @@ def test_opportunities_support_server_search_filters_and_count_headers(monkeypat
     )
 
 
+def test_opportunities_priority_prefers_actionable_runway_at_equal_relevance(
+    monkeypatch,
+):
+    _reset_api_state(monkeypatch)
+    today = date.today()
+    no_deadline = Opportunity(
+        source="science_fund",
+        source_url="https://example.org/no-deadline",
+        type=OpportunityType.GRANT,
+        title="Kazakhstan AI support without deadline",
+        tags=["kazakhstan", "ai"],
+    )
+    actionable = Opportunity(
+        source="science_fund",
+        source_url="https://example.org/actionable",
+        type=OpportunityType.GRANT,
+        title="Kazakhstan AI support with application window",
+        tags=["kazakhstan", "ai"],
+        deadline=today + timedelta(days=14),
+    )
+    api_main._cache.extend([no_deadline, actionable])
+
+    response = TestClient(api_main.app).get(
+        "/opportunities",
+        params={"min_score": 0.3, "lang": "en"},
+    )
+
+    assert response.status_code == 200
+    rows = response.json()
+    assert [row["id"] for row in rows] == [str(actionable.id), str(no_deadline.id)]
+    assert rows[0]["score"] == rows[1]["score"]
+    assert rows[0]["raw"]["ranking"]["priority"] > rows[1]["raw"]["ranking"]["priority"]
+
+
 def test_api_hides_retired_kazakhstan_watch_items_from_storage(tmp_path, monkeypatch):
     _reset_api_state(monkeypatch)
     db_url = f"sqlite:///{tmp_path / 'watch.sqlite'}"
@@ -2072,7 +2110,7 @@ def test_digest_defaults_to_russian_without_lang(monkeypatch):
     )
 
     client = TestClient(api_main.app)
-    response = client.get("/digest", params={"limit": 5, "min_score": 0.5})
+    response = client.get("/digest", params={"limit": 5, "min_score": 0.3})
 
     assert response.status_code == 200
     data = response.json()
@@ -2106,7 +2144,7 @@ def test_opportunities_endpoint_defaults_to_russian_without_lang(monkeypatch):
     )
     client = TestClient(api_main.app)
 
-    response = client.get("/opportunities", params={"min_score": 0.5})
+    response = client.get("/opportunities", params={"min_score": 0.3})
 
     assert response.status_code == 200
     data = response.json()
@@ -2144,8 +2182,9 @@ def test_api_returns_clean_source_raw_for_persisted_opportunity(tmp_path, monkey
     data = response.json()
     assert len(data) == 1
     assert data[0]["tags"] == ["ai", "education"]
-    assert data[0]["score"] == 0.8
-    assert data[0]["raw"] == {
+    assert data[0]["score"] == 0.7
+    raw = data[0]["raw"]
+    assert {key: value for key, value in raw.items() if key != "ranking"} == {
         "external_id": "RAW-1",
         "agency": "Example Agency",
         "decision_readiness": {
@@ -2155,7 +2194,8 @@ def test_api_returns_clean_source_raw_for_persisted_opportunity(tmp_path, monkey
             "missing_fields": ["deadline", "amount", "eligibility"],
         },
     }
-    assert "source_url" not in data[0]["raw"]
+    assert raw["ranking"]["model_version"] == "qazfund-relevance-v2"
+    assert "source_url" not in raw
 
 
 def test_compact_opportunities_keep_dashboard_fields_without_ingestion_payload(
@@ -2194,7 +2234,8 @@ def test_compact_opportunities_keep_dashboard_fields_without_ingestion_payload(
     assert response.status_code == 200
     data = response.json()
     assert len(data) == 1
-    assert data[0]["raw"] == {
+    raw = data[0]["raw"]
+    assert {key: value for key, value in raw.items() if key != "ranking"} == {
         "agency": "Example Agency",
         "application_url": "https://example.org/apply",
         "deadline_policy": "rolling",
@@ -2205,6 +2246,9 @@ def test_compact_opportunities_keep_dashboard_fields_without_ingestion_payload(
             "missing_fields": ["amount", "eligibility"],
         },
     }
+    ranking = raw["ranking"]
+    assert ranking["model_version"] == "qazfund-relevance-v2"
+    assert ranking["relevance"] == data[0]["score"]
 
 
 def test_decision_readiness_marks_complete_source_facts(tmp_path, monkeypatch):
@@ -2230,7 +2274,7 @@ def test_decision_readiness_marks_complete_source_facts(tmp_path, monkeypatch):
     )
 
     response = TestClient(api_main.app).get(
-        "/opportunities", params={"min_score": 0.5, "compact": "true"}
+        "/opportunities", params={"min_score": 0.3, "compact": "true"}
     )
 
     assert response.status_code == 200
@@ -3007,6 +3051,47 @@ def test_opportunity_page_lists_related_opportunities(monkeypatch):
     assert "Поддержка прикладных исследований и лабораторий." in ru_response.text
     assert "Applied labs grant" not in ru_response.text
     assert "University innovation support" not in ru_response.text
+
+
+def test_related_opportunities_diversify_sources(monkeypatch):
+    _reset_api_state(monkeypatch)
+    target = Opportunity(
+        source="science_fund",
+        source_url="https://example.org/target",
+        type=OpportunityType.GRANT,
+        title="Kazakhstan science commercialization",
+        funder="Science Fund",
+        tags=["science", "commercialization", "kazakhstan"],
+        score=0.8,
+    )
+    same_source_rows = [
+        Opportunity(
+            source="science_fund",
+            source_url=f"https://example.org/same-{index}",
+            type=OpportunityType.GRANT,
+            title=f"Science Fund call {index}",
+            funder="Science Fund",
+            tags=["science", "kazakhstan"],
+            score=0.75 - index * 0.01,
+        )
+        for index in range(3)
+    ]
+    other_source = Opportunity(
+        source="innovation_agency",
+        source_url="https://example.org/other-source",
+        type=OpportunityType.GRANT,
+        title="University commercialization support",
+        funder="Innovation Agency",
+        tags=["science", "commercialization", "kazakhstan"],
+        score=0.7,
+    )
+    api_main._cache.extend([target, *same_source_rows, other_source])
+
+    related = api_main._related_opportunities(target, lang="en", limit=3)
+
+    assert len(related) == 3
+    assert other_source.id in {item.id for item, _ in related}
+    assert len({item.source for item, _ in related}) >= 2
 
 
 def test_funder_page_renders_public_profile(monkeypatch):
