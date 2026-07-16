@@ -2266,6 +2266,14 @@ DASHBOARD_CSS = r"""    :root {
       font-size: var(--av-text-xs);
       line-height: 1.55;
     }
+    .site-footer-nav {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px 16px;
+      align-items: center;
+      font-size: var(--av-text-xs);
+      font-weight: 650;
+    }
     .site-footer p {
       margin: 0;
       max-width: 920px;

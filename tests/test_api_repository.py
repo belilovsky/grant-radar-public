@@ -1609,6 +1609,9 @@ def test_public_status_page_renders_coverage_without_operator_details(monkeypatc
     assert 'class="status-topbar"' in response.text
     assert 'class="lang-switch"' in response.text
     assert 'href="/status?lang=en"' in response.text
+    assert 'class="site-footer-nav"' in response.text
+    assert 'href="/?lang=ru#sources"' in response.text
+    assert 'href="/docs?lang=ru"' in response.text
     assert "min-height:var(--av-control-height-lg);" in response.text
     assert ".status-topbar .back" in response.text
     assert "--av-container-dashboard: 1280px" in response.text
@@ -2819,6 +2822,10 @@ def test_opportunity_page_renders_public_permalink(monkeypatch):
     assert 'href="https://example.org/project/P179204-page"' in response.text
     assert 'href="https://example.org/apply/P179204-page"' in response.text
     assert 'href="/?lang=ru#opportunities"' in response.text
+    assert 'class="site-footer-nav"' in response.text
+    assert 'href="/?lang=ru#sources"' in response.text
+    assert 'href="/status?lang=ru"' in response.text
+    assert 'href="/docs?lang=ru"' in response.text
     assert 'aria-label="Навигационная цепочка"' in response.text
     assert 'class="hero-fact hero-fact--source"' in response.text
     assert ".hero-actions .button" in response.text
@@ -3175,6 +3182,11 @@ def test_funder_page_renders_public_profile(monkeypatch):
     assert f'href="/opportunity/{open_item.id}?lang=ru"' in response.text
     assert f'href="/opportunity/{forecast_item.id}?lang=ru"' in response.text
     assert 'href="/?lang=ru#opportunities"' in response.text
+    assert 'class="hero-copy"' in response.text
+    assert 'class="site-footer-nav"' in response.text
+    assert 'href="/?lang=ru#sources"' in response.text
+    assert 'href="/status?lang=ru"' in response.text
+    assert 'href="/docs?lang=ru"' in response.text
     assert (
         'rel="alternate" hreflang="en" href="http://testserver/funder/science-fund?lang=en"'
         in response.text

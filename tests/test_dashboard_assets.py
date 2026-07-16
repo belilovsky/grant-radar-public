@@ -22,3 +22,7 @@ def test_dashboard_uses_extracted_static_styles() -> None:
 
     assert DASHBOARD_CSS in html
     assert "--container-max: var(--av-container-dashboard)" in DASHBOARD_CSS
+    assert 'class="site-footer-nav"' in html
+    assert 'href="#opportunities"' in html
+    assert 'href="#sources"' in html
+    assert "syncFilterDisclosureForViewport" in html

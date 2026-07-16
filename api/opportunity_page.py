@@ -734,6 +734,31 @@ def render_opportunity_page(
         quote=True,
     )
     catalog_href = escape(_catalog_path(root_path, active_lang), quote=True)
+    detail_base = root_path.rstrip("/")
+    sources_href = escape(
+        (
+            f"{detail_base}/?lang={active_lang}#sources"
+            if detail_base
+            else f"/?lang={active_lang}#sources"
+        ),
+        quote=True,
+    )
+    status_href = escape(
+        (
+            f"{detail_base}/status?lang={active_lang}"
+            if detail_base
+            else f"/status?lang={active_lang}"
+        ),
+        quote=True,
+    )
+    docs_href = escape(
+        (
+            f"{detail_base}/docs?lang={active_lang}"
+            if detail_base
+            else f"/docs?lang={active_lang}"
+        ),
+        quote=True,
+    )
     source_href = escape(str(detail.source_url), quote=True)
     application_href = (
         escape(detail.application_url, quote=True) if detail.application_url else ""
@@ -989,7 +1014,7 @@ def render_opportunity_page(
     .hero h1 {{
       margin: 0;
       max-width: 30ch;
-      font-size: clamp(27px, 2.8vw, 36px);
+      font-size: clamp(26px, 2.5vw, 34px);
       line-height: 1.06;
       text-wrap: balance;
     }}
@@ -1501,8 +1526,21 @@ def render_opportunity_page(
       font-size: var(--av-text-xs);
       line-height: 1.5;
     }}
+    .site-footer-nav {{
+      display:flex;
+      flex-wrap:wrap;
+      gap:6px 16px;
+      align-items:center;
+      font-size:var(--av-text-xs);
+      font-weight:650;
+    }}
     .site-footer p {{ margin: 0; }}
     .site-footer a {{ color: var(--text); font-weight: 700; }}
+    a:focus-visible, button:focus-visible {{
+      outline:2px solid var(--brand);
+      outline-offset:2px;
+      border-radius:var(--av-radius-sm);
+    }}
     @media (max-width: 900px) {{
       .hero-grid,
       .content-grid,
@@ -1548,7 +1586,7 @@ def render_opportunity_page(
         padding: 12px;
       }}
       .hero h1 {{
-        font-size: 25px;
+        font-size: 24px;
       }}
       .summary {{
         font-size: 14px;
@@ -1642,6 +1680,12 @@ def render_opportunity_page(
     {apply_markup}
     {related_markup}
     <footer class="site-footer">
+      <nav class="site-footer-nav" aria-label="{escape(str(copy["views_aria"]), quote=True)}">
+        <a href="{catalog_href}">{escape(str(copy["tab_opportunities"]))}</a>
+        <a href="{sources_href}">{escape(str(copy["tab_sources"]))}</a>
+        <a href="{status_href}">{escape(str(copy["status_link"]))}</a>
+        <a href="{docs_href}">{escape(str(copy["api_docs"]))}</a>
+      </nav>
       <p>
         {escape(str(copy["footer_owner"]))}
         <a href="https://qdev.run">{escape(str(copy["footer_qdev"]))}</a>

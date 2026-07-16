@@ -981,6 +981,12 @@ def render_dashboard(
       </div>
     </details>
     <footer class="site-footer" data-avds-component="site-footer">
+      <nav class="site-footer-nav" aria-label="{escape(str(copy["views_aria"]), quote=True)}">
+        <a href="#opportunities">{escape(str(copy["tab_opportunities"]))}</a>
+        <a href="#sources">{escape(str(copy["tab_sources"]))}</a>
+        <a href="{status_href}">{escape(str(copy["status_link"]))}</a>
+        <a href="{docs_href}">{escape(str(copy["api_docs"]))}</a>
+      </nav>
       <p>
         {escape(str(copy["footer_owner"]))}
         <a href="https://qdev.run" target="_blank" rel="noopener">
@@ -4743,6 +4749,7 @@ def render_dashboard(
 
     let resizeSyncTimer = 0;
     function scheduleHashViewSync() {{
+      syncFilterDisclosureForViewport();
       const view = window.location.hash.replace("#", "");
       if (!viewTargets[view]) return;
       window.clearTimeout(resizeSyncTimer);
@@ -4792,6 +4799,20 @@ def render_dashboard(
       if (restoreFocus) mobileFilterTrigger.focus();
     }}
 
+    function syncFilterDisclosureForViewport() {{
+      const disclosure = $("#filter-disclosure");
+      if (!disclosure) return;
+      if (appShellMedia.matches) {{
+        document.body.classList.remove("filter-sheet-open");
+        mobileFilterBackdrop.classList.remove("is-open");
+        mobileFilterBackdrop.hidden = true;
+        mobileFilterTrigger.setAttribute("aria-expanded", "false");
+        disclosure.open = false;
+        return;
+      }}
+      disclosure.open = true;
+    }}
+
     function openMobileSavedItems() {{
       goToView("opportunities", {{ scroll: false }});
       const workspaceButton = $("#workspace-filter");
@@ -4838,9 +4859,8 @@ def render_dashboard(
 
     applyStateFromUrl();
     const filterDisclosure = $("#filter-disclosure");
-    if (filterDisclosure && appShellMedia.matches) {{
-      filterDisclosure.open = false;
-    }}
+    syncFilterDisclosureForViewport();
+    appShellMedia.addEventListener("change", syncFilterDisclosureForViewport);
     filterDisclosure?.querySelector("summary")?.addEventListener("click", (event) => {{
       if (!appShellMedia.matches) return;
       event.preventDefault();
