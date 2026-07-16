@@ -370,6 +370,31 @@ def render_funder_page(
     )
     canonical_href = escape(_absolute_href(site_origin, canonical_path), quote=True)
     catalog_href = escape(_catalog_path(root_path, active_lang), quote=True)
+    base_path = root_path.rstrip("/")
+    sources_href = escape(
+        (
+            f"{base_path}/?lang={active_lang}#sources"
+            if base_path
+            else f"/?lang={active_lang}#sources"
+        ),
+        quote=True,
+    )
+    status_href = escape(
+        (
+            f"{base_path}/status?lang={active_lang}"
+            if base_path
+            else f"/status?lang={active_lang}"
+        ),
+        quote=True,
+    )
+    docs_href = escape(
+        (
+            f"{base_path}/docs?lang={active_lang}"
+            if base_path
+            else f"/docs?lang={active_lang}"
+        ),
+        quote=True,
+    )
     back_label = escape(str(copy["funder_back_to_catalog"]))
     funder_name = escape(_label_value(str(funder["name"]), copy))
     overview = escape(_overview_sentence(funder, copy))
@@ -543,8 +568,8 @@ def render_funder_page(
     }}
     .hero {{
       display: grid;
-      grid-template-columns: minmax(0, 1fr) minmax(280px, 0.52fr);
-      gap: 10px 20px;
+      grid-template-columns: minmax(0, 1fr) minmax(250px, 0.44fr);
+      gap: 12px 20px;
       padding: 18px;
       border: 1px solid var(--line);
       border-radius: var(--av-radius-md);
@@ -564,7 +589,7 @@ def render_funder_page(
       margin: 0;
       font-family: var(--av-font-sans, Arial, sans-serif);
       max-width: 20ch;
-      font-size: clamp(27px, 2.6vw, 36px);
+      font-size: clamp(26px, 2.4vw, 34px);
       line-height: 1.08;
       text-wrap: balance;
     }}
@@ -575,13 +600,14 @@ def render_funder_page(
       font-size: 15px;
       line-height: 1.55;
     }}
+    .hero-copy {{ display: grid; gap: 12px; align-content: start; }}
     .stat-grid {{
       display: grid;
       grid-column: 2;
-      grid-row: 2 / span 2;
+      grid-row: 2;
       grid-template-columns: repeat(2, minmax(120px, 1fr));
       gap: 0;
-      align-self: stretch;
+      align-self: start;
       border-left: 1px solid var(--line);
       padding-left: 16px;
     }}
@@ -656,9 +682,9 @@ def render_funder_page(
     }}
     .opportunity-card {{
       display: grid;
-      grid-template-columns: minmax(260px, 1.25fr) minmax(260px, 0.9fr) auto;
+      grid-template-columns: minmax(290px, 1.18fr) minmax(240px, 0.92fr) auto;
       gap: 14px;
-      align-items: center;
+      align-items: start;
       align-content: start;
       border: 1px solid var(--line);
       border-radius: var(--av-radius-md);
@@ -704,7 +730,7 @@ def render_funder_page(
       flex-wrap: wrap;
       gap: 8px;
       margin-top: 0;
-      align-self: end;
+      align-self: center;
       justify-content: flex-end;
     }}
     .button {{
@@ -720,6 +746,7 @@ def render_funder_page(
       text-decoration: none;
       font-size: 14px;
       font-weight: 650;
+      white-space: nowrap;
     }}
     .button.soft {{
       background: var(--brand-soft);
@@ -767,8 +794,21 @@ def render_funder_page(
       font-size: 12px;
       line-height: 1.5;
     }}
+    .site-footer-nav {{
+      display:flex;
+      flex-wrap:wrap;
+      gap:6px 16px;
+      align-items:center;
+      font-size:12px;
+      font-weight:650;
+    }}
     .site-footer p {{ margin: 0; }}
     .site-footer a {{ color: var(--ink); font-weight: 700; }}
+    a:focus-visible, button:focus-visible {{
+      outline:2px solid var(--brand);
+      outline-offset:2px;
+      border-radius:var(--av-radius-sm);
+    }}
     @media (max-width: 900px) {{
       .hero {{ grid-template-columns: 1fr; }}
       .stat-grid {{
@@ -824,11 +864,11 @@ def render_funder_page(
     </div>
     <section class="hero">
       <span class="eyebrow">{escape(str(copy["funder_page_eyebrow"]))}</span>
-      <div>
+      <div class="hero-copy">
         <h1>{funder_name}</h1>
         <p>{overview}</p>
+        <div class="topic-row">{tag_chips}</div>
       </div>
-      <div class="topic-row">{tag_chips}</div>
       <div class="stat-grid">{stat_markup}</div>
     </section>
 
@@ -852,6 +892,12 @@ def render_funder_page(
       </div>
     </section>
     <footer class="site-footer">
+      <nav class="site-footer-nav" aria-label="{escape(str(copy["views_aria"]), quote=True)}">
+        <a href="{catalog_href}">{escape(str(copy["tab_opportunities"]))}</a>
+        <a href="{sources_href}">{escape(str(copy["tab_sources"]))}</a>
+        <a href="{status_href}">{escape(str(copy["status_link"]))}</a>
+        <a href="{docs_href}">{escape(str(copy["api_docs"]))}</a>
+      </nav>
       <p>
         {escape(str(copy["footer_owner"]))}
         <a href="https://qdev.run">{escape(str(copy["footer_qdev"]))}</a>

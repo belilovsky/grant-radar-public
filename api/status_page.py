@@ -8,6 +8,7 @@ from typing import Any
 from urllib.parse import urlparse
 
 from api.avds import AVDS_CSS, AVDS_FONT_HEAD
+from api.dashboard_copy import dashboard_copy
 
 COPY = {
     "ru": {
@@ -94,6 +95,11 @@ def render_status_page(
     copy = COPY[active_lang]
     base = root_path.rstrip("/")
     catalog_href = f"{base}/?lang={active_lang}" if base else f"/?lang={active_lang}"
+    sources_href = f"{catalog_href}#sources"
+    docs_href = (
+        f"{base}/docs?lang={active_lang}" if base else f"/docs?lang={active_lang}"
+    )
+    product_copy = dashboard_copy(active_lang)
     ru_href = f"{base}/status?lang=ru" if base else "/status?lang=ru"
     en_href = f"{base}/status?lang=en" if base else "/status?lang=en"
     status_path = (
@@ -187,7 +193,7 @@ def render_status_page(
       background:var(--panel); box-shadow:var(--av-shadow-xs); }}
     .hero {{ padding:16px 18px; }}
     .eyebrow {{ color:var(--brand); font-size:var(--av-text-xs); font-weight:700; }}
-    h1 {{ margin:5px 0; font-size:clamp(28px,3vw,36px); line-height:1.05; letter-spacing:0; }}
+    h1 {{ margin:5px 0; font-size:clamp(26px,2.6vw,34px); line-height:1.08; letter-spacing:0; }}
     .hero p {{ max-width:720px; margin:0; color:var(--muted); line-height:1.5; }}
     .metrics {{ display:grid; grid-template-columns:repeat(2,minmax(0,1fr));
       align-content:stretch; margin:12px 12px 12px 0; border-left:1px solid var(--line); }}
@@ -213,6 +219,13 @@ def render_status_page(
     .state--fresh {{ background:var(--good-soft); color:var(--good); }}
     .state--stale {{ background:var(--warn-soft); color:var(--warn); }}
     .note {{ margin:14px 2px 0; color:var(--muted); font-size:13px; line-height:1.5; }}
+    .site-footer {{ display:grid; gap:6px; margin-top:20px; padding-top:14px;
+      border-top:1px solid var(--line); color:var(--muted); font-size:12px; line-height:1.5; }}
+    .site-footer-nav {{ display:flex; flex-wrap:wrap; gap:6px 16px;
+      align-items:center; font-weight:650; }}
+    .site-footer a {{ color:var(--ink); font-weight:700; text-decoration:none; }}
+    a:focus-visible {{ outline:2px solid var(--brand); outline-offset:2px;
+      border-radius:var(--av-radius-sm); }}
     .empty {{ color:var(--muted); text-align:center; }}
     @media (max-width:860px) {{
       .overview {{ grid-template-columns:1fr; }}
@@ -280,6 +293,17 @@ def render_status_page(
       </table>
     </div>
     <p class="note">{escape(str(copy["disclaimer"]))}</p>
+    <footer class="site-footer">
+      <nav class="site-footer-nav"
+        aria-label="{escape(str(product_copy["views_aria"]), quote=True)}">
+        <a href="{escape(catalog_href, quote=True)}"
+          >{escape(str(product_copy["tab_opportunities"]))}</a>
+        <a href="{escape(sources_href, quote=True)}"
+          >{escape(str(product_copy["tab_sources"]))}</a>
+        <a href="{escape(docs_href, quote=True)}">{escape(str(product_copy["api_docs"]))}</a>
+      </nav>
+      <a href="mailto:contact@qaz.fund">contact@qaz.fund</a>
+    </footer>
   </main>
 </body>
 </html>"""
