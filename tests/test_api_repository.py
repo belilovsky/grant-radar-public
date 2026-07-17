@@ -167,12 +167,15 @@ def test_root_renders_service_landing(monkeypatch):
     )
     assert response.text.index(
         'data-avds-component="discovery-library"'
-    ) < response.text.index('id="funders-title"')
+    ) < response.text.index('data-avds-component="funder-library"')
     assert 'data-avds-component="trust-library"' in response.text
+    assert 'data-avds-component="funder-library"' in response.text
+    assert 'data-avds-component="methodology-library"' in response.text
+    assert 'id="methodology-panel"' in response.text
     assert "Источники и прозрачность" in response.text
     assert response.text.index(
         'data-avds-component="trust-library"'
-    ) < response.text.index('id="funders-title"')
+    ) < response.text.index('data-avds-component="funder-library"')
     assert "Оценка учитывает регион и тему" in response.text
     assert "Это не вероятность одобрения" in response.text
     assert "По приоритету действий" in response.text
@@ -514,6 +517,8 @@ def test_root_renders_service_landing(monkeypatch):
     assert "function goToView(view, options = {})" in response.text
     assert 'const trustLibrary = $("#trust-library");' in response.text
     assert "trustLibrary.open = true;" in response.text
+    assert 'function openTrustDisclosure(targetId = "")' in response.text
+    assert "methodologyLibrary.open = true;" in response.text
     assert "function syncViewFromHash" in response.text
     assert "function scheduleHashViewSync" in response.text
     assert "const shouldScroll = options.scroll !== false;" in response.text

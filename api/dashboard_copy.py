@@ -325,6 +325,14 @@ COPY = {
         "trust_library_description": (
             "Покрытие, свежесть данных, активные фонды и методология."
         ),
+        "funder_library_summary": "Профили фондов",
+        "funder_library_description": (
+            "Кто предоставляет возможности и какие программы сейчас в работе."
+        ),
+        "methodology_library_summary": "Проверка данных и методика",
+        "methodology_library_description": (
+            "Статус источников, принципы отбора и правила использования."
+        ),
         "source_refresh_title": "Последнее успешное обновление источника",
         "source_refresh_value": "Обновлено {date}",
         "source_refresh_unknown": "Дата обновления не указана",
@@ -1309,6 +1317,14 @@ COPY = {
         "trust_library_summary": "Sources and transparency",
         "trust_library_description": (
             "Coverage, data freshness, active funders, and methodology."
+        ),
+        "funder_library_summary": "Funder profiles",
+        "funder_library_description": (
+            "Who provides opportunities and which programs are active now."
+        ),
+        "methodology_library_summary": "Data checks and methodology",
+        "methodology_library_description": (
+            "Source status, selection principles and usage guidance."
         ),
         "source_refresh_title": "Latest successful source refresh",
         "source_refresh_value": "Updated {date}",
