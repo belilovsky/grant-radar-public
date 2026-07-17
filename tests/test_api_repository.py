@@ -84,9 +84,7 @@ def test_root_renders_service_landing(monkeypatch):
     assert 'data-avds-component="hero-band"' in response.text
     assert "QAZ.FUND" in response.text
     assert "Публичный навигатор по грантам, субсидиям" in response.text
-    assert (
-        "Находите гранты, субсидии и программы поддержки для стартапов" in response.text
-    )
+    assert "Гранты, субсидии и программы поддержки для Казахстана" in response.text
     assert "Что нужно сделать сейчас?" in response.text
     assert "Открыть каталог" in response.text
     assert "Прямое подключение к официальному источнику" in response.text
@@ -879,7 +877,7 @@ def test_root_supports_explicit_english_dashboard(monkeypatch):
     assert (
         "Public funding navigator for grants, subsidies, accelerators" in response.text
     )
-    assert "Find grants, subsidies, and support programs" in response.text
+    assert "Grants, subsidies and support programs for Kazakhstan" in response.text
     assert "What people usually look for" in response.text
     assert "Clear theme" in response.text
     assert "What do you need to do now?" in response.text

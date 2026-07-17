@@ -22,9 +22,8 @@ COPY = {
             "программам поддержки для Казахстана."
         ),
         "hero_intro": (
-            "Находите гранты, субсидии и программы поддержки для стартапов, "
-            "бизнеса, фермеров, НКО и исследовательских команд без ручного "
-            "обхода десятков сайтов."
+            "Гранты, субсидии и программы поддержки для Казахстана и "
+            "Центральной Азии."
         ),
         "hero_primary_cta": "Открыть каталог",
         "hero_stage_eyebrow": "Рабочие сценарии",
@@ -1010,9 +1009,7 @@ COPY = {
             "and support programs in Kazakhstan."
         ),
         "hero_intro": (
-            "Find grants, subsidies, and support programs for startups, "
-            "businesses, farms, NGOs, and research teams without checking "
-            "dozens of separate sites by hand."
+            "Grants, subsidies and support programs for Kazakhstan and Central Asia."
         ),
         "hero_primary_cta": "Open catalog",
         "hero_stage_eyebrow": "Workflows",
