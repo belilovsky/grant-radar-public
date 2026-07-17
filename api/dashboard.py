@@ -837,19 +837,27 @@ def render_dashboard(
         </span>
       </summary>
       <div class="trust-library-body">
-    <section class="funder-section" aria-labelledby="funders-title">
-      <div class="spotlight-copy">
-        <span class="eyebrow">{escape(str(copy["funder_section_eyebrow"]))}</span>
-        <h2 id="funders-title">{escape(str(copy["funder_section_title"]))}</h2>
-        <p>{escape(str(copy["funder_section_description"]))}</p>
-      </div>
-      <div
-        class="funder-grid async-grid"
-        id="funder-grid"
-        data-avds-component="funder-grid"
-        aria-busy="true"
-      ></div>
-    </section>
+        <details class="funder-library" data-avds-component="funder-library">
+          <summary>
+            <span>{escape(str(copy["funder_library_summary"]))}</span>
+            <span class="funder-library-description">
+              {escape(str(copy["funder_library_description"]))}
+            </span>
+          </summary>
+          <div class="funder-library-body">
+            <section
+              class="funder-section"
+              aria-label="{escape(str(copy["funder_library_summary"]), quote=True)}"
+            >
+              <div
+                class="funder-grid async-grid"
+                id="funder-grid"
+                data-avds-component="funder-grid"
+                aria-busy="true"
+              ></div>
+            </section>
+          </div>
+        </details>
 
     <section class="panel" id="sources-panel" data-avds-component="panel">
       <div class="panel-head">
@@ -870,6 +878,18 @@ def render_dashboard(
       <div id="source-list" class="source-grid"></div>
     </section>
 
+        <details
+          class="methodology-library"
+          id="methodology-panel"
+          data-avds-component="methodology-library"
+        >
+          <summary>
+            <span>{escape(str(copy["methodology_library_summary"]))}</span>
+            <span class="methodology-library-description">
+              {escape(str(copy["methodology_library_description"]))}
+            </span>
+          </summary>
+          <div class="methodology-library-body">
     <section class="panel" id="health-panel" data-avds-component="panel">
       <div class="panel-head">
         <div>
@@ -906,13 +926,7 @@ def render_dashboard(
       <p class="health-note" id="health-note">{escape(str(copy["health_note_loading"]))}</p>
     </section>
 
-    <section class="panel" id="methodology-panel" data-avds-component="panel">
-      <div class="panel-head">
-        <div>
-          <h2>{escape(str(copy["methodology_title"]))}</h2>
-          <p>{escape(str(copy["methodology_description"]))}</p>
-        </div>
-      </div>
+    <section class="panel methodology-panel" data-avds-component="panel">
       <div class="method-grid" data-avds-component="method-grid">
         <article class="method-card" data-avds-component="method-card">
           <h3>{escape(str(copy["method_card_sources_title"]))}</h3>
@@ -978,6 +992,8 @@ def render_dashboard(
         </article>
       </div>
     </section>
+          </div>
+        </details>
       </div>
     </details>
     <footer class="site-footer" data-avds-component="site-footer">
@@ -4669,8 +4685,16 @@ def render_dashboard(
       health: "#health-panel"
     }};
     const trustLibrary = $("#trust-library");
+    const methodologyLibrary = $("#methodology-panel");
     const trustHashes = new Set(["sources-panel", "health-panel", "methodology-panel"]);
     const viewButtons = document.querySelectorAll("[data-view]");
+
+    function openTrustDisclosure(targetId = "") {{
+      trustLibrary.open = true;
+      if (["health-panel", "methodology-panel"].includes(targetId)) {{
+        methodologyLibrary.open = true;
+      }}
+    }}
 
     function syncMobileNavigation(activeView = "") {{
       const resolvedView = activeView || (
@@ -4710,7 +4734,7 @@ def render_dashboard(
       const target = document.querySelector(selector);
       if (!target) return;
       if (view === "sources" || view === "health") {{
-        trustLibrary.open = true;
+        openTrustDisclosure(view === "health" ? "health-panel" : "");
       }}
       const shouldScroll = options.scroll !== false;
       setActiveView(view);
@@ -4732,7 +4756,7 @@ def render_dashboard(
       if (viewTargets[view]) {{
         goToView(view, options);
       }} else if (trustHashes.has(view)) {{
-        trustLibrary.open = true;
+        openTrustDisclosure(view);
         setActiveView("sources");
         if (options.scroll !== false) {{
           window.requestAnimationFrame(() => {{
@@ -4852,7 +4876,7 @@ def render_dashboard(
       'a[href="#methodology-panel"], a[href="#health-panel"]'
     ).forEach((link) => {{
       link.addEventListener("click", () => {{
-        trustLibrary.open = true;
+        openTrustDisclosure(link.getAttribute("href")?.slice(1) || "");
         setActiveView("sources");
       }});
     }});

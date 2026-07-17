@@ -545,6 +545,57 @@ DASHBOARD_CSS = r"""    :root {
     .trust-library-body > section {
       margin: 0;
     }
+    .funder-library,
+    .methodology-library {
+      margin: 0;
+      border: 0;
+      border-top: 1px solid var(--line-subtle);
+      background: transparent;
+    }
+    .funder-library > summary,
+    .methodology-library > summary {
+      display: flex;
+      align-items: baseline;
+      justify-content: space-between;
+      gap: var(--av-spacing-3);
+      min-height: 48px;
+      cursor: pointer;
+      color: var(--ink);
+      font-size: var(--av-text-sm);
+      font-weight: 700;
+      list-style: none;
+    }
+    .funder-library > summary::-webkit-details-marker,
+    .methodology-library > summary::-webkit-details-marker { display: none; }
+    .funder-library > summary::after,
+    .methodology-library > summary::after {
+      content: "+";
+      flex: 0 0 auto;
+      color: var(--brand);
+      font-size: 20px;
+      font-weight: 500;
+      line-height: 1;
+    }
+    .funder-library[open] > summary::after,
+    .methodology-library[open] > summary::after { content: "−"; }
+    .funder-library > summary:focus-visible,
+    .methodology-library > summary:focus-visible {
+      outline: 2px solid var(--focus-ring);
+      outline-offset: -2px;
+    }
+    .funder-library-description,
+    .methodology-library-description {
+      color: var(--muted);
+      font-size: var(--av-text-xs);
+      font-weight: 500;
+      text-align: right;
+    }
+    .funder-library-body,
+    .methodology-library-body {
+      display: grid;
+      gap: var(--av-spacing-3);
+      padding: 0 0 var(--av-spacing-3);
+    }
     .funder-grid {
       display: grid;
       grid-template-columns: repeat(3, minmax(0, 1fr));
@@ -3193,7 +3244,9 @@ DASHBOARD_CSS = r"""    :root {
         min-height: 48px;
       }
       .discovery-library-description,
-      .trust-library-description {
+      .trust-library-description,
+      .funder-library-description,
+      .methodology-library-description {
         display: none;
       }
       .themes-grid {
