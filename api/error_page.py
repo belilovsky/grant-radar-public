@@ -53,22 +53,39 @@ def render_not_found_page(*, lang: str, root_path: str = "") -> str:
       margin: 0;
       min-height: 100vh;
       display: grid;
-      grid-template-rows: 1fr auto;
+      grid-template-rows: auto 1fr auto;
       place-items: stretch;
       padding: 0;
       background: var(--color-bg);
       color: var(--color-text);
       font-family: var(--av-font-sans);
     }}
+    header,
+    footer {{
+      width: min(var(--av-container-dashboard), calc(100% - 48px));
+      margin: 0 auto;
+    }}
+    header {{
+      padding: 22px 0 16px;
+      border-bottom: 1px solid var(--color-border-subtle);
+    }}
+    .brand {{
+      color: var(--color-text);
+      font-size: var(--av-text-base);
+      font-weight: 800;
+      text-decoration: none;
+    }}
     main {{
       align-self: center;
-      justify-self: center;
-      width: min(620px, calc(100% - 48px));
-      padding: clamp(24px, 6vw, 48px);
-      border: 1px solid var(--color-border-subtle);
-      border-radius: var(--av-radius-lg);
-      background: var(--color-surface);
-      box-shadow: var(--shadow-sm);
+      justify-self: stretch;
+      width: min(var(--av-container-dashboard), calc(100% - 48px));
+      margin: 0 auto;
+      padding: 64px 0;
+      border: 0;
+      border-bottom: 1px solid var(--color-border-subtle);
+      border-radius: 0;
+      background: transparent;
+      box-shadow: none;
     }}
     .eyebrow {{
       color: var(--color-accent);
@@ -77,7 +94,7 @@ def render_not_found_page(*, lang: str, root_path: str = "") -> str:
     }}
     h1 {{
       margin: 8px 0 12px;
-      font-size: clamp(30px, 6vw, 48px);
+      font-size: 48px;
       line-height: 1.05;
     }}
     p {{
@@ -99,14 +116,33 @@ def render_not_found_page(*, lang: str, root_path: str = "") -> str:
       text-decoration: none;
     }}
     .primary-action:focus-visible {{ outline: 0; box-shadow: var(--color-focus-ring); }}
+    footer {{
+      padding: 18px 0 24px;
+      color: var(--color-text-muted);
+      font-size: var(--av-text-sm);
+    }}
+    footer a {{ color: var(--color-text); }}
+    @media (max-width: 640px) {{
+      header,
+      main,
+      footer {{ width: calc(100% - 24px); }}
+      main {{ padding: 44px 0; }}
+      h1 {{ font-size: 36px; }}
+    }}
   </style>
 </head>
 <body>
+  <header>
+    <a class="brand" href="{escape(catalog_href, quote=True)}">QAZ.FUND</a>
+  </header>
   <main>
     <span class="eyebrow">{escape(copy["eyebrow"])}</span>
     <h1>{escape(copy["heading"])}</h1>
     <p>{escape(copy["text"])}</p>
     <a class="primary-action" href="{escape(catalog_href, quote=True)}">{escape(copy["action"])}</a>
   </main>
+  <footer>
+    <a href="mailto:contact@qaz.fund">contact@qaz.fund</a>
+  </footer>
 </body>
 </html>"""

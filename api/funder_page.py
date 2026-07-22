@@ -525,9 +525,9 @@ def render_funder_page(
     }}
     a {{ color: inherit; }}
     .shell {{
-      width: min(var(--av-container-dashboard), calc(100% - 32px));
+      width: min(var(--av-container-dashboard), calc(100% - 48px));
       margin: 0 auto;
-      padding: 16px 0 36px;
+      padding: 20px 0 40px;
     }}
     .back-link {{
       display: inline-flex;
@@ -570,12 +570,14 @@ def render_funder_page(
     .hero {{
       display: grid;
       grid-template-columns: minmax(0, 1fr) minmax(250px, 0.44fr);
-      gap: 12px 20px;
-      padding: 18px;
-      border: 1px solid var(--line);
-      border-radius: var(--av-radius-md);
-      background: var(--panel);
-      box-shadow: var(--av-shadow-xs);
+      gap: 14px 36px;
+      padding: 24px 0;
+      border: 0;
+      border-top: 1px solid var(--line);
+      border-bottom: 1px solid var(--line);
+      border-radius: 0;
+      background: transparent;
+      box-shadow: none;
     }}
     .hero > .eyebrow {{ grid-column: 1 / -1; }}
     .eyebrow {{
@@ -590,7 +592,7 @@ def render_funder_page(
       margin: 0;
       font-family: var(--av-font-sans, Arial, sans-serif);
       max-width: 20ch;
-      font-size: clamp(26px, 2.4vw, 34px);
+      font-size: 36px;
       line-height: 1.08;
       text-wrap: balance;
     }}
@@ -642,7 +644,7 @@ def render_funder_page(
     .section h2 {{
       margin: 0 0 8px;
       font-family: var(--av-font-sans, Arial, sans-serif);
-      font-size: 17px;
+      font-size: 22px;
       line-height: 1.2;
     }}
     .section p.section-note {{
@@ -660,7 +662,7 @@ def render_funder_page(
       display: inline-flex;
       align-items: center;
       min-height: 28px;
-      border: 1px solid var(--line-subtle);
+      border: 0;
       border-radius: 999px;
       padding: 0 10px;
       background: var(--panel-subtle);
@@ -679,18 +681,20 @@ def render_funder_page(
     .opportunity-list {{
       display: grid;
       grid-template-columns: 1fr;
-      gap: 6px;
+      gap: 0;
+      border-bottom: 1px solid var(--line);
     }}
     .opportunity-card {{
       display: grid;
-      grid-template-columns: minmax(290px, 1.18fr) minmax(240px, 0.92fr) auto;
-      gap: 14px;
+      grid-template-columns: minmax(300px, 1.18fr) minmax(260px, 0.92fr) minmax(230px, auto);
+      gap: 24px;
       align-items: start;
       align-content: start;
-      border: 1px solid var(--line);
-      border-radius: var(--av-radius-md);
-      background: var(--panel);
-      padding: 12px 14px;
+      border: 0;
+      border-top: 1px solid var(--line);
+      border-radius: 0;
+      background: transparent;
+      padding: 20px 4px;
       box-shadow: none;
     }}
     .opportunity-head {{
@@ -702,8 +706,8 @@ def render_funder_page(
     }}
     .opportunity-card h3 {{
       margin: 0 0 6px;
-      font-size: 16px;
-      line-height: 1.25;
+      font-size: 18px;
+      line-height: 1.3;
     }}
     .opportunity-card h3 a {{
       text-decoration: none;
@@ -719,8 +723,8 @@ def render_funder_page(
     .opportunity-card p {{
       margin: 0;
       color: var(--muted);
-      font-size: 13px;
-      line-height: 1.45;
+      font-size: 14px;
+      line-height: 1.55;
       display: -webkit-box;
       -webkit-line-clamp: 3;
       -webkit-box-orient: vertical;
@@ -750,7 +754,7 @@ def render_funder_page(
       white-space: nowrap;
     }}
     .button.soft {{
-      background: var(--brand-soft);
+      background: transparent;
       color: var(--brand);
       border-color: transparent;
     }}
@@ -787,12 +791,12 @@ def render_funder_page(
     }}
     .site-footer {{
       display: grid;
-      gap: 4px;
+      gap: 8px;
       margin-top: 28px;
-      padding-top: 16px;
+      padding-top: 22px;
       border-top: 1px solid var(--line);
       color: var(--muted);
-      font-size: 12px;
+      font-size: 14px;
       line-height: 1.5;
     }}
     .site-footer-nav {{
@@ -840,7 +844,7 @@ def render_funder_page(
         padding-top: 16px;
       }}
       .hero {{
-        padding: 12px;
+        padding: 16px 0;
       }}
       .stat-grid {{
         grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -851,6 +855,12 @@ def render_funder_page(
       .opportunity-head {{
         grid-template-columns: 1fr;
       }}
+      .opportunity-card {{ padding: 18px 2px; }}
+      .card-actions {{
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+      }}
+      .card-actions .button {{ width: 100%; }}
     }}
   </style>
 </head>

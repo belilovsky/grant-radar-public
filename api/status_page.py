@@ -182,8 +182,8 @@ def render_status_page(
     body {{ margin:0; background:var(--wash); color:var(--ink);
       font-family:var(--av-font-sans); font-size:var(--av-text-base); }}
     a {{ color:var(--brand); }}
-    main {{ width:min(var(--av-container-dashboard),calc(100% - 32px)); margin:0 auto;
-      padding:16px 0 40px; }}
+    main {{ width:min(var(--av-container-dashboard),calc(100% - 48px)); margin:0 auto;
+      padding:20px 0 40px; }}
     .back {{ display:inline-flex; min-height:32px; align-items:center; margin-bottom:10px;
       font-weight:700; text-decoration:none; }}
     .status-topbar {{ display:flex; align-items:center; justify-content:space-between;
@@ -195,24 +195,25 @@ def render_status_page(
       font-weight:700; }}
     .lang-switch a[aria-current="page"] {{ border-bottom-color:var(--brand); color:var(--ink); }}
     .overview {{ display:grid; grid-template-columns:minmax(0,1.25fr) minmax(420px,.75fr);
-      gap:0; margin-bottom:12px; border:1px solid var(--line); border-radius:var(--av-radius-md);
-      background:var(--panel); box-shadow:var(--av-shadow-xs); }}
-    .hero {{ padding:16px 18px; }}
+      gap:0; margin-bottom:16px; border:0; border-top:1px solid var(--line);
+      border-bottom:1px solid var(--line); border-radius:0;
+      background:transparent; box-shadow:none; }}
+    .hero {{ padding:24px 0; }}
     .eyebrow {{ color:var(--brand); font-size:var(--av-text-xs); font-weight:700; }}
-    h1 {{ margin:5px 0; font-size:clamp(26px,2.6vw,34px); line-height:1.08; letter-spacing:0; }}
+    h1 {{ margin:5px 0; font-size:36px; line-height:1.08; letter-spacing:0; }}
     .hero p {{ max-width:720px; margin:0; color:var(--muted); line-height:1.5; }}
     .metrics {{ display:grid; grid-template-columns:repeat(2,minmax(0,1fr));
-      align-content:stretch; margin:12px 12px 12px 0; border-left:1px solid var(--line); }}
+      align-content:stretch; margin:16px 0 16px 32px; border-left:1px solid var(--line); }}
     .metric {{ display:grid; align-content:center; padding:10px 14px;
       border-bottom:1px solid var(--line-subtle); background:transparent; }}
     .metric span {{ display:block; color:var(--muted); font-size:12px; }}
     .metric strong {{ display:block; margin-top:3px; font-size:22px; line-height:1; }}
-    .table-wrap {{ overflow-x:auto; border:1px solid var(--line); border-radius:8px;
-      background:var(--panel); }}
+    .table-wrap {{ overflow-x:auto; border:0; border-top:1px solid var(--line);
+      border-bottom:1px solid var(--line); border-radius:0; background:transparent; }}
     table {{ width:100%; border-collapse:collapse; }}
     th,td {{ padding:10px 14px; border-bottom:1px solid var(--line-subtle); text-align:left;
       vertical-align:middle; }}
-    th {{ position:sticky; top:0; z-index:1; color:var(--muted); background:var(--panel);
+    th {{ position:sticky; top:0; z-index:1; color:var(--muted); background:var(--wash);
       font-size:12px; font-weight:700; }}
     td {{ font-size:14px; }}
     tbody tr:hover {{ background:color-mix(in oklab,var(--panel),var(--brand-soft) 10%); }}
@@ -226,8 +227,8 @@ def render_status_page(
     .state--fresh {{ background:var(--good-soft); color:var(--good); }}
     .state--stale {{ background:var(--warn-soft); color:var(--warn); }}
     .note {{ margin:14px 2px 0; color:var(--muted); font-size:13px; line-height:1.5; }}
-    .site-footer {{ display:grid; gap:6px; margin-top:20px; padding-top:14px;
-      border-top:1px solid var(--line); color:var(--muted); font-size:12px; line-height:1.5; }}
+    .site-footer {{ display:grid; gap:8px; margin-top:24px; padding-top:20px;
+      border-top:1px solid var(--line); color:var(--muted); font-size:14px; line-height:1.5; }}
     .site-footer-nav {{ display:flex; flex-wrap:wrap; gap:6px 16px;
       align-items:center; font-weight:650; }}
     .site-footer a {{ color:var(--ink); font-weight:700; text-decoration:none; }}
@@ -236,7 +237,7 @@ def render_status_page(
     .empty {{ color:var(--muted); text-align:center; }}
     @media (max-width:860px) {{
       .overview {{ grid-template-columns:1fr; }}
-      .metrics {{ margin:0 12px 12px; border-top:1px solid var(--line); border-left:0; }}
+      .metrics {{ margin:0; padding:12px 0; border-top:1px solid var(--line); border-left:0; }}
     }}
     @media (max-width:720px) {{
       .lang-switch a {{
@@ -248,12 +249,12 @@ def render_status_page(
       }}
       .status-topbar .back {{ min-height:var(--av-control-height-lg); }}
       main {{ width:min(100% - 20px,var(--av-container-dashboard)); padding-top:10px; }}
-      .hero {{ padding:14px; }}
+      .hero {{ padding:18px 0; }}
       .metrics {{ grid-template-columns:repeat(2,minmax(0,1fr)); }}
       thead {{ display:none; }}
       tbody, tr, td {{ display:block; }}
       tr {{ display:grid; grid-template-columns:minmax(0,1fr) auto; gap:7px 12px;
-        padding:10px; border-bottom:1px solid var(--line-subtle); }}
+        padding:14px 2px; border-bottom:1px solid var(--line-subtle); }}
       tr:last-child {{ border-bottom:0; }}
       td {{ padding:0; border:0; }}
       td:first-child {{ grid-column:1 / -1; }}
