@@ -106,11 +106,13 @@ def _transport(
                     "Disallow: /refresh\n"
                     "Sitemap: https://example.org/grant-radar/sitemap.xml\n"
                 ),
+                headers={"cache-control": "public, max-age=300"},
             )
         if endpoint_path == "/sitemap.xml" or path == "/sitemap.xml":
             return httpx.Response(
                 200,
                 text='<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9"></urlset>',
+                headers={"cache-control": "public, max-age=300"},
             )
         if endpoint_path == "/llms.txt" or path == "/llms.txt":
             return httpx.Response(
@@ -137,7 +139,11 @@ def _transport(
                     f"- Opportunities JSON: {public_root}/opportunities\n"
                     f"- Opportunities NDJSON: {public_root}/opportunities.ndjson\n"
                     f"- Digest JSON: {public_root}/digest\n"
+                    "\n## AI consumption guidance\n"
+                    "- Prefer Opportunities NDJSON for bulk reads; it supports "
+                    "cache validation and stable newline-delimited records.\n"
                 ),
+                headers={"cache-control": "public, max-age=300"},
             )
         if endpoint_path == "/docs" or path == "/docs":
             return httpx.Response(
@@ -204,6 +210,10 @@ def _transport(
                         "opportunities_ndjson": (f"{public_root}/opportunities.ndjson"),
                         "digest": f"{public_root}/digest",
                     },
+                    "ai_consumption": {
+                        "preferred_bulk_export": f"{public_root}/opportunities.ndjson",
+                        "cache_policy": {"ndjson_seconds": 300},
+                    },
                     "query_templates": {
                         "opportunities_recent": (
                             "/opportunities?lang=ru&limit=50&min_score=0.5"
@@ -221,6 +231,7 @@ def _transport(
                         "read-only public catalog",
                     ],
                 },
+                headers={"cache-control": "public, max-age=300"},
             )
         if endpoint_path == "/.well-known/qazstack-consumer.json":
             return httpx.Response(
@@ -230,6 +241,7 @@ def _transport(
                     "qazstack_version": "1.40.0",
                     "integration_mode": "python-package",
                 },
+                headers={"cache-control": "public, max-age=60"},
             )
         if endpoint_path == "/.well-known/avds-ui-contract.json":
             return httpx.Response(
@@ -238,6 +250,7 @@ def _transport(
                     "schema_version": "avds-ui-contract-v1",
                     "avds_source": {"version": "4.3.2"},
                 },
+                headers={"cache-control": "public, max-age=60"},
             )
         if endpoint_path == "/.well-known/qdev-ecosystem.json":
             return httpx.Response(
@@ -249,6 +262,7 @@ def _transport(
                         "qazlake": {"direct_write": False},
                     },
                 },
+                headers={"cache-control": "public, max-age=60"},
             )
         return httpx.Response(404, json={"detail": "not found"})
 

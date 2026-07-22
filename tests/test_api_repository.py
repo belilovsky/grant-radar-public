@@ -1026,6 +1026,7 @@ def test_marketing_endpoints_are_exposed(monkeypatch):
     robots = client.get("/robots.txt")
     assert robots.status_code == 200
     assert robots.headers["content-type"].startswith("text/plain")
+    assert robots.headers["cache-control"].startswith("public, max-age=300")
     assert "User-agent: *" in robots.text
     assert "Allow: /" in robots.text
     assert "Disallow: /health" in robots.text
@@ -1035,10 +1036,12 @@ def test_marketing_endpoints_are_exposed(monkeypatch):
     robots_head = client.head("/robots.txt")
     assert robots_head.status_code == 200
     assert robots_head.headers["content-type"].startswith("text/plain")
+    assert robots_head.headers["cache-control"].startswith("public, max-age=300")
 
     llms = client.get("/llms.txt")
     assert llms.status_code == 200
     assert llms.headers["content-type"].startswith("text/plain")
+    assert llms.headers["cache-control"].startswith("public, max-age=300")
     assert "# QAZ.FUND" in llms.text
     assert "Home: http://testserver/" in llms.text
     assert "Sitemap: http://testserver/sitemap.xml" in llms.text
@@ -1063,6 +1066,8 @@ def test_marketing_endpoints_are_exposed(monkeypatch):
     assert "Coverage JSON: http://testserver/coverage" in llms.text
     assert "Opportunities JSON: http://testserver/opportunities" in llms.text
     assert "Opportunities NDJSON: http://testserver/opportunities.ndjson" in llms.text
+    assert "## AI consumption guidance" in llms.text
+    assert "Prefer Opportunities NDJSON for bulk reads" in llms.text
     assert "Opportunity detail JSON: /opportunities/{id}?lang=ru|en" in llms.text
     assert "Digest JSON: http://testserver/digest" in llms.text
     assert "Opportunity page: /opportunity/{id}?lang=ru|en" in llms.text
@@ -1072,10 +1077,12 @@ def test_marketing_endpoints_are_exposed(monkeypatch):
     llms_head = client.head("/llms.txt")
     assert llms_head.status_code == 200
     assert llms_head.headers["content-type"].startswith("text/plain")
+    assert llms_head.headers["cache-control"].startswith("public, max-age=300")
 
     discovery = client.get("/site-discovery.json")
     assert discovery.status_code == 200
     assert discovery.headers["content-type"].startswith("application/json")
+    assert discovery.headers["cache-control"].startswith("public, max-age=300")
     assert discovery.json() == {
         "site": "QAZ.FUND",
         "type": "public-funding-navigator",
@@ -1108,6 +1115,33 @@ def test_marketing_endpoints_are_exposed(monkeypatch):
             "opportunities": "http://testserver/opportunities",
             "opportunities_ndjson": "http://testserver/opportunities.ndjson",
             "digest": "http://testserver/digest",
+        },
+        "ai_consumption": {
+            "preferred_bulk_export": "http://testserver/opportunities.ndjson",
+            "preferred_detail_template": "/opportunities/{id}?lang=ru|en",
+            "preferred_human_template": "/opportunity/{id}?lang=ru|en",
+            "recommended_language_order": ["ru", "en"],
+            "cache_policy": {
+                "discovery_seconds": 300,
+                "catalog_seconds": 60,
+                "ndjson_seconds": 300,
+            },
+            "public_evidence_fields": [
+                "source",
+                "source_url",
+                "discovered_at",
+                "deadline",
+                "score",
+                "evidence_state",
+                "raw.decision_readiness",
+                "raw.ranking",
+            ],
+            "do_not_infer": [
+                "eligibility",
+                "deadline",
+                "award amount",
+                "application result",
+            ],
         },
         "query_templates": {
             "opportunities_recent": (
@@ -1142,6 +1176,7 @@ def test_marketing_endpoints_are_exposed(monkeypatch):
     discovery_head = client.head("/site-discovery.json")
     assert discovery_head.status_code == 200
     assert discovery_head.headers["content-type"].startswith("application/json")
+    assert discovery_head.headers["cache-control"].startswith("public, max-age=300")
 
     qazstack_contract = client.get("/.well-known/qazstack-consumer.json")
     assert qazstack_contract.status_code == 200
@@ -1203,17 +1238,21 @@ def test_marketing_endpoints_are_exposed(monkeypatch):
     favicon = client.get("/favicon.ico")
     assert favicon.status_code == 200
     assert favicon.headers["content-type"].startswith("image/svg+xml")
+    assert favicon.headers["cache-control"].startswith("public, max-age=3600")
     assert "<svg" in favicon.text
     favicon_head = client.head("/favicon.ico")
     assert favicon_head.status_code == 200
     assert favicon_head.headers["content-type"].startswith("image/svg+xml")
+    assert favicon_head.headers["cache-control"].startswith("public, max-age=3600")
 
     sitemap = client.get("/sitemap.xml")
     assert sitemap.status_code == 200
     assert sitemap.headers["content-type"].startswith("application/xml")
+    assert sitemap.headers["cache-control"].startswith("public, max-age=300")
     assert '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9"' in sitemap.text
     sitemap_head = client.head("/sitemap.xml")
     assert sitemap_head.status_code == 200
+    assert sitemap_head.headers["cache-control"].startswith("public, max-age=300")
     assert sitemap_head.headers["content-type"].startswith("application/xml")
     assert "<loc>http://testserver/?lang=ru</loc>" in sitemap.text
     assert (

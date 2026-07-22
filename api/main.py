@@ -114,6 +114,30 @@ _MACHINE_ROUTE_PREFIXES = (
     "/site-discovery.json",
     "/sources",
 )
+_PUBLIC_FAST_CACHE = "public, max-age=60, stale-while-revalidate=300"
+_PUBLIC_DISCOVERY_CACHE = "public, max-age=300, stale-while-revalidate=1800"
+_PUBLIC_LONG_CACHE = "public, max-age=3600, stale-while-revalidate=86400"
+_PUBLIC_FAST_CACHE_PATHS = {
+    "/",
+    "/.well-known/avds-ui-contract.json",
+    "/.well-known/qazstack-consumer.json",
+    "/.well-known/qdev-ecosystem.json",
+    "/coverage",
+    "/funders",
+    "/opportunities",
+}
+_PUBLIC_DISCOVERY_CACHE_PATHS = {
+    "/llms.txt",
+    "/robots.txt",
+    "/site-discovery.json",
+    "/sitemap.xml",
+    "/sources",
+}
+_PUBLIC_LONG_CACHE_PATHS = {
+    "/favicon.ico",
+    "/og-image.svg",
+    f"/{GOOGLE_SITE_VERIFICATION_FILENAME}",
+}
 
 
 @app.exception_handler(StarletteHTTPException)
@@ -203,18 +227,13 @@ async def add_security_headers(
         "Permissions-Policy",
         "camera=(), microphone=(), geolocation=(), payment=()",
     )
-    if request.method in {"GET", "HEAD"} and request.url.path in {
-        "/",
-        "/.well-known/avds-ui-contract.json",
-        "/.well-known/qazstack-consumer.json",
-        "/.well-known/qdev-ecosystem.json",
-        "/coverage",
-        "/funders",
-        "/opportunities",
-    }:
-        response.headers.setdefault(
-            "Cache-Control", "public, max-age=60, stale-while-revalidate=300"
-        )
+    if request.method in {"GET", "HEAD"}:
+        if request.url.path in _PUBLIC_FAST_CACHE_PATHS:
+            response.headers.setdefault("Cache-Control", _PUBLIC_FAST_CACHE)
+        elif request.url.path in _PUBLIC_DISCOVERY_CACHE_PATHS:
+            response.headers.setdefault("Cache-Control", _PUBLIC_DISCOVERY_CACHE)
+        elif request.url.path in _PUBLIC_LONG_CACHE_PATHS:
+            response.headers.setdefault("Cache-Control", _PUBLIC_LONG_CACHE)
     return response
 
 
@@ -1655,6 +1674,20 @@ async def llms_txt(request: Request) -> Response:
                 "- Opportunity detail JSON: /opportunities/{id}?lang=ru|en",
                 f"- Digest JSON: {digest}",
                 "",
+                "## AI consumption guidance",
+                (
+                    "- Prefer Opportunities NDJSON for bulk reads; it supports "
+                    "cache validation and stable newline-delimited records."
+                ),
+                (
+                    "- Use Site discovery JSON for route templates, query templates, "
+                    "cache expectations, and contract URLs."
+                ),
+                (
+                    "- Cache public discovery documents for at least 300 seconds "
+                    "unless HTTP headers say otherwise."
+                ),
+                "",
                 "## Public route templates",
                 "- Opportunity page: /opportunity/{id}?lang=ru|en",
                 "- Funder page: /funder/{slug}?lang=ru|en",
@@ -1748,6 +1781,33 @@ async def site_discovery(request: Request) -> Response:
             "opportunities": opportunities,
             "opportunities_ndjson": opportunities_ndjson,
             "digest": digest,
+        },
+        "ai_consumption": {
+            "preferred_bulk_export": opportunities_ndjson,
+            "preferred_detail_template": "/opportunities/{id}?lang=ru|en",
+            "preferred_human_template": "/opportunity/{id}?lang=ru|en",
+            "recommended_language_order": ["ru", "en"],
+            "cache_policy": {
+                "discovery_seconds": 300,
+                "catalog_seconds": 60,
+                "ndjson_seconds": 300,
+            },
+            "public_evidence_fields": [
+                "source",
+                "source_url",
+                "discovered_at",
+                "deadline",
+                "score",
+                "evidence_state",
+                "raw.decision_readiness",
+                "raw.ranking",
+            ],
+            "do_not_infer": [
+                "eligibility",
+                "deadline",
+                "award amount",
+                "application result",
+            ],
         },
         "query_templates": {
             "opportunities_recent": (

@@ -90,6 +90,11 @@ def _require(condition: bool, message: str) -> None:
         raise SmokeError(message)
 
 
+def _is_public_cacheable(response: httpx.Response, min_age: int) -> bool:
+    cache_control = response.headers.get("cache-control", "").lower()
+    return "public" in cache_control and f"max-age={min_age}" in cache_control
+
+
 def run_smoke(
     *,
     base_url: str,
@@ -142,6 +147,9 @@ def run_smoke(
         robots = _get_text(client, base_url, "/robots.txt")
         sitemap = _get_text(client, base_url, "/sitemap.xml")
         llms = _get_text(client, base_url, "/llms.txt")
+        robots_head = _head(client, base_url, "/robots.txt")
+        sitemap_head = _head(client, base_url, "/sitemap.xml")
+        llms_head = _head(client, base_url, "/llms.txt")
         docs = _get_text(client, base_url, "/docs")
         docs_head = _head(client, base_url, "/docs")
         status_page = _get_text(client, base_url, "/status?lang=ru")
@@ -149,13 +157,17 @@ def run_smoke(
         operator_page = _get_text(client, base_url, "/operator?lang=ru")
         operator_head = _head(client, base_url, "/operator?lang=ru")
         discovery = _get_json(client, base_url, "/site-discovery.json")
+        discovery_head = _head(client, base_url, "/site-discovery.json")
         qazstack_contract = _get_json(
             client, base_url, "/.well-known/qazstack-consumer.json"
         )
+        qazstack_head = _head(client, base_url, "/.well-known/qazstack-consumer.json")
         avds_contract = _get_json(
             client, base_url, "/.well-known/avds-ui-contract.json"
         )
+        avds_head = _head(client, base_url, "/.well-known/avds-ui-contract.json")
         ecosystem = _get_json(client, base_url, "/.well-known/qdev-ecosystem.json")
+        ecosystem_head = _head(client, base_url, "/.well-known/qdev-ecosystem.json")
 
     _require(health.get("status") == "ok", "health status is not ok")
     _require(
@@ -224,6 +236,11 @@ def run_smoke(
             f"Release metadata JSON: "
             f"{_url(base_url, '/.well-known/release.json')}" in llms
         ),
+        "llms_ai_guidance": "## AI consumption guidance" in llms,
+        "llms_ndjson_guidance": "Prefer Opportunities NDJSON for bulk reads" in llms,
+        "robots_cache": _is_public_cacheable(robots_head, 300),
+        "sitemap_cache": _is_public_cacheable(sitemap_head, 300),
+        "llms_cache": _is_public_cacheable(llms_head, 300),
         "docs_brand": "QAZ.FUND API" in docs,
         "docs_openapi": "/openapi.json" in docs,
         "docs_head": docs_head.headers.get("content-type", "").startswith("text/html"),
@@ -260,6 +277,18 @@ def run_smoke(
             (discovery.get("data_endpoints") or {}).get("opportunities_ndjson") or ""
         )
         == _url(base_url, "/opportunities.ndjson"),
+        "site_discovery_cache": _is_public_cacheable(discovery_head, 300),
+        "site_discovery_ai_bulk_export": str(
+            (discovery.get("ai_consumption") or {}).get("preferred_bulk_export") or ""
+        )
+        == _url(base_url, "/opportunities.ndjson"),
+        "site_discovery_ai_cache_policy": int(
+            ((discovery.get("ai_consumption") or {}).get("cache_policy") or {}).get(
+                "ndjson_seconds"
+            )
+            or 0
+        )
+        >= 300,
         "site_discovery_qazstack": str(
             (discovery.get("contracts") or {}).get("qazstack") or ""
         )
@@ -272,10 +301,12 @@ def run_smoke(
             qazstack_contract.get("schema_version") == "qazstack-consumer-v1"
             and qazstack_contract.get("qazstack_version") == "1.40.0"
             and qazstack_contract.get("integration_mode") == "python-package"
+            and _is_public_cacheable(qazstack_head, 60)
         ),
         "avds4_contract": (
             avds_contract.get("schema_version") == "avds-ui-contract-v1"
             and (avds_contract.get("avds_source") or {}).get("version") == "4.3.2"
+            and _is_public_cacheable(avds_head, 60)
         ),
         "ecosystem_contract": (
             ecosystem.get("schema_version") == "qdev-ecosystem-integration-v1"
@@ -285,6 +316,7 @@ def run_smoke(
             .get("qazlake", {})
             .get("direct_write")
             is False
+            and _is_public_cacheable(ecosystem_head, 60)
         ),
     }
     missing_discovery = [
