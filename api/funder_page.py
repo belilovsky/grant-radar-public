@@ -10,12 +10,13 @@ from html import escape
 from typing import Any, cast
 from urllib.parse import urlparse
 
+from qazstack.opportunities import public_lifecycle
+
 from api.avds import AVDS_CSS, AVDS_FONT_HEAD
 from api.dashboard import dashboard_copy
 from api.public_meta import analytics_head_html, og_image_url
 from core.models import Opportunity
 from core.nlp import clean_source_summary
-from qazstack.opportunities import public_lifecycle
 
 _ACRONYM_MAP = {
     "ai": "AI",

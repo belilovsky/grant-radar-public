@@ -59,7 +59,7 @@ def test_root_renders_service_landing(monkeypatch):
     assert "--badge-outline" in response.text
     assert "--color-focus-ring: var(--av-focus-ring)" in response.text
     assert "--color-bg: var(--av-color-background)" in response.text
-    assert "width: min(var(--container-max), calc(100% - 28px));" in response.text
+    assert "width: min(var(--container-max), calc(100% - 48px));" in response.text
     assert "grid-template-columns: repeat(3, minmax(148px, 196px));" in response.text
     assert "width: fit-content;" in response.text
     assert "grid-template-columns: repeat(3, minmax(0, 1fr));" in response.text
@@ -534,7 +534,10 @@ def test_root_renders_service_landing(monkeypatch):
     assert "content-visibility: auto;" not in response.text
     assert "contain-intrinsic-size:" not in response.text
     assert ".opportunity {" in response.text
-    assert "border-left: 2px solid var(--line-strong);" in response.text
+    opportunity_css = response.text.split(".opportunity {", 1)[1].split("}", 1)[0]
+    assert "border: 0;" in opportunity_css
+    assert "border-top: 1px solid var(--line);" in opportunity_css
+    assert "border-left:" not in opportunity_css
     assert ".opportunity-content {" in response.text
     assert ".opportunity-rail {" in response.text
     assert 'class="opportunity-rail"' in response.text

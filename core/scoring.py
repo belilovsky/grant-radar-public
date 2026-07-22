@@ -7,13 +7,14 @@ from dataclasses import asdict, dataclass
 from datetime import date
 from typing import Any
 
+from qazstack.opportunities import is_rolling_item
+
 from core.geofit import (
     exclusion_reason,
     has_positive_geo_signal,
     is_low_confidence_for_kazakhstan_focus,
 )
 from core.models import Opportunity
-from qazstack.opportunities import is_rolling_item
 
 MODEL_VERSION = "qazfund-relevance-v2"
 PUBLIC_RELEVANCE_THRESHOLD = 0.3

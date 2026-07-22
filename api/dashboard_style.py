@@ -58,19 +58,20 @@ DASHBOARD_CSS = r"""    :root {
       display: none;
     }
     .shell {
-      width: min(var(--container-max), calc(100% - 28px));
+      width: min(var(--container-max), calc(100% - 48px));
       margin: 0 auto;
-      padding: var(--av-spacing-3) 0 var(--av-spacing-8);
+      padding: 22px 0 var(--av-spacing-8);
     }
     .hero-band {
       position: relative;
       overflow: hidden;
-      padding: 16px 18px 0;
-      margin-bottom: var(--av-spacing-3);
-      border: 1px solid var(--line-subtle);
-      border-radius: var(--av-radius-md);
-      background: var(--panel);
-      box-shadow: var(--shadow-xs);
+      padding: 20px 0 0;
+      margin-bottom: 16px;
+      border: 0;
+      border-bottom: 1px solid var(--line);
+      border-radius: 0;
+      background: transparent;
+      box-shadow: none;
       isolation: isolate;
     }
     .hero-band::before {
@@ -83,22 +84,24 @@ DASHBOARD_CSS = r"""    :root {
       position: sticky;
       top: 0;
       z-index: 24;
-      padding: 0 0 var(--av-spacing-2);
-      margin-bottom: var(--av-spacing-1);
-      background: transparent;
-      backdrop-filter: none;
+      padding: 0;
+      margin-bottom: 10px;
+      background: color-mix(in oklab, var(--bg), transparent 5%);
+      backdrop-filter: blur(14px);
     }
     .sticky-bar {
       display: flex;
       align-items: center;
       justify-content: space-between;
       gap: var(--av-spacing-3);
-      padding: 8px 10px;
-      border: 1px solid var(--line-subtle);
-      border-radius: var(--av-radius-md);
-      background: color-mix(in oklab, var(--panel), transparent 8%);
-      box-shadow: var(--shadow-xs);
-      backdrop-filter: blur(12px);
+      min-height: 52px;
+      padding: 7px 0;
+      border: 0;
+      border-bottom: 1px solid var(--line);
+      border-radius: 0;
+      background: transparent;
+      box-shadow: none;
+      backdrop-filter: none;
     }
     .topbar {
       display: grid;
@@ -126,8 +129,8 @@ DASHBOARD_CSS = r"""    :root {
     }
     .brand h1 {
       margin: 0;
-      font-size: clamp(32px, 3.5vw, 44px);
-      line-height: 1;
+      font-size: 42px;
+      line-height: 1.05;
       letter-spacing: 0;
     }
     .brand p {
@@ -162,8 +165,8 @@ DASHBOARD_CSS = r"""    :root {
     }
     .hero-grid {
       display: grid;
-      grid-template-columns: minmax(0, 1fr) minmax(480px, 0.72fr);
-      gap: var(--av-spacing-4);
+      grid-template-columns: minmax(0, 1fr) minmax(390px, 0.6fr);
+      gap: 48px;
       align-items: start;
       margin-bottom: var(--av-spacing-3);
     }
@@ -172,14 +175,14 @@ DASHBOARD_CSS = r"""    :root {
       gap: var(--av-spacing-3);
       align-content: start;
       min-width: 0;
-      padding: var(--av-spacing-2) var(--av-spacing-1) 0;
+      padding: var(--av-spacing-2) 0 0;
     }
     .hero-intro {
       margin: 0;
       max-width: 64ch;
       color: color-mix(in oklab, var(--ink), white 20%);
-      font-size: var(--av-text-base);
-      line-height: 1.55;
+      font-size: 15px;
+      line-height: 1.6;
     }
     .hero-actions {
       display: flex;
@@ -221,7 +224,7 @@ DASHBOARD_CSS = r"""    :root {
       gap: var(--av-spacing-3);
       min-width: 0;
       align-content: start;
-      padding: 4px 0 4px var(--av-spacing-4);
+      padding: 4px 0 4px 28px;
       border: 0;
       border-left: 1px solid var(--line-subtle);
       border-radius: 0;
@@ -239,7 +242,7 @@ DASHBOARD_CSS = r"""    :root {
     .hero-stage-title {
       margin: 0;
       font-family: var(--font-sans);
-      font-size: clamp(16px, 1.35vw, 18px);
+      font-size: 18px;
       font-weight: 700;
       line-height: var(--av-leading-tight);
       letter-spacing: 0;
@@ -286,8 +289,8 @@ DASHBOARD_CSS = r"""    :root {
       min-height: 28px;
       padding-inline: 8px;
       border-radius: var(--av-radius-md);
-      border: 1px solid color-mix(in oklab, var(--line), var(--brand) 18%);
-      background: rgb(255 255 255 / 0.56);
+      border: 1px solid var(--line-subtle);
+      background: transparent;
       color: var(--ink);
       font-size: var(--av-text-xs);
       font-weight: 700;
@@ -315,8 +318,8 @@ DASHBOARD_CSS = r"""    :root {
       border-radius: 0;
     }
     .hero-band .metric {
-      min-height: 64px;
-      padding: 10px 12px;
+      min-height: 72px;
+      padding: 14px 18px;
       border-top: 0;
     }
     .hero-band .metric span {
@@ -1153,12 +1156,12 @@ DASHBOARD_CSS = r"""    :root {
       align-items: flex-end;
       flex-wrap: wrap;
       gap: var(--av-spacing-1);
-      margin-bottom: var(--av-spacing-1);
+      margin-bottom: 12px;
     }
     .panel-head h2 {
       margin: 0;
       font-family: var(--font-sans);
-      font-size: 18px;
+      font-size: 22px;
       font-weight: 700;
       line-height: var(--av-leading-tight);
     }
@@ -1181,13 +1184,13 @@ DASHBOARD_CSS = r"""    :root {
     .filter-disclosure-body { display: contents; }
     .filters-shell {
       display: grid;
-      gap: var(--av-spacing-2);
-      margin-bottom: var(--av-spacing-2);
-      padding: 10px 12px 12px;
-      border: 1px solid var(--line);
-      border-top: 0;
-      border-radius: 0 0 var(--av-radius-md) var(--av-radius-md);
-      background: var(--panel);
+      gap: 12px;
+      margin-bottom: 12px;
+      padding: 14px 0 16px;
+      border: 0;
+      border-bottom: 1px solid var(--line);
+      border-radius: 0;
+      background: transparent;
       box-shadow: none;
     }
     .filters {
@@ -1206,7 +1209,7 @@ DASHBOARD_CSS = r"""    :root {
     }
     .advanced-filters {
       border-top: 1px solid var(--line-subtle);
-      padding-top: 8px;
+      padding-top: 10px;
     }
     .advanced-filters > summary {
       display: inline-flex;
@@ -1215,9 +1218,9 @@ DASHBOARD_CSS = r"""    :root {
       align-items: center;
       gap: 6px;
       padding: 0 10px;
-      border: 1px solid var(--line-subtle);
-      border-radius: var(--av-radius-full);
-      background: var(--panel);
+      border: 0;
+      border-radius: var(--av-radius-sm);
+      background: transparent;
       color: var(--ink);
       cursor: pointer;
       font-size: var(--av-text-sm);
@@ -1255,10 +1258,11 @@ DASHBOARD_CSS = r"""    :root {
       grid-template-columns: repeat(3, minmax(0, 1fr));
       gap: 0;
       margin-bottom: 0;
-      padding: 10px 12px;
-      border: 1px solid var(--line);
-      border-radius: var(--av-radius-md) var(--av-radius-md) 0 0;
-      background: var(--panel);
+      padding: 14px 0;
+      border: 0;
+      border-top: 1px solid var(--line);
+      border-radius: 0;
+      background: transparent;
     }
     .preset-group {
       display: grid;
@@ -1284,9 +1288,9 @@ DASHBOARD_CSS = r"""    :root {
     .preset-button {
       min-height: 32px;
       padding: 0 11px;
-      border: 1px solid var(--line-subtle);
+      border: 1px solid transparent;
       border-radius: var(--av-radius-md);
-      background: var(--panel);
+      background: var(--panel-subtle);
       color: var(--muted);
       font-size: var(--av-text-xs);
       font-weight: 700;
@@ -1324,12 +1328,7 @@ DASHBOARD_CSS = r"""    :root {
       text-transform: none;
     }
     .filter-label::before {
-      content: "";
-      width: 6px;
-      height: 6px;
-      border-radius: var(--av-radius-full);
-      background: color-mix(in oklab, var(--brand), transparent 40%);
-      box-shadow: 0 0 0 3px color-mix(in oklab, var(--brand-soft), transparent 36%);
+      content: none;
     }
     .filters-meta {
       display: flex;
@@ -1412,10 +1411,11 @@ DASHBOARD_CSS = r"""    :root {
       display: grid;
       gap: var(--av-spacing-2);
       margin: 0 0 var(--av-spacing-3);
-      padding: 12px;
-      border: 1px solid var(--line-subtle);
-      border-radius: var(--av-radius-md);
-      background: var(--panel-subtle);
+      padding: 12px 0;
+      border: 0;
+      border-bottom: 1px solid var(--line-subtle);
+      border-radius: 0;
+      background: transparent;
     }
     .workspace-queue[hidden] { display: none; }
     .workspace-queue-head {
@@ -1635,18 +1635,22 @@ DASHBOARD_CSS = r"""    :root {
       border-color: var(--danger);
       background: var(--danger-soft);
     }
-    .list { display: grid; gap: var(--av-spacing-1); }
+    .list {
+      display: grid;
+      gap: 0;
+      border-bottom: 1px solid var(--line);
+    }
     .list-actions {
       display: flex;
       justify-content: center;
       margin-top: var(--av-spacing-3);
     }
     .opportunity {
-      border: 1px solid var(--line);
-      border-left: 2px solid var(--line-strong);
-      border-radius: var(--av-radius-md);
-      background: var(--panel);
-      padding: 13px 14px;
+      border: 0;
+      border-top: 1px solid var(--line);
+      border-radius: 0;
+      background: transparent;
+      padding: 22px 4px;
       box-shadow: none;
       position: relative;
       overflow: visible;
@@ -1655,33 +1659,34 @@ DASHBOARD_CSS = r"""    :root {
         color var(--av-duration-base) var(--av-easing-emphasized);
     }
     .opportunity:hover {
-      background: color-mix(in oklab, var(--panel), var(--brand-soft) 5%);
-      box-shadow: var(--shadow-sm);
+      background: color-mix(in oklab, var(--panel), var(--brand-soft) 7%);
+      box-shadow: none;
     }
-    .opportunity.good { border-left-color: var(--good); }
-    .opportunity.warn { border-left-color: var(--warn); }
+    .opportunity.good,
+    .opportunity.warn { border-left-color: transparent; }
     .opportunity-main {
       display: grid;
-      grid-template-columns: minmax(0, 1fr) minmax(420px, 0.46fr);
-      gap: 14px;
+      grid-template-columns: minmax(0, 1fr) minmax(310px, 0.36fr);
+      gap: 36px;
       align-items: start;
     }
     .opportunity-content {
       display: grid;
-      gap: 8px;
+      gap: 12px;
       min-width: 0;
     }
     .opportunity-rail {
       display: grid;
-      grid-template-columns: minmax(150px, 0.8fr) minmax(190px, 1fr);
+      grid-template-columns: minmax(0, 1fr);
       grid-template-areas:
-        "status meta"
-        "fit meta"
-        "actions meta";
+        "status"
+        "meta"
+        "fit"
+        "actions";
       align-content: start;
-      gap: 8px;
+      gap: 12px;
       min-width: 0;
-      padding: 1px 0 1px 14px;
+      padding: 2px 0 2px 24px;
       border: 0;
       border-left: 1px solid var(--line-subtle);
       border-radius: 0;
@@ -1689,13 +1694,13 @@ DASHBOARD_CSS = r"""    :root {
     }
     .opportunity-heading {
       display: grid;
-      gap: 6px;
+      gap: 9px;
     }
     .opportunity h3 {
       margin: 0;
-      font-size: 16px;
-      font-weight: 650;
-      line-height: var(--av-leading-snug);
+      font-size: 19px;
+      font-weight: 700;
+      line-height: 1.3;
       display: -webkit-box;
       -webkit-line-clamp: 3;
       -webkit-box-orient: vertical;
@@ -1715,20 +1720,21 @@ DASHBOARD_CSS = r"""    :root {
     .opportunity-summary {
       margin: 0;
       color: var(--muted);
-      font-size: var(--av-text-sm);
-      line-height: var(--av-leading-snug);
+      max-width: 78ch;
+      font-size: 14px;
+      line-height: 1.58;
       display: -webkit-box;
-      -webkit-line-clamp: 2;
+      -webkit-line-clamp: 3;
       -webkit-box-orient: vertical;
       overflow: hidden;
     }
     .tags { display: flex; flex-wrap: wrap; gap: var(--av-spacing-1); }
     .tag {
       border-radius: var(--av-radius-sm);
-      border: 1px solid var(--line-subtle);
-      background: var(--panel);
+      border: 0;
+      background: var(--panel-subtle);
       color: var(--muted);
-      padding: 2px 6px;
+      padding: 3px 7px;
       font-family: var(--font-mono);
       font-size: var(--av-text-xs);
       line-height: 1.4;
@@ -1816,30 +1822,23 @@ DASHBOARD_CSS = r"""    :root {
     .meta-rows {
       grid-area: meta;
       display: grid;
-      grid-template-columns: 1fr;
-      gap: 5px;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 10px 18px;
     }
     .meta-row {
       display: grid;
-      grid-template-columns: 18px minmax(0, 1fr);
-      gap: 6px;
-      align-items: center;
+      grid-template-columns: minmax(0, 1fr);
+      gap: 3px;
+      align-items: start;
       min-width: 0;
-      font-size: var(--av-text-xs);
-      line-height: var(--av-leading-snug);
+      padding-top: 8px;
+      border-top: 1px solid var(--line-subtle);
+      font-size: 12px;
+      line-height: 1.4;
     }
     .meta-row::before {
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-      width: 18px;
-      height: 18px;
-      border-radius: var(--av-radius-sm);
-      background: var(--panel);
-      color: var(--muted);
-      font-size: 11px;
-      font-weight: 700;
-      box-shadow: inset 0 0 0 1px var(--line-subtle);
+      content: none !important;
+      display: none;
     }
     .meta-row:nth-child(1)::before {
       content: "";
@@ -1869,12 +1868,12 @@ DASHBOARD_CSS = r"""    :root {
         var(--panel);
     }
     .meta-row span {
-      grid-column: 2;
+      grid-column: 1;
       color: var(--muted);
       font-weight: 600;
     }
     .meta-row strong {
-      grid-column: 2;
+      grid-column: 1;
       min-width: 0;
       color: var(--ink);
       font-weight: 650;
@@ -1917,7 +1916,7 @@ DASHBOARD_CSS = r"""    :root {
       align-items: center;
       justify-content: flex-start;
       flex-wrap: wrap;
-      gap: 6px;
+      gap: 7px;
     }
     .score {
       display: inline-flex;
@@ -1925,8 +1924,8 @@ DASHBOARD_CSS = r"""    :root {
       justify-content: center;
       gap: 5px;
       min-width: 72px;
-      min-height: 24px;
-      padding: 0 8px;
+      min-height: 28px;
+      padding: 0 10px;
       border-radius: var(--av-radius-full);
       background: var(--brand-soft);
       color: var(--brand);
@@ -1953,7 +1952,7 @@ DASHBOARD_CSS = r"""    :root {
       align-items: center;
       justify-content: center;
       gap: 5px;
-      min-height: 24px;
+      min-height: 28px;
       width: max-content;
       max-width: 100%;
       border: 1px solid transparent;
@@ -2043,11 +2042,12 @@ DASHBOARD_CSS = r"""    :root {
       display: flex;
       align-items: center;
       gap: 0.85rem;
-      border: 1px solid var(--line-subtle);
-      border-radius: var(--av-radius-md);
-      padding: 0.75rem;
-      background: var(--panel);
-      min-height: 58px;
+      border: 0;
+      border-top: 1px solid var(--line-subtle);
+      border-radius: 0;
+      padding: 14px 4px;
+      background: transparent;
+      min-height: 66px;
       color: inherit;
       text-decoration: none;
       transition:
@@ -2093,8 +2093,8 @@ DASHBOARD_CSS = r"""    :root {
       color: var(--av-color-red-700);
     }
     .source-card:hover {
-      background: color-mix(in oklab, var(--panel), var(--brand-soft) 6%);
-      box-shadow: var(--shadow-xs);
+      background: color-mix(in oklab, var(--panel), var(--brand-soft) 7%);
+      box-shadow: none;
       transform: none;
     }
     .source-card strong {
@@ -2309,12 +2309,12 @@ DASHBOARD_CSS = r"""    :root {
     .footer-sep { color: var(--line-strong); }
     .site-footer {
       display: grid;
-      gap: 6px;
+      gap: 10px;
       margin-top: var(--section-gap);
-      padding: 16px 0 0;
+      padding: 24px 0 0;
       border-top: 1px solid var(--line);
       color: var(--muted);
-      font-size: var(--av-text-xs);
+      font-size: var(--av-text-sm);
       line-height: 1.55;
     }
     .site-footer-nav {
@@ -2396,14 +2396,14 @@ DASHBOARD_CSS = r"""    :root {
       justify-content: space-between;
       align-items: flex-start;
       gap: var(--av-spacing-2);
-      padding: 12px;
+      padding: 18px 20px;
       border-bottom: 1px solid var(--line-subtle);
-      background: color-mix(in oklab, var(--panel), var(--brand-soft) 9%);
+      background: var(--panel);
     }
     .detail-header h2 {
       margin: var(--av-spacing-1) 0 0;
       font-family: var(--font-sans);
-      font-size: var(--av-text-lg);
+      font-size: 19px;
       line-height: var(--av-leading-tight);
     }
     .detail-status {
@@ -2419,9 +2419,9 @@ DASHBOARD_CSS = r"""    :root {
     }
     .detail-body {
       overflow-y: auto;
-      padding: 12px;
+      padding: 18px 20px;
       display: grid;
-      gap: var(--av-spacing-2);
+      gap: 18px;
       align-content: start;
     }
     .detail-meta {
@@ -2431,11 +2431,11 @@ DASHBOARD_CSS = r"""    :root {
     .detail-fit {
       display: grid;
       gap: var(--av-spacing-2);
-      padding: 10px 12px;
-      border: 1px solid var(--line-subtle);
-      border-left: 3px solid var(--brand);
-      border-radius: var(--av-radius-md);
-      background: var(--accent-wash);
+      padding: 12px 0 12px 14px;
+      border: 0;
+      border-left: 2px solid var(--brand);
+      border-radius: 0;
+      background: transparent;
     }
     .detail-fit h3 {
       margin: 0;
@@ -2452,9 +2452,11 @@ DASHBOARD_CSS = r"""    :root {
     .detail-readiness {
       display: grid;
       gap: 5px;
-      padding: 10px 12px;
-      border-radius: var(--av-radius-md);
-      background: var(--panel-wash);
+      padding: 12px 0;
+      border-top: 1px solid var(--line-subtle);
+      border-bottom: 1px solid var(--line-subtle);
+      border-radius: 0;
+      background: transparent;
     }
     .detail-readiness h3 {
       margin: 0;
@@ -2470,14 +2472,15 @@ DASHBOARD_CSS = r"""    :root {
     .detail-meta-grid {
       display: grid;
       grid-template-columns: repeat(2, minmax(0, 1fr));
-      gap: var(--av-spacing-2);
+      gap: 0 18px;
     }
     .detail-meta-item {
       min-width: 0;
-      padding: 10px;
-      border: 1px solid var(--line-subtle);
-      border-radius: var(--av-radius-md);
-      background: var(--panel-wash);
+      padding: 11px 0;
+      border: 0;
+      border-top: 1px solid var(--line-subtle);
+      border-radius: 0;
+      background: transparent;
     }
     .detail-meta-item span {
       display: block;
@@ -2532,7 +2535,7 @@ DASHBOARD_CSS = r"""    :root {
       align-items: center;
       gap: var(--av-spacing-2);
       flex-wrap: wrap;
-      padding: 12px;
+      padding: 14px 20px;
       border-top: 1px solid var(--line-subtle);
       background: transparent;
     }
@@ -2879,9 +2882,11 @@ DASHBOARD_CSS = r"""    :root {
       }
       .filter-disclosure {
         margin-bottom: var(--av-spacing-2);
-        border: 1px solid var(--line-subtle);
-        border-radius: var(--av-radius-md);
-        background: var(--panel);
+        border: 0;
+        border-top: 1px solid var(--line-subtle);
+        border-bottom: 1px solid var(--line-subtle);
+        border-radius: 0;
+        background: transparent;
       }
       .filter-disclosure > summary {
         display: flex;
@@ -3009,7 +3014,7 @@ DASHBOARD_CSS = r"""    :root {
         grid-template-columns: 32px minmax(0, 1fr) auto;
         align-items: flex-start;
         gap: 0.6rem;
-        padding: 0.75rem;
+        padding: 14px 2px;
       }
       .source-icon {
         grid-column: 1;
@@ -3047,7 +3052,7 @@ DASHBOARD_CSS = r"""    :root {
       }
       .meta-rows { grid-template-columns: 1fr; }
       .meta-row {
-        grid-template-columns: 18px minmax(68px, 0.42fr) minmax(0, 1fr);
+        grid-template-columns: minmax(86px, 0.42fr) minmax(0, 1fr);
       }
       .meta-row span,
       .meta-row strong { grid-column: auto; }

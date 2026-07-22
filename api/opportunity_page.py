@@ -939,7 +939,7 @@ def render_opportunity_page(
       --success-soft: var(--color-success-subtle);
       --radius: var(--av-radius-lg);
       --shadow: var(--shadow-md);
-      --container-max: min(1180px, calc(100% - 32px));
+      --container-max: min(1280px, calc(100% - 48px));
     }}
     * {{ box-sizing: border-box; }}
     body {{
@@ -996,12 +996,14 @@ def render_opportunity_page(
     .hero {{
       display: grid;
       gap: 12px;
-      padding: 18px;
-      border: 1px solid var(--line);
-      border-radius: var(--av-radius-md);
-      background: var(--surface);
-      box-shadow: var(--av-shadow-xs);
-      margin-bottom: 12px;
+      padding: 24px 0;
+      border: 0;
+      border-top: 1px solid var(--line);
+      border-bottom: 1px solid var(--line);
+      border-radius: 0;
+      background: transparent;
+      box-shadow: none;
+      margin-bottom: 14px;
     }}
     .eyebrow {{
       color: var(--muted);
@@ -1014,7 +1016,7 @@ def render_opportunity_page(
     .hero h1 {{
       margin: 0;
       max-width: 30ch;
-      font-size: clamp(26px, 2.5vw, 34px);
+      font-size: 36px;
       line-height: 1.06;
       text-wrap: balance;
     }}
@@ -1028,7 +1030,7 @@ def render_opportunity_page(
     .hero-grid {{
       display: grid;
       grid-template-columns: minmax(0, 1.7fr) minmax(230px, 0.62fr);
-      gap: 18px;
+      gap: 36px;
       align-items: start;
     }}
     .hero-actions {{
@@ -1518,12 +1520,12 @@ def render_opportunity_page(
     }}
     .site-footer {{
       display: grid;
-      gap: 4px;
+      gap: 8px;
       margin-top: 28px;
-      padding-top: 16px;
+      padding-top: 22px;
       border-top: 1px solid var(--line);
       color: var(--muted);
-      font-size: var(--av-text-xs);
+      font-size: var(--av-text-sm);
       line-height: 1.5;
     }}
     .site-footer-nav {{
@@ -1585,6 +1587,7 @@ def render_opportunity_page(
       .related-card {{
         padding: 12px;
       }}
+      .hero {{ padding-inline: 0; }}
       .hero h1 {{
         font-size: 24px;
       }}
