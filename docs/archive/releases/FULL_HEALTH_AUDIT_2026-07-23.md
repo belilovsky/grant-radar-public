@@ -36,12 +36,18 @@
 - `grant-radar` is not clean:
   - Dirty files: `.env.example`, `DEPLOYMENT.md`, `api/main.py`, `core/db.py`, `tests/test_api_repository.py`
   - It is on feature branch `codex/grant-radar-robots-head-2026-06-14`
-- `grant-radar-ops` is not clean:
-  - Untracked file: `.mcp.json`
-  - It is on `main` with clean branch status otherwise
+- `grant-radar-ops` is clean:
+  - On `main` and aligned with `origin/main`
+  - No untracked files after local cleanup
+
+### Documentation and release drift
+
+- `grant-radar-public` has two local docs commits after the audited production revision:
+  - `498996e` and `9ddafae`
+- `grant-radar-public` is `2` commits ahead of `origin/main` locally because docs updates have not been pushed yet
 
 ## Open risk and action items
 
-1. Close the local repo hygiene drift in `grant-radar` and `grant-radar-ops` before claiming a global multi-repository finish.
+1. Close the local repo hygiene drift in `grant-radar` before claiming a global multi-repository finish.
 2. Keep `main` on all repos clean before any further cross-repo release decisions.
 3. Continue periodic production proof after each content or UI pass.
