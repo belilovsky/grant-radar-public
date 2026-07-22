@@ -227,7 +227,7 @@ def _transport(
                 200,
                 json={
                     "schema_version": "qazstack-consumer-v1",
-                    "qazstack_version": "1.37.2",
+                    "qazstack_version": "1.40.0",
                     "integration_mode": "python-package",
                 },
             )

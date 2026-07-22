@@ -15,7 +15,7 @@ from api.dashboard import dashboard_copy
 from api.public_meta import analytics_head_html, og_image_url
 from core.models import Opportunity
 from core.nlp import clean_source_summary
-from core.opportunity_intelligence import public_lifecycle
+from qazstack.opportunities import public_lifecycle
 
 _ACRONYM_MAP = {
     "ai": "AI",

@@ -22,6 +22,7 @@ from fastapi.responses import HTMLResponse, JSONResponse, RedirectResponse, Resp
 from qazstack.content import diversify_ranked_items
 from qazstack.evidence import count_evidence_states, resolve_public_evidence_state
 from qazstack.export import ndjson_response
+from qazstack.opportunities import normalized_opportunity_status, public_lifecycle
 from starlette.exceptions import HTTPException as StarletteHTTPException
 from starlette.middleware.gzip import GZipMiddleware
 from starlette.middleware.trustedhost import TrustedHostMiddleware
@@ -55,10 +56,6 @@ from core.localization import (
 )
 from core.models import Digest, Opportunity, OpportunityDetail, OpportunityType
 from core.nlp import clean_source_summary
-from core.opportunity_intelligence import (
-    normalized_opportunity_status,
-    public_lifecycle,
-)
 from core.persistence import Repository
 from core.pipeline import run_all
 from core.repository_factory import make_repository

@@ -16,7 +16,7 @@ prove.
 
 | System | Runtime status | Boundary |
 | --- | --- | --- |
-| QazStack 1.37.2 | `runtime-proven` | QAZ.FUND uses neutral contracts, source/content normalization, evidence states, diversified listing and machine-export helpers. Product relevance policy stays local. |
+| QazStack 1.40.0 | `runtime-proven` | QAZ.FUND uses neutral contracts, source/content normalization, lifecycle normalization, evidence states, diversified listing and machine-export helpers. Product relevance policy stays local. |
 | AV DS 4.3.2 | `adapter-aligned` | FastAPI pages use a local SSR adapter mapped to AV DS component families. No React package import is claimed. |
 | QazPipe | `interface-ready` | QazPipe can pull the public `/opportunities` API with stable pagination and provenance. Activation remains consumer-controlled. |
 | QazLake | `brokered-via-qazpipe` | Public records may be archived through QazPipe. QAZ.FUND never writes directly into QazLake tables. |

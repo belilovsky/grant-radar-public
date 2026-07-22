@@ -13,7 +13,7 @@ from core.geofit import (
     is_low_confidence_for_kazakhstan_focus,
 )
 from core.models import Opportunity
-from core.opportunity_intelligence import is_rolling_item
+from qazstack.opportunities import is_rolling_item
 
 MODEL_VERSION = "qazfund-relevance-v2"
 PUBLIC_RELEVANCE_THRESHOLD = 0.3

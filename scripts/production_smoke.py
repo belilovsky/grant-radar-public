@@ -270,7 +270,7 @@ def run_smoke(
         == _url(base_url, "/.well-known/avds-ui-contract.json"),
         "qazstack_contract": (
             qazstack_contract.get("schema_version") == "qazstack-consumer-v1"
-            and qazstack_contract.get("qazstack_version") == "1.37.2"
+            and qazstack_contract.get("qazstack_version") == "1.40.0"
             and qazstack_contract.get("integration_mode") == "python-package"
         ),
         "avds4_contract": (
