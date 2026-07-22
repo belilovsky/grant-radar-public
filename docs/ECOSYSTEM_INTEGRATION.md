@@ -33,7 +33,8 @@ prove.
 - `/llms.txt` – compact discovery guidance for AI systems.
 - `/openapi.json` – executable API contract.
 - `/opportunities` - read-only, paginated public JSON data plane.
-- `/opportunities.ndjson` - filtered, cache-aware stream for AI and data consumers.
+- `/opportunities.ndjson` - filtered, cache-aware full stream for data consumers.
+- `/opportunities.ndjson?compact=true` - lighter bulk stream for AI discovery.
 
 ## Data ownership
 

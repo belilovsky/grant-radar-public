@@ -228,6 +228,10 @@ def run_smoke(
         "llms_opportunities_ndjson": (
             f"Opportunities NDJSON: {_url(base_url, '/opportunities.ndjson')}" in llms
         ),
+        "llms_compact_opportunities_ndjson": (
+            "Compact Opportunities NDJSON: "
+            f"{_url(base_url, '/opportunities.ndjson?compact=true')}" in llms
+        ),
         "llms_ecosystem": (
             f"Ecosystem integration JSON: "
             f"{_url(base_url, '/.well-known/qdev-ecosystem.json')}" in llms
@@ -237,7 +241,9 @@ def run_smoke(
             f"{_url(base_url, '/.well-known/release.json')}" in llms
         ),
         "llms_ai_guidance": "## AI consumption guidance" in llms,
-        "llms_ndjson_guidance": "Prefer Opportunities NDJSON for bulk reads" in llms,
+        "llms_ndjson_guidance": (
+            "Prefer compact Opportunities NDJSON for bulk discovery reads" in llms
+        ),
         "robots_cache": _is_public_cacheable(robots_head, 300),
         "sitemap_cache": _is_public_cacheable(sitemap_head, 300),
         "llms_cache": _is_public_cacheable(llms_head, 300),
@@ -277,11 +283,16 @@ def run_smoke(
             (discovery.get("data_endpoints") or {}).get("opportunities_ndjson") or ""
         )
         == _url(base_url, "/opportunities.ndjson"),
+        "site_discovery_opportunities_ndjson_compact": str(
+            (discovery.get("data_endpoints") or {}).get("opportunities_ndjson_compact")
+            or ""
+        )
+        == _url(base_url, "/opportunities.ndjson?compact=true"),
         "site_discovery_cache": _is_public_cacheable(discovery_head, 300),
         "site_discovery_ai_bulk_export": str(
             (discovery.get("ai_consumption") or {}).get("preferred_bulk_export") or ""
         )
-        == _url(base_url, "/opportunities.ndjson"),
+        == _url(base_url, "/opportunities.ndjson?compact=true"),
         "site_discovery_ai_cache_policy": int(
             ((discovery.get("ai_consumption") or {}).get("cache_policy") or {}).get(
                 "ndjson_seconds"

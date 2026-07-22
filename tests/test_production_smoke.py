@@ -138,10 +138,12 @@ def _transport(
                     f"- Coverage JSON: {public_root}/coverage\n"
                     f"- Opportunities JSON: {public_root}/opportunities\n"
                     f"- Opportunities NDJSON: {public_root}/opportunities.ndjson\n"
+                    "- Compact Opportunities NDJSON: "
+                    f"{public_root}/opportunities.ndjson?compact=true\n"
                     f"- Digest JSON: {public_root}/digest\n"
                     "\n## AI consumption guidance\n"
-                    "- Prefer Opportunities NDJSON for bulk reads; it supports "
-                    "cache validation and stable newline-delimited records.\n"
+                    "- Prefer compact Opportunities NDJSON for bulk discovery reads; "
+                    "use the full NDJSON export when raw source payloads are needed.\n"
                 ),
                 headers={"cache-control": "public, max-age=300"},
             )
@@ -199,6 +201,9 @@ def _transport(
                         "coverage": "/coverage",
                         "opportunities": "/opportunities?lang={lang}",
                         "opportunities_ndjson": "/opportunities.ndjson?lang={lang}",
+                        "opportunities_ndjson_compact": (
+                            "/opportunities.ndjson?lang={lang}&compact=true"
+                        ),
                         "opportunity_api": "/opportunities/{id}?lang={lang}",
                         "opportunity": "/opportunity/{id}?lang={lang}",
                         "funder": "/funder/{slug}?lang={lang}",
@@ -208,10 +213,15 @@ def _transport(
                         "coverage": f"{public_root}/coverage",
                         "opportunities": f"{public_root}/opportunities",
                         "opportunities_ndjson": (f"{public_root}/opportunities.ndjson"),
+                        "opportunities_ndjson_compact": (
+                            f"{public_root}/opportunities.ndjson?compact=true"
+                        ),
                         "digest": f"{public_root}/digest",
                     },
                     "ai_consumption": {
-                        "preferred_bulk_export": f"{public_root}/opportunities.ndjson",
+                        "preferred_bulk_export": (
+                            f"{public_root}/opportunities.ndjson?compact=true"
+                        ),
                         "cache_policy": {"ndjson_seconds": 300},
                     },
                     "query_templates": {

@@ -127,3 +127,36 @@ def test_ndjson_export_is_cacheable_and_ai_ready(monkeypatch) -> None:
     )
     assert cached.status_code == 304
     assert cached.text == ""
+
+
+def test_ndjson_export_supports_compact_payload(monkeypatch) -> None:
+    _reset_api_state(monkeypatch)
+    api_main._cache.append(
+        _opportunity(source="source_a", index=1, score=0.9).model_copy(
+            update={
+                "raw": {
+                    "decision_readiness": {"status": "complete"},
+                    "source_html": "x" * 1000,
+                }
+            }
+        )
+    )
+    client = TestClient(api_main.app)
+
+    full = client.get("/opportunities.ndjson", params={"limit": 10})
+    compact = client.get(
+        "/opportunities.ndjson",
+        params={"limit": 10, "compact": "true"},
+    )
+
+    assert full.status_code == 200
+    assert compact.status_code == 200
+    full_row = json.loads(full.text.strip())
+    compact_row = json.loads(compact.text.strip())
+    assert full_row["evidence_state"] == "sourced"
+    assert compact_row["evidence_state"] == "sourced"
+    assert full_row["raw"]["source_html"] == "x" * 1000
+    assert "source_html" not in compact_row["raw"]
+    assert compact_row["raw"]["decision_readiness"]["status"] == "partial"
+    assert "ranking" in compact_row["raw"]
+    assert len(compact.text) < len(full.text)

@@ -1066,8 +1066,12 @@ def test_marketing_endpoints_are_exposed(monkeypatch):
     assert "Coverage JSON: http://testserver/coverage" in llms.text
     assert "Opportunities JSON: http://testserver/opportunities" in llms.text
     assert "Opportunities NDJSON: http://testserver/opportunities.ndjson" in llms.text
+    assert (
+        "Compact Opportunities NDJSON: "
+        "http://testserver/opportunities.ndjson?compact=true"
+    ) in llms.text
     assert "## AI consumption guidance" in llms.text
-    assert "Prefer Opportunities NDJSON for bulk reads" in llms.text
+    assert "Prefer compact Opportunities NDJSON for bulk discovery reads" in llms.text
     assert "Opportunity detail JSON: /opportunities/{id}?lang=ru|en" in llms.text
     assert "Digest JSON: http://testserver/digest" in llms.text
     assert "Opportunity page: /opportunity/{id}?lang=ru|en" in llms.text
@@ -1105,6 +1109,9 @@ def test_marketing_endpoints_are_exposed(monkeypatch):
             "source_status": "/status?lang={lang}",
             "opportunities": "/opportunities?lang={lang}",
             "opportunities_ndjson": "/opportunities.ndjson?lang={lang}",
+            "opportunities_ndjson_compact": (
+                "/opportunities.ndjson?lang={lang}&compact=true"
+            ),
             "opportunity_api": "/opportunities/{id}?lang={lang}",
             "opportunity": "/opportunity/{id}?lang={lang}",
             "funder": "/funder/{slug}?lang={lang}",
@@ -1114,10 +1121,15 @@ def test_marketing_endpoints_are_exposed(monkeypatch):
             "coverage": "http://testserver/coverage",
             "opportunities": "http://testserver/opportunities",
             "opportunities_ndjson": "http://testserver/opportunities.ndjson",
+            "opportunities_ndjson_compact": (
+                "http://testserver/opportunities.ndjson?compact=true"
+            ),
             "digest": "http://testserver/digest",
         },
         "ai_consumption": {
-            "preferred_bulk_export": "http://testserver/opportunities.ndjson",
+            "preferred_bulk_export": (
+                "http://testserver/opportunities.ndjson?compact=true"
+            ),
             "preferred_detail_template": "/opportunities/{id}?lang=ru|en",
             "preferred_human_template": "/opportunity/{id}?lang=ru|en",
             "recommended_language_order": ["ru", "en"],
@@ -1157,7 +1169,7 @@ def test_marketing_endpoints_are_exposed(monkeypatch):
                 "/opportunities?lang=ru&limit=50&lifecycle={lifecycle}"
             ),
             "opportunities_ai_export": (
-                "/opportunities.ndjson?lang=ru&limit=500&min_score=0.3"
+                "/opportunities.ndjson?lang=ru&limit=500&min_score=0.3" "&compact=true"
             ),
             "digest_ai": "/digest?lang=ru&limit=5&tag=ai",
         },

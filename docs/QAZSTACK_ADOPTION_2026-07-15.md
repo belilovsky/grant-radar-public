@@ -14,7 +14,7 @@ platform package. The adopted release is the immutable QazStack `1.37.2` tag.
 | `qazstack.content.strip_html` and `normalize_text` | One source-text helper replaces 16 collector-local implementations. | Consistent HTML decoding and whitespace cleanup. |
 | `qazstack.content.diversify_ranked_items` | The short digest promotes source variety, then fills remaining slots in rank order. | A single source cannot crowd out the useful overview. |
 | `qazstack.evidence.resolve_public_evidence_state` | Coverage exposes aggregate evidence states; NDJSON rows expose their state. | A source link is labelled `sourced`, never falsely promoted to `verified`. |
-| `qazstack.export.ndjson_response` | `/opportunities.ndjson` mirrors public filters with ETag and `304` support. | AI systems and data consumers can stream compact records with lower transfer cost. |
+| `qazstack.export.ndjson_response` | `/opportunities.ndjson` mirrors public filters with ETag and `304` support; `compact=true` strips ingestion-only raw fields for bulk discovery. | AI systems and data consumers can choose between full provenance payloads and lower transfer cost. |
 
 The vendored wheel is built from tag `v1.37.2` at commit
 `b401122feb0ab7fd7e4b1d84b9b6ea8ded20071b`. Its SHA-256 is recorded beside
@@ -48,6 +48,7 @@ helpers would remove useful behaviour rather than reduce duplication.
 
 - JSON catalog: `/opportunities`
 - Streaming export: `/opportunities.ndjson`
+- Compact streaming export: `/opportunities.ndjson?compact=true`
 - Source and evidence coverage: `/coverage`
 - Short diversified feed: `/digest`
 - Discovery: `/llms.txt`, `/site-discovery.json`, `/openapi.json`

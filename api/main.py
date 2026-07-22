@@ -1646,6 +1646,9 @@ async def llms_txt(request: Request) -> Response:
     coverage = _public_url(request, root_path, "/coverage")
     opportunities = _public_url(request, root_path, "/opportunities")
     opportunities_ndjson = _public_url(request, root_path, "/opportunities.ndjson")
+    opportunities_ndjson_compact = _public_url(
+        request, root_path, "/opportunities.ndjson?compact=true"
+    )
     digest = _public_url(request, root_path, "/digest")
     return Response(
         "\n".join(
@@ -1673,13 +1676,14 @@ async def llms_txt(request: Request) -> Response:
                 f"- Coverage JSON: {coverage}",
                 f"- Opportunities JSON: {opportunities}",
                 f"- Opportunities NDJSON: {opportunities_ndjson}",
+                f"- Compact Opportunities NDJSON: {opportunities_ndjson_compact}",
                 "- Opportunity detail JSON: /opportunities/{id}?lang=ru|en",
                 f"- Digest JSON: {digest}",
                 "",
                 "## AI consumption guidance",
                 (
-                    "- Prefer Opportunities NDJSON for bulk reads; it supports "
-                    "cache validation and stable newline-delimited records."
+                    "- Prefer compact Opportunities NDJSON for bulk discovery reads; "
+                    "use the full NDJSON export when raw source payloads are needed."
                 ),
                 (
                     "- Use Site discovery JSON for route templates, query templates, "
@@ -1697,7 +1701,8 @@ async def llms_txt(request: Request) -> Response:
                 "## Query hints",
                 (
                     "- Opportunities filters: q, source, lifecycle, region, tag, "
-                    "min_score, deadline_before, deadline_after, limit, offset, lang"
+                    "min_score, deadline_before, deadline_after, limit, offset, lang, "
+                    "compact"
                 ),
                 "- Digest filters: limit, min_score, tag, lang",
                 "",
@@ -1742,6 +1747,9 @@ async def site_discovery(request: Request) -> Response:
     coverage = _public_url(request, root_path, "/coverage")
     opportunities = _public_url(request, root_path, "/opportunities")
     opportunities_ndjson = _public_url(request, root_path, "/opportunities.ndjson")
+    opportunities_ndjson_compact = _public_url(
+        request, root_path, "/opportunities.ndjson?compact=true"
+    )
     digest = _public_url(request, root_path, "/digest")
     ecosystem = _public_url(request, root_path, "/.well-known/qdev-ecosystem.json")
     release = _public_url(request, root_path, "/.well-known/release.json")
@@ -1773,6 +1781,9 @@ async def site_discovery(request: Request) -> Response:
             "source_status": "/status?lang={lang}",
             "opportunities": "/opportunities?lang={lang}",
             "opportunities_ndjson": "/opportunities.ndjson?lang={lang}",
+            "opportunities_ndjson_compact": (
+                "/opportunities.ndjson?lang={lang}&compact=true"
+            ),
             "opportunity_api": "/opportunities/{id}?lang={lang}",
             "opportunity": "/opportunity/{id}?lang={lang}",
             "funder": "/funder/{slug}?lang={lang}",
@@ -1782,10 +1793,11 @@ async def site_discovery(request: Request) -> Response:
             "coverage": coverage,
             "opportunities": opportunities,
             "opportunities_ndjson": opportunities_ndjson,
+            "opportunities_ndjson_compact": opportunities_ndjson_compact,
             "digest": digest,
         },
         "ai_consumption": {
-            "preferred_bulk_export": opportunities_ndjson,
+            "preferred_bulk_export": opportunities_ndjson_compact,
             "preferred_detail_template": "/opportunities/{id}?lang=ru|en",
             "preferred_human_template": "/opportunity/{id}?lang=ru|en",
             "recommended_language_order": ["ru", "en"],
@@ -1825,7 +1837,7 @@ async def site_discovery(request: Request) -> Response:
                 "/opportunities?lang=ru&limit=50&lifecycle={lifecycle}"
             ),
             "opportunities_ai_export": (
-                "/opportunities.ndjson?lang=ru&limit=500&min_score=0.3"
+                "/opportunities.ndjson?lang=ru&limit=500&min_score=0.3" "&compact=true"
             ),
             "digest_ai": "/digest?lang=ru&limit=5&tag=ai",
         },
@@ -2269,6 +2281,7 @@ async def export_opportunities_ndjson(
     limit: int = Query(500, ge=1, le=5000),
     offset: int = Query(0, ge=0),
     lang: str | None = Query(None),
+    compact: bool = Query(False),
 ) -> Response:
     """Export the filtered public catalog as cache-aware newline-delimited JSON."""
 
@@ -2285,7 +2298,7 @@ async def export_opportunities_ndjson(
         limit=limit,
         offset=offset,
         lang=lang,
-        compact=False,
+        compact=compact,
     )
     rows: list[dict[str, Any]] = []
     for item in items:

@@ -53,6 +53,9 @@ The main public endpoints are:
 
 For machine consumers, `llms.txt` and `site-discovery.json` publish the public
 entry points, read-only JSON/NDJSON endpoints, and supported query templates.
+Use `/opportunities.ndjson?compact=true` for bulk discovery; keep the full
+`/opportunities.ndjson` export for consumers that explicitly need raw source
+payloads.
 
 ## Quick start
 
