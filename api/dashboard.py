@@ -659,7 +659,12 @@ def render_dashboard(
         </button>
       </div>
       <div class="filters-meta">
-        <div id="filter-summary" class="filter-summary" data-avds-component="filter-summary"></div>
+        <div
+          id="filter-summary"
+          class="filter-summary"
+          data-avds-component="filter-summary"
+          data-avds-pattern="filter-state-summary"
+        ></div>
         <button
           class="text-button"
           type="button"
@@ -4190,6 +4195,7 @@ def render_dashboard(
           rel="noopener"
           aria-label="${{sourceName}}"
           data-avds-component="source-card"
+          data-avds-pattern="evidence-summary"
         >
           <span
             class="
@@ -4459,6 +4465,7 @@ def render_dashboard(
         return `<article
           class="opportunity avds-document-row ${{scoreTone}}"
           data-avds-component="opportunity-card"
+          data-avds-pattern="decision-summary"
         >
           <div class="opportunity-main">
             <div class="opportunity-content">

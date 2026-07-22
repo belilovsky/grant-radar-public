@@ -1154,6 +1154,17 @@ def test_marketing_endpoints_are_exposed(monkeypatch):
         "package": "@sgeo/ui-kit",
         "version": "4.3.2",
     }
+    assert avds_contract.json()["runtime_neutral_patterns"] == {
+        "package": "@av/patterns",
+        "version": "0.1.0",
+        "adopted": [
+            "evidence-summary",
+            "filter-state-summary",
+            "decision-summary",
+        ],
+        "rendering": "server-rendered-local-adapter",
+        "calculation_ownership": "qaz-fund",
+    }
     assert client.head("/.well-known/avds-ui-contract.json").status_code == 200
 
     ecosystem = client.get("/.well-known/qdev-ecosystem.json")

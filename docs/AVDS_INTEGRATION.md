@@ -39,6 +39,10 @@ is a local server-rendered adapter in `api/avds.py`, aligned to AV DS 4.3.2.
   compatibility boundary. It intentionally reports
   `direct_package_import: false` through the ecosystem manifest; the SSR adapter
   must not be mistaken for a React package import.
+- The runtime-neutral `@av/patterns` contracts adopted from AV DS are
+  `EvidenceSummary`, `FilterStateSummary` and `DecisionSummary`. Their live
+  instances are marked with `data-avds-pattern`; the Python service continues
+  to own rendering, filtering, localization and all relevance calculations.
 
 ## Why local adapter
 
@@ -51,3 +55,20 @@ The adapter should be replaced only if AV DS publishes a framework-neutral CSS
 artifact suitable for a Python-only image. Until then, parity is maintained by
 semantic roles, component-family mapping, visual tests and production smoke,
 not by copying React component source.
+
+## Deliberate non-adoptions
+
+The AV platform registry also contains search, jobs, forms, notification and
+telemetry packages. QAZ.FUND does not import them merely for nominal parity:
+
+- PostgreSQL-backed public queries and the released QazStack helpers remain the
+  production search path; an in-memory search adapter would regress scale and
+  filtering semantics.
+- QAZ.FUND keeps its audited scheduler and run records; a generic scheduler is
+  not a replacement until it has the same persistence and safety contract.
+- Product authentication, messaging and editor workflows are not present on the
+  public catalog, so forms and notification runtimes would add unused attack
+  surface.
+
+This keeps AV DS focused on reusable presentation contracts and prevents a
+cross-language dependency from complicating the Python production image.

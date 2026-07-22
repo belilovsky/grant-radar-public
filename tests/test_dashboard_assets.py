@@ -26,5 +26,8 @@ def test_dashboard_uses_extracted_static_styles() -> None:
     assert 'href="#opportunities"' in html
     assert 'href="#sources"' in html
     assert "syncFilterDisclosureForViewport" in html
+    assert 'data-avds-pattern="filter-state-summary"' in html
+    assert 'data-avds-pattern="evidence-summary"' in html
+    assert 'data-avds-pattern="decision-summary"' in html
     assert "grid-template-columns: repeat(2, minmax(0, 1fr));" in DASHBOARD_CSS
     assert ".hero-pick:last-child { grid-column: 1 / -1; }" in DASHBOARD_CSS

@@ -14,6 +14,8 @@ QAZSTACK_SCHEMA_DIGEST = (
 QAZSTACK_VERIFIED_AT = "2026-07-15T14:21:32Z"
 AVDS_PACKAGE = "@sgeo/ui-kit"
 AVDS_VERSION = "4.3.2"
+AVDS_PATTERN_PACKAGE = "@av/patterns"
+AVDS_PATTERN_VERSION = "0.1.0"
 
 
 def _url(origin: str, path: str) -> str:
@@ -83,10 +85,17 @@ def avds_ui_contract() -> dict[str, Any]:
         "component_families": [
             {
                 "id": "navigation-filtering",
-                "components": ["PillTabs", "FilterChipRow", "SearchField"],
+                "components": [
+                    "PillTabs",
+                    "FilterChipRow",
+                    "SearchField",
+                    "FilterStateSummary",
+                ],
                 "qazstack_relationship": (
                     "QAZ.FUND keeps filtering behavior local and follows AV DS 4 "
-                    "navigation and input semantics through its SSR adapter."
+                    "navigation and input semantics through its SSR adapter. "
+                    "The visible active-query summary follows the runtime-neutral "
+                    "@av/patterns contract."
                 ),
             },
             {
@@ -99,10 +108,25 @@ def avds_ui_contract() -> dict[str, Any]:
             },
             {
                 "id": "evidence",
-                "components": ["ProvenanceCard", "ProvenanceTable", "SourceCard"],
+                "components": [
+                    "EvidenceSummary",
+                    "ProvenanceCard",
+                    "ProvenanceTable",
+                    "SourceCard",
+                ],
                 "qazstack_relationship": (
                     "Official source, freshness, coverage, and limitations remain "
-                    "visible beside public opportunity data."
+                    "visible beside public opportunity data through the "
+                    "@av/patterns evidence contract."
+                ),
+            },
+            {
+                "id": "explainable-results",
+                "components": ["DecisionSummary", "FitPill", "OpportunityCard"],
+                "qazstack_relationship": (
+                    "QAZ.FUND owns relevance and action-priority calculation. "
+                    "AV DS only standardizes how the resulting reasons and limits "
+                    "are presented."
                 ),
             },
             {
@@ -121,6 +145,17 @@ def avds_ui_contract() -> dict[str, Any]:
                 ),
             },
         ],
+        "runtime_neutral_patterns": {
+            "package": AVDS_PATTERN_PACKAGE,
+            "version": AVDS_PATTERN_VERSION,
+            "adopted": [
+                "evidence-summary",
+                "filter-state-summary",
+                "decision-summary",
+            ],
+            "rendering": "server-rendered-local-adapter",
+            "calculation_ownership": "qaz-fund",
+        },
         "do_not_duplicate": [
             "alert",
             "badge",
