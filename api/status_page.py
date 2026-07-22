@@ -311,7 +311,6 @@ def render_status_page(
           >{escape(str(product_copy["tab_sources"]))}</a>
         <a href="{escape(docs_href, quote=True)}">{escape(str(product_copy["api_docs"]))}</a>
       </nav>
-      <a href="mailto:contact@qaz.fund">contact@qaz.fund</a>
     </footer>
   </main>
 </body>

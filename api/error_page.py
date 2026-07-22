@@ -60,8 +60,7 @@ def render_not_found_page(*, lang: str, root_path: str = "") -> str:
       color: var(--color-text);
       font-family: var(--av-font-sans);
     }}
-    header,
-    footer {{
+    header {{
       width: min(var(--av-container-dashboard), calc(100% - 48px));
       margin: 0 auto;
     }}
@@ -116,16 +115,9 @@ def render_not_found_page(*, lang: str, root_path: str = "") -> str:
       text-decoration: none;
     }}
     .primary-action:focus-visible {{ outline: 0; box-shadow: var(--color-focus-ring); }}
-    footer {{
-      padding: 18px 0 24px;
-      color: var(--color-text-muted);
-      font-size: var(--av-text-sm);
-    }}
-    footer a {{ color: var(--color-text); }}
     @media (max-width: 640px) {{
       header,
-      main,
-      footer {{ width: calc(100% - 24px); }}
+      main {{ width: calc(100% - 24px); }}
       main {{ padding: 44px 0; }}
       h1 {{ font-size: 36px; }}
     }}
@@ -141,8 +133,5 @@ def render_not_found_page(*, lang: str, root_path: str = "") -> str:
     <p>{escape(copy["text"])}</p>
     <a class="primary-action" href="{escape(catalog_href, quote=True)}">{escape(copy["action"])}</a>
   </main>
-  <footer>
-    <a href="mailto:contact@qaz.fund">contact@qaz.fund</a>
-  </footer>
 </body>
 </html>"""
