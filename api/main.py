@@ -19,6 +19,7 @@ from uuid import NAMESPACE_URL, UUID, uuid5
 from fastapi import Depends, FastAPI, Header, HTTPException, Query, Request, status
 from fastapi.openapi.docs import get_swagger_ui_html
 from fastapi.responses import HTMLResponse, JSONResponse, RedirectResponse, Response
+from pydantic import TypeAdapter
 from qazstack.content import diversify_ranked_items
 from qazstack.evidence import count_evidence_states, resolve_public_evidence_state
 from qazstack.export import ndjson_response
@@ -138,6 +139,7 @@ _PUBLIC_LONG_CACHE_PATHS = {
     "/og-image.svg",
     f"/{GOOGLE_SITE_VERIFICATION_FILENAME}",
 }
+_OPPORTUNITY_LIST_ADAPTER = TypeAdapter(list[Opportunity])
 
 
 @app.exception_handler(StarletteHTTPException)
@@ -2121,9 +2123,8 @@ async def refresh(_: None = Depends(require_admin_token)) -> dict:
     return {"refreshed": len(_cache)}
 
 
-@app.get("/opportunities", response_model=list[Opportunity])
-async def list_opportunities(
-    response: Response,
+def _query_opportunities(
+    *,
     tag: str | None = Query(None),
     q: str | None = Query(None, max_length=200),
     source: str | None = Query(None, max_length=120),
@@ -2143,7 +2144,7 @@ async def list_opportunities(
     offset: int = Query(0, ge=0),
     lang: str | None = Query(None),
     compact: bool = Query(False),
-) -> list[Opportunity]:
+) -> tuple[list[Opportunity], int]:
     content_lang = _public_lang(lang)
     items = _cached_public_scope_items(
         content_lang=content_lang, include_irrelevant=include_irrelevant
@@ -2185,11 +2186,66 @@ async def list_opportunities(
         )
         for item in items[offset : offset + limit]
     ]
-    response.headers["X-Total-Count"] = str(total_count)
-    response.headers["X-Result-Count"] = str(len(results))
     if compact:
-        return [_compact_dashboard_item(item) for item in results]
-    return results
+        return [_compact_dashboard_item(item) for item in results], total_count
+    return results, total_count
+
+
+def _opportunities_json_response(
+    items: list[Opportunity],
+    *,
+    total_count: int,
+) -> Response:
+    """Serialize the catalog once, bypassing duplicate FastAPI model encoding."""
+
+    return Response(
+        content=_OPPORTUNITY_LIST_ADAPTER.dump_json(items),
+        media_type="application/json",
+        headers={
+            "X-Total-Count": str(total_count),
+            "X-Result-Count": str(len(items)),
+        },
+    )
+
+
+@app.get("/opportunities", response_model=list[Opportunity])
+async def list_opportunities(
+    tag: str | None = Query(None),
+    q: str | None = Query(None, max_length=200),
+    source: str | None = Query(None, max_length=120),
+    lifecycle: str | None = Query(
+        None,
+        pattern="^(open|closing_soon|rolling|forecast|closed|awarded)$",
+    ),
+    region: str | None = Query(
+        None,
+        pattern="^(kazakhstan|central_asia|global)$",
+    ),
+    min_score: float = Query(0.0, ge=0.0, le=1.0),
+    deadline_before: date | None = None,
+    deadline_after: date | None = None,
+    include_irrelevant: bool = False,
+    limit: int = Query(50, ge=1, le=5000),
+    offset: int = Query(0, ge=0),
+    lang: str | None = Query(None),
+    compact: bool = Query(False),
+) -> Response:
+    results, total_count = _query_opportunities(
+        tag=tag,
+        q=q,
+        source=source,
+        lifecycle=lifecycle,
+        region=region,
+        min_score=min_score,
+        deadline_before=deadline_before,
+        deadline_after=deadline_after,
+        include_irrelevant=include_irrelevant,
+        limit=limit,
+        offset=offset,
+        lang=lang,
+        compact=compact,
+    )
+    return _opportunities_json_response(results, total_count=total_count)
 
 
 @app.get("/opportunities.ndjson", include_in_schema=True)
@@ -2216,9 +2272,7 @@ async def export_opportunities_ndjson(
 ) -> Response:
     """Export the filtered public catalog as cache-aware newline-delimited JSON."""
 
-    metadata_response = Response()
-    items = await list_opportunities(
-        response=metadata_response,
+    items, _ = _query_opportunities(
         tag=tag,
         q=q,
         source=source,
@@ -2275,9 +2329,7 @@ async def list_opportunities_head(
     lang: str | None = Query(None),
     compact: bool = Query(False),
 ) -> Response:
-    metadata_response = Response()
-    await list_opportunities(
-        response=metadata_response,
+    items, total_count = _query_opportunities(
         tag=tag,
         q=q,
         source=source,
@@ -2296,8 +2348,8 @@ async def list_opportunities_head(
         status_code=200,
         media_type="application/json",
         headers={
-            "X-Total-Count": metadata_response.headers.get("X-Total-Count", "0"),
-            "X-Result-Count": metadata_response.headers.get("X-Result-Count", "0"),
+            "X-Total-Count": str(total_count),
+            "X-Result-Count": str(len(items)),
         },
     )
 
