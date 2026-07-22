@@ -1147,8 +1147,14 @@ def test_marketing_endpoints_are_exposed(monkeypatch):
     assert qazstack_contract.status_code == 200
     assert qazstack_contract.json()["schema_version"] == "qazstack-consumer-v1"
     assert qazstack_contract.json()["qazstack_version"] == "1.40.0"
+    assert qazstack_contract.json()["source_revision"] == (
+        "a0a4bfc6ea6b2fce205afe24fbf732fb3de3bc68"
+    )
     assert qazstack_contract.json()["integration_mode"] == "python-package"
     assert qazstack_contract.json()["evidence"]["environment"] == "production"
+    assert qazstack_contract.json()["evidence"]["source_revision"] == (
+        qazstack_contract.json()["source_revision"]
+    )
     assert client.head("/.well-known/qazstack-consumer.json").status_code == 200
 
     avds_contract = client.get("/.well-known/avds-ui-contract.json")

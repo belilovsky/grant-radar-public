@@ -7,11 +7,11 @@ from typing import Any
 from qazstack import __version__ as qazstack_version
 from qazstack.contracts import validate_consumer_contract
 
-QAZSTACK_SOURCE_REVISION = "b401122feb0ab7fd7e4b1d84b9b6ea8ded20071b"
+QAZSTACK_SOURCE_REVISION = "a0a4bfc6ea6b2fce205afe24fbf732fb3de3bc68"
 QAZSTACK_SCHEMA_DIGEST = (
     "sha256:6ca8e38c09315d02993e3600b7a05dc23d695cd152545f8a970566e303fc158c"
 )
-QAZSTACK_VERIFIED_AT = "2026-07-15T14:21:32Z"
+QAZSTACK_VERIFIED_AT = "2026-07-22T20:06:40Z"
 AVDS_PACKAGE = "@sgeo/ui-kit"
 AVDS_VERSION = "4.3.2"
 AVDS_PATTERN_PACKAGE = "@av/patterns"
