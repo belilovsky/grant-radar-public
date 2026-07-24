@@ -241,13 +241,19 @@ def ecosystem_manifest(origin: str) -> dict[str, Any]:
             },
             "qazcompute": {
                 "status": "profile-compatible-local-fallback",
-                "enabled_profiles": ["evidence_readiness.v1"],
-                "public_fields": ["raw.qazcompute_evidence_readiness"],
+                "enabled_profiles": [
+                    "evidence_readiness.v1",
+                    "deadline_anomaly.v1",
+                    "source_freshness.v1",
+                ],
+                "public_fields": [
+                    "raw.qazcompute_evidence_readiness",
+                    "raw.qazcompute_deadline_anomaly",
+                    "coverage.sources[].qazcompute_source_freshness",
+                ],
                 "decision_ready": False,
                 "candidate_jobs": [
                     "cross-source duplicate clustering",
-                    "deadline anomaly detection",
-                    "source freshness scoring",
                 ],
             },
             "edpol": {

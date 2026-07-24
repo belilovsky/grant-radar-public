@@ -59,7 +59,11 @@ from core.models import Digest, Opportunity, OpportunityDetail, OpportunityType
 from core.nlp import clean_source_summary
 from core.persistence import Repository
 from core.pipeline import run_all
-from core.qazcompute_bridge import opportunity_evidence_readiness
+from core.qazcompute_bridge import (
+    opportunity_deadline_anomaly,
+    opportunity_evidence_readiness,
+    source_freshness_envelope,
+)
 from core.repository_factory import make_repository
 from core.scoring import priority_score, ranking_payload
 from core.scoring import score as score_opportunity
@@ -202,6 +206,7 @@ _DASHBOARD_RAW_FIELDS = frozenset(
         "project_status",
         "projectstatusdisplay",
         "qazcompute_evidence_readiness",
+        "qazcompute_deadline_anomaly",
         "ranking",
         "region",
         "status",
@@ -658,6 +663,7 @@ def _with_decision_readiness(
                 **raw,
                 "decision_readiness": readiness,
                 "qazcompute_evidence_readiness": opportunity_evidence_readiness(item),
+                "qazcompute_deadline_anomaly": opportunity_deadline_anomaly(item),
                 "ranking": ranking_payload(ranking_subject or item),
             }
         }
@@ -1031,7 +1037,10 @@ def _source_coverage(
         )
         last_checked = source_checks.get(slug)
         freshness_at = _newest_timestamp(last_seen, last_checked)
-        freshness = _source_freshness(freshness_at)
+        freshness = _source_freshness(
+            freshness_at,
+            source_id=slug,
+        )
         normalized_last_seen = _normalized_utc(last_seen)
         normalized_last_checked = _normalized_utc(last_checked)
         uses_source_check = normalized_last_checked is not None and (
@@ -1067,7 +1076,10 @@ def _source_coverage(
             if is_relevant_for_kazakhstan_focus(item) and item.score >= 0.3
         ]
         last_seen = max((item.discovered_at for item in source_items), default=None)
-        freshness = _source_freshness(last_seen)
+        freshness = _source_freshness(
+            last_seen,
+            source_id=slug,
+        )
         rows.append(
             {
                 "slug": slug,
@@ -1102,16 +1114,35 @@ def _newest_timestamp(
     return max(values, default=None)
 
 
-def _source_freshness(last_seen: datetime | None) -> dict[str, Any]:
+def _source_freshness(
+    last_seen: datetime | None,
+    *,
+    source_id: str = "source",
+    item_count_24h: int | None = None,
+) -> dict[str, Any]:
     """Return stable public freshness signals without exposing run errors."""
-    if last_seen is None:
-        return {"freshness_status": "unknown", "age_hours": None}
     normalized = _normalized_utc(last_seen)
-    assert normalized is not None
-    age_hours = max(0.0, (datetime.now(UTC) - normalized).total_seconds() / 3600)
+    envelope = source_freshness_envelope(
+        source_id=source_id,
+        last_success_at=normalized,
+        expected_interval_hours=72.0,
+        item_count_24h=item_count_24h,
+    )
+    features = envelope.get("features") if isinstance(envelope, dict) else {}
+    age_hours = features.get("age_hours") if isinstance(features, dict) else None
+    tier = str(envelope.get("tier") or "unknown")
     return {
-        "freshness_status": "stale" if age_hours > 72 else "fresh",
-        "age_hours": round(age_hours, 1),
+        "freshness_status": (
+            "stale"
+            if tier == "stale" or (age_hours is not None and float(age_hours) > 72)
+            else (
+                "fresh"
+                if tier == "fresh"
+                else "unknown" if tier == "unknown" else "watch"
+            )
+        ),
+        "age_hours": round(float(age_hours), 1) if age_hours is not None else None,
+        "qazcompute_source_freshness": envelope,
     }
 
 

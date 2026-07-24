@@ -1735,10 +1735,13 @@ def test_operator_page_is_noindex_and_never_embeds_admin_token(monkeypatch):
 def test_source_freshness_marks_old_and_missing_timestamps():
     old = datetime.now(timezone.utc) - timedelta(hours=96)
 
-    assert api_main._source_freshness(None) == {
-        "freshness_status": "unknown",
-        "age_hours": None,
-    }
+    missing = api_main._source_freshness(None)
+    assert missing["freshness_status"] == "unknown"
+    assert missing["age_hours"] is None
+    assert missing["qazcompute_source_freshness"]["schema_version"] == (
+        "source_freshness.v1"
+    )
+    assert missing["qazcompute_source_freshness"]["decision_ready"] is False
     assert api_main._source_freshness(old)["freshness_status"] == "stale"
     assert (
         api_main._source_freshness(datetime.now(timezone.utc))["freshness_status"]
@@ -2284,7 +2287,12 @@ def test_api_returns_clean_source_raw_for_persisted_opportunity(tmp_path, monkey
     assert {
         key: value
         for key, value in raw.items()
-        if key not in {"ranking", "qazcompute_evidence_readiness"}
+        if key
+        not in {
+            "ranking",
+            "qazcompute_evidence_readiness",
+            "qazcompute_deadline_anomaly",
+        }
     } == {
         "external_id": "RAW-1",
         "agency": "Example Agency",
@@ -2296,6 +2304,10 @@ def test_api_returns_clean_source_raw_for_persisted_opportunity(tmp_path, monkey
         },
     }
     assert raw["ranking"]["model_version"] == "qazfund-relevance-v2"
+    assert raw["qazcompute_deadline_anomaly"]["schema_version"] == (
+        "deadline_anomaly.v1"
+    )
+    assert raw["qazcompute_deadline_anomaly"]["decision_ready"] is False
     assert "source_url" not in raw
 
 
@@ -2339,7 +2351,12 @@ def test_compact_opportunities_keep_dashboard_fields_without_ingestion_payload(
     assert {
         key: value
         for key, value in raw.items()
-        if key not in {"ranking", "qazcompute_evidence_readiness"}
+        if key
+        not in {
+            "ranking",
+            "qazcompute_evidence_readiness",
+            "qazcompute_deadline_anomaly",
+        }
     } == {
         "agency": "Example Agency",
         "application_url": "https://example.org/apply",
@@ -2361,6 +2378,10 @@ def test_compact_opportunities_keep_dashboard_fields_without_ingestion_payload(
     assert readiness["decision_ready"] is False
     assert readiness["tier"] == "watch"
     assert readiness["features"]["required_evidence_count"] == 4
+    anomaly = raw["qazcompute_deadline_anomaly"]
+    assert anomaly["schema_version"] == "deadline_anomaly.v1"
+    assert anomaly["decision_ready"] is False
+    assert anomaly["tier"] == "clean"
 
 
 def test_decision_readiness_marks_complete_source_facts(tmp_path, monkeypatch):

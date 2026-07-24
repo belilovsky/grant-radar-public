@@ -1,9 +1,13 @@
 from __future__ import annotations
 
-from datetime import date
+from datetime import UTC, date, datetime, timedelta
 
 from core.models import Opportunity, OpportunityType
-from core.qazcompute_bridge import opportunity_evidence_readiness
+from core.qazcompute_bridge import (
+    opportunity_deadline_anomaly,
+    opportunity_evidence_readiness,
+    source_freshness_envelope,
+)
 
 
 def _opportunity(**kwargs) -> Opportunity:
@@ -59,3 +63,52 @@ def test_qazcompute_evidence_readiness_marks_missing_application_facts() -> None
         "missing_amount",
         "missing_eligibility",
     ]
+
+
+def test_qazcompute_deadline_anomaly_marks_open_past_deadline() -> None:
+    item = _opportunity(
+        deadline=date(2026, 7, 1),
+        opportunity_status="open",
+        discovered_at=datetime(2026, 6, 1, tzinfo=UTC),
+    )
+
+    anomaly = opportunity_deadline_anomaly(
+        item,
+        checked_at=datetime(2026, 7, 24, tzinfo=UTC),
+    )
+
+    assert anomaly["schema_version"] == "deadline_anomaly.v1"
+    assert anomaly["provider"] == "qazfund-local-fallback"
+    assert anomaly["decision_ready"] is False
+    assert anomaly["tier"] == "blocked"
+    assert anomaly["anomalies"] == ["open_after_deadline"]
+    assert anomaly["features"]["runway_days"] < 0
+
+
+def test_qazcompute_source_freshness_envelope_reports_stale_source() -> None:
+    freshness = source_freshness_envelope(
+        source_id="world_bank_kazakhstan",
+        last_success_at=datetime(2026, 7, 20, tzinfo=UTC),
+        checked_at=datetime(2026, 7, 24, tzinfo=UTC),
+        expected_interval_hours=72,
+    )
+
+    assert freshness["schema_version"] == "source_freshness.v1"
+    assert freshness["provider"] == "qazfund-local-fallback"
+    assert freshness["decision_ready"] is False
+    assert freshness["tier"] == "watch"
+    assert freshness["warnings"] == ["source_lagging"]
+    assert freshness["features"]["age_hours"] == 96
+
+
+def test_qazcompute_source_freshness_envelope_reports_unknown_source() -> None:
+    freshness = source_freshness_envelope(
+        source_id="empty_source",
+        last_success_at=None,
+        checked_at=datetime.now(UTC),
+        expected_interval_hours=timedelta(days=3).total_seconds() / 3600,
+    )
+
+    assert freshness["tier"] == "unknown"
+    assert freshness["score"] == 0
+    assert freshness["blockers"] == ["missing_last_success"]
