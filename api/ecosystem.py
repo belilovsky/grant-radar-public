@@ -245,16 +245,18 @@ def ecosystem_manifest(origin: str) -> dict[str, Any]:
                     "evidence_readiness.v1",
                     "deadline_anomaly.v1",
                     "source_freshness.v1",
+                    "duplicate_cluster.v1",
                 ],
                 "public_fields": [
                     "raw.qazcompute_evidence_readiness",
                     "raw.qazcompute_deadline_anomaly",
                     "coverage.sources[].qazcompute_source_freshness",
                 ],
-                "decision_ready": False,
-                "candidate_jobs": [
-                    "cross-source duplicate clustering",
+                "public_endpoints": [
+                    _url(origin, "/opportunities/duplicate-candidates"),
                 ],
+                "decision_ready": False,
+                "candidate_jobs": [],
             },
             "edpol": {
                 "status": "query-ready",

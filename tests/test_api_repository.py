@@ -2311,6 +2311,46 @@ def test_api_returns_clean_source_raw_for_persisted_opportunity(tmp_path, monkey
     assert "source_url" not in raw
 
 
+def test_duplicate_candidates_endpoint_returns_review_only_clusters(monkeypatch):
+    _reset_api_state(monkeypatch)
+    api_main._cache.extend(
+        [
+            Opportunity(
+                source="astana_hub",
+                source_url="https://example.org/program",
+                type=OpportunityType.GRANT,
+                title="Kazakhstan innovation grant for startups",
+                summary="Support for Kazakhstan technology startups.",
+                tags=["kazakhstan", "startup"],
+                score=0.8,
+            ),
+            Opportunity(
+                source="astana_hub",
+                source_url="https://www.example.org/program/",
+                type=OpportunityType.GRANT,
+                title="Kazakhstan innovation grant for startups",
+                summary="Technology startup support in Kazakhstan.",
+                tags=["kazakhstan", "startup"],
+                score=0.8,
+            ),
+        ]
+    )
+    api_main._clear_public_items_cache()
+    client = TestClient(api_main.app)
+
+    response = client.get(
+        "/opportunities/duplicate-candidates",
+        params={"min_score": 0.1, "content_lang": "en"},
+    )
+
+    assert response.status_code == 200
+    payload = response.json()
+    assert payload["schema_version"] == "duplicate_cluster.v1"
+    assert payload["decision_ready"] is False
+    assert payload["cluster_count"] == 1
+    assert payload["pairs"][0]["tier"] == "duplicate_candidate"
+
+
 def test_compact_opportunities_keep_dashboard_fields_without_ingestion_payload(
     tmp_path, monkeypatch
 ):

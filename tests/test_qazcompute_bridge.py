@@ -4,6 +4,7 @@ from datetime import UTC, date, datetime, timedelta
 
 from core.models import Opportunity, OpportunityType
 from core.qazcompute_bridge import (
+    duplicate_cluster_envelope,
     opportunity_deadline_anomaly,
     opportunity_evidence_readiness,
     source_freshness_envelope,
@@ -112,3 +113,33 @@ def test_qazcompute_source_freshness_envelope_reports_unknown_source() -> None:
     assert freshness["tier"] == "unknown"
     assert freshness["score"] == 0
     assert freshness["blockers"] == ["missing_last_success"]
+
+
+def test_qazcompute_duplicate_cluster_envelope_is_review_only() -> None:
+    first = _opportunity(
+        title="Kazakhstan innovation grant for startups",
+        summary="Support for Kazakhstan technology startups.",
+        source_url="https://example.org/program",
+    )
+    second = _opportunity(
+        title="Kazakhstan innovation grant for startups",
+        summary="Technology startup support in Kazakhstan.",
+        source_url="https://www.example.org/program/",
+    )
+    third = _opportunity(
+        title="Agritech accelerator for Central Asia",
+        summary="Acceleration program for agriculture companies.",
+        source_url="https://other.example.org/agri",
+    )
+
+    payload = duplicate_cluster_envelope(
+        [first, second, third],
+        related_threshold=0.45,
+    )
+
+    assert payload["schema_version"] == "duplicate_cluster.v1"
+    assert payload["provider"] == "qazfund-local-fallback"
+    assert payload["decision_ready"] is False
+    assert payload["cluster_count"] == 1
+    assert payload["pairs"][0]["tier"] == "duplicate_candidate"
+    assert "same_canonical_url" in payload["pairs"][0]["reasons"]

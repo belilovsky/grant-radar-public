@@ -2,9 +2,11 @@
 
 from __future__ import annotations
 
+import re
 from dataclasses import dataclass
 from datetime import UTC, date, datetime
 from typing import Any, Literal
+from urllib.parse import urlsplit
 
 from core.models import Opportunity
 
@@ -14,10 +16,27 @@ DEADLINE_ANOMALY_SCHEMA_VERSION = "deadline_anomaly.v1"
 DEADLINE_ANOMALY_MODEL = "deadline-anomaly-deterministic-v1"
 SOURCE_FRESHNESS_SCHEMA_VERSION = "source_freshness.v1"
 SOURCE_FRESHNESS_MODEL = "source-freshness-deterministic-v1"
+DUPLICATE_CLUSTER_SCHEMA_VERSION = "duplicate_cluster.v1"
+DUPLICATE_CLUSTER_MODEL = "duplicate-cluster-deterministic-v1"
 
 ReadinessTier = Literal["ready", "watch", "blocked"]
 DeadlineTier = Literal["clean", "watch", "blocked"]
 FreshnessTier = Literal["fresh", "watch", "stale", "unknown"]
+
+_WORD_RE = re.compile(r"[^\W_]+", re.UNICODE)
+_STOPWORDS = {
+    "and",
+    "для",
+    "және",
+    "the",
+    "with",
+    "for",
+    "of",
+    "in",
+    "on",
+    "to",
+    "по",
+}
 
 
 @dataclass(frozen=True, slots=True)
@@ -364,6 +383,70 @@ def source_freshness_envelope(
     ).to_json()
 
 
+def duplicate_cluster_envelope(
+    items: list[Opportunity],
+    *,
+    duplicate_threshold: float = 0.82,
+    related_threshold: float = 0.62,
+    max_pairs: int = 100,
+) -> dict[str, Any]:
+    """Return QazCompute-compatible duplicate candidates for public records."""
+
+    if not 0.0 <= related_threshold <= duplicate_threshold <= 1.0:
+        raise ValueError("Thresholds must satisfy 0 <= related <= duplicate <= 1.")
+    if max_pairs < 1:
+        raise ValueError("max_pairs must be at least 1.")
+
+    ordered = sorted(items, key=lambda item: str(item.id))
+    pairs: list[dict[str, Any]] = []
+    duplicate_edges: list[tuple[str, str]] = []
+
+    for left_index, left in enumerate(ordered[:-1]):
+        for right in ordered[left_index + 1 :]:
+            score, reasons = _duplicate_pair_score(left, right)
+            if score < related_threshold:
+                continue
+            left_id = str(left.id)
+            right_id = str(right.id)
+            tier = (
+                "duplicate_candidate"
+                if score >= duplicate_threshold
+                else "related_candidate"
+            )
+            pairs.append(
+                {
+                    "left_id": left_id,
+                    "right_id": right_id,
+                    "score": round(score, 4),
+                    "tier": tier,
+                    "reasons": reasons,
+                }
+            )
+            if tier == "duplicate_candidate":
+                duplicate_edges.append((left_id, right_id))
+
+    pairs.sort(key=lambda row: (-float(row["score"]), row["left_id"], row["right_id"]))
+    pairs = pairs[:max_pairs]
+    pair_ids = {(row["left_id"], row["right_id"]) for row in pairs}
+    duplicate_edges = [edge for edge in duplicate_edges if edge in pair_ids]
+    clusters = _duplicate_clusters(
+        [str(item.id) for item in ordered], duplicate_edges, pairs
+    )
+
+    return {
+        "schema_version": DUPLICATE_CLUSTER_SCHEMA_VERSION,
+        "provider": "qazfund-local-fallback",
+        "model": DUPLICATE_CLUSTER_MODEL,
+        "quality_tier": "deterministic",
+        "decision_ready": False,
+        "item_count": len(ordered),
+        "pair_count": len(pairs),
+        "cluster_count": len(clusters),
+        "pairs": pairs,
+        "clusters": clusters,
+    }
+
+
 def _ratio(numerator: int, denominator: int) -> float:
     return numerator / denominator if denominator else 0.0
 
@@ -392,3 +475,112 @@ def _unique(values: list[str]) -> list[str]:
         seen.add(normalized)
         result.append(normalized)
     return result
+
+
+def _duplicate_pair_score(
+    left: Opportunity, right: Opportunity
+) -> tuple[float, list[str]]:
+    left_tokens = _tokens(left.title)
+    right_tokens = _tokens(right.title)
+    title_similarity = _jaccard(left_tokens, right_tokens)
+    summary_similarity = _jaccard(_tokens(left.summary), _tokens(right.summary))
+    same_source = left.source.strip().casefold() == right.source.strip().casefold()
+    left_url = str(left.source_url)
+    right_url = str(right.source_url)
+    same_host = _host(left_url) == _host(right_url)
+
+    score = title_similarity * 0.78 + summary_similarity * 0.12
+    reasons: list[str] = []
+    if title_similarity >= 0.8:
+        reasons.append("title_overlap")
+    if summary_similarity >= 0.7:
+        reasons.append("summary_overlap")
+    if same_host:
+        score += 0.06
+        reasons.append("same_host")
+    if same_source:
+        score += 0.04
+        reasons.append("same_source")
+    if _canonical_url(left_url) == _canonical_url(right_url):
+        score = 1.0
+        reasons.append("same_canonical_url")
+
+    return min(1.0, score), _unique(reasons or ["lexical_overlap"])
+
+
+def _duplicate_clusters(
+    ids: list[str],
+    edges: list[tuple[str, str]],
+    pairs: list[dict[str, Any]],
+) -> list[dict[str, Any]]:
+    parent = {item_id: item_id for item_id in ids}
+
+    def find(item_id: str) -> str:
+        while parent[item_id] != item_id:
+            parent[item_id] = parent[parent[item_id]]
+            item_id = parent[item_id]
+        return item_id
+
+    def union(left: str, right: str) -> None:
+        left_root = find(left)
+        right_root = find(right)
+        if left_root != right_root:
+            parent[max(left_root, right_root)] = min(left_root, right_root)
+
+    for left, right in edges:
+        union(left, right)
+
+    groups: dict[str, list[str]] = {}
+    for item_id in ids:
+        groups.setdefault(find(item_id), []).append(item_id)
+
+    pair_by_items = {
+        frozenset((str(pair["left_id"]), str(pair["right_id"]))): pair for pair in pairs
+    }
+    clusters: list[dict[str, Any]] = []
+    for members in groups.values():
+        if len(members) < 2:
+            continue
+        member_pairs = [
+            pair_by_items[frozenset((left, right))]
+            for index, left in enumerate(members[:-1])
+            for right in members[index + 1 :]
+            if frozenset((left, right)) in pair_by_items
+        ]
+        reasons = _unique(
+            [str(reason) for pair in member_pairs for reason in pair.get("reasons", [])]
+        )
+        score = min((float(pair["score"]) for pair in member_pairs), default=0.0)
+        sorted_members = sorted(members)
+        clusters.append(
+            {
+                "id": "dup-" + "-".join(sorted_members),
+                "item_ids": sorted_members,
+                "score": round(score, 4),
+                "reasons": reasons,
+            }
+        )
+    clusters.sort(key=lambda cluster: (-float(cluster["score"]), str(cluster["id"])))
+    return clusters
+
+
+def _tokens(text: str | None) -> set[str]:
+    return {
+        normalized
+        for token in _WORD_RE.findall(text or "")
+        if len(normalized := token.casefold()) >= 3 and normalized not in _STOPWORDS
+    }
+
+
+def _jaccard(left: set[str], right: set[str]) -> float:
+    union = left | right
+    return len(left & right) / len(union) if union else 0.0
+
+
+def _host(url: str) -> str:
+    return urlsplit(url).netloc.casefold().removeprefix("www.")
+
+
+def _canonical_url(url: str) -> str:
+    parsed = urlsplit(url)
+    return f"{parsed.netloc.casefold().removeprefix('www.')}{parsed.path.rstrip('/')}"

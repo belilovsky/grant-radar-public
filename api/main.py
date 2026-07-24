@@ -60,6 +60,7 @@ from core.nlp import clean_source_summary
 from core.persistence import Repository
 from core.pipeline import run_all
 from core.qazcompute_bridge import (
+    duplicate_cluster_envelope,
     opportunity_deadline_anomaly,
     opportunity_evidence_readiness,
     source_freshness_envelope,
@@ -2293,6 +2294,36 @@ async def list_opportunities(
         compact=compact,
     )
     return _opportunities_json_response(results, total_count=total_count)
+
+
+@app.get("/opportunities/duplicate-candidates")
+async def duplicate_candidates(
+    min_score: float = Query(0.3, ge=0.0, le=1.0),
+    limit: int = Query(200, ge=2, le=500),
+    max_pairs: int = Query(100, ge=1, le=500),
+    content_lang: str = Query("en", pattern="^(en|ru)$"),
+) -> dict[str, Any]:
+    """Return review-only duplicate candidates for public opportunity records."""
+
+    items = [
+        item
+        for item in _cached_public_scope_items(content_lang)
+        if float(item.score or 0.0) >= min_score
+    ][:limit]
+    if len(items) < 2:
+        return {
+            "schema_version": "duplicate_cluster.v1",
+            "provider": "qazfund-local-fallback",
+            "model": "duplicate-cluster-deterministic-v1",
+            "quality_tier": "deterministic",
+            "decision_ready": False,
+            "item_count": len(items),
+            "pair_count": 0,
+            "cluster_count": 0,
+            "pairs": [],
+            "clusters": [],
+        }
+    return duplicate_cluster_envelope(items, max_pairs=max_pairs)
 
 
 @app.get("/opportunities.ndjson", include_in_schema=True)

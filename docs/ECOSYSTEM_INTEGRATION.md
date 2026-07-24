@@ -22,7 +22,7 @@ prove.
 | QazLake | `brokered-via-qazpipe` | Public records may be archived through QazPipe. QAZ.FUND never writes directly into QazLake tables. |
 | EdPol | `query-ready` | Education opportunities are available through the public tag-filtered API. EdPol decides whether and how to consume them. |
 | QazGeo | `deferred-no-geometry` | Region classes exist, but verified coordinates do not. No inferred or decorative map is published. |
-| QazCompute | `profile-compatible-local-fallback` | `evidence_readiness.v1`, `deadline_anomaly.v1` and `source_freshness.v1` are exposed as QazCompute-compatible public envelopes; remote task execution still needs parity and private server-side wiring. |
+| QazCompute | `profile-compatible-local-fallback` | `evidence_readiness.v1`, `deadline_anomaly.v1`, `source_freshness.v1` and `duplicate_cluster.v1` are exposed as QazCompute-compatible public envelopes; remote task execution still needs parity and private server-side wiring. |
 
 ## Machine entry points
 
@@ -59,10 +59,10 @@ must never enter the public feed. Public records sent downstream retain at least
 5. QazPipe ingestion is enabled only with a dry run, idempotency proof and a
    named QazLake record contract.
 6. Reusable computation moves to QazCompute only through versioned task-profile
-   envelopes. `evidence_readiness.v1`, `deadline_anomaly.v1` and
-   `source_freshness.v1` are now exposed through deterministic local fallbacks
-   that match the QazCompute result shape; remote execution still requires
-   fixture parity and a private server-side sync path.
+   envelopes. `evidence_readiness.v1`, `deadline_anomaly.v1`,
+   `source_freshness.v1` and `duplicate_cluster.v1` are now exposed through
+   deterministic local fallbacks that match the QazCompute result shape; remote
+   execution still requires fixture parity and a private server-side sync path.
 7. New visual patterns use AV DS 4 component families; a local SSR exception is
    documented instead of forking React source.
 
@@ -85,12 +85,13 @@ The enabled contracts are:
   `raw.qazcompute_deadline_anomaly`;
 - `source_freshness.v1` in `/coverage` source rows as
   `qazcompute_source_freshness`.
+- `duplicate_cluster.v1` at `/opportunities/duplicate-candidates` as a
+  review-only candidate queue.
 
-All three keep `decision_ready=false`; they are technical review signals, not
+All four keep `decision_ready=false`; they are technical review signals, not
 legal eligibility, publication, funding or source-control decisions.
-Cross-source duplicate clustering remains the next candidate. Keep
-request/response fixtures in both repositories. QAZ.FUND must degrade to its
-local deterministic implementation when QazCompute is unavailable.
+Keep request/response fixtures in both repositories. QAZ.FUND must degrade to
+its local deterministic implementation when QazCompute is unavailable.
 
 ### QazGeo
 
