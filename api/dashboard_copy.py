@@ -637,6 +637,14 @@ COPY = {
         "detail_readiness_partial": (
             "Подтверждено {known} из {total}. На источнике проверьте: {missing}."
         ),
+        "detail_compute_readiness": (
+            "QazCompute: {score} / 100, {tier}. Это техническая оценка полноты, "
+            "не решение о праве на участие."
+        ),
+        "detail_compute_ready": "данных достаточно",
+        "detail_compute_watch": "нужна сверка",
+        "detail_compute_blocked": "есть блокеры",
+        "detail_compute_unknown": "статус неизвестен",
         "detail_copy_brief": "Скопировать справку",
         "detail_copy_brief_done": "Рабочая справка скопирована.",
         "detail_copy_brief_prompt": "Скопируйте рабочую справку",
@@ -1629,6 +1637,14 @@ COPY = {
         "detail_readiness_partial": (
             "{known} of {total} fields confirmed. Verify at source: {missing}."
         ),
+        "detail_compute_readiness": (
+            "QazCompute: {score} / 100, {tier}. This is a technical completeness "
+            "signal, not an eligibility decision."
+        ),
+        "detail_compute_ready": "data is sufficient",
+        "detail_compute_watch": "review needed",
+        "detail_compute_blocked": "blockers present",
+        "detail_compute_unknown": "status unknown",
         "detail_copy_brief": "Copy working brief",
         "detail_copy_brief_done": "Working brief copied.",
         "detail_copy_brief_prompt": "Copy the working brief",

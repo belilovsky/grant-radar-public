@@ -240,7 +240,10 @@ def ecosystem_manifest(origin: str) -> dict[str, Any]:
                 ),
             },
             "qazcompute": {
-                "status": "candidate-not-enabled",
+                "status": "profile-compatible-local-fallback",
+                "enabled_profiles": ["evidence_readiness.v1"],
+                "public_fields": ["raw.qazcompute_evidence_readiness"],
+                "decision_ready": False,
                 "candidate_jobs": [
                     "cross-source duplicate clustering",
                     "deadline anomaly detection",

@@ -59,6 +59,7 @@ from core.models import Digest, Opportunity, OpportunityDetail, OpportunityType
 from core.nlp import clean_source_summary
 from core.persistence import Repository
 from core.pipeline import run_all
+from core.qazcompute_bridge import opportunity_evidence_readiness
 from core.repository_factory import make_repository
 from core.scoring import priority_score, ranking_payload
 from core.scoring import score as score_opportunity
@@ -200,6 +201,7 @@ _DASHBOARD_RAW_FIELDS = frozenset(
         "opportunity_status",
         "project_status",
         "projectstatusdisplay",
+        "qazcompute_evidence_readiness",
         "ranking",
         "region",
         "status",
@@ -655,6 +657,7 @@ def _with_decision_readiness(
             "raw": {
                 **raw,
                 "decision_readiness": readiness,
+                "qazcompute_evidence_readiness": opportunity_evidence_readiness(item),
                 "ranking": ranking_payload(ranking_subject or item),
             }
         }
@@ -1814,6 +1817,7 @@ async def site_discovery(request: Request) -> Response:
                 "score",
                 "evidence_state",
                 "raw.decision_readiness",
+                "raw.qazcompute_evidence_readiness",
                 "raw.ranking",
             ],
             "do_not_infer": [
