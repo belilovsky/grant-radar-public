@@ -1,0 +1,53 @@
+{
+  "schema_version": "qazstack-consumer-v1",
+  "project_id": "qaz-fund",
+  "product_name": "QAZ.FUND",
+  "lifecycle": "production",
+  "integration_mode": "python-package",
+  "qazstack_version": "1.40.0",
+  "source_revision": "a0a4bfc6ea6b2fce205afe24fbf732fb3de3bc68",
+  "primitives": [
+    "collectors-and-entity-pipeline",
+    "content-api",
+    "core-foundation",
+    "reports-and-export"
+  ],
+  "owns": [
+    "grant-opportunity-ranking",
+    "kazakhstan-fit-policy",
+    "source-suitability-gate"
+  ],
+  "depends_on": [
+    "qazstack",
+    "postgres"
+  ],
+  "forbidden_capabilities": [
+    "fake-application-submission",
+    "unverified-source-promotion",
+    "secret-export"
+  ],
+  "evidence": {
+    "source_files": [
+      "core/qazstack_bridge.py",
+      "core/source_text.py",
+      "requirements-prod.txt",
+      "tests/test_qazstack_adoption.py",
+      "tests/test_qazstack_bridge.py"
+    ],
+    "test_commands": [
+      ".venv/bin/python -m pytest -q",
+      "python -m scripts.production_smoke --base-url https://qaz.fund"
+    ],
+    "runtime_urls": [
+      "https://qaz.fund/.well-known/qazstack-consumer.json",
+      "https://qaz.fund/health"
+    ],
+    "verified_at": "2026-07-24T15:50:00+05:00",
+    "environment": "production",
+    "source_revision": "a0a4bfc6ea6b2fce205afe24fbf732fb3de3bc68",
+    "schema_digest": "sha256:6ca8e38c09315d02993e3600b7a05dc23d695cd152545f8a970566e303fc158c",
+    "checked_by": "codex"
+  },
+  "owner": "qdev-platform",
+  "notes": "Checked-in discovery copy of the live QAZ.FUND QazStack consumer contract. Product-specific grant relevance remains owned by QAZ.FUND."
+}
