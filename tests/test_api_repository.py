@@ -78,6 +78,8 @@ def test_root_renders_service_landing(monkeypatch):
     assert "avds-stat-kpi-card" in response.text
     assert "avds-source-card" in response.text
     assert "avds-source-card__icon" in response.text
+    assert "detail-compute-readiness-text" in response.text
+    assert "QazCompute:" in response.text
     assert "avds-source-card__arrow" in response.text
     assert 'data-avds-component="source-icon"' in response.text
     assert "avds-document-row" in response.text
@@ -1146,6 +1148,7 @@ def test_marketing_endpoints_are_exposed(monkeypatch):
                 "score",
                 "evidence_state",
                 "raw.decision_readiness",
+                "raw.qazcompute_evidence_readiness",
                 "raw.ranking",
             ],
             "do_not_infer": [
@@ -1234,8 +1237,9 @@ def test_marketing_endpoints_are_exposed(monkeypatch):
         "deferred-no-geometry"
     )
     assert ecosystem_payload["integrations"]["qazcompute"]["status"] == (
-        "candidate-not-enabled"
+        "profile-compatible-local-fallback"
     )
+    assert ecosystem_payload["integrations"]["qazcompute"]["decision_ready"] is False
     assert client.head("/.well-known/qdev-ecosystem.json").status_code == 200
 
     release = client.get("/.well-known/release.json")
@@ -1731,10 +1735,13 @@ def test_operator_page_is_noindex_and_never_embeds_admin_token(monkeypatch):
 def test_source_freshness_marks_old_and_missing_timestamps():
     old = datetime.now(timezone.utc) - timedelta(hours=96)
 
-    assert api_main._source_freshness(None) == {
-        "freshness_status": "unknown",
-        "age_hours": None,
-    }
+    missing = api_main._source_freshness(None)
+    assert missing["freshness_status"] == "unknown"
+    assert missing["age_hours"] is None
+    assert missing["qazcompute_source_freshness"]["schema_version"] == (
+        "source_freshness.v1"
+    )
+    assert missing["qazcompute_source_freshness"]["decision_ready"] is False
     assert api_main._source_freshness(old)["freshness_status"] == "stale"
     assert (
         api_main._source_freshness(datetime.now(timezone.utc))["freshness_status"]
@@ -2277,7 +2284,16 @@ def test_api_returns_clean_source_raw_for_persisted_opportunity(tmp_path, monkey
     assert data[0]["tags"] == ["ai", "education"]
     assert data[0]["score"] == 0.7
     raw = data[0]["raw"]
-    assert {key: value for key, value in raw.items() if key != "ranking"} == {
+    assert {
+        key: value
+        for key, value in raw.items()
+        if key
+        not in {
+            "ranking",
+            "qazcompute_evidence_readiness",
+            "qazcompute_deadline_anomaly",
+        }
+    } == {
         "external_id": "RAW-1",
         "agency": "Example Agency",
         "decision_readiness": {
@@ -2288,7 +2304,51 @@ def test_api_returns_clean_source_raw_for_persisted_opportunity(tmp_path, monkey
         },
     }
     assert raw["ranking"]["model_version"] == "qazfund-relevance-v2"
+    assert raw["qazcompute_deadline_anomaly"]["schema_version"] == (
+        "deadline_anomaly.v1"
+    )
+    assert raw["qazcompute_deadline_anomaly"]["decision_ready"] is False
     assert "source_url" not in raw
+
+
+def test_duplicate_candidates_endpoint_returns_review_only_clusters(monkeypatch):
+    _reset_api_state(monkeypatch)
+    api_main._cache.extend(
+        [
+            Opportunity(
+                source="astana_hub",
+                source_url="https://example.org/program",
+                type=OpportunityType.GRANT,
+                title="Kazakhstan innovation grant for startups",
+                summary="Support for Kazakhstan technology startups.",
+                tags=["kazakhstan", "startup"],
+                score=0.8,
+            ),
+            Opportunity(
+                source="astana_hub",
+                source_url="https://www.example.org/program/",
+                type=OpportunityType.GRANT,
+                title="Kazakhstan innovation grant for startups",
+                summary="Technology startup support in Kazakhstan.",
+                tags=["kazakhstan", "startup"],
+                score=0.8,
+            ),
+        ]
+    )
+    api_main._clear_public_items_cache()
+    client = TestClient(api_main.app)
+
+    response = client.get(
+        "/opportunities/duplicate-candidates",
+        params={"min_score": 0.1, "content_lang": "en"},
+    )
+
+    assert response.status_code == 200
+    payload = response.json()
+    assert payload["schema_version"] == "duplicate_cluster.v1"
+    assert payload["decision_ready"] is False
+    assert payload["cluster_count"] == 1
+    assert payload["pairs"][0]["tier"] == "duplicate_candidate"
 
 
 def test_compact_opportunities_keep_dashboard_fields_without_ingestion_payload(
@@ -2328,7 +2388,16 @@ def test_compact_opportunities_keep_dashboard_fields_without_ingestion_payload(
     data = response.json()
     assert len(data) == 1
     raw = data[0]["raw"]
-    assert {key: value for key, value in raw.items() if key != "ranking"} == {
+    assert {
+        key: value
+        for key, value in raw.items()
+        if key
+        not in {
+            "ranking",
+            "qazcompute_evidence_readiness",
+            "qazcompute_deadline_anomaly",
+        }
+    } == {
         "agency": "Example Agency",
         "application_url": "https://example.org/apply",
         "deadline_policy": "rolling",
@@ -2342,6 +2411,17 @@ def test_compact_opportunities_keep_dashboard_fields_without_ingestion_payload(
     ranking = raw["ranking"]
     assert ranking["model_version"] == "qazfund-relevance-v2"
     assert ranking["relevance"] == data[0]["score"]
+    readiness = raw["qazcompute_evidence_readiness"]
+    assert readiness["schema_version"] == "evidence_readiness.v1"
+    assert readiness["provider"] == "qazfund-local-fallback"
+    assert readiness["model"] == "evidence-readiness-deterministic-v1"
+    assert readiness["decision_ready"] is False
+    assert readiness["tier"] == "watch"
+    assert readiness["features"]["required_evidence_count"] == 4
+    anomaly = raw["qazcompute_deadline_anomaly"]
+    assert anomaly["schema_version"] == "deadline_anomaly.v1"
+    assert anomaly["decision_ready"] is False
+    assert anomaly["tier"] == "clean"
 
 
 def test_decision_readiness_marks_complete_source_facts(tmp_path, monkeypatch):
@@ -2378,6 +2458,11 @@ def test_decision_readiness_marks_complete_source_facts(tmp_path, monkeypatch):
         "total_fields": 4,
         "missing_fields": [],
     }
+    compute_readiness = response.json()[0]["raw"]["qazcompute_evidence_readiness"]
+    assert compute_readiness["schema_version"] == "evidence_readiness.v1"
+    assert compute_readiness["decision_ready"] is False
+    assert compute_readiness["tier"] == "ready"
+    assert compute_readiness["score"] >= 85
 
 
 def test_public_items_cache_reuses_loaded_items_until_invalidated(monkeypatch):

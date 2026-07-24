@@ -2469,6 +2469,10 @@ DASHBOARD_CSS = r"""    :root {
       font-size: var(--av-text-sm);
       line-height: var(--av-leading-snug);
     }
+    .detail-readiness .detail-subtle {
+      font-size: var(--av-text-xs);
+      color: color-mix(in oklab, var(--muted), var(--ink) 14%);
+    }
     .detail-meta-grid {
       display: grid;
       grid-template-columns: repeat(2, minmax(0, 1fr));
