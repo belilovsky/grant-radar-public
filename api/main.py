@@ -17,6 +17,7 @@ from typing import Any, cast
 from uuid import NAMESPACE_URL, UUID, uuid5
 
 from fastapi import Depends, FastAPI, Header, HTTPException, Query, Request, status
+from fastapi.encoders import jsonable_encoder
 from fastapi.openapi.docs import get_swagger_ui_html
 from fastapi.responses import HTMLResponse, JSONResponse, RedirectResponse, Response
 from pydantic import TypeAdapter
@@ -34,6 +35,7 @@ from api.dashboard import (
     GOOGLE_SITE_VERIFICATION_FILENAME,
     render_dashboard,
 )
+from api.dashboard_copy import dashboard_copy as localized_dashboard_copy
 from api.ecosystem import (
     avds_ui_contract,
     ecosystem_manifest,
@@ -41,9 +43,24 @@ from api.ecosystem import (
 )
 from api.error_page import render_not_found_page
 from api.funder_page import render_funder_page
+from api.media import (
+    CARD_FORMATS,
+    CHART_TYPES,
+    chart_csv,
+    chart_rows,
+    chart_title,
+    citation_text,
+    content_payload,
+    json_dumps,
+    json_feed,
+    render_chart_svg,
+    render_opportunity_card_svg,
+    rss_feed,
+)
 from api.operator_page import render_operator_page
 from api.opportunity_detail import build_opportunity_detail
 from api.opportunity_page import render_opportunity_page
+from api.policy_pages import render_policy_page
 from api.public_meta import OG_IMAGE_SVG
 from api.status_page import render_status_page
 from core.geofit import (
@@ -59,6 +76,13 @@ from core.models import Digest, Opportunity, OpportunityDetail, OpportunityType
 from core.nlp import clean_source_summary
 from core.persistence import Repository
 from core.pipeline import run_all
+from core.public_contract import (
+    DATASET_SCHEMA_VERSION,
+    SCHEMA_VERSION,
+    OpportunityV1,
+    dataset_revision,
+    to_opportunity_v1,
+)
 from core.qazcompute_bridge import (
     duplicate_cluster_envelope,
     opportunity_deadline_anomaly,
@@ -100,7 +124,7 @@ app = FastAPI(
         "Public funding navigator for grants, subsidies, accelerators, and "
         "support programs in Kazakhstan"
     ),
-    version="0.1.0",
+    version="0.2.0",
     root_path=os.environ.get("ROOT_PATH", ""),
     lifespan=_lifespan,
     docs_url=None,
@@ -109,6 +133,7 @@ app = FastAPI(
 
 _MACHINE_ROUTE_PREFIXES = (
     "/.well-known",
+    "/api/v1",
     "/coverage",
     "/digest",
     "/funders",
@@ -120,6 +145,7 @@ _MACHINE_ROUTE_PREFIXES = (
     "/refresh",
     "/site-discovery.json",
     "/sources",
+    "/media/v1",
 )
 _PUBLIC_FAST_CACHE = "public, max-age=60, stale-while-revalidate=300"
 _PUBLIC_DISCOVERY_CACHE = "public, max-age=300, stale-while-revalidate=1800"
@@ -1355,6 +1381,22 @@ def _render_sitemap_xml(base_url: str) -> str:
         ),
     ]
 
+    for page in ("status", "terms", "data-policy", "attribution"):
+        ru_url = _public_url_from_base(base_url, f"/{page}?lang=ru")
+        en_url = _public_url_from_base(base_url, f"/{page}?lang=en")
+        rows.append(
+            _sitemap_entry(
+                ru_url,
+                changefreq="monthly",
+                priority="0.4",
+                alternates={
+                    "ru": ru_url,
+                    "en": en_url,
+                    "x-default": ru_url,
+                },
+            )
+        )
+
     for item in opportunities[:500]:
         ru_url = _public_url_from_base(base_url, f"/opportunity/{item.id}?lang=ru")
         en_url = _public_url_from_base(base_url, f"/opportunity/{item.id}?lang=en")
@@ -1464,7 +1506,7 @@ async def swagger_docs(request: Request) -> HTMLResponse:
             "heading": "Документация API",
             "description": (
                 "Интерактивное описание публичного API QAZ.FUND для каталогов, "
-                "источников, возможностей и статуса данных."
+                "источников, программ и статуса данных."
             ),
         },
         "en": {
@@ -1498,19 +1540,29 @@ async def swagger_docs(request: Request) -> HTMLResponse:
     {AVDS_CSS}
     html, body {{
       margin: 0;
-      background: var(--color-bg);
+      overflow-x: clip;
+      background:
+        radial-gradient(circle at 12% 0%, var(--color-accent-subtle), transparent 28rem),
+        var(--color-bg);
       color: var(--color-text);
       font-family: var(--av-font-sans);
     }}
     .qazfund-docs-header {{
-      max-width: var(--av-container-dashboard);
-      margin: 0 auto;
-      padding: 14px 20px;
+      position: sticky;
+      top: 12px;
+      z-index: 20;
+      width: min(var(--av-container-dashboard), calc(100% - 64px));
+      margin: 18px auto;
+      padding: 10px 14px;
       display: flex;
       align-items: center;
       justify-content: space-between;
       gap: 16px;
-      border-bottom: 1px solid var(--color-border);
+      border: 1px solid var(--color-border);
+      border-radius: var(--av-radius-lg);
+      background: color-mix(in oklab, var(--color-surface), transparent 7%);
+      box-shadow: var(--av-shadow-sm);
+      backdrop-filter: blur(16px);
     }}
     .qazfund-docs-header a {{
       color: inherit;
@@ -1531,10 +1583,18 @@ async def swagger_docs(request: Request) -> HTMLResponse:
     .swagger-ui {{
       max-width: var(--av-container-dashboard);
       margin: 0 auto;
+      padding: 0 24px 40px;
       font-family: var(--av-font-sans);
       color: var(--color-text);
     }}
-    .swagger-ui .info {{ margin: 24px 0; }}
+    .swagger-ui .info {{
+      margin: 0 0 18px;
+      padding: 24px;
+      border: 1px solid var(--color-border);
+      border-radius: var(--av-radius-lg);
+      background: var(--color-surface);
+      box-shadow: var(--av-shadow-xs);
+    }}
     .swagger-ui .info .title,
     .swagger-ui .opblock-tag,
     .swagger-ui .opblock-summary-method,
@@ -1579,7 +1639,14 @@ async def swagger_docs(request: Request) -> HTMLResponse:
       }}
       .swagger-ui .opblock-control-arrow,
       .swagger-ui .expand-operation {{ min-width: var(--av-control-height-lg); }}
-      .qazfund-docs-header {{ align-items: flex-start; padding-inline: 16px; }}
+      .qazfund-docs-header {{
+        top: 8px;
+        width: calc(100% - 24px);
+        margin: 14px auto;
+        align-items: flex-start;
+        padding-inline: 12px;
+      }}
+      .swagger-ui {{ padding-inline: 12px; }}
       .qazfund-docs-title {{ max-width: 15ch; text-align: right; }}
     }}
   </style>
@@ -1684,6 +1751,14 @@ async def llms_txt(request: Request) -> Response:
     opportunities_ndjson_compact = _public_url(
         request, root_path, "/opportunities.ndjson?compact=true"
     )
+    api_v1 = _public_url(request, root_path, "/api/v1")
+    api_v1_opportunities = _public_url(request, root_path, "/api/v1/opportunities")
+    api_v1_ndjson = _public_url(request, root_path, "/api/v1/opportunities.ndjson")
+    media_feed_json = _public_url(request, root_path, "/media/v1/feed.json")
+    media_feed_rss = _public_url(request, root_path, "/media/v1/feed.rss")
+    terms = _public_url(request, root_path, "/terms")
+    data_policy = _public_url(request, root_path, "/data-policy")
+    attribution = _public_url(request, root_path, "/attribution")
     digest = _public_url(request, root_path, "/digest")
     return Response(
         "\n".join(
@@ -1712,8 +1787,16 @@ async def llms_txt(request: Request) -> Response:
                 f"- Opportunities JSON: {opportunities}",
                 f"- Opportunities NDJSON: {opportunities_ndjson}",
                 f"- Compact Opportunities NDJSON: {opportunities_ndjson_compact}",
+                f"- Versioned API index: {api_v1}",
+                f"- Versioned opportunities JSON: {api_v1_opportunities}",
+                f"- Versioned opportunities NDJSON: {api_v1_ndjson}",
+                f"- Media JSON feed: {media_feed_json}",
+                f"- Media RSS feed: {media_feed_rss}",
                 "- Opportunity detail JSON: /opportunities/{id}?lang=ru|en",
                 f"- Digest JSON: {digest}",
+                f"- Terms: {terms}",
+                f"- Data policy: {data_policy}",
+                f"- Attribution: {attribution}",
                 "",
                 "## AI consumption guidance",
                 (
@@ -1732,6 +1815,9 @@ async def llms_txt(request: Request) -> Response:
                 "## Public route templates",
                 "- Opportunity page: /opportunity/{id}?lang=ru|en",
                 "- Funder page: /funder/{slug}?lang=ru|en",
+                "- Versioned opportunity: /api/v1/opportunities/{id}?lang=ru|en",
+                "- Citation text: /media/v1/opportunities/{id}/citation.txt?lang=ru|en",
+                "- Social card SVG: /media/v1/opportunities/{id}/card.svg?format=og",
                 "",
                 "## Query hints",
                 (
@@ -1785,6 +1871,15 @@ async def site_discovery(request: Request) -> Response:
     opportunities_ndjson_compact = _public_url(
         request, root_path, "/opportunities.ndjson?compact=true"
     )
+    api_v1 = _public_url(request, root_path, "/api/v1")
+    api_v1_schema = _public_url(request, root_path, "/api/v1/schema")
+    api_v1_opportunities = _public_url(request, root_path, "/api/v1/opportunities")
+    api_v1_ndjson = _public_url(request, root_path, "/api/v1/opportunities.ndjson")
+    media_feed_json = _public_url(request, root_path, "/media/v1/feed.json")
+    media_feed_rss = _public_url(request, root_path, "/media/v1/feed.rss")
+    terms = _public_url(request, root_path, "/terms")
+    data_policy = _public_url(request, root_path, "/data-policy")
+    attribution = _public_url(request, root_path, "/attribution")
     digest = _public_url(request, root_path, "/digest")
     ecosystem = _public_url(request, root_path, "/.well-known/qdev-ecosystem.json")
     release = _public_url(request, root_path, "/.well-known/release.json")
@@ -1802,7 +1897,12 @@ async def site_discovery(request: Request) -> Response:
         "llms": llms,
         "api_docs": docs,
         "openapi": openapi_url,
+        "versioned_api": api_v1,
+        "api_v1_schema": api_v1_schema,
         "source_status": status_page,
+        "terms": terms,
+        "data_policy": data_policy,
+        "attribution": attribution,
         "ecosystem": ecosystem,
         "release": release,
         "contracts": {
@@ -1821,6 +1921,21 @@ async def site_discovery(request: Request) -> Response:
             ),
             "opportunity_api": "/opportunities/{id}?lang={lang}",
             "opportunity": "/opportunity/{id}?lang={lang}",
+            "api_v1": "/api/v1",
+            "api_v1_schema": "/api/v1/schema",
+            "api_v1_opportunities": "/api/v1/opportunities?lang={lang}",
+            "api_v1_opportunities_ndjson": "/api/v1/opportunities.ndjson?lang={lang}",
+            "api_v1_opportunity": "/api/v1/opportunities/{id}?lang={lang}",
+            "media_content": "/media/v1/opportunities/{id}/content.json?lang={lang}",
+            "media_citation": "/media/v1/opportunities/{id}/citation.txt?lang={lang}",
+            "media_card": "/media/v1/opportunities/{id}/card.svg?lang={lang}",
+            "media_chart_svg": "/media/v1/charts/{chart_type}.svg?lang={lang}",
+            "media_chart_csv": "/media/v1/charts/{chart_type}.csv?lang={lang}",
+            "media_feed_json": "/media/v1/feed.json?lang={lang}",
+            "media_feed_rss": "/media/v1/feed.rss?lang={lang}",
+            "terms": "/terms?lang={lang}",
+            "data_policy": "/data-policy?lang={lang}",
+            "attribution": "/attribution?lang={lang}",
             "funder": "/funder/{slug}?lang={lang}",
             "digest": "/digest?lang={lang}",
         },
@@ -1829,11 +1944,28 @@ async def site_discovery(request: Request) -> Response:
             "opportunities": opportunities,
             "opportunities_ndjson": opportunities_ndjson,
             "opportunities_ndjson_compact": opportunities_ndjson_compact,
+            "api_v1": api_v1,
+            "api_v1_schema": api_v1_schema,
+            "api_v1_opportunities": api_v1_opportunities,
+            "api_v1_opportunities_ndjson": api_v1_ndjson,
             "digest": digest,
         },
+        "media_endpoints": {
+            "feed_json": media_feed_json,
+            "feed_rss": media_feed_rss,
+            "content_template": "/media/v1/opportunities/{id}/content.json?lang=ru|en",
+            "citation_template": (
+                "/media/v1/opportunities/{id}/citation.txt?lang=ru|en"
+            ),
+            "card_template": "/media/v1/opportunities/{id}/card.svg?format=og",
+            "chart_svg_template": "/media/v1/charts/{chart_type}.svg?lang=ru|en",
+            "chart_csv_template": "/media/v1/charts/{chart_type}.csv?lang=ru|en",
+        },
         "ai_consumption": {
-            "preferred_bulk_export": opportunities_ndjson_compact,
-            "preferred_detail_template": "/opportunities/{id}?lang=ru|en",
+            "preferred_bulk_export": api_v1_ndjson,
+            "preferred_legacy_bulk_export": opportunities_ndjson_compact,
+            "preferred_detail_template": "/api/v1/opportunities/{id}?lang=ru|en",
+            "preferred_legacy_detail_template": "/opportunities/{id}?lang=ru|en",
             "preferred_human_template": "/opportunity/{id}?lang=ru|en",
             "recommended_language_order": ["ru", "en"],
             "cache_policy": {
@@ -1848,6 +1980,8 @@ async def site_discovery(request: Request) -> Response:
                 "deadline",
                 "score",
                 "evidence_state",
+                "provenance.content_hash",
+                "quality.confidence_score",
                 "raw.decision_readiness",
                 "raw.qazcompute_evidence_readiness",
                 "raw.ranking",
@@ -1875,12 +2009,22 @@ async def site_discovery(request: Request) -> Response:
             "opportunities_ai_export": (
                 "/opportunities.ndjson?lang=ru&limit=500&min_score=0.3" "&compact=true"
             ),
+            "opportunities_v1_export": (
+                "/api/v1/opportunities.ndjson?lang=ru&limit=500&min_score=0.3"
+            ),
+            "opportunity_v1_detail": "/api/v1/opportunities/{id}?lang=ru",
+            "opportunity_citation": (
+                "/media/v1/opportunities/{id}/citation.txt?lang=ru&style=citation"
+            ),
             "digest_ai": "/digest?lang=ru&limit=5&tag=ai",
         },
         "capabilities": [
             "public opportunity pages",
             "public funder pages",
             "machine-readable opportunity api",
+            "versioned public data contract",
+            "source attribution and citation helpers",
+            "machine-readable media feeds",
             "cache-aware ndjson export",
             "machine-readable source coverage",
             "public source freshness status",
@@ -2043,6 +2187,38 @@ async def public_status_page(request: Request) -> HTMLResponse:
     )
     response.headers["Cache-Control"] = "public, max-age=60, stale-while-revalidate=300"
     return response
+
+
+def _render_public_policy_response(request: Request, page: str) -> HTMLResponse:
+    root_path = _root_path(request)
+    active_lang = _public_lang(str(request.query_params.get("lang") or "").strip())
+    response = HTMLResponse(
+        render_policy_page(
+            page,
+            lang=active_lang,
+            root_path=root_path,
+            site_origin=_site_origin(request, root_path),
+        )
+    )
+    response.headers["Cache-Control"] = (
+        "public, max-age=300, stale-while-revalidate=1800"
+    )
+    return response
+
+
+@app.api_route("/terms", methods=["GET", "HEAD"], include_in_schema=False)
+async def public_terms_page(request: Request) -> HTMLResponse:
+    return _render_public_policy_response(request, "terms")
+
+
+@app.api_route("/data-policy", methods=["GET", "HEAD"], include_in_schema=False)
+async def public_data_policy_page(request: Request) -> HTMLResponse:
+    return _render_public_policy_response(request, "data-policy")
+
+
+@app.api_route("/attribution", methods=["GET", "HEAD"], include_in_schema=False)
+async def public_attribution_page(request: Request) -> HTMLResponse:
+    return _render_public_policy_response(request, "attribution")
 
 
 @app.api_route("/operator", methods=["GET", "HEAD"], include_in_schema=False)
@@ -2253,6 +2429,421 @@ def _opportunities_json_response(
             "X-Total-Count": str(total_count),
             "X-Result-Count": str(len(items)),
         },
+    )
+
+
+def _opportunity_v1_from_item(
+    item: Opportunity,
+    *,
+    request: Request,
+    root_path: str,
+) -> OpportunityV1:
+    return to_opportunity_v1(
+        item,
+        source_name=_source_name(item.source),
+        public_base_url=_public_root_base(request, root_path),
+    )
+
+
+def _versioned_json_response(payload: dict[str, Any]) -> JSONResponse:
+    return JSONResponse(
+        jsonable_encoder(payload),
+        headers={
+            "X-Dataset-Schema-Version": DATASET_SCHEMA_VERSION,
+            "X-Opportunity-Schema-Version": SCHEMA_VERSION,
+        },
+    )
+
+
+def _query_opportunities_v1(
+    request: Request,
+    *,
+    tag: str | None = None,
+    q: str | None = None,
+    source: str | None = None,
+    lifecycle: str | None = None,
+    region: str | None = None,
+    min_score: float = 0.0,
+    deadline_before: date | None = None,
+    deadline_after: date | None = None,
+    include_irrelevant: bool = False,
+    limit: int = 50,
+    offset: int = 0,
+    lang: str | None = None,
+) -> tuple[list[OpportunityV1], int, str]:
+    root_path = _root_path(request)
+    items, total_count = _query_opportunities(
+        tag=tag,
+        q=q,
+        source=source,
+        lifecycle=lifecycle,
+        region=region,
+        min_score=min_score,
+        deadline_before=deadline_before,
+        deadline_after=deadline_after,
+        include_irrelevant=include_irrelevant,
+        limit=limit,
+        offset=offset,
+        lang=lang,
+        compact=False,
+    )
+    rows = [
+        _opportunity_v1_from_item(item, request=request, root_path=root_path)
+        for item in items
+    ]
+    return rows, total_count, root_path
+
+
+def _find_opportunity_v1(
+    request: Request,
+    opportunity_id: UUID,
+    *,
+    lang: str | None = None,
+) -> OpportunityV1:
+    content_lang = _public_lang(lang)
+    item = _find_opportunity(opportunity_id, content_lang=content_lang)
+    if item is None:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND)
+    localized = _with_decision_readiness(
+        localize_opportunity(item, content_lang),
+        ranking_subject=item,
+    )
+    root_path = _root_path(request)
+    return _opportunity_v1_from_item(localized, request=request, root_path=root_path)
+
+
+def _localized_chart_rows(
+    rows: list[dict[str, int | str]],
+    *,
+    lang: str,
+) -> list[dict[str, int | str]]:
+    copy = localized_dashboard_copy(lang)
+    label_map = copy.get("label_map")
+    if not isinstance(label_map, dict):
+        return rows
+    localized_rows: list[dict[str, int | str]] = []
+    for row in rows:
+        label = str(row["label"])
+        localized = label_map.get(label, label.replace("_", " "))
+        localized_rows.append({"label": str(localized), "value": int(row["value"])})
+    return localized_rows
+
+
+def _media_opportunity_rows(
+    request: Request,
+    *,
+    lang: str | None = None,
+    limit: int = 500,
+) -> list[OpportunityV1]:
+    rows, _, _ = _query_opportunities_v1(
+        request,
+        lifecycle=None,
+        min_score=0.0,
+        include_irrelevant=False,
+        limit=limit,
+        offset=0,
+        lang=lang,
+    )
+    return rows
+
+
+@app.get("/api/v1", include_in_schema=False)
+async def api_v1_index(request: Request) -> JSONResponse:
+    root_path = _root_path(request)
+    base = _public_root_base(request, root_path).rstrip("/")
+    payload = {
+        "schema_version": DATASET_SCHEMA_VERSION,
+        "opportunity_schema_version": SCHEMA_VERSION,
+        "routes": {
+            "opportunities": f"{base}/api/v1/opportunities",
+            "opportunities_ndjson": f"{base}/api/v1/opportunities.ndjson",
+            "opportunity": f"{base}/api/v1/opportunities/{{id}}",
+            "schema": f"{base}/api/v1/schema",
+            "media_feed_json": f"{base}/media/v1/feed.json",
+            "media_feed_rss": f"{base}/media/v1/feed.rss",
+        },
+    }
+    return _versioned_json_response(payload)
+
+
+@app.get("/api/v1/schema")
+async def api_v1_schema() -> JSONResponse:
+    return _versioned_json_response(
+        {
+            "schema_version": SCHEMA_VERSION,
+            "dataset_schema_version": DATASET_SCHEMA_VERSION,
+            "opportunity": OpportunityV1.model_json_schema(),
+        }
+    )
+
+
+@app.get("/api/v1/opportunities")
+async def list_opportunities_v1(
+    request: Request,
+    tag: str | None = Query(None),
+    q: str | None = Query(None, max_length=200),
+    source: str | None = Query(None, max_length=120),
+    lifecycle: str | None = Query(
+        None,
+        pattern="^(open|closing_soon|rolling|forecast|closed|awarded)$",
+    ),
+    region: str | None = Query(
+        None,
+        pattern="^(kazakhstan|central_asia|global)$",
+    ),
+    min_score: float = Query(0.0, ge=0.0, le=1.0),
+    deadline_before: date | None = None,
+    deadline_after: date | None = None,
+    include_irrelevant: bool = False,
+    limit: int = Query(50, ge=1, le=5000),
+    offset: int = Query(0, ge=0),
+    lang: str | None = Query(None),
+) -> JSONResponse:
+    rows, total_count, _ = _query_opportunities_v1(
+        request,
+        tag=tag,
+        q=q,
+        source=source,
+        lifecycle=lifecycle,
+        region=region,
+        min_score=min_score,
+        deadline_before=deadline_before,
+        deadline_after=deadline_after,
+        include_irrelevant=include_irrelevant,
+        limit=limit,
+        offset=offset,
+        lang=lang,
+    )
+    payload = {
+        "schema_version": DATASET_SCHEMA_VERSION,
+        "opportunity_schema_version": SCHEMA_VERSION,
+        "generated_at": datetime.now(UTC).isoformat(),
+        "dataset_revision": dataset_revision(rows),
+        "total_count": total_count,
+        "result_count": len(rows),
+        "items": rows,
+    }
+    response = _versioned_json_response(payload)
+    response.headers["X-Total-Count"] = str(total_count)
+    response.headers["X-Result-Count"] = str(len(rows))
+    return response
+
+
+@app.get("/api/v1/opportunities.ndjson")
+async def export_opportunities_v1_ndjson(
+    request: Request,
+    tag: str | None = Query(None),
+    q: str | None = Query(None, max_length=200),
+    source: str | None = Query(None, max_length=120),
+    lifecycle: str | None = Query(
+        None,
+        pattern="^(open|closing_soon|rolling|forecast|closed|awarded)$",
+    ),
+    region: str | None = Query(
+        None,
+        pattern="^(kazakhstan|central_asia|global)$",
+    ),
+    min_score: float = Query(0.0, ge=0.0, le=1.0),
+    deadline_before: date | None = None,
+    deadline_after: date | None = None,
+    include_irrelevant: bool = False,
+    limit: int = Query(500, ge=1, le=5000),
+    offset: int = Query(0, ge=0),
+    lang: str | None = Query(None),
+) -> Response:
+    rows, _, _ = _query_opportunities_v1(
+        request,
+        tag=tag,
+        q=q,
+        source=source,
+        lifecycle=lifecycle,
+        region=region,
+        min_score=min_score,
+        deadline_before=deadline_before,
+        deadline_after=deadline_after,
+        include_irrelevant=include_irrelevant,
+        limit=limit,
+        offset=offset,
+        lang=lang,
+    )
+    last_modified = max(
+        (item.timestamps.discovered_at for item in rows),
+        default=None,
+    )
+    return ndjson_response(
+        request,
+        [item.model_dump(mode="json") for item in rows],
+        filename="qazfund-opportunities-v1.ndjson",
+        last_modified=last_modified,
+        prefix="qazfund-opportunities-v1",
+    )
+
+
+@app.get("/api/v1/opportunities/{opportunity_id}", response_model=OpportunityV1)
+async def get_opportunity_v1(
+    request: Request,
+    opportunity_id: UUID,
+    lang: str | None = Query(None),
+) -> OpportunityV1:
+    return _find_opportunity_v1(request, opportunity_id, lang=lang)
+
+
+@app.get("/media/v1/opportunities/{opportunity_id}/content.json")
+async def opportunity_media_content(
+    request: Request,
+    opportunity_id: UUID,
+    lang: str | None = Query(None),
+) -> JSONResponse:
+    item = _find_opportunity_v1(request, opportunity_id, lang=lang)
+    return JSONResponse(
+        jsonable_encoder(content_payload(item, lang=_public_lang(lang)))
+    )
+
+
+@app.get("/media/v1/opportunities/{opportunity_id}/citation.txt")
+async def opportunity_media_citation(
+    request: Request,
+    opportunity_id: UUID,
+    style: str = Query("citation", pattern="^(plain|markdown|citation|press)$"),
+    lang: str | None = Query(None),
+) -> Response:
+    item = _find_opportunity_v1(request, opportunity_id, lang=lang)
+    text = citation_text(item, style=cast(Any, style), lang=_public_lang(lang))
+    return Response(text, media_type="text/plain; charset=utf-8")
+
+
+@app.get("/media/v1/opportunities/{opportunity_id}/card.svg")
+async def opportunity_media_card(
+    request: Request,
+    opportunity_id: UUID,
+    card_format: str = Query("og", alias="format"),
+    lang: str | None = Query(None),
+) -> Response:
+    if card_format not in CARD_FORMATS:
+        raise HTTPException(status_code=status.HTTP_422_UNPROCESSABLE_ENTITY)
+    item = _find_opportunity_v1(request, opportunity_id, lang=lang)
+    return Response(
+        render_opportunity_card_svg(
+            item,
+            card_format=card_format,
+            lang=_public_lang(lang),
+        ),
+        media_type="image/svg+xml",
+    )
+
+
+@app.get("/media/v1/charts/{chart_type}.json")
+async def media_chart_json(
+    request: Request,
+    chart_type: str,
+    lang: str | None = Query(None),
+    limit: int = Query(500, ge=1, le=5000),
+) -> JSONResponse:
+    if chart_type not in CHART_TYPES:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND)
+    active_lang = _public_lang(lang)
+    rows = _localized_chart_rows(
+        chart_rows(
+            _media_opportunity_rows(request, lang=active_lang, limit=limit), chart_type
+        ),
+        lang=active_lang,
+    )
+    return JSONResponse(
+        jsonable_encoder(
+            {
+                "schema_version": "qazfund-media-chart.v1",
+                "chart_type": chart_type,
+                "title": chart_title(chart_type, active_lang),
+                "generated_at": datetime.now(UTC).isoformat(),
+                "rows": rows,
+            }
+        )
+    )
+
+
+@app.get("/media/v1/charts/{chart_type}.csv")
+async def media_chart_csv(
+    request: Request,
+    chart_type: str,
+    lang: str | None = Query(None),
+    limit: int = Query(500, ge=1, le=5000),
+) -> Response:
+    if chart_type not in CHART_TYPES:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND)
+    active_lang = _public_lang(lang)
+    rows = _localized_chart_rows(
+        chart_rows(
+            _media_opportunity_rows(request, lang=active_lang, limit=limit), chart_type
+        ),
+        lang=active_lang,
+    )
+    return Response(chart_csv(rows), media_type="text/csv; charset=utf-8")
+
+
+@app.get("/media/v1/charts/{chart_type}.svg")
+async def media_chart_svg(
+    request: Request,
+    chart_type: str,
+    lang: str | None = Query(None),
+    limit: int = Query(500, ge=1, le=5000),
+) -> Response:
+    if chart_type not in CHART_TYPES:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND)
+    active_lang = _public_lang(lang)
+    generated_at = datetime.now(UTC)
+    rows = _localized_chart_rows(
+        chart_rows(
+            _media_opportunity_rows(request, lang=active_lang, limit=limit), chart_type
+        ),
+        lang=active_lang,
+    )
+    return Response(
+        render_chart_svg(
+            rows,
+            title=chart_title(chart_type, active_lang),
+            generated_at=generated_at,
+        ),
+        media_type="image/svg+xml",
+    )
+
+
+@app.get("/media/v1/feed.json")
+async def media_feed_json(
+    request: Request,
+    lang: str | None = Query(None),
+    limit: int = Query(50, ge=1, le=200),
+) -> Response:
+    active_lang = _public_lang(lang)
+    root_path = _root_path(request)
+    base = _public_root_base(request, root_path)
+    payload = json_feed(
+        _media_opportunity_rows(request, lang=active_lang, limit=limit),
+        base_url=base,
+        lang=active_lang,
+    )
+    return Response(
+        json_dumps(payload),
+        media_type="application/feed+json; charset=utf-8",
+    )
+
+
+@app.get("/media/v1/feed.rss")
+async def media_feed_rss(
+    request: Request,
+    lang: str | None = Query(None),
+    limit: int = Query(50, ge=1, le=200),
+) -> Response:
+    active_lang = _public_lang(lang)
+    root_path = _root_path(request)
+    base = _public_root_base(request, root_path)
+    return Response(
+        rss_feed(
+            _media_opportunity_rows(request, lang=active_lang, limit=limit),
+            base_url=base,
+            generated_at=datetime.now(UTC),
+            lang=active_lang,
+        ),
+        media_type="application/rss+xml; charset=utf-8",
     )
 
 

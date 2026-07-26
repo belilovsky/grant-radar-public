@@ -34,8 +34,9 @@ PUBLIC_METADATA_KEYS = frozenset(
     }
 )
 HERO_METADATA_KEYS = frozenset({"source", "funder", "deadline"})
-SOURCE_COLLAPSE_PARAGRAPH_THRESHOLD = 4
-SOURCE_COLLAPSE_CHAR_THRESHOLD = 1600
+SOURCE_SECTION_NOISE_HEADINGS = frozenset(
+    {"notification", "search", "поиск", "уведомление"}
+)
 
 
 def _absolute_href(origin: str, path: str) -> str:
@@ -285,11 +286,12 @@ def _sections_markup(
     *,
     title: str,
     expand_label: str = "",
+    collapse_label: str = "",
 ) -> str:
     sections = [section for section in detail.detail_sections if section.text.strip()]
     if not sections:
         return ""
-    blocks = []
+    entries = []
     seen_sections: list[tuple[str, str]] = []
     for section in sections:
         if detail.eligibility and len(section.text) < 96 and "_" in section.text:
@@ -297,7 +299,15 @@ def _sections_markup(
         normalized_heading = re.sub(
             r"\W+", " ", (section.heading or fallback_heading).casefold()
         ).strip()
+        if normalized_heading in SOURCE_SECTION_NOISE_HEADINGS:
+            continue
         normalized_text = re.sub(r"\W+", " ", section.text.casefold()).strip()
+        fallback_normalized = re.sub(r"\W+", " ", fallback_heading.casefold()).strip()
+        if (
+            normalized_heading == fallback_normalized
+            and len(_clean_summary_text(section.text, title=title)) < 80
+        ):
+            continue
         if any(
             normalized_heading == seen_heading
             and (
@@ -322,33 +332,10 @@ def _sections_markup(
             if chunk.strip()
         )
         heading = escape(section.heading or fallback_heading)
-        paragraph_count = paragraphs.count("<p>")
-        should_collapse = (
-            not section.heading.strip()
-            or len(section.text) >= SOURCE_COLLAPSE_CHAR_THRESHOLD
-            or paragraph_count >= SOURCE_COLLAPSE_PARAGRAPH_THRESHOLD
-        )
-        if should_collapse:
-            blocks.append(
-                """
-                <details class="section-card source-disclosure">
-                  <summary>
-                    <span class="source-disclosure-title">{heading}</span>
-                    <span class="source-disclosure-action">{action}</span>
-                  </summary>
-                  <div class="richtext">{paragraphs}</div>
-                </details>
-                """.format(
-                    heading=heading,
-                    action=escape(expand_label or fallback_heading),
-                    paragraphs=paragraphs,
-                )
-            )
-            continue
-        blocks.append(
+        entries.append(
             """
-            <section class="section-card">
-              <h2>{heading}</h2>
+            <section class="source-entry">
+              <h3>{heading}</h3>
               <div class="richtext">{paragraphs}</div>
             </section>
             """.format(
@@ -356,7 +343,25 @@ def _sections_markup(
                 paragraphs=paragraphs,
             )
         )
-    return "".join(blocks)
+    if not entries:
+        return ""
+    return """
+    <details class="section-card source-disclosure">
+      <summary>
+        <span class="source-disclosure-title">{heading}</span>
+        <span class="source-disclosure-action">
+          <span class="source-action-open">{action}</span>
+          <span class="source-action-close">{collapse_action}</span>
+        </span>
+      </summary>
+      <div class="source-excerpts">{entries}</div>
+    </details>
+    """.format(
+        heading=escape(fallback_heading),
+        action=escape(expand_label or fallback_heading),
+        collapse_action=escape(collapse_label or expand_label or fallback_heading),
+        entries="".join(entries),
+    )
 
 
 def _paragraph_chunks(text: str, *, target_length: int = 520) -> list[str]:
@@ -794,6 +799,7 @@ def render_opportunity_page(
         str(copy["detail_source_excerpt"]),
         title=title,
         expand_label=str(copy["detail_expand_source"]),
+        collapse_label=str(copy["detail_collapse_source"]),
     )
     prepare_markup = _prepare_markup(detail, copy=copy)
     apply_markup = _apply_markup(
@@ -939,12 +945,14 @@ def render_opportunity_page(
       --success-soft: var(--color-success-subtle);
       --radius: var(--av-radius-lg);
       --shadow: var(--shadow-md);
-      --container-max: min(1280px, calc(100% - 48px));
+      --container-max: min(var(--av-container-dashboard), calc(100% - 64px));
     }}
     * {{ box-sizing: border-box; }}
     body {{
       margin: 0;
-      background: var(--bg);
+      background:
+        radial-gradient(circle at 12% 0%, var(--brand-soft), transparent 28rem),
+        var(--bg);
       color: var(--text);
       font-family: var(--av-font-sans);
       font-size: var(--av-text-base);
@@ -954,7 +962,7 @@ def render_opportunity_page(
     .shell {{
       width: var(--container-max);
       margin: 0 auto;
-      padding: 16px 0 36px;
+      padding: 18px 0 44px;
     }}
     .topbar {{
       display: flex;
@@ -962,7 +970,16 @@ def render_opportunity_page(
       align-items: center;
       justify-content: space-between;
       gap: 12px;
-      margin-bottom: 16px;
+      position: sticky;
+      top: 12px;
+      z-index: 20;
+      margin-bottom: 18px;
+      padding: 10px 14px;
+      border: 1px solid color-mix(in oklab, var(--line), transparent 18%);
+      border-radius: var(--av-radius-lg);
+      background: color-mix(in oklab, var(--surface), transparent 7%);
+      box-shadow: var(--av-shadow-sm);
+      backdrop-filter: blur(16px);
     }}
     .breadcrumbs {{
       display: flex;
@@ -996,59 +1013,69 @@ def render_opportunity_page(
     .hero {{
       display: grid;
       gap: 12px;
-      padding: 24px 0;
-      border: 0;
-      border-top: 1px solid var(--line);
-      border-bottom: 1px solid var(--line);
-      border-radius: 0;
-      background: transparent;
-      box-shadow: none;
-      margin-bottom: 14px;
+      padding: clamp(26px, 4vw, 48px);
+      border: 1px solid color-mix(in oklab, var(--line), transparent 12%);
+      border-radius: 24px;
+      background:
+        linear-gradient(135deg, var(--surface) 0%, var(--accent-wash) 100%);
+      box-shadow: var(--av-shadow-md);
+      margin-bottom: 18px;
     }}
     .eyebrow {{
-      color: var(--muted);
+      color: var(--brand);
       font-size: var(--av-text-xs);
       font-family: var(--font-sans);
-      font-weight: 650;
-      text-transform: none;
-      letter-spacing: 0;
+      font-weight: 750;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
     }}
     .hero h1 {{
       margin: 0;
-      max-width: 30ch;
-      font-size: 36px;
-      line-height: 1.06;
+      max-width: 24ch;
+      font-size: clamp(34px, 4.2vw, 58px);
+      line-height: 1.02;
+      letter-spacing: -0.035em;
       text-wrap: balance;
     }}
     .summary {{
       margin: 0;
-      max-width: 64ch;
+      max-width: 60ch;
       color: color-mix(in oklab, var(--text), var(--muted) 35%);
-      font-size: 15px;
+      font-size: clamp(16px, 1.4vw, 19px);
       line-height: 1.55;
     }}
     .hero-grid {{
       display: grid;
-      grid-template-columns: minmax(0, 1.7fr) minmax(230px, 0.62fr);
-      gap: 36px;
+      grid-template-columns: minmax(0, 1.6fr) minmax(260px, 0.66fr);
+      gap: clamp(28px, 5vw, 72px);
       align-items: start;
     }}
     .hero-actions {{
       display: flex;
       flex-wrap: wrap;
-      gap: 8px;
+      gap: 10px;
+      margin-top: 20px;
     }}
     .button {{
       display: inline-flex;
       align-items: center;
       justify-content: center;
-      min-height: var(--av-control-height-md);
-      padding: 0 14px;
+      min-height: 46px;
+      padding: 0 18px;
       border-radius: var(--av-radius-md);
       border: 1px solid var(--line);
       background: var(--surface);
-      font-weight: 600;
+      font-weight: 700;
       cursor: pointer;
+      transition:
+        transform var(--av-motion-fast) ease,
+        border-color var(--av-motion-fast) ease,
+        box-shadow var(--av-motion-fast) ease;
+    }}
+    .button:hover {{
+      transform: translateY(-1px);
+      border-color: var(--line-strong);
+      box-shadow: var(--av-shadow-sm);
     }}
     .button.primary {{
       border-color: color-mix(in oklab, var(--brand), black 12%);
@@ -1056,21 +1083,30 @@ def render_opportunity_page(
       color: white;
     }}
     .button.slim {{
-      min-height: var(--av-control-height-sm);
+      min-height: 46px;
       background: color-mix(in oklab, var(--surface), white 14%);
     }}
     .hero-stats {{
       display: grid;
-      gap: 8px;
-      padding: 2px 0 2px 16px;
-      border: 0;
-      border-left: 1px solid var(--line);
-      border-radius: 0;
-      background: transparent;
+      gap: 0;
+      padding: 18px;
+      border: 1px solid color-mix(in oklab, var(--line), transparent 12%);
+      border-radius: var(--av-radius-lg);
+      background: color-mix(in oklab, var(--surface), transparent 12%);
+      box-shadow: var(--av-shadow-xs);
     }}
     .hero-stats > div {{
       display: grid;
-      gap: 2px;
+      gap: 4px;
+      padding: 12px 0;
+      border-bottom: 1px solid var(--line-subtle);
+    }}
+    .hero-stats > div:first-child {{
+      padding-top: 0;
+    }}
+    .hero-stats > div:last-child {{
+      padding-bottom: 0;
+      border-bottom: 0;
     }}
     .hero-stats strong {{
       font-size: var(--av-text-base);
@@ -1099,8 +1135,9 @@ def render_opportunity_page(
     .pills {{
       display: flex;
       flex-wrap: wrap;
-      gap: 6px;
-      margin-bottom: 12px;
+      gap: 8px;
+      margin-bottom: 18px;
+      padding: 0 4px;
     }}
     .pill {{
       display: inline-flex;
@@ -1116,37 +1153,39 @@ def render_opportunity_page(
     }}
     .content-grid {{
       display: grid;
-      grid-template-columns: minmax(0, 1.4fr) minmax(260px, 0.8fr);
-      gap: 18px;
+      grid-template-columns: minmax(0, 1.48fr) minmax(280px, 0.62fr);
+      gap: 20px;
       align-items: start;
-      padding-top: 14px;
-      border-top: 1px solid var(--line);
+      padding-top: 0;
+      border-top: 0;
     }}
     .content-grid--single {{
       grid-template-columns: minmax(0, 1fr);
     }}
     .content-grid--single .section-stack {{
       grid-template-columns: repeat(2, minmax(0, 1fr));
-      column-gap: 24px;
+      column-gap: 14px;
     }}
     .content-grid--single .source-disclosure {{ grid-column: 1 / -1; }}
     .section-stack {{
       display: grid;
-      gap: 0;
+      gap: 12px;
     }}
     .section-card {{
-      padding: 14px 0;
-      border: 0;
-      border-bottom: 1px solid var(--line);
-      border-radius: 0;
-      background: transparent;
-      box-shadow: none;
+      padding: 0;
+      border: 1px solid var(--line);
+      border-radius: var(--av-radius-lg);
+      background: var(--surface);
+      box-shadow: var(--av-shadow-xs);
+      overflow: clip;
     }}
     .source-disclosure summary {{
       display: flex;
       align-items: center;
       justify-content: space-between;
-      gap: 12px;
+      gap: 16px;
+      min-height: 62px;
+      padding: 17px 20px;
       cursor: pointer;
       list-style: none;
     }}
@@ -1154,7 +1193,7 @@ def render_opportunity_page(
       display: none;
     }}
     .source-disclosure-title {{
-      font-size: 20px;
+      font-size: clamp(17px, 1.8vw, 21px);
       font-weight: 750;
       line-height: 1.2;
     }}
@@ -1163,22 +1202,49 @@ def render_opportunity_page(
       padding: 5px 10px;
       border: 1px solid var(--line);
       border-radius: 999px;
-      background: var(--surface-wash);
-      color: var(--muted);
+      background: var(--brand-soft);
+      color: var(--brand);
       font-size: var(--av-text-xs);
       font-weight: 700;
     }}
     .source-disclosure[open] summary {{
-      margin-bottom: 12px;
-      padding-bottom: 12px;
+      margin-bottom: 0;
+      padding-bottom: 17px;
       border-bottom: 1px solid var(--line-subtle);
     }}
+    .source-disclosure[open] .source-disclosure-action {{
+      color: var(--text);
+      background: var(--surface-subtle);
+    }}
+    .source-action-close {{ display: none; }}
+    .source-disclosure[open] .source-action-open {{ display: none; }}
+    .source-disclosure[open] .source-action-close {{ display: inline; }}
+    .source-excerpts {{
+      display: grid;
+      gap: 18px;
+      padding: 18px 20px 20px;
+    }}
+    .source-entry {{
+      padding-top: 18px;
+      border-top: 1px solid var(--line-subtle);
+    }}
+    .source-entry:first-child {{
+      padding-top: 0;
+      border-top: 0;
+    }}
+    .source-entry h3 {{
+      margin: 0 0 8px;
+      font-size: var(--av-text-base);
+      line-height: 1.3;
+    }}
     .sidebar-card {{
-      padding: 12px;
-      border: 1px solid var(--line-subtle);
-      border-radius: var(--av-radius-md);
+      position: sticky;
+      top: 88px;
+      padding: 20px;
+      border: 1px solid var(--line);
+      border-radius: var(--av-radius-lg);
       background: var(--surface);
-      box-shadow: none;
+      box-shadow: var(--av-shadow-xs);
     }}
     .section-card h2,
     .sidebar-card h2 {{
@@ -1188,7 +1254,7 @@ def render_opportunity_page(
     }}
     .richtext {{
       display: grid;
-      gap: 8px;
+      gap: 12px;
     }}
     .richtext p {{
       margin: 0;
@@ -1201,7 +1267,7 @@ def render_opportunity_page(
       gap: 8px;
     }}
     .meta-item {{
-      padding: 8px 0;
+      padding: 11px 0;
       border: 0;
       border-bottom: 1px solid var(--line-subtle);
       border-radius: 0;
@@ -1243,9 +1309,13 @@ def render_opportunity_page(
     }}
     .verification-section {{
       display: grid;
-      gap: 12px;
-      padding: 18px 0;
-      border-bottom: 1px solid var(--line);
+      gap: 18px;
+      margin-top: 18px;
+      padding: 24px;
+      border: 1px solid var(--line);
+      border-radius: var(--av-radius-lg);
+      background: var(--surface);
+      box-shadow: var(--av-shadow-xs);
     }}
     .verification-head {{
       display: grid;
@@ -1266,7 +1336,7 @@ def render_opportunity_page(
     .verification-list {{
       display: grid;
       grid-template-columns: repeat(2, minmax(0, 1fr));
-      gap: 0 20px;
+      gap: 12px;
       margin: 0;
       padding: 0;
       list-style: none;
@@ -1274,8 +1344,11 @@ def render_opportunity_page(
     .verification-item {{
       display: grid;
       gap: 3px;
-      padding: 10px 0;
-      border-top: 1px solid var(--line-subtle);
+      min-height: 100%;
+      padding: 14px;
+      border: 1px solid var(--line-subtle);
+      border-radius: var(--av-radius-md);
+      background: var(--surface-subtle);
     }}
     .verification-item strong {{
       font-size: var(--av-text-sm);
@@ -1288,14 +1361,13 @@ def render_opportunity_page(
     }}
     .prepare-section {{
       display: grid;
-      gap: 10px;
-      margin-bottom: 0;
-      padding: 18px 0;
-      border: 0;
-      border-bottom: 1px solid var(--line);
-      border-radius: 0;
-      background: transparent;
-      box-shadow: none;
+      gap: 18px;
+      margin-top: 18px;
+      padding: 24px;
+      border: 1px solid var(--line);
+      border-radius: var(--av-radius-lg);
+      background: var(--surface);
+      box-shadow: var(--av-shadow-xs);
     }}
     .prepare-head {{
       display: grid;
@@ -1318,20 +1390,19 @@ def render_opportunity_page(
     .prepare-grid {{
       display: grid;
       grid-template-columns: repeat(4, minmax(0, 1fr));
-      gap: 0;
+      gap: 12px;
     }}
     .prepare-card {{
       display: grid;
       gap: 6px;
-      min-height: 0;
-      padding: 6px 14px;
-      border: 0;
-      border-left: 1px solid var(--line-subtle);
-      border-radius: 0;
-      background: transparent;
+      min-height: 100%;
+      padding: 16px;
+      border: 1px solid var(--line-subtle);
+      border-radius: var(--av-radius-md);
+      background: var(--surface-subtle);
       box-shadow: none;
     }}
-    .prepare-card:first-child {{ border-left: 0; padding-left: 0; }}
+    .prepare-card:first-child {{ border-left: 1px solid var(--line-subtle); }}
     .prepare-index {{
       display: inline-flex;
       align-items: center;
@@ -1358,14 +1429,13 @@ def render_opportunity_page(
     }}
     .apply-section {{
       display: grid;
-      gap: 10px;
-      margin-bottom: 0;
-      padding: 18px 0;
-      border: 0;
-      border-bottom: 1px solid var(--line);
-      border-radius: 0;
-      background: transparent;
-      box-shadow: none;
+      gap: 18px;
+      margin-top: 18px;
+      padding: 24px;
+      border: 1px solid var(--line);
+      border-radius: var(--av-radius-lg);
+      background: var(--surface);
+      box-shadow: var(--av-shadow-xs);
     }}
     .apply-head {{
       display: grid;
@@ -1388,7 +1458,7 @@ def render_opportunity_page(
     .apply-list {{
       display: grid;
       grid-template-columns: repeat(4, minmax(0, 1fr));
-      gap: 0;
+      gap: 12px;
       padding: 0;
       margin: 0;
       list-style: none;
@@ -1396,15 +1466,15 @@ def render_opportunity_page(
     .apply-step {{
       display: grid;
       grid-template-columns: 28px minmax(0, 1fr);
-      gap: 8px;
+      gap: 10px;
       align-items: start;
-      padding: 6px 14px;
-      border: 0;
-      border-left: 1px solid var(--line-subtle);
-      border-radius: 0;
-      background: transparent;
+      min-height: 100%;
+      padding: 16px;
+      border: 1px solid var(--line-subtle);
+      border-radius: var(--av-radius-md);
+      background: var(--surface-subtle);
     }}
-    .apply-step:first-child {{ border-left: 0; padding-left: 0; }}
+    .apply-step:first-child {{ border-left: 1px solid var(--line-subtle); }}
     .apply-index {{
       display: inline-flex;
       align-items: center;
@@ -1431,10 +1501,13 @@ def render_opportunity_page(
     }}
     .related-section {{
       display: grid;
-      gap: 12px;
-      margin-top: 14px;
-      padding-top: 12px;
-      border-top: 1px solid var(--line);
+      gap: 18px;
+      margin-top: 18px;
+      padding: 24px;
+      border: 1px solid var(--line);
+      border-radius: var(--av-radius-lg);
+      background: var(--surface);
+      box-shadow: var(--av-shadow-xs);
     }}
     .related-head {{
       display: grid;
@@ -1457,17 +1530,17 @@ def render_opportunity_page(
     .related-grid {{
       display: grid;
       grid-template-columns: repeat(3, minmax(0, 1fr));
-      gap: 12px;
+      gap: 14px;
     }}
     .related-card {{
       display: grid;
       gap: 10px;
-      min-height: 0;
-      padding: 10px;
+      min-height: 100%;
+      padding: 18px;
       border: 1px solid var(--line);
-      border-radius: var(--av-radius-md);
+      border-radius: var(--av-radius-lg);
       background: var(--surface);
-      box-shadow: none;
+      box-shadow: var(--av-shadow-xs);
     }}
     .related-top,
     .related-meta {{
@@ -1521,9 +1594,11 @@ def render_opportunity_page(
     .site-footer {{
       display: grid;
       gap: 8px;
-      margin-top: 28px;
-      padding-top: 22px;
-      border-top: 1px solid var(--line);
+      margin-top: 18px;
+      padding: 22px 24px;
+      border: 1px solid var(--line);
+      border-radius: var(--av-radius-lg);
+      background: var(--surface);
       color: var(--muted);
       font-size: var(--av-text-sm);
       line-height: 1.5;
@@ -1555,9 +1630,9 @@ def render_opportunity_page(
       .content-grid--single .section-stack {{ grid-template-columns: 1fr; }}
       .hero-stats,
       .sidebar-card {{
-        padding: 12px 0 0;
-        border-left: 0;
-        border-top: 1px solid var(--line);
+        position: static;
+        padding: 18px;
+        border: 1px solid var(--line);
       }}
       .hero-stats {{
         grid-template-columns: repeat(3, minmax(0, 1fr));
@@ -1568,12 +1643,10 @@ def render_opportunity_page(
       .prepare-card:first-child,
       .apply-step,
       .apply-step:first-child {{
-        padding: 10px 0;
-        border-left: 0;
-        border-top: 1px solid var(--line-subtle);
+        min-height: auto;
+        padding: 16px;
+        border: 1px solid var(--line-subtle);
       }}
-      .prepare-card:first-child,
-      .apply-step:first-child {{ border-top: 0; }}
     }}
     @media (max-width: 640px) {{
       .hero-actions .button,
@@ -1583,23 +1656,28 @@ def render_opportunity_page(
         width: min(100%, calc(100% - 24px));
         padding: 14px 0 32px;
       }}
-      .hero,
-      .related-card {{
-        padding: 12px;
+      .topbar {{
+        top: 8px;
+        padding: 8px 10px;
       }}
-      .hero {{ padding-inline: 0; }}
+      .breadcrumbs span:last-child {{
+        display: none;
+      }}
+      .hero {{
+        padding: 22px 18px;
+        border-radius: 20px;
+      }}
       .hero h1 {{
-        font-size: 24px;
+        font-size: 30px;
       }}
       .summary {{
         font-size: 14px;
       }}
       .hero-actions {{
         display: grid;
-        grid-template-columns: repeat(2, minmax(0, 1fr));
+        grid-template-columns: 1fr;
       }}
       .hero-actions .button {{ width: 100%; }}
-      .hero-actions .primary {{ grid-column: 1 / -1; }}
       .hero-stats {{
         grid-template-columns: repeat(2, minmax(0, 1fr));
       }}
@@ -1607,6 +1685,24 @@ def render_opportunity_page(
       .hero-stats > div:nth-child(2) {{ grid-column: 1 / -1; }}
       .hero-stats strong {{
         font-size: 14px;
+      }}
+      .verification-section,
+      .prepare-section,
+      .apply-section,
+      .related-section,
+      .site-footer {{
+        padding: 18px;
+        border-radius: 16px;
+      }}
+      .source-disclosure summary {{
+        align-items: flex-start;
+        padding: 16px;
+      }}
+      .source-disclosure-action {{
+        padding: 4px 8px;
+      }}
+      .related-card {{
+        padding: 16px;
       }}
       .prepare-head h2,
       .apply-head h2,

@@ -13,7 +13,7 @@ COPY = {
         "heading": "Такой страницы нет",
         "text": (
             "Возможно, ссылка устарела или адрес введён с ошибкой. "
-            "Вернитесь в каталог и продолжите поиск возможностей."
+            "Вернитесь в каталог и продолжите поиск программ."
         ),
         "action": "Вернуться в каталог",
     },
@@ -56,17 +56,23 @@ def render_not_found_page(*, lang: str, root_path: str = "") -> str:
       grid-template-rows: auto 1fr auto;
       place-items: stretch;
       padding: 0;
-      background: var(--color-bg);
+      background:
+        radial-gradient(circle at 12% 0%, var(--color-accent-subtle), transparent 28rem),
+        var(--color-bg);
       color: var(--color-text);
       font-family: var(--av-font-sans);
     }}
     header {{
-      width: min(var(--av-container-dashboard), calc(100% - 48px));
+      width: min(var(--av-container-dashboard), calc(100% - 64px));
       margin: 0 auto;
     }}
     header {{
-      padding: 22px 0 16px;
-      border-bottom: 1px solid var(--color-border-subtle);
+      margin-top: 18px;
+      padding: 12px 16px;
+      border: 1px solid var(--color-border);
+      border-radius: var(--av-radius-lg);
+      background: color-mix(in oklab, var(--color-surface), transparent 7%);
+      box-shadow: var(--av-shadow-sm);
     }}
     .brand {{
       color: var(--color-text);
@@ -77,14 +83,13 @@ def render_not_found_page(*, lang: str, root_path: str = "") -> str:
     main {{
       align-self: center;
       justify-self: stretch;
-      width: min(var(--av-container-dashboard), calc(100% - 48px));
+      width: min(860px, calc(100% - 64px));
       margin: 0 auto;
-      padding: 64px 0;
-      border: 0;
-      border-bottom: 1px solid var(--color-border-subtle);
-      border-radius: 0;
-      background: transparent;
-      box-shadow: none;
+      padding: clamp(34px, 6vw, 72px);
+      border: 1px solid var(--color-border);
+      border-radius: 24px;
+      background: var(--color-surface);
+      box-shadow: var(--av-shadow-md);
     }}
     .eyebrow {{
       color: var(--color-accent);
@@ -93,8 +98,9 @@ def render_not_found_page(*, lang: str, root_path: str = "") -> str:
     }}
     h1 {{
       margin: 8px 0 12px;
-      font-size: 48px;
-      line-height: 1.05;
+      font-size: clamp(38px, 6vw, 64px);
+      line-height: 1.02;
+      letter-spacing: -0.035em;
     }}
     p {{
       max-width: 52ch;
@@ -105,7 +111,7 @@ def render_not_found_page(*, lang: str, root_path: str = "") -> str:
     .primary-action {{
       display: inline-flex;
       align-items: center;
-      min-height: var(--av-control-height-md);
+      min-height: 46px;
       margin-top: 24px;
       padding: 0 16px;
       border-radius: var(--av-radius-md);
@@ -118,7 +124,8 @@ def render_not_found_page(*, lang: str, root_path: str = "") -> str:
     @media (max-width: 640px) {{
       header,
       main {{ width: calc(100% - 24px); }}
-      main {{ padding: 44px 0; }}
+      header {{ margin-top: 14px; }}
+      main {{ padding: 34px 22px; border-radius: 20px; }}
       h1 {{ font-size: 36px; }}
     }}
   </style>

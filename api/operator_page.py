@@ -9,12 +9,12 @@ from api.avds import AVDS_CSS, AVDS_FONT_HEAD
 
 COPY = {
     "ru": {
-        "title": "Операторский контроль – QAZ.FUND",
-        "brand_context": "Операторский контур",
-        "eyebrow": "Состояние конвейера",
+        "title": "Служебный контроль – QAZ.FUND",
+        "brand_context": "Служебный раздел",
+        "eyebrow": "Проверка источников",
         "heading": "Контроль источников",
-        "intro": "Техническое состояние сборщиков и последние запуски.",
-        "token": "Операторский токен",
+        "intro": "Состояние сборщиков и последние проверки источников.",
+        "token": "Служебный токен",
         "connect": "Подключиться",
         "disconnect": "Выйти",
         "back": "Каталог",
@@ -25,7 +25,7 @@ COPY = {
         "catalog": "Записей",
         "relevant": "Актуально",
         "sources": "Источники",
-        "fresh": "Свежие",
+        "fresh": "Проверены",
         "stale": "Требуют внимания",
         "failed": "Ошибки запусков",
         "recent": "Последние запуски",
@@ -97,16 +97,22 @@ def render_operator_page(*, lang: str, root_path: str = "") -> str:
       --brand-soft:var(--color-accent-subtle); --good:var(--color-success);
       --warn:var(--color-warning); --bad:var(--color-danger); }}
     * {{ box-sizing:border-box; }}
-    body {{ margin:0; background:var(--wash); color:var(--ink);
-      font-family:var(--av-font-sans); font-size:var(--av-text-base); }}
+    body {{ margin:0;
+      background:radial-gradient(circle at 12% 0%,var(--brand-soft),transparent 28rem),
+        var(--wash);
+      color:var(--ink); font-family:var(--av-font-sans); font-size:var(--av-text-base); }}
     button,input {{ font:inherit; }}
     .visually-hidden {{ position:absolute; width:1px; height:1px; padding:0;
       margin:-1px; overflow:hidden; clip:rect(0,0,0,0); white-space:nowrap;
       border:0; }}
-    main {{ width:min(var(--av-container-dashboard),calc(100% - 32px)); margin:auto;
-      padding:16px 0 40px; }}
-    .operator-topbar {{ display:flex; align-items:center; justify-content:space-between;
-      gap:16px; margin-bottom:18px; }}
+    main {{ width:min(var(--av-container-dashboard),calc(100% - 64px)); margin:auto;
+      padding:18px 0 44px; }}
+    .operator-topbar {{ position:sticky; top:12px; z-index:20; display:flex;
+      align-items:center; justify-content:space-between; gap:16px; margin-bottom:18px;
+      padding:10px 14px; border:1px solid color-mix(in oklab,var(--line),transparent 18%);
+      border-radius:var(--av-radius-lg);
+      background:color-mix(in oklab,var(--panel),transparent 7%);
+      box-shadow:var(--av-shadow-sm); backdrop-filter:blur(16px); }}
     .operator-brand {{ display:inline-flex; align-items:baseline; gap:10px; color:var(--ink);
       font-size:17px; font-weight:800; letter-spacing:0; }}
     .operator-brand span {{ color:var(--muted); font-size:12px; font-weight:650; }}
@@ -117,15 +123,18 @@ def render_operator_page(*, lang: str, root_path: str = "") -> str:
     .lang-switch a[aria-current="page"] {{ border-bottom-color:var(--brand); color:var(--ink); }}
     .catalog-link {{ min-height:32px; display:inline-flex; align-items:center; }}
     .intro-grid {{ display:grid; grid-template-columns:minmax(0,1fr) minmax(360px,520px);
-      gap:28px; align-items:center; padding:24px 0; border-top:1px solid var(--line);
-      border-bottom:1px solid var(--line); }}
-    .eyebrow {{ display:block; margin-bottom:6px; color:var(--brand); font-size:12px;
-      font-weight:700; }}
-    h1 {{ max-width:18ch; margin:0 0 6px; font-size:clamp(27px,3vw,36px); line-height:1.05; }}
-    p {{ margin:0; color:var(--muted); line-height:1.5; }}
+      gap:clamp(28px,5vw,72px); align-items:center; padding:clamp(26px,4vw,48px);
+      border:1px solid color-mix(in oklab,var(--line),transparent 12%);
+      border-radius:24px; background:linear-gradient(135deg,var(--panel),var(--brand-soft) 130%);
+      box-shadow:var(--av-shadow-md); }}
+    .eyebrow {{ display:block; margin-bottom:8px; color:var(--brand); font-size:12px;
+      font-weight:750; letter-spacing:.06em; text-transform:uppercase; }}
+    h1 {{ max-width:18ch; margin:0 0 10px; font-size:clamp(34px,4vw,54px);
+      line-height:1.02; letter-spacing:-.035em; }}
+    p {{ margin:0; color:var(--muted); line-height:1.58; }}
     a {{ color:var(--brand); font-weight:700; text-decoration:none; }}
-    .auth,.panel {{ padding:14px; border:1px solid var(--line); border-radius:var(--av-radius-md);
-      background:var(--panel); }}
+    .auth,.panel {{ padding:18px; border:1px solid var(--line);
+      border-radius:var(--av-radius-lg); background:var(--panel); box-shadow:var(--av-shadow-xs); }}
     .auth form {{ display:grid; gap:7px; }}
     .auth label {{ color:var(--muted); font-size:12px; font-weight:700; }}
     .auth-controls {{ display:grid; grid-template-columns:1fr auto; gap:10px; }}
@@ -139,16 +148,14 @@ def render_operator_page(*, lang: str, root_path: str = "") -> str:
     .message {{ min-height:20px; margin:10px 0 0; color:var(--muted); }}
     .message.bad {{ color:var(--bad); }}
     .dashboard[hidden],.auth[hidden] {{ display:none; }}
-    .dashboard {{ padding-top:14px; }}
+    .dashboard {{ padding-top:18px; }}
     .dashboard-toolbar {{ display:flex; align-items:center; justify-content:space-between;
       gap:12px; }}
     .dashboard-toolbar .message {{ margin:0; }}
     .metrics {{ display:grid; grid-template-columns:repeat(5,minmax(0,1fr));
-      gap:0; margin:12px 0; border:1px solid var(--line); border-radius:var(--av-radius-md);
-      background:var(--panel); }}
-    .metric {{ padding:10px 12px; border:0; border-left:1px solid var(--line-subtle);
-      background:transparent; }}
-    .metric:first-child {{ border-left:0; }}
+      gap:10px; margin:14px 0; }}
+    .metric {{ padding:14px; border:1px solid var(--line);
+      border-radius:var(--av-radius-md); background:var(--panel); box-shadow:var(--av-shadow-xs); }}
     .metric span {{ display:block; color:var(--muted); font-size:12px; }}
     .metric strong {{ display:block; margin-top:3px; font-size:22px; }}
     .grid {{ display:grid; grid-template-columns:minmax(0,1fr) minmax(0,2fr);
@@ -173,13 +180,15 @@ def render_operator_page(*, lang: str, root_path: str = "") -> str:
       .catalog-link {{ min-height: var(--av-control-height-lg); }}
       .lang-switch a {{ min-width: var(--av-control-height-lg); }}
       main {{ width:min(100% - 20px,var(--av-container-dashboard)); padding-top:10px; }}
+      .operator-topbar {{ top:8px; padding:8px 10px; }}
       .operator-topbar {{ align-items:flex-start; }}
       .operator-brand {{ display:grid; gap:2px; }}
       .operator-tools {{ gap:6px; }}
       .catalog-link {{ font-size:0; }}
       .catalog-link {{ min-width:var(--av-control-height-lg); justify-content:center; }}
       .catalog-link::before {{ content:"←"; font-size:18px; }}
-      .intro-grid,.grid {{ grid-template-columns:1fr; gap:16px; padding:18px 0; }}
+      .intro-grid,.grid {{ grid-template-columns:1fr; gap:16px; }}
+      .intro-grid {{ padding:22px 18px; border-radius:20px; }}
       .metrics {{ grid-template-columns:repeat(2,minmax(0,1fr)); }}
       .auth-controls {{ grid-template-columns:1fr; }}
       .dashboard-toolbar {{ align-items:flex-start; }}

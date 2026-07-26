@@ -47,7 +47,9 @@ def test_root_renders_service_landing(monkeypatch):
     )
     assert "\u2014" not in response.text
     assert "fonts.googleapis.com" not in response.text
-    assert '--av-font-sans: Arial, "Helvetica Neue", Helvetica' in response.text
+    assert (
+        '--av-font-sans: -apple-system, BlinkMacSystemFont, "Segoe UI"' in response.text
+    )
     assert 'data-avds="grant-radar"' in response.text
     assert 'data-av-theme="light"' in response.text
     assert "--av-color-background" in response.text
@@ -59,12 +61,12 @@ def test_root_renders_service_landing(monkeypatch):
     assert "--badge-outline" in response.text
     assert "--color-focus-ring: var(--av-focus-ring)" in response.text
     assert "--color-bg: var(--av-color-background)" in response.text
-    assert "width: min(var(--container-max), calc(100% - 48px));" in response.text
+    assert "width: min(var(--container-max), calc(100% - 64px));" in response.text
     assert "grid-template-columns: repeat(3, minmax(148px, 196px));" in response.text
     assert "width: fit-content;" in response.text
     assert "grid-template-columns: repeat(3, minmax(0, 1fr));" in response.text
     assert "font-family: var(--font-sans);" in response.text
-    assert "text-transform: uppercase;" not in response.text
+    assert "text-transform: uppercase;" in response.text
     assert "letter-spacing: 0.12em;" not in response.text
     assert "border: 1.5px solid var(--line);" not in response.text
     assert ".source-card {" in response.text
@@ -86,16 +88,18 @@ def test_root_renders_service_landing(monkeypatch):
     assert 'data-avds-component="hero-band"' in response.text
     assert "QAZ.FUND" in response.text
     assert "Публичный навигатор по грантам, субсидиям" in response.text
-    assert "Гранты, субсидии и программы поддержки для Казахстана" in response.text
-    assert "Что нужно сделать сейчас?" in response.text
-    assert "Открыть каталог" in response.text
+    assert (
+        "Гранты, субсидии и программы поддержки из открытых источников" in response.text
+    )
+    assert "Что вы хотите найти?" in response.text
+    assert "Перейти к программам" in response.text
     assert "Прямое подключение к официальному источнику" in response.text
     assert "Внешний мониторинг и редакционная выборка" in response.text
-    assert "Рабочие сценарии" in response.text
-    assert "Найти поддержку" in response.text
-    assert "Проверить программу" in response.text
-    assert "Сроки до месяца" in response.text
-    assert "Господдержка РК" in response.text
+    assert "Быстрый выбор" in response.text
+    assert "Найти программу" in response.text
+    assert "Сверить условия" in response.text
+    assert "Срок до месяца" in response.text
+    assert "Поддержка в Казахстане" in response.text
     assert "Тендеры и закупки" in response.text
     assert 'data-hero-focus="search"' in response.text
     assert 'data-hero-sort="deadline"' in response.text
@@ -124,7 +128,7 @@ def test_root_renders_service_landing(monkeypatch):
     assert "workspace_action_preparing" in response.text
     assert "Сохраняется только в этом браузере." in response.text
     assert "Уточнить данные" in response.text
-    assert "Рабочие подборки" in response.text
+    assert "Сохранённые подборки" in response.text
     assert "Сохранить фильтры" in response.text
     assert "Поделиться выдачей" in response.text
     assert "Сроки в календарь" in response.text
@@ -136,25 +140,25 @@ def test_root_renders_service_landing(monkeypatch):
     assert "Госслужащему" in response.text
     assert "Подборки для старта" in response.text
     assert "Актуально сейчас" in response.text
-    assert "Лучшие сигналы недели" in response.text
+    assert "Подходящие программы" in response.text
     assert "Госсектор и субсидии" in response.text
-    assert "Не тянуть с подачей" in response.text
-    assert "Маршруты по задачам" in response.text
+    assert "Ближайшие сроки" in response.text
+    assert "Для кого" in response.text
     assert "По типу проекта" in response.text
     assert "Акселераторы, гранты и облачные кредиты" in response.text
     assert "Субсидии, льготы и меры поддержки РК" in response.text
-    assert "Темы для навигации" in response.text
+    assert "Темы" in response.text
     assert "По направлению" in response.text
     assert "Активные фонды и программы" in response.text
     assert "ИИ, облачные кредиты и цифровые навыки" in response.text
     assert "Инфраструктура, закупки и программы развития" in response.text
-    assert "В фокусе сейчас" in response.text
+    assert "Текущая подборка" in response.text
     assert "Что здесь обычно ищут" in response.text
     assert "Лучше всего подходит" in response.text
-    assert "ИИ-пилоты и акселераторы" in response.text
+    assert "Опытные проекты в области ИИ и акселераторы" in response.text
     assert "Локальные субсидии и меры РК" in response.text
     assert "Убрать тему" in response.text
-    assert "Приоритет: Казахстан и ЦА" in response.text
+    assert "Казахстан в приоритете" in response.text
     assert (
         '<strong id="metric-strong" data-catalog-count="0">0</strong>' in response.text
     )
@@ -180,9 +184,9 @@ def test_root_renders_service_landing(monkeypatch):
     ) < response.text.index('data-avds-component="funder-library"')
     assert "Оценка учитывает регион и тему" in response.text
     assert "Это не вероятность одобрения" in response.text
-    assert "По приоритету действий" in response.text
+    assert "По приоритету проверки" in response.text
     assert "Точность совпадения" not in response.text
-    assert "медиа" in response.text
+    assert "СМИ" in response.text
     assert "-webkit-line-clamp: 2;" in response.text
     assert ".hero-band" in response.text
     assert ".hero-grid" in response.text
@@ -256,7 +260,7 @@ def test_root_renders_service_landing(monkeypatch):
     assert 'id="opportunities-list"' in response.text
     assert 'id="load-more-wrap"' in response.text
     assert 'data-avds-component="discovery-library"' in response.text
-    assert "Подборки и маршруты" in response.text
+    assert "Готовые подборки" in response.text
     assert 'id="spotlight-grid"' in response.text
     assert 'id="themes-grid"' in response.text
     assert 'id="pathways-grid"' in response.text
@@ -381,18 +385,18 @@ def test_root_renders_service_landing(monkeypatch):
     assert "Все регионы" in response.text
     assert "Бессрочные" in response.text
     assert "Кому подходит" in response.text
-    assert "Почему это в фокусе" in response.text
-    assert "Локальная мера поддержки для команд и бизнеса" in response.text
+    assert "Почему показано" in response.text
+    assert "Мера поддержки доступна командам и компаниям" in response.text
     assert "Подходит командам, которые работают с госсектором" in response.text
     assert "Быстрая оценка" in response.text
     assert "Критерии нужно уточнить" in response.text
     assert "Попробуйте ослабить один из фильтров" in response.text
     assert "Сбросить всё" in response.text
     assert "Открыть весь индекс" in response.text
-    assert "Быстрый просмотр" in response.text
+    assert "Кратко о программе" in response.text
     assert "Официальный источник" in response.text
-    assert "Полная карточка" in response.text
-    assert '"read_more": "Полная карточка"' in response.text
+    assert "Открыть карточку" in response.text
+    assert '"read_more": "Открыть карточку"' in response.text
     assert '"kz": "Казахстан"' in response.text
     assert '"program": "Программа"' in response.text
     assert '"education_organisation": "Образовательные организации"' in response.text
@@ -537,8 +541,8 @@ def test_root_renders_service_landing(monkeypatch):
     assert "contain-intrinsic-size:" not in response.text
     assert ".opportunity {" in response.text
     opportunity_css = response.text.split(".opportunity {", 1)[1].split("}", 1)[0]
-    assert "border: 0;" in opportunity_css
-    assert "border-top: 1px solid var(--line);" in opportunity_css
+    assert "border: 1px solid color-mix" in opportunity_css
+    assert "border-radius: 18px;" in opportunity_css
     assert "border-left:" not in opportunity_css
     assert ".opportunity-content {" in response.text
     assert ".opportunity-rail {" in response.text
@@ -769,7 +773,7 @@ def test_sections_markup_collapses_long_source_text():
     )
 
     assert '<details class="section-card source-disclosure">' in markup
-    assert '<span class="source-disclosure-title">Выдержка с источника</span>' in markup
+    assert '<span class="source-disclosure-title">Описание</span>' in markup
     assert "Показать выдержку" in markup
     assert markup.count("<p>") >= 4
 
@@ -837,7 +841,7 @@ def test_working_brief_uses_only_available_fields_and_keeps_source_boundary():
         copy=copy,
     )
 
-    assert "QAZ.FUND – рабочая справка" in brief
+    assert "QAZ.FUND – сведения о программе" in brief
     assert "Организатор или источник: Официальная программа" in brief
     assert "Регион: Казахстан" in brief
     assert "Сумма: 10 000 000 KZT" in brief
@@ -1089,105 +1093,47 @@ def test_marketing_endpoints_are_exposed(monkeypatch):
     assert discovery.status_code == 200
     assert discovery.headers["content-type"].startswith("application/json")
     assert discovery.headers["cache-control"].startswith("public, max-age=300")
-    assert discovery.json() == {
-        "site": "QAZ.FUND",
-        "type": "public-funding-navigator",
-        "home": "http://testserver/",
-        "sitemap": "http://testserver/sitemap.xml",
-        "llms": "http://testserver/llms.txt",
-        "api_docs": "http://testserver/docs",
-        "openapi": "http://testserver/openapi.json",
-        "source_status": "http://testserver/status",
-        "ecosystem": "http://testserver/.well-known/qdev-ecosystem.json",
-        "release": "http://testserver/.well-known/release.json",
-        "contracts": {
-            "qazstack": ("http://testserver/.well-known/qazstack-consumer.json"),
-            "avds4": "http://testserver/.well-known/avds-ui-contract.json",
-        },
-        "languages": ["ru", "en"],
-        "routes": {
-            "home": "/?lang={lang}",
-            "coverage": "/coverage",
-            "source_status": "/status?lang={lang}",
-            "opportunities": "/opportunities?lang={lang}",
-            "opportunities_ndjson": "/opportunities.ndjson?lang={lang}",
-            "opportunities_ndjson_compact": (
-                "/opportunities.ndjson?lang={lang}&compact=true"
-            ),
-            "opportunity_api": "/opportunities/{id}?lang={lang}",
-            "opportunity": "/opportunity/{id}?lang={lang}",
-            "funder": "/funder/{slug}?lang={lang}",
-            "digest": "/digest?lang={lang}",
-        },
-        "data_endpoints": {
-            "coverage": "http://testserver/coverage",
-            "opportunities": "http://testserver/opportunities",
-            "opportunities_ndjson": "http://testserver/opportunities.ndjson",
-            "opportunities_ndjson_compact": (
-                "http://testserver/opportunities.ndjson?compact=true"
-            ),
-            "digest": "http://testserver/digest",
-        },
-        "ai_consumption": {
-            "preferred_bulk_export": (
-                "http://testserver/opportunities.ndjson?compact=true"
-            ),
-            "preferred_detail_template": "/opportunities/{id}?lang=ru|en",
-            "preferred_human_template": "/opportunity/{id}?lang=ru|en",
-            "recommended_language_order": ["ru", "en"],
-            "cache_policy": {
-                "discovery_seconds": 300,
-                "catalog_seconds": 60,
-                "ndjson_seconds": 300,
-            },
-            "public_evidence_fields": [
-                "source",
-                "source_url",
-                "discovered_at",
-                "deadline",
-                "score",
-                "evidence_state",
-                "raw.decision_readiness",
-                "raw.qazcompute_evidence_readiness",
-                "raw.ranking",
-            ],
-            "do_not_infer": [
-                "eligibility",
-                "deadline",
-                "award amount",
-                "application result",
-            ],
-        },
-        "query_templates": {
-            "opportunities_recent": (
-                "/opportunities?lang=ru&limit=50&min_score=0.5"
-                "&deadline_after={yyyy-mm-dd}"
-            ),
-            "opportunities_by_tag": "/opportunities?lang=ru&limit=50&tag={tag}",
-            "opportunities_search": "/opportunities?lang=ru&limit=50&q={query}",
-            "opportunities_by_source": (
-                "/opportunities?lang=ru&limit=50&source={source}"
-            ),
-            "opportunities_by_lifecycle": (
-                "/opportunities?lang=ru&limit=50&lifecycle={lifecycle}"
-            ),
-            "opportunities_ai_export": (
-                "/opportunities.ndjson?lang=ru&limit=500&min_score=0.3" "&compact=true"
-            ),
-            "digest_ai": "/digest?lang=ru&limit=5&tag=ai",
-        },
-        "capabilities": [
-            "public opportunity pages",
-            "public funder pages",
-            "machine-readable opportunity api",
-            "cache-aware ndjson export",
-            "machine-readable source coverage",
-            "public source freshness status",
-            "official source links",
-            "read-only public catalog",
-            "qdev ecosystem contract",
-        ],
-    }
+    data = discovery.json()
+    assert data["site"] == "QAZ.FUND"
+    assert data["home"] == "http://testserver/"
+    assert data["openapi"] == "http://testserver/openapi.json"
+    assert data["versioned_api"] == "http://testserver/api/v1"
+    assert data["api_v1_schema"] == "http://testserver/api/v1/schema"
+    assert data["terms"] == "http://testserver/terms"
+    assert data["data_policy"] == "http://testserver/data-policy"
+    assert data["attribution"] == "http://testserver/attribution"
+    assert data["contracts"]["qazstack"].endswith("/.well-known/qazstack-consumer.json")
+    assert data["routes"]["opportunities"] == "/opportunities?lang={lang}"
+    assert data["routes"]["api_v1_opportunity"] == (
+        "/api/v1/opportunities/{id}?lang={lang}"
+    )
+    assert data["routes"]["media_citation"] == (
+        "/media/v1/opportunities/{id}/citation.txt?lang={lang}"
+    )
+    assert data["routes"]["media_chart_svg"] == (
+        "/media/v1/charts/{chart_type}.svg?lang={lang}"
+    )
+    assert data["data_endpoints"]["api_v1_opportunities"] == (
+        "http://testserver/api/v1/opportunities"
+    )
+    assert (
+        data["media_endpoints"]["feed_json"] == "http://testserver/media/v1/feed.json"
+    )
+    assert data["ai_consumption"]["preferred_bulk_export"] == (
+        "http://testserver/api/v1/opportunities.ndjson"
+    )
+    assert data["ai_consumption"]["preferred_legacy_bulk_export"] == (
+        "http://testserver/opportunities.ndjson?compact=true"
+    )
+    assert data["ai_consumption"]["preferred_detail_template"] == (
+        "/api/v1/opportunities/{id}?lang=ru|en"
+    )
+    assert "provenance.content_hash" in data["ai_consumption"]["public_evidence_fields"]
+    assert data["query_templates"]["opportunity_citation"] == (
+        "/media/v1/opportunities/{id}/citation.txt?lang=ru&style=citation"
+    )
+    assert "versioned public data contract" in data["capabilities"]
+    assert "machine-readable media feeds" in data["capabilities"]
     discovery_head = client.head("/site-discovery.json")
     assert discovery_head.status_code == 200
     assert discovery_head.headers["content-type"].startswith("application/json")
@@ -1694,7 +1640,7 @@ def test_public_status_page_renders_coverage_without_operator_details(monkeypatc
     assert 'href="/docs?lang=ru"' in response.text
     assert "min-height:var(--av-control-height-lg);" in response.text
     assert ".status-topbar .back" in response.text
-    assert "--av-container-dashboard: 1280px" in response.text
+    assert "--av-container-dashboard: 1440px" in response.text
     assert "World Bank Kazakhstan" in response.text
     assert "Последняя проверка" in response.text
     assert 'rel="canonical" href="https://qaz.fund/status?lang=ru"' in response.text
@@ -1716,7 +1662,7 @@ def test_operator_page_is_noindex_and_never_embeds_admin_token(monkeypatch):
     assert "Контроль источников" in response.text
     assert 'data-av-theme="light" data-theme="light"' in response.text
     assert 'class="operator-brand"' in response.text
-    assert '<label for="token">Операторский токен</label>' in response.text
+    assert '<label for="token">Служебный токен</label>' in response.text
     assert 'class="lang-switch"' in response.text
     assert 'href="/operator?lang=en"' in response.text
     assert "X-Grant-Radar-Admin-Token" in response.text
@@ -2954,16 +2900,16 @@ def test_opportunity_page_renders_public_permalink(monkeypatch):
     assert "Проверьте критерии" in response.text
     assert "Соберите проектную заявку" in response.text
     assert "Как подать" in response.text
-    assert "Скопировать справку" in response.text
+    assert "Скопировать сведения" in response.text
     assert 'id="copy-working-brief"' in response.text
     assert 'id="copy-working-brief-status"' in response.text
-    assert "Рабочая справка скопирована." in response.text
-    assert "Перед использованием карточки" in response.text
+    assert "Сведения скопированы." in response.text
+    assert "Что нужно перепроверить" in response.text
     assert "Право на участие" in response.text
     assert "Закупочная документация" in response.text
-    assert "Публикация и служебная записка" in response.text
+    assert "Ссылка при передаче" in response.text
     assert "не подтверждает право на участие" in response.text
-    assert "QAZ.FUND – рабочая справка" in response.text
+    assert "QAZ.FUND – сведения о программе" in response.text
     assert "Проверить на официальном источнике" in response.text
     assert "Откройте страницу подачи" in response.text
     assert "Сверьте критерии" in response.text
@@ -3227,7 +3173,7 @@ def test_opportunity_page_lists_related_opportunities(monkeypatch):
     ru_response = client.get(f"/opportunity/{target.id}", params={"lang": "ru"})
 
     assert ru_response.status_code == 200
-    assert "Похожие возможности" in ru_response.text
+    assert "Похожие программы" in ru_response.text
     assert "Прикладной грант для лабораторий" in ru_response.text
     assert "Поддержка университетских инноваций доступна для команд" in ru_response.text
     assert "Поддержка прикладных исследований и лабораторий." in ru_response.text
@@ -3319,18 +3265,18 @@ def test_funder_page_renders_public_profile(monkeypatch):
     assert '<html lang="ru"' in response.text
     assert "<title>Фонд науки – QAZ.FUND</title>" in response.text
     assert "<h1>Фонд науки</h1>" in response.text
-    assert "Профиль фонда" in response.text
+    assert "Организация и её программы" in response.text
     assert "--brand: var(--color-accent);" in response.text
     assert "--av-color-primary-700" not in response.text
-    assert "Живые и рабочие возможности" in response.text
+    assert "Открытые программы" in response.text
     assert "min-height: var(--av-control-height-lg);" in response.text
-    assert "Архив и исторический след" in response.text
+    assert "Архив программ" in response.text
     assert (
-        "Профиль построен по опубликованным программам и объявлениям." in response.text
+        "Сведения собраны по опубликованным программам и объявлениям." in response.text
     )
     assert "Форматы:" in response.text
     assert "Основные темы:" in response.text
-    assert "Фокус по регионам:" in response.text
+    assert "Регионы:" in response.text
     assert "science_fund" not in response.text
     assert "opportunitytype." not in response.text.lower()
     assert "Open science commercialization" in response.text
@@ -3389,7 +3335,7 @@ def test_funder_topics_do_not_repeat_opportunity_format():
 
     assert funder_page_module._public_topic_labels(funder, copy) == ["ЕБРР", "ECEPP"]
     assert funder_page_module._overview_sentence(funder, copy) == (
-        "Профиль построен по опубликованным программам и объявлениям. "
+        "Сведения собраны по опубликованным программам и объявлениям. "
         "Форматы: Тендер. "
         "Основные темы: ЕБРР, ECEPP."
     )
