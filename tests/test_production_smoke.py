@@ -216,10 +216,17 @@ def _transport(
                         "opportunities_ndjson_compact": (
                             f"{public_root}/opportunities.ndjson?compact=true"
                         ),
+                        "api_v1_opportunities_ndjson": (
+                            f"{public_root}/api/v1/opportunities.ndjson"
+                        ),
                         "digest": f"{public_root}/digest",
                     },
+                    "versioned_api": f"{public_root}/api/v1",
                     "ai_consumption": {
                         "preferred_bulk_export": (
+                            f"{public_root}/api/v1/opportunities.ndjson"
+                        ),
+                        "preferred_legacy_bulk_export": (
                             f"{public_root}/opportunities.ndjson?compact=true"
                         ),
                         "cache_policy": {"ndjson_seconds": 300},

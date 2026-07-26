@@ -288,9 +288,21 @@ def run_smoke(
             or ""
         )
         == _url(base_url, "/opportunities.ndjson?compact=true"),
+        "site_discovery_api_v1": str(discovery.get("versioned_api") or "")
+        == _url(base_url, "/api/v1"),
+        "site_discovery_api_v1_ndjson": str(
+            (discovery.get("data_endpoints") or {}).get("api_v1_opportunities_ndjson")
+            or ""
+        )
+        == _url(base_url, "/api/v1/opportunities.ndjson"),
         "site_discovery_cache": _is_public_cacheable(discovery_head, 300),
         "site_discovery_ai_bulk_export": str(
             (discovery.get("ai_consumption") or {}).get("preferred_bulk_export") or ""
+        )
+        == _url(base_url, "/api/v1/opportunities.ndjson"),
+        "site_discovery_ai_legacy_bulk_export": str(
+            (discovery.get("ai_consumption") or {}).get("preferred_legacy_bulk_export")
+            or ""
         )
         == _url(base_url, "/opportunities.ndjson?compact=true"),
         "site_discovery_ai_cache_policy": int(
