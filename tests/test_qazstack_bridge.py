@@ -12,7 +12,7 @@ from sources.kazakhstan_watch import KazakhstanWatchParser
 def test_qazstack_release_dependency_is_imported_outside_the_worktree() -> None:
     """QAZ.FUND consumes the released package, not a copied source snapshot."""
 
-    assert qazstack_version == "1.40.0"
+    assert qazstack_version == "1.41.2"
     package_path = Path(qazstack.__file__).resolve()
     assert "site-packages" in package_path.parts
     assert not package_path.is_relative_to(Path.cwd() / "qazstack")
@@ -62,3 +62,16 @@ def test_opportunity_lifecycle_uses_packaged_qazstack_release() -> None:
 
     assert public_lifecycle({"raw": {"status": "awarded"}}) == "awarded"
     assert not (Path("core") / "opportunity_intelligence.py").exists()
+
+
+def test_public_contract_and_ranking_evaluation_use_packaged_qazstack_release() -> None:
+    """Portable record and metric code is shared while product policy stays local."""
+
+    from qazstack.opportunities import OpportunityV1 as SharedOpportunityV1
+    from qazstack.opportunities import evaluate_judgments as shared_evaluate_judgments
+
+    from core.public_contract import OpportunityV1
+    from core.ranking_evaluation import evaluate_judgments
+
+    assert OpportunityV1 is SharedOpportunityV1
+    assert evaluate_judgments is not shared_evaluate_judgments

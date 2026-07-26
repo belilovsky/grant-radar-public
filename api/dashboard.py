@@ -373,6 +373,7 @@ def render_dashboard(
         <section
           class="hero-stage"
           aria-label="{escape(str(copy["hero_picks_label"]), quote=True)}"
+          data-avds-component="quick-links-rail"
         >
           <span class="hero-stage-eyebrow">{escape(str(copy["hero_stage_eyebrow"]))}</span>
           <h2 class="hero-stage-title">{escape(str(copy["hero_stage_title"]))}</h2>
@@ -426,7 +427,11 @@ def render_dashboard(
         </section>
       </div>
 
-      <section class="grid" aria-label="{escape(str(copy["metrics_aria"]), quote=True)}">
+      <section
+        class="grid"
+        aria-label="{escape(str(copy["metrics_aria"]), quote=True)}"
+        data-avds-component="public-summary-strip"
+      >
         <div class="metric avds-stat-kpi-card" data-avds-component="metric-card">
           <span>{escape(str(copy["metric_total"]))}</span>
           <strong id="metric-total">{items}</strong>

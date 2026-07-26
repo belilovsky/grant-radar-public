@@ -36,6 +36,8 @@ def _transport(
                 "</nav>"
                 '<input class="field avds-field">'
                 '<div data-avds-component="filter-summary"></div>'
+                '<div data-avds-component="quick-links-rail"></div>'
+                '<div data-avds-component="public-summary-strip"></div>'
                 '<div data-avds-component="source-card"></div>'
                 '<span data-avds-component="source-icon"></span>'
                 '<span class="avds-source-card__arrow"></span>'
@@ -255,8 +257,12 @@ def _transport(
                 200,
                 json={
                     "schema_version": "qazstack-consumer-v1",
-                    "qazstack_version": "1.40.0",
+                    "qazstack_version": "1.41.2",
                     "integration_mode": "python-package",
+                    "primitives": [
+                        "opportunity-public-contract",
+                        "opportunity-ranking-evaluation",
+                    ],
                 },
                 headers={"cache-control": "public, max-age=60"},
             )
@@ -265,7 +271,16 @@ def _transport(
                 200,
                 json={
                     "schema_version": "avds-ui-contract-v1",
-                    "avds_source": {"version": "4.3.2"},
+                    "avds_source": {"version": "4.2.0"},
+                    "runtime_neutral_patterns": {
+                        "adopted": [
+                            "evidence-summary",
+                            "filter-state-summary",
+                            "decision-summary",
+                            "evidence-disclosure",
+                            "action-path",
+                        ]
+                    },
                 },
                 headers={"cache-control": "public, max-age=60"},
             )

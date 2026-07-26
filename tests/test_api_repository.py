@@ -106,6 +106,8 @@ def test_root_renders_service_landing(monkeypatch):
     assert response.text.index('<div class="hero-points"') < response.text.index(
         '<section\n          class="hero-stage"'
     )
+    assert 'data-avds-component="quick-links-rail"' in response.text
+    assert 'data-avds-component="public-summary-strip"' in response.text
     assert "function pathwayPreviewMarkup" not in response.text
     assert "function themePreviewMarkup" not in response.text
     assert "Дополнительные фильтры" in response.text
@@ -772,7 +774,9 @@ def test_sections_markup_collapses_long_source_text():
         expand_label="Показать выдержку",
     )
 
-    assert '<details class="section-card source-disclosure">' in markup
+    assert 'class="section-card source-disclosure"' in markup
+    assert 'data-avds-component="evidence-disclosure"' in markup
+    assert 'data-avds-pattern="evidence-disclosure"' in markup
     assert '<span class="source-disclosure-title">Описание</span>' in markup
     assert "Показать выдержку" in markup
     assert markup.count("<p>") >= 4
@@ -813,7 +817,7 @@ def test_sections_markup_removes_duplicate_and_taxonomy_only_sections():
 
     assert markup.count(">Обзор<") == 1
     assert "education organization" not in markup
-    assert '<details class="section-card source-disclosure">' in markup
+    assert 'class="section-card source-disclosure"' in markup
 
 
 def test_working_brief_uses_only_available_fields_and_keeps_source_boundary():
@@ -1142,11 +1146,15 @@ def test_marketing_endpoints_are_exposed(monkeypatch):
     qazstack_contract = client.get("/.well-known/qazstack-consumer.json")
     assert qazstack_contract.status_code == 200
     assert qazstack_contract.json()["schema_version"] == "qazstack-consumer-v1"
-    assert qazstack_contract.json()["qazstack_version"] == "1.40.0"
+    assert qazstack_contract.json()["qazstack_version"] == "1.41.2"
     assert qazstack_contract.json()["source_revision"] == (
-        "a0a4bfc6ea6b2fce205afe24fbf732fb3de3bc68"
+        "986cfca3779f74c0f734ed174e7a28c944fd30f7"
     )
     assert qazstack_contract.json()["integration_mode"] == "python-package"
+    assert {
+        "opportunity-public-contract",
+        "opportunity-ranking-evaluation",
+    }.issubset(set(qazstack_contract.json()["primitives"]))
     assert qazstack_contract.json()["evidence"]["environment"] == "production"
     assert qazstack_contract.json()["evidence"]["source_revision"] == (
         qazstack_contract.json()["source_revision"]
@@ -1157,17 +1165,24 @@ def test_marketing_endpoints_are_exposed(monkeypatch):
     assert avds_contract.status_code == 200
     assert avds_contract.json()["schema_version"] == "avds-ui-contract-v1"
     assert avds_contract.json()["avds_source"] == {
-        "site": "https://ui.qdev.run",
+        "site": "https://avds.digital",
         "package": "@sgeo/ui-kit",
-        "version": "4.3.2",
+        "version": "4.2.0",
     }
     assert avds_contract.json()["runtime_neutral_patterns"] == {
         "package": "@av/patterns",
         "version": "0.1.0",
+        "source_revision": "3d482e1c7592e2f8ae359c3e3b2d10c5c1118c37",
+        "source": (
+            "https://github.com/belilovsky/av-platform-core/tree/"
+            "3d482e1c7592e2f8ae359c3e3b2d10c5c1118c37/packages/patterns"
+        ),
         "adopted": [
             "evidence-summary",
             "filter-state-summary",
             "decision-summary",
+            "evidence-disclosure",
+            "action-path",
         ],
         "rendering": "server-rendered-local-adapter",
         "calculation_ownership": "qaz-fund",
@@ -2897,6 +2912,11 @@ def test_opportunity_page_renders_public_permalink(monkeypatch):
     assert "Что финансируется" in response.text
     assert "Зарегистрированные НПО" in response.text
     assert "Что подготовить" in response.text
+    assert response.text.count('data-avds-component="action-path"') == 2
+    assert response.text.count('data-avds-pattern="action-path"') == 2
+    assert 'data-avds-component="evidence-disclosure"' in response.text
+    assert 'data-avds-pattern="evidence-disclosure"' in response.text
+    assert 'data-avds-component="trust-facts-panel"' in response.text
     assert "Проверьте критерии" in response.text
     assert "Соберите проектную заявку" in response.text
     assert "Как подать" in response.text
@@ -3166,6 +3186,7 @@ def test_opportunity_page_lists_related_opportunities(monkeypatch):
     assert "University innovation support" in response.text
     assert "Same source" in response.text
     assert "Related theme" in response.text
+    assert response.text.count('data-avds-component="document-card"') == 2
     assert f'href="/opportunity/{same_source.id}?lang=en"' in response.text
     assert f'href="/opportunity/{same_theme.id}?lang=en"' in response.text
     assert "Road corridor procurement" not in response.text

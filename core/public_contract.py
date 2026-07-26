@@ -7,95 +7,28 @@ source-specific ``raw`` payload as the primary interface.
 
 from __future__ import annotations
 
-import hashlib
-import json
-from datetime import date, datetime
-from decimal import Decimal
+from datetime import datetime
 from typing import Any, Literal
-from urllib.parse import urlparse
-from uuid import UUID
 
-from pydantic import BaseModel, Field
+from qazstack.opportunities import (
+    OPPORTUNITY_SCHEMA_VERSION,
+    FundingAmount,
+    LocalizedText,
+    OpportunityLinks,
+    OpportunityProvenance,
+    OpportunityQuality,
+    OpportunityTimestamps,
+    OpportunityV1,
+    SourceReference,
+    opportunity_dataset_revision,
+    semantic_payload_hash,
+)
+from qazstack.opportunities import source_host as _source_host
 
 from core.models import Opportunity
 
-SCHEMA_VERSION = "opportunity.v1"
+SCHEMA_VERSION = OPPORTUNITY_SCHEMA_VERSION
 DATASET_SCHEMA_VERSION = "qazfund-dataset.v1"
-
-
-class LocalizedText(BaseModel):
-    ru: str | None = None
-    kk: str | None = None
-    en: str | None = None
-
-
-class FundingAmount(BaseModel):
-    minimum: Decimal | None = None
-    maximum: Decimal | None = None
-    currency: str | None = None
-    display: str | None = None
-
-
-class SourceReference(BaseModel):
-    id: str
-    name: str
-    url: str
-
-
-class OpportunityTimestamps(BaseModel):
-    discovered_at: datetime
-    source_checked_at: datetime | None = None
-    last_verified_at: datetime | None = None
-
-
-class OpportunityProvenance(BaseModel):
-    evidence_state: Literal["verified", "sourced", "archival", "compiled", "unlinked"]
-    verification_method: str
-    adapter: str
-    snapshot_hash: str | None = None
-    content_hash: str
-
-
-class OpportunityQuality(BaseModel):
-    status: Literal["complete", "partial", "review_required"]
-    confidence_score: float = Field(ge=0.0, le=1.0)
-    missing_fields: list[str] = Field(default_factory=list)
-    warnings: list[str] = Field(default_factory=list)
-    score_meaning: str = (
-        "record completeness and source evidence, not approval probability"
-    )
-
-
-class OpportunityLinks(BaseModel):
-    public_page: str
-    api: str
-    official_source: str
-    application: str | None = None
-
-
-class OpportunityV1(BaseModel):
-    schema_version: Literal["opportunity.v1"] = "opportunity.v1"
-    id: UUID
-    title: str
-    title_i18n: LocalizedText = Field(default_factory=LocalizedText)
-    summary: str
-    summary_i18n: LocalizedText = Field(default_factory=LocalizedText)
-    status: str
-    deadline: date | None = None
-    deadline_type: Literal["fixed", "rolling", "unknown"]
-    formats: list[str] = Field(default_factory=list)
-    target_audience: list[str] = Field(default_factory=list)
-    themes: list[str] = Field(default_factory=list)
-    regions: list[str] = Field(default_factory=list)
-    source: SourceReference
-    funder: str | None = None
-    funding_amount: FundingAmount = Field(default_factory=FundingAmount)
-    eligibility_summary: str | None = None
-    eligibility: list[str] = Field(default_factory=list)
-    timestamps: OpportunityTimestamps
-    provenance: OpportunityProvenance
-    quality: OpportunityQuality
-    links: OpportunityLinks
 
 
 def _string(value: Any) -> str:
@@ -306,17 +239,6 @@ def _evidence_state(
     return "sourced"
 
 
-def _semantic_hash(payload: dict[str, Any]) -> str:
-    serialized = json.dumps(
-        payload,
-        ensure_ascii=False,
-        sort_keys=True,
-        separators=(",", ":"),
-        default=str,
-    )
-    return hashlib.sha256(serialized.encode("utf-8")).hexdigest()
-
-
 def to_opportunity_v1(
     item: Opportunity,
     *,
@@ -356,7 +278,7 @@ def to_opportunity_v1(
         "amount_max": item.amount_max,
         "amount_raw": amount_display,
     }
-    content_hash = _semantic_hash(semantic)
+    content_hash = semantic_payload_hash(semantic)
     base = public_base_url.rstrip("/")
     source_label = (
         source_name
@@ -423,18 +345,11 @@ def to_opportunity_v1(
 
 
 def dataset_revision(items: list[OpportunityV1]) -> str:
-    rows = sorted(
-        (
-            {
-                "id": str(item.id),
-                "content_hash": item.provenance.content_hash,
-            }
-            for item in items
-        ),
-        key=lambda row: row["id"],
+    return opportunity_dataset_revision(
+        items,
+        schema_version=DATASET_SCHEMA_VERSION,
     )
-    return _semantic_hash({"schema_version": DATASET_SCHEMA_VERSION, "rows": rows})
 
 
 def source_host(url: str) -> str:
-    return (urlparse(url).hostname or "").removeprefix("www.")
+    return _source_host(url)

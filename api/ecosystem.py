@@ -7,15 +7,16 @@ from typing import Any
 from qazstack import __version__ as qazstack_version
 from qazstack.contracts import validate_consumer_contract
 
-QAZSTACK_SOURCE_REVISION = "a0a4bfc6ea6b2fce205afe24fbf732fb3de3bc68"
+QAZSTACK_SOURCE_REVISION = "986cfca3779f74c0f734ed174e7a28c944fd30f7"
 QAZSTACK_SCHEMA_DIGEST = (
     "sha256:6ca8e38c09315d02993e3600b7a05dc23d695cd152545f8a970566e303fc158c"
 )
-QAZSTACK_VERIFIED_AT = "2026-07-22T20:06:40Z"
+QAZSTACK_VERIFIED_AT = "2026-07-26T19:24:00Z"
 AVDS_PACKAGE = "@sgeo/ui-kit"
-AVDS_VERSION = "4.3.2"
+AVDS_VERSION = "4.2.0"
 AVDS_PATTERN_PACKAGE = "@av/patterns"
 AVDS_PATTERN_VERSION = "0.1.0"
+AVDS_PATTERN_SOURCE_REVISION = "3d482e1c7592e2f8ae359c3e3b2d10c5c1118c37"
 
 
 def _url(origin: str, path: str) -> str:
@@ -37,11 +38,26 @@ def qazstack_consumer_contract(origin: str) -> dict[str, Any]:
             "collectors-and-entity-pipeline",
             "content-api",
             "core-foundation",
+            "opportunity-public-contract",
+            "opportunity-ranking-evaluation",
             "reports-and-export",
+        ],
+        "owns": [
+            "grant-opportunity-ranking",
+            "kazakhstan-fit-policy",
+            "source-suitability-gate",
+        ],
+        "depends_on": ["qazstack", "postgres"],
+        "forbidden_capabilities": [
+            "fake-application-submission",
+            "unverified-source-promotion",
+            "secret-export",
         ],
         "evidence": {
             "source_files": [
                 "core/qazstack_bridge.py",
+                "core/public_contract.py",
+                "core/ranking_evaluation.py",
                 "core/source_text.py",
                 "requirements-prod.txt",
                 "tests/test_qazstack_adoption.py",
@@ -78,7 +94,7 @@ def avds_ui_contract() -> dict[str, Any]:
         "schema_version": "avds-ui-contract-v1",
         "contract_id": "avds-ui-contract",
         "avds_source": {
-            "site": "https://ui.qdev.run",
+            "site": "https://avds.digital",
             "package": AVDS_PACKAGE,
             "version": AVDS_VERSION,
         },
@@ -90,6 +106,7 @@ def avds_ui_contract() -> dict[str, Any]:
                     "FilterChipRow",
                     "SearchField",
                     "FilterStateSummary",
+                    "QuickLinksRail",
                 ],
                 "qazstack_relationship": (
                     "QAZ.FUND keeps filtering behavior local and follows AV DS 4 "
@@ -110,6 +127,7 @@ def avds_ui_contract() -> dict[str, Any]:
                 "id": "evidence",
                 "components": [
                     "EvidenceSummary",
+                    "EvidenceDisclosure",
                     "ProvenanceCard",
                     "ProvenanceTable",
                     "SourceCard",
@@ -127,6 +145,15 @@ def avds_ui_contract() -> dict[str, Any]:
                     "QAZ.FUND owns relevance and action-priority calculation. "
                     "AV DS only standardizes how the resulting reasons and limits "
                     "are presented."
+                ),
+            },
+            {
+                "id": "guidance",
+                "components": ["ActionPath", "DocumentCard", "TrustFactsPanel"],
+                "qazstack_relationship": (
+                    "AV DS standardizes ordered guidance, related documents, and "
+                    "compact trust facts. QAZ.FUND owns the wording, applicability, "
+                    "routes, and submission state."
                 ),
             },
             {
@@ -148,13 +175,47 @@ def avds_ui_contract() -> dict[str, Any]:
         "runtime_neutral_patterns": {
             "package": AVDS_PATTERN_PACKAGE,
             "version": AVDS_PATTERN_VERSION,
+            "source_revision": AVDS_PATTERN_SOURCE_REVISION,
+            "source": (
+                "https://github.com/belilovsky/av-platform-core/tree/"
+                f"{AVDS_PATTERN_SOURCE_REVISION}/packages/patterns"
+            ),
             "adopted": [
                 "evidence-summary",
                 "filter-state-summary",
                 "decision-summary",
+                "evidence-disclosure",
+                "action-path",
             ],
             "rendering": "server-rendered-local-adapter",
             "calculation_ownership": "qaz-fund",
+        },
+        "pattern_exchange": {
+            "direction": "two-way",
+            "published_at": "2026-07-26",
+            "adopted_existing": [
+                "PublicSummaryStrip",
+                "QuickLinksRail",
+                "TrustFactsPanel",
+                "DocumentCard",
+            ],
+            "absorbed_from_qaz_fund": [
+                {
+                    "component": "EvidenceDisclosure",
+                    "pattern": "evidence-disclosure",
+                    "source_surface": "public opportunity source excerpts",
+                },
+                {
+                    "component": "ActionPath",
+                    "pattern": "action-path",
+                    "source_surface": "preparation and application guidance",
+                },
+            ],
+            "ownership_boundary": (
+                "QAZ.FUND owns source selection, eligibility, ranking, deadlines, "
+                "routes, localization, and submission state. AV DS owns reusable "
+                "presentation contracts and component semantics."
+            ),
         },
         "do_not_duplicate": [
             "alert",
@@ -168,6 +229,8 @@ def avds_ui_contract() -> dict[str, Any]:
         ],
         "qazstack_behavior_sources": [
             "collectors-and-entity-pipeline",
+            "opportunity-public-contract",
+            "opportunity-ranking-evaluation",
             "observability-and-ui",
             "pagination-and-listing",
         ],
@@ -213,6 +276,11 @@ def ecosystem_manifest(origin: str) -> dict[str, Any]:
                 "status": "runtime-proven",
                 "mode": "python-package",
                 "version": qazstack_version,
+                "source_revision": QAZSTACK_SOURCE_REVISION,
+                "adopted_primitives": [
+                    "opportunity-public-contract",
+                    "opportunity-ranking-evaluation",
+                ],
             },
             "avds4": {
                 "status": "adapter-aligned",

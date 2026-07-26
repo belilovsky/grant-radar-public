@@ -346,7 +346,11 @@ def _sections_markup(
     if not entries:
         return ""
     return """
-    <details class="section-card source-disclosure">
+    <details
+      class="section-card source-disclosure"
+      data-avds-component="evidence-disclosure"
+      data-avds-pattern="evidence-disclosure"
+    >
       <summary>
         <span class="source-disclosure-title">{heading}</span>
         <span class="source-disclosure-action">
@@ -493,7 +497,11 @@ def _prepare_markup(
             )
         )
     return """
-    <section class="prepare-section">
+    <section
+      class="prepare-section"
+      data-avds-component="action-path"
+      data-avds-pattern="action-path"
+    >
       <div class="prepare-head">
         <span class="eyebrow">{eyebrow}</span>
         <h2>{title}</h2>
@@ -543,7 +551,11 @@ def _apply_markup(
             )
         )
     return """
-    <section class="apply-section">
+    <section
+      class="apply-section"
+      data-avds-component="action-path"
+      data-avds-pattern="action-path"
+    >
       <div class="apply-head">
         <span class="eyebrow">{eyebrow}</span>
         <h2>{title}</h2>
@@ -673,7 +685,7 @@ def _related_markup(
         )
         cards.append(
             """
-            <article class="related-card">
+            <article class="related-card" data-avds-component="document-card">
               <div class="related-top">
                 <span class="related-reason">{reason}</span>
                 <span class="related-deadline">{deadline}</span>
@@ -1745,7 +1757,7 @@ def render_opportunity_page(
           </div>
           <p class="hero-action-status" id="copy-working-brief-status" aria-live="polite"></p>
         </div>
-        <aside class="hero-stats">
+        <aside class="hero-stats" data-avds-component="trust-facts-panel">
           <div>
             <span class="eyebrow">{escape(str(copy["detail_meta_title"]))}</span>
           </div>

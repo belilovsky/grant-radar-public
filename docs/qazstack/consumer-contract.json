@@ -4,12 +4,14 @@
   "product_name": "QAZ.FUND",
   "lifecycle": "production",
   "integration_mode": "python-package",
-  "qazstack_version": "1.40.0",
-  "source_revision": "a0a4bfc6ea6b2fce205afe24fbf732fb3de3bc68",
+  "qazstack_version": "1.41.2",
+  "source_revision": "986cfca3779f74c0f734ed174e7a28c944fd30f7",
   "primitives": [
     "collectors-and-entity-pipeline",
     "content-api",
     "core-foundation",
+    "opportunity-public-contract",
+    "opportunity-ranking-evaluation",
     "reports-and-export"
   ],
   "owns": [
@@ -29,6 +31,8 @@
   "evidence": {
     "source_files": [
       "core/qazstack_bridge.py",
+      "core/public_contract.py",
+      "core/ranking_evaluation.py",
       "core/source_text.py",
       "requirements-prod.txt",
       "tests/test_qazstack_adoption.py",
@@ -40,14 +44,14 @@
     ],
     "runtime_urls": [
       "https://qaz.fund/.well-known/qazstack-consumer.json",
-      "https://qaz.fund/health"
+      "https://qaz.fund/ready"
     ],
-    "verified_at": "2026-07-24T15:50:00+05:00",
+    "verified_at": "2026-07-27T00:24:00+05:00",
     "environment": "production",
-    "source_revision": "a0a4bfc6ea6b2fce205afe24fbf732fb3de3bc68",
+    "source_revision": "986cfca3779f74c0f734ed174e7a28c944fd30f7",
     "schema_digest": "sha256:6ca8e38c09315d02993e3600b7a05dc23d695cd152545f8a970566e303fc158c",
     "checked_by": "codex"
   },
   "owner": "qdev-platform",
-  "notes": "Checked-in discovery copy of the live QAZ.FUND QazStack consumer contract. Product-specific grant relevance remains owned by QAZ.FUND."
+  "notes": "Checked-in discovery copy of the live QAZ.FUND QazStack consumer contract. Public records and evaluation mathematics are shared; product-specific opportunity relevance and publication remain owned by QAZ.FUND."
 }

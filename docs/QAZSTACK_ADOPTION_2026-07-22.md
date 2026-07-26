@@ -1,5 +1,8 @@
 # QazStack 1.40 adoption - 2026-07-22
 
+> Историческая запись. Начиная с 27 июля 2026 года ее заменяет
+> [обмен QAZ.FUND и QazStack 1.41.2](QAZSTACK_EXCHANGE_2026-07-27.md).
+
 ## Change
 
 QAZ.FUND now consumes the checksum-pinned `qazstack-1.40.0-py3-none-any.whl`

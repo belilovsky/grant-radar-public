@@ -20,6 +20,8 @@ DASHBOARD_MARKERS = (
     'data-avds-component="admin-shell"',
     'data-avds-component="sticky-shell"',
     'data-avds-component="filter-summary"',
+    'data-avds-component="quick-links-rail"',
+    'data-avds-component="public-summary-strip"',
     'class="toolbar avds-tabs-list"',
     "avds-tabs-trigger",
     "avds-field",
@@ -322,13 +324,25 @@ def run_smoke(
         == _url(base_url, "/.well-known/avds-ui-contract.json"),
         "qazstack_contract": (
             qazstack_contract.get("schema_version") == "qazstack-consumer-v1"
-            and qazstack_contract.get("qazstack_version") == "1.40.0"
+            and qazstack_contract.get("qazstack_version") == "1.41.2"
+            and {
+                "opportunity-public-contract",
+                "opportunity-ranking-evaluation",
+            }.issubset(set(qazstack_contract.get("primitives") or []))
             and qazstack_contract.get("integration_mode") == "python-package"
             and _is_public_cacheable(qazstack_head, 60)
         ),
         "avds4_contract": (
             avds_contract.get("schema_version") == "avds-ui-contract-v1"
-            and (avds_contract.get("avds_source") or {}).get("version") == "4.3.2"
+            and (avds_contract.get("avds_source") or {}).get("version") == "4.2.0"
+            and (avds_contract.get("runtime_neutral_patterns") or {}).get("adopted")
+            == [
+                "evidence-summary",
+                "filter-state-summary",
+                "decision-summary",
+                "evidence-disclosure",
+                "action-path",
+            ]
             and _is_public_cacheable(avds_head, 60)
         ),
         "ecosystem_contract": (
