@@ -162,10 +162,11 @@ def test_root_renders_service_landing(monkeypatch):
     assert (
         '<strong id="metric-strong" data-catalog-count="0">0</strong>' in response.text
     )
-    assert '<strong id="metric-sources">0</strong>' in response.text
+    parser_count = len(api_main.PARSERS)
+    assert f'<strong id="metric-sources">{parser_count}</strong>' in response.text
     assert '<strong id="health-status">Каталог доступен</strong>' in response.text
     assert '<strong id="health-items">0</strong>' in response.text
-    assert '<strong id="health-sources">0</strong>' in response.text
+    assert f'<strong id="health-sources">{parser_count}</strong>' in response.text
     assert '<strong id="health-stale-sources">0</strong>' in response.text
     assert 'class="discovery-grid"' in response.text
     assert response.text.index('id="opportunities-panel"') < response.text.index(
@@ -3449,6 +3450,16 @@ def test_root_renders_initial_metrics_from_cached_items(monkeypatch):
                 tags=["us"],
                 score=0.1,
             ),
+            Opportunity(
+                source="eeas_kazakhstan",
+                source_url="https://example.org/expired",
+                type=OpportunityType.GRANT,
+                title="Expired",
+                summary="Expired Kazakhstan call",
+                tags=["kazakhstan", "grant"],
+                deadline=date.today() - timedelta(days=1),
+                score=0.9,
+            ),
         ]
     )
     client = TestClient(api_main.app)
@@ -3456,13 +3467,14 @@ def test_root_renders_initial_metrics_from_cached_items(monkeypatch):
     response = client.get("/")
 
     assert response.status_code == 200
-    assert '<strong id="metric-total">2</strong>' in response.text
+    assert '<strong id="metric-total">3</strong>' in response.text
     assert (
         '<strong id="metric-strong" data-catalog-count="1">1</strong>' in response.text
     )
-    assert '<strong id="metric-sources">2</strong>' in response.text
-    assert '<strong id="health-items">2</strong>' in response.text
-    assert '<strong id="health-sources">2</strong>' in response.text
+    parser_count = len(api_main.PARSERS)
+    assert f'<strong id="metric-sources">{parser_count}</strong>' in response.text
+    assert '<strong id="health-items">3</strong>' in response.text
+    assert f'<strong id="health-sources">{parser_count}</strong>' in response.text
 
 
 def test_large_opportunity_response_supports_gzip(monkeypatch):

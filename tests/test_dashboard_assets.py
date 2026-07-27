@@ -35,3 +35,6 @@ def test_dashboard_uses_extracted_static_styles() -> None:
     assert 'data-avds-version="4.6.0"' in html
     assert "grid-template-columns: repeat(2, minmax(0, 1fr));" in DASHBOARD_CSS
     assert ".hero-pick:last-child { grid-column: 1 / -1; }" in DASHBOARD_CSS
+    assert ".funder-library," in DASHBOARD_CSS
+    assert ".funder-card-head {\n        flex-wrap: wrap;" in DASHBOARD_CSS
+    assert "white-space: normal;\n        text-align: right;" in DASHBOARD_CSS

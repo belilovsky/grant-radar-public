@@ -282,20 +282,21 @@ def render_insights_page(
             ),
             "eyebrow": "Центр данных QAZ.FUND",
             "lead": (
-                "Карта доступной поддержки: что открыто, кто может участвовать, "
+                "Карта текущего каталога: что доступно, кто может участвовать, "
                 "где сосредоточены возможности и каких сведений пока не хватает."
             ),
             "catalog": "Открыть каталог",
             "api": "Данные для систем",
-            "active": "Открыто сейчас",
-            "sources": "Источников",
+            "active": "В текущем каталоге",
+            "sources": "Источников в выборке",
             "closing": "Срок в ближайшие 30 дней",
             "kz": "С прямым фокусом на Казахстан",
             "snapshot": "Срез каталога",
             "snapshot_title": "Из чего состоит доступная поддержка",
             "snapshot_text": (
-                "Одна программа может относиться к нескольким темам и аудиториям. "
-                "Основной формат считается один раз."
+                "Расчёт ведётся по текущему каталогу. Одна программа может "
+                "относиться к нескольким темам и аудиториям, а основной формат "
+                "считается один раз."
             ),
             "count": "Количество",
             "share": "Доля",
@@ -305,13 +306,14 @@ def render_insights_page(
             "deadlines": "Календарь решений",
             "deadlines_title": "Когда нужно действовать",
             "deadlines_text": (
-                "Распределение открытых карточек по ближайшему сроку подачи."
+                "Карточки текущего каталога по ближайшему сроку подачи."
             ),
             "quality": "Качество данных",
             "quality_title": "Что известно до перехода к источнику",
             "quality_text": (
-                "Покрытие ключевых полей среди открытых карточек. Низкое значение "
-                "означает недостаток сведений у первоисточника или в текущем адаптере."
+                "Покрытие ключевых полей в текущем каталоге. Низкое значение "
+                "означает недостаток сведений у первоисточника или в текущем "
+                "адаптере."
             ),
             "quality_note": (
                 "Статус «с источником» означает наличие проверяемой ссылки, а не "
@@ -321,7 +323,7 @@ def render_insights_page(
             "procurement": "Доля закупок и конкурсов",
             "sources_title": "Какие источники формируют каталог",
             "sources_text": (
-                "Рейтинг показывает вклад источника в открытую выборку, а не его "
+                "Рейтинг показывает вклад источника в текущий каталог, а не его "
                 "качество или объём финансирования."
             ),
             "changes": "Изменения",
@@ -344,11 +346,12 @@ def render_insights_page(
             "docs": "Документация",
             "method": "Как читать показатели",
             "method_text": (
-                "Расчёты строятся только по публичным карточкам, относящимся к "
-                "Казахстану, Центральной Азии или доступным глобальным программам. "
-                "Суммы не складываются, пока валюта и правила финансирования не "
-                "нормализованы."
+                "Текущий каталог совпадает с начальной выдачей: применимость к "
+                "Казахстану, порог отбора 0,30, неистёкший срок и неархивное "
+                "состояние. Полный релевантный индекс остаётся доступен через API. "
+                "Суммы не складываются без сопоставимых валют и правил."
             ),
+            "indexed": "Релевантных карточек в индексе",
             "revision": "Версия набора",
             "as_of": "Срез на",
             "home": "Каталог",
@@ -369,20 +372,21 @@ def render_insights_page(
             ),
             "eyebrow": "QAZ.FUND data centre",
             "lead": (
-                "A map of available support: what is open, who it is for, where "
-                "opportunities concentrate and which facts are still missing."
+                "A map of the current catalogue: what is available, who it is for, "
+                "where opportunities concentrate and which facts are still missing."
             ),
             "catalog": "Open catalogue",
             "api": "Data for systems",
-            "active": "Open now",
-            "sources": "Sources",
+            "active": "Current catalogue",
+            "sources": "Sources in this set",
             "closing": "Due within 30 days",
             "kz": "Explicit Kazakhstan focus",
             "snapshot": "Catalogue snapshot",
             "snapshot_title": "What available support consists of",
             "snapshot_text": (
-                "A programme may belong to several themes and audiences. Its "
-                "primary format is counted once."
+                "Figures use the current catalogue. A programme may belong to "
+                "several themes and audiences, while its primary format is counted "
+                "once."
             ),
             "count": "Count",
             "share": "Share",
@@ -391,12 +395,13 @@ def render_insights_page(
             "themes": "Main themes",
             "deadlines": "Decision calendar",
             "deadlines_title": "When action is needed",
-            "deadlines_text": "Open records grouped by the nearest deadline.",
+            "deadlines_text": "Current catalogue records grouped by nearest deadline.",
             "quality": "Data quality",
             "quality_title": "What is known before opening the source",
             "quality_text": (
-                "Coverage of key fields across open records. A low value means "
-                "the primary source or current adapter does not provide enough detail."
+                "Coverage of key fields across the current catalogue. A low value "
+                "means the primary source or current adapter does not provide "
+                "enough detail."
             ),
             "quality_note": (
                 "A sourced record has an auditable primary link. It does not mean "
@@ -406,7 +411,7 @@ def render_insights_page(
             "procurement": "Procurement and call share",
             "sources_title": "Which sources shape the catalogue",
             "sources_text": (
-                "The ranking reflects a source's contribution to the open set, "
+                "The ranking reflects a source's contribution to the current set, "
                 "not its quality or funding volume."
             ),
             "changes": "Changes",
@@ -429,10 +434,13 @@ def render_insights_page(
             "docs": "Documentation",
             "method": "How to read the figures",
             "method_text": (
-                "Calculations use public records relevant to Kazakhstan, Central "
-                "Asia or globally accessible programmes. Funding amounts are not "
-                "summed until currencies and funding rules are normalized."
+                "The current catalogue matches the default results: Kazakhstan "
+                "relevance, a 0.30 public threshold, an unexpired deadline and a "
+                "non-archival state. The full relevant index remains available "
+                "through the API. Amounts are not summed across incompatible "
+                "currencies or funding rules."
             ),
+            "indexed": "Relevant records in the index",
             "revision": "Dataset revision",
             "as_of": "Snapshot date",
             "home": "Catalogue",
@@ -1281,6 +1289,10 @@ def render_insights_page(
     </section>
 
     <div class="revision">
+      <span>
+        {escape(copy["indexed"])}
+        <strong>{_number(scope.get("indexed_relevant"), active_lang)}</strong>
+      </span>
       <span>
         {escape(copy["as_of"])}
         <strong>{escape(str(payload.get("as_of") or ""))}</strong>

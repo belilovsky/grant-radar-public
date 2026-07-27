@@ -38,7 +38,10 @@ def _transport(
                 '<input class="field avds-field">'
                 '<div data-avds-component="filter-summary"></div>'
                 '<div data-avds-component="quick-links-rail"></div>'
-                '<div data-avds-component="public-summary-strip"></div>'
+                '<div data-avds-component="public-summary-strip">'
+                '<strong id="metric-strong" data-catalog-count="44">44</strong>'
+                '<strong id="metric-sources">23</strong>'
+                "</div>"
                 '<div data-avds-component="source-card"></div>'
                 '<span data-avds-component="source-icon"></span>'
                 '<span class="avds-source-card__arrow"></span>'
@@ -203,6 +206,8 @@ def _transport(
                 text=(
                     '<html lang="ru" data-avds="grant-radar">'
                     '<main data-avds-component="data-centre">'
+                    "<span>В текущем каталоге</span>"
+                    "<span>Релевантных карточек в индексе</span>"
                     '<section data-avds-pattern="data-quality-scorecard"></section>'
                     "</main></html>"
                 ),
@@ -278,7 +283,14 @@ def _transport(
         if endpoint_path == "/api/v1/insights":
             return httpx.Response(
                 200,
-                json={"schema_version": "qazfund-insights.v1"},
+                json={
+                    "schema_version": "qazfund-insights.v1",
+                    "scope": {
+                        "indexed_relevant": 55,
+                        "current_catalog": 44,
+                        "active": 44,
+                    },
+                },
             )
         if endpoint_path == "/api/v1/changes":
             return httpx.Response(

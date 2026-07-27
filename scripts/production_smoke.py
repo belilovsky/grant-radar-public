@@ -283,6 +283,16 @@ def run_smoke(
     _require(english_dashboard, "english dashboard variant is missing")
 
     discovery_status = {
+        "dashboard_initial_current_metric": (
+            f'id="metric-strong" data-catalog-count="'
+            f'{int(coverage.get("relevant_open_items") or 0)}">'
+            f'{int(coverage.get("relevant_open_items") or 0)}</strong>'
+            in dashboard_html
+        ),
+        "dashboard_initial_source_metric": (
+            f'<strong id="metric-sources">'
+            f'{int(coverage.get("enabled_sources") or 0)}</strong>' in dashboard_html
+        ),
         "llms_home": f"Home: {_url(base_url, '/')}" in llms,
         "llms_sitemap": f"Sitemap: {_url(base_url, '/sitemap.xml')}" in llms,
         "llms_openapi": f"OpenAPI schema: {_url(base_url, '/openapi.json')}" in llms,
@@ -337,6 +347,8 @@ def run_smoke(
         "insights_page": (
             'data-avds-component="data-centre"' in insights_page
             and 'data-avds-pattern="data-quality-scorecard"' in insights_page
+            and "В текущем каталоге" in insights_page
+            and "Релевантных карточек в индексе" in insights_page
             and "\u2014" not in insights_page
         ),
         "insights_head": insights_head.headers.get("content-type", "").startswith(
@@ -380,7 +392,15 @@ def run_smoke(
             and str((api_index.get("routes") or {}).get("daily_digest_text") or "")
             == _url(base_url, "/media/v1/digest/daily.txt")
         ),
-        "insights_api": insights_api.get("schema_version") == "qazfund-insights.v1",
+        "insights_api": (
+            insights_api.get("schema_version") == "qazfund-insights.v1"
+            and int((insights_api.get("scope") or {}).get("current_catalog") or 0)
+            == int(coverage.get("relevant_open_items") or 0)
+            and int((insights_api.get("scope") or {}).get("active") or 0)
+            == int(coverage.get("relevant_open_items") or 0)
+            and int((insights_api.get("scope") or {}).get("indexed_relevant") or 0)
+            >= int((insights_api.get("scope") or {}).get("current_catalog") or 0)
+        ),
         "changes_api": changes_api.get("schema_version") == "qazfund-changes.v1",
         "daily_digest": (
             daily_digest.get("schema_version") == "qazfund-daily-digest.v1"

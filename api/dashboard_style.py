@@ -3279,6 +3279,23 @@ DASHBOARD_CSS = r"""    :root {
       .funder-grid {
         grid-template-columns: 1fr;
       }
+      .funder-library,
+      .funder-library-body,
+      .funder-section,
+      .funder-grid,
+      .funder-card {
+        width: 100%;
+        min-width: 0;
+        max-width: 100%;
+      }
+      .funder-card-head {
+        flex-wrap: wrap;
+      }
+      .funder-kpi {
+        max-width: 100%;
+        white-space: normal;
+        text-align: right;
+      }
       .discovery-grid {
         padding-block: var(--av-spacing-3);
       }

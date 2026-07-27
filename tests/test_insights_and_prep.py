@@ -6,8 +6,10 @@ from fastapi.testclient import TestClient
 
 from api import main as api_main
 from api.daily_digest import daily_digest_payload, daily_digest_text
+from api.insights import build_insights_payload
 from core.db import SqlRepository
 from core.models import Opportunity, OpportunityType
+from core.public_contract import to_opportunity_v1
 
 
 def _reset_api_state(monkeypatch) -> None:
@@ -53,6 +55,7 @@ def test_insights_api_and_page_are_data_backed(monkeypatch):
     payload = response.json()
     assert payload["schema_version"] == "qazfund-insights.v1"
     assert payload["scope"]["active"] == 1
+    assert payload["scope"]["current_catalog"] == 1
     assert payload["scope"]["sources"] == 1
     assert payload["quality"]["complete_core_share"] == 100.0
     assert payload["distribution"]["formats"][0]["label"] == "Гранты"
@@ -70,6 +73,47 @@ def test_insights_api_and_page_are_data_backed(monkeypatch):
     assert "/api/v1/changes?hours=24" in page.text
     assert "\u2014" not in page.text
     assert "QazCompute" not in page.text
+
+
+def test_insights_separates_current_catalog_from_full_index():
+    current = _item().model_copy(update={"lifecycle": "closing_soon"})
+    expired = _item().model_copy(
+        update={
+            "source_url": "https://example.org/expired",
+            "deadline": date.today() - timedelta(days=1),
+            "lifecycle": "closed",
+            "raw": {"external_id": "INSIGHT-EXPIRED"},
+        }
+    )
+    review = _item().model_copy(
+        update={
+            "source_url": "https://example.org/review",
+            "lifecycle": "closing_soon",
+            "raw": {"external_id": "INSIGHT-REVIEW"},
+        }
+    )
+    current_v1 = to_opportunity_v1(current, source_name="Astana Hub")
+    expired_v1 = to_opportunity_v1(expired, source_name="Astana Hub")
+    review_v1 = to_opportunity_v1(review, source_name="Astana Hub")
+
+    payload = build_insights_payload(
+        [current_v1, expired_v1, review_v1],
+        today=date.today(),
+        catalog_items=[current_v1],
+    )
+
+    assert payload["scope"] == {
+        "indexed_relevant": 3,
+        "current_catalog": 1,
+        "active": 1,
+        "outside_current_catalog": 2,
+        "closed_or_archival": 1,
+        "review_queue": 1,
+        "sources": 1,
+        "indexed_sources": 1,
+        "closing_within_30_days": 1,
+        "kazakhstan_explicit": 1,
+    }
 
 
 def test_application_workspace_is_local_and_exportable(monkeypatch):

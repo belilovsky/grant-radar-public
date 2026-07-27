@@ -4046,8 +4046,10 @@ def render_dashboard(
           return item.score >= state.minScore
             && (
               (state.includeArchived || historicalLifecycle)
-              || !item.deadline
-              || item.deadline >= today
+              || (
+                !["closed", "awarded"].includes(itemLifecycle(item))
+                && (!item.deadline || item.deadline >= today)
+              )
             )
             && (state.source === "all" || item.source === state.source)
             && audiencePreset.matches(item)

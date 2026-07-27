@@ -112,6 +112,12 @@ def _is_active(item: OpportunityV1) -> bool:
     return _status(item) in ACTIVE_STATUSES
 
 
+def _is_current(item: OpportunityV1, *, today: date) -> bool:
+    if not _is_active(item):
+        return False
+    return item.deadline is None or item.deadline >= today
+
+
 def _is_amount_known(item: OpportunityV1) -> bool:
     amount = item.funding_amount
     return bool(
@@ -235,13 +241,21 @@ def build_insights_payload(
     lang: str = "ru",
     today: date | None = None,
     history: dict[str, Any] | None = None,
+    catalog_items: list[OpportunityV1] | None = None,
 ) -> dict[str, Any]:
     """Build deterministic current-state analytics without inventing missing facts."""
 
     active_lang = "en" if lang == "en" else "ru"
     current_day = today or date.today()
-    active = [item for item in items if _is_active(item)]
+    candidate_catalog = items if catalog_items is None else catalog_items
+    active = [
+        item for item in candidate_catalog if _is_current(item, today=current_day)
+    ]
+    archival = [item for item in items if not _is_current(item, today=current_day)]
+    outside_current_catalog = max(0, len(items) - len(active))
+    review_queue = max(0, outside_current_catalog - len(archival))
     sources = Counter(item.source.name for item in active)
+    indexed_sources = {item.source.name for item in items}
     formats: Counter[str] = Counter(
         (item.formats[0] if item.formats else "unknown") for item in active
     )
@@ -313,9 +327,13 @@ def build_insights_payload(
         "dataset_revision": dataset_revision(items),
         "scope": {
             "indexed_relevant": len(items),
+            "current_catalog": len(active),
             "active": len(active),
-            "closed_or_archival": len(items) - len(active),
+            "outside_current_catalog": outside_current_catalog,
+            "closed_or_archival": len(archival),
+            "review_queue": review_queue,
             "sources": len(sources),
+            "indexed_sources": len(indexed_sources),
             "closing_within_30_days": closing_30,
             "kazakhstan_explicit": kazakhstan_count,
         },

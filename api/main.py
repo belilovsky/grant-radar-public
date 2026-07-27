@@ -101,7 +101,7 @@ from core.qazcompute_bridge import (
     source_freshness_envelope,
 )
 from core.repository_factory import make_repository
-from core.scoring import priority_score, ranking_payload
+from core.scoring import PUBLIC_RELEVANCE_THRESHOLD, priority_score, ranking_payload
 from core.scoring import score as score_opportunity
 from sources import PARSERS
 from sources.kazakhstan_domestic import (
@@ -780,7 +780,10 @@ def _is_active_item(item: Opportunity) -> bool:
 
 
 def _is_open(item: Opportunity, today: date) -> bool:
-    return item.deadline is None or item.deadline >= today
+    lifecycle = public_lifecycle(item, today=today)
+    return lifecycle not in {"closed", "awarded"} and (
+        item.deadline is None or item.deadline >= today
+    )
 
 
 def _normalized_token(value: Any) -> str:
@@ -1107,7 +1110,8 @@ def _source_coverage(
         relevant_open_items = [
             item
             for item in open_items
-            if is_relevant_for_kazakhstan_focus(item) and item.score >= 0.3
+            if is_relevant_for_kazakhstan_focus(item)
+            and item.score >= PUBLIC_RELEVANCE_THRESHOLD
         ]
         last_seen = max(
             (item.discovered_at for item in source_items),
@@ -1151,7 +1155,8 @@ def _source_coverage(
         relevant_open_items = [
             item
             for item in open_items
-            if is_relevant_for_kazakhstan_focus(item) and item.score >= 0.3
+            if is_relevant_for_kazakhstan_focus(item)
+            and item.score >= PUBLIC_RELEVANCE_THRESHOLD
         ]
         last_seen = max((item.discovered_at for item in source_items), default=None)
         freshness = _source_freshness(
@@ -1541,11 +1546,13 @@ async def root(request: Request) -> HTMLResponse:
     site_origin = _site_origin(request, root_path)
     repository = _configured_repository()
     items = repository.size() if repository is not None else len(_cache)
-    public_items = _cached_public_items(content_lang="en")
-    relevant_items = len(_cached_public_scope_items(content_lang="en"))
-    source_count = len(
-        {item.source for item in public_items if str(item.source).strip()}
+    today = date.today()
+    relevant_items = sum(
+        1
+        for item in _cached_public_scope_items(content_lang="en")
+        if _is_open(item, today) and item.score >= PUBLIC_RELEVANCE_THRESHOLD
     )
+    source_count = len(PARSERS)
     lang = str(request.query_params.get("lang") or "").strip().lower()
     dashboard_lang = "en" if lang == "en" else "ru"
     return HTMLResponse(
@@ -1577,13 +1584,26 @@ async def insights_page(
         limit=5000,
         lang=active_lang,
     )
+    catalog_rows, _, _ = _query_opportunities_v1(
+        request,
+        include_irrelevant=False,
+        min_score=PUBLIC_RELEVANCE_THRESHOLD,
+        deadline_after=date.today(),
+        limit=5000,
+        lang=active_lang,
+    )
     history = _change_history_payload(
         request,
         hours=24,
         limit=20,
         lang=active_lang,
     )
-    payload = build_insights_payload(rows, lang=active_lang, history=history)
+    payload = build_insights_payload(
+        rows,
+        lang=active_lang,
+        history=history,
+        catalog_items=catalog_rows,
+    )
     if request.method == "HEAD":
         return HTMLResponse("")
     return HTMLResponse(
@@ -2933,13 +2953,26 @@ async def api_v1_insights(
         limit=5000,
         lang=active_lang,
     )
+    catalog_rows, _, _ = _query_opportunities_v1(
+        request,
+        include_irrelevant=False,
+        min_score=PUBLIC_RELEVANCE_THRESHOLD,
+        deadline_after=date.today(),
+        limit=5000,
+        lang=active_lang,
+    )
     history = _change_history_payload(
         request,
         hours=24,
         limit=20,
         lang=active_lang,
     )
-    payload = build_insights_payload(rows, lang=active_lang, history=history)
+    payload = build_insights_payload(
+        rows,
+        lang=active_lang,
+        history=history,
+        catalog_items=catalog_rows,
+    )
     return _versioned_json_response(payload)
 
 

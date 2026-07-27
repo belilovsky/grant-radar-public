@@ -228,8 +228,8 @@ COPY = {
         "tab_health": "Статус",
         "metrics_aria": "Показатели каталога",
         "metric_total": "Всего программ",
-        "metric_relevant": "Открыто сейчас",
-        "metric_sources": "Источников",
+        "metric_relevant": "В текущем каталоге",
+        "metric_sources": "Источников отслеживается",
         "opportunities_title": "Каталог программ",
         "opportunities_description": (
             "Гранты, субсидии, конкурсы и закупки с актуальными условиями "
@@ -1221,8 +1221,8 @@ COPY = {
         "tab_health": "Status",
         "metrics_aria": "Summary metrics",
         "metric_total": "Indexed",
-        "metric_relevant": "Relevant in index",
-        "metric_sources": "Sources",
+        "metric_relevant": "Current catalogue",
+        "metric_sources": "Sources monitored",
         "opportunities_title": "Opportunities",
         "opportunities_description": (
             "Grants, subsidies, competitions and procurement with current terms "
