@@ -26,6 +26,15 @@ from .startup_programs import (
     MongoDbStartupsParser,
     NvidiaInceptionParser,
 )
+from .strategic_watch import (
+    DaadCentralAsiaParser,
+    EdbProcurementParser,
+    GefSgpKazakhstanParser,
+    GlobalInnovationFundParser,
+    IomKazakhstanProcurementParser,
+    OsceProcurementParser,
+    UngmOpportunitiesParser,
+)
 from .undp_procurement import UndpProcurementParser
 from .unesco_iite import UnescoIiteParser
 from .unicef_kazakhstan import UnicefKazakhstanParser
@@ -59,6 +68,13 @@ PARSERS = {
     UnicefKazakhstanParser.slug: UnicefKazakhstanParser,
     GoogleOrgAiOpportunityParser.slug: GoogleOrgAiOpportunityParser,
     UnescoIiteParser.slug: UnescoIiteParser,
+    UngmOpportunitiesParser.slug: UngmOpportunitiesParser,
+    OsceProcurementParser.slug: OsceProcurementParser,
+    IomKazakhstanProcurementParser.slug: IomKazakhstanProcurementParser,
+    EdbProcurementParser.slug: EdbProcurementParser,
+    DaadCentralAsiaParser.slug: DaadCentralAsiaParser,
+    GefSgpKazakhstanParser.slug: GefSgpKazakhstanParser,
+    GlobalInnovationFundParser.slug: GlobalInnovationFundParser,
 }
 
 __all__ = [
@@ -90,5 +106,12 @@ __all__ = [
     "GoogleOrgAiOpportunityParser",
     "UnescoIiteParser",
     "UndpProcurementParser",
+    "UngmOpportunitiesParser",
+    "OsceProcurementParser",
+    "IomKazakhstanProcurementParser",
+    "EdbProcurementParser",
+    "DaadCentralAsiaParser",
+    "GefSgpKazakhstanParser",
+    "GlobalInnovationFundParser",
     "PARSERS",
 ]

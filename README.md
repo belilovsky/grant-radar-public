@@ -131,6 +131,13 @@ Current ingestion includes public programs and monitors such as:
 - `unicef_kazakhstan`
 - `google_org_ai_opportunity`
 - `unesco_iite`
+- `ungm_opportunities`
+- `osce_procurement`
+- `iom_kazakhstan_procurement`
+- `edb_procurement`
+- `daad_central_asia`
+- `gef_sgp_kazakhstan`
+- `global_innovation_fund`
 
 See [docs/SOURCE_REGISTRY.md](docs/SOURCE_REGISTRY.md)
 for source-specific notes and priorities.

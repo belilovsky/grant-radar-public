@@ -45,7 +45,14 @@ def test_m2_end_to_end_flow():
 
 def test_parsers_registry_contains_m2_sources():
     # M2 sources should be registered
-    expected = {"grants_gov", "astana_hub", "internews"}
+    expected = {
+        "grants_gov",
+        "astana_hub",
+        "internews",
+        "ungm_opportunities",
+        "osce_procurement",
+        "daad_central_asia",
+    }
     assert expected.issubset(set(PARSERS.keys()))
 
 

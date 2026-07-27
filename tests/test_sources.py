@@ -92,6 +92,13 @@ def test_registry_contains_all_parsers():
         "google_org_ai_opportunity",
         "unesco_iite",
         "undp_procurement",
+        "ungm_opportunities",
+        "osce_procurement",
+        "iom_kazakhstan_procurement",
+        "edb_procurement",
+        "daad_central_asia",
+        "gef_sgp_kazakhstan",
+        "global_innovation_fund",
     }
     for cls in PARSERS.values():
         assert issubclass(cls, BaseSourceParser)
