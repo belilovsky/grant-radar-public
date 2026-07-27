@@ -7,6 +7,7 @@ from html import escape
 from typing import Any, Mapping
 
 from api.avds import AVDS_CSS, AVDS_FONT_HEAD
+from api.avds_visual import DASHBOARD_AVDS4_CSS
 from api.dashboard_copy import dashboard_copy
 from api.dashboard_style import DASHBOARD_CSS
 from api.public_meta import analytics_head_html, og_image_url
@@ -162,6 +163,36 @@ def render_dashboard(
         else f"/status?lang={active_lang}"
     )
     status_href = escape(status_path, quote=True)
+    insights_path = (
+        f"{base_raw}/insights?lang={active_lang}"
+        if base_raw
+        else f"/insights?lang={active_lang}"
+    )
+    insights_href = escape(insights_path, quote=True)
+    terms_href = escape(
+        (
+            f"{base_raw}/terms?lang={active_lang}"
+            if base_raw
+            else f"/terms?lang={active_lang}"
+        ),
+        quote=True,
+    )
+    data_policy_href = escape(
+        (
+            f"{base_raw}/data-policy?lang={active_lang}"
+            if base_raw
+            else f"/data-policy?lang={active_lang}"
+        ),
+        quote=True,
+    )
+    attribution_href = escape(
+        (
+            f"{base_raw}/attribution?lang={active_lang}"
+            if base_raw
+            else f"/attribution?lang={active_lang}"
+        ),
+        quote=True,
+    )
     ru_href = escape(_root_href(base_raw, "ru"), quote=True)
     en_href = escape(_root_href(base_raw, "en"), quote=True)
     canonical_path = _root_href(base_raw, active_lang)
@@ -286,7 +317,8 @@ def render_dashboard(
 {AVDS_FONT_HEAD}
   <style>
 {AVDS_CSS}
-{DASHBOARD_CSS}  </style>
+{DASHBOARD_CSS}
+{DASHBOARD_AVDS4_CSS}  </style>
 </head>
 <body>
   <main
@@ -295,6 +327,7 @@ def render_dashboard(
     data-api-base="{base}"
     data-lang="{escape(active_lang, quote=True)}"
     data-avds-component="admin-shell"
+    data-avds-version="4.6.0"
   >
     <header class="mobile-app-bar" data-avds-component="mobile-app-bar">
       <a class="mobile-app-brand" href="{canonical_href}" aria-label="QAZ.FUND">
@@ -330,21 +363,21 @@ def render_dashboard(
       hidden
     ></button>
     <section class="hero-band" data-avds-component="hero-band">
-      <header class="topbar" data-avds-component="topbar">
-        <div class="brand">
-          <span class="eyebrow">{escape(str(copy["eyebrow"]))}</span>
-          <div class="brand-row">
-            <h1>{escape(str(copy["headline"]))}</h1>
-          </div>
-          <p>{escape(str(copy["subtitle"]))}</p>
-          <div class="focus-row" aria-label="{escape(str(copy["focus_aria"]), quote=True)}">
-            <span class="focus-chip">{escape(str(copy["focus_primary"]))}</span>
-            <span class="focus-chip">{escape(str(copy["focus_secondary"]))}</span>
-          </div>
-        </div>
-      </header>
       <div class="hero-grid">
         <div class="hero-copy">
+          <header class="topbar" data-avds-component="topbar">
+            <div class="brand">
+              <span class="eyebrow">{escape(str(copy["eyebrow"]))}</span>
+              <div class="brand-row">
+                <h1>{escape(str(copy["headline"]))}</h1>
+              </div>
+              <p>{escape(str(copy["subtitle"]))}</p>
+              <div class="focus-row" aria-label="{escape(str(copy["focus_aria"]), quote=True)}">
+                <span class="focus-chip">{escape(str(copy["focus_primary"]))}</span>
+                <span class="focus-chip">{escape(str(copy["focus_secondary"]))}</span>
+              </div>
+            </div>
+          </header>
           <p class="hero-intro">{escape(str(copy["hero_intro"]))}</p>
           <div class="hero-actions">
             <button
@@ -354,6 +387,11 @@ def render_dashboard(
               data-hero-view="opportunities"
               data-avds-component="button"
             >{escape(str(copy["hero_primary_cta"]))}</button>
+            <a
+              class="button"
+              href="{insights_href}"
+              data-avds-component="button"
+            >{escape(str(copy["insights_link"]))}</a>
           </div>
           <div class="hero-points" aria-label="{escape(str(copy["hero_stage_title"]), quote=True)}">
             <div class="hero-point">
@@ -448,7 +486,7 @@ def render_dashboard(
     </section>
 
     <div class="sticky-shell" data-avds-component="sticky-shell">
-      <div class="sticky-bar">
+      <div class="sticky-bar" data-avds-component="trust-strip">
         <nav
           class="toolbar avds-tabs-list"
           aria-label="{escape(str(copy["views_aria"]), quote=True)}"
@@ -475,6 +513,9 @@ def render_dashboard(
           </div>
           <div class="topbar-actions">
             <div class="utility-links">
+              <a class="utility-link" href="{insights_href}"
+                >{escape(str(copy["insights_link"]))}</a
+              >
               <a class="utility-link" href="{docs_href}">{escape(str(copy["api_docs"]))}</a>
               <a class="utility-link" href="#methodology-panel"
                 >{escape(str(copy["methodology_link"]))}</a
@@ -1010,8 +1051,12 @@ def render_dashboard(
       <nav class="site-footer-nav" aria-label="{escape(str(copy["views_aria"]), quote=True)}">
         <a href="#opportunities">{escape(str(copy["tab_opportunities"]))}</a>
         <a href="#sources">{escape(str(copy["tab_sources"]))}</a>
+        <a href="{insights_href}">{escape(str(copy["insights_link"]))}</a>
         <a href="{status_href}">{escape(str(copy["status_link"]))}</a>
         <a href="{docs_href}">{escape(str(copy["api_docs"]))}</a>
+        <a href="{terms_href}">{escape(str(copy["footer_terms"]))}</a>
+        <a href="{data_policy_href}">{escape(str(copy["footer_data_policy"]))}</a>
+        <a href="{attribution_href}">{escape(str(copy["footer_attribution"]))}</a>
       </nav>
       <p>
         {escape(str(copy["footer_owner"]))}
@@ -1104,7 +1149,6 @@ def render_dashboard(
       <div class="detail-readiness hidden" id="detail-readiness">
         <h3>{escape(str(copy["detail_readiness_title"]))}</h3>
         <p id="detail-readiness-text"></p>
-        <p class="detail-subtle" id="detail-compute-readiness-text"></p>
       </div>
       <div class="detail-meta hidden" id="detail-meta">
         <h3>{escape(str(copy["detail_meta_title"]))}</h3>
@@ -1798,14 +1842,6 @@ def render_dashboard(
       return withLang(`${{apiBase}}/opportunity/${{encodeURIComponent(String(opportunityId))}}`);
     }}
 
-    function renderTextBlocks(value) {{
-      const paragraphs = String(value || "")
-        .split(/\\n+/)
-        .map((entry) => cleanSummaryText(entry) || entry.trim())
-        .filter(Boolean);
-      return paragraphs.map((entry) => `<p>${{escapeHtml(entry)}}</p>`).join("");
-    }}
-
     function renderDetailFit(item) {{
       const root = $("#detail-fit");
       const summary = $("#detail-fit-summary");
@@ -1824,12 +1860,10 @@ def render_dashboard(
     function renderDetailReadiness(item) {{
       const root = $("#detail-readiness");
       const target = $("#detail-readiness-text");
-      const computeTarget = $("#detail-compute-readiness-text");
       const readiness = item && item.raw && item.raw.decision_readiness;
       if (!readiness || !Number.isFinite(Number(readiness.total_fields))) {{
         root.classList.add("hidden");
         target.textContent = "";
-        computeTarget.textContent = "";
         return;
       }}
       const known = Number(readiness.known_fields || 0);
@@ -1846,22 +1880,7 @@ def render_dashboard(
             missing: missing.join(", ")
           }})
         : text("detail_readiness_complete", {{ total: formatNumber.format(total) }});
-      const compute = item && item.raw && item.raw.qazcompute_evidence_readiness;
-      const computeScore = compute ? Number(compute.score) : Number.NaN;
-      computeTarget.textContent = compute && Number.isFinite(computeScore)
-        ? text("detail_compute_readiness", {{
-            score: formatNumber.format(computeScore),
-            tier: computeReadinessLabel(compute.tier)
-          }})
-        : "";
       root.classList.remove("hidden");
-    }}
-
-    function computeReadinessLabel(tier) {{
-      if (tier === "ready") return copy.detail_compute_ready;
-      if (tier === "blocked") return copy.detail_compute_blocked;
-      if (tier === "watch") return copy.detail_compute_watch;
-      return copy.detail_compute_unknown;
     }}
 
     function openDetailShell() {{
@@ -1937,9 +1956,6 @@ def render_dashboard(
           ? detail.metadata.filter((entry) => entry && entry.key && entry.value)
           : []
       );
-      const sections = Array.isArray(detail.detail_sections) ? detail.detail_sections.filter(
-        (section) => section && section.text
-      ) : [];
       $("#detail-title").textContent = title;
       $("#detail-status").textContent = statusText;
       $("#detail-open-source").setAttribute(
@@ -1968,16 +1984,12 @@ def render_dashboard(
       $("#detail-meta").classList.toggle("hidden", !metadata.length);
 
       const sectionBody = $("#detail-sections-body");
-      sectionBody.innerHTML = sections.map((section) => `
-        <section class="detail-section-block">
-          <h3>${{escapeHtml(section.heading || copy.detail_source_excerpt)}}</h3>
-          ${{renderTextBlocks(section.text)}}
-        </section>
-      `).join("");
-      $("#detail-sections").classList.toggle("hidden", !sections.length);
+      const summary = String(detail.summary || "").trim();
+      sectionBody.innerHTML = summary ? `<p>${{escapeHtml(summary)}}</p>` : "";
+      $("#detail-sections").classList.toggle("hidden", !summary);
 
       const emptyMessage = $("#detail-empty");
-      if (sections.length || metadata.length) {{
+      if (summary || metadata.length) {{
         emptyMessage.classList.add("hidden");
       }} else {{
         emptyMessage.textContent = copy.detail_empty;

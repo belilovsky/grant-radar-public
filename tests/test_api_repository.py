@@ -80,27 +80,25 @@ def test_root_renders_service_landing(monkeypatch):
     assert "avds-stat-kpi-card" in response.text
     assert "avds-source-card" in response.text
     assert "avds-source-card__icon" in response.text
-    assert "detail-compute-readiness-text" in response.text
-    assert "QazCompute:" in response.text
+    assert "detail-compute-readiness-text" not in response.text
+    assert "QazCompute:" not in response.text
     assert "avds-source-card__arrow" in response.text
     assert 'data-avds-component="source-icon"' in response.text
     assert "avds-document-row" in response.text
     assert 'data-avds-component="hero-band"' in response.text
     assert "QAZ.FUND" in response.text
     assert "Публичный навигатор по грантам, субсидиям" in response.text
-    assert (
-        "Гранты, субсидии и программы поддержки из открытых источников" in response.text
-    )
-    assert "Что вы хотите найти?" in response.text
+    assert "Действующие гранты, субсидии, тендеры" in response.text
+    assert "С чего начать" in response.text
     assert "Перейти к программам" in response.text
     assert "Прямое подключение к официальному источнику" in response.text
     assert "Внешний мониторинг и редакционная выборка" in response.text
     assert "Быстрый выбор" in response.text
-    assert "Найти программу" in response.text
-    assert "Сверить условия" in response.text
-    assert "Срок до месяца" in response.text
+    assert "Все программы" in response.text
+    assert "Поиск по условиям" in response.text
+    assert "Срок до 30 дней" in response.text
     assert "Поддержка в Казахстане" in response.text
-    assert "Тендеры и закупки" in response.text
+    assert ">Тендеры</button>" in response.text
     assert 'data-hero-focus="search"' in response.text
     assert 'data-hero-sort="deadline"' in response.text
     assert response.text.index('<div class="hero-points"') < response.text.index(
@@ -184,7 +182,7 @@ def test_root_renders_service_landing(monkeypatch):
     assert response.text.index(
         'data-avds-component="trust-library"'
     ) < response.text.index('data-avds-component="funder-library"')
-    assert "Оценка учитывает регион и тему" in response.text
+    assert "Показывает соответствие программы выбранным фильтрам" in response.text
     assert "Это не вероятность одобрения" in response.text
     assert "По приоритету проверки" in response.text
     assert "Точность совпадения" not in response.text
@@ -395,10 +393,9 @@ def test_root_renders_service_landing(monkeypatch):
     assert "Попробуйте ослабить один из фильтров" in response.text
     assert "Сбросить всё" in response.text
     assert "Открыть весь индекс" in response.text
-    assert "Кратко о программе" in response.text
-    assert "Официальный источник" in response.text
-    assert "Открыть карточку" in response.text
-    assert '"read_more": "Открыть карточку"' in response.text
+    assert '"open_details": "Кратко"' in response.text
+    assert '"open_source_short": "Источник"' in response.text
+    assert '"read_more": "Подробнее"' in response.text
     assert '"kz": "Казахстан"' in response.text
     assert '"program": "Программа"' in response.text
     assert '"education_organisation": "Образовательные организации"' in response.text
@@ -580,12 +577,31 @@ def test_browser_404_is_branded_while_api_404_stays_json(monkeypatch):
     assert "This page does not exist" in browser_response.text
     assert 'meta name="description"' in browser_response.text
     assert 'href="/?lang=en"' in browser_response.text
-    assert 'class="primary-action"' in browser_response.text
-    assert ".primary-action {" in browser_response.text
-    assert "grid-template-rows: auto 1fr auto;" in browser_response.text
+    assert "primary-action" in browser_response.text
+    assert 'data-avds-component="StatePanel"' in browser_response.text
+    assert 'href="/insights?lang=en"' in browser_response.text
+    assert 'href="/status?lang=en"' in browser_response.text
     assert 'class="brand"' in browser_response.text
     assert "contact@qaz.fund" not in browser_response.text
     assert api_response.status_code == 404
+    assert api_response.headers["content-type"].startswith("application/json")
+
+
+def test_malformed_human_permalink_recovers_without_framework_error(monkeypatch):
+    _reset_api_state(monkeypatch)
+    client = TestClient(api_main.app)
+
+    browser_response = client.get(
+        "/opportunity/not-a-uuid?lang=ru",
+        headers={"Accept": "text/html"},
+    )
+    api_response = client.get("/opportunities/not-a-uuid")
+
+    assert browser_response.status_code == 404
+    assert browser_response.headers["content-type"].startswith("text/html")
+    assert "Такой страницы нет" in browser_response.text
+    assert 'href="/?lang=ru"' in browser_response.text
+    assert api_response.status_code == 422
     assert api_response.headers["content-type"].startswith("application/json")
 
 
@@ -897,13 +913,13 @@ def test_root_supports_explicit_english_dashboard(monkeypatch):
     assert (
         "Public funding navigator for grants, subsidies, accelerators" in response.text
     )
-    assert "Grants, subsidies and support programs for Kazakhstan" in response.text
+    assert "Active grants, subsidies, tenders and support programs" in response.text
     assert "What people usually look for" in response.text
     assert "Clear theme" in response.text
-    assert "What do you need to do now?" in response.text
-    assert "Find support" in response.text
-    assert "Check a program" in response.text
-    assert "Deadlines this month" in response.text
+    assert "Where to begin" in response.text
+    assert "All programs" in response.text
+    assert "Search by criteria" in response.text
+    assert "Due within 30 days" in response.text
     assert "Tenders and procurement" in response.text
     assert "How to use QAZ.FUND at work" in response.text
     assert "For analysts" in response.text
@@ -1072,6 +1088,13 @@ def test_marketing_endpoints_are_exposed(monkeypatch):
     assert (
         "AV DS 4 UI contract: " "http://testserver/.well-known/avds-ui-contract.json"
     ) in llms.text
+    assert (
+        "QazPipe source contract: " "http://testserver/.well-known/qazpipe-source.json"
+    ) in llms.text
+    assert (
+        "QazCompute profile contract: "
+        "http://testserver/.well-known/qazcompute-profiles.json"
+    ) in llms.text
     assert "Source status page: http://testserver/status" in llms.text
     assert "Coverage JSON: http://testserver/coverage" in llms.text
     assert "Opportunities JSON: http://testserver/opportunities" in llms.text
@@ -1107,6 +1130,10 @@ def test_marketing_endpoints_are_exposed(monkeypatch):
     assert data["data_policy"] == "http://testserver/data-policy"
     assert data["attribution"] == "http://testserver/attribution"
     assert data["contracts"]["qazstack"].endswith("/.well-known/qazstack-consumer.json")
+    assert data["contracts"]["qazpipe"].endswith("/.well-known/qazpipe-source.json")
+    assert data["contracts"]["qazcompute"].endswith(
+        "/.well-known/qazcompute-profiles.json"
+    )
     assert data["routes"]["opportunities"] == "/opportunities?lang={lang}"
     assert data["routes"]["api_v1_opportunity"] == (
         "/api/v1/opportunities/{id}?lang={lang}"
@@ -1138,6 +1165,8 @@ def test_marketing_endpoints_are_exposed(monkeypatch):
     )
     assert "versioned public data contract" in data["capabilities"]
     assert "machine-readable media feeds" in data["capabilities"]
+    assert "qazpipe pull-source contract" in data["capabilities"]
+    assert "qazcompute profile contract" in data["capabilities"]
     discovery_head = client.head("/site-discovery.json")
     assert discovery_head.status_code == 200
     assert discovery_head.headers["content-type"].startswith("application/json")
@@ -1167,7 +1196,7 @@ def test_marketing_endpoints_are_exposed(monkeypatch):
     assert avds_contract.json()["avds_source"] == {
         "site": "https://avds.digital",
         "package": "@sgeo/ui-kit",
-        "version": "4.2.0",
+        "version": "4.6.0",
     }
     assert avds_contract.json()["runtime_neutral_patterns"] == {
         "package": "@av/patterns",
@@ -1189,16 +1218,50 @@ def test_marketing_endpoints_are_exposed(monkeypatch):
     }
     assert client.head("/.well-known/avds-ui-contract.json").status_code == 200
 
+    qazpipe_contract = client.get("/.well-known/qazpipe-source.json")
+    assert qazpipe_contract.status_code == 200
+    qazpipe_payload = qazpipe_contract.json()
+    assert qazpipe_payload["schema_version"] == "qazpipe-pull-source-v1"
+    assert qazpipe_payload["direction"] == "outbound-read-only"
+    assert qazpipe_payload["endpoints"]["bulk_ndjson"] == (
+        "http://testserver/api/v1/opportunities.ndjson"
+    )
+    assert qazpipe_payload["qazlake_handoff"]["status"] == ("brokered-activation-gated")
+    assert qazpipe_payload["qazlake_handoff"]["direct_write"] is False
+    assert "provenance.content_hash" in qazpipe_payload["required_provenance"]
+    assert client.head("/.well-known/qazpipe-source.json").status_code == 200
+
+    qazcompute_contract = client.get("/.well-known/qazcompute-profiles.json")
+    assert qazcompute_contract.status_code == 200
+    qazcompute_payload = qazcompute_contract.json()
+    assert qazcompute_payload["schema_version"] == ("qazcompute-profile-contract-v1")
+    assert qazcompute_payload["execution"] == {
+        "mode": "local-deterministic-fallback",
+        "runtime_status": "proven",
+        "remote_execution_active": False,
+        "decision_ready": False,
+    }
+    assert {
+        profile["schema_version"] for profile in qazcompute_payload["profiles"]
+    } == {
+        "evidence_readiness.v1",
+        "deadline_anomaly.v1",
+        "source_freshness.v1",
+        "duplicate_cluster.v1",
+    }
+    assert client.head("/.well-known/qazcompute-profiles.json").status_code == 200
+
     ecosystem = client.get("/.well-known/qdev-ecosystem.json")
     assert ecosystem.status_code == 200
     ecosystem_payload = ecosystem.json()
     assert ecosystem_payload["integrations"]["qazstack"]["status"] == ("runtime-proven")
+    assert ecosystem_payload["integrations"]["qazpipe"]["status"] == ("producer-ready")
     assert ecosystem_payload["integrations"]["qazlake"]["direct_write"] is False
     assert ecosystem_payload["integrations"]["qazgeo"]["status"] == (
         "deferred-no-geometry"
     )
     assert ecosystem_payload["integrations"]["qazcompute"]["status"] == (
-        "profile-compatible-local-fallback"
+        "local-runtime-proven"
     )
     assert ecosystem_payload["integrations"]["qazcompute"]["decision_ready"] is False
     assert client.head("/.well-known/qdev-ecosystem.json").status_code == 200
@@ -2924,15 +2987,11 @@ def test_opportunity_page_renders_public_permalink(monkeypatch):
     assert 'id="copy-working-brief"' in response.text
     assert 'id="copy-working-brief-status"' in response.text
     assert "Сведения скопированы." in response.text
-    assert "Что нужно перепроверить" in response.text
-    assert "Проверка перед решением" in response.text
-    assert "Известно в карточке" in response.text
-    assert "Нужно сверить" in response.text
-    assert "Это рабочая проверка, а не правовое заключение" in response.text
-    assert "Право на участие" in response.text
-    assert "Закупочная документация" in response.text
-    assert "Ссылка при передаче" in response.text
-    assert "не подтверждает право на участие" in response.text
+    assert "Ключевые условия" in response.text
+    assert "Что известно" in response.text
+    assert "Что уточнить" in response.text
+    assert "Куда подавать" in response.text
+    assert "Карточка помогает с отбором" in response.text
     assert "QAZ.FUND – сведения о программе" in response.text
     assert "Проверить на официальном источнике" in response.text
     assert "Откройте страницу подачи" in response.text
@@ -3112,13 +3171,11 @@ def test_opportunity_page_tailors_prepare_checklist_for_subsidies(monkeypatch):
     assert 'aria-label="Breadcrumbs"' in response.text
     assert "What to prepare" in response.text
     assert "Copy working brief" in response.text
-    assert "Before using this card" in response.text
-    assert "Decision check" in response.text
-    assert "Known in the card" in response.text
-    assert "Check at source" in response.text
-    assert "This is a working check, not legal advice" in response.text
-    assert "Procurement documents" in response.text
-    assert "does not confirm eligibility" in response.text
+    assert "Key conditions" in response.text
+    assert "What is known" in response.text
+    assert "What to confirm" in response.text
+    assert "Where to apply" in response.text
+    assert "the organizer&#x27;s rules govern the decision" in response.text
     assert "Prepare local documents" in response.text
     assert "Check company status, digital signature, tax status" in response.text
     assert "Check current terms" in response.text

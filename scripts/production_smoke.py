@@ -136,6 +136,13 @@ def run_smoke(
                 f"&deadline_after={deadline_after}"
             ),
         )
+        _require(bool(opportunities), "opportunity list is empty")
+        opportunity_id = str(opportunities[0].get("id") or "")
+        _require(bool(opportunity_id), "opportunity list has no stable id")
+        funders = _get_json(client, base_url, "/funders?limit=1")
+        _require(bool(funders), "funder list is empty")
+        funder_slug = str(funders[0].get("slug") or "")
+        _require(bool(funder_slug), "funder list has no stable slug")
         ndjson_response = client.get(
             _url(base_url, "/opportunities.ndjson?limit=20&min_score=0.3")
         )
@@ -158,6 +165,52 @@ def run_smoke(
         status_head = _head(client, base_url, "/status?lang=ru")
         operator_page = _get_text(client, base_url, "/operator?lang=ru")
         operator_head = _head(client, base_url, "/operator?lang=ru")
+        insights_page = _get_text(client, base_url, "/insights?lang=ru")
+        insights_head = _head(client, base_url, "/insights?lang=ru")
+        detail_page = _get_text(
+            client,
+            base_url,
+            f"/opportunity/{opportunity_id}?lang=ru",
+        )
+        detail_head = _head(
+            client,
+            base_url,
+            f"/opportunity/{opportunity_id}?lang=ru",
+        )
+        prepare_page = _get_text(
+            client,
+            base_url,
+            f"/opportunity/{opportunity_id}/prepare?lang=ru",
+        )
+        prepare_head = _head(
+            client,
+            base_url,
+            f"/opportunity/{opportunity_id}/prepare?lang=ru",
+        )
+        funder_page = _get_text(
+            client,
+            base_url,
+            f"/funder/{funder_slug}?lang=ru",
+        )
+        policy_terms = _get_text(client, base_url, "/terms?lang=ru")
+        policy_data = _get_text(client, base_url, "/data-policy?lang=ru")
+        policy_attribution = _get_text(client, base_url, "/attribution?lang=ru")
+        missing_page = client.get(
+            _url(base_url, "/opportunity/not-a-valid-id?lang=ru"),
+            headers={"Accept": "text/html"},
+        )
+        api_index = _get_json(client, base_url, "/api/v1")
+        insights_api = _get_json(client, base_url, "/api/v1/insights?lang=ru")
+        changes_api = _get_json(
+            client,
+            base_url,
+            "/api/v1/changes?hours=24&lang=ru",
+        )
+        daily_digest = _get_json(
+            client,
+            base_url,
+            "/media/v1/digest/daily.json?lang=ru",
+        )
         discovery = _get_json(client, base_url, "/site-discovery.json")
         discovery_head = _head(client, base_url, "/site-discovery.json")
         qazstack_contract = _get_json(
@@ -168,6 +221,16 @@ def run_smoke(
             client, base_url, "/.well-known/avds-ui-contract.json"
         )
         avds_head = _head(client, base_url, "/.well-known/avds-ui-contract.json")
+        qazpipe_contract = _get_json(
+            client, base_url, "/.well-known/qazpipe-source.json"
+        )
+        qazpipe_head = _head(client, base_url, "/.well-known/qazpipe-source.json")
+        qazcompute_contract = _get_json(
+            client, base_url, "/.well-known/qazcompute-profiles.json"
+        )
+        qazcompute_head = _head(
+            client, base_url, "/.well-known/qazcompute-profiles.json"
+        )
         ecosystem = _get_json(client, base_url, "/.well-known/qdev-ecosystem.json")
         ecosystem_head = _head(client, base_url, "/.well-known/qdev-ecosystem.json")
 
@@ -242,6 +305,14 @@ def run_smoke(
             f"Release metadata JSON: "
             f"{_url(base_url, '/.well-known/release.json')}" in llms
         ),
+        "llms_qazpipe": (
+            f"QazPipe source contract: "
+            f"{_url(base_url, '/.well-known/qazpipe-source.json')}" in llms
+        ),
+        "llms_qazcompute": (
+            f"QazCompute profile contract: "
+            f"{_url(base_url, '/.well-known/qazcompute-profiles.json')}" in llms
+        ),
         "llms_ai_guidance": "## AI consumption guidance" in llms,
         "llms_ndjson_guidance": (
             "Prefer compact Opportunities NDJSON for bulk discovery reads" in llms
@@ -263,6 +334,59 @@ def run_smoke(
         ),
         "operator_noindex": "noindex"
         in operator_head.headers.get("x-robots-tag", "").lower(),
+        "insights_page": (
+            'data-avds-component="data-centre"' in insights_page
+            and 'data-avds-pattern="data-quality-scorecard"' in insights_page
+            and "\u2014" not in insights_page
+        ),
+        "insights_head": insights_head.headers.get("content-type", "").startswith(
+            "text/html"
+        ),
+        "detail_page": (
+            'data-avds-component="lite-reading-surface"' in detail_page
+            and "Ключевые условия" in detail_page
+            and "\u2014" not in detail_page
+        ),
+        "detail_head": detail_head.headers.get("content-type", "").startswith(
+            "text/html"
+        ),
+        "application_workspace": (
+            'data-avds-component="application-workspace"' in prepare_page
+            and "Данные остаются в этом браузере" in prepare_page
+            and "localStorage.setItem" in prepare_page
+            and "\u2014" not in prepare_page
+        ),
+        "application_workspace_head": prepare_head.headers.get(
+            "content-type", ""
+        ).startswith("text/html"),
+        "funder_page": (
+            "QAZ.FUND" in funder_page
+            and 'data-avds="grant-radar"' in funder_page
+            and "\u2014" not in funder_page
+        ),
+        "policy_routes": (
+            "Условия использования" in policy_terms
+            and "Политика данных" in policy_data
+            and "Цитирование и повторное использование" in policy_attribution
+        ),
+        "browser_404": (
+            missing_page.status_code == 404
+            and "Такой страницы нет" in missing_page.text
+            and "Вернуться в каталог" in missing_page.text
+        ),
+        "api_v1_daily_digest": (
+            str((api_index.get("routes") or {}).get("daily_digest_json") or "")
+            == _url(base_url, "/media/v1/digest/daily.json")
+            and str((api_index.get("routes") or {}).get("daily_digest_text") or "")
+            == _url(base_url, "/media/v1/digest/daily.txt")
+        ),
+        "insights_api": insights_api.get("schema_version") == "qazfund-insights.v1",
+        "changes_api": changes_api.get("schema_version") == "qazfund-changes.v1",
+        "daily_digest": (
+            daily_digest.get("schema_version") == "qazfund-daily-digest.v1"
+            and daily_digest.get("state") in {"collecting", "no_changes", "ready"}
+            and (daily_digest.get("delivery") or {}).get("automatic") is False
+        ),
         "site_discovery_openapi": str(discovery.get("openapi") or "")
         == _url(base_url, "/openapi.json"),
         "site_discovery_llms": str(discovery.get("llms") or "")
@@ -322,6 +446,14 @@ def run_smoke(
             (discovery.get("contracts") or {}).get("avds4") or ""
         )
         == _url(base_url, "/.well-known/avds-ui-contract.json"),
+        "site_discovery_qazpipe": str(
+            (discovery.get("contracts") or {}).get("qazpipe") or ""
+        )
+        == _url(base_url, "/.well-known/qazpipe-source.json"),
+        "site_discovery_qazcompute": str(
+            (discovery.get("contracts") or {}).get("qazcompute") or ""
+        )
+        == _url(base_url, "/.well-known/qazcompute-profiles.json"),
         "qazstack_contract": (
             qazstack_contract.get("schema_version") == "qazstack-consumer-v1"
             and qazstack_contract.get("qazstack_version") == "1.41.2"
@@ -334,7 +466,7 @@ def run_smoke(
         ),
         "avds4_contract": (
             avds_contract.get("schema_version") == "avds-ui-contract-v1"
-            and (avds_contract.get("avds_source") or {}).get("version") == "4.2.0"
+            and (avds_contract.get("avds_source") or {}).get("version") == "4.6.0"
             and (avds_contract.get("runtime_neutral_patterns") or {}).get("adopted")
             == [
                 "evidence-summary",
@@ -345,14 +477,58 @@ def run_smoke(
             ]
             and _is_public_cacheable(avds_head, 60)
         ),
+        "qazpipe_contract": (
+            qazpipe_contract.get("schema_version") == "qazpipe-pull-source-v1"
+            and qazpipe_contract.get("mode") == "pull"
+            and qazpipe_contract.get("direction") == "outbound-read-only"
+            and (qazpipe_contract.get("endpoints") or {}).get("bulk_ndjson")
+            == _url(base_url, "/api/v1/opportunities.ndjson")
+            and (qazpipe_contract.get("qazlake_handoff") or {}).get("direct_write")
+            is False
+            and {
+                "source.url",
+                "provenance.content_hash",
+                "provenance.verification_method",
+            }.issubset(set(qazpipe_contract.get("required_provenance") or []))
+            and _is_public_cacheable(qazpipe_head, 60)
+        ),
+        "qazcompute_contract": (
+            qazcompute_contract.get("schema_version")
+            == "qazcompute-profile-contract-v1"
+            and (qazcompute_contract.get("execution") or {}).get("runtime_status")
+            == "proven"
+            and (qazcompute_contract.get("execution") or {}).get(
+                "remote_execution_active"
+            )
+            is False
+            and (qazcompute_contract.get("execution") or {}).get("decision_ready")
+            is False
+            and {
+                "evidence_readiness.v1",
+                "deadline_anomaly.v1",
+                "source_freshness.v1",
+                "duplicate_cluster.v1",
+            }
+            == {
+                str(profile.get("schema_version") or "")
+                for profile in qazcompute_contract.get("profiles") or []
+            }
+            and _is_public_cacheable(qazcompute_head, 60)
+        ),
         "ecosystem_contract": (
             ecosystem.get("schema_version") == "qdev-ecosystem-integration-v1"
             and (ecosystem.get("integrations") or {}).get("qazstack", {}).get("status")
             == "runtime-proven"
+            and (ecosystem.get("integrations") or {}).get("qazpipe", {}).get("status")
+            == "producer-ready"
             and (ecosystem.get("integrations") or {})
             .get("qazlake", {})
             .get("direct_write")
             is False
+            and (ecosystem.get("integrations") or {})
+            .get("qazcompute", {})
+            .get("status")
+            == "local-runtime-proven"
             and _is_public_cacheable(ecosystem_head, 60)
         ),
     }

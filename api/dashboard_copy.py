@@ -22,21 +22,22 @@ COPY = {
             "программам поддержки для Казахстана."
         ),
         "hero_intro": (
-            "Гранты, субсидии и программы поддержки из открытых источников – "
-            "для Казахстана и Центральной Азии."
+            "Действующие гранты, субсидии, тендеры и программы поддержки "
+            "для проектов из Казахстана."
         ),
         "hero_primary_cta": "Перейти к программам",
+        "insights_link": "Аналитика",
         "hero_stage_eyebrow": "Быстрый выбор",
-        "hero_stage_title": "Что вы хотите найти?",
+        "hero_stage_title": "С чего начать",
         "hero_stage_point_one": "Настройте фильтры и сохраните ссылку на точную подборку",
         "hero_stage_point_two": "Скопируйте рабочую справку с источником и полями для проверки",
         "hero_stage_point_three": "Выгрузите таблицу или добавьте ближайшие сроки в календарь",
         "hero_picks_label": "Выбор задачи",
-        "hero_pick_startup": "Найти программу",
-        "hero_pick_business": "Сверить условия",
-        "hero_pick_farmer": "Срок до месяца",
+        "hero_pick_startup": "Все программы",
+        "hero_pick_business": "Поиск по условиям",
+        "hero_pick_farmer": "Срок до 30 дней",
         "hero_pick_science": "Поддержка в Казахстане",
-        "hero_pick_tenders": "Тендеры и закупки",
+        "hero_pick_tenders": "Тендеры",
         "spotlight_section_eyebrow": "Подборки для старта",
         "spotlight_section_title": "Актуально сейчас",
         "spotlight_section_description": (
@@ -104,7 +105,7 @@ COPY = {
             "Откройте программы по теме без ручного просмотра всего каталога."
         ),
         "discovery_library_summary": "Готовые подборки",
-        "discovery_library_description": ("Тематические подборки для быстрого поиска."),
+        "discovery_library_description": ("Быстрый вход по задаче, теме или сроку."),
         "themes_count": "Сейчас: {count}",
         "themes_action_open": "Открыть тему",
         "themes_empty": "По этому направлению сейчас нет активных карточек.",
@@ -231,8 +232,8 @@ COPY = {
         "metric_sources": "Источников",
         "opportunities_title": "Каталог программ",
         "opportunities_description": (
-            "Открытые и бессрочные программы для заявителей из Казахстана и "
-            "Центральной Азии – по официальным и отобранным источникам."
+            "Гранты, субсидии, конкурсы и закупки с актуальными условиями "
+            "и ссылкой на организатора."
         ),
         "opportunities_description_all": (
             "Открытые, бессрочные и архивные записи индекса для аудита покрытия "
@@ -302,10 +303,7 @@ COPY = {
         "score_option_03": "Базовое соответствие",
         "score_option_05": "Хорошее соответствие",
         "score_option_07": "Высокое соответствие",
-        "score_help": (
-            "Оценка учитывает регион и тему, а порядок – ещё и доступный срок. "
-            "Это не вероятность одобрения; условия сверяйте с первоисточником."
-        ),
+        "score_help": "Показывает соответствие программы выбранным фильтрам.",
         "all_sources": "Все источники",
         "clear_filters": "Сбросить фильтры",
         "loading_opportunities": "Загружаем программы...",
@@ -319,23 +317,19 @@ COPY = {
         "show_fewer_sources": "Показать меньше",
         "trust_library_summary": "Источники и прозрачность",
         "trust_library_description": (
-            "Охват источников, даты проверки, организации и методика."
+            "Кто публикует программы и когда обновлены сведения."
         ),
         "funder_library_summary": "Организации и программы",
         "funder_library_description": (
             "Кто публикует программы и какие из них открыты."
         ),
         "methodology_library_summary": "Проверка данных и методика",
-        "methodology_library_description": (
-            "Статус источников, принципы отбора и правила использования."
-        ),
+        "methodology_library_description": "Как отбираются и обновляются программы.",
         "source_refresh_title": "Последнее успешное обновление источника",
         "source_refresh_value": "Обновлено {date}",
         "source_refresh_unknown": "Дата обновления не указана",
         "health_title": "Статус данных",
-        "health_description": (
-            "Показываем доступность каталога и даты последней проверки источников."
-        ),
+        "health_description": "Последняя проверка каталога и источников.",
         "health_ok_value": "Источники проверены",
         "health_attention_value": "Проверить",
         "health_note_loading": (
@@ -518,7 +512,7 @@ COPY = {
         "workspace_imported": "Сохранённые данные восстановлены.",
         "workspace_import_error": "Не удалось прочитать резервную копию.",
         "report_issue": "Уточнить данные",
-        "open_source_short": "Официальный источник",
+        "open_source_short": "Источник",
         "footer_owner": "QAZ.FUND – навигатор программ поддержки. Проект",
         "footer_disclaimer": (
             "QAZ.FUND не выдаёт гранты и не принимает заявки. Финальные условия, "
@@ -526,6 +520,9 @@ COPY = {
         ),
         "footer_support": "Обратная связь",
         "footer_qdev": "qdev.run",
+        "footer_terms": "Условия",
+        "footer_data_policy": "Политика данных",
+        "footer_attribution": "Использование данных",
         "view_funder": "Об организации",
         "fit_label": "Кому подходит",
         "fit_unknown": "Критерии нужно уточнить",
@@ -588,8 +585,8 @@ COPY = {
         "empty_action_deadline": "Любые сроки",
         "empty_action_score": "Стандартный порог",
         "empty_action_scope": "Открыть весь индекс",
-        "open_details": "Кратко о программе",
-        "read_more": "Открыть карточку",
+        "open_details": "Кратко",
+        "read_more": "Подробнее",
         "open_rolling": "Открыто / бессрочно",
         "score_title": "Соответствие теме и региону; не вероятность одобрения",
         "score_exact": "Высокое",
@@ -603,35 +600,32 @@ COPY = {
         "views_aria": "Навигация по разделам панели",
         "breadcrumbs_aria": "Навигационная цепочка",
         "detail_panel_label": "Карточка программы",
-        "detail_shell_title": "Локальная карточка",
+        "detail_shell_title": "Краткий обзор",
         "detail_title_fallback": "Карточка программы",
         "detail_loading": "Загружаем текст и параметры...",
         "detail_error": (
             "Карточка на QAZ.FUND сейчас недоступна. Откройте официальный источник."
         ),
-        "detail_empty": (
-            "Источник пока не отдал расширенный текст. Показываем краткое описание "
-            "и структурированные поля."
-        ),
+        "detail_empty": "Доступны краткое описание и ключевые условия.",
         "detail_close": "Закрыть",
         "detail_open_page": "Открыть страницу",
         "detail_all_opportunities": "Все программы",
         "detail_open_source": "Открыть источник",
         "detail_open_application": "Открыть подачу",
-        "detail_meta_title": "Параметры",
-        "detail_readiness_title": "Полнота данных",
-        "detail_readiness_complete": "Подтверждены все {total} ключевых поля.",
-        "detail_readiness_partial": (
-            "Подтверждено {known} из {total}. На источнике проверьте: {missing}."
+        "detail_prepare_application": "Подготовить заявку",
+        "detail_closed_notice": (
+            "Приём завершён. Карточка сохранена для справки; новый набор "
+            "проверяйте у организатора."
         ),
-        "detail_compute_readiness": (
-            "QazCompute: {score} / 100, {tier}. Это техническая оценка полноты, "
-            "не решение о праве на участие."
+        "detail_forecast_notice": (
+            "Приём ещё не открыт. Условия и сроки могут измениться до начала набора."
         ),
-        "detail_compute_ready": "данных достаточно",
-        "detail_compute_watch": "нужна сверка",
-        "detail_compute_blocked": "есть препятствия",
-        "detail_compute_unknown": "статус неизвестен",
+        "detail_meta_title": "Главное",
+        "detail_readiness_title": "Что проверить",
+        "detail_readiness_complete": (
+            "Основные сведения заполнены. Перед подачей проверьте актуальную редакцию."
+        ),
+        "detail_readiness_partial": ("На странице организатора уточните: {missing}."),
         "detail_copy_brief": "Скопировать сведения",
         "detail_copy_brief_done": "Сведения скопированы.",
         "detail_copy_brief_prompt": "Скопируйте сведения о программе",
@@ -648,59 +642,35 @@ COPY = {
             "Проверить на официальном источнике: действующие условия, право на "
             "участие, документы, срок и канал подачи."
         ),
-        "verification_eyebrow": "Перед использованием",
-        "verification_title": "Что нужно перепроверить",
-        "verification_description": (
-            "Карточка помогает быстро оценить программу, но не "
-            "подтверждает право на участие и не заменяет официальные условия."
-        ),
-        "verification_eligibility_title": "Право на участие",
-        "verification_eligibility_text": (
-            "Сверьте тип заявителя, юрисдикцию, ограничения и требуемый опыт."
-        ),
-        "verification_terms_title": "Действующие условия",
-        "verification_terms_text": (
-            "Проверьте последнюю редакцию, срок, сумму и способ отправки заявки."
-        ),
-        "verification_procurement_title": "Закупочная документация",
-        "verification_procurement_text": (
-            "Для тендеров отдельно проверьте лоты, квалификацию, приложения и изменения."
-        ),
-        "verification_publication_title": "Ссылка при передаче",
-        "verification_publication_text": (
-            "Сохраняйте ссылку на официальный источник и дату проверки сведений."
-        ),
-        "decision_check_eyebrow": "Квалификация",
-        "decision_check_title": "Проверка перед решением",
+        "decision_check_eyebrow": "Перед подачей",
+        "decision_check_title": "Ключевые условия",
         "decision_check_description": (
-            "Короткий контрольный срез: что уже видно в карточке и что нужно "
-            "подтвердить перед тем, как тратить время на заявку."
+            "Сначала проверьте четыре пункта на странице организатора."
         ),
-        "decision_check_known_title": "Известно в карточке",
+        "decision_check_known_title": "Что известно",
         "decision_check_known_source": "источник: {source}",
         "decision_check_known_format": "формат: {format}",
         "decision_check_known_deadline": "срок: {deadline}",
         "decision_check_known_amount": "объём поддержки: {amount}",
         "decision_check_known_eligibility": "требования: {eligibility}",
         "decision_check_known_empty": "Пока известны только источник и описание.",
-        "decision_check_missing_title": "Нужно сверить",
+        "decision_check_missing_title": "Что уточнить",
         "decision_check_missing_text": "На официальной странице проверьте: {items}.",
         "decision_check_missing_none": (
-            "Основные поля заполнены, но финальную редакцию всё равно сверяйте "
-            "на официальной странице."
+            "Основные поля заполнены. Проверьте актуальную редакцию условий."
         ),
-        "decision_check_route_title": "Где действовать",
+        "decision_check_route_title": "Куда подавать",
         "decision_check_route_application": (
-            "У карточки есть отдельный путь подачи. Начинайте с него и сравните "
-            "требования с первоисточником."
+            "Используйте отдельную форму подачи и сверяйте требования "
+            "с первоисточником."
         ),
         "decision_check_route_source": (
-            "Отдельный путь подачи не указан. Действуйте только через официальный "
-            "источник."
+            "Отдельная форма не указана. Подавайте заявку только через "
+            "страницу организатора."
         ),
-        "decision_check_boundary_title": "Граница вывода",
+        "decision_check_boundary_title": "Важно",
         "decision_check_boundary_text": (
-            "Это рабочая проверка, а не правовое заключение и не прогноз одобрения."
+            "Карточка помогает с отбором; решение принимают по правилам организатора."
         ),
         "detail_missing_labels": {
             "deadline": "срок",
@@ -708,9 +678,9 @@ COPY = {
             "eligibility": "требования к заявителю",
             "application": "путь подачи",
         },
-        "detail_sections_title": "Сведения из источника",
+        "detail_sections_title": "О программе",
         "detail_status_ok": "Описание и ключевые поля собраны с официального источника",
-        "detail_status_structured_only": "Показываем краткое описание и структурированные поля",
+        "detail_status_structured_only": "Краткое описание и ключевые условия",
         "detail_status_blocked": "Полный текст не удалось получить автоматически",
         "detail_status_not_allowed": "Для этого источника локальная загрузка отключена",
         "detail_status_too_large": "Страница слишком велика для локального чтения",
@@ -722,8 +692,7 @@ COPY = {
         "prepare_section_eyebrow": "Перед подачей",
         "prepare_section_title": "Что подготовить",
         "prepare_section_description": (
-            "Состав подготовки зависит от типа программы. Требования сверяйте "
-            "с официальным источником."
+            "Перечень зависит от программы. Точный состав – на странице организатора."
         ),
         "prepare_eligibility_title": "Проверьте критерии",
         "prepare_eligibility_text": (
@@ -775,7 +744,7 @@ COPY = {
         "apply_section_eyebrow": "Подача",
         "apply_section_title": "Как подать",
         "apply_section_description": (
-            "Основные действия перед отправкой заявки. Точный порядок определяет организатор."
+            "Порядок может отличаться. Следуйте инструкции организатора."
         ),
         "apply_step_open_apply_title": "Откройте страницу подачи",
         "apply_step_open_apply_text": (
@@ -1043,20 +1012,22 @@ COPY = {
             "and support programs in Kazakhstan."
         ),
         "hero_intro": (
-            "Grants, subsidies and support programs for Kazakhstan and Central Asia."
+            "Active grants, subsidies, tenders and support programs "
+            "for projects from Kazakhstan."
         ),
         "hero_primary_cta": "Open catalog",
-        "hero_stage_eyebrow": "Workflows",
-        "hero_stage_title": "What do you need to do now?",
+        "insights_link": "Insights",
+        "hero_stage_eyebrow": "Quick start",
+        "hero_stage_title": "Where to begin",
         "hero_stage_point_one": "Filter the catalog and save a link to the exact result set",
         "hero_stage_point_two": "Copy a working brief with its source and verification fields",
         "hero_stage_point_three": "Export a table or add the nearest deadlines to your calendar",
         "hero_picks_label": "Workflows",
-        "hero_pick_startup": "Find support",
-        "hero_pick_business": "Check a program",
-        "hero_pick_farmer": "Deadlines this month",
+        "hero_pick_startup": "All programs",
+        "hero_pick_business": "Search by criteria",
+        "hero_pick_farmer": "Due within 30 days",
         "hero_pick_science": "Kazakhstan support",
-        "hero_pick_tenders": "Tenders and procurement",
+        "hero_pick_tenders": "Tenders",
         "spotlight_section_eyebrow": "Start here",
         "spotlight_section_title": "Current opportunities",
         "spotlight_section_description": (
@@ -1123,9 +1094,7 @@ COPY = {
             "Open opportunities by topic without scanning the full catalog."
         ),
         "discovery_library_summary": "Collections and routes",
-        "discovery_library_description": (
-            "Ready-made views for getting acquainted with the catalog."
-        ),
+        "discovery_library_description": "Shortcuts by task, topic or deadline.",
         "themes_count": "Now: {count}",
         "themes_action_open": "Open theme",
         "themes_empty": "There are no active items in this focus area right now.",
@@ -1256,7 +1225,8 @@ COPY = {
         "metric_sources": "Sources",
         "opportunities_title": "Opportunities",
         "opportunities_description": (
-            "Open and rolling programs with Kazakhstan and Central Asia shown first."
+            "Grants, subsidies, competitions and procurement with current terms "
+            "and a direct organizer link."
         ),
         "opportunities_description_all": (
             "Open, rolling and archived index records for coverage and source audits."
@@ -1325,10 +1295,7 @@ COPY = {
         "score_option_03": "Baseline relevance",
         "score_option_05": "Good relevance",
         "score_option_07": "High relevance",
-        "score_help": (
-            "The estimate considers region and topic; ordering also uses deadline "
-            "runway. It is not an award probability; verify the official source."
-        ),
+        "score_help": "Shows how closely a program matches the selected filters.",
         "all_sources": "All sources",
         "clear_filters": "Clear filters",
         "loading_opportunities": "Loading opportunities...",
@@ -1342,24 +1309,19 @@ COPY = {
         "show_fewer_sources": "Show fewer",
         "trust_library_summary": "Sources and transparency",
         "trust_library_description": (
-            "Coverage, data freshness, active funders, and methodology."
+            "Who publishes the programs and when the data was updated."
         ),
         "funder_library_summary": "Funder profiles",
         "funder_library_description": (
             "Who provides opportunities and which programs are active now."
         ),
         "methodology_library_summary": "Data checks and methodology",
-        "methodology_library_description": (
-            "Source status, selection principles and usage guidance."
-        ),
+        "methodology_library_description": "How programs are selected and updated.",
         "source_refresh_title": "Latest successful source refresh",
         "source_refresh_value": "Updated {date}",
         "source_refresh_unknown": "Refresh date unavailable",
         "health_title": "Data status",
-        "health_description": (
-            "Shows whether the catalog is reachable and how many sources are "
-            "currently active in the public feed."
-        ),
+        "health_description": "Latest catalog and source check.",
         "health_ok_value": "Data is current",
         "health_attention_value": "Needs review",
         "health_note_loading": (
@@ -1541,7 +1503,7 @@ COPY = {
         "workspace_imported": "Workspace restored.",
         "workspace_import_error": "The workspace backup could not be read.",
         "report_issue": "Correct the data",
-        "open_source_short": "Official source",
+        "open_source_short": "Source",
         "footer_owner": "QAZ.FUND is a public opportunity navigator. Built by",
         "footer_disclaimer": (
             "QAZ.FUND does not award grants or process applications. Always verify "
@@ -1549,6 +1511,9 @@ COPY = {
         ),
         "footer_support": "Feedback",
         "footer_qdev": "qdev.run",
+        "footer_terms": "Terms",
+        "footer_data_policy": "Data policy",
+        "footer_attribution": "Data use",
         "view_funder": "Funder profile",
         "fit_label": "Who it fits",
         "fit_unknown": "Check eligibility",
@@ -1619,7 +1584,7 @@ COPY = {
         "empty_action_score": "Standard threshold",
         "empty_action_scope": "Open full index",
         "open_details": "Quick view",
-        "read_more": "Full card",
+        "read_more": "Details",
         "open_rolling": "Open / Rolling",
         "score_title": "Explainable catalog relevance; not an award probability",
         "score_exact": "High",
@@ -1632,37 +1597,34 @@ COPY = {
         "unknown_url": "Unknown URL",
         "views_aria": "Dashboard section navigation",
         "breadcrumbs_aria": "Breadcrumbs",
-        "detail_panel_label": "Local opportunity detail",
-        "detail_shell_title": "Local detail",
+        "detail_panel_label": "Opportunity quick view",
+        "detail_shell_title": "Quick overview",
         "detail_title_fallback": "Opportunity detail",
-        "detail_loading": "Loading local text and structured fields...",
+        "detail_loading": "Loading summary and key details...",
         "detail_error": (
             "The local detail view is unavailable right now. The direct source link "
             "is still available below."
         ),
-        "detail_empty": (
-            "The source did not provide a richer local text yet. Showing the "
-            "stored summary and structured fields."
-        ),
+        "detail_empty": "A summary and key details are available.",
         "detail_close": "Close",
         "detail_open_page": "Open page",
         "detail_all_opportunities": "All opportunities",
         "detail_open_source": "Open source",
         "detail_open_application": "Open application",
-        "detail_meta_title": "Key fields",
-        "detail_readiness_title": "Data completeness",
-        "detail_readiness_complete": "All {total} key fields are confirmed.",
-        "detail_readiness_partial": (
-            "{known} of {total} fields confirmed. Verify at source: {missing}."
+        "detail_prepare_application": "Prepare application",
+        "detail_closed_notice": (
+            "Applications are closed. This record remains available for reference; "
+            "check with the organizer for a new round."
         ),
-        "detail_compute_readiness": (
-            "QazCompute: {score} / 100, {tier}. This is a technical completeness "
-            "signal, not an eligibility decision."
+        "detail_forecast_notice": (
+            "Applications are not open yet. Terms and dates may change before launch."
         ),
-        "detail_compute_ready": "data is sufficient",
-        "detail_compute_watch": "review needed",
-        "detail_compute_blocked": "blockers present",
-        "detail_compute_unknown": "status unknown",
+        "detail_meta_title": "At a glance",
+        "detail_readiness_title": "What to check",
+        "detail_readiness_complete": (
+            "The main details are present. Check the current terms before applying."
+        ),
+        "detail_readiness_partial": ("Confirm on the organizer's page: {missing}."),
         "detail_copy_brief": "Copy working brief",
         "detail_copy_brief_done": "Working brief copied.",
         "detail_copy_brief_prompt": "Copy the working brief",
@@ -1679,58 +1641,34 @@ COPY = {
             "Verify at the official source: current terms, eligibility, required "
             "documents, deadline, and submission route."
         ),
-        "verification_eyebrow": "Verification and handoff",
-        "verification_title": "Before using this card",
-        "verification_description": (
-            "The card supports initial analysis and working briefs, but does not "
-            "confirm eligibility or replace the official terms."
-        ),
-        "verification_eligibility_title": "Eligibility",
-        "verification_eligibility_text": (
-            "Confirm applicant type, jurisdiction, restrictions, and required experience."
-        ),
-        "verification_terms_title": "Current terms",
-        "verification_terms_text": (
-            "Check the latest version, deadline, amount, and submission route."
-        ),
-        "verification_procurement_title": "Procurement documents",
-        "verification_procurement_text": (
-            "For tenders, check lots, qualifications, attachments, and amendments separately."
-        ),
-        "verification_publication_title": "Publication and internal notes",
-        "verification_publication_text": (
-            "Record the official source and the date when the information was verified."
-        ),
-        "decision_check_eyebrow": "Qualification",
-        "decision_check_title": "Decision check",
+        "decision_check_eyebrow": "Before applying",
+        "decision_check_title": "Key conditions",
         "decision_check_description": (
-            "A compact control pass: what the card already knows and what must be "
-            "confirmed before spending time on an application."
+            "Check these four points on the organizer's page first."
         ),
-        "decision_check_known_title": "Known in the card",
+        "decision_check_known_title": "What is known",
         "decision_check_known_source": "source: {source}",
         "decision_check_known_format": "format: {format}",
         "decision_check_known_deadline": "deadline: {deadline}",
         "decision_check_known_amount": "support amount: {amount}",
         "decision_check_known_eligibility": "requirements: {eligibility}",
         "decision_check_known_empty": "Only the source and summary are known so far.",
-        "decision_check_missing_title": "Check at source",
+        "decision_check_missing_title": "What to confirm",
         "decision_check_missing_text": "Confirm on the official page: {items}.",
         "decision_check_missing_none": (
-            "The main fields are present, but final terms still need confirmation "
-            "on the official page."
+            "The main fields are present. Check the current terms before applying."
         ),
-        "decision_check_route_title": "Action route",
+        "decision_check_route_title": "Where to apply",
         "decision_check_route_application": (
-            "The card has a separate application route. Start there and compare "
-            "requirements with the source."
+            "Use the dedicated application form and compare its requirements "
+            "with the source."
         ),
         "decision_check_route_source": (
-            "No separate application route is listed. Act through the official source."
+            "No separate form is listed. Apply only through the organizer's page."
         ),
-        "decision_check_boundary_title": "Boundary",
+        "decision_check_boundary_title": "Important",
         "decision_check_boundary_text": (
-            "This is a working check, not legal advice or an approval forecast."
+            "The card helps with selection; the organizer's rules govern the decision."
         ),
         "detail_missing_labels": {
             "deadline": "deadline",
@@ -1738,9 +1676,9 @@ COPY = {
             "eligibility": "applicant eligibility",
             "application": "application route",
         },
-        "detail_sections_title": "Text and excerpts",
+        "detail_sections_title": "About the program",
         "detail_status_ok": "Description and key fields were collected from the official source",
-        "detail_status_structured_only": "Showing the stored summary and structured fields",
+        "detail_status_structured_only": "Summary and key details",
         "detail_status_blocked": "The source blocked automatic full-text retrieval",
         "detail_status_not_allowed": "Local fetch is disabled for this source",
         "detail_status_too_large": "The source page is too large for the local reader",
@@ -1752,8 +1690,7 @@ COPY = {
         "prepare_section_eyebrow": "Before applying",
         "prepare_section_title": "What to prepare",
         "prepare_section_description": (
-            "A short practical checklist for this kind of opportunity. Always "
-            "confirm final requirements on the official source."
+            "The exact list depends on the program. Use the organizer's page as final."
         ),
         "prepare_eligibility_title": "Check eligibility",
         "prepare_eligibility_text": (
@@ -1801,8 +1738,7 @@ COPY = {
         "apply_section_eyebrow": "Application",
         "apply_section_title": "How to apply",
         "apply_section_description": (
-            "A short route to submission. It helps keep the steps visible, but does "
-            "not replace the official source instructions."
+            "The order may differ. Follow the organizer's instructions."
         ),
         "apply_step_open_apply_title": "Open the application page",
         "apply_step_open_apply_text": (

@@ -34,13 +34,19 @@ The main public endpoints are:
 - `GET /sources`
 - `GET /coverage`
 - `GET /status?lang=ru|en`
+- `GET /insights?lang=ru|en`
 - `GET /funders`
 - `GET /opportunities`
 - `GET /opportunities.ndjson`
 - `GET /opportunities/{opportunity_id}`
 - `GET /opportunity/{opportunity_id}?lang=ru|en`
+- `GET /opportunity/{opportunity_id}/prepare?lang=ru|en`
 - `GET /funder/{funder_slug}?lang=ru|en`
 - `GET /digest`
+- `GET /api/v1/insights`
+- `GET /api/v1/changes`
+- `GET /media/v1/digest/daily.json`
+- `GET /media/v1/digest/daily.txt`
 - `GET /docs`
 - `GET /openapi.json`
 - `GET /robots.txt`
@@ -56,6 +62,10 @@ entry points, read-only JSON/NDJSON endpoints, and supported query templates.
 Use `/opportunities.ndjson?compact=true` for bulk discovery; keep the full
 `/opportunities.ndjson` export for consumers that explicitly need raw source
 payloads.
+
+`/insights` is the public data-centre view. It reports only values derived from
+the current catalogue and observation ledger. The application workspace stores
+draft content in the browser and never submits it to QAZ.FUND.
 
 ## Quick start
 
@@ -184,6 +194,10 @@ Deployment guidance lives in [DEPLOYMENT.md](DEPLOYMENT.md) and
 - [SUPPORT.md](SUPPORT.md)
 - [docs/README.md](docs/README.md)
 - [docs/PERSISTENCE.md](docs/PERSISTENCE.md)
+- [docs/QAZFUND_DATA_CENTRE_2026-07-27.md](docs/QAZFUND_DATA_CENTRE_2026-07-27.md)
+- [docs/UX_CJM_2026-07-27.md](docs/UX_CJM_2026-07-27.md)
+- [docs/REPRODUCIBILITY_AND_RUNTIME.md](docs/REPRODUCIBILITY_AND_RUNTIME.md)
+- [docs/TELEGRAM_DIGEST.md](docs/TELEGRAM_DIGEST.md)
 
 ## License
 

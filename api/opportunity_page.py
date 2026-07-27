@@ -10,6 +10,7 @@ from html import escape
 from urllib.parse import urlparse
 
 from api.avds import AVDS_CSS, AVDS_FONT_HEAD
+from api.avds_visual import OPPORTUNITY_AVDS4_CSS
 from api.dashboard import dashboard_copy
 from api.public_meta import analytics_head_html, og_image_url
 from core.models import Opportunity, OpportunityDetail, OpportunityMetadataField
@@ -665,42 +666,6 @@ def _apply_markup(
     )
 
 
-def _verification_markup(copy: dict[str, object]) -> str:
-    items = (
-        ("verification_eligibility_title", "verification_eligibility_text"),
-        ("verification_terms_title", "verification_terms_text"),
-        ("verification_procurement_title", "verification_procurement_text"),
-        ("verification_publication_title", "verification_publication_text"),
-    )
-    item_markup = "".join(
-        """
-        <li class="verification-item">
-          <strong>{title}</strong>
-          <span>{text}</span>
-        </li>
-        """.format(
-            title=escape(str(copy[title_key])),
-            text=escape(str(copy[text_key])),
-        )
-        for title_key, text_key in items
-    )
-    return """
-    <section class="verification-section">
-      <div class="verification-head">
-        <span class="eyebrow">{eyebrow}</span>
-        <h2>{title}</h2>
-        <p>{description}</p>
-      </div>
-      <ul class="verification-list">{items}</ul>
-    </section>
-    """.format(
-        eyebrow=escape(str(copy["verification_eyebrow"])),
-        title=escape(str(copy["verification_title"])),
-        description=escape(str(copy["verification_description"])),
-        items=item_markup,
-    )
-
-
 def _detail_metadata_value(detail: OpportunityDetail, *keys: str) -> str:
     wanted = set(keys)
     for entry in detail.metadata:
@@ -825,6 +790,7 @@ def render_opportunity_page(
     root_path: str,
     site_origin: str,
     related_items: list[tuple[Opportunity, str]] | None = None,
+    lifecycle: str = "open",
 ) -> str:
     copy = dashboard_copy(lang)
     active_lang = str(copy["lang"])
@@ -870,6 +836,46 @@ def render_opportunity_page(
         ),
         quote=True,
     )
+    insights_href = escape(
+        (
+            f"{detail_base}/insights?lang={active_lang}"
+            if detail_base
+            else f"/insights?lang={active_lang}"
+        ),
+        quote=True,
+    )
+    terms_href = escape(
+        (
+            f"{detail_base}/terms?lang={active_lang}"
+            if detail_base
+            else f"/terms?lang={active_lang}"
+        ),
+        quote=True,
+    )
+    data_policy_href = escape(
+        (
+            f"{detail_base}/data-policy?lang={active_lang}"
+            if detail_base
+            else f"/data-policy?lang={active_lang}"
+        ),
+        quote=True,
+    )
+    attribution_href = escape(
+        (
+            f"{detail_base}/attribution?lang={active_lang}"
+            if detail_base
+            else f"/attribution?lang={active_lang}"
+        ),
+        quote=True,
+    )
+    prepare_href = escape(
+        (
+            f"{detail_base}/opportunity/{detail.id}/prepare?lang={active_lang}"
+            if detail_base
+            else f"/opportunity/{detail.id}/prepare?lang={active_lang}"
+        ),
+        quote=True,
+    )
     source_href = escape(str(detail.source_url), quote=True)
     application_href = (
         escape(detail.application_url, quote=True) if detail.application_url else ""
@@ -912,7 +918,6 @@ def render_opportunity_page(
         has_application_url=bool(application_href),
         copy=copy,
     )
-    verification_markup = _verification_markup(copy)
     related_markup = _related_markup(
         related_items or [],
         lang=active_lang,
@@ -979,6 +984,19 @@ def render_opportunity_page(
     eligibility_markup = "".join(
         f'<span class="pill">{value}</span>' for value in eligibility[:6]
     )
+    applications_closed = lifecycle in {"closed", "awarded"}
+    prepare_button = (
+        """
+        <a class="button slim" href="{href}">
+          {label}
+        </a>
+        """.format(
+            href=prepare_href,
+            label=escape(str(copy["detail_prepare_application"])),
+        )
+        if not applications_closed
+        else ""
+    )
     application_button = (
         """
         <a class="button slim" href="{href}" target="_blank" rel="noopener">
@@ -988,7 +1006,18 @@ def render_opportunity_page(
             href=application_href,
             label=escape(str(copy["detail_open_application"])),
         )
-        if application_href
+        if application_href and not applications_closed
+        else ""
+    )
+    lifecycle_notice = ""
+    if applications_closed:
+        lifecycle_notice = str(copy["detail_closed_notice"])
+    elif lifecycle == "forecast":
+        lifecycle_notice = str(copy["detail_forecast_notice"])
+    lifecycle_notice_markup = (
+        '<p class="lifecycle-notice" data-avds-component="Alert">'
+        f"{escape(lifecycle_notice)}</p>"
+        if lifecycle_notice
         else ""
     )
     empty_markup = ""
@@ -1420,6 +1449,17 @@ def render_opportunity_page(
       color: var(--success);
       font-size: var(--av-text-xs);
       font-weight: 600;
+    }}
+    .lifecycle-notice {{
+      max-width: 720px;
+      margin: 16px 0 0;
+      padding: 11px 13px;
+      border: 1px solid rgb(255 255 255 / .18);
+      border-radius: var(--av-radius-md);
+      background: rgb(255 255 255 / .08);
+      color: #dbe7f5;
+      font-size: 13px;
+      line-height: 1.5;
     }}
     .verification-section {{
       display: grid;
@@ -1882,10 +1922,15 @@ def render_opportunity_page(
         font-size: 18px;
       }}
     }}
+{OPPORTUNITY_AVDS4_CSS}
   </style>
 </head>
 <body>
-  <main class="shell">
+  <main
+    class="shell"
+    data-avds-component="lite-reading-surface"
+    data-avds-version="4.6.0"
+  >
     <div class="topbar">
       <nav class="breadcrumbs" aria-label="{escape(str(copy["breadcrumbs_aria"]), quote=True)}">
         <a href="{catalog_href}">QAZ.FUND</a>
@@ -1900,16 +1945,19 @@ def render_opportunity_page(
       </nav>
     </div>
 
-    <section class="hero">
+    <section class="hero" data-avds-component="editorial-lead-rail">
       <div class="hero-grid">
         <div>
           <div class="eyebrow">QAZ.FUND</div>
           <h1>{escape(title)}</h1>
           <p class="summary">{escape(summary)}</p>
+          <div class="pills">{eligibility_markup}</div>
+          {lifecycle_notice_markup}
           <div class="hero-actions">
             <a class="button primary" href="{source_href}" target="_blank" rel="noopener">
               {escape(str(copy["detail_open_source"]))}
             </a>
+            {prepare_button}
             <button class="button slim" type="button" id="copy-working-brief">
               {escape(str(copy["detail_copy_brief"]))}
             </button>
@@ -1937,26 +1985,29 @@ def render_opportunity_page(
       </div>
     </section>
 
-    <div class="pills">{eligibility_markup}</div>
-
-    <section class="{content_grid_class}">
-      <div class="section-stack">
-        {sections_markup}
-        {empty_markup}
-      </div>
-      {sidebar_markup}
-    </section>
-    {verification_markup}
-    {decision_check_markup}
-    {prepare_markup}
-    {apply_markup}
-    {related_markup}
+    <div class="detail-flow">
+      <section class="{content_grid_class}">
+        <div class="section-stack">
+          {sections_markup}
+          {empty_markup}
+        </div>
+        {sidebar_markup}
+      </section>
+      {decision_check_markup}
+      {prepare_markup}
+      {apply_markup}
+      {related_markup}
+    </div>
     <footer class="site-footer">
       <nav class="site-footer-nav" aria-label="{escape(str(copy["views_aria"]), quote=True)}">
         <a href="{catalog_href}">{escape(str(copy["tab_opportunities"]))}</a>
         <a href="{sources_href}">{escape(str(copy["tab_sources"]))}</a>
+        <a href="{insights_href}">{escape("Аналитика" if active_lang == "ru" else "Insights")}</a>
         <a href="{status_href}">{escape(str(copy["status_link"]))}</a>
         <a href="{docs_href}">{escape(str(copy["api_docs"]))}</a>
+        <a href="{terms_href}">{escape(str(copy["footer_terms"]))}</a>
+        <a href="{data_policy_href}">{escape(str(copy["footer_data_policy"]))}</a>
+        <a href="{attribution_href}">{escape(str(copy["footer_attribution"]))}</a>
       </nav>
       <p>
         {escape(str(copy["footer_owner"]))}

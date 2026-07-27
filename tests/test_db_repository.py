@@ -13,7 +13,11 @@ import pytest
 
 pytest.importorskip("sqlalchemy", reason="SQLAlchemy is optional for in-memory tests")
 
-from core.db import OpportunityRow, SqlRepository  # noqa: E402
+from core.db import (  # noqa: E402
+    OpportunityObservationRow,
+    OpportunityRow,
+    SqlRepository,
+)
 from core.models import Opportunity, OpportunityType  # noqa: E402
 from core.persistence import InMemoryRepository  # noqa: E402
 from core.repository_factory import make_repository  # noqa: E402
@@ -69,10 +73,12 @@ def test_sql_repository_upsert_updates_fields():
     assert row.score == 9.5
 
 
-def test_sql_repository_upsert_refreshes_discovered_at():
+def test_sql_repository_upsert_tracks_first_and_last_seen():
     repo = SqlRepository("sqlite:///:memory:")
     assert repo.upsert(_record(title="Old")) is True
-    first_seen = list(repo.all())[0].discovered_at
+    inserted = list(repo.all())[0]
+    first_seen = inserted.first_seen_at
+    first_last_seen = inserted.last_seen_at
 
     with repo._Session() as session:  # noqa: SLF001 - verifies persisted timestamp.
         row = session.get(OpportunityRow, "grants_gov:OPP-1")
@@ -83,7 +89,46 @@ def test_sql_repository_upsert_refreshes_discovered_at():
     refreshed = list(repo.all())[0]
     assert refreshed.title == "Still active"
     assert refreshed.discovered_at > datetime(2024, 1, 1)
-    assert refreshed.discovered_at >= first_seen
+    assert refreshed.first_seen_at == first_seen
+    assert refreshed.last_seen_at >= first_last_seen
+    assert refreshed.discovered_at == refreshed.last_seen_at
+
+
+def test_sql_repository_records_only_semantic_changes():
+    repo = SqlRepository("sqlite:///:memory:")
+    assert repo.upsert(_record(title="First")) is True
+    created = repo.observations_since(datetime(2020, 1, 1))
+    assert len(created) == 1
+    assert created[0].change_type == "created"
+    assert created[0].snapshot["title"] == "First"
+
+    assert repo.upsert(_record(title="First")) is False
+    assert len(repo.observations_since(datetime(2020, 1, 1))) == 1
+
+    assert repo.upsert(_record(title="Changed")) is False
+    observations = repo.observations_since(datetime(2020, 1, 1))
+    assert len(observations) == 2
+    assert observations[0].change_type == "changed"
+    assert observations[0].changed_fields == ["title"]
+    assert observations[0].snapshot["title"] == "Changed"
+    assert observations[0].content_hash.startswith("sha256:")
+
+
+def test_sql_repository_baselines_pre_migration_rows_without_false_change():
+    repo = SqlRepository("sqlite:///:memory:")
+    assert repo.upsert(_record(title="Existing")) is True
+    with repo._Session() as session:  # noqa: SLF001 - simulate pre-ledger data.
+        session.query(OpportunityObservationRow).delete()
+        row = session.get(OpportunityRow, "grants_gov:OPP-1")
+        row.content_hash = None
+        session.commit()
+
+    assert repo.upsert(_record(title="Existing")) is False
+    assert repo.observations_since(datetime(2020, 1, 1)) == []
+    with repo._Session() as session:  # noqa: SLF001 - verify stored baseline.
+        rows = list(session.query(OpportunityObservationRow).all())
+    assert len(rows) == 1
+    assert rows[0].change_type == "baseline"
 
 
 def test_sql_repository_upsert_preserves_i18n_payload():

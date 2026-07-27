@@ -13,6 +13,7 @@ def _transport(
 ) -> httpx.MockTransport:
     def handler(request: httpx.Request) -> httpx.Response:
         path = request.url.path
+        sample_id = "00000000-0000-4000-8000-000000000001"
         root = str(request.url.copy_with(path="/", query=None)).rstrip("/")
         base_prefix = "/grant-radar" if path.startswith("/grant-radar") else ""
         public_root = f"{root}{base_prefix}"
@@ -82,8 +83,23 @@ def _transport(
             return httpx.Response(
                 200,
                 json=[
-                    {"title": opportunity_title, "source": "world_bank_kazakhstan"}
+                    {
+                        "id": sample_id,
+                        "title": opportunity_title,
+                        "source": "world_bank_kazakhstan",
+                    }
                     for _ in range(44)
+                ],
+            )
+        if endpoint_path == "/funders":
+            return httpx.Response(
+                200,
+                json=[
+                    {
+                        "slug": "development-fund",
+                        "name": "Development Fund",
+                        "current_items": 3,
+                    }
                 ],
             )
         if endpoint_path == "/opportunities.ndjson":
@@ -136,6 +152,10 @@ def _transport(
                     f"{public_root}/.well-known/qazstack-consumer.json\n"
                     f"- AV DS 4 UI contract: "
                     f"{public_root}/.well-known/avds-ui-contract.json\n"
+                    f"- QazPipe source contract: "
+                    f"{public_root}/.well-known/qazpipe-source.json\n"
+                    f"- QazCompute profile contract: "
+                    f"{public_root}/.well-known/qazcompute-profiles.json\n"
                     f"- Source status page: {public_root}/status\n"
                     f"- Coverage JSON: {public_root}/coverage\n"
                     f"- Opportunities JSON: {public_root}/opportunities\n"
@@ -177,6 +197,103 @@ def _transport(
                     "x-robots-tag": "noindex, nofollow",
                 },
             )
+        if endpoint_path == "/insights":
+            return httpx.Response(
+                200,
+                text=(
+                    '<html lang="ru" data-avds="grant-radar">'
+                    '<main data-avds-component="data-centre">'
+                    '<section data-avds-pattern="data-quality-scorecard"></section>'
+                    "</main></html>"
+                ),
+                headers={"content-type": "text/html; charset=utf-8"},
+            )
+        if endpoint_path == f"/opportunity/{sample_id}":
+            return httpx.Response(
+                200,
+                text=(
+                    '<html lang="ru" data-avds="grant-radar">'
+                    '<main data-avds-component="lite-reading-surface">'
+                    "<h1>Kazakhstan AI grant</h1><h2>Ключевые условия</h2>"
+                    "</main></html>"
+                ),
+                headers={"content-type": "text/html; charset=utf-8"},
+            )
+        if endpoint_path == f"/opportunity/{sample_id}/prepare":
+            return httpx.Response(
+                200,
+                text=(
+                    '<html lang="ru" data-avds="grant-radar">'
+                    '<main data-avds-component="application-workspace">'
+                    "<p>Данные остаются в этом браузере</p>"
+                    "<script>localStorage.setItem('draft','value')</script>"
+                    "</main></html>"
+                ),
+                headers={"content-type": "text/html; charset=utf-8"},
+            )
+        if endpoint_path == "/funder/development-fund":
+            return httpx.Response(
+                200,
+                text=(
+                    '<html lang="ru" data-avds="grant-radar">'
+                    "<main><h1>Development Fund</h1><span>QAZ.FUND</span></main>"
+                    "</html>"
+                ),
+                headers={"content-type": "text/html; charset=utf-8"},
+            )
+        if endpoint_path in {"/terms", "/data-policy", "/attribution"}:
+            labels = {
+                "/terms": "Условия использования",
+                "/data-policy": "Политика данных",
+                "/attribution": "Цитирование и повторное использование",
+            }
+            return httpx.Response(
+                200,
+                text=f"<html lang='ru'><h1>{labels[endpoint_path]}</h1></html>",
+                headers={"content-type": "text/html; charset=utf-8"},
+            )
+        if endpoint_path == "/opportunity/not-a-valid-id":
+            return httpx.Response(
+                404,
+                text=(
+                    "<html lang='ru'><h1>Такой страницы нет</h1>"
+                    "<a href='/'>Вернуться в каталог</a></html>"
+                ),
+                headers={"content-type": "text/html; charset=utf-8"},
+            )
+        if endpoint_path == "/api/v1":
+            return httpx.Response(
+                200,
+                json={
+                    "routes": {
+                        "daily_digest_json": (
+                            f"{public_root}/media/v1/digest/daily.json"
+                        ),
+                        "daily_digest_text": (
+                            f"{public_root}/media/v1/digest/daily.txt"
+                        ),
+                    }
+                },
+            )
+        if endpoint_path == "/api/v1/insights":
+            return httpx.Response(
+                200,
+                json={"schema_version": "qazfund-insights.v1"},
+            )
+        if endpoint_path == "/api/v1/changes":
+            return httpx.Response(
+                200,
+                json={"schema_version": "qazfund-changes.v1"},
+            )
+        if endpoint_path == "/media/v1/digest/daily.json":
+            return httpx.Response(
+                200,
+                json={
+                    "schema_version": "qazfund-daily-digest.v1",
+                    "state": "collecting",
+                    "delivery": {"automatic": False},
+                },
+            )
         if endpoint_path == "/site-discovery.json" or path == "/site-discovery.json":
             return httpx.Response(
                 200,
@@ -196,6 +313,10 @@ def _transport(
                             f"{public_root}/.well-known/qazstack-consumer.json"
                         ),
                         "avds4": (f"{public_root}/.well-known/avds-ui-contract.json"),
+                        "qazpipe": (f"{public_root}/.well-known/qazpipe-source.json"),
+                        "qazcompute": (
+                            f"{public_root}/.well-known/qazcompute-profiles.json"
+                        ),
                     },
                     "languages": ["ru", "en"],
                     "routes": {
@@ -271,7 +392,7 @@ def _transport(
                 200,
                 json={
                     "schema_version": "avds-ui-contract-v1",
-                    "avds_source": {"version": "4.2.0"},
+                    "avds_source": {"version": "4.6.0"},
                     "runtime_neutral_patterns": {
                         "adopted": [
                             "evidence-summary",
@@ -284,6 +405,44 @@ def _transport(
                 },
                 headers={"cache-control": "public, max-age=60"},
             )
+        if endpoint_path == "/.well-known/qazpipe-source.json":
+            return httpx.Response(
+                200,
+                json={
+                    "schema_version": "qazpipe-pull-source-v1",
+                    "mode": "pull",
+                    "direction": "outbound-read-only",
+                    "endpoints": {
+                        "bulk_ndjson": (f"{public_root}/api/v1/opportunities.ndjson")
+                    },
+                    "required_provenance": [
+                        "source.url",
+                        "provenance.content_hash",
+                        "provenance.verification_method",
+                    ],
+                    "qazlake_handoff": {"direct_write": False},
+                },
+                headers={"cache-control": "public, max-age=60"},
+            )
+        if endpoint_path == "/.well-known/qazcompute-profiles.json":
+            return httpx.Response(
+                200,
+                json={
+                    "schema_version": "qazcompute-profile-contract-v1",
+                    "execution": {
+                        "runtime_status": "proven",
+                        "remote_execution_active": False,
+                        "decision_ready": False,
+                    },
+                    "profiles": [
+                        {"schema_version": "evidence_readiness.v1"},
+                        {"schema_version": "deadline_anomaly.v1"},
+                        {"schema_version": "source_freshness.v1"},
+                        {"schema_version": "duplicate_cluster.v1"},
+                    ],
+                },
+                headers={"cache-control": "public, max-age=60"},
+            )
         if endpoint_path == "/.well-known/qdev-ecosystem.json":
             return httpx.Response(
                 200,
@@ -291,7 +450,9 @@ def _transport(
                     "schema_version": "qdev-ecosystem-integration-v1",
                     "integrations": {
                         "qazstack": {"status": "runtime-proven"},
+                        "qazpipe": {"status": "producer-ready"},
                         "qazlake": {"direct_write": False},
+                        "qazcompute": {"status": "local-runtime-proven"},
                     },
                 },
                 headers={"cache-control": "public, max-age=60"},

@@ -18,6 +18,11 @@ from uuid import NAMESPACE_URL, UUID, uuid5
 
 from fastapi import Depends, FastAPI, Header, HTTPException, Query, Request, status
 from fastapi.encoders import jsonable_encoder
+from fastapi.exception_handlers import (
+    http_exception_handler,
+    request_validation_exception_handler,
+)
+from fastapi.exceptions import RequestValidationError
 from fastapi.openapi.docs import get_swagger_ui_html
 from fastapi.responses import HTMLResponse, JSONResponse, RedirectResponse, Response
 from pydantic import TypeAdapter
@@ -29,7 +34,9 @@ from starlette.exceptions import HTTPException as StarletteHTTPException
 from starlette.middleware.gzip import GZipMiddleware
 from starlette.middleware.trustedhost import TrustedHostMiddleware
 
+from api.application_prep_page import render_application_prep_page
 from api.avds import AVDS_CSS
+from api.daily_digest import daily_digest_payload, daily_digest_text
 from api.dashboard import (
     GOOGLE_SITE_VERIFICATION_CONTENT,
     GOOGLE_SITE_VERIFICATION_FILENAME,
@@ -39,10 +46,14 @@ from api.dashboard_copy import dashboard_copy as localized_dashboard_copy
 from api.ecosystem import (
     avds_ui_contract,
     ecosystem_manifest,
+    qazcompute_profile_contract,
+    qazpipe_source_contract,
     qazstack_consumer_contract,
 )
-from api.error_page import render_not_found_page
+from api.error_page import render_error_page
 from api.funder_page import render_funder_page
+from api.insights import build_insights_payload
+from api.insights_page import render_insights_page
 from api.media import (
     CARD_FORMATS,
     CHART_TYPES,
@@ -138,6 +149,7 @@ _MACHINE_ROUTE_PREFIXES = (
     "/digest",
     "/funders",
     "/health",
+    "/insights",
     "/openapi.json",
     "/opportunities",
     "/operator/health",
@@ -153,10 +165,15 @@ _PUBLIC_LONG_CACHE = "public, max-age=3600, stale-while-revalidate=86400"
 _PUBLIC_FAST_CACHE_PATHS = {
     "/",
     "/.well-known/avds-ui-contract.json",
+    "/.well-known/qazcompute-profiles.json",
+    "/.well-known/qazpipe-source.json",
     "/.well-known/qazstack-consumer.json",
     "/.well-known/qdev-ecosystem.json",
     "/coverage",
     "/funders",
+    "/insights",
+    "/api/v1/changes",
+    "/api/v1/insights",
     "/opportunities",
 }
 _PUBLIC_DISCOVERY_CACHE_PATHS = {
@@ -188,16 +205,40 @@ async def public_http_exception_page(
         or not accepts_html
         or is_machine_route
     ):
-        return JSONResponse(
-            {"detail": exc.detail},
-            status_code=exc.status_code,
-            headers=exc.headers,
-        )
+        return await http_exception_handler(request, exc)
     active_lang = _public_lang(str(request.query_params.get("lang") or ""))
     response = HTMLResponse(
-        render_not_found_page(lang=active_lang, root_path=_root_path(request)),
+        render_error_page(
+            status_code=exc.status_code,
+            lang=active_lang,
+            root_path=_root_path(request),
+        ),
         status_code=exc.status_code,
         headers=exc.headers,
+    )
+    response.headers["X-Robots-Tag"] = "noindex, follow"
+    return response
+
+
+@app.exception_handler(RequestValidationError)
+async def public_validation_error_page(
+    request: Request,
+    exc: RequestValidationError,
+) -> Response:
+    """Turn malformed human permalinks into a navigable recovery page."""
+
+    accepts_html = "text/html" in request.headers.get("accept", "").lower()
+    human_permalink = request.url.path.startswith(("/opportunity/", "/funder/"))
+    if not accepts_html or not human_permalink:
+        return await request_validation_exception_handler(request, exc)
+    active_lang = _public_lang(str(request.query_params.get("lang") or ""))
+    response = HTMLResponse(
+        render_error_page(
+            status_code=status.HTTP_404_NOT_FOUND,
+            lang=active_lang,
+            root_path=_root_path(request),
+        ),
+        status_code=status.HTTP_404_NOT_FOUND,
     )
     response.headers["X-Robots-Tag"] = "noindex, follow"
     return response
@@ -422,12 +463,22 @@ def _stored_opportunity(row: Any, *, content_lang: str = "en") -> Opportunity:
     raw = getattr(row, "raw", None)
     if not isinstance(raw, dict):
         raw = {}
+    else:
+        raw = dict(raw)
 
     dedup_key = str(getattr(row, "dedup_key", None) or getattr(row, "id", ""))
     source_url: Any = str(getattr(row, "source_url", None) or raw.get("url") or "")
-    discovered_at = getattr(row, "discovered_at", None)
+    first_seen_at = getattr(row, "first_seen_at", None)
+    last_seen_at = getattr(row, "last_seen_at", None)
+    discovered_at = (
+        first_seen_at
+        if isinstance(first_seen_at, datetime)
+        else getattr(row, "discovered_at", None)
+    )
     if not isinstance(discovered_at, datetime):
         discovered_at = datetime.now(UTC)
+    if isinstance(last_seen_at, datetime) and not raw.get("source_checked_at"):
+        raw["source_checked_at"] = last_seen_at.isoformat()
     existing_id = getattr(row, "id", None)
     stable_id = existing_id if isinstance(existing_id, UUID) else None
 
@@ -1381,6 +1432,21 @@ def _render_sitemap_xml(base_url: str) -> str:
         ),
     ]
 
+    insights_ru = _public_url_from_base(base_url, "/insights?lang=ru")
+    insights_en = _public_url_from_base(base_url, "/insights?lang=en")
+    rows.append(
+        _sitemap_entry(
+            insights_ru,
+            changefreq="daily",
+            priority="0.8",
+            alternates={
+                "ru": insights_ru,
+                "en": insights_en,
+                "x-default": insights_ru,
+            },
+        )
+    )
+
     for page in ("status", "terms", "data-policy", "attribution"):
         ru_url = _public_url_from_base(base_url, f"/{page}?lang=ru")
         en_url = _public_url_from_base(base_url, f"/{page}?lang=en")
@@ -1494,10 +1560,48 @@ async def root(request: Request) -> HTMLResponse:
     )
 
 
+@app.api_route(
+    "/insights",
+    methods=["GET", "HEAD"],
+    response_class=HTMLResponse,
+    include_in_schema=False,
+)
+async def insights_page(
+    request: Request,
+    lang: str | None = Query(None),
+) -> HTMLResponse:
+    active_lang = _public_lang(lang)
+    rows, _, root_path = _query_opportunities_v1(
+        request,
+        include_irrelevant=False,
+        limit=5000,
+        lang=active_lang,
+    )
+    history = _change_history_payload(
+        request,
+        hours=24,
+        limit=20,
+        lang=active_lang,
+    )
+    payload = build_insights_payload(rows, lang=active_lang, history=history)
+    if request.method == "HEAD":
+        return HTMLResponse("")
+    return HTMLResponse(
+        render_insights_page(
+            payload=payload,
+            lang=active_lang,
+            root_path=root_path,
+            site_origin=_site_origin(request, root_path),
+        )
+    )
+
+
 @app.api_route("/docs", methods=["GET", "HEAD"], include_in_schema=False)
 async def swagger_docs(request: Request) -> HTMLResponse:
     root_path = _root_path(request).rstrip("/")
     docs_lang = _public_lang(str(request.query_params.get("lang") or "").strip())
+    if request.method == "HEAD":
+        return HTMLResponse("")
     home_href = f"{root_path}/?lang={docs_lang}" if root_path else f"/?lang={docs_lang}"
     openapi_href = f"{root_path}/openapi.json" if root_path else "/openapi.json"
     docs_copy = {
@@ -1688,6 +1792,8 @@ async def opportunity_page(
     item = _find_opportunity(opportunity_id, content_lang=content_lang)
     if item is None:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND)
+    if request.method == "HEAD":
+        return HTMLResponse("")
     root_path = _root_path(request)
     site_origin = _site_origin(request, root_path)
     related_items = _related_opportunities(item, lang=content_lang)
@@ -1703,6 +1809,41 @@ async def opportunity_page(
             root_path=root_path,
             site_origin=site_origin,
             related_items=related_items,
+            lifecycle=public_lifecycle(item),
+        )
+    )
+
+
+@app.api_route(
+    "/opportunity/{opportunity_id}/prepare",
+    methods=["GET", "HEAD"],
+    response_class=HTMLResponse,
+    include_in_schema=False,
+)
+async def opportunity_prepare_page(
+    request: Request,
+    opportunity_id: UUID,
+    lang: str | None = Query(None),
+) -> HTMLResponse:
+    content_lang = _public_lang(lang)
+    item = _find_opportunity(opportunity_id, content_lang=content_lang)
+    if item is None:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND)
+    root_path = _root_path(request)
+    detail = await build_opportunity_detail(
+        localize_opportunity(item, content_lang),
+        lang=content_lang,
+        allow_remote_fetch=False,
+    )
+    if request.method == "HEAD":
+        return HTMLResponse("")
+    return HTMLResponse(
+        render_application_prep_page(
+            detail=detail,
+            lang=content_lang,
+            root_path=root_path,
+            site_origin=_site_origin(request, root_path),
+            lifecycle=public_lifecycle(item),
         )
     )
 
@@ -1744,6 +1885,12 @@ async def llms_txt(request: Request) -> Response:
     avds_contract = _public_url(
         request, root_path, "/.well-known/avds-ui-contract.json"
     )
+    qazpipe_contract = _public_url(
+        request, root_path, "/.well-known/qazpipe-source.json"
+    )
+    qazcompute_contract = _public_url(
+        request, root_path, "/.well-known/qazcompute-profiles.json"
+    )
     status_page = _public_url(request, root_path, "/status")
     coverage = _public_url(request, root_path, "/coverage")
     opportunities = _public_url(request, root_path, "/opportunities")
@@ -1754,8 +1901,15 @@ async def llms_txt(request: Request) -> Response:
     api_v1 = _public_url(request, root_path, "/api/v1")
     api_v1_opportunities = _public_url(request, root_path, "/api/v1/opportunities")
     api_v1_ndjson = _public_url(request, root_path, "/api/v1/opportunities.ndjson")
+    insights = _public_url(request, root_path, "/insights")
+    api_v1_insights = _public_url(request, root_path, "/api/v1/insights")
+    api_v1_changes = _public_url(request, root_path, "/api/v1/changes")
     media_feed_json = _public_url(request, root_path, "/media/v1/feed.json")
     media_feed_rss = _public_url(request, root_path, "/media/v1/feed.rss")
+    daily_digest_json = _public_url(request, root_path, "/media/v1/digest/daily.json")
+    daily_digest_text_url = _public_url(
+        request, root_path, "/media/v1/digest/daily.txt"
+    )
     terms = _public_url(request, root_path, "/terms")
     data_policy = _public_url(request, root_path, "/data-policy")
     attribution = _public_url(request, root_path, "/attribution")
@@ -1780,7 +1934,10 @@ async def llms_txt(request: Request) -> Response:
                 f"- Release metadata JSON: {release}",
                 f"- QazStack consumer contract: {qazstack_contract}",
                 f"- AV DS 4 UI contract: {avds_contract}",
+                f"- QazPipe source contract: {qazpipe_contract}",
+                f"- QazCompute profile contract: {qazcompute_contract}",
                 f"- Source status page: {status_page}",
+                f"- Public analytics: {insights}",
                 "",
                 "## Public data endpoints",
                 f"- Coverage JSON: {coverage}",
@@ -1790,8 +1947,12 @@ async def llms_txt(request: Request) -> Response:
                 f"- Versioned API index: {api_v1}",
                 f"- Versioned opportunities JSON: {api_v1_opportunities}",
                 f"- Versioned opportunities NDJSON: {api_v1_ndjson}",
+                f"- Derived insights JSON: {api_v1_insights}",
+                f"- Semantic change ledger: {api_v1_changes}",
                 f"- Media JSON feed: {media_feed_json}",
                 f"- Media RSS feed: {media_feed_rss}",
+                f"- Daily change digest JSON: {daily_digest_json}",
+                f"- Daily change digest text: {daily_digest_text_url}",
                 "- Opportunity detail JSON: /opportunities/{id}?lang=ru|en",
                 f"- Digest JSON: {digest}",
                 f"- Terms: {terms}",
@@ -1814,8 +1975,11 @@ async def llms_txt(request: Request) -> Response:
                 "",
                 "## Public route templates",
                 "- Opportunity page: /opportunity/{id}?lang=ru|en",
+                "- Local application workspace: /opportunity/{id}/prepare?lang=ru|en",
                 "- Funder page: /funder/{slug}?lang=ru|en",
                 "- Versioned opportunity: /api/v1/opportunities/{id}?lang=ru|en",
+                "- Public analytics: /insights?lang=ru|en",
+                "- Change ledger: /api/v1/changes?hours=24&lang=ru|en",
                 "- Citation text: /media/v1/opportunities/{id}/citation.txt?lang=ru|en",
                 "- Social card SVG: /media/v1/opportunities/{id}/card.svg?format=og",
                 "",
@@ -1837,8 +2001,8 @@ async def llms_txt(request: Request) -> Response:
                 "",
                 "## Operator notes for AI systems",
                 (
-                    "- Treat QAZ.FUND as a public opportunity discovery surface, "
-                    "not as an application processor."
+                    "- Treat QAZ.FUND as a public discovery and preparation surface, "
+                    "not as an application submission system."
                 ),
                 "- Prefer the public opportunity and funder pages over guessed program details.",
                 (
@@ -1875,8 +2039,15 @@ async def site_discovery(request: Request) -> Response:
     api_v1_schema = _public_url(request, root_path, "/api/v1/schema")
     api_v1_opportunities = _public_url(request, root_path, "/api/v1/opportunities")
     api_v1_ndjson = _public_url(request, root_path, "/api/v1/opportunities.ndjson")
+    insights_page = _public_url(request, root_path, "/insights")
+    api_v1_insights = _public_url(request, root_path, "/api/v1/insights")
+    api_v1_changes = _public_url(request, root_path, "/api/v1/changes")
     media_feed_json = _public_url(request, root_path, "/media/v1/feed.json")
     media_feed_rss = _public_url(request, root_path, "/media/v1/feed.rss")
+    daily_digest_json = _public_url(request, root_path, "/media/v1/digest/daily.json")
+    daily_digest_text_url = _public_url(
+        request, root_path, "/media/v1/digest/daily.txt"
+    )
     terms = _public_url(request, root_path, "/terms")
     data_policy = _public_url(request, root_path, "/data-policy")
     attribution = _public_url(request, root_path, "/attribution")
@@ -1889,6 +2060,12 @@ async def site_discovery(request: Request) -> Response:
     avds_contract = _public_url(
         request, root_path, "/.well-known/avds-ui-contract.json"
     )
+    qazpipe_contract = _public_url(
+        request, root_path, "/.well-known/qazpipe-source.json"
+    )
+    qazcompute_contract = _public_url(
+        request, root_path, "/.well-known/qazcompute-profiles.json"
+    )
     payload = {
         "site": "QAZ.FUND",
         "type": "public-funding-navigator",
@@ -1899,6 +2076,7 @@ async def site_discovery(request: Request) -> Response:
         "openapi": openapi_url,
         "versioned_api": api_v1,
         "api_v1_schema": api_v1_schema,
+        "insights": insights_page,
         "source_status": status_page,
         "terms": terms,
         "data_policy": data_policy,
@@ -1908,6 +2086,8 @@ async def site_discovery(request: Request) -> Response:
         "contracts": {
             "qazstack": qazstack_contract,
             "avds4": avds_contract,
+            "qazpipe": qazpipe_contract,
+            "qazcompute": qazcompute_contract,
         },
         "languages": ["ru", "en"],
         "routes": {
@@ -1921,11 +2101,15 @@ async def site_discovery(request: Request) -> Response:
             ),
             "opportunity_api": "/opportunities/{id}?lang={lang}",
             "opportunity": "/opportunity/{id}?lang={lang}",
+            "opportunity_prepare": "/opportunity/{id}/prepare?lang={lang}",
             "api_v1": "/api/v1",
             "api_v1_schema": "/api/v1/schema",
             "api_v1_opportunities": "/api/v1/opportunities?lang={lang}",
             "api_v1_opportunities_ndjson": "/api/v1/opportunities.ndjson?lang={lang}",
             "api_v1_opportunity": "/api/v1/opportunities/{id}?lang={lang}",
+            "insights": "/insights?lang={lang}",
+            "api_v1_insights": "/api/v1/insights?lang={lang}",
+            "api_v1_changes": "/api/v1/changes?lang={lang}&hours={hours}",
             "media_content": "/media/v1/opportunities/{id}/content.json?lang={lang}",
             "media_citation": "/media/v1/opportunities/{id}/citation.txt?lang={lang}",
             "media_card": "/media/v1/opportunities/{id}/card.svg?lang={lang}",
@@ -1933,6 +2117,8 @@ async def site_discovery(request: Request) -> Response:
             "media_chart_csv": "/media/v1/charts/{chart_type}.csv?lang={lang}",
             "media_feed_json": "/media/v1/feed.json?lang={lang}",
             "media_feed_rss": "/media/v1/feed.rss?lang={lang}",
+            "media_daily_digest_json": "/media/v1/digest/daily.json?lang={lang}",
+            "media_daily_digest_text": "/media/v1/digest/daily.txt?lang={lang}",
             "terms": "/terms?lang={lang}",
             "data_policy": "/data-policy?lang={lang}",
             "attribution": "/attribution?lang={lang}",
@@ -1948,11 +2134,15 @@ async def site_discovery(request: Request) -> Response:
             "api_v1_schema": api_v1_schema,
             "api_v1_opportunities": api_v1_opportunities,
             "api_v1_opportunities_ndjson": api_v1_ndjson,
+            "api_v1_insights": api_v1_insights,
+            "api_v1_changes": api_v1_changes,
             "digest": digest,
         },
         "media_endpoints": {
             "feed_json": media_feed_json,
             "feed_rss": media_feed_rss,
+            "daily_digest_json": daily_digest_json,
+            "daily_digest_text": daily_digest_text_url,
             "content_template": "/media/v1/opportunities/{id}/content.json?lang=ru|en",
             "citation_template": (
                 "/media/v1/opportunities/{id}/citation.txt?lang=ru|en"
@@ -1965,8 +2155,11 @@ async def site_discovery(request: Request) -> Response:
             "preferred_bulk_export": api_v1_ndjson,
             "preferred_legacy_bulk_export": opportunities_ndjson_compact,
             "preferred_detail_template": "/api/v1/opportunities/{id}?lang=ru|en",
+            "preferred_insights": api_v1_insights,
+            "preferred_changes": api_v1_changes,
             "preferred_legacy_detail_template": "/opportunities/{id}?lang=ru|en",
             "preferred_human_template": "/opportunity/{id}?lang=ru|en",
+            "preferred_preparation_template": ("/opportunity/{id}/prepare?lang=ru|en"),
             "recommended_language_order": ["ru", "en"],
             "cache_policy": {
                 "discovery_seconds": 300,
@@ -2013,6 +2206,8 @@ async def site_discovery(request: Request) -> Response:
                 "/api/v1/opportunities.ndjson?lang=ru&limit=500&min_score=0.3"
             ),
             "opportunity_v1_detail": "/api/v1/opportunities/{id}?lang=ru",
+            "insights": "/api/v1/insights?lang=ru",
+            "changes_last_day": "/api/v1/changes?lang=ru&hours=24",
             "opportunity_citation": (
                 "/media/v1/opportunities/{id}/citation.txt?lang=ru&style=citation"
             ),
@@ -2020,17 +2215,23 @@ async def site_discovery(request: Request) -> Response:
         },
         "capabilities": [
             "public opportunity pages",
+            "private-by-default application preparation",
             "public funder pages",
             "machine-readable opportunity api",
             "versioned public data contract",
+            "derived public analytics",
+            "semantic change ledger",
             "source attribution and citation helpers",
             "machine-readable media feeds",
+            "daily semantic-change digest",
             "cache-aware ndjson export",
             "machine-readable source coverage",
             "public source freshness status",
             "official source links",
             "read-only public catalog",
             "qdev ecosystem contract",
+            "qazpipe pull-source contract",
+            "qazcompute profile contract",
         ],
     }
     return JSONResponse(payload)
@@ -2054,6 +2255,28 @@ async def public_qazstack_consumer_contract(request: Request) -> Response:
 )
 async def public_avds_ui_contract() -> Response:
     return JSONResponse(avds_ui_contract())
+
+
+@app.api_route(
+    "/.well-known/qazpipe-source.json",
+    methods=["GET", "HEAD"],
+    include_in_schema=False,
+)
+async def public_qazpipe_source_contract(request: Request) -> Response:
+    root_path = _root_path(request)
+    origin = _public_root_base(request, root_path)
+    return JSONResponse(qazpipe_source_contract(origin))
+
+
+@app.api_route(
+    "/.well-known/qazcompute-profiles.json",
+    methods=["GET", "HEAD"],
+    include_in_schema=False,
+)
+async def public_qazcompute_profile_contract(request: Request) -> Response:
+    root_path = _root_path(request)
+    origin = _public_root_base(request, root_path)
+    return JSONResponse(qazcompute_profile_contract(origin))
 
 
 @app.api_route(
@@ -2175,6 +2398,11 @@ async def coverage_head() -> Response:
 @app.api_route("/status", methods=["GET", "HEAD"], include_in_schema=False)
 async def public_status_page(request: Request) -> HTMLResponse:
     """Render a public, cacheable source-freshness view."""
+    if request.method == "HEAD":
+        return HTMLResponse(
+            "",
+            headers={"Cache-Control": "public, max-age=60, stale-while-revalidate=300"},
+        )
     root_path = _root_path(request)
     active_lang = _public_lang(str(request.query_params.get("lang") or "").strip())
     response = HTMLResponse(
@@ -2190,6 +2418,13 @@ async def public_status_page(request: Request) -> HTMLResponse:
 
 
 def _render_public_policy_response(request: Request, page: str) -> HTMLResponse:
+    if request.method == "HEAD":
+        return HTMLResponse(
+            "",
+            headers={
+                "Cache-Control": "public, max-age=300, stale-while-revalidate=1800"
+            },
+        )
     root_path = _root_path(request)
     active_lang = _public_lang(str(request.query_params.get("lang") or "").strip())
     response = HTMLResponse(
@@ -2303,6 +2538,8 @@ async def funder_page(
                 status_code=status.HTTP_302_FOUND,
             )
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND)
+    if request.method == "HEAD":
+        return HTMLResponse("")
     root_path = _root_path(request)
     site_origin = _site_origin(request, root_path)
     items = cast(list[Opportunity], group["items"])
@@ -2547,6 +2784,103 @@ def _media_opportunity_rows(
     return rows
 
 
+def _observation_title(snapshot: dict[str, Any], lang: str) -> str:
+    i18n = snapshot.get("i18n")
+    localized = i18n.get(lang) if isinstance(i18n, dict) else None
+    title = localized.get("title") if isinstance(localized, dict) else None
+    return _display_text(title or snapshot.get("title"))
+
+
+def _change_history_payload(
+    request: Request,
+    *,
+    hours: int,
+    limit: int,
+    lang: str,
+) -> dict[str, Any]:
+    now = datetime.now(UTC)
+    since_aware = now - timedelta(hours=hours)
+    since = since_aware.replace(tzinfo=None)
+    repository = _configured_repository()
+    observations_since = getattr(repository, "observations_since", None)
+    if not callable(observations_since):
+        return {
+            "schema_version": "qazfund-changes.v1",
+            "available": False,
+            "state": "collecting",
+            "period_hours": hours,
+            "period_from": since_aware.isoformat(),
+            "period_to": now.isoformat(),
+            "created": 0,
+            "changed": 0,
+            "items": [],
+        }
+
+    observations = list(observations_since(since, limit=limit))
+    ledger_rows = list(
+        observations_since(
+            datetime(1970, 1, 1),
+            limit=1,
+            include_baselines=True,
+        )
+    )
+    root_path = _root_path(request)
+    items: list[dict[str, Any]] = []
+    for observation in observations:
+        snapshot_value = getattr(observation, "snapshot", None)
+        snapshot = snapshot_value if isinstance(snapshot_value, dict) else {}
+        dedup_key = str(getattr(observation, "dedup_key", "") or "")
+        source_url = str(snapshot.get("source_url") or "")
+        stable_id = uuid5(NAMESPACE_URL, dedup_key or source_url)
+        observed_at = getattr(observation, "observed_at", None)
+        if isinstance(observed_at, datetime):
+            if observed_at.tzinfo is None:
+                observed_at = observed_at.replace(tzinfo=UTC)
+            observed_at_text = observed_at.isoformat()
+        else:
+            observed_at_text = None
+        items.append(
+            {
+                "id": str(stable_id),
+                "change_type": str(
+                    getattr(observation, "change_type", "changed") or "changed"
+                ),
+                "observed_at": observed_at_text,
+                "source": {
+                    "id": str(getattr(observation, "source", "") or ""),
+                    "name": _source_name(str(getattr(observation, "source", "") or "")),
+                    "url": source_url,
+                },
+                "title": _observation_title(snapshot, lang),
+                "changed_fields": list(
+                    getattr(observation, "changed_fields", None) or []
+                ),
+                "content_hash": str(getattr(observation, "content_hash", "") or ""),
+                "public_page": _public_url(
+                    request,
+                    root_path,
+                    f"/opportunity/{stable_id}?lang={lang}",
+                ),
+                "api": _public_url(
+                    request,
+                    root_path,
+                    f"/api/v1/opportunities/{stable_id}?lang={lang}",
+                ),
+            }
+        )
+    return {
+        "schema_version": "qazfund-changes.v1",
+        "available": bool(ledger_rows),
+        "state": "ready" if ledger_rows else "collecting",
+        "period_hours": hours,
+        "period_from": since_aware.isoformat(),
+        "period_to": now.isoformat(),
+        "created": sum(row["change_type"] == "created" for row in items),
+        "changed": sum(row["change_type"] == "changed" for row in items),
+        "items": items,
+    }
+
+
 @app.get("/api/v1", include_in_schema=False)
 async def api_v1_index(request: Request) -> JSONResponse:
     root_path = _root_path(request)
@@ -2558,11 +2892,54 @@ async def api_v1_index(request: Request) -> JSONResponse:
             "opportunities": f"{base}/api/v1/opportunities",
             "opportunities_ndjson": f"{base}/api/v1/opportunities.ndjson",
             "opportunity": f"{base}/api/v1/opportunities/{{id}}",
+            "insights": f"{base}/api/v1/insights",
+            "changes": f"{base}/api/v1/changes",
             "schema": f"{base}/api/v1/schema",
             "media_feed_json": f"{base}/media/v1/feed.json",
             "media_feed_rss": f"{base}/media/v1/feed.rss",
+            "daily_digest_json": f"{base}/media/v1/digest/daily.json",
+            "daily_digest_text": f"{base}/media/v1/digest/daily.txt",
         },
     }
+    return _versioned_json_response(payload)
+
+
+@app.get("/api/v1/changes")
+async def api_v1_changes(
+    request: Request,
+    hours: int = Query(24, ge=1, le=24 * 90),
+    limit: int = Query(100, ge=1, le=1000),
+    lang: str | None = Query(None),
+) -> JSONResponse:
+    active_lang = _public_lang(lang)
+    payload = _change_history_payload(
+        request,
+        hours=hours,
+        limit=limit,
+        lang=active_lang,
+    )
+    return _versioned_json_response(payload)
+
+
+@app.get("/api/v1/insights")
+async def api_v1_insights(
+    request: Request,
+    lang: str | None = Query(None),
+) -> JSONResponse:
+    active_lang = _public_lang(lang)
+    rows, _, _ = _query_opportunities_v1(
+        request,
+        include_irrelevant=False,
+        limit=5000,
+        lang=active_lang,
+    )
+    history = _change_history_payload(
+        request,
+        hours=24,
+        limit=20,
+        lang=active_lang,
+    )
+    payload = build_insights_payload(rows, lang=active_lang, history=history)
     return _versioned_json_response(payload)
 
 
@@ -2844,6 +3221,44 @@ async def media_feed_rss(
             lang=active_lang,
         ),
         media_type="application/rss+xml; charset=utf-8",
+    )
+
+
+@app.get("/media/v1/digest/daily.json")
+async def media_daily_digest_json(
+    request: Request,
+    lang: str | None = Query(None),
+    limit: int = Query(12, ge=1, le=30),
+) -> JSONResponse:
+    active_lang = _public_lang(lang)
+    history = _change_history_payload(
+        request,
+        hours=24,
+        limit=limit,
+        lang=active_lang,
+    )
+    payload = daily_digest_payload(history, lang=active_lang, limit=limit)
+    payload["text"] = daily_digest_text(payload)
+    return _versioned_json_response(payload)
+
+
+@app.get("/media/v1/digest/daily.txt")
+async def media_daily_digest_text(
+    request: Request,
+    lang: str | None = Query(None),
+    limit: int = Query(12, ge=1, le=30),
+) -> Response:
+    active_lang = _public_lang(lang)
+    history = _change_history_payload(
+        request,
+        hours=24,
+        limit=limit,
+        lang=active_lang,
+    )
+    payload = daily_digest_payload(history, lang=active_lang, limit=limit)
+    return Response(
+        daily_digest_text(payload) + "\n",
+        media_type="text/plain; charset=utf-8",
     )
 
 

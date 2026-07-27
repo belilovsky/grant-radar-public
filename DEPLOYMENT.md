@@ -100,15 +100,20 @@ curl -fsS 'https://example.org/opportunities?limit=3'
 
 ## Backups
 
-Create encrypted database dumps outside the repository and verify a restore
-regularly. The helper retains the newest fourteen archives by default:
+Create database dumps outside the repository and verify a restore regularly.
+Pass an existing GPG recipient to encrypt the archive; the helper also writes a
+SHA-256 checksum and retains archives for fourteen days by default:
 
 ```bash
-BACKUP_DIR=/var/backups/grant-radar ./scripts/backup_postgres.sh
+BACKUP_DIR=/var/backups/grant-radar \
+BACKUP_GPG_RECIPIENT=operations@example.org \
+./scripts/backup_postgres.sh
 ```
 
-Schedule this command from the private maintainer runbook only after a restore
-drill. Do not commit dump files or host-specific backup paths.
+Without `BACKUP_GPG_RECIPIENT`, the helper creates a mode-0600 archive and emits
+a warning; use that fallback only on a protected host filesystem. Schedule this
+command from the private maintainer runbook only after a restore drill. Do not
+commit dump files or host-specific backup paths.
 
 ## Automation
 

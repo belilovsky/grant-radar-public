@@ -99,6 +99,24 @@ def render_status_page(
     docs_href = (
         f"{base}/docs?lang={active_lang}" if base else f"/docs?lang={active_lang}"
     )
+    insights_href = (
+        f"{base}/insights?lang={active_lang}"
+        if base
+        else f"/insights?lang={active_lang}"
+    )
+    terms_href = (
+        f"{base}/terms?lang={active_lang}" if base else f"/terms?lang={active_lang}"
+    )
+    data_policy_href = (
+        f"{base}/data-policy?lang={active_lang}"
+        if base
+        else f"/data-policy?lang={active_lang}"
+    )
+    attribution_href = (
+        f"{base}/attribution?lang={active_lang}"
+        if base
+        else f"/attribution?lang={active_lang}"
+    )
     product_copy = dashboard_copy(active_lang)
     ru_href = f"{base}/status?lang=ru" if base else "/status?lang=ru"
     en_href = f"{base}/status?lang=en" if base else "/status?lang=en"
@@ -324,7 +342,16 @@ def render_status_page(
           >{escape(str(product_copy["tab_opportunities"]))}</a>
         <a href="{escape(sources_href, quote=True)}"
           >{escape(str(product_copy["tab_sources"]))}</a>
-        <a href="{escape(docs_href, quote=True)}">{escape(str(product_copy["api_docs"]))}</a>
+        <a href="{escape(insights_href, quote=True)}"
+          >{escape(str(product_copy["insights_link"]))}</a>
+        <a href="{escape(docs_href, quote=True)}"
+          >{escape(str(product_copy["api_docs"]))}</a>
+        <a href="{escape(terms_href, quote=True)}"
+          >{escape(str(product_copy["footer_terms"]))}</a>
+        <a href="{escape(data_policy_href, quote=True)}"
+          >{escape(str(product_copy["footer_data_policy"]))}</a>
+        <a href="{escape(attribution_href, quote=True)}"
+          >{escape(str(product_copy["footer_attribution"]))}</a>
       </nav>
     </footer>
   </main>

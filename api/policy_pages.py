@@ -192,6 +192,21 @@ def render_policy_page(
         if active_lang == "ru"
         else "Version dated 26 July 2026"
     )
+    policy_links = []
+    for policy_slug in ("terms", "data-policy", "attribution"):
+        policy_copy = POLICY_COPY[policy_slug]
+        policy_title = str(policy_copy[f"{active_lang}_title"])
+        policy_href = (
+            f"{base}/{policy_slug}?lang={active_lang}"
+            if base
+            else f"/{policy_slug}?lang={active_lang}"
+        )
+        current = ' aria-current="page"' if policy_slug == page else ""
+        policy_links.append(
+            f'<a href="{escape(policy_href, quote=True)}"{current}>'
+            f"{escape(policy_title)}</a>"
+        )
+    policy_navigation = "".join(policy_links)
     return f"""<!doctype html>
 <html lang="{active_lang}" data-avds="grant-radar" data-av-theme="light" data-theme="light">
 <head>
@@ -245,8 +260,8 @@ def render_policy_page(
       backdrop-filter:blur(16px);
     }}
     header a {{ color:var(--ink); text-decoration:none; font-weight:750; }}
-    nav {{ display:flex; gap:4px; }}
-    nav a {{
+    header nav {{ display:flex; gap:4px; }}
+    header nav a {{
       display:inline-flex;
       min-width:34px;
       min-height:34px;
@@ -256,7 +271,7 @@ def render_policy_page(
       color:var(--muted);
       font-size:12px;
     }}
-    nav a[aria-current="page"] {{ border-bottom-color:var(--brand); color:var(--ink); }}
+    header nav a[aria-current="page"] {{ border-bottom-color:var(--brand); color:var(--ink); }}
     article {{
       padding:clamp(28px, 5vw, 56px);
       border:1px solid var(--line);
@@ -281,12 +296,28 @@ def render_policy_page(
       color:var(--muted);
       font-size:14px;
     }}
+    .policy-nav {{
+      margin-top:22px;
+      display:flex;
+      flex-wrap:wrap;
+      gap:8px 16px;
+    }}
+    .policy-nav a {{
+      color:var(--muted);
+      font-size:13px;
+      font-weight:700;
+      text-decoration:none;
+    }}
+    .policy-nav a[aria-current="page"] {{ color:var(--ink); text-decoration:underline; }}
     a:focus-visible {{ outline:2px solid var(--brand); outline-offset:3px;
       border-radius:var(--av-radius-sm); }}
     @media (max-width:640px) {{
       header,article {{ width:calc(100% - 24px); }}
       header {{ top:8px; margin-top:14px; padding:8px 10px; }}
-      nav a {{ min-width:var(--av-control-height-lg); min-height:var(--av-control-height-lg); }}
+      header nav a {{
+        min-width:var(--av-control-height-lg);
+        min-height:var(--av-control-height-lg);
+      }}
       article {{ padding:26px 20px; border-radius:20px; }}
       .intro {{ font-size:18px; }}
     }}
@@ -304,7 +335,12 @@ def render_policy_page(
     <h1>{escape(title)}</h1>
     <p class="intro">{escape(intro)}</p>
     {section_markup}
-    <footer>{escape(footer)}</footer>
+    <footer>
+      <div>{escape(footer)}</div>
+      <nav class="policy-nav" aria-label="{escape(title, quote=True)}">
+        {policy_navigation}
+      </nav>
+    </footer>
   </article>
 </body>
 </html>"""

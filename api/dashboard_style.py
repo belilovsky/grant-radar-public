@@ -2402,16 +2402,19 @@ DASHBOARD_CSS = r"""    :root {
     }
     .detail-drawer {
       position: fixed;
-      inset: 0 0 0 auto;
+      inset: 16px 16px auto auto;
       z-index: 80;
       width: min(640px, 100vw);
-      border-left: 1px solid var(--line);
+      max-height: calc(100dvh - 32px);
+      border: 1px solid var(--line);
+      border-radius: var(--av-radius-lg);
       background: color-mix(in oklab, var(--panel), white 6%);
       box-shadow: -24px 0 64px rgb(15 23 42 / 0.18);
       transform: translateX(100%);
       transition: transform var(--av-duration-base) var(--av-easing-emphasized);
       display: grid;
-      grid-template-rows: auto 1fr auto;
+      grid-template-rows: auto minmax(0, auto) auto;
+      overflow: hidden;
     }
     .detail-drawer.open {
       transform: translateX(0);
@@ -3116,8 +3119,14 @@ DASHBOARD_CSS = r"""    :root {
         grid-template-columns: 1fr;
       }
       .detail-drawer {
+        inset: auto 0 0;
         width: 100vw;
-        border-left: 0;
+        height: auto;
+        max-height: 100dvh;
+        border: 1px solid var(--line);
+        border-bottom: 0;
+        border-radius: var(--av-radius-lg) var(--av-radius-lg) 0 0;
+        grid-template-rows: auto minmax(0, 1fr) auto;
       }
       .detail-header,
       .detail-body,

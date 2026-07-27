@@ -17,10 +17,15 @@ historic backup filenames, and maintainer-only evidence.
 - `GET` and `HEAD /health` are public.
 - `GET` and `HEAD /ready` are public and must not expose secrets.
 - `GET /coverage`, `GET /opportunities`, and `GET /digest` are public.
+- `GET` and `HEAD /insights` render public data-centre analytics.
+- `GET /api/v1/insights` and `GET /api/v1/changes` are public and read-only.
+- `GET /media/v1/digest/daily.json` and `.txt` expose a truthful change digest.
 - `GET` and `HEAD /status` render public source freshness without run errors.
 - `GET` and `HEAD /operator` render a noindex/no-store token entry shell.
 - `GET /operator/health` must require `GRANT_RADAR_ADMIN_TOKEN`.
 - `GET` and `HEAD /opportunity/{id}` render public opportunity pages.
+- `GET` and `HEAD /opportunity/{id}/prepare` render a browser-local draft
+  workspace and never accept form submissions.
 - `GET` and `HEAD /funder/{slug}` render public funder pages.
 - `GET` and `HEAD /opportunities/{id}` return public opportunity detail availability.
 - `GET` and `HEAD /robots.txt`, `/sitemap.xml`, `/llms.txt`, and `/site-discovery.json` are public.
@@ -81,13 +86,18 @@ curl -fsSI https://example.org/favicon.ico
 curl -fsS https://example.org/llms.txt
 curl -fsS https://example.org/site-discovery.json
 curl -fsSI 'https://example.org/status?lang=ru'
+curl -fsSI 'https://example.org/insights?lang=ru'
 curl -fsSI 'https://example.org/operator?lang=ru'
 curl -fsSI https://example.org/docs
 curl -fsS 'https://example.org/opportunities?limit=3&min_score=0.5'
 curl -fsSI 'https://example.org/opportunities/<uuid>?lang=ru'
 curl -fsSI 'https://example.org/opportunity/<uuid>?lang=ru'
+curl -fsSI 'https://example.org/opportunity/<uuid>/prepare?lang=ru'
 curl -fsSI 'https://example.org/funder/<slug>?lang=ru'
 curl -fsS 'https://example.org/digest?limit=5&tag=ai'
+curl -fsS 'https://example.org/api/v1/insights?lang=ru'
+curl -fsS 'https://example.org/api/v1/changes?hours=24&lang=ru'
+curl -fsS 'https://example.org/media/v1/digest/daily.json?lang=ru'
 ```
 
 ## Operational notes
@@ -97,7 +107,10 @@ curl -fsS 'https://example.org/digest?limit=5&tag=ai'
   insufficient when edge and application origin are separate; the deploy must
   verify the exact revision through the public route.
 - Keep database backups outside the repository and verify restore regularly.
-- Create encrypted host-side dumps with `BACKUP_DIR=/var/backups/grant-radar ./scripts/backup_postgres.sh`.
+- Create an encrypted host-side dump with
+  `BACKUP_DIR=/var/backups/grant-radar BACKUP_GPG_RECIPIENT=<recipient>
+  ./scripts/backup_postgres.sh`; verify its SHA-256 sidecar and restore it on a
+  temporary database.
 - Schedule the backup script from the private maintainer runbook only after a restore drill.
 - Monitor freshness in `/coverage`, especially zero-item and stale sources.
 - Source freshness uses the newest successful per-source check or discovered
@@ -106,3 +119,8 @@ curl -fsS 'https://example.org/digest?limit=5&tag=ai'
   `fresh`; never backfill that timestamp manually.
 - Keep deploy hosts, paths, backup archives, and incident history in a private
   maintainer runbook.
+- The standard runtime contains exactly one `db`, one `api` and one `worker`
+  Compose service. Telegram delivery is a one-shot command and has no scheduler
+  in this repository.
+- Run the process and timer audit in `REPRODUCIBILITY_AND_RUNTIME.md` before and
+  after a release that changes ingestion or delivery behavior.

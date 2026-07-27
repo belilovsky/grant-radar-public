@@ -1,6 +1,7 @@
 """Regression tests for the dashboard module boundaries."""
 
 from api import dashboard
+from api.avds_visual import DASHBOARD_AVDS4_CSS
 from api.dashboard_copy import dashboard_copy as canonical_dashboard_copy
 from api.dashboard_style import DASHBOARD_CSS
 
@@ -21,6 +22,7 @@ def test_dashboard_uses_extracted_static_styles() -> None:
     )
 
     assert DASHBOARD_CSS in html
+    assert DASHBOARD_AVDS4_CSS in html
     assert "--container-max: var(--av-container-dashboard)" in DASHBOARD_CSS
     assert 'class="site-footer-nav"' in html
     assert 'href="#opportunities"' in html
@@ -29,5 +31,7 @@ def test_dashboard_uses_extracted_static_styles() -> None:
     assert 'data-avds-pattern="filter-state-summary"' in html
     assert 'data-avds-pattern="evidence-summary"' in html
     assert 'data-avds-pattern="decision-summary"' in html
+    assert 'data-avds-component="trust-strip"' in html
+    assert 'data-avds-version="4.6.0"' in html
     assert "grid-template-columns: repeat(2, minmax(0, 1fr));" in DASHBOARD_CSS
     assert ".hero-pick:last-child { grid-column: 1 / -1; }" in DASHBOARD_CSS

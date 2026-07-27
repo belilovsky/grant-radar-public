@@ -141,6 +141,73 @@ def test_upgrade_creates_runs_table(alembic_cfg):
     assert {"ix_runs_source", "ix_runs_started_at", "ix_runs_status"} <= index_names
 
 
+def test_upgrade_creates_opportunity_observation_ledger(alembic_cfg):
+    from sqlalchemy import create_engine, inspect
+
+    command.upgrade(alembic_cfg, "head")
+    engine = create_engine(alembic_cfg.get_main_option("sqlalchemy.url"))
+    insp = inspect(engine)
+    assert "opportunity_observations" in set(insp.get_table_names())
+    opportunity_cols = {c["name"] for c in insp.get_columns("opportunities")}
+    assert {"first_seen_at", "last_seen_at", "content_hash"} <= opportunity_cols
+    observation_cols = {c["name"] for c in insp.get_columns("opportunity_observations")}
+    assert {
+        "opportunity_id",
+        "observed_at",
+        "change_type",
+        "content_hash",
+        "changed_fields",
+        "snapshot",
+    } <= observation_cols
+    index_names = {ix["name"] for ix in insp.get_indexes("opportunity_observations")}
+    assert {
+        "ix_opportunity_observations_opportunity_id",
+        "ix_opportunity_observations_source",
+        "ix_opportunity_observations_observed_at",
+        "ix_opportunity_observations_change_type",
+    } <= index_names
+
+
+def test_observation_migration_seeds_recoverable_seen_timestamps(alembic_cfg):
+    from sqlalchemy import create_engine, text
+
+    command.upgrade(alembic_cfg, "0004_runs_table")
+    engine = create_engine(alembic_cfg.get_main_option("sqlalchemy.url"))
+    discovered_at = "2025-03-04 05:06:07"
+    with engine.begin() as connection:
+        connection.execute(
+            text("""
+                INSERT INTO opportunities (
+                    id, dedup_key, source, source_url, title, currency, discovered_at
+                ) VALUES (
+                    :id, :dedup_key, :source, :source_url, :title, :currency,
+                    :discovered_at
+                )
+                """),
+            {
+                "id": "legacy-1",
+                "dedup_key": "legacy-1",
+                "source": "legacy",
+                "source_url": "https://example.org/legacy",
+                "title": "Legacy record",
+                "currency": "KZT",
+                "discovered_at": discovered_at,
+            },
+        )
+
+    command.upgrade(alembic_cfg, "head")
+    with engine.connect() as connection:
+        row = connection.execute(
+            text(
+                "SELECT discovered_at, first_seen_at, last_seen_at "
+                "FROM opportunities WHERE id = :id"
+            ),
+            {"id": "legacy-1"},
+        ).one()
+    assert str(row.first_seen_at) == str(row.discovered_at)
+    assert str(row.last_seen_at) == str(row.discovered_at)
+
+
 def test_downgrade_to_0003_drops_runs_table(alembic_cfg):
     from sqlalchemy import create_engine, inspect
 
