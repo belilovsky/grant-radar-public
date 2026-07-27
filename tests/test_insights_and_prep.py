@@ -70,6 +70,8 @@ def test_insights_api_and_page_are_data_backed(monkeypatch):
     assert "--ink: var(--color-text)" in page.text
     assert "Данные о финансировании Казахстана" in page.text
     assert "Что известно до перехода к источнику" in page.text
+    assert ".footer nav { display: flex; flex-wrap: wrap;" in page.text
+    assert ".hero { grid-template-columns: minmax(0, 1fr); }" in page.text
     assert "/api/v1/changes?hours=24" in page.text
     assert "\u2014" not in page.text
     assert "QazCompute" not in page.text

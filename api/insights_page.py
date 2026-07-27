@@ -1046,12 +1046,13 @@ def render_insights_page(
       font-size: 11px;
     }}
     .footer p {{ max-width: 720px; margin: 0; }}
-    .footer nav {{ display: flex; gap: 12px; }}
+    .footer nav {{ display: flex; flex-wrap: wrap; gap: 12px; }}
     .footer a {{ font-weight: 700; }}
     @media (max-width: 900px) {{
-      .hero, .chart-grid, .deadline-layout, .source-layout {{
+      .chart-grid, .deadline-layout, .source-layout {{
         grid-template-columns: 1fr;
       }}
+      .hero {{ grid-template-columns: minmax(0, 1fr); }}
       .quality-grid {{ grid-template-columns: repeat(2, minmax(0, 1fr)); }}
       .theme-strip {{ grid-template-columns: repeat(3, minmax(0, 1fr)); }}
       .change-grid, .reuse-grid {{ grid-template-columns: repeat(2, minmax(0, 1fr)); }}
