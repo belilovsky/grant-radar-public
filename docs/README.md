@@ -41,3 +41,5 @@ Historical release reports are retained under
 [archive/releases](archive/releases/README.md). They are evidence snapshots,
 not operating instructions. Current production procedures remain in
 `PRODUCTION_CHECKLIST.md` and the repository-level `DEPLOYMENT.md`.
+
+- [PROD_READINESS_2026-07-27.md](archive/releases/PROD_READINESS_2026-07-27.md)
