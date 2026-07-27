@@ -1,0 +1,64 @@
+{
+  "schema_version": "qazstack-reuse-v1",
+  "project_id": "qaz-fund",
+  "qazstack_version": "1.40.0",
+  "owner": "qdev-platform",
+  "consumer_contract_path": "docs/qazstack/consumer-contract.json",
+  "adoptions": [
+    {
+      "module": "opportunities",
+      "capabilities": [
+        "collectors-entity-pipeline",
+        "source-contract-validation"
+      ],
+      "reason": "Use the packaged QazStack opportunity contract for source adapter validation instead of maintaining a grant-only parser vocabulary.",
+      "evidence": [
+        "core/qazstack_bridge.py",
+        "tests/test_qazstack_bridge.py"
+      ]
+    },
+    {
+      "module": "source",
+      "capabilities": [
+        "source-url-canonicalization"
+      ],
+      "reason": "Use QazStack canonical URL fingerprints for deduplication and public source identity.",
+      "evidence": [
+        "core/persistence.py"
+      ]
+    },
+    {
+      "module": "content",
+      "capabilities": [
+        "text-normalization",
+        "source-diversity"
+      ],
+      "reason": "Use shared QazStack source-text normalization and ranked-item diversification while keeping grant relevance rules product-owned.",
+      "evidence": [
+        "core/source_text.py",
+        "api/main.py"
+      ]
+    },
+    {
+      "module": "evidence",
+      "capabilities": [
+        "public-evidence-state"
+      ],
+      "reason": "Use QazStack evidence-state semantics so public rows distinguish sourced records from verified application advice.",
+      "evidence": [
+        "api/main.py"
+      ]
+    },
+    {
+      "module": "export",
+      "capabilities": [
+        "ndjson-public-export"
+      ],
+      "reason": "Use QazStack NDJSON export helpers for machine consumers instead of a product-local bulk export primitive.",
+      "evidence": [
+        "api/main.py"
+      ]
+    }
+  ],
+  "local_exceptions": []
+}
