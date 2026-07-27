@@ -2925,6 +2925,10 @@ def test_opportunity_page_renders_public_permalink(monkeypatch):
     assert 'id="copy-working-brief-status"' in response.text
     assert "Сведения скопированы." in response.text
     assert "Что нужно перепроверить" in response.text
+    assert "Проверка перед решением" in response.text
+    assert "Известно в карточке" in response.text
+    assert "Нужно сверить" in response.text
+    assert "Это рабочая проверка, а не правовое заключение" in response.text
     assert "Право на участие" in response.text
     assert "Закупочная документация" in response.text
     assert "Ссылка при передаче" in response.text
@@ -3109,6 +3113,10 @@ def test_opportunity_page_tailors_prepare_checklist_for_subsidies(monkeypatch):
     assert "What to prepare" in response.text
     assert "Copy working brief" in response.text
     assert "Before using this card" in response.text
+    assert "Decision check" in response.text
+    assert "Known in the card" in response.text
+    assert "Check at source" in response.text
+    assert "This is a working check, not legal advice" in response.text
     assert "Procurement documents" in response.text
     assert "does not confirm eligibility" in response.text
     assert "Prepare local documents" in response.text

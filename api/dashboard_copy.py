@@ -670,6 +670,38 @@ COPY = {
         "verification_publication_text": (
             "Сохраняйте ссылку на официальный источник и дату проверки сведений."
         ),
+        "decision_check_eyebrow": "Квалификация",
+        "decision_check_title": "Проверка перед решением",
+        "decision_check_description": (
+            "Короткий контрольный срез: что уже видно в карточке и что нужно "
+            "подтвердить перед тем, как тратить время на заявку."
+        ),
+        "decision_check_known_title": "Известно в карточке",
+        "decision_check_known_source": "источник: {source}",
+        "decision_check_known_format": "формат: {format}",
+        "decision_check_known_deadline": "срок: {deadline}",
+        "decision_check_known_amount": "объём поддержки: {amount}",
+        "decision_check_known_eligibility": "требования: {eligibility}",
+        "decision_check_known_empty": "Пока известны только источник и описание.",
+        "decision_check_missing_title": "Нужно сверить",
+        "decision_check_missing_text": "На официальной странице проверьте: {items}.",
+        "decision_check_missing_none": (
+            "Основные поля заполнены, но финальную редакцию всё равно сверяйте "
+            "на официальной странице."
+        ),
+        "decision_check_route_title": "Где действовать",
+        "decision_check_route_application": (
+            "У карточки есть отдельный путь подачи. Начинайте с него и сравните "
+            "требования с первоисточником."
+        ),
+        "decision_check_route_source": (
+            "Отдельный путь подачи не указан. Действуйте только через официальный "
+            "источник."
+        ),
+        "decision_check_boundary_title": "Граница вывода",
+        "decision_check_boundary_text": (
+            "Это рабочая проверка, а не правовое заключение и не прогноз одобрения."
+        ),
         "detail_missing_labels": {
             "deadline": "срок",
             "amount": "сумму",
@@ -1668,6 +1700,37 @@ COPY = {
         "verification_publication_title": "Publication and internal notes",
         "verification_publication_text": (
             "Record the official source and the date when the information was verified."
+        ),
+        "decision_check_eyebrow": "Qualification",
+        "decision_check_title": "Decision check",
+        "decision_check_description": (
+            "A compact control pass: what the card already knows and what must be "
+            "confirmed before spending time on an application."
+        ),
+        "decision_check_known_title": "Known in the card",
+        "decision_check_known_source": "source: {source}",
+        "decision_check_known_format": "format: {format}",
+        "decision_check_known_deadline": "deadline: {deadline}",
+        "decision_check_known_amount": "support amount: {amount}",
+        "decision_check_known_eligibility": "requirements: {eligibility}",
+        "decision_check_known_empty": "Only the source and summary are known so far.",
+        "decision_check_missing_title": "Check at source",
+        "decision_check_missing_text": "Confirm on the official page: {items}.",
+        "decision_check_missing_none": (
+            "The main fields are present, but final terms still need confirmation "
+            "on the official page."
+        ),
+        "decision_check_route_title": "Action route",
+        "decision_check_route_application": (
+            "The card has a separate application route. Start there and compare "
+            "requirements with the source."
+        ),
+        "decision_check_route_source": (
+            "No separate application route is listed. Act through the official source."
+        ),
+        "decision_check_boundary_title": "Boundary",
+        "decision_check_boundary_text": (
+            "This is a working check, not legal advice or an approval forecast."
         ),
         "detail_missing_labels": {
             "deadline": "deadline",

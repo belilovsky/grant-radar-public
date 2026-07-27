@@ -517,6 +517,100 @@ def _prepare_markup(
     )
 
 
+def _decision_check_markup(
+    detail: OpportunityDetail,
+    *,
+    copy: dict[str, object],
+    lang: str,
+    source_label: str,
+    format_label: str,
+    deadline_label: str,
+) -> str:
+    amount = _detail_metadata_value(detail, "amount", "amount_raw")
+    known_items = [
+        str(copy["decision_check_known_source"]).format(source=source_label),
+        str(copy["decision_check_known_format"]).format(format=format_label),
+    ]
+    if detail.deadline is not None:
+        known_items.append(
+            str(copy["decision_check_known_deadline"]).format(deadline=deadline_label)
+        )
+    if amount:
+        known_items.append(
+            str(copy["decision_check_known_amount"]).format(amount=amount)
+        )
+    if detail.eligibility:
+        eligibility = "; ".join(detail.eligibility[:2])
+        known_items.append(
+            str(copy["decision_check_known_eligibility"]).format(
+                eligibility=eligibility
+            )
+        )
+
+    missing_labels = copy.get("detail_missing_labels")
+    labels = missing_labels if isinstance(missing_labels, dict) else {}
+    missing = []
+    if detail.deadline is None:
+        missing.append(str(labels.get("deadline", "deadline")))
+    if not amount:
+        missing.append(str(labels.get("amount", "amount")))
+    if not detail.eligibility:
+        missing.append(str(labels.get("eligibility", "eligibility")))
+    if not detail.application_url:
+        missing.append(str(labels.get("application", "application")))
+
+    if missing:
+        missing_text = str(copy["decision_check_missing_text"]).format(
+            items=", ".join(missing)
+        )
+    else:
+        missing_text = str(copy["decision_check_missing_none"])
+
+    route_text = (
+        str(copy["decision_check_route_application"])
+        if detail.application_url
+        else str(copy["decision_check_route_source"])
+    )
+
+    cards = (
+        (
+            "decision_check_known_title",
+            "; ".join(known_items) or str(copy["decision_check_known_empty"]),
+        ),
+        ("decision_check_missing_title", missing_text),
+        ("decision_check_route_title", route_text),
+        ("decision_check_boundary_title", str(copy["decision_check_boundary_text"])),
+    )
+    card_markup = "".join(
+        """
+        <article class="decision-check-card">
+          <span class="decision-check-label">{label}</span>
+          <p>{text}</p>
+        </article>
+        """.format(
+            label=escape(str(copy[title_key])),
+            text=escape(text),
+        )
+        for title_key, text in cards
+    )
+    return """
+    <section class="decision-check-section" lang="{lang}">
+      <div class="decision-check-head">
+        <span class="eyebrow">{eyebrow}</span>
+        <h2>{title}</h2>
+        <p>{description}</p>
+      </div>
+      <div class="decision-check-grid">{cards}</div>
+    </section>
+    """.format(
+        lang=escape(lang, quote=True),
+        eyebrow=escape(str(copy["decision_check_eyebrow"])),
+        title=escape(str(copy["decision_check_title"])),
+        description=escape(str(copy["decision_check_description"])),
+        cards=card_markup,
+    )
+
+
 def _apply_markup(
     *,
     has_application_url: bool,
@@ -836,6 +930,14 @@ def render_opportunity_page(
     deadline_label = escape(deadline_text)
     source_host = escape(_host_label(str(detail.source_url)))
     format_label = escape(format_text)
+    decision_check_markup = _decision_check_markup(
+        detail,
+        copy=copy,
+        lang=active_lang,
+        source_label=source_text,
+        format_label=format_text,
+        deadline_label=deadline_text,
+    )
     working_brief = _working_brief(
         detail,
         title=title,
@@ -1371,6 +1473,62 @@ def render_opportunity_page(
       font-size: var(--av-text-sm);
       line-height: 1.48;
     }}
+    .decision-check-section {{
+      display: grid;
+      gap: 18px;
+      margin-top: 18px;
+      padding: 24px;
+      border: 1px solid var(--line);
+      border-radius: var(--av-radius-lg);
+      background: var(--surface);
+      box-shadow: var(--av-shadow-xs);
+    }}
+    .decision-check-head {{
+      display: grid;
+      gap: 6px;
+      max-width: 760px;
+    }}
+    .decision-check-head h2 {{
+      margin: 0;
+      font-family: var(--font-sans);
+      font-size: clamp(17px, 2vw, 21px);
+      font-weight: 700;
+      line-height: 1.16;
+    }}
+    .decision-check-head p {{
+      margin: 0;
+      color: color-mix(in oklab, var(--text), var(--muted) 28%);
+      font-size: var(--av-text-sm);
+      line-height: 1.46;
+    }}
+    .decision-check-grid {{
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 12px;
+    }}
+    .decision-check-card {{
+      display: grid;
+      gap: 8px;
+      min-height: 100%;
+      padding: 14px;
+      border: 1px solid var(--line-subtle);
+      border-radius: var(--av-radius-md);
+      background: var(--surface-subtle);
+    }}
+    .decision-check-label {{
+      color: var(--muted);
+      font-family: var(--font-mono);
+      font-size: var(--av-text-xs);
+      font-weight: 700;
+      letter-spacing: .08em;
+      text-transform: uppercase;
+    }}
+    .decision-check-card p {{
+      margin: 0;
+      color: color-mix(in oklab, var(--text), var(--muted) 18%);
+      font-size: var(--av-text-sm);
+      line-height: 1.5;
+    }}
     .prepare-section {{
       display: grid;
       gap: 18px;
@@ -1634,6 +1792,7 @@ def render_opportunity_page(
       .hero-grid,
       .content-grid,
       .prepare-grid,
+      .decision-check-grid,
       .apply-list,
       .related-grid,
       .verification-list {{
@@ -1653,6 +1812,7 @@ def render_opportunity_page(
       .hero-stats > div:first-child {{ grid-column: 1 / -1; }}
       .prepare-card,
       .prepare-card:first-child,
+      .decision-check-card,
       .apply-step,
       .apply-step:first-child {{
         min-height: auto;
@@ -1787,6 +1947,7 @@ def render_opportunity_page(
       {sidebar_markup}
     </section>
     {verification_markup}
+    {decision_check_markup}
     {prepare_markup}
     {apply_markup}
     {related_markup}
