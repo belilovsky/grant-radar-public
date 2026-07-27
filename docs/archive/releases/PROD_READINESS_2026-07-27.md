@@ -14,8 +14,10 @@ applications, confirm legal eligibility or predict approval.
 
 - Repository: `grant-radar-public`
 - Branch: `codex/qazfund-completion-2026-07-26`
-- Candidate revision: `be1decd8e6d206e2f965d05581270234b8944bee`
-- Local `origin/main`: `be1decd8e6d206e2f965d05581270234b8944bee`
+- Application candidate revision: `be1decd8e6d206e2f965d05581270234b8944bee`
+- Release evidence revision: docs-only commits after the application candidate
+  do not change runtime code; use `git rev-parse HEAD` immediately before
+  production deploy as the exact revision for public verification.
 - Public URL expected after deploy: `https://qaz.fund`
 - Host path expected by deploy helper: `/opt/grant-radar`
 
