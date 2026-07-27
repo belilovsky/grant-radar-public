@@ -286,6 +286,22 @@ def test_machine_and_operator_routes_have_explicit_boundaries(monkeypatch):
         assert response.status_code == 200, path
         assert "json" in response.headers["content-type"], path
 
+    head_routes = (
+        "/sources",
+        "/funders",
+        "/api/v1",
+        "/api/v1/schema",
+        "/api/v1/opportunities",
+        "/api/v1/opportunities.ndjson",
+        "/api/v1/insights",
+        "/api/v1/changes",
+        "/opportunities.ndjson",
+    )
+    for path in head_routes:
+        response = client.head(path)
+        assert response.status_code == 200, path
+        assert response.content == b"", path
+
     api_index = client.get("/api/v1").json()["routes"]
     assert api_index["daily_digest_json"].endswith("/media/v1/digest/daily.json")
     assert api_index["daily_digest_text"].endswith("/media/v1/digest/daily.txt")

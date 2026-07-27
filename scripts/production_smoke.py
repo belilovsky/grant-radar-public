@@ -152,6 +152,11 @@ def run_smoke(
             for line in ndjson_response.text.splitlines()
             if line.strip()
         ]
+        ndjson_head = _head(
+            client,
+            base_url,
+            "/opportunities.ndjson?limit=20&min_score=0.3",
+        )
         digest = _get_json(client, base_url, "/digest?limit=5&tag=ai")
         robots = _get_text(client, base_url, "/robots.txt")
         sitemap = _get_text(client, base_url, "/sitemap.xml")
@@ -201,6 +206,16 @@ def run_smoke(
         )
         api_index = _get_json(client, base_url, "/api/v1")
         insights_api = _get_json(client, base_url, "/api/v1/insights?lang=ru")
+        insights_api_head = _head(
+            client,
+            base_url,
+            "/api/v1/insights?lang=ru",
+        )
+        api_v1_ndjson_head = _head(
+            client,
+            base_url,
+            "/api/v1/opportunities.ndjson?lang=ru",
+        )
         changes_api = _get_json(
             client,
             base_url,
@@ -400,6 +415,24 @@ def run_smoke(
             == int(coverage.get("relevant_open_items") or 0)
             and int((insights_api.get("scope") or {}).get("indexed_relevant") or 0)
             >= int((insights_api.get("scope") or {}).get("current_catalog") or 0)
+        ),
+        "insights_api_head": (
+            insights_api_head.headers.get("content-type", "").startswith(
+                "application/json"
+            )
+            and _is_public_cacheable(insights_api_head, 60)
+        ),
+        "legacy_ndjson_head": (
+            ndjson_head.headers.get("content-type", "").startswith(
+                "application/x-ndjson"
+            )
+            and _is_public_cacheable(ndjson_head, 300)
+        ),
+        "api_v1_ndjson_head": (
+            api_v1_ndjson_head.headers.get("content-type", "").startswith(
+                "application/x-ndjson"
+            )
+            and _is_public_cacheable(api_v1_ndjson_head, 300)
         ),
         "changes_api": changes_api.get("schema_version") == "qazfund-changes.v1",
         "daily_digest": (

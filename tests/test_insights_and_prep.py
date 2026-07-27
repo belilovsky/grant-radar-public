@@ -75,6 +75,38 @@ def test_insights_api_and_page_are_data_backed(monkeypatch):
     assert "QazCompute" not in page.text
 
 
+def test_insights_snapshot_is_reused_by_api_and_page(monkeypatch):
+    _reset_api_state(monkeypatch)
+    api_main._cache.append(_item())
+    calls = {"count": 0}
+    original = api_main.build_insights_payload
+
+    def counted_build(*args, **kwargs):
+        calls["count"] += 1
+        return original(*args, **kwargs)
+
+    monkeypatch.setattr(api_main, "build_insights_payload", counted_build)
+    client = TestClient(api_main.app)
+
+    assert client.get("/api/v1/insights?lang=ru").status_code == 200
+    assert client.get("/insights?lang=ru").status_code == 200
+    assert calls["count"] == 1
+
+
+def test_insights_head_skips_analytics_projection(monkeypatch):
+    _reset_api_state(monkeypatch)
+
+    def fail_if_called(*args, **kwargs):
+        raise AssertionError("HEAD must not build analytics")
+
+    monkeypatch.setattr(api_main, "_cached_insights_payload", fail_if_called)
+
+    response = TestClient(api_main.app).head("/insights?lang=ru")
+
+    assert response.status_code == 200
+    assert response.content == b""
+
+
 def test_insights_separates_current_catalog_from_full_index():
     current = _item().model_copy(update={"lifecycle": "closing_soon"})
     expired = _item().model_copy(
@@ -146,6 +178,22 @@ def test_application_workspace_is_local_and_exportable(monkeypatch):
     assert "fetch(" not in page.text
     assert 'method="post"' not in page.text.lower()
     assert "\u2014" not in page.text
+
+
+def test_application_workspace_head_skips_detail_projection(monkeypatch):
+    _reset_api_state(monkeypatch)
+    item = _item()
+    api_main._cache.append(item)
+
+    async def fail_if_called(*args, **kwargs):
+        raise AssertionError("HEAD must not build the application workspace")
+
+    monkeypatch.setattr(api_main, "build_opportunity_detail", fail_if_called)
+
+    response = TestClient(api_main.app).head(f"/opportunity/{item.id}/prepare?lang=ru")
+
+    assert response.status_code == 200
+    assert response.content == b""
 
 
 def test_change_ledger_and_daily_digest_distinguish_updates(tmp_path, monkeypatch):

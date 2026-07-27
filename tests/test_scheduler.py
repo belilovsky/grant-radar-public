@@ -3,7 +3,12 @@
 import asyncio
 from dataclasses import dataclass, field
 
-from core.scheduler import ScheduleConfig, SourceScheduler, build_default_configs
+from core.scheduler import (
+    ScheduleConfig,
+    SourceScheduler,
+    _heartbeat_worker,
+    build_default_configs,
+)
 from sources.base import GrantRecord
 
 
@@ -193,5 +198,57 @@ def test_scheduler_closes_remaining_parsers_after_close_failure() -> None:
         await SourceScheduler._close_parsers([_CloseFailingParser(), remaining])
 
         assert remaining.closed is True
+
+    asyncio.run(_go())
+
+
+def test_scheduler_bounds_parallel_source_fetches() -> None:
+    async def _go() -> None:
+        state = {"active": 0, "peak": 0}
+
+        class _ConcurrentParser(_Parser):
+            async def fetch(self):
+                state["active"] += 1
+                state["peak"] = max(state["peak"], state["active"])
+                try:
+                    await asyncio.sleep(0.02)
+                finally:
+                    state["active"] -= 1
+                yield GrantRecord(
+                    source=self.slug,
+                    external_id="bounded",
+                    title="Bounded fetch",
+                    url="https://example.org/bounded",
+                )
+
+        scheduler = SourceScheduler(max_concurrency=2)
+        await asyncio.gather(
+            *(scheduler._fetch_once(_ConcurrentParser()) for _ in range(6))
+        )
+
+        assert state["peak"] == 2
+
+    asyncio.run(_go())
+
+
+def test_worker_heartbeat_tracks_event_loop_liveness(tmp_path) -> None:
+    async def _go() -> None:
+        heartbeat = tmp_path / "worker-heartbeat"
+        stop_event = asyncio.Event()
+        task = asyncio.create_task(
+            _heartbeat_worker(
+                stop_event,
+                path=str(heartbeat),
+                interval_seconds=1,
+            )
+        )
+        for _ in range(20):
+            if heartbeat.exists():
+                break
+            await asyncio.sleep(0.01)
+        stop_event.set()
+        await task
+
+        assert heartbeat.is_file()
 
     asyncio.run(_go())

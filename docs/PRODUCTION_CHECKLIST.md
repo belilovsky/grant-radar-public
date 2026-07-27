@@ -16,9 +16,10 @@ historic backup filenames, and maintainer-only evidence.
 
 - `GET` and `HEAD /health` are public.
 - `GET` and `HEAD /ready` are public and must not expose secrets.
-- `GET /coverage`, `GET /opportunities`, and `GET /digest` are public.
+- `GET` and `HEAD /coverage`, `/opportunities`, and `/digest` are public.
 - `GET` and `HEAD /insights` render public data-centre analytics.
-- `GET /api/v1/insights` and `GET /api/v1/changes` are public and read-only.
+- `GET` and `HEAD /api/v1/insights`, `/api/v1/changes`,
+  `/api/v1/opportunities`, and both NDJSON exports are public and read-only.
 - `GET /media/v1/digest/daily.json` and `.txt` expose a truthful change digest.
 - `GET` and `HEAD /status` render public source freshness without run errors.
 - `GET` and `HEAD /operator` render a noindex/no-store token entry shell.
@@ -34,7 +35,8 @@ historic backup filenames, and maintainer-only evidence.
   and stable query templates for machine consumers.
 - `POST /refresh` must require `GRANT_RADAR_ADMIN_TOKEN`.
 - The production compose file must not start without `POSTGRES_PASSWORD`.
-- The API container must report healthy through `GET /ready`.
+- The API container must report healthy through `GET /ready`; the worker must
+  report healthy through its event-loop heartbeat.
 
 ## Pre-release checks
 
@@ -45,6 +47,7 @@ PYTHONPATH=. ./.venv/bin/python -m scripts.production_smoke --base-url https://e
 PYTHONPATH=. ./.venv/bin/python -m scripts.content_audit --base-url https://example.org
 PYTHONPATH=. ./.venv/bin/python -m scripts.nlp_quality_audit --base-url https://example.org --lang ru --limit 150
 PYTHONPATH=. ./.venv/bin/python -m scripts.nlp_quality_audit --base-url https://example.org --lang en --limit 150
+PYTHONPATH=. ./.venv/bin/python -m scripts.performance_smoke --base-url https://example.org --samples 5
 ```
 
 ## Public UX expectations
@@ -96,6 +99,9 @@ curl -fsSI 'https://example.org/opportunity/<uuid>/prepare?lang=ru'
 curl -fsSI 'https://example.org/funder/<slug>?lang=ru'
 curl -fsS 'https://example.org/digest?limit=5&tag=ai'
 curl -fsS 'https://example.org/api/v1/insights?lang=ru'
+curl -fsSI 'https://example.org/api/v1/insights?lang=ru'
+curl -fsSI 'https://example.org/api/v1/opportunities.ndjson?lang=ru'
+curl -fsSI 'https://example.org/opportunities.ndjson?lang=ru&compact=true'
 curl -fsS 'https://example.org/api/v1/changes?hours=24&lang=ru'
 curl -fsS 'https://example.org/media/v1/digest/daily.json?lang=ru'
 ```
@@ -120,7 +126,8 @@ curl -fsS 'https://example.org/media/v1/digest/daily.json?lang=ru'
 - Keep deploy hosts, paths, backup archives, and incident history in a private
   maintainer runbook.
 - The standard runtime contains exactly one `db`, one `api` and one `worker`
-  Compose service. Telegram delivery is a one-shot command and has no scheduler
-  in this repository.
+  Compose service. The API service runs two Uvicorn workers; the worker service
+  runs one scheduler with bounded source concurrency. Telegram delivery is a
+  one-shot command and has no scheduler in this repository.
 - Run the process and timer audit in `REPRODUCIBILITY_AND_RUNTIME.md` before and
   after a release that changes ingestion or delivery behavior.

@@ -110,6 +110,7 @@ Useful commands:
 - `make format`
 - `make db-upgrade`
 - `make show-runs`
+- `python -m scripts.performance_smoke --base-url http://localhost:8000`
 
 ## Active source coverage
 
@@ -182,6 +183,8 @@ make ci-fast
 `Dockerfile.prod` runs `scripts/entrypoint.sh`, which applies
 `alembic upgrade head` before starting uvicorn. Real `.env.dev`,
 `.env.staging`, and `.env.prod` files must stay local to the machine or server.
+Production defaults to two Uvicorn workers, bounded source-fetch concurrency,
+and a Compose worker heartbeat; see the runtime guide before changing them.
 
 Deployment guidance lives in [DEPLOYMENT.md](DEPLOYMENT.md) and
 [docs/PRODUCTION_CHECKLIST.md](docs/PRODUCTION_CHECKLIST.md).

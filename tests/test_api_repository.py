@@ -2575,6 +2575,109 @@ def test_public_scope_cache_reuses_expensive_geography_filter(monkeypatch):
     assert calls["count"] == 1
 
 
+def test_prepared_scope_cache_reuses_ranking_projection(monkeypatch):
+    _reset_api_state(monkeypatch)
+    calls = {"count": 0}
+    item = Opportunity(
+        source="grants_gov",
+        source_url="https://example.org/prepared-cache",
+        type=OpportunityType.GRANT,
+        title="Prepared cache grant",
+        summary="Opportunity for Central Asia teams.",
+        tags=["central_asia", "grant"],
+        score=0.8,
+    )
+    original = api_main._with_decision_readiness
+
+    def counted_projection(*args, **kwargs):
+        calls["count"] += 1
+        return original(*args, **kwargs)
+
+    monkeypatch.setattr(
+        api_main,
+        "_cached_public_scope_items",
+        lambda content_lang="en", include_irrelevant=False: [item],
+    )
+    monkeypatch.setattr(api_main, "_with_decision_readiness", counted_projection)
+
+    assert api_main._cached_prepared_scope_items("en")[0].id == item.id
+    assert api_main._cached_prepared_scope_items("en")[0].id == item.id
+    assert calls["count"] == 1
+
+
+def test_public_v1_cache_reuses_machine_projection(monkeypatch):
+    _reset_api_state(monkeypatch)
+    calls = {"count": 0}
+    item = Opportunity(
+        source="grants_gov",
+        source_url="https://example.org/v1-cache",
+        type=OpportunityType.GRANT,
+        title="Versioned cache grant",
+        summary="Opportunity for Central Asia teams.",
+        tags=["central_asia", "grant"],
+        score=0.8,
+    )
+    original = api_main.to_opportunity_v1
+
+    def counted_projection(*args, **kwargs):
+        calls["count"] += 1
+        return original(*args, **kwargs)
+
+    monkeypatch.setattr(
+        api_main,
+        "_cached_prepared_scope_items",
+        lambda content_lang="en", include_irrelevant=False: [item],
+    )
+    monkeypatch.setattr(api_main, "to_opportunity_v1", counted_projection)
+
+    first = api_main._cached_public_v1_index(
+        content_lang="en",
+        include_irrelevant=False,
+        public_base_url="https://qaz.fund",
+    )
+    second = api_main._cached_public_v1_index(
+        content_lang="en",
+        include_irrelevant=False,
+        public_base_url="https://qaz.fund",
+    )
+
+    assert first[item.id] == second[item.id]
+    assert calls["count"] == 1
+
+
+def test_ndjson_body_cache_skips_repeated_catalog_projection(monkeypatch):
+    _reset_api_state(monkeypatch)
+    api_main._cache.append(
+        Opportunity(
+            source="grants_gov",
+            source_url="https://example.org/ndjson-cache",
+            type=OpportunityType.GRANT,
+            title="NDJSON cache grant",
+            summary="Opportunity for Kazakhstan teams.",
+            tags=["kazakhstan", "grant"],
+            score=0.8,
+        )
+    )
+    calls = {"count": 0}
+    original = api_main._query_opportunities
+
+    def counted_query(*args, **kwargs):
+        calls["count"] += 1
+        return original(*args, **kwargs)
+
+    monkeypatch.setattr(api_main, "_query_opportunities", counted_query)
+    client = TestClient(api_main.app)
+
+    first = client.get("/opportunities.ndjson?lang=ru&compact=true")
+    second = client.get("/opportunities.ndjson?lang=ru&compact=true")
+
+    assert first.status_code == 200
+    assert second.status_code == 200
+    assert first.text == second.text
+    assert first.headers["etag"] == second.headers["etag"]
+    assert calls["count"] == 1
+
+
 def test_coverage_cache_reuses_source_aggregation(monkeypatch):
     _reset_api_state(monkeypatch)
     calls = {"count": 0}

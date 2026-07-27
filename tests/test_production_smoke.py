@@ -112,7 +112,19 @@ def _transport(
                     '{"title":"Kazakhstan AI grant","source":"world_bank_kazakhstan",'
                     '"evidence_state":"sourced"}\n'
                 ),
-                headers={"content-type": "application/x-ndjson"},
+                headers={
+                    "content-type": "application/x-ndjson",
+                    "cache-control": "public, max-age=300",
+                },
+            )
+        if endpoint_path == "/api/v1/opportunities.ndjson":
+            return httpx.Response(
+                200,
+                text="",
+                headers={
+                    "content-type": "application/x-ndjson; charset=utf-8",
+                    "cache-control": "public, max-age=300",
+                },
             )
         if endpoint_path == "/digest":
             return httpx.Response(200, json={"items": [{"title": "AI digest"}]})
@@ -290,6 +302,10 @@ def _transport(
                         "current_catalog": 44,
                         "active": 44,
                     },
+                },
+                headers={
+                    "content-type": "application/json",
+                    "cache-control": "public, max-age=60",
                 },
             )
         if endpoint_path == "/api/v1/changes":

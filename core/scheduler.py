@@ -14,6 +14,7 @@ import os
 import signal
 from collections.abc import Iterable
 from dataclasses import dataclass
+from pathlib import Path
 from typing import Any, Callable, Optional
 
 from sources import PARSERS, BaseSourceParser
@@ -22,6 +23,9 @@ from .fetch_queue import FetchQueue
 
 logger = logging.getLogger(__name__)
 DEFAULT_INTERVAL_SECONDS = 6 * 60 * 60
+DEFAULT_MAX_SOURCE_CONCURRENCY = 4
+DEFAULT_HEARTBEAT_INTERVAL_SECONDS = 15
+DEFAULT_HEARTBEAT_PATH = "/tmp/grant-radar-worker-heartbeat"
 
 
 @dataclass
@@ -46,11 +50,20 @@ class SourceScheduler:
         queue: Optional[FetchQueue] = None,
         parsers: Iterable[BaseSourceParser] | None = None,
         recorder_factory: Callable[[str], Any | None] | None = None,
+        max_concurrency: int | None = None,
     ):
         self.configs = list(configs or [])
         self.queue = queue
         self.parsers = list(parsers or [])
         self.recorder_factory = recorder_factory
+        self.max_concurrency = (
+            max(1, int(max_concurrency)) if max_concurrency is not None else None
+        )
+        self._fetch_slots = (
+            asyncio.Semaphore(self.max_concurrency)
+            if self.max_concurrency is not None
+            else None
+        )
         self._tasks: list[asyncio.Task] = []
         self._owned_parsers: list[BaseSourceParser] = []
         self._stop = asyncio.Event()
@@ -79,6 +92,12 @@ class SourceScheduler:
                 continue
 
     async def _fetch_once(self, parser: BaseSourceParser) -> int:
+        if self._fetch_slots is None:
+            return await self._fetch_once_unbounded(parser)
+        async with self._fetch_slots:
+            return await self._fetch_once_unbounded(parser)
+
+    async def _fetch_once_unbounded(self, parser: BaseSourceParser) -> int:
         source = str(getattr(parser, "slug", "") or parser.name)
         recorder = None
         run_id = None
@@ -212,6 +231,38 @@ def build_default_configs() -> list[ScheduleConfig]:
     return configs
 
 
+def _positive_int_env(name: str, default: int) -> int:
+    raw = os.environ.get(name, str(default))
+    try:
+        return max(1, int(raw))
+    except ValueError:
+        logger.warning("invalid %s=%r; using default=%d", name, raw, default)
+        return default
+
+
+async def _heartbeat_worker(
+    stop_event: asyncio.Event,
+    *,
+    path: str,
+    interval_seconds: int,
+) -> None:
+    """Refresh a local liveness marker while the worker event loop is responsive."""
+    heartbeat_path = Path(path)
+    while not stop_event.is_set():
+        try:
+            heartbeat_path.parent.mkdir(parents=True, exist_ok=True)
+            heartbeat_path.touch()
+        except OSError:
+            logger.exception("worker_heartbeat_write_failed path=%s", heartbeat_path)
+        try:
+            await asyncio.wait_for(
+                stop_event.wait(),
+                timeout=max(1, interval_seconds),
+            )
+        except asyncio.TimeoutError:
+            continue
+
+
 async def run_worker() -> None:
     """Run scheduler and pipeline until SIGTERM/SIGINT."""
     from .runner_factory import build_default_runner, build_run_recorder_factory
@@ -222,6 +273,10 @@ async def run_worker() -> None:
         build_default_configs(),
         queue=queue,
         recorder_factory=build_run_recorder_factory(),
+        max_concurrency=_positive_int_env(
+            "GRANT_RADAR_MAX_SOURCE_CONCURRENCY",
+            DEFAULT_MAX_SOURCE_CONCURRENCY,
+        ),
     )
 
     stop_event = asyncio.Event()
@@ -232,17 +287,34 @@ async def run_worker() -> None:
         except NotImplementedError:  # pragma: no cover - Windows fallback
             pass
 
-    runner.start()
-    await scheduler.start()
-    logger.info(
-        "grant-radar worker started sources=%s", [c.source for c in scheduler.configs]
+    heartbeat_task = asyncio.create_task(
+        _heartbeat_worker(
+            stop_event,
+            path=os.environ.get(
+                "GRANT_RADAR_WORKER_HEARTBEAT_PATH",
+                DEFAULT_HEARTBEAT_PATH,
+            ),
+            interval_seconds=_positive_int_env(
+                "GRANT_RADAR_WORKER_HEARTBEAT_INTERVAL_SECONDS",
+                DEFAULT_HEARTBEAT_INTERVAL_SECONDS,
+            ),
+        )
     )
+    runner.start()
     try:
+        await scheduler.start()
+        logger.info(
+            "grant-radar worker started sources=%s max_concurrency=%s",
+            [c.source for c in scheduler.configs],
+            scheduler.max_concurrency,
+        )
         await stop_event.wait()
     finally:
+        stop_event.set()
         logger.info("grant-radar worker stopping")
         await scheduler.stop()
         await runner.stop()
+        await heartbeat_task
 
 
 def main() -> int:

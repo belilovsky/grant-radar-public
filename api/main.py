@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import json
 import os
 import re
 import threading
@@ -28,7 +29,7 @@ from fastapi.responses import HTMLResponse, JSONResponse, RedirectResponse, Resp
 from pydantic import TypeAdapter
 from qazstack.content import diversify_ranked_items
 from qazstack.evidence import count_evidence_states, resolve_public_evidence_state
-from qazstack.export import ndjson_response
+from qazstack.export import cached_body_response
 from qazstack.opportunities import normalized_opportunity_status, public_lifecycle
 from starlette.exceptions import HTTPException as StarletteHTTPException
 from starlette.middleware.gzip import GZipMiddleware
@@ -174,7 +175,10 @@ _PUBLIC_FAST_CACHE_PATHS = {
     "/insights",
     "/api/v1/changes",
     "/api/v1/insights",
+    "/api/v1/opportunities",
+    "/api/v1/opportunities.ndjson",
     "/opportunities",
+    "/opportunities.ndjson",
 }
 _PUBLIC_DISCOVERY_CACHE_PATHS = {
     "/llms.txt",
@@ -252,9 +256,24 @@ _sitemap_cache: dict[tuple[str, str], tuple[datetime, str]] = {}
 _PUBLIC_ITEMS_CACHE_TTL = timedelta(
     seconds=max(30, int(os.environ.get("PUBLIC_ITEMS_CACHE_TTL_SECONDS", "300")))
 )
+_INSIGHTS_CACHE_TTL = timedelta(
+    seconds=max(15, int(os.environ.get("INSIGHTS_CACHE_TTL_SECONDS", "60")))
+)
+_NDJSON_CACHE_MAX_ENTRIES = 8
 _public_items_cache_lock = threading.Lock()
 _public_items_cache: dict[str, tuple[datetime, list[Opportunity]]] = {}
 _public_scope_cache: dict[tuple[str, bool], tuple[datetime, list[Opportunity]]] = {}
+_public_prepared_cache: dict[tuple[str, bool], tuple[datetime, list[Opportunity]]] = {}
+_public_current_catalog_cache: dict[str, tuple[datetime, list[Opportunity]]] = {}
+_public_v1_cache: dict[
+    tuple[str, bool, str], tuple[datetime, dict[UUID, OpportunityV1]]
+] = {}
+_funder_index_cache: dict[str, tuple[datetime, dict[str, dict[str, Any]]]] = {}
+_insights_cache: dict[tuple[str, str], tuple[datetime, dict[str, Any]]] = {}
+_ndjson_body_cache: dict[
+    tuple[str, str, tuple[tuple[str, str], ...]],
+    tuple[datetime, str, datetime | date | None],
+] = {}
 _coverage_cache: tuple[datetime, dict[str, Any]] | None = None
 LEGACY_FUNDER_REDIRECTS: dict[str, str] = {
     "dod-amraa": "DOD-AMRAA",
@@ -689,15 +708,108 @@ def _clear_public_items_cache() -> None:
     with _public_items_cache_lock:
         _public_items_cache.clear()
         _public_scope_cache.clear()
+        _public_prepared_cache.clear()
+        _public_current_catalog_cache.clear()
+        _public_v1_cache.clear()
+        _funder_index_cache.clear()
+        _insights_cache.clear()
+        _ndjson_body_cache.clear()
         _coverage_cache = None
 
 
+def _ndjson_cache_key(
+    request: Request,
+) -> tuple[str, str, tuple[tuple[str, str], ...]]:
+    public_origin = _public_base_url() or str(request.base_url).rstrip("/")
+    return (
+        public_origin,
+        request.url.path,
+        tuple(sorted(request.query_params.multi_items())),
+    )
+
+
+def _cached_ndjson_export(
+    request: Request,
+    *,
+    filename: str,
+    prefix: str,
+) -> Response | None:
+    cache_key = _ndjson_cache_key(request)
+    now = datetime.now(UTC)
+    with _public_items_cache_lock:
+        cached = _ndjson_body_cache.get(cache_key)
+        if cached is None:
+            return None
+        if now - cached[0] >= _PUBLIC_ITEMS_CACHE_TTL:
+            _ndjson_body_cache.pop(cache_key, None)
+            return None
+        _, body, last_modified = cached
+    return cached_body_response(
+        request,
+        body=body,
+        media_type="application/x-ndjson; charset=utf-8",
+        last_modified=last_modified,
+        prefix=prefix,
+        filename=filename,
+    )
+
+
+def _store_ndjson_export(
+    request: Request,
+    *,
+    rows: Iterable[Mapping[str, Any]],
+    filename: str,
+    prefix: str,
+    last_modified: datetime | date | None,
+) -> Response:
+    body = "".join(
+        json.dumps(
+            dict(row),
+            ensure_ascii=False,
+            separators=(",", ":"),
+            default=str,
+        )
+        + "\n"
+        for row in rows
+    )
+    cache_key = _ndjson_cache_key(request)
+    now = datetime.now(UTC)
+    with _public_items_cache_lock:
+        if (
+            cache_key not in _ndjson_body_cache
+            and len(_ndjson_body_cache) >= _NDJSON_CACHE_MAX_ENTRIES
+        ):
+            oldest_key = min(
+                _ndjson_body_cache,
+                key=lambda key: _ndjson_body_cache[key][0],
+            )
+            _ndjson_body_cache.pop(oldest_key, None)
+        _ndjson_body_cache[cache_key] = (now, body, last_modified)
+    return cached_body_response(
+        request,
+        body=body,
+        media_type="application/x-ndjson; charset=utf-8",
+        last_modified=last_modified,
+        prefix=prefix,
+        filename=filename,
+    )
+
+
 def _warm_public_items_cache() -> None:
-    """Warm both dashboard languages before the first public visitor arrives."""
+    """Warm expensive public projections before the first visitor arrives."""
+    public_base_url = _public_base_url()
     for content_lang in ("en", "ru"):
         with suppress(Exception):
             _cached_public_items(content_lang)
             _cached_public_scope_items(content_lang)
+            _cached_prepared_scope_items(content_lang)
+            _cached_current_catalog_items(content_lang)
+            if public_base_url:
+                _cached_public_v1_index(
+                    content_lang=content_lang,
+                    include_irrelevant=False,
+                    public_base_url=public_base_url,
+                )
     with suppress(Exception):
         _cached_coverage_payload()
 
@@ -746,6 +858,62 @@ def _with_decision_readiness(
             }
         }
     )
+
+
+def _cached_prepared_scope_items(
+    content_lang: str = "en", *, include_irrelevant: bool = False
+) -> list[Opportunity]:
+    """Cache localized ranking and evidence projections shared by public routes."""
+    normalized_lang = _public_lang(content_lang)
+    cache_key = (normalized_lang, include_irrelevant)
+    now = datetime.now(UTC)
+    with _public_items_cache_lock:
+        cached = _public_prepared_cache.get(cache_key)
+        if cached is not None and now - cached[0] < _PUBLIC_ITEMS_CACHE_TTL:
+            return list(cached[1])
+
+    today = date.today()
+    prepared = [
+        _with_decision_readiness(
+            localize_opportunity(item, normalized_lang),
+            ranking_subject=item,
+        )
+        for item in _cached_public_scope_items(
+            content_lang=normalized_lang,
+            include_irrelevant=include_irrelevant,
+        )
+    ]
+    prepared.sort(
+        key=lambda item: (
+            priority_score(item, today=today),
+            item.score,
+            item.discovered_at,
+        ),
+        reverse=True,
+    )
+    with _public_items_cache_lock:
+        _public_prepared_cache[cache_key] = (now, prepared)
+    return list(prepared)
+
+
+def _cached_current_catalog_items(content_lang: str = "en") -> list[Opportunity]:
+    """Return the exact current public catalog used by the dashboard and insights."""
+    normalized_lang = _public_lang(content_lang)
+    now = datetime.now(UTC)
+    with _public_items_cache_lock:
+        cached = _public_current_catalog_cache.get(normalized_lang)
+        if cached is not None and now - cached[0] < _PUBLIC_ITEMS_CACHE_TTL:
+            return list(cached[1])
+
+    today = date.today()
+    current_items = [
+        item
+        for item in _cached_prepared_scope_items(normalized_lang)
+        if _is_open(item, today) and item.score >= PUBLIC_RELEVANCE_THRESHOLD
+    ]
+    with _public_items_cache_lock:
+        _public_current_catalog_cache[normalized_lang] = (now, current_items)
+    return list(current_items)
 
 
 def _find_opportunity(
@@ -971,9 +1139,22 @@ def _build_funder_index(items: Iterable[Opportunity]) -> dict[str, dict[str, Any
 
 
 def _funder_index(content_lang: str = "en") -> dict[str, dict[str, Any]]:
-    return _build_funder_index(
-        _cached_public_scope_items(content_lang=content_lang, include_irrelevant=False)
+    normalized_lang = _public_lang(content_lang)
+    now = datetime.now(UTC)
+    with _public_items_cache_lock:
+        cached = _funder_index_cache.get(normalized_lang)
+        if cached is not None and now - cached[0] < _PUBLIC_ITEMS_CACHE_TTL:
+            return cached[1]
+
+    groups = _build_funder_index(
+        _cached_prepared_scope_items(
+            content_lang=normalized_lang,
+            include_irrelevant=False,
+        )
     )
+    with _public_items_cache_lock:
+        _funder_index_cache[normalized_lang] = (now, groups)
+    return groups
 
 
 def _funder_payload(group: dict[str, Any]) -> dict[str, Any]:
@@ -1546,12 +1727,7 @@ async def root(request: Request) -> HTMLResponse:
     site_origin = _site_origin(request, root_path)
     repository = _configured_repository()
     items = repository.size() if repository is not None else len(_cache)
-    today = date.today()
-    relevant_items = sum(
-        1
-        for item in _cached_public_scope_items(content_lang="en")
-        if _is_open(item, today) and item.score >= PUBLIC_RELEVANCE_THRESHOLD
-    )
+    relevant_items = len(_cached_current_catalog_items(content_lang="en"))
     source_count = len(PARSERS)
     lang = str(request.query_params.get("lang") or "").strip().lower()
     dashboard_lang = "en" if lang == "en" else "ru"
@@ -1577,35 +1753,11 @@ async def insights_page(
     request: Request,
     lang: str | None = Query(None),
 ) -> HTMLResponse:
-    active_lang = _public_lang(lang)
-    rows, _, root_path = _query_opportunities_v1(
-        request,
-        include_irrelevant=False,
-        limit=5000,
-        lang=active_lang,
-    )
-    catalog_rows, _, _ = _query_opportunities_v1(
-        request,
-        include_irrelevant=False,
-        min_score=PUBLIC_RELEVANCE_THRESHOLD,
-        deadline_after=date.today(),
-        limit=5000,
-        lang=active_lang,
-    )
-    history = _change_history_payload(
-        request,
-        hours=24,
-        limit=20,
-        lang=active_lang,
-    )
-    payload = build_insights_payload(
-        rows,
-        lang=active_lang,
-        history=history,
-        catalog_items=catalog_rows,
-    )
     if request.method == "HEAD":
         return HTMLResponse("")
+    active_lang = _public_lang(lang)
+    root_path = _root_path(request)
+    payload = _cached_insights_payload(request, lang=active_lang)
     return HTMLResponse(
         render_insights_page(
             payload=payload,
@@ -1850,13 +2002,13 @@ async def opportunity_prepare_page(
     if item is None:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND)
     root_path = _root_path(request)
+    if request.method == "HEAD":
+        return HTMLResponse("")
     detail = await build_opportunity_detail(
         localize_opportunity(item, content_lang),
         lang=content_lang,
         allow_remote_fetch=False,
     )
-    if request.method == "HEAD":
-        return HTMLResponse("")
     return HTMLResponse(
         render_application_prep_page(
             detail=detail,
@@ -2411,7 +2563,6 @@ async def coverage() -> dict[str, Any]:
 
 @app.head("/coverage", include_in_schema=False)
 async def coverage_head() -> Response:
-    await coverage()
     return Response(status_code=200, media_type="application/json")
 
 
@@ -2479,9 +2630,15 @@ async def public_attribution_page(request: Request) -> HTMLResponse:
 @app.api_route("/operator", methods=["GET", "HEAD"], include_in_schema=False)
 async def operator_page(request: Request) -> HTMLResponse:
     """Render the noindex operator shell without embedding credentials."""
-    active_lang = _public_lang(str(request.query_params.get("lang") or "").strip())
-    response = HTMLResponse(
-        render_operator_page(lang=active_lang, root_path=_root_path(request))
+    response = (
+        HTMLResponse("")
+        if request.method == "HEAD"
+        else HTMLResponse(
+            render_operator_page(
+                lang=_public_lang(str(request.query_params.get("lang") or "").strip()),
+                root_path=_root_path(request),
+            )
+        )
     )
     response.headers["Cache-Control"] = "no-store"
     response.headers["X-Robots-Tag"] = "noindex, nofollow"
@@ -2627,7 +2784,7 @@ def _query_opportunities(
     compact: bool = Query(False),
 ) -> tuple[list[Opportunity], int]:
     content_lang = _public_lang(lang)
-    items = _cached_public_scope_items(
+    items = _cached_prepared_scope_items(
         content_lang=content_lang, include_irrelevant=include_irrelevant
     )
     if tag:
@@ -2660,13 +2817,7 @@ def _query_opportunities(
         ),
         reverse=True,
     )
-    results = [
-        _with_decision_readiness(
-            localize_opportunity(item, content_lang),
-            ranking_subject=item,
-        )
-        for item in items[offset : offset + limit]
-    ]
+    results = items[offset : offset + limit]
     if compact:
         return [_compact_dashboard_item(item) for item in results], total_count
     return results, total_count
@@ -2702,6 +2853,38 @@ def _opportunity_v1_from_item(
     )
 
 
+def _cached_public_v1_index(
+    *,
+    content_lang: str,
+    include_irrelevant: bool,
+    public_base_url: str,
+) -> dict[UUID, OpportunityV1]:
+    """Cache the versioned machine projection by language, scope, and origin."""
+    normalized_lang = _public_lang(content_lang)
+    normalized_base = public_base_url.rstrip("/")
+    cache_key = (normalized_lang, include_irrelevant, normalized_base)
+    now = datetime.now(UTC)
+    with _public_items_cache_lock:
+        cached = _public_v1_cache.get(cache_key)
+        if cached is not None and now - cached[0] < _PUBLIC_ITEMS_CACHE_TTL:
+            return cached[1]
+
+    index = {
+        item.id: to_opportunity_v1(
+            item,
+            source_name=_source_name(item.source),
+            public_base_url=normalized_base,
+        )
+        for item in _cached_prepared_scope_items(
+            content_lang=normalized_lang,
+            include_irrelevant=include_irrelevant,
+        )
+    }
+    with _public_items_cache_lock:
+        _public_v1_cache[cache_key] = (now, index)
+    return index
+
+
 def _versioned_json_response(payload: dict[str, Any]) -> JSONResponse:
     return JSONResponse(
         jsonable_encoder(payload),
@@ -2729,6 +2912,7 @@ def _query_opportunities_v1(
     lang: str | None = None,
 ) -> tuple[list[OpportunityV1], int, str]:
     root_path = _root_path(request)
+    content_lang = _public_lang(lang)
     items, total_count = _query_opportunities(
         tag=tag,
         q=q,
@@ -2741,11 +2925,17 @@ def _query_opportunities_v1(
         include_irrelevant=include_irrelevant,
         limit=limit,
         offset=offset,
-        lang=lang,
+        lang=content_lang,
         compact=False,
     )
+    index = _cached_public_v1_index(
+        content_lang=content_lang,
+        include_irrelevant=include_irrelevant,
+        public_base_url=_public_root_base(request, root_path),
+    )
     rows = [
-        _opportunity_v1_from_item(item, request=request, root_path=root_path)
+        index.get(item.id)
+        or _opportunity_v1_from_item(item, request=request, root_path=root_path)
         for item in items
     ]
     return rows, total_count, root_path
@@ -2761,11 +2951,18 @@ def _find_opportunity_v1(
     item = _find_opportunity(opportunity_id, content_lang=content_lang)
     if item is None:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND)
+    root_path = _root_path(request)
+    cached = _cached_public_v1_index(
+        content_lang=content_lang,
+        include_irrelevant=False,
+        public_base_url=_public_root_base(request, root_path),
+    ).get(item.id)
+    if cached is not None:
+        return cached
     localized = _with_decision_readiness(
         localize_opportunity(item, content_lang),
         ranking_subject=item,
     )
-    root_path = _root_path(request)
     return _opportunity_v1_from_item(localized, request=request, root_path=root_path)
 
 
@@ -2901,6 +3098,49 @@ def _change_history_payload(
     }
 
 
+def _cached_insights_payload(
+    request: Request,
+    *,
+    lang: str,
+) -> dict[str, Any]:
+    """Share one short-lived analytics snapshot between HTML and JSON routes."""
+    active_lang = _public_lang(lang)
+    root_path = _root_path(request)
+    public_base_url = _public_root_base(request, root_path)
+    cache_key = (active_lang, public_base_url)
+    now = datetime.now(UTC)
+    with _public_items_cache_lock:
+        cached = _insights_cache.get(cache_key)
+        if cached is not None and now - cached[0] < _INSIGHTS_CACHE_TTL:
+            return cached[1]
+
+    rows = list(
+        _cached_public_v1_index(
+            content_lang=active_lang,
+            include_irrelevant=False,
+            public_base_url=public_base_url,
+        ).values()
+    )
+    current_ids = {
+        item.id for item in _cached_current_catalog_items(content_lang=active_lang)
+    }
+    catalog_rows = [item for item in rows if item.id in current_ids]
+    payload = build_insights_payload(
+        rows,
+        lang=active_lang,
+        history=_change_history_payload(
+            request,
+            hours=24,
+            limit=20,
+            lang=active_lang,
+        ),
+        catalog_items=catalog_rows,
+    )
+    with _public_items_cache_lock:
+        _insights_cache[cache_key] = (now, payload)
+    return payload
+
+
 @app.get("/api/v1", include_in_schema=False)
 async def api_v1_index(request: Request) -> JSONResponse:
     root_path = _root_path(request)
@@ -2947,33 +3187,7 @@ async def api_v1_insights(
     lang: str | None = Query(None),
 ) -> JSONResponse:
     active_lang = _public_lang(lang)
-    rows, _, _ = _query_opportunities_v1(
-        request,
-        include_irrelevant=False,
-        limit=5000,
-        lang=active_lang,
-    )
-    catalog_rows, _, _ = _query_opportunities_v1(
-        request,
-        include_irrelevant=False,
-        min_score=PUBLIC_RELEVANCE_THRESHOLD,
-        deadline_after=date.today(),
-        limit=5000,
-        lang=active_lang,
-    )
-    history = _change_history_payload(
-        request,
-        hours=24,
-        limit=20,
-        lang=active_lang,
-    )
-    payload = build_insights_payload(
-        rows,
-        lang=active_lang,
-        history=history,
-        catalog_items=catalog_rows,
-    )
-    return _versioned_json_response(payload)
+    return _versioned_json_response(_cached_insights_payload(request, lang=active_lang))
 
 
 @app.get("/api/v1/schema")
@@ -3061,6 +3275,13 @@ async def export_opportunities_v1_ndjson(
     offset: int = Query(0, ge=0),
     lang: str | None = Query(None),
 ) -> Response:
+    cached = _cached_ndjson_export(
+        request,
+        filename="qazfund-opportunities-v1.ndjson",
+        prefix="qazfund-opportunities-v1",
+    )
+    if cached is not None:
+        return cached
     rows, _, _ = _query_opportunities_v1(
         request,
         tag=tag,
@@ -3080,9 +3301,9 @@ async def export_opportunities_v1_ndjson(
         (item.timestamps.discovered_at for item in rows),
         default=None,
     )
-    return ndjson_response(
+    return _store_ndjson_export(
         request,
-        [item.model_dump(mode="json") for item in rows],
+        rows=(item.model_dump(mode="json") for item in rows),
         filename="qazfund-opportunities-v1.ndjson",
         last_modified=last_modified,
         prefix="qazfund-opportunities-v1",
@@ -3390,6 +3611,13 @@ async def export_opportunities_ndjson(
 ) -> Response:
     """Export the filtered public catalog as cache-aware newline-delimited JSON."""
 
+    cached = _cached_ndjson_export(
+        request,
+        filename="qazfund-opportunities.ndjson",
+        prefix="qazfund-opportunities",
+    )
+    if cached is not None:
+        return cached
     items, _ = _query_opportunities(
         tag=tag,
         q=q,
@@ -3416,12 +3644,21 @@ async def export_opportunities_ndjson(
         (item.discovered_at for item in items),
         default=None,
     )
-    return ndjson_response(
+    return _store_ndjson_export(
         request,
-        rows,
+        rows=rows,
         filename="qazfund-opportunities.ndjson",
         last_modified=last_modified,
         prefix="qazfund-opportunities",
+    )
+
+
+@app.head("/opportunities.ndjson", include_in_schema=False)
+async def export_opportunities_ndjson_head() -> Response:
+    return Response(
+        status_code=200,
+        media_type="application/x-ndjson; charset=utf-8",
+        headers={"Cache-Control": _PUBLIC_DISCOVERY_CACHE},
     )
 
 
@@ -3493,7 +3730,8 @@ async def get_opportunity_detail_head(
     opportunity_id: UUID,
     lang: str | None = Query(None),
 ) -> Response:
-    await get_opportunity_detail(opportunity_id, lang=lang)
+    if _find_opportunity(opportunity_id, content_lang=_public_lang(lang)) is None:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND)
     return Response(status_code=200, media_type="application/json")
 
 
@@ -3555,11 +3793,34 @@ async def digest_head(
     include_irrelevant: bool = False,
     lang: str | None = Query(None),
 ) -> Response:
-    await digest(
-        tag=tag,
-        min_score=min_score,
-        limit=limit,
-        include_irrelevant=include_irrelevant,
-        lang=lang,
-    )
     return Response(status_code=200, media_type="application/json")
+
+
+@app.head("/sources", include_in_schema=False)
+@app.head("/funders", include_in_schema=False)
+@app.head("/api/v1", include_in_schema=False)
+@app.head("/api/v1/schema", include_in_schema=False)
+@app.head("/api/v1/opportunities", include_in_schema=False)
+@app.head("/api/v1/opportunities.ndjson", include_in_schema=False)
+@app.head("/api/v1/insights", include_in_schema=False)
+@app.head("/api/v1/changes", include_in_schema=False)
+async def public_machine_head(request: Request) -> Response:
+    """Answer discovery probes without running catalog projections."""
+    is_ndjson = request.url.path.endswith(".ndjson")
+    headers = {
+        "Cache-Control": (_PUBLIC_DISCOVERY_CACHE if is_ndjson else _PUBLIC_FAST_CACHE)
+    }
+    if request.url.path.startswith("/api/v1"):
+        headers.update(
+            {
+                "X-Dataset-Schema-Version": DATASET_SCHEMA_VERSION,
+                "X-Opportunity-Schema-Version": SCHEMA_VERSION,
+            }
+        )
+    return Response(
+        status_code=200,
+        media_type=(
+            "application/x-ndjson; charset=utf-8" if is_ndjson else "application/json"
+        ),
+        headers=headers,
+    )
