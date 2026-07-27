@@ -9,7 +9,11 @@ from scripts.production_smoke import SmokeError, run_smoke
 
 
 def _transport(
-    *, opportunity_title: str = "Kazakhstan AI grant"
+    *,
+    opportunity_title: str = "Kazakhstan AI grant",
+    opportunity_count: int = 44,
+    coverage_current: int = 44,
+    insights_current: int = 44,
 ) -> httpx.MockTransport:
     def handler(request: httpx.Request) -> httpx.Response:
         path = request.url.path
@@ -77,7 +81,7 @@ def _transport(
                 json={
                     "status": "ok",
                     "enabled_sources": 23,
-                    "relevant_open_items": 44,
+                    "relevant_open_items": coverage_current,
                     "stale_sources": 1,
                     "unknown_freshness_sources": 2,
                 },
@@ -91,7 +95,7 @@ def _transport(
                         "title": opportunity_title,
                         "source": "world_bank_kazakhstan",
                     }
-                    for _ in range(44)
+                    for _ in range(opportunity_count)
                 ],
             )
         if endpoint_path == "/funders":
@@ -299,8 +303,8 @@ def _transport(
                     "schema_version": "qazfund-insights.v1",
                     "scope": {
                         "indexed_relevant": 55,
-                        "current_catalog": 44,
-                        "active": 44,
+                        "current_catalog": insights_current,
+                        "active": insights_current,
                     },
                 },
                 headers={
@@ -549,6 +553,34 @@ def test_run_smoke_rejects_forbidden_content():
             transport=_transport(
                 opportunity_title="AI3 Action Institute - Artificial Intelligence"
             ),
+        )
+
+
+def test_run_smoke_rejects_cross_surface_current_catalog_mismatch():
+    with pytest.raises(SmokeError, match="coverage and deadline-filtered"):
+        run_smoke(
+            base_url="https://example.org/grant-radar",
+            deadline_after="2026-05-23",
+            min_sources=23,
+            min_opportunities=40,
+            min_digest_items=1,
+            expect_backend="database",
+            forbidden=[],
+            timeout=1.0,
+            transport=_transport(coverage_current=45),
+        )
+
+    with pytest.raises(SmokeError, match="insights and deadline-filtered"):
+        run_smoke(
+            base_url="https://example.org/grant-radar",
+            deadline_after="2026-05-23",
+            min_sources=23,
+            min_opportunities=40,
+            min_digest_items=1,
+            expect_backend="database",
+            forbidden=[],
+            timeout=1.0,
+            transport=_transport(insights_current=45),
         )
 
 

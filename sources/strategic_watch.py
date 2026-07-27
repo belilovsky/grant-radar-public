@@ -30,12 +30,14 @@ class StrategicWatchSpec:
     url: str
     title: str
     summary: str
+    title_ru: str
+    summary_ru: str
     funder: str
     type: OpportunityType
     eligibility: tuple[str, ...]
     tags: tuple[str, ...]
-    lifecycle: str = "watchlist"
-    opportunity_status: str = "watchlist"
+    lifecycle: str = "forecast"
+    opportunity_status: str = "upcoming"
     blocked_ok: bool = False
 
 
@@ -50,6 +52,13 @@ STRATEGIC_WATCH_SPECS = {
             "procurement notices, requests for proposals, grant-support calls, "
             "consultant calls and implementing-partner calls that can be filtered "
             "by beneficiary country, organization and opportunity type."
+        ),
+        title_ru="Закупки ООН, грантовые конкурсы и поиск партнёров",
+        summary_ru=(
+            "Официальный каталог Глобального рынка ООН: закупки, запросы "
+            "предложений, грантовые конкурсы, услуги консультантов и поиск "
+            "партнёров-исполнителей. Отбор доступен по стране, организации "
+            "и виду возможности."
         ),
         funder="United Nations Global Marketplace",
         type=OpportunityType.TENDER,
@@ -75,6 +84,13 @@ STRATEGIC_WATCH_SPECS = {
             "offices, research, training, civic technology and implementation "
             "partner routes."
         ),
+        title_ru="Открытые тендеры и конкурсы для партнёров ОБСЕ",
+        summary_ru=(
+            "Официальный портал закупок ОБСЕ с тендерами, запросами предложений "
+            "и выражениями заинтересованности. Для Казахстана и Центральной "
+            "Азии здесь публикуются закупки, исследования, обучение, цифровые "
+            "проекты и услуги исполнителей."
+        ),
         funder="OSCE",
         type=OpportunityType.TENDER,
         eligibility=("kazakhstan", "central_asia", "supplier_or_partner"),
@@ -90,6 +106,12 @@ STRATEGIC_WATCH_SPECS = {
             "consulting, research, training and service opportunities. Some "
             "edge requests may be blocked by the source CDN, so QAZ.FUND keeps "
             "the official URL and explicit source status."
+        ),
+        title_ru="Закупки и услуги МОМ в Казахстане",
+        summary_ru=(
+            "Официальный раздел МОМ в Казахстане с закупками и конкурсами для "
+            "поставщиков, консультантов, исследователей, учебных организаций "
+            "и сервисных компаний."
         ),
         funder="IOM Kazakhstan",
         type=OpportunityType.TENDER,
@@ -107,6 +129,12 @@ STRATEGIC_WATCH_SPECS = {
             "Kazakhstan-based suppliers, consultants and regional development "
             "projects, including technical assistance and digital initiatives."
         ),
+        title_ru="Закупки и объявления Евразийского банка развития",
+        summary_ru=(
+            "Официальный раздел закупок ЕАБР для поставщиков и консультантов. "
+            "Здесь публикуются задания по региональным проектам развития, "
+            "технической помощи и цифровизации."
+        ),
         funder="Eurasian Development Bank",
         type=OpportunityType.TENDER,
         eligibility=("kazakhstan", "regional_supplier_or_consultant"),
@@ -121,6 +149,12 @@ STRATEGIC_WATCH_SPECS = {
             "DAAD Central Asia funding entry point for students, graduates, "
             "postdocs, researchers and alumni from Kazakhstan, Kyrgyzstan, "
             "Tajikistan and Uzbekistan."
+        ),
+        title_ru="Стипендии и финансирование исследований DAAD для Центральной Азии",
+        summary_ru=(
+            "Официальный раздел DAAD для студентов, выпускников, аспирантов, "
+            "исследователей и преподавателей из Казахстана и других стран "
+            "Центральной Азии."
         ),
         funder="DAAD Central Asia",
         type=OpportunityType.FELLOWSHIP,
@@ -147,6 +181,12 @@ STRATEGIC_WATCH_SPECS = {
             "Programme. It is a high-value watch source for environment, climate, "
             "community resilience, biodiversity and local civil-society projects."
         ),
+        title_ru="Программа малых грантов ГЭФ в Казахстане",
+        summary_ru=(
+            "Официальная страница ПРООН о Программе малых грантов ГЭФ. "
+            "Направления поддержки – экология, климат, биоразнообразие, "
+            "устойчивость сообществ и местные инициативы гражданского сектора."
+        ),
         funder="GEF Small Grants Programme / UNDP Kazakhstan",
         type=OpportunityType.GRANT,
         eligibility=("kazakhstan", "civil_society", "community_project"),
@@ -164,12 +204,18 @@ STRATEGIC_WATCH_SPECS = {
             "closed, so QAZ.FUND treats this as a future-call watch source rather "
             "than an open application."
         ),
+        title_ru="Будущие конкурсы Глобального инновационного фонда",
+        summary_ru=(
+            "Официальная страница фонда для масштабируемых решений в области "
+            "развития. Предыдущий приём завершён; карточка отслеживает появление "
+            "следующего конкурса и не является открытой заявкой."
+        ),
         funder="Global Innovation Fund",
         type=OpportunityType.GRANT,
         eligibility=("global", "development_innovation"),
         tags=("gif", "innovation", "development", "grant", "future_call"),
-        lifecycle="future_watch",
-        opportunity_status="future_watch",
+        lifecycle="forecast",
+        opportunity_status="upcoming",
     ),
 }
 
@@ -243,6 +289,16 @@ class StrategicWatchSource(BaseSource):
                 "Official monitored entry point. Verify current item-level "
                 "conditions on the source before acting."
             ),
+            "i18n": {
+                "ru": {
+                    "title": self.spec.title_ru,
+                    "summary": self.spec.summary_ru,
+                },
+                "en": {
+                    "title": self.spec.title,
+                    "summary": self.spec.summary,
+                },
+            },
         }
 
         yield Opportunity(

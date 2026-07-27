@@ -12,6 +12,7 @@ from urllib.parse import parse_qs, urljoin, urlparse
 import structlog
 
 from core.models import Opportunity, OpportunityType
+from core.public_clock import public_today
 from core.source_text import clean_source_text as _clean_text
 from sources.base import BaseSource
 
@@ -163,7 +164,7 @@ def _extract_notices(
     *,
     today: date | None = None,
 ) -> list[UndpNotice]:
-    today = today or date.today()
+    today = today or public_today()
     notices: list[UndpNotice] = []
     seen: set[str] = set()
     seen_urls: set[str] = set()

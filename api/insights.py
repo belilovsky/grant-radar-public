@@ -6,6 +6,7 @@ from collections import Counter
 from datetime import date, timedelta
 from typing import Any, Iterable
 
+from core.public_clock import public_today
 from core.public_contract import OpportunityV1, dataset_revision
 
 ACTIVE_STATUSES = frozenset(
@@ -246,7 +247,7 @@ def build_insights_payload(
     """Build deterministic current-state analytics without inventing missing facts."""
 
     active_lang = "en" if lang == "en" else "ru"
-    current_day = today or date.today()
+    current_day = today or public_today()
     candidate_catalog = items if catalog_items is None else catalog_items
     active = [
         item for item in candidate_catalog if _is_current(item, today=current_day)

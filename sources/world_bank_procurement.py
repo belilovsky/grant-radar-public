@@ -9,6 +9,7 @@ from typing import Any, ClassVar
 import structlog
 
 from core.models import Opportunity, OpportunityType
+from core.public_clock import public_today
 from sources.base import BaseSource
 from sources.world_bank import _infer_tags, _unique
 
@@ -123,7 +124,7 @@ class WorldBankCentralAsiaProcurementSource(BaseSource):
         if not isinstance(notices, list):
             return
 
-        today = date.today()
+        today = public_today()
         count = 0
         for notice in notices:
             if not isinstance(notice, dict) or not _is_current_notice(notice, today):

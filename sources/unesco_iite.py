@@ -12,6 +12,7 @@ from urllib.parse import urljoin
 import structlog
 
 from core.models import Opportunity, OpportunityType
+from core.public_clock import public_today
 from core.source_text import clean_source_text as _clean_text
 from sources.base import BaseSource
 
@@ -241,7 +242,7 @@ class UnescoIiteSource(BaseSource):
             )
             return
 
-        today = date.today()
+        today = public_today()
         for url, listing_title in _extract_links(response.text)[:12]:
             try:
                 detail = await self.client.get(url)

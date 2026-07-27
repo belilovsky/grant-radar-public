@@ -157,6 +157,8 @@ def _json_payload(record: Any) -> dict[str, Any]:
             "eligibility": _get(record, "eligibility") or [],
             "tags": _get(record, "tags") or [],
             "languages": _get(record, "languages") or [],
+            "opportunity_status": _get(record, "opportunity_status"),
+            "lifecycle": _get(record, "lifecycle"),
             "raw": record_raw,
         }
     try:

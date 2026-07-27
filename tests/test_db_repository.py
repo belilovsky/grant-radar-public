@@ -225,6 +225,31 @@ def test_sql_repository_serializes_opportunity_source_raw_without_full_model():
     assert "source_url" not in row.raw
 
 
+def test_sql_repository_preserves_opportunity_status_contract():
+    repo = SqlRepository("sqlite:///:memory:")
+    repo.upsert(
+        Opportunity(
+            source="official_watch",
+            source_url="https://example.org/future-call",
+            type=OpportunityType.GRANT,
+            title="Future call watch",
+            opportunity_status="upcoming",
+            lifecycle="forecast",
+            raw={"external_id": "FUTURE-1", "source_watch": True},
+        )
+    )
+
+    row = list(repo.all())[0]
+    assert row.raw["opportunity_status"] == "upcoming"
+    assert row.raw["lifecycle"] == "forecast"
+
+    from api.main import _stored_opportunity
+
+    restored = _stored_opportunity(row)
+    assert restored.opportunity_status == "upcoming"
+    assert restored.lifecycle == "forecast"
+
+
 def test_sql_repository_upserts_opportunity_by_raw_external_id():
     repo = SqlRepository("sqlite:///:memory:")
     assert repo.upsert(

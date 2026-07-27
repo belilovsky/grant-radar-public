@@ -13,6 +13,7 @@ import structlog
 from bs4 import BeautifulSoup
 
 from core.models import Opportunity, OpportunityType
+from core.public_clock import public_today
 from sources.base import BaseSource
 
 log = structlog.get_logger()
@@ -89,7 +90,7 @@ class CanadaCfliCentralAsiaSource(BaseSource):
             status_text = cells[1].get_text(" ", strip=True).lower()
             deadline_text = cells[2].get_text(" ", strip=True)
             deadline = _date_from_text(deadline_text)
-            if status_text != "open" or deadline is None or deadline < date.today():
+            if status_text != "open" or deadline is None or deadline < public_today():
                 continue
             link = cells[0].find("a", href=True)
             if link is not None:

@@ -23,6 +23,8 @@ services:
     environment:
       DATABASE_URL: postgresql+psycopg://grantradar:${POSTGRES_PASSWORD:-changeme}@db:5432/grantradar
       GRANT_RADAR_DB_URL: postgresql+psycopg://grantradar:${POSTGRES_PASSWORD:-changeme}@db:5432/grantradar
+      GRANT_RADAR_TIME_ZONE: ${GRANT_RADAR_TIME_ZONE:-Asia/Almaty}
+      TZ: ${GRANT_RADAR_TIME_ZONE:-Asia/Almaty}
     healthcheck:
       test:
         [
@@ -43,6 +45,8 @@ services:
     environment:
       DATABASE_URL: postgresql+psycopg://grantradar:${POSTGRES_PASSWORD:-changeme}@db:5432/grantradar
       GRANT_RADAR_DB_URL: postgresql+psycopg://grantradar:${POSTGRES_PASSWORD:-changeme}@db:5432/grantradar
+      GRANT_RADAR_TIME_ZONE: ${GRANT_RADAR_TIME_ZONE:-Asia/Almaty}
+      TZ: ${GRANT_RADAR_TIME_ZONE:-Asia/Almaty}
       # Migrations are owned by the API entrypoint to avoid concurrent Alembic runs.
       GRANT_RADAR_SKIP_MIGRATIONS: "1"
       GRANT_RADAR_MAX_SOURCE_CONCURRENCY: ${GRANT_RADAR_MAX_SOURCE_CONCURRENCY:-4}

@@ -68,6 +68,37 @@ def test_content_audit_flags_forbidden_and_missing_summary():
     }
 
 
+def test_content_audit_flags_current_catalog_count_drift():
+    result = analyze_content(
+        coverage={
+            "enabled_sources": 1,
+            "relevant_open_items": 2,
+            "sources": [],
+        },
+        opportunities=[
+            {
+                "title": "Current support program",
+                "summary": (
+                    "Current support opportunity with enough public context and "
+                    "a verified direct source for applicants in Kazakhstan."
+                ),
+                "tags": ["rolling"],
+                "source_url": "https://example.org/program/current",
+            }
+        ],
+        forbidden_terms=[],
+        min_sources=1,
+        min_opportunities=1,
+        stale_after_days=7,
+        now=datetime(2026, 7, 28, tzinfo=UTC),
+    )
+
+    assert result.status == "needs_attention"
+    assert "coverage and deadline-filtered catalog counts differ: 2 != 1" in (
+        result.issues
+    )
+
+
 def test_content_audit_accepts_clean_rolling_items():
     result = analyze_content(
         coverage={
@@ -102,6 +133,46 @@ def test_content_audit_accepts_clean_rolling_items():
 
     assert result.status == "ok"
     assert result.issues == []
+    assert result.missing_deadline_titles == []
+    assert result.rootish_source_urls == []
+
+
+def test_content_audit_accepts_forecast_source_watch_without_deadline():
+    result = analyze_content(
+        coverage={
+            "enabled_sources": 1,
+            "relevant_open_items": 1,
+            "sources": [
+                {
+                    "slug": "official_watch",
+                    "enabled": True,
+                    "items": 1,
+                    "last_discovered_at": "2026-07-28T00:00:00+00:00",
+                }
+            ],
+        },
+        opportunities=[
+            {
+                "title": "Future official call",
+                "summary": (
+                    "Official monitored entry point for a forthcoming program "
+                    "relevant to applicants in Kazakhstan and Central Asia."
+                ),
+                "tags": ["source_watch", "official_source"],
+                "source_url": "https://example.org/tenders",
+                "opportunity_status": "upcoming",
+                "lifecycle": "forecast",
+                "raw": {"source_watch": True},
+            }
+        ],
+        forbidden_terms=[],
+        min_sources=1,
+        min_opportunities=1,
+        stale_after_days=7,
+        now=datetime(2026, 7, 28, tzinfo=UTC),
+    )
+
+    assert result.status == "ok"
     assert result.missing_deadline_titles == []
     assert result.rootish_source_urls == []
 

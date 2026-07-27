@@ -92,7 +92,7 @@ These sources are worth tracking but should not dominate the pipeline.
 | Philanthropic education foundations | grants | Useful for nonprofit wrapper strategy | monthly | Often requires NGO or academic lead |
 | Regional ministry / agency sites | tenders / pilots | Can surface local procurement or pilot windows | weekly | Especially education ministries and digital ministries |
 | University innovation funds | pilots / partnerships | Useful for validation and pilot co-financing | monthly | Better for research or training modules |
-| Global Innovation Fund | development innovation grants | Relevant for scalable social innovation, but the latest public application page is not an open call | monthly | Active `global_innovation_fund` future-watch source; do not present as open until the source publishes a new call |
+| Global Innovation Fund | development innovation grants | Relevant for scalable social innovation, but the latest public application page is not an open call | monthly | Active `global_innovation_fund` forecast monitor; do not present as open until the source publishes a new call |
 
 ## Country-specific pages to track
 
@@ -238,7 +238,7 @@ Recommended parser order:
 30. EDB procurement – active official watch `edb_procurement`
 31. DAAD Central Asia – active official watch `daad_central_asia`
 32. GEF SGP Kazakhstan – active official watch `gef_sgp_kazakhstan`
-33. Global Innovation Fund – active future-watch `global_innovation_fund`
+33. Global Innovation Fund – active forecast monitor `global_innovation_fund`
 34. country ministry pages
 
 ## Data capture fields

@@ -88,6 +88,7 @@ from core.models import Digest, Opportunity, OpportunityDetail, OpportunityType
 from core.nlp import clean_source_summary
 from core.persistence import Repository
 from core.pipeline import run_all
+from core.public_clock import public_today
 from core.public_contract import (
     DATASET_SCHEMA_VERSION,
     SCHEMA_VERSION,
@@ -525,8 +526,10 @@ def _stored_opportunity(row: Any, *, content_lang: str = "en") -> Opportunity:
         tags=_list_value(getattr(row, "tags", None) or raw.get("tags")),
         languages=_list_value(getattr(row, "languages", None) or raw.get("languages")),
         score=float(getattr(row, "score", None) or raw.get("score") or 0.0),
-        opportunity_status=getattr(row, "opportunity_status", None),
-        lifecycle=getattr(row, "lifecycle", None),
+        opportunity_status=(
+            getattr(row, "opportunity_status", None) or raw.get("opportunity_status")
+        ),
+        lifecycle=getattr(row, "lifecycle", None) or raw.get("lifecycle"),
         discovered_at=discovered_at,
         raw=_public_raw(raw),
     )
@@ -872,7 +875,7 @@ def _cached_prepared_scope_items(
         if cached is not None and now - cached[0] < _PUBLIC_ITEMS_CACHE_TTL:
             return list(cached[1])
 
-    today = date.today()
+    today = public_today()
     prepared = [
         _with_decision_readiness(
             localize_opportunity(item, normalized_lang),
@@ -905,7 +908,7 @@ def _cached_current_catalog_items(content_lang: str = "en") -> list[Opportunity]
         if cached is not None and now - cached[0] < _PUBLIC_ITEMS_CACHE_TTL:
             return list(cached[1])
 
-    today = date.today()
+    today = public_today()
     current_items = [
         item
         for item in _cached_prepared_scope_items(normalized_lang)
@@ -1059,7 +1062,7 @@ def _funder_tag_tokens(item: Opportunity) -> list[str]:
 
 
 def _build_funder_index(items: Iterable[Opportunity]) -> dict[str, dict[str, Any]]:
-    today = date.today()
+    today = public_today()
     groups: dict[str, dict[str, Any]] = {}
     for item in items:
         name = _funder_name(item)
@@ -1231,7 +1234,7 @@ def _related_opportunities(
     lang: str,
     limit: int = 3,
 ) -> list[tuple[Opportunity, str]]:
-    today = date.today()
+    today = public_today()
     rows: list[tuple[float, Opportunity]] = []
     for candidate in _cached_public_items(content_lang=lang):
         if candidate.id == target.id or not _is_open(candidate, today):
@@ -1278,7 +1281,7 @@ def _source_coverage(
     items: list[Opportunity],
     source_checks: Mapping[str, datetime] | None = None,
 ) -> list[dict[str, Any]]:
-    today = date.today()
+    today = public_today()
     source_checks = source_checks or {}
     by_source: dict[str, list[Opportunity]] = {}
     for item in items:
@@ -1598,7 +1601,7 @@ def _render_sitemap_xml(base_url: str) -> str:
         [
             item
             for item in _cached_public_scope_items(content_lang="en")
-            if _is_open(item, date.today())
+            if _is_open(item, public_today())
         ],
         key=lambda item: (item.discovered_at, item.score, str(item.title).lower()),
         reverse=True,
@@ -2808,7 +2811,7 @@ def _query_opportunities(
     if deadline_after:
         items = [o for o in items if o.deadline is None or o.deadline >= deadline_after]
     total_count = len(items)
-    today = date.today()
+    today = public_today()
     items.sort(
         key=lambda item: (
             priority_score(item, today=today),
@@ -3744,7 +3747,7 @@ async def digest(
     lang: str | None = Query(None),
 ) -> Digest:
     content_lang = _public_lang(lang)
-    today = date.today()
+    today = public_today()
     items = _cached_public_scope_items(
         content_lang=content_lang, include_irrelevant=include_irrelevant
     )

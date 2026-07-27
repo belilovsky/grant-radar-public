@@ -6,11 +6,12 @@ import argparse
 import json
 import re
 from dataclasses import asdict, dataclass
-from datetime import date
 from typing import Any
 from urllib.parse import urljoin
 
 import httpx
+
+from core.public_clock import public_today
 
 DASHBOARD_MARKERS = (
     '<html lang="ru"',
@@ -132,7 +133,7 @@ def run_smoke(
             client,
             base_url,
             (
-                "/opportunities?limit=1000&min_score=0.3"
+                "/opportunities?limit=5000&min_score=0.3"
                 f"&deadline_after={deadline_after}"
             ),
         )
@@ -268,6 +269,21 @@ def run_smoke(
     _require(
         len(opportunities) >= min_opportunities,
         "opportunity count is below production threshold",
+    )
+    current_catalog_count = len(opportunities)
+    coverage_current_count = int(coverage.get("relevant_open_items") or 0)
+    insights_current_count = int(
+        (insights_api.get("scope") or {}).get("current_catalog") or 0
+    )
+    _require(
+        coverage_current_count == current_catalog_count,
+        "coverage and deadline-filtered current catalog counts differ: "
+        f"{coverage_current_count} != {current_catalog_count}",
+    )
+    _require(
+        insights_current_count == current_catalog_count,
+        "insights and deadline-filtered current catalog counts differ: "
+        f"{insights_current_count} != {current_catalog_count}",
     )
     _require(bool(ndjson_items), "NDJSON export is empty")
     _require(
@@ -628,7 +644,7 @@ def _parser() -> argparse.ArgumentParser:
     )
     parser.add_argument(
         "--deadline-after",
-        default=date.today().isoformat(),
+        default=public_today().isoformat(),
         help="ISO date used for open-opportunity filtering.",
     )
     parser.add_argument("--min-sources", type=int, default=26)

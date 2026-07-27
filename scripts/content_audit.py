@@ -6,13 +6,14 @@ import argparse
 import json
 import re
 from dataclasses import asdict, dataclass, field
-from datetime import date, datetime, timedelta, timezone
+from datetime import datetime, timedelta, timezone
 from typing import Any
 from urllib.parse import urljoin, urlparse
 
 import httpx
 
 from api.dashboard import dashboard_copy
+from core.public_clock import public_today
 
 try:
     from datetime import UTC
@@ -118,6 +119,35 @@ def _raw_payload(item: dict[str, Any]) -> dict[str, Any]:
     return raw if isinstance(raw, dict) else {}
 
 
+def _is_source_watch(item: dict[str, Any]) -> bool:
+    tags = {str(tag).strip().lower() for tag in item.get("tags") or []}
+    return "source_watch" in tags or _raw_payload(item).get("source_watch") is True
+
+
+def _has_deadline_policy(item: dict[str, Any]) -> bool:
+    if item.get("deadline"):
+        return True
+    tags = {str(tag).strip().lower() for tag in item.get("tags") or []}
+    raw = _raw_payload(item)
+    status = (
+        str(
+            item.get("lifecycle")
+            or item.get("opportunity_status")
+            or raw.get("lifecycle")
+            or raw.get("opportunity_status")
+            or ""
+        )
+        .strip()
+        .lower()
+    )
+    return bool(
+        "rolling" in tags
+        or raw.get("deadline_policy")
+        or status in {"forecast", "upcoming"}
+        or _is_source_watch(item)
+    )
+
+
 def _has_detail_contract(item: dict[str, Any]) -> bool:
     raw = _raw_payload(item)
     if str(raw.get("detail_text") or "").strip():
@@ -177,6 +207,11 @@ def analyze_content(
     source_count = int(coverage.get("enabled_sources") or 0)
     relevant_open_items = int(coverage.get("relevant_open_items") or 0)
     opportunity_count = len(opportunities)
+    if relevant_open_items != opportunity_count:
+        issues.append(
+            "coverage and deadline-filtered catalog counts differ: "
+            f"{relevant_open_items} != {opportunity_count}"
+        )
     if zero_item_sources:
         issues.append(
             f"enabled sources with zero items: {', '.join(zero_item_sources)}"
@@ -209,7 +244,7 @@ def analyze_content(
     missing_deadline_titles = [
         str(item.get("title") or "")
         for item in opportunities
-        if not item.get("deadline") and "rolling" not in (item.get("tags") or [])
+        if not _has_deadline_policy(item)
     ][:20]
     if missing_deadline_titles:
         issues.append(
@@ -219,7 +254,7 @@ def analyze_content(
     rootish_source_urls = [
         str(item.get("source_url") or "")
         for item in opportunities
-        if _rootish_source_url(item.get("source_url"))
+        if _rootish_source_url(item.get("source_url")) and not _is_source_watch(item)
     ][:20]
     if rootish_source_urls:
         issues.append(f"{len(rootish_source_urls)} opportunities have weak source_url")
@@ -311,7 +346,7 @@ def run_audit(
             _url(
                 base_url,
                 (
-                    "/opportunities?limit=1000&min_score=0.3"
+                    "/opportunities?limit=5000&min_score=0.3"
                     f"&deadline_after={deadline_after}"
                 ),
             )
@@ -331,7 +366,7 @@ def run_audit(
 def _parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--base-url", default="https://qaz.fund")
-    parser.add_argument("--deadline-after", default=date.today().isoformat())
+    parser.add_argument("--deadline-after", default=public_today().isoformat())
     parser.add_argument("--min-sources", type=int, default=26)
     parser.add_argument("--min-opportunities", type=int, default=45)
     parser.add_argument("--stale-after-days", type=int, default=7)

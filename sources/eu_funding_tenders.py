@@ -11,6 +11,7 @@ from urllib.parse import quote
 import structlog
 
 from core.models import Opportunity, OpportunityType
+from core.public_clock import public_today
 from sources.base import BaseSource
 from sources.world_bank import _infer_tags, _unique
 
@@ -82,7 +83,7 @@ class EuFundingTendersCentralAsiaSource(BaseSource):
     async def fetch(self) -> AsyncIterator[Opportunity]:
         seen: set[str] = set()
         count = 0
-        today = date.today()
+        today = public_today()
         for term in SEARCH_TERMS:
             try:
                 response = await self.client.post(

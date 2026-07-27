@@ -11,6 +11,7 @@ from api.avds_visual import DASHBOARD_AVDS4_CSS
 from api.dashboard_copy import dashboard_copy
 from api.dashboard_style import DASHBOARD_CSS
 from api.public_meta import analytics_head_html, og_image_url
+from core.public_clock import public_time_zone_name
 
 GOOGLE_SITE_VERIFICATION_FILENAME = "google6ce0cb641d438c0c.html"
 GOOGLE_SITE_VERIFICATION_CONTENT = (
@@ -213,6 +214,7 @@ def render_dashboard(
         items=items,
     )
     copy_json = json.dumps(copy, ensure_ascii=False)
+    public_time_zone_json = json.dumps(public_time_zone_name())
     html_lang = escape(active_lang, quote=True)
     og_locale = escape(active_lang.replace("-", "_") + "_KZ", quote=True)
     social_image = escape(og_image_url(site_origin, base_raw), quote=True)
@@ -1189,6 +1191,13 @@ def render_dashboard(
 
   <script>
     const copy = {copy_json};
+    const PUBLIC_TIME_ZONE = {public_time_zone_json};
+    const PUBLIC_DATE_FORMATTER = new Intl.DateTimeFormat("en-US", {{
+      timeZone: PUBLIC_TIME_ZONE,
+      year: "numeric",
+      month: "2-digit",
+      day: "2-digit"
+    }});
     const root = document.querySelector("[data-api-base]");
     const datasetApiBase = root.dataset.apiBase || "";
     const deriveApiBase = () => {{
@@ -2303,14 +2312,9 @@ def render_dashboard(
 
     function daysUntilDeadline(item) {{
       if (!item || !item.deadline) return null;
-      const parsed = Date.parse(`${{item.deadline}}T00:00:00`);
+      const parsed = Date.parse(`${{item.deadline}}T00:00:00Z`);
       if (Number.isNaN(parsed)) return null;
-      const today = new Date();
-      const todayStart = Date.UTC(
-        today.getUTCFullYear(),
-        today.getUTCMonth(),
-        today.getUTCDate()
-      );
+      const todayStart = Date.parse(`${{publicDateISO()}}T00:00:00Z`);
       return Math.ceil((parsed - todayStart) / (1000 * 60 * 60 * 24));
     }}
 
@@ -3793,13 +3797,17 @@ def render_dashboard(
       }}
     }}
 
-    function localDateISO(date = new Date()) {{
-      const timezoneOffsetMs = date.getTimezoneOffset() * 60 * 1000;
-      return new Date(date.getTime() - timezoneOffsetMs).toISOString().slice(0, 10);
+    function publicDateISO(date = new Date()) {{
+      const parts = Object.fromEntries(
+        PUBLIC_DATE_FORMATTER.formatToParts(date).map(
+          ({{ type, value }}) => [type, value]
+        )
+      );
+      return `${{parts.year}}-${{parts.month}}-${{parts.day}}`;
     }}
 
     function localRelevantBySource() {{
-      const today = localDateISO();
+      const today = publicDateISO();
       return state.items.reduce((counts, item) => {{
         if (item.score >= 0.3 && (!item.deadline || item.deadline >= today)) {{
           counts.set(item.source, (counts.get(item.source) || 0) + 1);
@@ -4032,7 +4040,7 @@ def render_dashboard(
     }}
 
     function visibleItems() {{
-      const today = localDateISO();
+      const today = publicDateISO();
       const historicalLifecycle = state.lifecycle === "closed" || state.lifecycle === "awarded";
       const audiencePreset = activeAudiencePreset();
       const formatPreset = activeFormatPreset();
@@ -4694,7 +4702,7 @@ def render_dashboard(
 
     async function loadOpportunities() {{
       const message = $("#opportunities-message");
-      const today = localDateISO();
+      const today = publicDateISO();
       const params = state.includeArchived
         ? "limit=5000&min_score=0&include_irrelevant=true&compact=true"
         : `limit=5000&min_score=0&deadline_after=${{today}}&compact=true`;

@@ -159,6 +159,11 @@ def test_ungm_watch_source_marks_official_entry_point_not_item_parser():
     assert items[0].raw["item_level_parser"] is False
     assert items[0].raw["source_watch"] is True
     assert "implementing_partner" in items[0].tags
+    assert items[0].opportunity_status == "upcoming"
+    assert items[0].lifecycle == "forecast"
+    assert items[0].raw["i18n"]["ru"]["title"] == (
+        "Закупки ООН, грантовые конкурсы и поиск партнёров"
+    )
 
 
 def test_iom_watch_source_keeps_blocked_official_page_with_status():
@@ -181,7 +186,7 @@ def test_iom_watch_source_keeps_blocked_official_page_with_status():
     assert items[0].raw["status_code"] == 403
 
 
-def test_global_innovation_fund_is_future_watch_not_open_call():
+def test_global_innovation_fund_is_forecast_not_open_call():
     html = "<html><head><title>Apply for funding</title></head></html>"
     transport = httpx.MockTransport(
         lambda request: httpx.Response(200, text=html, request=request)
@@ -192,5 +197,5 @@ def test_global_innovation_fund_is_future_watch_not_open_call():
 
     assert len(items) == 1
     assert items[0].source == "global_innovation_fund"
-    assert items[0].opportunity_status == "future_watch"
-    assert items[0].lifecycle == "future_watch"
+    assert items[0].opportunity_status == "upcoming"
+    assert items[0].lifecycle == "forecast"

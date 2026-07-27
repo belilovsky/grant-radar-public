@@ -30,6 +30,7 @@
 | UNICEF Kazakhstan | HTML tender page | Kazakhstan procurement | Item-level UNICEF Kazakhstan tender parser with browser-like retry headers; recent closed tenders can remain as coverage-only records while expired tenders stay out of the default feed |
 | Google.org AI Opportunity | page monitor | AI education philanthropy | Global AI/digital-skills grant and partner-program watch for nonprofit, government and academic routes |
 | UNESCO IITE | HTML announcements | AI and education calls | Item-level UNESCO IITE parser for AI/EdTech awards, proposals and consultancy calls; expired notices are excluded |
+| Strategic official watches | curated official page checks | UNGM, OSCE, IOM Kazakhstan, EDB, DAAD Central Asia, GEF SGP Kazakhstan and Global Innovation Fund | Page-level discovery records with curated Russian copy; all carry `upcoming` / `forecast` status until an item-level call with confirmed conditions is available |
 
 ## Quality rules now enforced
 
@@ -92,6 +93,9 @@
 - Official curated watch pages that block automated fetches with `403` or
   rate limits are retained with the curated title and a raw status note, so
   CDN error text such as `Access Denied` does not enter the public content.
+- Page-level strategic watches are never represented as open applications.
+  Their `upcoming` status and `forecast` lifecycle survive SQL persistence,
+  and the public card tells the user to verify an item-level call at source.
 - Selected official service pages can also be retained when the VPS cannot
   complete TLS/HTTP fetches, again using curated text plus a raw status note
   instead of surfacing transport errors to users.
@@ -112,7 +116,8 @@
   official detail page is available.
 - `make content-audit` checks live source coverage, forbidden terms, missing
   summaries, short summaries, unmarked no-deadline records, weak homepage-like
-  source URLs and leaked HTML entities.
+  source URLs, leaked HTML entities, untranslated public labels and equality
+  between the coverage count and the deadline-filtered catalog.
 - `/coverage` reports per-source indexed/open/relevant counts so the dashboard
   can show whether a source is only registered or actually contributing items.
 - Production `GRANT_RADAR_SOURCES` must include the full source registry, not

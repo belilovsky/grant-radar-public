@@ -32,6 +32,37 @@ def _reset_api_state(monkeypatch) -> None:
     api_main._clear_public_items_cache()
 
 
+def test_current_catalog_uses_kazakhstan_business_date(monkeypatch):
+    _reset_api_state(monkeypatch)
+    monkeypatch.setattr(api_main, "public_today", lambda: date(2026, 7, 28))
+    api_main._cache.extend(
+        [
+            Opportunity(
+                source="astana_hub",
+                source_url="https://example.org/expired",
+                type=OpportunityType.GRANT,
+                title="Kazakhstan AI programme expired yesterday",
+                tags=["kazakhstan", "ai"],
+                score=0.9,
+                deadline=date(2026, 7, 27),
+            ),
+            Opportunity(
+                source="astana_hub",
+                source_url="https://example.org/current",
+                type=OpportunityType.GRANT,
+                title="Kazakhstan AI programme closing today",
+                tags=["kazakhstan", "ai"],
+                score=0.9,
+                deadline=date(2026, 7, 28),
+            ),
+        ]
+    )
+
+    current = api_main._cached_current_catalog_items("en")
+
+    assert [item.title for item in current] == ["Kazakhstan AI programme closing today"]
+
+
 def test_root_renders_service_landing(monkeypatch):
     _reset_api_state(monkeypatch)
     client = TestClient(api_main.app)
@@ -343,7 +374,9 @@ def test_root_renders_service_landing(monkeypatch):
     assert "SEARCH_SYNONYM_GROUPS" in response.text
     assert "return copy.score_exact" in response.text
     assert 'aria-label="${sourceName}"' in response.text
-    assert "function localDateISO" in response.text
+    assert "function publicDateISO" in response.text
+    assert "timeZone: PUBLIC_TIME_ZONE" in response.text
+    assert "getTimezoneOffset" not in response.text
     assert "function localRelevantBySource" in response.text
     assert "function regionalPriority" in response.text
     assert "function regionalBadgeLabel" in response.text

@@ -12,6 +12,7 @@ from email.utils import format_datetime
 from html import escape
 from typing import Literal
 
+from core.public_clock import public_today
 from core.public_contract import OpportunityV1
 
 CARD_FORMATS: dict[str, tuple[int, int]] = {
@@ -223,7 +224,7 @@ def chart_rows(
     today: date | None = None,
     limit: int = 10,
 ) -> list[dict[str, int | str]]:
-    current_day = today or date.today()
+    current_day = today or public_today()
     counter: Counter[str] = Counter()
     if chart_type == "active_by_theme":
         counter.update(theme for item in items for theme in item.themes)
