@@ -594,7 +594,12 @@ def _public_dedup_key(item: Opportunity) -> str:
     if item.source == "undp_procurement" and "nego_id=" in source_url:
         # UNDP may revise the reference number without changing the notice URL.
         return f"{item.source}:url:{source_url}"
-    external_id = str(raw.get("external_id") or raw.get("reference") or "").strip()
+    external_id = str(
+        raw.get("external_id")
+        or raw.get("reference")
+        or (raw.get("number") if item.source == "grants_gov" else "")
+        or ""
+    ).strip()
     if external_id:
         return f"{item.source}:{external_id.lower()}"
     return f"{item.source}:{source_url}"

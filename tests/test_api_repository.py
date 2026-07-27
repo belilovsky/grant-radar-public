@@ -1055,6 +1055,29 @@ def test_public_dedupe_uses_undp_notice_url_when_reference_changes():
     assert deduped[0].raw["external_id"] == "UNDP-KAZ-42,1"
 
 
+def test_public_dedupe_uses_grants_gov_opportunity_number_across_revisions():
+    older = Opportunity(
+        source="grants_gov",
+        source_url="https://www.grants.gov/search-results-detail/363033",
+        type=OpportunityType.GRANT,
+        title="Regional AI program",
+        score=0.8,
+        discovered_at=datetime(2026, 7, 1, tzinfo=timezone.utc),
+        raw={"number": "DFOP0018586"},
+    )
+    revised = older.model_copy(
+        update={
+            "source_url": "https://www.grants.gov/search-results-detail/363227",
+            "discovered_at": datetime(2026, 7, 17, tzinfo=timezone.utc),
+        }
+    )
+
+    deduped = api_main._dedupe_public_items([older, revised], content_lang="en")
+
+    assert len(deduped) == 1
+    assert str(deduped[0].source_url).endswith("/363227")
+
+
 def test_marketing_endpoints_are_exposed(monkeypatch):
     _reset_api_state(monkeypatch)
     api_main._cache.extend(
@@ -2236,7 +2259,7 @@ def test_digest_returns_open_relevant_items_with_tag_filter(monkeypatch):
     assert data["channel"] == "api"
     assert len(data["items"]) == 1
     assert data["items"][0]["source"] == "google_cloud_startup"
-    assert data["items"][0]["title"] == "Google for Startups Cloud Program"
+    assert data["items"][0]["title"] == "Google Cloud для стартапов"
     head_response = client.head("/digest", params={"tag": "cloud_credits", "limit": 5})
     assert head_response.status_code == 200
     assert head_response.headers["content-type"].startswith("application/json")
@@ -3535,11 +3558,12 @@ def test_funder_page_renders_public_profile(monkeypatch):
 def test_funder_labels_keep_acronyms_and_normalized_case():
     copy = dashboard_copy("ru")
 
-    assert (
-        funder_page_module._label_value("undp_procurement", copy) == "UNDP Procurement"
-    )
+    assert funder_page_module._label_value("undp_procurement", copy) == "Закупки ПРООН"
     assert funder_page_module._label_value("ebrd_ecepp_procurement", copy) == (
-        "EBRD ECEPP Procurement"
+        "Закупки ЕБРР ECEPP"
+    )
+    assert funder_page_module._label_value("isdb_project_procurement", copy) == (
+        "Закупки Исламского банка развития"
     )
     assert funder_page_module._label_value("support_rk", copy) == "Support RK"
     assert (

@@ -80,6 +80,16 @@ _KAZAKHSTAN_WATCH_SUMMARIES = {
     ),
 }
 
+_SOURCE_RU_TITLES = {
+    "google_cloud_startup": "Google Cloud для стартапов",
+    "microsoft_founders_hub": "Microsoft Founders Hub для стартапов",
+    "aws_activate": "Облачные кредиты AWS Activate",
+    "nvidia_inception": "Программа NVIDIA Inception для стартапов",
+    "cloudflare_startups": "Cloudflare для стартапов",
+    "mongodb_startups": "MongoDB для стартапов",
+    "google_org_ai_opportunity": ("Программы Google.org в сфере ИИ и цифровых навыков"),
+}
+
 
 def _raw(item: Opportunity) -> dict[str, Any]:
     return item.raw if isinstance(item.raw, dict) else {}
@@ -122,6 +132,8 @@ def russian_opportunity_title_fallback(item: Opportunity, title: str) -> str:
         return cleaned
 
     source = item.source
+    if source in _SOURCE_RU_TITLES:
+        return _SOURCE_RU_TITLES[source]
     if source == "adb_kazakhstan":
         return "Проект Азиатского банка развития для Казахстана"
     if source == "world_bank_kazakhstan":

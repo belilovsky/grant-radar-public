@@ -117,6 +117,20 @@ def test_english_localization_uses_curated_astana_hub_fallback():
     assert localized.summary.startswith("Astana Hub digital-skills program.")
 
 
+def test_russian_localization_uses_editorial_startup_program_title():
+    item = Opportunity(
+        source="google_cloud_startup",
+        source_url=HttpUrl("https://startup.google.com/cloud/"),
+        type=OpportunityType.CLOUD_CREDIT,
+        title="Google for Startups Cloud Program",
+        summary="Global startup support program with cloud credits.",
+    )
+
+    localized = localize_opportunity(item, "ru")
+
+    assert localized.title == "Google Cloud для стартапов"
+
+
 def test_english_localization_expands_short_eeas_summary():
     item = Opportunity(
         source="eeas_kazakhstan",

@@ -9,6 +9,7 @@ from html import escape
 from typing import Any
 
 from api.avds import AVDS_CSS, AVDS_FONT_HEAD
+from api.dashboard_copy import dashboard_copy
 from api.public_meta import analytics_head_html
 from core.models import OpportunityDetail
 
@@ -16,6 +17,20 @@ from core.models import OpportunityDetail
 def _type_value(value: object) -> str:
     raw = value.value if isinstance(value, Enum) else value
     return str(raw or "grant").strip().lower()
+
+
+def _public_label(value: object, lang: str) -> str:
+    raw_value = value.value if isinstance(value, Enum) else value
+    raw = str(raw_value or "").strip()
+    if not raw:
+        return ""
+    label_map_raw = dashboard_copy(lang).get("label_map")
+    label_map = label_map_raw if isinstance(label_map_raw, dict) else {}
+    normalized = raw.lower().replace("-", "_").replace(" ", "_")
+    mapped = label_map.get(normalized) or label_map.get(raw.lower())
+    if isinstance(mapped, str) and mapped.strip():
+        return mapped.strip()
+    return raw.replace("_", " ")
 
 
 def _deadline(value: date | None, lang: str) -> str:
@@ -358,9 +373,13 @@ def render_application_prep_page(
     base = root_path.rstrip("/")
     detail_path = f"{base}/opportunity/{detail.id}?lang={active_lang}"
     source_href = str(detail.source_url)
-    organizer = str(detail.funder or detail.source or "")
+    organizer = _public_label(detail.funder or detail.source, active_lang)
     eligibility = (
-        "; ".join(str(value) for value in detail.eligibility if str(value).strip())
+        "; ".join(
+            _public_label(value, active_lang)
+            for value in detail.eligibility
+            if str(value).strip()
+        )
         or copy["unknown"]
     )
     deadline = _deadline(detail.deadline, active_lang)

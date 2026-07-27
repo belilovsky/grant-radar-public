@@ -2067,7 +2067,7 @@ def render_dashboard(
     }}
 
     function sourceInitials(source) {{
-      const label = String(source.name || humanizeLabel(source.slug) || "GR");
+      const label = sourceDisplayName(source) || "GR";
       const words = label
         .replace(/[^0-9A-Za-zА-Яа-яӘәҒғҚқҢңӨөҰұҮүҺһІіЁё]+/g, " ")
         .trim()

@@ -249,10 +249,11 @@ def test_content_audit_flags_tags_without_public_localization():
         min_opportunities=1,
         stale_after_days=7,
         label_maps={
-            "ru": {"rolling": "Бессрочно"},
+            "ru": {"rolling": "Бессрочно", "startup": "Стартап"},
             "en": {
                 "rolling": "Rolling",
                 "capacity_building": "Capacity building",
+                "startup": "Startup",
             },
         },
         now=datetime(2026, 5, 25, tzinfo=UTC),
@@ -261,6 +262,50 @@ def test_content_audit_flags_tags_without_public_localization():
     assert result.status == "needs_attention"
     assert result.unlocalized_tags == {"ru": ["capacity_building"]}
     assert "public tags are missing localized display labels" in result.issues
+
+
+def test_content_audit_flags_sources_without_public_localization():
+    result = analyze_content(
+        coverage={
+            "enabled_sources": 1,
+            "relevant_open_items": 1,
+            "sources": [
+                {
+                    "slug": "official_watch",
+                    "enabled": True,
+                    "items": 1,
+                    "last_discovered_at": "2026-07-28T00:00:00+00:00",
+                }
+            ],
+        },
+        opportunities=[
+            {
+                "title": "Rolling official program",
+                "summary": (
+                    "Official program with clear public context, eligibility "
+                    "guidance and a direct source for applicants in Kazakhstan."
+                ),
+                "tags": ["rolling"],
+                "source_url": "https://example.org/program/current",
+            }
+        ],
+        forbidden_terms=[],
+        min_sources=1,
+        min_opportunities=1,
+        stale_after_days=7,
+        label_maps={
+            "ru": {"rolling": "Бессрочно"},
+            "en": {
+                "rolling": "Rolling",
+                "official_watch": "Official watch",
+            },
+        },
+        now=datetime(2026, 7, 28, tzinfo=UTC),
+    )
+
+    assert result.status == "needs_attention"
+    assert result.unlocalized_sources == {"ru": ["official_watch"]}
+    assert "public sources are missing localized display labels" in result.issues
 
 
 def test_content_audit_ignores_html_entities_inside_raw_source_snippets():

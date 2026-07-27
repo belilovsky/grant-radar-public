@@ -28,7 +28,7 @@
 | Cloudflare Startups | page monitor | Global startup cloud credits | Edge/serverless/security/Workers AI credit monitor |
 | MongoDB Startups | page monitor | Global startup database credits | Atlas/database startup support monitor |
 | UNICEF Kazakhstan | HTML tender page | Kazakhstan procurement | Item-level UNICEF Kazakhstan tender parser with browser-like retry headers; recent closed tenders can remain as coverage-only records while expired tenders stay out of the default feed |
-| Google.org AI Opportunity | page monitor | AI education philanthropy | Global AI/digital-skills grant and partner-program watch for nonprofit, government and academic routes |
+| Google.org AI Opportunity | page monitor | AI education philanthropy | Forecast monitor for future grant and partner calls; it is not presented as an open application until the official page confirms a current window |
 | UNESCO IITE | HTML announcements | AI and education calls | Item-level UNESCO IITE parser for AI/EdTech awards, proposals and consultancy calls; expired notices are excluded |
 | Strategic official watches | curated official page checks | UNGM, OSCE, IOM Kazakhstan, EDB, DAAD Central Asia, GEF SGP Kazakhstan and Global Innovation Fund | Page-level discovery records with curated Russian copy; all carry `upcoming` / `forecast` status until an item-level call with confirmed conditions is available |
 
@@ -117,7 +117,8 @@
 - `make content-audit` checks live source coverage, forbidden terms, missing
   summaries, short summaries, unmarked no-deadline records, weak homepage-like
   source URLs, leaked HTML entities, untranslated public labels and equality
-  between the coverage count and the deadline-filtered catalog.
+  between the coverage count and the deadline-filtered catalog. The same audit
+  requires a localized display name for every enabled source.
 - `/coverage` reports per-source indexed/open/relevant counts so the dashboard
   can show whether a source is only registered or actually contributing items.
 - Production `GRANT_RADAR_SOURCES` must include the full source registry, not

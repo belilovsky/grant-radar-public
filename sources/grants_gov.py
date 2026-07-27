@@ -85,6 +85,9 @@ class GrantsGovSource(BaseSource):
 
     def _to_opportunity(self, h: dict, kw: str) -> Opportunity:
         opp_id = h.get("id") or h.get("oppNumber", "")
+        opportunity_number = _clean_text(
+            h.get("oppNumber") or h.get("number") or opp_id
+        )
         url = f"https://www.grants.gov/search-results-detail/{opp_id}"
         agency = _clean_text(
             h.get("agencyName") or h.get("agency") or h.get("agencyCode")
@@ -115,7 +118,7 @@ class GrantsGovSource(BaseSource):
             funder=agency,
             deadline=deadline,
             tags=[*self.default_tags, *topic_tags],
-            raw=h,
+            raw={**h, "external_id": opportunity_number},
         )
 
 

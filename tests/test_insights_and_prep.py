@@ -10,6 +10,7 @@ from api.insights import build_insights_payload
 from core.db import SqlRepository
 from core.models import Opportunity, OpportunityType
 from core.public_contract import to_opportunity_v1
+from sources.kazakhstan_domestic import ACTIVE_DOMESTIC_URLS
 
 
 def _reset_api_state(monkeypatch) -> None:
@@ -180,6 +181,29 @@ def test_application_workspace_is_local_and_exportable(monkeypatch):
     assert "fetch(" not in page.text
     assert 'method="post"' not in page.text.lower()
     assert "\u2014" not in page.text
+
+
+def test_application_workspace_localizes_internal_source_slug(monkeypatch):
+    _reset_api_state(monkeypatch)
+    item = _item().model_copy(
+        update={
+            "source": "kazakhstan_domestic_support",
+            "source_url": sorted(ACTIVE_DOMESTIC_URLS)[0],
+            "funder": None,
+            "eligibility": ["startup", "global"],
+        }
+    )
+    api_main._cache.append(item)
+
+    page = TestClient(api_main.app).get(
+        f"/opportunity/{item.id}/prepare",
+        params={"lang": "ru"},
+    )
+
+    assert page.status_code == 200
+    assert "kazakhstan_domestic_support" not in page.text
+    assert "Поддержка РК" in page.text
+    assert "Стартап; Глобально" in page.text
 
 
 def test_application_workspace_head_skips_detail_projection(monkeypatch):

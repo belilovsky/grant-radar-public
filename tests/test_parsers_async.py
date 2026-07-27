@@ -1472,9 +1472,13 @@ async def test_google_org_fetch_yields_ai_opportunity_watch():
     assert "global" in item.eligibility
     assert "ai" in item.tags
     assert "central_asia_eligible" in item.tags
-    assert "rolling" in item.tags
+    assert "source_watch" in item.tags
+    assert "rolling" not in item.tags
+    assert item.opportunity_status == "upcoming"
+    assert item.lifecycle == "forecast"
     assert item.raw["external_id"] == "google_org_ai_opportunity"
-    assert item.raw["deadline_policy"] == "rolling"
+    assert item.raw["source_watch"] is True
+    assert item.raw["i18n"]["ru"]["title"].startswith("Программы Google.org")
 
 
 @pytest.mark.asyncio

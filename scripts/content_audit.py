@@ -47,6 +47,7 @@ class ContentAuditResult:
     html_entity_titles: list[str] = field(default_factory=list)
     missing_detail_status_titles: list[str] = field(default_factory=list)
     unlocalized_tags: dict[str, list[str]] = field(default_factory=dict)
+    unlocalized_sources: dict[str, list[str]] = field(default_factory=dict)
     forbidden_hits: dict[str, list[str]] = field(default_factory=dict)
     issues: list[str] = field(default_factory=list)
 
@@ -280,6 +281,7 @@ def analyze_content(
         )
 
     unlocalized_tags: dict[str, list[str]] = {}
+    unlocalized_sources: dict[str, list[str]] = {}
     if label_maps:
         tags = {
             str(tag).strip()
@@ -296,6 +298,22 @@ def analyze_content(
                 unlocalized_tags[lang] = missing
         if unlocalized_tags:
             issues.append("public tags are missing localized display labels")
+        source_slugs = {
+            str(row.get("slug") or "").strip()
+            for row in source_rows
+            if row.get("enabled") and str(row.get("slug") or "").strip()
+        }
+        for lang, label_map in label_maps.items():
+            normalized_labels = {_label_key(key) for key in label_map}
+            missing = sorted(
+                slug
+                for slug in source_slugs
+                if _label_key(slug) not in normalized_labels
+            )
+            if missing:
+                unlocalized_sources[lang] = missing
+        if unlocalized_sources:
+            issues.append("public sources are missing localized display labels")
 
     forbidden_hits: dict[str, list[str]] = {}
     for term in forbidden_terms:
@@ -324,6 +342,7 @@ def analyze_content(
         html_entity_titles=html_entity_titles,
         missing_detail_status_titles=missing_detail_status_titles,
         unlocalized_tags=unlocalized_tags,
+        unlocalized_sources=unlocalized_sources,
         forbidden_hits=forbidden_hits,
         issues=issues,
     )
