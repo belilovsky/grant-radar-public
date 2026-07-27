@@ -12,3 +12,7 @@ Use the following documents for current operations:
 
 Historical files are retained for traceability. They are not active runbooks or
 current backlog documents.
+
+Latest closeout snapshot:
+
+- [`PROD_CLOSEOUT_2026-07-27.md`](PROD_CLOSEOUT_2026-07-27.md)

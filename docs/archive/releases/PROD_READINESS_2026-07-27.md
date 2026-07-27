@@ -62,6 +62,10 @@ scope.
 
 ## Production deployment status
 
+Update after closeout: production deploy was completed and verified. The final
+release evidence is recorded in
+`docs/archive/releases/PROD_CLOSEOUT_2026-07-27.md`.
+
 The production helper is ready and intentionally refuses unsafe releases:
 
 ```bash
@@ -71,11 +75,7 @@ bash scripts/deploy_qaz_fund.sh
 ```
 
 The helper requires both the private SSH target and public revision verification
-through `/.well-known/release.json?revision=<git-sha>`. In the current Codex
-environment `DEPLOY_HOST` is not configured in the repository or process
-environment, and the shell cannot resolve external hosts. Because the SSH target
-is not present, the QAZ.FUND production deploy was not executed from this
-session.
-
-Do not mark this release as publicly deployed until the command above verifies
-the exact candidate revision on `https://qaz.fund`.
+through `/.well-known/release.json?revision=<git-sha>`. For the 2026-07-27
+release the verified backend target is
+`root@187.55.228.239:/opt/grant-radar`; `148.230.117.131` is the edge nginx
+host for the public domain.
