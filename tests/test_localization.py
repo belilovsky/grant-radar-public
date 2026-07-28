@@ -1,11 +1,13 @@
 from pydantic import HttpUrl
 
+from api.dashboard_copy import dashboard_copy
 from core.localization import (
     localize_opportunity,
     localized_section_list,
     localized_text,
 )
 from core.models import Opportunity, OpportunityType
+from sources.kazakhstan_domestic import DOMESTIC_PROGRAMS
 
 
 def test_russian_source_detail_beats_shorter_i18n_fallback():
@@ -30,6 +32,14 @@ def test_russian_source_detail_beats_shorter_i18n_fallback():
 
     assert localized_text(raw, "ru", "detail_text") == raw["detail_text"]
     assert localized_section_list(raw, "ru") == raw["detail_sections"]
+
+
+def test_domestic_support_tags_have_public_labels():
+    tags = sorted({tag for program in DOMESTIC_PROGRAMS for tag in program.tags})
+
+    for lang in ("ru", "en"):
+        labels = dashboard_copy(lang)["label_map"]
+        assert all(tag in labels for tag in tags)
 
 
 def test_localized_summary_removes_source_ui_noise():
