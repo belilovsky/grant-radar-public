@@ -563,6 +563,61 @@ PROGRAMS = (
         ),
         application_url="https://www.explorers.org/grants/rising-explorer-grant/",
     ),
+    GlobalTrainingProgram(
+        url="https://www.isocfoundation.org/grant-programme/beyond-the-net-grant-program/",
+        title="Beyond the Net Grant Program",
+        summary=(
+            "Official Internet Society Foundation grant programme for Internet "
+            "Society Chapters. The call is open until 1 October 2026 and supports "
+            "local projects that improve meaningful access to an open, trusted "
+            "and globally connected Internet, including connectivity, affordable "
+            "access, online safety and open-Internet work."
+        ),
+        title_ru="Грантовая программа Beyond the Net",
+        summary_ru=(
+            "Официальная грантовая программа Internet Society Foundation для "
+            "отделений Internet Society. Приём заявок открыт до 1 октября "
+            "2026 года; поддерживаются локальные проекты по доступу к открытому, "
+            "надёжному и глобально связанному интернету, включая подключение "
+            "сообществ, доступность связи, онлайн-безопасность и защиту открытого "
+            "интернета."
+        ),
+        funder="Internet Society Foundation",
+        opportunity_type=OpportunityType.GRANT,
+        deadline=date(2026, 10, 1),
+        tags=(
+            "global",
+            "central_asia_eligible",
+            "grant",
+            "digital",
+            "internet_access",
+            "connectivity",
+            "digital_inclusion",
+            "online_safety",
+            "open_internet",
+            "community",
+            "civil_society",
+            "infrastructure",
+            "cybersecurity",
+            "capacity_building",
+            "isoc",
+            "internet_society_foundation",
+        ),
+        eligibility=(
+            "Internet Society Chapters in good standing, including eligible "
+            "chapters in Central Asia, with an official bank account and current "
+            "reporting status under Internet Society Foundation rules",
+        ),
+        amount_raw=(
+            "chapters may manage up to two simultaneous Beyond the Net grants, "
+            "not exceeding USD 55,000 in total; projects above USD 20,000 require "
+            "an external partner and at least a six-month implementation period"
+        ),
+        application_url=(
+            "https://www.isocfoundation.org/grant-programme/"
+            "beyond-the-net-grant-program/"
+        ),
+    ),
 )
 
 

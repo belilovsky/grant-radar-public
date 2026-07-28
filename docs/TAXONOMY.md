@@ -253,7 +253,13 @@ Allowed tags:
 - `archaeology`
 - `anthropology`
 - `cloud_infrastructure`
+- `community`
+- `connectivity`
 - `research`
+- `internet_access`
+- `digital_inclusion`
+- `online_safety`
+- `open_internet`
 - `inclusion`
 - `stem`
 - `youth`
@@ -262,6 +268,8 @@ Allowed tags:
 - `women_in_tech`
 - `data_governance`
 - `cybersecurity`
+- `isoc`
+- `internet_society_foundation`
 
 ## Eligibility taxonomy
 

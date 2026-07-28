@@ -1843,7 +1843,7 @@ async def test_global_training_fetch_yields_official_mid_career_course():
 
     items = await _collect(GlobalTrainingOpportunitiesSource())
 
-    assert len(items) == 10
+    assert len(items) == 11
     by_title = {item.title: item for item in items}
     item = by_title[
         "FY2026 Mid-Career Course for peacebuilding and development professionals"
@@ -1986,6 +1986,21 @@ async def test_global_training_fetch_yields_official_mid_career_course():
     assert "central_asia_eligible" in rising.tags
     assert "field_research" in rising.tags
     assert "explorers_club" in rising.tags
+
+    beyond = by_title["Beyond the Net Grant Program"]
+    assert beyond.type == OpportunityType.GRANT
+    assert beyond.deadline == date(2026, 10, 1)
+    assert beyond.funder == "Internet Society Foundation"
+    assert "USD 55,000" in beyond.raw["amount_raw"]
+    assert beyond.raw["application_url"] == (
+        "https://www.isocfoundation.org/grant-programme/"
+        "beyond-the-net-grant-program/"
+    )
+    assert beyond.raw["i18n"]["ru"]["title"] == "Грантовая программа Beyond the Net"
+    assert "отделений Internet Society" in beyond.raw["i18n"]["ru"]["summary"]
+    assert "internet_access" in beyond.tags
+    assert "open_internet" in beyond.tags
+    assert "internet_society_foundation" in beyond.tags
 
 
 @pytest.mark.asyncio
