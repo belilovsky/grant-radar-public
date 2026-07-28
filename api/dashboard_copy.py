@@ -802,6 +802,8 @@ COPY = {
             "status_note": "Статус загрузки",
         },
         "label_map": {
+            "administrative_support": "Административная поддержка",
+            "american_spaces": "American Spaces",
             "ai": "ИИ",
             "artificial intelligence": "ИИ",
             "edtech": "Образовательные технологии",
@@ -1838,6 +1840,8 @@ COPY = {
             "status_note": "Fetch status",
         },
         "label_map": {
+            "administrative_support": "Administrative support",
+            "american_spaces": "American Spaces",
             "ai": "AI",
             "artificial intelligence": "AI",
             "edtech": "EdTech",

@@ -34,7 +34,7 @@ KEYWORDS = [
     "veterinary",
     "environment",
     "climate",
-    "Kazakhstan",
+    "kazakhstan",
 ]
 
 KAZAKHSTAN_AGENCY_CODES = {"DOS-KAZ"}
@@ -77,6 +77,35 @@ CURATED_KAZAKHSTAN_OPPORTUNITIES: dict[str, CuratedGrantsGovOpportunity] = {
         "application_url": (
             "https://simpler.grants.gov/opportunity/"
             "da9ea956-a099-4ac0-ae24-3f9b001ee9a0"
+        ),
+    },
+    "DOS-KAZ-AST-PDS-26-003": {
+        "summary": (
+            "U.S. Mission to Kazakhstan cooperative agreement for administrative "
+            "and programming support to eight American Spaces in Kazakhstan. The "
+            "award covers coordinator stipends and benefits, outreach costs, "
+            "mobile plans, branded materials and monthly programming focused on "
+            "U.S. culture, education, technology and innovation."
+        ),
+        "amount_min": Decimal("120000"),
+        "amount_max": Decimal("150000"),
+        "tags": [
+            "kazakhstan",
+            "education",
+            "youth",
+            "public_diplomacy",
+            "cooperative_agreement",
+            "administrative_support",
+            "american_spaces",
+        ],
+        "eligibility": [
+            "Not-for-profit organizations based in Kazakhstan, including think "
+            "tanks and civil society or non-governmental organizations",
+            "For-profit entities are not eligible under the official notice",
+        ],
+        "application_url": (
+            "https://simpler.grants.gov/opportunity/"
+            "bea4fe72-2418-4ad1-83cd-cf6a9ee15a20"
         ),
     },
 }
@@ -162,7 +191,7 @@ class GrantsGovSource(BaseSource):
                 deadline = datetime.strptime(cd, "%m/%d/%Y").date()
             except ValueError:
                 pass
-        topic_tags = [kw] if _keyword_is_visible(kw, title, summary) else []
+        topic_tags = [kw.lower()] if _keyword_is_visible(kw, title, summary) else []
         curated_tags = curated["tags"] if curated else []
         return Opportunity(
             source=self.slug,
@@ -176,7 +205,7 @@ class GrantsGovSource(BaseSource):
             currency="USD",
             deadline=deadline,
             eligibility=curated["eligibility"] if curated else [],
-            tags=[*self.default_tags, *topic_tags, *curated_tags],
+            tags=list(dict.fromkeys([*self.default_tags, *topic_tags, *curated_tags])),
             raw={
                 **h,
                 "external_id": opportunity_number,

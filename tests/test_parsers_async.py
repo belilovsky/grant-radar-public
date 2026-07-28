@@ -852,6 +852,20 @@ async def test_grants_gov_keeps_us_mission_to_kazakhstan_opportunities():
                     "oppStatus": "posted",
                     "docType": "synopsis",
                 },
+                {
+                    "id": "362791",
+                    "number": "DOS-KAZ-AST-PDS-26-003",
+                    "title": (
+                        "Administrative and Programming Support Funding for "
+                        "American Corners"
+                    ),
+                    "agencyCode": "DOS-KAZ",
+                    "agency": "U.S. Mission to Kazakhstan",
+                    "openDate": "06/15/2026",
+                    "closeDate": "07/31/2026",
+                    "oppStatus": "posted",
+                    "docType": "synopsis",
+                },
             ]
         }
     }
@@ -859,8 +873,9 @@ async def test_grants_gov_keeps_us_mission_to_kazakhstan_opportunities():
 
     items = await _collect(GrantsGovSource())
 
-    assert len(items) == 1
-    item = items[0]
+    assert len(items) == 2
+    by_number = {item.raw["external_id"]: item for item in items}
+    item = by_number["DOS-KAZ-ALM-PDS-26-001"]
     assert item.title == (
         "Access Alumni Outreach and Engagement and English Access Scholarship Program"
     )
@@ -875,6 +890,18 @@ async def test_grants_gov_keeps_us_mission_to_kazakhstan_opportunities():
         "https://simpler.grants.gov/opportunity/da9ea956-a099-4ac0-ae24-3f9b001ee9a0"
     )
     assert "Shymkent" in item.summary
+    corners = by_number["DOS-KAZ-AST-PDS-26-003"]
+    assert corners.title == (
+        "Administrative and Programming Support Funding for American Corners"
+    )
+    assert corners.deadline == date(2026, 7, 31)
+    assert corners.amount_min == 120000
+    assert corners.amount_max == 150000
+    assert "american_spaces" in corners.tags
+    assert corners.raw["application_url"] == (
+        "https://simpler.grants.gov/opportunity/bea4fe72-2418-4ad1-83cd-cf6a9ee15a20"
+    )
+    assert "eight American Spaces" in corners.summary
 
 
 @pytest.mark.asyncio
