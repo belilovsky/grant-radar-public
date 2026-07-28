@@ -2201,6 +2201,16 @@ async def test_astana_hub_fetch_uses_curated_pages_on_404():
         in by_title["Hero Training for OTS startup founders"].summary
     )
     assert (
+        by_title["Hero Training for OTS startup founders"].raw["i18n"]["ru"]["title"]
+        == "Hero Training для основателей стартапов из стран ОТГ"
+    )
+    assert (
+        "Кремниевой долине"
+        in by_title["Hero Training for OTS startup founders"].raw["i18n"]["ru"][
+            "summary"
+        ]
+    )
+    assert (
         by_title["Regional IT Hub"].raw["country_scope"] == "Kazakhstan / Central Asia"
     )
 

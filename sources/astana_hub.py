@@ -9,7 +9,7 @@ from __future__ import annotations
 import re
 from collections.abc import AsyncIterator
 from datetime import date, datetime
-from typing import ClassVar
+from typing import Any, ClassVar
 
 import structlog
 
@@ -31,6 +31,18 @@ FALLBACK_PROGRAM_URLS = (
 )
 FALLBACK_PROGRAM_TITLES = {
     "https://astanahub.com/en/l/backup": "Hero Training for OTS startup founders",
+}
+FALLBACK_PROGRAM_RU = {
+    "https://astanahub.com/en/l/backup": {
+        "title": "Hero Training для основателей стартапов из стран ОТГ",
+        "summary": (
+            "Программа Astana Hub и Draper University для основателей стартапов "
+            "из стран ОТГ, включая Казахстан. Участники проходят онлайн-подготовку, "
+            "после которой отбираются 15 проектов для Hero Training; команды, "
+            "успешно завершившие онлайн-этап и прошедшие отбор, получают доступ "
+            "к очной части в Кремниевой долине."
+        ),
+    },
 }
 FALLBACK_PROGRAM_SUMMARIES = {
     "https://astanahub.com/ru/l/TechOrda2025": (
@@ -315,6 +327,23 @@ class AstanaHubSource(BaseSource):
         if deadline is None and url in FALLBACK_PROGRAM_URLS:
             tags.append("rolling")
         summary = FALLBACK_PROGRAM_SUMMARIES.get(url, "Astana Hub program")
+        raw_payload: dict[str, Any] = {
+            "external_id": opp_id,
+            "snippet": raw,
+            "description": summary,
+            "country_scope": "Kazakhstan / Central Asia",
+            "application_url": url,
+            "eligibility": (
+                "Check the current Astana Hub program page for applicant "
+                "requirements, dates and partner-school or startup criteria."
+            ),
+            "deadline_policy": (
+                "rolling" if deadline is None and url in FALLBACK_PROGRAM_URLS else None
+            ),
+        }
+        localized_ru = FALLBACK_PROGRAM_RU.get(url)
+        if localized_ru:
+            raw_payload["i18n"] = {"ru": localized_ru}
         return Opportunity(
             source=self.slug,
             source_url=url,  # type: ignore[arg-type]
@@ -328,22 +357,7 @@ class AstanaHubSource(BaseSource):
                 "the current Astana Hub program terms"
             ],
             tags=tags,
-            raw={
-                "external_id": opp_id,
-                "snippet": raw,
-                "description": summary,
-                "country_scope": "Kazakhstan / Central Asia",
-                "application_url": url,
-                "eligibility": (
-                    "Check the current Astana Hub program page for applicant "
-                    "requirements, dates and partner-school or startup criteria."
-                ),
-                "deadline_policy": (
-                    "rolling"
-                    if deadline is None and url in FALLBACK_PROGRAM_URLS
-                    else None
-                ),
-            },
+            raw=raw_payload,
         )
 
     async def healthcheck(self) -> bool:
