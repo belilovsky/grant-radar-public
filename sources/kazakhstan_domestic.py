@@ -14,7 +14,7 @@ import ssl
 import tempfile
 from collections.abc import AsyncIterator, Iterable
 from dataclasses import dataclass
-from datetime import datetime, timezone
+from datetime import date, datetime, timezone
 from decimal import Decimal
 from pathlib import Path
 from typing import Any, ClassVar
@@ -117,6 +117,9 @@ class DomesticProgram:
     tags: tuple[str, ...]
     type: OpportunityType = OpportunityType.GRANT
     rolling: bool = True
+    deadline: date | None = None
+    opportunity_status: str | None = None
+    lifecycle: str | None = None
     retain_on_fetch_error: bool = True
     eligibility: tuple[str, ...] = ()
     amount_raw: str | None = None
@@ -142,6 +145,58 @@ DOMESTIC_PROGRAMS = (
             "business_support",
             "qazinnovations",
         ),
+    ),
+    DomesticProgram(
+        url="https://www.gov.kz/memleket/entities/sci/press/news/details/1243733?lang=ru",
+        title="Kazakhstan state educational grants competition",
+        summary=(
+            "Official Ministry of Science and Higher Education notice for the "
+            "2026 state educational-grant competition. Applications were accepted "
+            "from 13 to 20 July 2026 through university admission offices, virtual "
+            "admission offices and eGov; grant-holder lists are expected by 10 August."
+        ),
+        tags=(
+            "grant",
+            "scholarship",
+            "education",
+            "higher_education",
+            "citizen_support",
+            "egov",
+            "ministry_science_higher_education",
+        ),
+        eligibility=(
+            "Kazakhstan applicants entering higher education under the official admission rules",
+        ),
+        application_url="https://egov.kz/cms/ru/services/university_degree/182pass_mon",
+    ),
+    DomesticProgram(
+        url="https://www.gov.kz/memleket/entities/sci/press/news/details/1262257?lang=ru",
+        title="State educational grants for the Taraz RCTU branch",
+        summary=(
+            "Official Ministry notice on the 2026-2027 admission campaign for the "
+            "Taraz branch of D. Mendeleev University. The state allocated 100 "
+            "educational grants for inorganic chemical technology and analytical "
+            "chemistry programmes; documents are accepted until 9 August 2026."
+        ),
+        tags=(
+            "grant",
+            "scholarship",
+            "education",
+            "higher_education",
+            "engineering",
+            "chemistry",
+            "citizen_support",
+            "ministry_science_higher_education",
+        ),
+        rolling=False,
+        deadline=date(2026, 8, 9),
+        opportunity_status="open",
+        lifecycle="open",
+        eligibility=(
+            "Applicants to the Taraz branch admission campaign who meet the "
+            "official competition requirements",
+        ),
+        amount_raw="100 state educational grants for 2026-2027",
     ),
     DomesticProgram(
         url="https://egov.kz/cms/ru/mobile-services/pass455_mir",
@@ -974,8 +1029,11 @@ class KazakhstanDomesticSupportSource(BaseSource):
             amount_min=program.amount_min,
             amount_max=program.amount_max,
             currency=program.currency,
+            deadline=program.deadline,
             eligibility=list(program.eligibility),
             tags=_program_tags(program, self.default_tags),
+            opportunity_status=program.opportunity_status,
+            lifecycle=program.lifecycle,
             raw=raw,
         )
 
@@ -1028,6 +1086,13 @@ class KazakhstanDomesticSupportSource(BaseSource):
                             "page_title": program.title,
                             "status_code": None,
                             "deadline_policy": ("rolling" if program.rolling else None),
+                            "deadline": (
+                                program.deadline.isoformat()
+                                if program.deadline
+                                else None
+                            ),
+                            "opportunity_status": program.opportunity_status,
+                            "lifecycle": program.lifecycle,
                             **_amount_raw_payload(program),
                             "application_url": program.application_url,
                             "eligibility_raw": list(program.eligibility),
@@ -1059,6 +1124,11 @@ class KazakhstanDomesticSupportSource(BaseSource):
                 "page_title": page_title,
                 "status_code": response.status_code,
                 "deadline_policy": "rolling" if program.rolling else None,
+                "deadline": (
+                    program.deadline.isoformat() if program.deadline else None
+                ),
+                "opportunity_status": program.opportunity_status,
+                "lifecycle": program.lifecycle,
                 **_amount_raw_payload(program),
                 "application_url": program.application_url,
                 "eligibility_raw": list(program.eligibility),

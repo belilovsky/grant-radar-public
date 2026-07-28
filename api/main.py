@@ -556,6 +556,11 @@ def _stored_opportunity(row: Any, *, content_lang: str = "en") -> Opportunity:
             )
             opportunity.amount_min = opportunity.amount_min or program.amount_min
             opportunity.amount_max = opportunity.amount_max or program.amount_max
+            opportunity.deadline = opportunity.deadline or program.deadline
+            opportunity.opportunity_status = (
+                opportunity.opportunity_status or program.opportunity_status
+            )
+            opportunity.lifecycle = opportunity.lifecycle or program.lifecycle
             if program.amount_min is not None or program.amount_max is not None:
                 opportunity.currency = program.currency
             if program.rolling:

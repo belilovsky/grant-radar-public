@@ -846,8 +846,12 @@ async def test_kazakhstan_watch_yields_curated_relevant_pages():
     assert {item.source for item in items} == {"kazakhstan_watch"}
     assert all("kazakhstan" in item.tags for item in items)
     assert all(item.raw["page_title"] for item in items)
-    assert all("rolling" in item.tags for item in items)
-    assert all(item.raw["deadline_policy"] == "rolling" for item in items)
+    assert all("rolling" in item.tags for item in items if item.deadline is None)
+    assert all(
+        item.raw["deadline_policy"] == "rolling"
+        for item in items
+        if item.deadline is None
+    )
 
 
 @pytest.mark.asyncio
@@ -866,12 +870,18 @@ async def test_kazakhstan_domestic_support_yields_official_programs():
     assert all("domestic_support" in item.tags for item in items)
     assert all("state_program" in item.tags for item in items)
     assert all(item.raw["page_title"] for item in items)
-    assert all("rolling" in item.tags for item in items)
-    assert all(item.raw["deadline_policy"] == "rolling" for item in items)
+    assert all("rolling" in item.tags for item in items if item.deadline is None)
+    assert all(
+        item.raw["deadline_policy"] == "rolling"
+        for item in items
+        if item.deadline is None
+    )
     by_title = {item.title: item for item in items}
     assert "State grant for startup business development" in by_title
     assert "How to get a state grant to start a business" in by_title
     assert "Interest-rate subsidy service for entrepreneurs" in by_title
+    assert "Kazakhstan state educational grants competition" in by_title
+    assert "State educational grants for the Taraz RCTU branch" in by_title
     assert "Road Map of Business support programme" in by_title
     assert "State grants for social entrepreneurship" in by_title
     assert "Subsidies for crop production" in by_title
@@ -907,6 +917,17 @@ async def test_kazakhstan_domestic_support_yields_official_programs():
     assert (
         by_title["State grant for startup business development"].raw["amount_raw"]
         == "up to 400 MRP"
+    )
+    assert by_title[
+        "State educational grants for the Taraz RCTU branch"
+    ].deadline == date(2026, 8, 9)
+    assert (
+        by_title["State educational grants for the Taraz RCTU branch"].lifecycle
+        == "open"
+    )
+    assert (
+        by_title["State educational grants for the Taraz RCTU branch"].raw["amount_raw"]
+        == "100 state educational grants for 2026-2027"
     )
     assert by_title["State grant for startup business development"].amount_max is None
     assert (
