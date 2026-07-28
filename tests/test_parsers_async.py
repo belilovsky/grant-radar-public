@@ -892,6 +892,9 @@ async def test_grants_gov_keeps_us_mission_to_kazakhstan_opportunities():
         "https://simpler.grants.gov/opportunity/da9ea956-a099-4ac0-ae24-3f9b001ee9a0"
     )
     assert "Shymkent" in item.summary
+    assert item.raw["i18n"]["ru"]["title"].startswith("Программа Access Alumni")
+    assert "Южном Казахстане" in item.raw["i18n"]["ru"]["summary"]
+    assert "Некоммерческие организации" in item.raw["i18n"]["ru"]["eligibility"][0]
     corners = by_number["DOS-KAZ-AST-PDS-26-003"]
     assert corners.title == (
         "Administrative and Programming Support Funding for American Corners"
@@ -904,6 +907,12 @@ async def test_grants_gov_keeps_us_mission_to_kazakhstan_opportunities():
         "https://simpler.grants.gov/opportunity/bea4fe72-2418-4ad1-83cd-cf6a9ee15a20"
     )
     assert "eight American Spaces" in corners.summary
+    assert (
+        corners.raw["i18n"]["ru"]["title"]
+        == "Административная и программная поддержка American Corners"
+    )
+    assert "восьми American Spaces" in corners.raw["i18n"]["ru"]["summary"]
+    assert "Коммерческие организации" in corners.raw["i18n"]["ru"]["eligibility"][1]
 
 
 @pytest.mark.asyncio

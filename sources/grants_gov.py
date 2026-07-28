@@ -12,7 +12,7 @@ import re
 from collections.abc import AsyncIterator
 from datetime import datetime
 from decimal import Decimal
-from typing import ClassVar, TypedDict
+from typing import ClassVar, NotRequired, TypedDict
 
 import structlog
 
@@ -43,6 +43,9 @@ KAZAKHSTAN_AGENCY_NAMES = {"u.s. mission to kazakhstan"}
 
 class CuratedGrantsGovOpportunity(TypedDict):
     summary: str
+    title_ru: NotRequired[str]
+    summary_ru: NotRequired[str]
+    eligibility_ru: NotRequired[list[str]]
     amount_min: Decimal
     amount_max: Decimal
     tags: list[str]
@@ -59,6 +62,18 @@ CURATED_KAZAKHSTAN_OPPORTUNITIES: dict[str, CuratedGrantsGovOpportunity] = {
             "in Shymkent, Kyzylorda, Taraz, Turkistan and Almaty, plus new "
             "Access students from Shymkent or Taraz."
         ),
+        "title_ru": (
+            "Программа Access Alumni Outreach and Engagement и English Access "
+            "Scholarship"
+        ),
+        "summary_ru": (
+            "Соглашение о сотрудничестве U.S. Mission to Kazakhstan для двух "
+            "направлений в Южном Казахстане: работа с выпускниками Access и "
+            "цикл English Access Scholarship Program на 2026–2028 годы. Проект "
+            "охватывает выпускников Access в Шымкенте, Кызылорде, Таразе, "
+            "Туркестане и Алматы, а также новых учеников Access из Шымкента "
+            "или Тараза."
+        ),
         "amount_min": Decimal("30000"),
         "amount_max": Decimal("50000"),
         "tags": [
@@ -74,6 +89,11 @@ CURATED_KAZAKHSTAN_OPPORTUNITIES: dict[str, CuratedGrantsGovOpportunity] = {
             "and civil society or non-governmental organizations",
             "U.S. government-sponsored program alumni associations in Kazakhstan",
         ],
+        "eligibility_ru": [
+            "Некоммерческие организации в Казахстане, включая аналитические "
+            "центры, гражданские и неправительственные организации",
+            "Ассоциации выпускников программ правительства США в Казахстане",
+        ],
         "application_url": (
             "https://simpler.grants.gov/opportunity/"
             "da9ea956-a099-4ac0-ae24-3f9b001ee9a0"
@@ -86,6 +106,15 @@ CURATED_KAZAKHSTAN_OPPORTUNITIES: dict[str, CuratedGrantsGovOpportunity] = {
             "award covers coordinator stipends and benefits, outreach costs, "
             "mobile plans, branded materials and monthly programming focused on "
             "U.S. culture, education, technology and innovation."
+        ),
+        "title_ru": ("Административная и программная поддержка American Corners"),
+        "summary_ru": (
+            "Соглашение о сотрудничестве U.S. Mission to Kazakhstan для "
+            "административной и программной поддержки восьми American Spaces "
+            "в Казахстане. Финансирование покрывает выплаты координаторам, "
+            "социальные отчисления, расходы на связь, выездные мероприятия, "
+            "брендированные материалы и ежемесячные программы о культуре, "
+            "образовании, технологиях и инновациях США."
         ),
         "amount_min": Decimal("120000"),
         "amount_max": Decimal("150000"),
@@ -102,6 +131,13 @@ CURATED_KAZAKHSTAN_OPPORTUNITIES: dict[str, CuratedGrantsGovOpportunity] = {
             "Not-for-profit organizations based in Kazakhstan, including think "
             "tanks and civil society or non-governmental organizations",
             "For-profit entities are not eligible under the official notice",
+        ],
+        "eligibility_ru": [
+            "Некоммерческие организации, зарегистрированные в Казахстане, "
+            "включая аналитические центры, гражданские и неправительственные "
+            "организации",
+            "Коммерческие организации не допускаются по условиям официального "
+            "конкурса",
         ],
         "application_url": (
             "https://simpler.grants.gov/opportunity/"
@@ -212,6 +248,7 @@ class GrantsGovSource(BaseSource):
                 "application_url": curated.get("application_url") if curated else None,
                 "amount_min": str(curated["amount_min"]) if curated else None,
                 "amount_max": str(curated["amount_max"]) if curated else None,
+                "i18n": _curated_i18n(title, summary, curated),
             },
         )
 
@@ -232,3 +269,27 @@ def _has_kazakhstan_official_signal(h: dict) -> bool:
         or agency_name in KAZAKHSTAN_AGENCY_NAMES
         or opportunity_number.startswith("DOS-KAZ-")
     )
+
+
+def _curated_i18n(
+    title: str, summary: str, curated: CuratedGrantsGovOpportunity | None
+) -> dict | None:
+    if not curated:
+        return None
+    title_ru = curated.get("title_ru")
+    summary_ru = curated.get("summary_ru")
+    eligibility_ru = curated.get("eligibility_ru")
+    if not title_ru and not summary_ru and not eligibility_ru:
+        return None
+    return {
+        "ru": {
+            "title": title_ru or title,
+            "summary": summary_ru or summary,
+            "eligibility": eligibility_ru or curated["eligibility"],
+        },
+        "en": {
+            "title": title,
+            "summary": summary,
+            "eligibility": curated["eligibility"],
+        },
+    }
