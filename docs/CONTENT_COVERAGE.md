@@ -4,7 +4,7 @@
 
 | Source | Adapter | Signal | Current role |
 |---|---|---|---|
-| Grants.gov | API | US federal grants | High-volume upstream source for AI, education, media, governance, agriculture and environment themes |
+| Grants.gov | API | US federal grants | High-volume upstream source for AI, education, media, governance, agriculture and environment themes; `DOS-KAZ` / U.S. Mission to Kazakhstan notices are retained even when the short search synopsis lacks an explicit geography phrase |
 | Astana Hub | HTML + curated fallback | Kazakhstan startup/program ecosystem | Local startup and accelerator coverage, including curated stable pages for Tech Orda, Silkway, Regional IT Hub and Central Eurasia Market Entry |
 | Internews | HTML + RSS fallback | Media grants and fellowships | Media and journalism opportunities; no-date terms of reference are marked `rolling` instead of surfacing as broken deadline records |
 | IsDB project procurement | HTML listing | Central Asia development procurement | Item-level active IsDB tender coverage for Kazakhstan and neighboring Central Asia countries |

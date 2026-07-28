@@ -834,6 +834,51 @@ async def test_grants_gov_skips_us_tribal_only_opportunities():
 
 @pytest.mark.asyncio
 @respx.mock
+async def test_grants_gov_keeps_us_mission_to_kazakhstan_opportunities():
+    payload = {
+        "data": {
+            "oppHits": [
+                {
+                    "id": "363256",
+                    "number": "DOS-KAZ-ALM-PDS-26-001",
+                    "title": (
+                        "Access Alumni Outreach and Engagement and English "
+                        "Access Scholarship Program"
+                    ),
+                    "agencyCode": "DOS-KAZ",
+                    "agency": "U.S. Mission to Kazakhstan",
+                    "openDate": "07/21/2026",
+                    "closeDate": "08/21/2026",
+                    "oppStatus": "posted",
+                    "docType": "synopsis",
+                },
+            ]
+        }
+    }
+    respx.post(GG_SEARCH_URL).mock(return_value=httpx.Response(200, json=payload))
+
+    items = await _collect(GrantsGovSource())
+
+    assert len(items) == 1
+    item = items[0]
+    assert item.title == (
+        "Access Alumni Outreach and Engagement and English Access Scholarship Program"
+    )
+    assert item.deadline == date(2026, 8, 21)
+    assert item.funder == "U.S. Mission to Kazakhstan"
+    assert item.amount_min == 30000
+    assert item.amount_max == 50000
+    assert "kazakhstan" in item.tags
+    assert "south_kazakhstan" in item.tags
+    assert item.raw["external_id"] == "DOS-KAZ-ALM-PDS-26-001"
+    assert item.raw["application_url"] == (
+        "https://simpler.grants.gov/opportunity/da9ea956-a099-4ac0-ae24-3f9b001ee9a0"
+    )
+    assert "Shymkent" in item.summary
+
+
+@pytest.mark.asyncio
+@respx.mock
 async def test_kazakhstan_watch_yields_curated_relevant_pages():
     for page in WATCH_PAGES:
         respx.get(page.url).mock(
