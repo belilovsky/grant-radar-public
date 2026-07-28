@@ -59,8 +59,9 @@ def test_qazstack_text_primitive_replaces_source_html_cleanup() -> None:
     assert clean_source_text("<p>Grant&nbsp; <strong>programme</strong></p>") == (
         "Grant programme"
     )
+    assert clean_source_text("<p>Deadline — 15 August</p>") == "Deadline – 15 August"
     assert clean_source_text(None) == ""
-    assert clean_plain_source_text("Terms&nbsp; A < B") == "Terms A < B"
+    assert clean_plain_source_text("Terms&nbsp; A < B — C") == "Terms A < B – C"
 
 
 def test_digest_promotes_source_diversity_without_dropping_results(monkeypatch) -> None:
