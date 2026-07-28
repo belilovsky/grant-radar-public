@@ -929,6 +929,12 @@ async def test_kazakhstan_domestic_support_yields_official_programs():
         by_title["State educational grants for the Taraz RCTU branch"].raw["amount_raw"]
         == "100 state educational grants for 2026-2027"
     )
+    assert (
+        by_title["State educational grants for the Taraz RCTU branch"].raw["i18n"][
+            "ru"
+        ]["title"]
+        == "100 образовательных грантов для Таразского филиала РХТУ"
+    )
     assert by_title["State grant for startup business development"].amount_max is None
     assert (
         "social_entrepreneurship"

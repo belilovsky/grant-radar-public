@@ -122,6 +122,8 @@ class DomesticProgram:
     lifecycle: str | None = None
     retain_on_fetch_error: bool = True
     eligibility: tuple[str, ...] = ()
+    title_ru: str = ""
+    summary_ru: str = ""
     amount_raw: str | None = None
     amount_min: Decimal | None = None
     amount_max: Decimal | None = None
@@ -155,6 +157,13 @@ DOMESTIC_PROGRAMS = (
             "from 13 to 20 July 2026 through university admission offices, virtual "
             "admission offices and eGov; grant-holder lists are expected by 10 August."
         ),
+        title_ru="Конкурс государственных образовательных грантов",
+        summary_ru=(
+            "Официальное сообщение Министерства науки и высшего образования "
+            "о конкурсе образовательных грантов 2026 года. Заявления принимались "
+            "с 13 по 20 июля через приёмные комиссии вузов, виртуальные приёмные "
+            "и eGov; списки обладателей грантов должны быть опубликованы до 10 августа."
+        ),
         tags=(
             "grant",
             "scholarship",
@@ -177,6 +186,14 @@ DOMESTIC_PROGRAMS = (
             "Taraz branch of D. Mendeleev University. The state allocated 100 "
             "educational grants for inorganic chemical technology and analytical "
             "chemistry programmes; documents are accepted until 9 August 2026."
+        ),
+        title_ru="100 образовательных грантов для Таразского филиала РХТУ",
+        summary_ru=(
+            "Официальное сообщение Министерства науки и высшего образования "
+            "о приёме документов в Таразский филиал РХТУ имени Д. И. Менделеева. "
+            "На 2026-2027 учебный год выделено 100 государственных грантов по "
+            "программам химической технологии неорганических веществ и аналитической "
+            "химии; документы принимаются до 9 августа 2026 года."
         ),
         tags=(
             "grant",
@@ -886,6 +903,17 @@ def _amount_raw_payload(program: DomesticProgram) -> dict[str, Any]:
     return payload
 
 
+def _i18n_payload(program: DomesticProgram) -> dict[str, Any]:
+    if not program.title_ru and not program.summary_ru:
+        return {}
+    ru: dict[str, str] = {}
+    if program.title_ru:
+        ru["title"] = program.title_ru
+    if program.summary_ru:
+        ru["summary"] = program.summary_ru
+    return {"i18n": {"ru": ru}}
+
+
 def _detail_snapshot(html: str) -> dict[str, Any] | None:
     sections, excerpt_only = _extract_detail_sections(html)
     sections = _drop_leading_navigation_section(sections)
@@ -1093,6 +1121,7 @@ class KazakhstanDomesticSupportSource(BaseSource):
                             ),
                             "opportunity_status": program.opportunity_status,
                             "lifecycle": program.lifecycle,
+                            **_i18n_payload(program),
                             **_amount_raw_payload(program),
                             "application_url": program.application_url,
                             "eligibility_raw": list(program.eligibility),
@@ -1129,6 +1158,7 @@ class KazakhstanDomesticSupportSource(BaseSource):
                 ),
                 "opportunity_status": program.opportunity_status,
                 "lifecycle": program.lifecycle,
+                **_i18n_payload(program),
                 **_amount_raw_payload(program),
                 "application_url": program.application_url,
                 "eligibility_raw": list(program.eligibility),
