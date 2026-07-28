@@ -152,11 +152,12 @@ PROGRAMS = (
         ),
         title_ru="Исследовательские гранты DAAD в Германии",
         summary_ru=(
-            "Официальная запись базы стипендий DAAD Central Asia о "
+            "Официальная запись базы стипендий DAAD Central Asia об "
             "исследовательских стажировках в Германии во время докторантуры "
             "или на раннем постдокторском этапе. Заявители из Казахстана могут "
-            "подаваться как PhD students или PhD holders; ближайший дедлайн – "
-            "17 августа 2026 года для финансирования с февраля 2027 года."
+            "подаваться как докторанты или недавние обладатели докторской "
+            "степени; ближайший срок подачи – 17 августа 2026 года для "
+            "финансирования с февраля 2027 года."
         ),
         funder="DAAD Central Asia",
         opportunity_type=OpportunityType.GRANT,
@@ -186,6 +187,60 @@ PROGRAMS = (
         application_url=(
             "https://www.daad-kyrgyzstan.org/en/find-funding/scholarship-database/"
             "?detail_to_show=0&detail_to_show=57742121&intention=&onlydaad=0"
+            "&origin=73&pg=1&q=&status=0&subject=0&tab=&target=73&type=a"
+        ),
+    ),
+    GlobalTrainingProgram(
+        url=(
+            "https://www.daad-kyrgyzstan.org/en/find-funding/scholarship-database/"
+            "?detail_to_show=0&detail_to_show=50026200&intention=&onlydaad=0"
+            "&origin=73&pg=1&q=&status=0&subject=0&tab=&target=73&type=a"
+        ),
+        title="DAAD Study Scholarships for Master's Studies",
+        summary=(
+            "Official DAAD Central Asia scholarship-database record for a full "
+            "postgraduate or master's programme in Germany, or one year of study "
+            "in Germany within a master's programme at the home university. "
+            "Applicants from Kazakhstan with a first degree can apply by "
+            "2 November 2026; funding lasts 10-24 months and begins in 2027."
+        ),
+        title_ru="Стипендии DAAD для обучения в магистратуре",
+        summary_ru=(
+            "Официальная запись базы стипендий DAAD Central Asia для полного "
+            "курса магистратуры в Германии или одного года обучения в Германии "
+            "в рамках магистерской программы домашнего вуза. Заявители из "
+            "Казахстана с первым высшим образованием могут подать заявку до "
+            "2 ноября 2026 года; финансирование рассчитано на 10–24 месяца и "
+            "начинается в 2027 году."
+        ),
+        funder="DAAD Central Asia",
+        opportunity_type=OpportunityType.FELLOWSHIP,
+        deadline=date(2026, 11, 2),
+        tags=(
+            "kazakhstan",
+            "central_asia",
+            "germany",
+            "daad",
+            "scholarship",
+            "education",
+            "higher_education",
+            "master_studies",
+            "graduates",
+            "student_exchange",
+            "german_language",
+        ),
+        eligibility=(
+            "Applicants from Kazakhstan who have completed a first degree by "
+            "the start of funding and meet the official DAAD programme requirements",
+        ),
+        amount_raw=(
+            "EUR 992 monthly scholarship, insurance payments, travel allowance, "
+            "annual study allowance of EUR 460, and possible additional benefits; "
+            "tuition fees are not covered"
+        ),
+        application_url=(
+            "https://www.daad-kyrgyzstan.org/en/find-funding/scholarship-database/"
+            "?detail_to_show=0&detail_to_show=50026200&intention=&onlydaad=0"
             "&origin=73&pg=1&q=&status=0&subject=0&tab=&target=73&type=a"
         ),
     ),
