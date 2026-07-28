@@ -24,6 +24,30 @@ def _url(base_url: str, path: str) -> str:
     return f"{base_url.rstrip('/')}/{path.lstrip('/')}"
 
 
+def _request_with_reconnect(
+    client: httpx.Client,
+    method: str,
+    url: str,
+    *,
+    retries: int = 2,
+) -> httpx.Response:
+    """Retry transient connection drops without hiding HTTP failures."""
+
+    for attempt in range(retries + 1):
+        try:
+            return client.request(method, url)
+        except (
+            httpx.RemoteProtocolError,
+            httpx.ReadError,
+            httpx.ConnectError,
+            httpx.PoolTimeout,
+        ):
+            if attempt >= retries:
+                raise
+            time.sleep(0.15 * (attempt + 1))
+    raise RuntimeError("unreachable request retry state")
+
+
 def run_probe(
     *,
     base_url: str,
@@ -51,13 +75,13 @@ def run_probe(
             response: httpx.Response | None = None
             for _ in range(samples):
                 started = time.perf_counter()
-                response = client.get(_url(base_url, path))
+                response = _request_with_reconnect(client, "GET", _url(base_url, path))
                 elapsed_ms = (time.perf_counter() - started) * 1000
                 response.raise_for_status()
                 durations.append(elapsed_ms)
 
             head_started = time.perf_counter()
-            head = client.head(_url(base_url, path))
+            head = _request_with_reconnect(client, "HEAD", _url(base_url, path))
             head_ms = (time.perf_counter() - head_started) * 1000
             head.raise_for_status()
             assert response is not None
