@@ -172,6 +172,8 @@ class GlobalTrainingOpportunitiesSource(BaseSource):
                     if _is_source_unavailable(page_title, response.text)
                     else "ok"
                 )
+                if detail_fetch_status == "source_unavailable":
+                    page_title = None
             except httpx.HTTPError as exc:
                 log.warning(
                     "global_training.fetch_failed",
