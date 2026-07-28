@@ -244,6 +244,36 @@ def test_grants_gov_public_diplomacy_mission_is_not_product_relevant():
     assert score(opp, today=date(2026, 5, 22)) < 0.3
 
 
+def test_grants_gov_official_kazakhstan_mission_grant_is_product_relevant():
+    opp = _opp(
+        "Access Alumni Outreach and Engagement and English Access Scholarship Program",
+        summary=(
+            "U.S. Mission to Kazakhstan cooperative agreement for Access Alumni "
+            "Outreach and the English Access Scholarship Program in South "
+            "Kazakhstan, including Shymkent, Kyzylorda, Taraz, Turkistan and "
+            "Almaty."
+        ),
+        tags=[
+            "us",
+            "federal",
+            "grant",
+            "kazakhstan",
+            "education",
+            "public_diplomacy",
+        ],
+    )
+    opp.source = "grants_gov"
+    opp.deadline = date(2026, 8, 21)
+    opp.raw = {
+        "agencyCode": "DOS-KAZ",
+        "agency": "U.S. Mission to Kazakhstan",
+        "external_id": "DOS-KAZ-ALM-PDS-26-001",
+    }
+
+    assert is_relevant_for_kazakhstan_focus(opp)
+    assert score(opp, today=date(2026, 7, 28)) >= 0.45
+
+
 def test_grants_gov_housing_demo_is_not_product_relevant():
     title = (
         "Mass Market Solutions for Leveraging Robotics and AI Technologies "
