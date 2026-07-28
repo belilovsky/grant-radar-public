@@ -402,6 +402,65 @@ PROGRAMS = (
         ),
         application_url=("https://britishcouncilarts.grantplatform.com/"),
     ),
+    GlobalTrainingProgram(
+        url=(
+            "https://www.daad-kyrgyzstan.org/en/find-funding/scholarship-database/"
+            "?detail_to_show=0&detail_to_show=50110016&intention=&onlydaad=0"
+            "&origin=73&pg=1&q=&status=0&subject=0&tab=&target=73&type=a"
+        ),
+        title="DAAD Study Visits for Academics – Artists and Architects",
+        summary=(
+            "Official DAAD Central Asia scholarship-database record for study "
+            "visits in Germany by university teachers in architecture, fine art, "
+            "film, design, visual communication, performing arts or music. "
+            "Applicants from Kazakhstan can apply by 17 August 2026 for funding "
+            "from February 2027; a second 2026 deadline is 16 November."
+        ),
+        title_ru=("Стажировки DAAD для преподавателей искусства и архитектуры"),
+        summary_ru=(
+            "Официальная запись базы стипендий DAAD Central Asia о "
+            "стажировках в Германии для преподавателей вузов в архитектуре, "
+            "изобразительном искусстве, кино, дизайне, визуальной коммуникации, "
+            "исполнительских искусствах и музыке. Заявители из Казахстана могут "
+            "подать заявку до 17 августа 2026 года для финансирования с февраля "
+            "2027 года; второй срок подачи в 2026 году – 16 ноября."
+        ),
+        funder="DAAD Central Asia",
+        opportunity_type=OpportunityType.GRANT,
+        deadline=date(2026, 8, 17),
+        tags=(
+            "kazakhstan",
+            "central_asia",
+            "germany",
+            "daad",
+            "grant",
+            "scholarship",
+            "higher_education",
+            "faculty",
+            "study_visit",
+            "architecture",
+            "creative_industries",
+            "arts",
+            "design",
+            "music",
+            "performing_arts",
+            "university_partnership",
+        ),
+        eligibility=(
+            "University teachers from Kazakhstan in architecture, fine art, "
+            "film, design, visual communication, performing arts or music whose "
+            "study visit is coordinated with a German host institution",
+        ),
+        amount_raw=(
+            "monthly payments of EUR 2,000 for assistant teachers, assistant "
+            "professors and lecturers, EUR 2,150 for professors, plus travel "
+            "allowance; funding lasts one to three months and must begin in 2027"
+        ),
+        application_url=(
+            "https://www2.daad.de/deutschland/stipendium/datenbank/en/"
+            "21148-scholarship-database/?detail=50110016"
+        ),
+    ),
 )
 
 

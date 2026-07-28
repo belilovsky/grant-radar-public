@@ -209,6 +209,13 @@ Allowed tags:
 - `curriculum`
 - `assessment`
 - `higher_education`
+- `faculty`
+- `study_visit`
+- `architecture`
+- `arts`
+- `design`
+- `music`
+- `performing_arts`
 - `govtech`
 - `public_sector`
 - `digital_identity`
