@@ -1965,6 +1965,10 @@ async def test_astana_hub_fetch_uses_curated_pages_on_404():
             "<title>Regional IT Hub</title>"
             "<p>Regional program for IT ecosystem development.</p>"
         ),
+        "https://astanahub.com/l/marketentry/centraleurasia2026": (
+            "<title>Central Eurasia Market Entry 2026</title>"
+            "<p>Application is open until August 16, 2026.</p>"
+        ),
     }
     for url in FALLBACK_PROGRAM_URLS:
         respx.get(url).mock(return_value=httpx.Response(200, text=fallback_html[url]))
@@ -1981,6 +1985,12 @@ async def test_astana_hub_fetch_uses_curated_pages_on_404():
     assert "central_asia_eligible" in by_title["Silkway Accelerator 2025"].tags
     assert "rolling" in by_title["Regional IT Hub"].tags
     assert by_title["Regional IT Hub"].raw["deadline_policy"] == "rolling"
+    assert by_title["Central Eurasia Market Entry 2026"].deadline == date(2026, 8, 16)
+    assert "market_entry" in by_title["Central Eurasia Market Entry 2026"].tags
+    assert "b2b" in by_title["Central Eurasia Market Entry 2026"].tags
+    assert (
+        "Kazakhstan customers" in by_title["Central Eurasia Market Entry 2026"].summary
+    )
     assert (
         by_title["Regional IT Hub"].raw["country_scope"] == "Kazakhstan / Central Asia"
     )

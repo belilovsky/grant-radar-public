@@ -25,6 +25,7 @@ FALLBACK_PROGRAM_URLS = (
     "https://astanahub.com/ru/l/TechOrda2025",
     "https://astanahub.com/ru/l/silkwayaccelerator2025",
     "https://astanahub.com/en/l/regional/develop",
+    "https://astanahub.com/l/marketentry/centraleurasia2026",
 )
 FALLBACK_PROGRAM_SUMMARIES = {
     "https://astanahub.com/ru/l/TechOrda2025": (
@@ -41,6 +42,12 @@ FALLBACK_PROGRAM_SUMMARIES = {
         "Astana Hub regional IT ecosystem program for Kazakhstan teams outside "
         "the capital. It is a practical entry point for startup support, local "
         "community development, acceleration and partner programs."
+    ),
+    "https://astanahub.com/l/marketentry/centraleurasia2026": (
+        "Astana Hub 12-week offline acceleration program in Almaty for "
+        "international B2B technology startups entering Kazakhstan and Central "
+        "Eurasia. The program supports market validation, local partnerships, "
+        "business setup and pilots with Kazakhstan customers."
     ),
 }
 FALLBACK_PROGRAM_EXTRA_TAGS = {
@@ -59,6 +66,17 @@ FALLBACK_PROGRAM_EXTRA_TAGS = {
         "regional_development",
         "kazakhstan",
     ],
+    "https://astanahub.com/l/marketentry/centraleurasia2026": [
+        "startup",
+        "accelerator",
+        "b2b",
+        "market_entry",
+        "central_asia_eligible",
+        "kazakhstan",
+    ],
+}
+FALLBACK_PROGRAM_DEADLINES = {
+    "https://astanahub.com/l/marketentry/centraleurasia2026": date(2026, 8, 16),
 }
 
 # Very lightweight HTML extraction patterns; resilient to small layout changes.
@@ -130,6 +148,11 @@ TEXTUAL_DEADLINE_PATTERNS = (
     ),
     re.compile(
         r"deadline[^.\n]{0,120}?(?P<month>[A-Za-z]+)\s+(?P<day>\d{1,2}),\s*(?P<year>20\d{2})",
+        re.IGNORECASE,
+    ),
+    re.compile(
+        r"application\s+is\s+open\s+until[^.\n]{0,80}?"
+        r"(?P<month>[A-Za-z]+)\s+(?P<day>\d{1,2}),\s*(?P<year>20\d{2})",
         re.IGNORECASE,
     ),
     re.compile(
@@ -236,6 +259,8 @@ class AstanaHubSource(BaseSource):
                 deadline = None
         if deadline is None:
             deadline = _parse_textual_deadline(raw)
+        if deadline is None:
+            deadline = FALLBACK_PROGRAM_DEADLINES.get(url)
 
         opp_id = re.sub(r"[^a-zA-Z0-9_-]+", "_", url.split("/")[-1] or url)[:64]
         tags = list(self.default_tags)

@@ -7,6 +7,7 @@ from core.localization import (
     localized_text,
 )
 from core.models import Opportunity, OpportunityType
+from sources.astana_hub import FALLBACK_PROGRAM_EXTRA_TAGS
 from sources.kazakhstan_domestic import DOMESTIC_PROGRAMS
 
 
@@ -36,6 +37,16 @@ def test_russian_source_detail_beats_shorter_i18n_fallback():
 
 def test_domestic_support_tags_have_public_labels():
     tags = sorted({tag for program in DOMESTIC_PROGRAMS for tag in program.tags})
+
+    for lang in ("ru", "en"):
+        labels = dashboard_copy(lang)["label_map"]
+        assert all(tag in labels for tag in tags)
+
+
+def test_astana_hub_curated_tags_have_public_labels():
+    tags = sorted(
+        {tag for tags in FALLBACK_PROGRAM_EXTRA_TAGS.values() for tag in tags}
+    )
 
     for lang in ("ru", "en"):
         labels = dashboard_copy(lang)["label_map"]
