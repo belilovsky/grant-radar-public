@@ -803,6 +803,7 @@ COPY = {
         },
         "label_map": {
             "ai": "ИИ",
+            "artificial intelligence": "ИИ",
             "edtech": "Образовательные технологии",
             "govtech": "Гостех",
             "agrotech": "Агротехнологии",
@@ -1838,6 +1839,7 @@ COPY = {
         },
         "label_map": {
             "ai": "AI",
+            "artificial intelligence": "AI",
             "edtech": "EdTech",
             "govtech": "GovTech",
             "agrotech": "AgroTech",
