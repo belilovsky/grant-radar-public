@@ -1843,7 +1843,7 @@ async def test_global_training_fetch_yields_official_mid_career_course():
 
     items = await _collect(GlobalTrainingOpportunitiesSource())
 
-    assert len(items) == 12
+    assert len(items) == 13
     by_title = {item.title: item for item in items}
     item = by_title[
         "FY2026 Mid-Career Course for peacebuilding and development professionals"
@@ -2021,6 +2021,20 @@ async def test_global_training_fetch_yields_official_mid_career_course():
     assert "human_origins" in leakey.tags
     assert "paleoanthropology" in leakey.tags
     assert "leakey_foundation" in leakey.tags
+
+    spencer = by_title["Spencer Foundation Vision Grants"]
+    assert spencer.type == OpportunityType.GRANT
+    assert spencer.deadline == date(2026, 8, 12)
+    assert spencer.opportunity_status == "open"
+    assert spencer.lifecycle == "open"
+    assert spencer.funder == "The Spencer Foundation"
+    assert "USD 75,000" in spencer.raw["amount_raw"]
+    assert spencer.raw["application_url"] == "https://spencer.smartsimple.us/"
+    assert spencer.raw["i18n"]["ru"]["title"] == "Vision Grants Spencer Foundation"
+    assert "организации Казахстана" in spencer.raw["i18n"]["ru"]["summary"]
+    assert "education_research" in spencer.tags
+    assert "planning_grant" in spencer.tags
+    assert "spencer_foundation" in spencer.tags
 
 
 @pytest.mark.asyncio

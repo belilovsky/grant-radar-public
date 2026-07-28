@@ -679,6 +679,62 @@ PROGRAMS = (
         opportunity_status="upcoming",
         lifecycle="forecast",
     ),
+    GlobalTrainingProgram(
+        url="https://www.spencer.org/grant_types/vision-grants",
+        title="Spencer Foundation Vision Grants",
+        summary=(
+            "Official Spencer Foundation planning-grant programme for ambitious "
+            "research on transforming education systems toward equity. The "
+            "2026 cycle is open: the required Intent to Apply form is due by "
+            "12 August 2026 at noon Central/Chicago time, with full proposals "
+            "due on 16 September 2026. Proposals are accepted from U.S. and "
+            "international administering organizations."
+        ),
+        title_ru="Vision Grants Spencer Foundation",
+        summary_ru=(
+            "Официальная программа планировочных исследовательских грантов "
+            "Spencer Foundation для команд, которые готовят крупные исследования "
+            "по изменению образовательных систем в сторону большей справедливости. "
+            "Цикл 2026 открыт: обязательная форма Intent to Apply принимается "
+            "до 12 августа 2026 года, 12:00 Central/Chicago; полная заявка – "
+            "до 16 сентября 2026 года. Заявки принимаются от организаций в США "
+            "и за их пределами, включая подходящие некоммерческие, "
+            "университетские и государственные организации Казахстана."
+        ),
+        funder="The Spencer Foundation",
+        opportunity_type=OpportunityType.GRANT,
+        deadline=date(2026, 8, 12),
+        tags=(
+            "global",
+            "central_asia_eligible",
+            "grant",
+            "education",
+            "education_research",
+            "research",
+            "equity",
+            "systems_change",
+            "planning_grant",
+            "policy",
+            "community",
+            "partnership",
+            "higher_education",
+            "nonprofit_required",
+            "spencer_foundation",
+        ),
+        eligibility=(
+            "Principal investigators and co-principal investigators with an "
+            "earned doctorate, appropriate professional experience or a terminal "
+            "professional degree, applying through a nonprofit or public "
+            "administering organization in the United States or internationally, "
+            "including eligible organizations in Kazakhstan",
+        ),
+        amount_raw=(
+            "USD 75,000 total for 12 to 18 months; budgets may not include "
+            "indirect cost charges, and the programme supports planning for "
+            "large-scale research rather than a fully developed study"
+        ),
+        application_url="https://spencer.smartsimple.us/",
+    ),
 )
 
 

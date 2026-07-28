@@ -245,6 +245,10 @@ Allowed tags:
 - `private_equity`
 - `venture`
 - `science`
+- `education_research`
+- `equity`
+- `systems_change`
+- `planning_grant`
 - `civil_society`
 - `field_research`
 - `conservation`
@@ -277,6 +281,7 @@ Allowed tags:
 - `cybersecurity`
 - `isoc`
 - `internet_society_foundation`
+- `spencer_foundation`
 
 ## Eligibility taxonomy
 
