@@ -25,6 +25,7 @@ class GlobalTrainingProgram:
     title_ru: str
     summary_ru: str
     funder: str
+    opportunity_type: OpportunityType
     deadline: date
     tags: tuple[str, ...]
     eligibility: tuple[str, ...]
@@ -58,6 +59,7 @@ PROGRAMS = (
             "заявки принимаются до 31 августа 2026 года, 17:00 по японскому времени."
         ),
         funder="Hiroshima University GPAD / UNITAR Hiroshima",
+        opportunity_type=OpportunityType.FELLOWSHIP,
         deadline=date(2026, 8, 31),
         tags=(
             "global",
@@ -110,6 +112,7 @@ PROGRAMS = (
             "15 августа 2026 года, 12:00 по времени Астаны."
         ),
         funder="U.S. Embassy in Kazakhstan / Fulbright Program",
+        opportunity_type=OpportunityType.FELLOWSHIP,
         deadline=date(2026, 8, 15),
         tags=(
             "kazakhstan",
@@ -132,6 +135,59 @@ PROGRAMS = (
             "and U.S. host university tuition waivers for required coursework"
         ),
         application_url="https://apply.iie.org/flta2027",
+    ),
+    GlobalTrainingProgram(
+        url=(
+            "https://www.daad-kyrgyzstan.org/en/find-funding/scholarship-database/"
+            "?detail_to_show=0&detail_to_show=57742121&intention=&onlydaad=0"
+            "&origin=73&pg=1&q=&status=0&subject=0&tab=&target=73&type=a"
+        ),
+        title="DAAD Research Grants in Germany",
+        summary=(
+            "Official DAAD Central Asia scholarship-database record for research "
+            "stays in Germany during a doctorate or the early postdoc phase. "
+            "Applicants from Kazakhstan can apply as PhD students or PhD holders; "
+            "the next application deadline is 17 August 2026 for funding from "
+            "February 2027."
+        ),
+        title_ru="Исследовательские гранты DAAD в Германии",
+        summary_ru=(
+            "Официальная запись базы стипендий DAAD Central Asia о "
+            "исследовательских стажировках в Германии во время докторантуры "
+            "или на раннем постдокторском этапе. Заявители из Казахстана могут "
+            "подаваться как PhD students или PhD holders; ближайший дедлайн – "
+            "17 августа 2026 года для финансирования с февраля 2027 года."
+        ),
+        funder="DAAD Central Asia",
+        opportunity_type=OpportunityType.GRANT,
+        deadline=date(2026, 8, 17),
+        tags=(
+            "kazakhstan",
+            "central_asia",
+            "germany",
+            "daad",
+            "grant",
+            "scholarship",
+            "research",
+            "higher_education",
+            "doctoral",
+            "postdoc",
+        ),
+        eligibility=(
+            "Applicants from Kazakhstan who are doctoral students outside Germany "
+            "or PhD holders up to four years after completing the doctorate, "
+            "under the official DAAD programme rules",
+        ),
+        amount_raw=(
+            "monthly scholarship payments of EUR 1,400, insurance payments, "
+            "travel allowance for funding periods over six months, and a EUR 460 "
+            "research allowance for funding periods over six months"
+        ),
+        application_url=(
+            "https://www.daad-kyrgyzstan.org/en/find-funding/scholarship-database/"
+            "?detail_to_show=0&detail_to_show=57742121&intention=&onlydaad=0"
+            "&origin=73&pg=1&q=&status=0&subject=0&tab=&target=73&type=a"
+        ),
     ),
 )
 
@@ -186,7 +242,7 @@ class GlobalTrainingOpportunitiesSource(BaseSource):
             yield Opportunity(
                 source=self.slug,
                 source_url=program.url,  # type: ignore[arg-type]
-                type=OpportunityType.FELLOWSHIP,
+                type=program.opportunity_type,
                 title=program.title,
                 summary=program.summary,
                 funder=program.funder,

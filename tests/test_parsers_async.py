@@ -1834,7 +1834,7 @@ async def test_global_training_fetch_yields_official_mid_career_course():
 
     items = await _collect(GlobalTrainingOpportunitiesSource())
 
-    assert len(items) == 2
+    assert len(items) == 3
     by_title = {item.title: item for item in items}
     item = by_title[
         "FY2026 Mid-Career Course for peacebuilding and development professionals"
@@ -1867,6 +1867,19 @@ async def test_global_training_fetch_yields_official_mid_career_course():
     assert "kazakhstan" in flta.tags
     assert "fulbright" in flta.tags
     assert "teacher_training" in flta.tags
+
+    daad = by_title["DAAD Research Grants in Germany"]
+    assert daad.type == OpportunityType.GRANT
+    assert daad.deadline == date(2026, 8, 17)
+    assert "EUR 1,400" in daad.raw["amount_raw"]
+    assert daad.raw["application_url"].startswith(
+        "https://www.daad-kyrgyzstan.org/en/find-funding/scholarship-database/"
+    )
+    assert daad.raw["i18n"]["ru"]["title"] == "Исследовательские гранты DAAD в Германии"
+    assert "kazakhstan" in daad.tags
+    assert "daad" in daad.tags
+    assert "doctoral" in daad.tags
+    assert "postdoc" in daad.tags
 
 
 @pytest.mark.asyncio
