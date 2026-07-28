@@ -252,6 +252,13 @@ Allowed tags:
 - `biology`
 - `archaeology`
 - `anthropology`
+- `genetics`
+- `geology`
+- `human_origins`
+- `paleoanthropology`
+- `paleoclimatology`
+- `primatology`
+- `leakey_foundation`
 - `cloud_infrastructure`
 - `community`
 - `connectivity`

@@ -618,6 +618,67 @@ PROGRAMS = (
             "beyond-the-net-grant-program/"
         ),
     ),
+    GlobalTrainingProgram(
+        url="https://leakeyfoundation.org/grant/research/",
+        title="Leakey Foundation Research Grants",
+        summary=(
+            "Official Leakey Foundation research-grant programme for advanced "
+            "doctoral students and post-PhD researchers from any country. The "
+            "programme funds research related to human origins, evolution and "
+            "behavior across disciplines such as archaeology, biological "
+            "anthropology, paleoanthropology, primate behavioral ecology, "
+            "genetics, geology and paleoclimatology; the next recurring deadline "
+            "after the 2026 fall cycle is 10 January 2027."
+        ),
+        title_ru="Исследовательские гранты Leakey Foundation",
+        summary_ru=(
+            "Официальная исследовательская программа Leakey Foundation для "
+            "докторантов на продвинутом этапе и исследователей после PhD из "
+            "любой страны, включая Казахстан. Финансируются проекты о "
+            "происхождении, эволюции и поведении человека: археология, "
+            "биологическая антропология, палеоантропология, поведенческая "
+            "экология приматов, генетика, геология и палеоклиматология. "
+            "Ближайший повторяющийся срок после осеннего цикла 2026 года – "
+            "10 января 2027 года."
+        ),
+        funder="The Leakey Foundation",
+        opportunity_type=OpportunityType.GRANT,
+        deadline=date(2027, 1, 10),
+        tags=(
+            "global",
+            "central_asia_eligible",
+            "grant",
+            "science",
+            "research",
+            "field_research",
+            "doctoral",
+            "postdoc",
+            "archaeology",
+            "anthropology",
+            "biology",
+            "ecology",
+            "genetics",
+            "geology",
+            "human_origins",
+            "paleoanthropology",
+            "paleoclimatology",
+            "primatology",
+            "leakey_foundation",
+        ),
+        eligibility=(
+            "Advanced doctoral students and post-PhD researchers from any "
+            "country, including Kazakhstan, whose institution-affiliated project "
+            "is directly relevant to human origins and evolution",
+        ),
+        amount_raw=(
+            "up to USD 20,000 for PhD candidates and up to USD 30,000 for "
+            "post-PhD researchers; eligible costs are direct research expenses "
+            "such as fieldwork travel, supplies and research assistance"
+        ),
+        application_url="https://leakeyfoundation.org/grant/research/",
+        opportunity_status="upcoming",
+        lifecycle="forecast",
+    ),
 )
 
 

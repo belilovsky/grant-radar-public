@@ -1843,7 +1843,7 @@ async def test_global_training_fetch_yields_official_mid_career_course():
 
     items = await _collect(GlobalTrainingOpportunitiesSource())
 
-    assert len(items) == 11
+    assert len(items) == 12
     by_title = {item.title: item for item in items}
     item = by_title[
         "FY2026 Mid-Career Course for peacebuilding and development professionals"
@@ -2001,6 +2001,26 @@ async def test_global_training_fetch_yields_official_mid_career_course():
     assert "internet_access" in beyond.tags
     assert "open_internet" in beyond.tags
     assert "internet_society_foundation" in beyond.tags
+
+    leakey = by_title["Leakey Foundation Research Grants"]
+    assert leakey.type == OpportunityType.GRANT
+    assert leakey.deadline == date(2027, 1, 10)
+    assert leakey.opportunity_status == "upcoming"
+    assert leakey.lifecycle == "forecast"
+    assert leakey.funder == "The Leakey Foundation"
+    assert "USD 20,000" in leakey.raw["amount_raw"]
+    assert "USD 30,000" in leakey.raw["amount_raw"]
+    assert (
+        leakey.raw["application_url"] == "https://leakeyfoundation.org/grant/research/"
+    )
+    assert (
+        leakey.raw["i18n"]["ru"]["title"]
+        == "Исследовательские гранты Leakey Foundation"
+    )
+    assert "включая Казахстан" in leakey.raw["i18n"]["ru"]["summary"]
+    assert "human_origins" in leakey.tags
+    assert "paleoanthropology" in leakey.tags
+    assert "leakey_foundation" in leakey.tags
 
 
 @pytest.mark.asyncio
