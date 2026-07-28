@@ -335,6 +335,46 @@ DOMESTIC_PROGRAMS = (
         application_url="https://egov.kz/cms/ru/online-services/for_citizen/pr_5",
     ),
     DomesticProgram(
+        url="https://www.gov.kz/memleket/entities/astana/press/news/details/1247988?lang=ru",
+        title="Astana college state-funded places",
+        summary=(
+            "Official Astana akimat notice on the 2026-2027 college admission "
+            "campaign. The city allocated 10,300 state-funded college places, "
+            "including working qualifications, middle-specialist and applied "
+            "bachelor programmes, target orders with employers and inclusive "
+            "education places. Applications are accepted online through eGov.kz; "
+            "published deadlines run by track from 20 July to 20 September 2026."
+        ),
+        title_ru="10 300 грантовых мест в колледжах Астаны",
+        summary_ru=(
+            "Официальное сообщение акимата Астаны о приёме в колледжи на "
+            "2026-2027 учебный год. В городе выделено 10 300 грантовых мест, "
+            "включая рабочие квалификации, специальности среднего звена и "
+            "прикладного бакалавриата, целевой заказ с работодателями и места "
+            "по инклюзивному образованию. Документы принимаются онлайн через "
+            "eGov.kz; опубликованные сроки зависят от траектории и идут с "
+            "20 июля до 20 сентября 2026 года."
+        ),
+        tags=(
+            "grant",
+            "scholarship",
+            "education",
+            "citizen_support",
+            "regional_development",
+            "govkz",
+        ),
+        rolling=False,
+        deadline=date(2026, 9, 20),
+        opportunity_status="open",
+        lifecycle="open",
+        eligibility=(
+            "Applicants to technical, vocational and post-secondary education "
+            "organizations in Astana under the official admission rules",
+        ),
+        amount_raw="10,300 state-funded college places for 2026-2027",
+        application_url="https://egov.kz/cms/ru/online-services/for_citizen/pr_5",
+    ),
+    DomesticProgram(
         url=(
             "https://bolashak.gov.kz/ru/allnews/"
             "100-obrazovatelnyh-grantov-dlya-kazahstancev-vydelili-vuzy-"
