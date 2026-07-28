@@ -291,6 +291,50 @@ DOMESTIC_PROGRAMS = (
         ),
     ),
     DomesticProgram(
+        url="https://www.gov.kz/memleket/entities/pavlodar-edu/press/events/details/47017",
+        title="Pavlodar region college state-funded places",
+        summary=(
+            "Official Pavlodar Region Education Department notice on the "
+            "2026-2027 technical, vocational and post-secondary admission cycle. "
+            "The region allocated 6,300 state-funded college places. Applications "
+            "are accepted through eGov.kz or directly by colleges, with deadlines "
+            "depending on the track: 10 August for pedagogy and some medical "
+            "routes, 15 August for medical routes after grade 11 or TVET, "
+            "22 August for middle-specialist and applied-bachelor programmes, "
+            "27 August for working qualifications and 20 September for part-time study."
+        ),
+        title_ru="6300 грантовых мест в колледжах Павлодарской области",
+        summary_ru=(
+            "Официальное сообщение Управления образования Павлодарской области "
+            "о приёме в колледжи на 2026-2027 учебный год. Регион выделил "
+            "6300 мест по государственному образовательному заказу. Документы "
+            "подаются через eGov.kz или напрямую в колледж; сроки зависят от "
+            "траектории: до 10 августа для педагогических и части медицинских "
+            "направлений, до 15 августа для медицинских направлений после 11 класса "
+            "или ТиПО, до 22 августа для специальностей среднего звена и прикладного "
+            "бакалавриата, до 27 августа для рабочих квалификаций и до 20 сентября "
+            "для заочной формы."
+        ),
+        tags=(
+            "grant",
+            "scholarship",
+            "education",
+            "citizen_support",
+            "regional_development",
+            "govkz",
+        ),
+        rolling=False,
+        deadline=date(2026, 9, 20),
+        opportunity_status="open",
+        lifecycle="open",
+        eligibility=(
+            "Applicants to technical, vocational and post-secondary education "
+            "organizations in Pavlodar Region under the official admission rules",
+        ),
+        amount_raw="6,300 state-funded college places for 2026-2027",
+        application_url="https://egov.kz/cms/ru/online-services/for_citizen/pr_5",
+    ),
+    DomesticProgram(
         url=(
             "https://bolashak.gov.kz/ru/allnews/"
             "100-obrazovatelnyh-grantov-dlya-kazahstancev-vydelili-vuzy-"

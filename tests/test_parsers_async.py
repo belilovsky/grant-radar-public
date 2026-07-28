@@ -956,6 +956,7 @@ async def test_kazakhstan_domestic_support_yields_official_programs():
     assert "Kazakhstan master's degree state educational grants" in by_title
     assert "State educational grants for the Taraz RCTU branch" in by_title
     assert "State educational grants for Anhalt International University" in by_title
+    assert "Pavlodar region college state-funded places" in by_title
     assert (
         "Tajikistan intergovernmental education grants for Kazakhstan citizens"
         in by_title
@@ -1079,6 +1080,23 @@ async def test_kazakhstan_domestic_support_yields_official_programs():
             "i18n"
         ]["ru"]["title"]
         == "Государственные образовательные гранты Anhalt International University"
+    )
+    assert by_title["Pavlodar region college state-funded places"].deadline == date(
+        2026, 9, 20
+    )
+    assert (
+        by_title["Pavlodar region college state-funded places"].raw["amount_raw"]
+        == "6,300 state-funded college places for 2026-2027"
+    )
+    assert (
+        by_title["Pavlodar region college state-funded places"].raw["application_url"]
+        == "https://egov.kz/cms/ru/online-services/for_citizen/pr_5"
+    )
+    assert (
+        by_title["Pavlodar region college state-funded places"].raw["i18n"]["ru"][
+            "title"
+        ]
+        == "6300 грантовых мест в колледжах Павлодарской области"
     )
     assert by_title["Astana Hub Seed Money Smart City"].raw["deadline_policy"] == (
         "rolling"
