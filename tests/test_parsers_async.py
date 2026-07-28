@@ -1834,7 +1834,7 @@ async def test_global_training_fetch_yields_official_mid_career_course():
 
     items = await _collect(GlobalTrainingOpportunitiesSource())
 
-    assert len(items) == 6
+    assert len(items) == 7
     by_title = {item.title: item for item in items}
     item = by_title[
         "FY2026 Mid-Career Course for peacebuilding and development professionals"
@@ -1920,6 +1920,19 @@ async def test_global_training_fetch_yields_official_mid_career_course():
     assert "cotutelle" in cotutelle.tags
     assert "university_partnership" in cotutelle.tags
     assert "doctoral" in cotutelle.tags
+
+    ctc = by_title["Connections Through Culture Grants 2026 for Kazakhstan"]
+    assert ctc.type == OpportunityType.GRANT
+    assert ctc.deadline == date(2026, 8, 12)
+    assert "GBP 10,000" in ctc.raw["amount_raw"]
+    assert ctc.raw["application_url"] == "https://britishcouncilarts.grantplatform.com/"
+    assert (
+        ctc.raw["i18n"]["ru"]["title"]
+        == "Гранты Connections Through Culture 2026 для Казахстана"
+    )
+    assert "british_council" in ctc.tags
+    assert "creative_industries" in ctc.tags
+    assert "partnership" in ctc.tags
 
 
 @pytest.mark.asyncio

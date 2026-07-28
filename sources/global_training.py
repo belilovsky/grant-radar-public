@@ -358,6 +358,50 @@ PROGRAMS = (
             "&origin=73&pg=1&q=&status=0&subject=0&tab=&target=73&type=a"
         ),
     ),
+    GlobalTrainingProgram(
+        url="https://arts.britishcouncil.org/connections-through-culture",
+        title="Connections Through Culture Grants 2026 for Kazakhstan",
+        summary=(
+            "Official British Council Arts call for Connections Through Culture "
+            "2026. The programme funds creative collaboration between at least "
+            "one UK-based partner and at least one partner in an eligible country, "
+            "including Kazakhstan. Applications close on 12 August 2026 at "
+            "23:59 BST; partnerships with Kazakhstan can request up to "
+            "GBP 10,000."
+        ),
+        title_ru="Гранты Connections Through Culture 2026 для Казахстана",
+        summary_ru=(
+            "Официальный конкурс British Council Arts Connections Through "
+            "Culture 2026 для творческого сотрудничества между партнёром из "
+            "Великобритании и партнёром из одной из стран-участниц, включая "
+            "Казахстан. Заявки принимаются до 12 августа 2026 года, 23:59 BST; "
+            "партнёрства с Казахстаном могут запросить до 10 000 GBP."
+        ),
+        funder="British Council Arts",
+        opportunity_type=OpportunityType.GRANT,
+        deadline=date(2026, 8, 12),
+        tags=(
+            "kazakhstan",
+            "uk",
+            "british_council",
+            "grant",
+            "creative_industries",
+            "culture",
+            "partnership",
+            "digital",
+        ),
+        eligibility=(
+            "Applications must involve at least one UK-based partner and at "
+            "least one partner legally based in Kazakhstan or another eligible "
+            "participating country throughout the project activity period",
+        ),
+        amount_raw=(
+            "up to GBP 10,000 for partnerships between UK-based partners and "
+            "partners in Kazakhstan; grant funding must cover the full partnership "
+            "activity"
+        ),
+        application_url=("https://britishcouncilarts.grantplatform.com/"),
+    ),
 )
 
 
