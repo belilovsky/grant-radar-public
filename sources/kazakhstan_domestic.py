@@ -505,6 +505,47 @@ DOMESTIC_PROGRAMS = (
         application_url="https://kezekte.kz/",
     ),
     DomesticProgram(
+        url="https://www.gov.kz/memleket/entities/mangystau-upp/press/article/details/212349",
+        title="Mangystau regional grants for social entrepreneurship",
+        summary=(
+            "Official Mangystau Entrepreneurship and Trade Department guidance "
+            "on non-repayable regional grants for social entrepreneurs and One "
+            "Village One Product finalists. The page explains eligible spending "
+            "on raw materials, repairs, new equipment, technologies, franchise "
+            "and research work, with at least 20% co-financing, documented "
+            "cashless payments and new jobs."
+        ),
+        title_ru="Региональные гранты Мангистауской области для социального предпринимательства",
+        summary_ru=(
+            "Официальная справка Управления предпринимательства и торговли "
+            "Мангистауской области о безвозмездных грантах для социальных "
+            "предпринимателей и финалистов программы «Одно село – один продукт». "
+            "Средства можно направлять на сырье, ремонт, новое оборудование, "
+            "технологии, франшизу и исследовательские работы; требуются "
+            "софинансирование не менее 20%, безналичная оплата с подтверждающими "
+            "документами и создание рабочих мест."
+        ),
+        tags=(
+            "grant",
+            "social_entrepreneurship",
+            "sme",
+            "business_support",
+            "regional_development",
+            "one_village_one_product",
+            "kezekte",
+            "mangystau",
+            "govkz",
+        ),
+        eligibility=(
+            "Social entrepreneurs and One Village One Product finalists under "
+            "Mangystau regional grant conditions",
+        ),
+        amount_raw="up to 5,000,000 KZT",
+        amount_max=Decimal("5000000"),
+        currency="KZT",
+        application_url="https://kezekte.kz/",
+    ),
+    DomesticProgram(
         url="https://www.enbek.kz/ru/node/3481",
         title="State grant for startup business development",
         summary=(
