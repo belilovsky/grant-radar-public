@@ -1834,7 +1834,7 @@ async def test_global_training_fetch_yields_official_mid_career_course():
 
     items = await _collect(GlobalTrainingOpportunitiesSource())
 
-    assert len(items) == 5
+    assert len(items) == 6
     by_title = {item.title: item for item in items}
     item = by_title[
         "FY2026 Mid-Career Course for peacebuilding and development professionals"
@@ -1907,6 +1907,19 @@ async def test_global_training_fetch_yields_official_mid_career_course():
     assert "doctoral" in doctoral.tags
     assert "research" in doctoral.tags
     assert "graduates" in doctoral.tags
+
+    cotutelle = by_title["DAAD Bi-nationally Supervised Doctoral Degrees / Cotutelle"]
+    assert cotutelle.type == OpportunityType.FELLOWSHIP
+    assert cotutelle.deadline == date(2026, 11, 16)
+    assert "EUR 1,400" in cotutelle.raw["amount_raw"]
+    assert "57507783" in cotutelle.raw["application_url"]
+    assert (
+        cotutelle.raw["i18n"]["ru"]["title"]
+        == "Гранты DAAD на совместную докторантуру Cotutelle"
+    )
+    assert "cotutelle" in cotutelle.tags
+    assert "university_partnership" in cotutelle.tags
+    assert "doctoral" in cotutelle.tags
 
 
 @pytest.mark.asyncio

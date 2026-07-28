@@ -299,6 +299,65 @@ PROGRAMS = (
             "&origin=73&pg=1&q=&status=0&subject=0&tab=&target=73&type=a"
         ),
     ),
+    GlobalTrainingProgram(
+        url=(
+            "https://www.daad-kyrgyzstan.org/en/find-funding/scholarship-database/"
+            "?detail_to_show=0&detail_to_show=57507783&intention=&onlydaad=0"
+            "&origin=73&pg=1&q=&status=0&subject=0&tab=&target=73&type=a"
+        ),
+        title="DAAD Bi-nationally Supervised Doctoral Degrees / Cotutelle",
+        summary=(
+            "Official DAAD Central Asia scholarship-database record for "
+            "bi-national doctoral supervision or a Cotutelle doctorate between "
+            "the home university and a German university. Applicants from "
+            "Kazakhstan can apply by 16 November 2026; funding begins in 2027 "
+            "and covers 7-24 months of research stays in Germany."
+        ),
+        title_ru="Гранты DAAD на совместную докторантуру Cotutelle",
+        summary_ru=(
+            "Официальная запись базы стипендий DAAD Central Asia для "
+            "совместной докторантуры: научное руководство в домашнем вузе и "
+            "немецком университете либо формат Cotutelle с индивидуальным "
+            "соглашением между университетами. Заявители из Казахстана могут "
+            "подать заявку до 16 ноября 2026 года; финансирование начинается "
+            "в 2027 году и покрывает 7–24 месяца исследовательских поездок "
+            "в Германию."
+        ),
+        funder="DAAD Central Asia",
+        opportunity_type=OpportunityType.FELLOWSHIP,
+        deadline=date(2026, 11, 16),
+        tags=(
+            "kazakhstan",
+            "central_asia",
+            "germany",
+            "daad",
+            "scholarship",
+            "research",
+            "higher_education",
+            "doctoral",
+            "graduates",
+            "cotutelle",
+            "university_partnership",
+            "german_language",
+        ),
+        eligibility=(
+            "Applicants from Kazakhstan pursuing bi-national doctoral supervision "
+            "who have earned a master's degree, Diplom or in exceptional cases a "
+            "bachelor's degree by the start of funding, or Cotutelle applicants "
+            "admitted to a doctoral programme by the start of funding",
+        ),
+        amount_raw=(
+            "EUR 1,400 monthly payments during stays in Germany, insurance "
+            "payments, travel allowance for up to three outward and return "
+            "journeys on application, EUR 460 research allowance, and possible "
+            "language-course support"
+        ),
+        application_url=(
+            "https://www.daad-kyrgyzstan.org/en/find-funding/scholarship-database/"
+            "?detail_to_show=0&detail_to_show=57507783&intention=&onlydaad=0"
+            "&origin=73&pg=1&q=&status=0&subject=0&tab=&target=73&type=a"
+        ),
+    ),
 )
 
 

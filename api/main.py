@@ -581,15 +581,18 @@ def _stored_opportunity(row: Any, *, content_lang: str = "en") -> Opportunity:
                     for key, value in domestic_raw.items()
                     if value not in (None, "")
                 }
-    normalized_status = normalized_opportunity_status(opportunity)
+    today = public_today()
+    normalized_status = normalized_opportunity_status(opportunity, today=today)
     opportunity.funder_slug = opportunity.funder_slug or _slugify_funder(
         _funder_name(opportunity)
     )
     opportunity.opportunity_status = opportunity.opportunity_status or normalized_status
-    opportunity.lifecycle = opportunity.lifecycle or public_lifecycle(opportunity)
+    opportunity.lifecycle = opportunity.lifecycle or public_lifecycle(
+        opportunity, today=today
+    )
     # Recompute with the current deterministic model so persisted scores from an
     # older release cannot silently survive a methodology change.
-    opportunity.score = score_opportunity(opportunity)
+    opportunity.score = score_opportunity(opportunity, today=today)
     return opportunity
 
 
@@ -840,9 +843,17 @@ def _with_decision_readiness(
     item: Opportunity,
     *,
     ranking_subject: Opportunity | None = None,
+    today: date | None = None,
 ) -> Opportunity:
     """Expose which application facts are present without inventing missing data."""
     raw = item.raw if isinstance(item.raw, dict) else {}
+    checked_day = today or public_today()
+    checked_at = datetime(
+        checked_day.year,
+        checked_day.month,
+        checked_day.day,
+        tzinfo=UTC,
+    )
     present = {
         "deadline": bool(item.deadline or raw.get("deadline_policy") == "rolling"),
         "amount": bool(
@@ -866,8 +877,11 @@ def _with_decision_readiness(
                 **raw,
                 "decision_readiness": readiness,
                 "qazcompute_evidence_readiness": opportunity_evidence_readiness(item),
-                "qazcompute_deadline_anomaly": opportunity_deadline_anomaly(item),
-                "ranking": ranking_payload(ranking_subject or item),
+                "qazcompute_deadline_anomaly": opportunity_deadline_anomaly(
+                    item,
+                    checked_at=checked_at,
+                ),
+                "ranking": ranking_payload(ranking_subject or item, today=checked_day),
             }
         }
     )
@@ -890,6 +904,7 @@ def _cached_prepared_scope_items(
         _with_decision_readiness(
             localize_opportunity(item, normalized_lang),
             ranking_subject=item,
+            today=today,
         )
         for item in _cached_public_scope_items(
             content_lang=normalized_lang,

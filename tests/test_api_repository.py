@@ -44,6 +44,7 @@ def test_current_catalog_uses_kazakhstan_business_date(monkeypatch):
                 title="Kazakhstan AI programme expired yesterday",
                 tags=["kazakhstan", "ai"],
                 score=0.9,
+                lifecycle="open",
                 deadline=date(2026, 7, 27),
             ),
             Opportunity(
@@ -53,6 +54,7 @@ def test_current_catalog_uses_kazakhstan_business_date(monkeypatch):
                 title="Kazakhstan AI programme closing today",
                 tags=["kazakhstan", "ai"],
                 score=0.9,
+                lifecycle="open",
                 deadline=date(2026, 7, 28),
             ),
         ]
