@@ -26,6 +26,7 @@ FALLBACK_PROGRAM_URLS = (
     "https://astanahub.com/ru/l/silkwayaccelerator2025",
     "https://astanahub.com/en/l/regional/develop",
     "https://astanahub.com/l/marketentry/centraleurasia2026",
+    "https://astanahub.com/en/l/aipreneurs-2026",
 )
 FALLBACK_PROGRAM_SUMMARIES = {
     "https://astanahub.com/ru/l/TechOrda2025": (
@@ -48,6 +49,14 @@ FALLBACK_PROGRAM_SUMMARIES = {
         "international B2B technology startups entering Kazakhstan and Central "
         "Eurasia. The program supports market validation, local partnerships, "
         "business setup and pilots with Kazakhstan customers."
+    ),
+    "https://astanahub.com/en/l/aipreneurs-2026": (
+        "Astana Hub 14-week offline program in Astana for professionals and "
+        "teams building AI startups. The route combines founder training, "
+        "accelerator work, product validation, AlemPlus cloud and GPU "
+        "infrastructure, Astana Hub partner resources, accommodation for "
+        "non-resident Core Accelerator participants and possible pre-seed "
+        "funding for the strongest teams."
     ),
 }
 FALLBACK_PROGRAM_EXTRA_TAGS = {
@@ -74,9 +83,19 @@ FALLBACK_PROGRAM_EXTRA_TAGS = {
         "central_asia_eligible",
         "kazakhstan",
     ],
+    "https://astanahub.com/en/l/aipreneurs-2026": [
+        "startup",
+        "accelerator",
+        "ai",
+        "gpu",
+        "pre_seed",
+        "alemplus",
+        "kazakhstan",
+    ],
 }
 FALLBACK_PROGRAM_DEADLINES = {
     "https://astanahub.com/l/marketentry/centraleurasia2026": date(2026, 8, 16),
+    "https://astanahub.com/en/l/aipreneurs-2026": date(2026, 8, 17),
 }
 
 # Very lightweight HTML extraction patterns; resilient to small layout changes.
@@ -153,6 +172,12 @@ TEXTUAL_DEADLINE_PATTERNS = (
     re.compile(
         r"application\s+is\s+open\s+until[^.\n]{0,80}?"
         r"(?P<month>[A-Za-z]+)\s+(?P<day>\d{1,2}),\s*(?P<year>20\d{2})",
+        re.IGNORECASE,
+    ),
+    re.compile(
+        r"application\s+period[^.\n]{0,120}?[–-]\s*"
+        r"(?P<day>\d{1,2})\s+(?P<month>[A-Za-z]+)[^.]{0,40}?"
+        r"(?P<year>20\d{2})",
         re.IGNORECASE,
     ),
     re.compile(
@@ -274,13 +299,19 @@ class AstanaHubSource(BaseSource):
             type=OpportunityType.ACCELERATOR,
             title=title,
             summary=summary,
+            funder="Astana Hub",
             deadline=deadline,
+            eligibility=[
+                "Kazakhstan and Central Asia startup teams or applicants under "
+                "the current Astana Hub program terms"
+            ],
             tags=tags,
             raw={
                 "external_id": opp_id,
                 "snippet": raw,
                 "description": summary,
                 "country_scope": "Kazakhstan / Central Asia",
+                "application_url": url,
                 "eligibility": (
                     "Check the current Astana Hub program page for applicant "
                     "requirements, dates and partner-school or startup criteria."

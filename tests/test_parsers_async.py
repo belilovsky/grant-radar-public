@@ -2095,6 +2095,11 @@ async def test_astana_hub_fetch_uses_curated_pages_on_404():
             "<title>Central Eurasia Market Entry 2026</title>"
             "<p>Application is open until August 16, 2026.</p>"
         ),
+        "https://astanahub.com/en/l/aipreneurs-2026": (
+            "<title>AI'Preneurs 3.0</title>"
+            "<p>Application period: 21 Jul - 17 Aug 2026.</p>"
+            "<p>The program will be held in an offline format in Astana, Kazakhstan.</p>"
+        ),
     }
     for url in FALLBACK_PROGRAM_URLS:
         respx.get(url).mock(return_value=httpx.Response(200, text=fallback_html[url]))
@@ -2117,6 +2122,10 @@ async def test_astana_hub_fetch_uses_curated_pages_on_404():
     assert (
         "Kazakhstan customers" in by_title["Central Eurasia Market Entry 2026"].summary
     )
+    assert by_title["AI'Preneurs 3.0"].deadline == date(2026, 8, 17)
+    assert "ai" in by_title["AI'Preneurs 3.0"].tags
+    assert "gpu" in by_title["AI'Preneurs 3.0"].tags
+    assert "pre-seed" in by_title["AI'Preneurs 3.0"].summary
     assert (
         by_title["Regional IT Hub"].raw["country_scope"] == "Kazakhstan / Central Asia"
     )
