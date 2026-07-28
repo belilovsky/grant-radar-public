@@ -62,6 +62,7 @@ PROGRAMS = (
         tags=(
             "global",
             "international",
+            "central_asia_eligible",
             "japan",
             "unitar",
             "fellowship",

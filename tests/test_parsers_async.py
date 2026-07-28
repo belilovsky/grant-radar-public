@@ -1842,6 +1842,7 @@ async def test_global_training_fetch_yields_official_mid_career_course():
     assert "no participation fee" in item.raw["amount_raw"]
     assert item.raw["i18n"]["ru"]["title"].startswith("FY2026 Mid-Career Course")
     assert "unitar" in item.tags
+    assert "central_asia_eligible" in item.tags
     assert "peacebuilding" in item.tags
     assert "international_development" in item.tags
 
