@@ -216,6 +216,42 @@ DOMESTIC_PROGRAMS = (
         amount_raw="100 state educational grants for 2026-2027",
     ),
     DomesticProgram(
+        url="https://www.gov.kz/memleket/entities/sci/press/news/details/1263399?lang=ru",
+        title="State educational grants for Anhalt International University",
+        summary=(
+            "Official Ministry notice on state educational grants at Anhalt "
+            "International University in Almaty. Kazakhstan applicants can apply "
+            "for electrical engineering, information technology and biomedical "
+            "engineering programmes; documents are accepted until 10 August 2026."
+        ),
+        title_ru="Государственные образовательные гранты Anhalt International University",
+        summary_ru=(
+            "Официальное сообщение Министерства науки и высшего образования "
+            "о государственных образовательных грантах в Anhalt International "
+            "University в Алматы. Абитуриенты из Казахстана могут подать документы "
+            "на направления «Электротехника и информационные технологии» и "
+            "«Биомедицинская инженерия» до 10 августа 2026 года."
+        ),
+        tags=(
+            "grant",
+            "scholarship",
+            "education",
+            "higher_education",
+            "engineering",
+            "it",
+            "citizen_support",
+            "ministry_science_higher_education",
+        ),
+        rolling=False,
+        deadline=date(2026, 8, 10),
+        opportunity_status="open",
+        lifecycle="open",
+        eligibility=(
+            "Kazakhstan applicants meeting the official admission criteria, "
+            "including UNT and English-language requirements",
+        ),
+    ),
+    DomesticProgram(
         url="https://egov.kz/cms/ru/mobile-services/pass455_mir",
         title="Innovation grants for commercialization of technologies",
         summary=(
@@ -697,6 +733,29 @@ DOMESTIC_PROGRAMS = (
             "preferences, application timing and required registration conditions."
         ),
         tags=("tax_benefit", "startup", "it", "business_support", "astana_hub"),
+    ),
+    DomesticProgram(
+        url="https://astanahub.com/en/l/SeedMoneySmartCity",
+        title="Astana Hub Seed Money Smart City",
+        summary=(
+            "Official Astana Hub financing route for smart-city technology "
+            "startups. Applicants submit documents through the Astana Hub "
+            "platform, pass eligibility review and present the project before "
+            "agreement signing and escrow-based disbursement."
+        ),
+        title_ru="Astana Hub Seed Money Smart City",
+        summary_ru=(
+            "Официальная программа финансирования Astana Hub для технологических "
+            "стартапов в сфере умного города. Заявитель подаёт документы через "
+            "платформу Astana Hub, проходит проверку условий и презентацию проекта; "
+            "после одобрения финансирование перечисляется через эскроу."
+        ),
+        tags=("grant", "startup", "innovation", "smart_city", "astana_hub"),
+        eligibility=(
+            "Technology startups meeting the Astana Hub programme requirements, "
+            "including legal-entity, team and activity-priority conditions",
+        ),
+        application_url="https://astanahub.com/en/l/SeedMoneySmartCity",
     ),
 )
 

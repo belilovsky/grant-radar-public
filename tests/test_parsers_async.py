@@ -882,6 +882,7 @@ async def test_kazakhstan_domestic_support_yields_official_programs():
     assert "Interest-rate subsidy service for entrepreneurs" in by_title
     assert "Kazakhstan state educational grants competition" in by_title
     assert "State educational grants for the Taraz RCTU branch" in by_title
+    assert "State educational grants for Anhalt International University" in by_title
     assert "Road Map of Business support programme" in by_title
     assert "State grants for social entrepreneurship" in by_title
     assert "Subsidies for crop production" in by_title
@@ -890,6 +891,7 @@ async def test_kazakhstan_domestic_support_yields_official_programs():
     assert "Agrarian Credit Corporation Ken Dala financing" in by_title
     assert "Development Bank of Kazakhstan investment-project financing" in by_title
     assert "Astana Hub participant tax benefits" in by_title
+    assert "Astana Hub Seed Money Smart City" in by_title
     assert "Business Enbek entrepreneur-support portal" not in by_title
     assert "Gosagro subsidy portal" not in by_title
     assert "Science Fund commercialization support" not in by_title
@@ -935,6 +937,19 @@ async def test_kazakhstan_domestic_support_yields_official_programs():
         ]["title"]
         == "100 образовательных грантов для Таразского филиала РХТУ"
     )
+    assert by_title[
+        "State educational grants for Anhalt International University"
+    ].deadline == date(2026, 8, 10)
+    assert (
+        by_title["State educational grants for Anhalt International University"].raw[
+            "i18n"
+        ]["ru"]["title"]
+        == "Государственные образовательные гранты Anhalt International University"
+    )
+    assert by_title["Astana Hub Seed Money Smart City"].raw["deadline_policy"] == (
+        "rolling"
+    )
+    assert "smart_city" in by_title["Astana Hub Seed Money Smart City"].tags
     assert by_title["State grant for startup business development"].amount_max is None
     assert (
         "social_entrepreneurship"
