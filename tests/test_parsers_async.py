@@ -1819,23 +1819,32 @@ async def test_google_org_fetch_yields_ai_opportunity_watch():
 @pytest.mark.asyncio
 @respx.mock
 async def test_global_training_fetch_yields_official_mid_career_course():
-    program = GLOBAL_TRAINING_PROGRAMS[0]
-    respx.get(program.url).mock(
-        return_value=httpx.Response(
-            200,
-            text="<html><head><title>FY2026 Mid-Career Course</title></head></html>",
+    for program in GLOBAL_TRAINING_PROGRAMS:
+        title = (
+            "Technical Difficulties"
+            if program.title.startswith("Fulbright")
+            else program.title
         )
-    )
+        respx.get(program.url).mock(
+            return_value=httpx.Response(
+                200,
+                text=f"<html><head><title>{title}</title></head></html>",
+            )
+        )
 
     items = await _collect(GlobalTrainingOpportunitiesSource())
 
-    assert len(items) == 1
-    item = items[0]
+    assert len(items) == 2
+    by_title = {item.title: item for item in items}
+    item = by_title[
+        "FY2026 Mid-Career Course for peacebuilding and development professionals"
+    ]
     assert item.source == "global_training_opportunities"
     assert item.type == OpportunityType.FELLOWSHIP
     assert item.deadline == date(2026, 8, 31)
     assert item.opportunity_status == "open"
     assert item.lifecycle == "open"
+    assert item.raw["detail_fetch_status"] == "ok"
     assert (
         item.raw["application_url"] == "mailto:gpad-midcareer@office.hiroshima-u.ac.jp"
     )
@@ -1845,6 +1854,18 @@ async def test_global_training_fetch_yields_official_mid_career_course():
     assert "central_asia_eligible" in item.tags
     assert "peacebuilding" in item.tags
     assert "international_development" in item.tags
+
+    flta = by_title[
+        "Fulbright Foreign Language Teaching Assistant Program for Kazakhstan"
+    ]
+    assert flta.deadline == date(2026, 8, 15)
+    assert flta.raw["application_url"] == "https://apply.iie.org/flta2027"
+    assert flta.raw["detail_fetch_status"] == "source_unavailable"
+    assert "monthly stipend" in flta.raw["amount_raw"]
+    assert flta.raw["i18n"]["ru"]["title"].startswith("Fulbright Foreign Language")
+    assert "kazakhstan" in flta.tags
+    assert "fulbright" in flta.tags
+    assert "teacher_training" in flta.tags
 
 
 @pytest.mark.asyncio

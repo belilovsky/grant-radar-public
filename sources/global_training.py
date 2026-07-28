@@ -85,6 +85,54 @@ PROGRAMS = (
         ),
         application_url="mailto:gpad-midcareer@office.hiroshima-u.ac.jp",
     ),
+    GlobalTrainingProgram(
+        url=(
+            "https://kz.usembassy.gov/fulbright-foreign-language-teaching-"
+            "assistant-program-russian-language-instruction/"
+        ),
+        title="Fulbright Foreign Language Teaching Assistant Program for Kazakhstan",
+        summary=(
+            "Official U.S. Embassy Kazakhstan page for the Fulbright Foreign "
+            "Language Teaching Assistant Program for Russian language instruction. "
+            "The nine-month non-degree programme places Kazakhstan teachers or "
+            "future teachers of English at U.S. host universities; applications "
+            "are due by 15 August 2026 at 12:00 p.m. Astana time."
+        ),
+        title_ru=(
+            "Fulbright Foreign Language Teaching Assistant Program для Казахстана"
+        ),
+        summary_ru=(
+            "Официальная страница Посольства США в Казахстане о программе "
+            "Fulbright Foreign Language Teaching Assistant для преподавания "
+            "русского языка. Девятимесячная неакадемическая программа размещает "
+            "казахстанских преподавателей или будущих преподавателей английского "
+            "языка в принимающих университетах США; заявки принимаются до "
+            "15 августа 2026 года, 12:00 по времени Астаны."
+        ),
+        funder="U.S. Embassy in Kazakhstan / Fulbright Program",
+        deadline=date(2026, 8, 15),
+        tags=(
+            "kazakhstan",
+            "us",
+            "fulbright",
+            "fellowship",
+            "scholarship",
+            "education",
+            "higher_education",
+            "teacher_training",
+            "student_exchange",
+        ),
+        eligibility=(
+            "Citizens of Kazakhstan residing in Kazakhstan who are teachers of "
+            "English or training to become teachers of English and meet the "
+            "official Fulbright FLTA eligibility rules",
+        ),
+        amount_raw=(
+            "monthly stipend, accident and sickness coverage, travel support, "
+            "and U.S. host university tuition waivers for required coursework"
+        ),
+        application_url="https://apply.iie.org/flta2027",
+    ),
 )
 
 
@@ -97,6 +145,11 @@ def _html_title(html: str) -> str | None:
     return clean_source_text(match.group("title")) or None
 
 
+def _is_source_unavailable(page_title: str | None, html: str) -> bool:
+    text = f"{page_title or ''} {html[:4000]}".lower()
+    return "technical difficulties" in text or "currently experiencing" in text
+
+
 class GlobalTrainingOpportunitiesSource(BaseSource):
     slug = "global_training_opportunities"
     name = "Global Training Opportunities"
@@ -107,11 +160,18 @@ class GlobalTrainingOpportunitiesSource(BaseSource):
         for program in PROGRAMS:
             page_title: str | None = None
             status_code: int | None = None
+            detail_fetch_status = "not_attempted"
+            detail_fetch_error: str | None = None
             try:
                 response = await self.client.get(program.url)
                 status_code = response.status_code
                 response.raise_for_status()
                 page_title = _html_title(response.text)
+                detail_fetch_status = (
+                    "source_unavailable"
+                    if _is_source_unavailable(page_title, response.text)
+                    else "ok"
+                )
             except httpx.HTTPError as exc:
                 log.warning(
                     "global_training.fetch_failed",
@@ -137,6 +197,8 @@ class GlobalTrainingOpportunitiesSource(BaseSource):
                     "external_id": program.url,
                     "page_title": page_title,
                     "status_code": status_code,
+                    "detail_fetch_status": detail_fetch_status,
+                    "detail_fetch_error": detail_fetch_error,
                     "amount_raw": program.amount_raw,
                     "application_url": program.application_url,
                     "deadline": program.deadline.isoformat(),
