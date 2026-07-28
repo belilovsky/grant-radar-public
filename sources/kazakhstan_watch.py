@@ -86,17 +86,6 @@ WATCH_PAGES = (
         rolling=True,
     ),
     WatchPage(
-        url="https://kazakhstan.britishcouncil.org/programmes/arts/connections-through-culture",
-        title="British Council Connections Through Culture Grants Kazakhstan",
-        summary=(
-            "Creative collaboration grants that include Kazakhstan and can support "
-            "digital culture, inclusion, climate and education-adjacent projects."
-        ),
-        tags=("grant", "creative_industries", "partnership", "culture"),
-        type=OpportunityType.GRANT,
-        rolling=True,
-    ),
-    WatchPage(
         url="https://kazakhstan.britishcouncil.org/newton-al-farabi",
         title="Newton - Al-Farabi Partnership Programme",
         summary=(
