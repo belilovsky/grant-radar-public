@@ -2156,6 +2156,15 @@ async def test_astana_hub_fetch_uses_curated_pages_on_404():
             "<p>Application period: 21 Jul - 17 Aug 2026.</p>"
             "<p>The program will be held in an offline format in Astana, Kazakhstan.</p>"
         ),
+        "https://astanahub.com/en/l/backup": (
+            "<title>backup</title>"
+            "<p>August 6 Application Deadline.</p>"
+            "<p>August 14 Virtual pre-acceleration.</p>"
+            "<p>August 31 Selection of TOP-15 project to the Hero Training Program.</p>"
+            "<p>October 9 Hero Training in Silicon Valley.</p>"
+            "<p>For the citizens and startups from OTS Countries: Kazakhstan, "
+            "Azerbaijan, Kyrgyz Republic, Turkiye and Uzbekistan.</p>"
+        ),
     }
     for url in FALLBACK_PROGRAM_URLS:
         respx.get(url).mock(return_value=httpx.Response(200, text=fallback_html[url]))
@@ -2182,6 +2191,15 @@ async def test_astana_hub_fetch_uses_curated_pages_on_404():
     assert "ai" in by_title["AI'Preneurs 3.0"].tags
     assert "gpu" in by_title["AI'Preneurs 3.0"].tags
     assert "pre-seed" in by_title["AI'Preneurs 3.0"].summary
+    assert by_title["Hero Training for OTS startup founders"].deadline == date(
+        2026, 8, 6
+    )
+    assert "founder_training" in by_title["Hero Training for OTS startup founders"].tags
+    assert "silicon_valley" in by_title["Hero Training for OTS startup founders"].tags
+    assert (
+        "Draper University"
+        in by_title["Hero Training for OTS startup founders"].summary
+    )
     assert (
         by_title["Regional IT Hub"].raw["country_scope"] == "Kazakhstan / Central Asia"
     )

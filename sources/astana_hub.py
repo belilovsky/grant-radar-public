@@ -27,7 +27,11 @@ FALLBACK_PROGRAM_URLS = (
     "https://astanahub.com/en/l/regional/develop",
     "https://astanahub.com/l/marketentry/centraleurasia2026",
     "https://astanahub.com/en/l/aipreneurs-2026",
+    "https://astanahub.com/en/l/backup",
 )
+FALLBACK_PROGRAM_TITLES = {
+    "https://astanahub.com/en/l/backup": "Hero Training for OTS startup founders",
+}
 FALLBACK_PROGRAM_SUMMARIES = {
     "https://astanahub.com/ru/l/TechOrda2025": (
         "Astana Hub education-support program for Kazakhstan IT talent. "
@@ -57,6 +61,13 @@ FALLBACK_PROGRAM_SUMMARIES = {
         "infrastructure, Astana Hub partner resources, accommodation for "
         "non-resident Core Accelerator participants and possible pre-seed "
         "funding for the strongest teams."
+    ),
+    "https://astanahub.com/en/l/backup": (
+        "Astana Hub and Draper University Hero Training route for startup "
+        "founders from OTS countries, including Kazakhstan. The programme "
+        "starts with online pre-acceleration, selects top projects for the "
+        "Hero Training track and includes a Silicon Valley stage for teams "
+        "that complete the online part and pass selection."
     ),
 }
 FALLBACK_PROGRAM_EXTRA_TAGS = {
@@ -92,10 +103,19 @@ FALLBACK_PROGRAM_EXTRA_TAGS = {
         "alemplus",
         "kazakhstan",
     ],
+    "https://astanahub.com/en/l/backup": [
+        "startup",
+        "accelerator",
+        "founder_training",
+        "silicon_valley",
+        "central_asia_eligible",
+        "kazakhstan",
+    ],
 }
 FALLBACK_PROGRAM_DEADLINES = {
     "https://astanahub.com/l/marketentry/centraleurasia2026": date(2026, 8, 16),
     "https://astanahub.com/en/l/aipreneurs-2026": date(2026, 8, 17),
+    "https://astanahub.com/en/l/backup": date(2026, 8, 6),
 }
 
 # Very lightweight HTML extraction patterns; resilient to small layout changes.
@@ -257,7 +277,9 @@ class AstanaHubSource(BaseSource):
                 continue
 
             title = (
-                self._title_from_html(resp.text) or url.rstrip("/").rsplit("/", 1)[-1]
+                FALLBACK_PROGRAM_TITLES.get(url)
+                or self._title_from_html(resp.text)
+                or url.rstrip("/").rsplit("/", 1)[-1]
             )
             count += 1
             yield self._to_opportunity(url=url, title=title, raw=resp.text[:2000])
