@@ -883,6 +883,14 @@ async def test_kazakhstan_domestic_support_yields_official_programs():
     assert "Kazakhstan state educational grants competition" in by_title
     assert "State educational grants for the Taraz RCTU branch" in by_title
     assert "State educational grants for Anhalt International University" in by_title
+    assert (
+        "Tajikistan intergovernmental education grants for Kazakhstan citizens"
+        in by_title
+    )
+    assert (
+        "Kyrgyzstan intergovernmental education grants for Kazakhstan citizens"
+        in by_title
+    )
     assert "Road Map of Business support programme" in by_title
     assert "State grants for social entrepreneurship" in by_title
     assert "Subsidies for crop production" in by_title
@@ -950,6 +958,30 @@ async def test_kazakhstan_domestic_support_yields_official_programs():
         "rolling"
     )
     assert "smart_city" in by_title["Astana Hub Seed Money Smart City"].tags
+    assert by_title[
+        "Tajikistan intergovernmental education grants for Kazakhstan citizens"
+    ].deadline == date(2026, 7, 28)
+    assert (
+        by_title[
+            "Tajikistan intergovernmental education grants for Kazakhstan citizens"
+        ].raw["amount_raw"]
+        == "100 education grants for 2026-2027"
+    )
+    assert by_title[
+        "Kyrgyzstan intergovernmental education grants for Kazakhstan citizens"
+    ].deadline == date(2026, 7, 28)
+    assert (
+        by_title[
+            "Kyrgyzstan intergovernmental education grants for Kazakhstan citizens"
+        ].raw["amount_raw"]
+        == "10 education grants for 2026-2027"
+    )
+    assert (
+        by_title[
+            "Kyrgyzstan intergovernmental education grants for Kazakhstan citizens"
+        ].raw["i18n"]["ru"]["title"]
+        == "10 образовательных грантов в вузах Кыргызстана для казахстанцев"
+    )
     assert by_title["State grant for startup business development"].amount_max is None
     assert (
         "social_entrepreneurship"

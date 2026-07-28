@@ -252,6 +252,96 @@ DOMESTIC_PROGRAMS = (
         ),
     ),
     DomesticProgram(
+        url=(
+            "https://bolashak.gov.kz/ru/allnews/"
+            "100-obrazovatelnyh-grantov-dlya-kazahstancev-vydelili-vuzy-"
+            "respubliki-tadzhikistan"
+        ),
+        title="Tajikistan intergovernmental education grants for Kazakhstan citizens",
+        summary=(
+            "Official Center for International Programs notice on 100 education "
+            "grants for Kazakhstan citizens at universities in Tajikistan for the "
+            "2026-2027 academic year. The package covers tuition, monthly "
+            "stipend and medical service; documents are accepted from 17 to "
+            "28 July 2026 through eGov or the Center."
+        ),
+        title_ru="100 образовательных грантов в вузах Таджикистана для казахстанцев",
+        summary_ru=(
+            "Официальное сообщение АО «Центр международных программ» о 100 "
+            "образовательных грантах для граждан Казахстана в вузах Республики "
+            "Таджикистан на 2026-2027 учебный год. Грант покрывает обучение, "
+            "ежемесячную стипендию и медицинское обслуживание; документы "
+            "принимаются с 17 по 28 июля 2026 года через eGov или Центр."
+        ),
+        tags=(
+            "grant",
+            "scholarship",
+            "education",
+            "higher_education",
+            "mobility",
+            "student_exchange",
+            "citizen_support",
+            "intergovernmental_grant",
+            "bolashak",
+            "tajikistan",
+        ),
+        rolling=False,
+        deadline=date(2026, 7, 28),
+        opportunity_status="open",
+        lifecycle="open",
+        eligibility=(
+            "Kazakhstan citizens applying under the official intergovernmental "
+            "education-grant selection rules",
+        ),
+        amount_raw="100 education grants for 2026-2027",
+        application_url="https://egov.kz/cms/ru/services/higher_education/pass_203_mon",
+    ),
+    DomesticProgram(
+        url=(
+            "https://bolashak.gov.kz/ru/allnews/"
+            "10-obrazovatelnyh-grantov-dlya-kazahstancev-vydelili-vuzy-"
+            "kyrgyzskoj-respubliki"
+        ),
+        title="Kyrgyzstan intergovernmental education grants for Kazakhstan citizens",
+        summary=(
+            "Official Center for International Programs notice on 10 education "
+            "grants for Kazakhstan citizens at universities in Kyrgyzstan for the "
+            "2026-2027 academic year. The package covers tuition and monthly "
+            "stipend; documents are accepted from 17 to 28 July 2026 through "
+            "eGov or the Center."
+        ),
+        title_ru="10 образовательных грантов в вузах Кыргызстана для казахстанцев",
+        summary_ru=(
+            "Официальное сообщение АО «Центр международных программ» о 10 "
+            "образовательных грантах для граждан Казахстана в вузах Кыргызской "
+            "Республики на 2026-2027 учебный год. Грант покрывает обучение и "
+            "ежемесячную стипендию; документы принимаются с 17 по 28 июля "
+            "2026 года через eGov или Центр."
+        ),
+        tags=(
+            "grant",
+            "scholarship",
+            "education",
+            "higher_education",
+            "mobility",
+            "student_exchange",
+            "citizen_support",
+            "intergovernmental_grant",
+            "bolashak",
+            "kyrgyzstan",
+        ),
+        rolling=False,
+        deadline=date(2026, 7, 28),
+        opportunity_status="open",
+        lifecycle="open",
+        eligibility=(
+            "Kazakhstan citizens applying under the official intergovernmental "
+            "education-grant selection rules",
+        ),
+        amount_raw="10 education grants for 2026-2027",
+        application_url="https://egov.kz/cms/ru/services/higher_education/pass_203_mon",
+    ),
+    DomesticProgram(
         url="https://egov.kz/cms/ru/mobile-services/pass455_mir",
         title="Innovation grants for commercialization of technologies",
         summary=(
