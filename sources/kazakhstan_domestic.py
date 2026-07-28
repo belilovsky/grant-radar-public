@@ -466,6 +466,45 @@ DOMESTIC_PROGRAMS = (
         application_url="https://egov.kz/cms/ru/services/state_support_measures/260_pass",
     ),
     DomesticProgram(
+        url="https://www.gov.kz/memleket/entities/kyzylorda-kasipkerlik/activities/37552",
+        title="Kyzylorda regional grants for social entrepreneurship",
+        summary=(
+            "Official Kyzylorda Entrepreneurship and Industry Department guidance "
+            "on regional state grants for social-entrepreneurship entities. Grants "
+            "are awarded through competitive selection for business projects up "
+            "to 18 months, with at least 20% co-financing, new jobs and required "
+            "project infrastructure."
+        ),
+        title_ru="Региональные гранты Кызылординской области для социального предпринимательства",
+        summary_ru=(
+            "Официальная справка Управления предпринимательства и промышленности "
+            "Кызылординской области о государственных грантах для субъектов "
+            "социального предпринимательства. Гранты выдаются по итогам конкурсного "
+            "отбора на бизнес-проекты сроком до 18 месяцев; обязательны "
+            "софинансирование не менее 20%, создание рабочих мест и наличие "
+            "инфраструктуры для проекта."
+        ),
+        tags=(
+            "grant",
+            "social_entrepreneurship",
+            "sme",
+            "business_support",
+            "regional_development",
+            "one_village_one_product",
+            "kezekte",
+            "kyzylorda",
+            "govkz",
+        ),
+        eligibility=(
+            "Social-entrepreneurship entities and One Village One Product finalists "
+            "under Kyzylorda regional competition conditions",
+        ),
+        amount_raw="up to 5,000,000 KZT",
+        amount_max=Decimal("5000000"),
+        currency="KZT",
+        application_url="https://kezekte.kz/",
+    ),
+    DomesticProgram(
         url="https://www.enbek.kz/ru/node/3481",
         title="State grant for startup business development",
         summary=(

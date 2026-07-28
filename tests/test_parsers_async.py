@@ -893,6 +893,7 @@ async def test_kazakhstan_domestic_support_yields_official_programs():
     )
     assert "Road Map of Business support programme" in by_title
     assert "State grants for social entrepreneurship" in by_title
+    assert "Kyzylorda regional grants for social entrepreneurship" in by_title
     assert "Subsidies for crop production" in by_title
     assert "Bgov.kz unified financial support platform" in by_title
     assert "KazAgroFinance Own Feed and Preferential Leasing" in by_title
@@ -923,6 +924,22 @@ async def test_kazakhstan_domestic_support_yields_official_programs():
     assert by_title["State grants for social entrepreneurship"].currency == "KZT"
     assert str(by_title["State grants for social entrepreneurship"].amount_max) == (
         "5000000"
+    )
+    assert (
+        by_title["Kyzylorda regional grants for social entrepreneurship"].raw[
+            "amount_raw"
+        ]
+        == "up to 5,000,000 KZT"
+    )
+    assert (
+        by_title["Kyzylorda regional grants for social entrepreneurship"].raw[
+            "application_url"
+        ]
+        == "https://kezekte.kz/"
+    )
+    assert (
+        "one_village_one_product"
+        in by_title["Kyzylorda regional grants for social entrepreneurship"].tags
     )
     assert (
         by_title["State grant for startup business development"].raw["amount_raw"]
