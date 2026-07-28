@@ -244,6 +244,61 @@ PROGRAMS = (
             "&origin=73&pg=1&q=&status=0&subject=0&tab=&target=73&type=a"
         ),
     ),
+    GlobalTrainingProgram(
+        url=(
+            "https://www.daad-kyrgyzstan.org/en/find-funding/scholarship-database/"
+            "?detail_to_show=0&detail_to_show=57135739&intention=&onlydaad=0"
+            "&origin=73&pg=1&q=&status=0&subject=0&tab=&target=73&type=a"
+        ),
+        title="DAAD Doctoral Programmes in Germany",
+        summary=(
+            "Official DAAD scholarship-database record for completing a doctoral "
+            "degree in Germany through an individual supervised project or a "
+            "structured doctoral programme. Applicants from Kazakhstan with "
+            "above-average qualifications can apply by 16 November 2026; funding "
+            "begins in 2027 and can last up to four years."
+        ),
+        title_ru="Гранты DAAD на докторантуру в Германии",
+        summary_ru=(
+            "Официальная запись базы стипендий DAAD для получения докторской "
+            "степени в Германии: индивидуальный исследовательский проект под "
+            "научным руководством или структурированная докторская программа. "
+            "Заявители из Казахстана с сильной академической подготовкой могут "
+            "подать заявку до 16 ноября 2026 года; финансирование начинается "
+            "в 2027 году и может длиться до четырёх лет."
+        ),
+        funder="DAAD",
+        opportunity_type=OpportunityType.FELLOWSHIP,
+        deadline=date(2026, 11, 16),
+        tags=(
+            "kazakhstan",
+            "central_asia",
+            "germany",
+            "daad",
+            "scholarship",
+            "research",
+            "higher_education",
+            "doctoral",
+            "graduates",
+            "german_language",
+        ),
+        eligibility=(
+            "Applicants from Kazakhstan with above-average qualifications who "
+            "completed a master's degree, Diplom, or in exceptional cases a "
+            "bachelor's degree by the start of funding and meet the official "
+            "DAAD programme requirements",
+        ),
+        amount_raw=(
+            "EUR 1,400 monthly scholarship, insurance payments, travel allowance, "
+            "annual research allowance of EUR 460, and possible additional "
+            "benefits including language-course support"
+        ),
+        application_url=(
+            "https://www.daad-kyrgyzstan.org/en/find-funding/scholarship-database/"
+            "?detail_to_show=0&detail_to_show=57135739&intention=&onlydaad=0"
+            "&origin=73&pg=1&q=&status=0&subject=0&tab=&target=73&type=a"
+        ),
+    ),
 )
 
 
