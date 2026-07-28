@@ -31,6 +31,8 @@ class GlobalTrainingProgram:
     eligibility: tuple[str, ...]
     amount_raw: str
     application_url: str
+    opportunity_status: str = "open"
+    lifecycle: str = "open"
 
 
 PROGRAMS = (
@@ -461,6 +463,51 @@ PROGRAMS = (
             "21148-scholarship-database/?detail=50110016"
         ),
     ),
+    GlobalTrainingProgram(
+        url="https://www.chevening.org/scholarship/kazakhstan/",
+        title="Chevening Scholarship for Kazakhstan 2027-2028",
+        summary=(
+            "Official Chevening country page for Kazakhstan and the 2027-2028 "
+            "scholarship cycle. Applications open on 4 August 2026 at 11:00 UTC "
+            "and close on 6 October 2026 at 11:00 UTC; the award supports a "
+            "one-year master's degree in the United Kingdom."
+        ),
+        title_ru="Стипендия Chevening для Казахстана 2027–2028",
+        summary_ru=(
+            "Официальная страница Chevening для Казахстана и цикла стипендий "
+            "2027–2028. Приём заявок откроется 4 августа 2026 года в 11:00 UTC "
+            "и завершится 6 октября 2026 года в 11:00 UTC; стипендия покрывает "
+            "годичную магистратуру в Великобритании."
+        ),
+        funder="Chevening / UK Foreign, Commonwealth and Development Office",
+        opportunity_type=OpportunityType.FELLOWSHIP,
+        deadline=date(2026, 10, 6),
+        tags=(
+            "kazakhstan",
+            "uk",
+            "chevening",
+            "fcdo",
+            "scholarship",
+            "fellowship",
+            "higher_education",
+            "master_studies",
+            "leadership",
+            "student_exchange",
+        ),
+        eligibility=(
+            "Citizens of Kazakhstan applying through the official Chevening "
+            "country page who meet Chevening eligibility, work-experience and "
+            "course-selection requirements",
+        ),
+        amount_raw=(
+            "fully funded one-year master's degree in the United Kingdom; "
+            "Chevening scholarships generally cover tuition, travel and living "
+            "support under the official award rules"
+        ),
+        application_url="https://www.chevening.org/scholarship/kazakhstan/",
+        opportunity_status="upcoming",
+        lifecycle="forecast",
+    ),
 )
 
 
@@ -521,8 +568,8 @@ class GlobalTrainingOpportunitiesSource(BaseSource):
                 deadline=program.deadline,
                 eligibility=list(program.eligibility),
                 tags=["official_source", *program.tags],
-                opportunity_status="open",
-                lifecycle="open",
+                opportunity_status=program.opportunity_status,
+                lifecycle=program.lifecycle,
                 raw={
                     "external_id": program.url,
                     "page_title": page_title,
@@ -532,8 +579,8 @@ class GlobalTrainingOpportunitiesSource(BaseSource):
                     "amount_raw": program.amount_raw,
                     "application_url": program.application_url,
                     "deadline": program.deadline.isoformat(),
-                    "opportunity_status": "open",
-                    "lifecycle": "open",
+                    "opportunity_status": program.opportunity_status,
+                    "lifecycle": program.lifecycle,
                     "i18n": {
                         "ru": {
                             "title": program.title_ru,

@@ -211,6 +211,7 @@ Allowed tags:
 - `higher_education`
 - `faculty`
 - `study_visit`
+- `leadership`
 - `architecture`
 - `arts`
 - `design`

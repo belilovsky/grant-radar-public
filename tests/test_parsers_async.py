@@ -1834,7 +1834,7 @@ async def test_global_training_fetch_yields_official_mid_career_course():
 
     items = await _collect(GlobalTrainingOpportunitiesSource())
 
-    assert len(items) == 8
+    assert len(items) == 9
     by_title = {item.title: item for item in items}
     item = by_title[
         "FY2026 Mid-Career Course for peacebuilding and development professionals"
@@ -1946,6 +1946,23 @@ async def test_global_training_fetch_yields_official_mid_career_course():
     assert "faculty" in artists.tags
     assert "study_visit" in artists.tags
     assert "performing_arts" in artists.tags
+
+    chevening = by_title["Chevening Scholarship for Kazakhstan 2027-2028"]
+    assert chevening.type == OpportunityType.FELLOWSHIP
+    assert chevening.deadline == date(2026, 10, 6)
+    assert chevening.opportunity_status == "upcoming"
+    assert chevening.lifecycle == "forecast"
+    assert "fully funded" in chevening.raw["amount_raw"]
+    assert chevening.raw["application_url"] == (
+        "https://www.chevening.org/scholarship/kazakhstan/"
+    )
+    assert (
+        chevening.raw["i18n"]["ru"]["title"]
+        == "Стипендия Chevening для Казахстана 2027–2028"
+    )
+    assert "chevening" in chevening.tags
+    assert "fcdo" in chevening.tags
+    assert "leadership" in chevening.tags
 
 
 @pytest.mark.asyncio
