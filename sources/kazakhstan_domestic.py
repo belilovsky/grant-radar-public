@@ -375,6 +375,47 @@ DOMESTIC_PROGRAMS = (
         application_url="https://egov.kz/cms/ru/online-services/for_citizen/pr_5",
     ),
     DomesticProgram(
+        url="https://www.gov.kz/memleket/entities/mfa-delhi/press/news/details/1228534?lang=ru",
+        title="Astana AI Film Festival international contest",
+        summary=(
+            "Official Kazakhstan MFA notice on the Astana AI Film Festival "
+            "international contest for AI-created short films. Applications are "
+            "open to individual authors and teams worldwide until 15 August 2026; "
+            "the festival will select 25 finalists and has a total prize fund "
+            "of USD 1 million."
+        ),
+        title_ru="Международный конкурс Astana AI Film Festival",
+        summary_ru=(
+            "Официальное сообщение МИД Казахстана о международном конкурсе "
+            "короткометражных фильмов, созданных с использованием искусственного "
+            "интеллекта. Заявки принимаются от индивидуальных авторов и команд "
+            "со всего мира до 15 августа 2026 года; фестиваль отберёт 25 "
+            "финалистов, общий призовой фонд составляет 1 млн долларов США."
+        ),
+        tags=(
+            "contest",
+            "ai",
+            "creative_industries",
+            "culture",
+            "media",
+            "digital",
+            "international",
+        ),
+        type=OpportunityType.CONTEST,
+        rolling=False,
+        deadline=date(2026, 8, 15),
+        opportunity_status="open",
+        lifecycle="open",
+        eligibility=(
+            "Individual authors and teams from any country submitting an "
+            "AI-created short film under the official festival rules",
+        ),
+        amount_raw="total prize fund of USD 1,000,000",
+        amount_max=Decimal("1000000"),
+        currency="USD",
+        application_url="https://aaiff.ai/",
+    ),
+    DomesticProgram(
         url=(
             "https://bolashak.gov.kz/ru/allnews/"
             "100-obrazovatelnyh-grantov-dlya-kazahstancev-vydelili-vuzy-"

@@ -958,6 +958,7 @@ async def test_kazakhstan_domestic_support_yields_official_programs():
     assert "State educational grants for Anhalt International University" in by_title
     assert "Pavlodar region college state-funded places" in by_title
     assert "Astana college state-funded places" in by_title
+    assert "Astana AI Film Festival international contest" in by_title
     assert (
         "Tajikistan intergovernmental education grants for Kazakhstan citizens"
         in by_title
@@ -1114,6 +1115,31 @@ async def test_kazakhstan_domestic_support_yields_official_programs():
     assert (
         by_title["Astana college state-funded places"].raw["i18n"]["ru"]["title"]
         == "10 300 грантовых мест в колледжах Астаны"
+    )
+    assert (
+        by_title["Astana AI Film Festival international contest"].type
+        == OpportunityType.CONTEST
+    )
+    assert by_title["Astana AI Film Festival international contest"].deadline == date(
+        2026, 8, 15
+    )
+    assert (
+        by_title["Astana AI Film Festival international contest"].raw["amount_raw"]
+        == "total prize fund of USD 1,000,000"
+    )
+    assert (
+        by_title["Astana AI Film Festival international contest"].raw["amount_max"]
+        == "1000000"
+    )
+    assert (
+        by_title["Astana AI Film Festival international contest"].raw["application_url"]
+        == "https://aaiff.ai/"
+    )
+    assert (
+        by_title["Astana AI Film Festival international contest"].raw["i18n"]["ru"][
+            "title"
+        ]
+        == "Международный конкурс Astana AI Film Festival"
     )
     assert by_title["Astana Hub Seed Money Smart City"].raw["deadline_policy"] == (
         "rolling"
