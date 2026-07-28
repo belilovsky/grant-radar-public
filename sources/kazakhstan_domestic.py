@@ -465,6 +465,51 @@ DOMESTIC_PROGRAMS = (
         application_url="https://egov.kz/cms/ru/services/higher_education/pass_203_mon",
     ),
     DomesticProgram(
+        url="https://bolashak.gov.kz/en/allnews/otkryt-priem-dokumentov-dlya-obucheniya-v-marokko",
+        title="Morocco intergovernmental education grants for Kazakhstan citizens",
+        summary=(
+            "Official Center for International Programs notice on 20 Moroccan "
+            "government education grants with scholarships for the 2026-2027 "
+            "academic year. The programme covers study in public higher, "
+            "technical and vocational institutions in Morocco; the final-stage "
+            "deadline for submitting baccalaureate exam results is 31 July 2026."
+        ),
+        title_ru="20 образовательных грантов Марокко для казахстанцев",
+        summary_ru=(
+            "Официальное сообщение АО «Центр международных программ» о 20 "
+            "образовательных грантах Королевства Марокко со стипендией на "
+            "2026-2027 учебный год. Программа охватывает обучение в государственных "
+            "высших, технических и профессиональных учебных заведениях Марокко; "
+            "срок представления результатов экзаменов на финальном этапе — "
+            "31 июля 2026 года."
+        ),
+        tags=(
+            "grant",
+            "scholarship",
+            "education",
+            "higher_education",
+            "vocational_training",
+            "mobility",
+            "student_exchange",
+            "citizen_support",
+            "intergovernmental_grant",
+            "bolashak",
+            "morocco",
+        ),
+        rolling=False,
+        deadline=date(2026, 7, 31),
+        opportunity_status="open",
+        lifecycle="open",
+        eligibility=(
+            "Kazakhstan citizens applying under the official Moroccan "
+            "intergovernmental education-grant selection rules",
+        ),
+        amount_raw=(
+            "20 education grants with scholarship for the 2026-2027 academic year"
+        ),
+        application_url="mailto:studyinmorocco.kz@gmail.com",
+    ),
+    DomesticProgram(
         url="https://egov.kz/cms/ru/mobile-services/pass455_mir",
         title="Innovation grants for commercialization of technologies",
         summary=(
