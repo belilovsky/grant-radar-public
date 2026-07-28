@@ -343,6 +343,13 @@ def exclusion_reason(item: Any) -> str | None:
     raw_text = _raw_json(item)
     for value in HARD_EXCLUSION_RAW_VALUES:
         if value.lower() in raw_text.lower():
+            if (
+                source == "global_training_opportunities"
+                and str(_raw_text_value(item, "detail_fetch_status")).lower()
+                == "source_unavailable"
+                and has_central_asia_geo_signal(item)
+            ):
+                continue
             return value
     return None
 

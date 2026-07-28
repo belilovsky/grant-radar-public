@@ -188,6 +188,24 @@ def test_unavailable_source_placeholder_is_downranked():
     assert score(opp, today=date(2026, 5, 22)) < 0.3
 
 
+def test_curated_global_training_placeholder_is_not_excluded():
+    opp = _opp(
+        "Fulbright Foreign Language Teaching Assistant Program for Kazakhstan",
+        summary=(
+            "Official U.S. Embassy Kazakhstan page for teachers of English "
+            "residing in Kazakhstan."
+        ),
+        tags=["kazakhstan", "education", "teacher_training", "fellowship"],
+    )
+    opp.source = "global_training_opportunities"
+    opp.raw = {
+        "page_title": "Technical Difficulties",
+        "detail_fetch_status": "source_unavailable",
+    }
+
+    assert score(opp, today=date(2026, 7, 28)) >= 0.3
+
+
 def test_grants_gov_without_geo_signal_is_low_confidence():
     opp = _opp("AI education grant", summary="For schools", tags=["ai", "education"])
     opp.source = "grants_gov"
