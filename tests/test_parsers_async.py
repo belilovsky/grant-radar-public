@@ -960,6 +960,7 @@ async def test_kazakhstan_domestic_support_yields_official_programs():
     assert "Astana college state-funded places" in by_title
     assert "Astana AI Film Festival international contest" in by_title
     assert "Aiboz national literary prize" in by_title
+    assert "Kazakhstan Through My Eyes international drawing contest" in by_title
     assert (
         "Tajikistan intergovernmental education grants for Kazakhstan citizens"
         in by_title
@@ -1157,6 +1158,39 @@ async def test_kazakhstan_domestic_support_yields_official_programs():
     assert (
         by_title["Aiboz national literary prize"].raw["i18n"]["ru"]["title"]
         == "Национальная литературная премия «Айбоз»"
+    )
+    assert (
+        by_title["Kazakhstan Through My Eyes international drawing contest"].type
+        == OpportunityType.CONTEST
+    )
+    assert by_title[
+        "Kazakhstan Through My Eyes international drawing contest"
+    ].deadline == date(2026, 8, 28)
+    assert (
+        by_title["Kazakhstan Through My Eyes international drawing contest"].raw[
+            "amount_raw"
+        ]
+        == "prizes include a laptop, tablet, smart watch and incentive prizes"
+    )
+    assert (
+        by_title["Kazakhstan Through My Eyes international drawing contest"].raw[
+            "application_url"
+        ]
+        == "mailto:oqbaiqau@gmail.com"
+    )
+    assert (
+        by_title["Kazakhstan Through My Eyes international drawing contest"].raw[
+            "i18n"
+        ]["ru"]["title"]
+        == "Международный конкурс рисунков «Казахстан моими глазами»"
+    )
+    assert (
+        "diaspora"
+        in by_title["Kazakhstan Through My Eyes international drawing contest"].tags
+    )
+    assert (
+        "visual_arts"
+        in by_title["Kazakhstan Through My Eyes international drawing contest"].tags
     )
     assert by_title["Astana Hub Seed Money Smart City"].raw["deadline_policy"] == (
         "rolling"

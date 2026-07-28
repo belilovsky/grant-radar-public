@@ -456,6 +456,49 @@ DOMESTIC_PROGRAMS = (
         application_url="https://www.aiboz.kz/",
     ),
     DomesticProgram(
+        url="https://www.gov.kz/memleket/entities/mfa-gorgan/press/news/details/1245087?lang=ru",
+        title="Kazakhstan Through My Eyes international drawing contest",
+        summary=(
+            "Official Kazakhstan MFA notice on the Otandastar Qory international "
+            "online drawing contest for ethnic Kazakh children aged 12-17 living "
+            "abroad. Works on Kazakhstan-related themes are accepted by email "
+            "until 28 August 2026; winners receive a laptop, tablet, smart watch "
+            "and other prizes."
+        ),
+        title_ru="Международный конкурс рисунков «Казахстан моими глазами»",
+        summary_ru=(
+            "Официальное сообщение МИД Казахстана о международном онлайн-конкурсе "
+            "рисунков Фонда «Отандастар» для этнических казахских детей "
+            "12–17 лет, проживающих за рубежом. Работы о природе, культуре, "
+            "наследии и будущем Казахстана принимаются по электронной почте "
+            "до 28 августа 2026 года; победителей наградят ноутбуком, планшетом, "
+            "смарт-часами и другими призами."
+        ),
+        tags=(
+            "contest",
+            "culture",
+            "creative_industries",
+            "diaspora",
+            "children",
+            "visual_arts",
+            "drawing",
+            "youth",
+        ),
+        type=OpportunityType.CONTEST,
+        rolling=False,
+        deadline=date(2026, 8, 28),
+        opportunity_status="open",
+        lifecycle="open",
+        eligibility=(
+            "Ethnic Kazakh children aged 12-17 living outside Kazakhstan under "
+            "the official contest rules",
+        ),
+        amount_raw=(
+            "prizes include a laptop, tablet, smart watch and incentive prizes"
+        ),
+        application_url="mailto:oqbaiqau@gmail.com",
+    ),
+    DomesticProgram(
         url=(
             "https://bolashak.gov.kz/ru/allnews/"
             "100-obrazovatelnyh-grantov-dlya-kazahstancev-vydelili-vuzy-"
