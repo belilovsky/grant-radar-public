@@ -179,6 +179,45 @@ DOMESTIC_PROGRAMS = (
         application_url="https://egov.kz/cms/ru/services/university_degree/182pass_mon",
     ),
     DomesticProgram(
+        url="https://www.gov.kz/memleket/entities/sci/press/news/details/1260614?lang=ru",
+        title="Kazakhstan master's degree state educational grants",
+        summary=(
+            "Official Ministry of Science and Higher Education notice on the "
+            "2026 master's admission cycle. Around 11,000 state educational "
+            "grants are allocated for master's training in priority fields; "
+            "applications for the grant competition are accepted from 12 to "
+            "18 August 2026, with results expected by 25 August."
+        ),
+        title_ru="Государственные образовательные гранты в магистратуру",
+        summary_ru=(
+            "Официальное сообщение Министерства науки и высшего образования "
+            "о приёмной кампании в магистратуру 2026 года. На подготовку "
+            "магистрантов выделено около 11 тысяч государственных грантов "
+            "по востребованным направлениям; документы на конкурс принимаются "
+            "с 12 по 18 августа 2026 года, списки обладателей грантов должны "
+            "быть опубликованы до 25 августа."
+        ),
+        tags=(
+            "grant",
+            "scholarship",
+            "education",
+            "higher_education",
+            "research",
+            "citizen_support",
+            "ministry_science_higher_education",
+        ),
+        rolling=False,
+        deadline=date(2026, 8, 18),
+        opportunity_status="upcoming",
+        lifecycle="forecast",
+        eligibility=(
+            "Kazakhstan applicants to master's programmes who meet the official "
+            "complex-testing thresholds and admission requirements",
+        ),
+        amount_raw="around 11,000 state educational grants for master's training in 2026",
+        application_url="https://egov.kz/cms/ru/services/university_degree/182pass_mon",
+    ),
+    DomesticProgram(
         url="https://www.gov.kz/memleket/entities/sci/press/news/details/1262257?lang=ru",
         title="State educational grants for the Taraz RCTU branch",
         summary=(

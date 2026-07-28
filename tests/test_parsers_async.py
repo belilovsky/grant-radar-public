@@ -953,6 +953,7 @@ async def test_kazakhstan_domestic_support_yields_official_programs():
     assert "How to get a state grant to start a business" in by_title
     assert "Interest-rate subsidy service for entrepreneurs" in by_title
     assert "Kazakhstan state educational grants competition" in by_title
+    assert "Kazakhstan master's degree state educational grants" in by_title
     assert "State educational grants for the Taraz RCTU branch" in by_title
     assert "State educational grants for Anhalt International University" in by_title
     assert (
@@ -1037,6 +1038,25 @@ async def test_kazakhstan_domestic_support_yields_official_programs():
     assert by_title[
         "State educational grants for the Taraz RCTU branch"
     ].deadline == date(2026, 8, 9)
+    assert by_title[
+        "Kazakhstan master's degree state educational grants"
+    ].deadline == date(2026, 8, 18)
+    assert (
+        by_title["Kazakhstan master's degree state educational grants"].lifecycle
+        == "forecast"
+    )
+    assert (
+        by_title["Kazakhstan master's degree state educational grants"].raw[
+            "amount_raw"
+        ]
+        == "around 11,000 state educational grants for master's training in 2026"
+    )
+    assert (
+        by_title["Kazakhstan master's degree state educational grants"].raw["i18n"][
+            "ru"
+        ]["title"]
+        == "Государственные образовательные гранты в магистратуру"
+    )
     assert (
         by_title["State educational grants for the Taraz RCTU branch"].lifecycle
         == "open"
