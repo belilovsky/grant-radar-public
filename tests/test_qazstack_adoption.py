@@ -60,6 +60,7 @@ def test_qazstack_text_primitive_replaces_source_html_cleanup() -> None:
         "Grant programme"
     )
     assert clean_source_text("<p>Deadline — 15 August</p>") == "Deadline – 15 August"
+    assert clean_source_text("<title>Course ― Call</title>") == "Course – Call"
     assert clean_source_text(None) == ""
     assert clean_plain_source_text("Terms&nbsp; A < B — C") == "Terms A < B – C"
 

@@ -8,7 +8,7 @@ from qazstack.content import normalize_text, strip_html
 
 
 def _normalize_editorial_dashes(value: str) -> str:
-    return value.replace("—", "–")
+    return value.replace("—", "–").replace("―", "–")
 
 
 def clean_source_text(value: object | None) -> str:

@@ -11,6 +11,7 @@ from .ebrd_ecepp import EbrdEceppProcurementParser
 from .eeas_kazakhstan import EeasKazakhstanParser
 from .erasmus_kazakhstan import ErasmusKazakhstanParser
 from .eu_funding_tenders import EuFundingTendersCentralAsiaParser
+from .global_training import GlobalTrainingOpportunitiesParser
 from .google_org import GoogleOrgAiOpportunityParser
 from .grants_gov import GrantsGovParser
 from .internews import InternewsParser
@@ -67,6 +68,7 @@ PARSERS = {
     MongoDbStartupsParser.slug: MongoDbStartupsParser,
     UnicefKazakhstanParser.slug: UnicefKazakhstanParser,
     GoogleOrgAiOpportunityParser.slug: GoogleOrgAiOpportunityParser,
+    GlobalTrainingOpportunitiesParser.slug: GlobalTrainingOpportunitiesParser,
     UnescoIiteParser.slug: UnescoIiteParser,
     UngmOpportunitiesParser.slug: UngmOpportunitiesParser,
     OsceProcurementParser.slug: OsceProcurementParser,
@@ -104,6 +106,7 @@ __all__ = [
     "MongoDbStartupsParser",
     "UnicefKazakhstanParser",
     "GoogleOrgAiOpportunityParser",
+    "GlobalTrainingOpportunitiesParser",
     "UnescoIiteParser",
     "UndpProcurementParser",
     "UngmOpportunitiesParser",

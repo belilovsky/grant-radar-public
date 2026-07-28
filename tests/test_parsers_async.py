@@ -32,6 +32,8 @@ from sources.erasmus_kazakhstan import ERASMUS_ARCHIVE_URL  # noqa: E402
 from sources.erasmus_kazakhstan import ERASMUS_NEWS_URL  # noqa: E402
 from sources.erasmus_kazakhstan import ErasmusKazakhstanSource  # noqa: E402
 from sources.erasmus_kazakhstan import _extract_actions  # noqa: E402
+from sources.global_training import PROGRAMS as GLOBAL_TRAINING_PROGRAMS  # noqa: E402
+from sources.global_training import GlobalTrainingOpportunitiesSource  # noqa: E402
 from sources.google_org import GOOGLE_ORG_KNOWLEDGE_URL  # noqa: E402
 from sources.google_org import GoogleOrgAiOpportunitySource  # noqa: E402
 from sources.grants_gov import SEARCH_URL as GG_SEARCH_URL  # noqa: E402
@@ -1812,6 +1814,36 @@ async def test_google_org_fetch_yields_ai_opportunity_watch():
     assert item.raw["external_id"] == "google_org_ai_opportunity"
     assert item.raw["source_watch"] is True
     assert item.raw["i18n"]["ru"]["title"].startswith("Программы Google.org")
+
+
+@pytest.mark.asyncio
+@respx.mock
+async def test_global_training_fetch_yields_official_mid_career_course():
+    program = GLOBAL_TRAINING_PROGRAMS[0]
+    respx.get(program.url).mock(
+        return_value=httpx.Response(
+            200,
+            text="<html><head><title>FY2026 Mid-Career Course</title></head></html>",
+        )
+    )
+
+    items = await _collect(GlobalTrainingOpportunitiesSource())
+
+    assert len(items) == 1
+    item = items[0]
+    assert item.source == "global_training_opportunities"
+    assert item.type == OpportunityType.FELLOWSHIP
+    assert item.deadline == date(2026, 8, 31)
+    assert item.opportunity_status == "open"
+    assert item.lifecycle == "open"
+    assert (
+        item.raw["application_url"] == "mailto:gpad-midcareer@office.hiroshima-u.ac.jp"
+    )
+    assert "no participation fee" in item.raw["amount_raw"]
+    assert item.raw["i18n"]["ru"]["title"].startswith("FY2026 Mid-Career Course")
+    assert "unitar" in item.tags
+    assert "peacebuilding" in item.tags
+    assert "international_development" in item.tags
 
 
 @pytest.mark.asyncio
