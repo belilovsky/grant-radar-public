@@ -416,6 +416,46 @@ DOMESTIC_PROGRAMS = (
         application_url="https://aaiff.ai/",
     ),
     DomesticProgram(
+        url="https://www.gov.kz/memleket/entities/mam/press/news/details/1214247?lang=ru",
+        title="Aiboz national literary prize",
+        summary=(
+            "Official Ministry of Culture and Information notice on the Aiboz "
+            "national literary prize for Kazakhstan authors. The 2026 contest "
+            "accepts unpublished works in seven nominations until 1 September "
+            "2026; the total prize fund is 35 million KZT, with 5 million KZT "
+            "planned for each nomination."
+        ),
+        title_ru="Национальная литературная премия «Айбоз»",
+        summary_ru=(
+            "Официальное сообщение Министерства культуры и информации о "
+            "Национальной литературной премии «Айбоз» для казахстанских авторов. "
+            "В 2026 году принимаются ранее не опубликованные произведения по "
+            "семи номинациям; заявки принимаются до 1 сентября, общий призовой "
+            "фонд составляет 35 млн тенге, по 5 млн тенге на каждую номинацию."
+        ),
+        tags=(
+            "contest",
+            "culture",
+            "literature",
+            "creative_industries",
+            "translation",
+            "comics",
+        ),
+        type=OpportunityType.CONTEST,
+        rolling=False,
+        deadline=date(2026, 9, 1),
+        opportunity_status="open",
+        lifecycle="open",
+        eligibility=(
+            "Kazakhstan authors submitting previously unpublished literary works "
+            "under the official Aiboz prize rules",
+        ),
+        amount_raw="total prize fund of 35,000,000 KZT; 5,000,000 KZT per nomination",
+        amount_max=Decimal("35000000"),
+        currency="KZT",
+        application_url="https://www.aiboz.kz/",
+    ),
+    DomesticProgram(
         url=(
             "https://bolashak.gov.kz/ru/allnews/"
             "100-obrazovatelnyh-grantov-dlya-kazahstancev-vydelili-vuzy-"

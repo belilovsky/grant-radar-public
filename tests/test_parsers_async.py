@@ -959,6 +959,7 @@ async def test_kazakhstan_domestic_support_yields_official_programs():
     assert "Pavlodar region college state-funded places" in by_title
     assert "Astana college state-funded places" in by_title
     assert "Astana AI Film Festival international contest" in by_title
+    assert "Aiboz national literary prize" in by_title
     assert (
         "Tajikistan intergovernmental education grants for Kazakhstan citizens"
         in by_title
@@ -1140,6 +1141,22 @@ async def test_kazakhstan_domestic_support_yields_official_programs():
             "title"
         ]
         == "Международный конкурс Astana AI Film Festival"
+    )
+    assert by_title["Aiboz national literary prize"].type == OpportunityType.CONTEST
+    assert by_title["Aiboz national literary prize"].deadline == date(2026, 9, 1)
+    assert (
+        by_title["Aiboz national literary prize"].raw["amount_raw"]
+        == "total prize fund of 35,000,000 KZT; 5,000,000 KZT per nomination"
+    )
+    assert by_title["Aiboz national literary prize"].raw["amount_max"] == "35000000"
+    assert by_title["Aiboz national literary prize"].currency == "KZT"
+    assert (
+        by_title["Aiboz national literary prize"].raw["application_url"]
+        == "https://www.aiboz.kz/"
+    )
+    assert (
+        by_title["Aiboz national literary prize"].raw["i18n"]["ru"]["title"]
+        == "Национальная литературная премия «Айбоз»"
     )
     assert by_title["Astana Hub Seed Money Smart City"].raw["deadline_policy"] == (
         "rolling"
