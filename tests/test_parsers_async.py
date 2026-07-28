@@ -1843,7 +1843,7 @@ async def test_global_training_fetch_yields_official_mid_career_course():
 
     items = await _collect(GlobalTrainingOpportunitiesSource())
 
-    assert len(items) == 9
+    assert len(items) == 10
     by_title = {item.title: item for item in items}
     item = by_title[
         "FY2026 Mid-Career Course for peacebuilding and development professionals"
@@ -1972,6 +1972,20 @@ async def test_global_training_fetch_yields_official_mid_career_course():
     assert "chevening" in chevening.tags
     assert "fcdo" in chevening.tags
     assert "leadership" in chevening.tags
+
+    rising = by_title["Rising Explorer Grant 2027"]
+    assert rising.type == OpportunityType.GRANT
+    assert rising.deadline == date(2026, 8, 31)
+    assert rising.funder == "The Explorers Club"
+    assert "USD 2,000" in rising.raw["amount_raw"]
+    assert rising.raw["application_url"] == (
+        "https://www.explorers.org/grants/rising-explorer-grant/"
+    )
+    assert rising.raw["i18n"]["ru"]["title"] == "Грант Rising Explorer 2027"
+    assert "любой страны, включая Казахстан" in rising.raw["i18n"]["ru"]["summary"]
+    assert "central_asia_eligible" in rising.tags
+    assert "field_research" in rising.tags
+    assert "explorers_club" in rising.tags
 
 
 @pytest.mark.asyncio

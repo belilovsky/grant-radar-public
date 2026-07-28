@@ -508,6 +508,61 @@ PROGRAMS = (
         opportunity_status="upcoming",
         lifecycle="forecast",
     ),
+    GlobalTrainingProgram(
+        url="https://www.explorers.org/grants/rising-explorer-grant/",
+        title="Rising Explorer Grant 2027",
+        summary=(
+            "Official Explorers Club grant for high school students, college "
+            "undergraduates and independent researchers working at an equivalent "
+            "level anywhere in the world. The programme supports field-science "
+            "projects across disciplines such as ecology, conservation, "
+            "environmental science, archaeology and anthropology; 2027-cycle "
+            "applications are due by 31 August 2026 at 6:00 PM ET."
+        ),
+        title_ru="Грант Rising Explorer 2027",
+        summary_ru=(
+            "Официальный грант The Explorers Club для старшеклассников, "
+            "студентов бакалавриата и независимых исследователей сопоставимого "
+            "уровня из любой страны, включая Казахстан. Программа поддерживает "
+            "полевые научные проекты в экологии, охране природы, науках об "
+            "окружающей среде, археологии, антропологии и близких областях; "
+            "заявки на цикл 2027 принимаются до 31 августа 2026 года, "
+            "18:00 ET."
+        ),
+        funder="The Explorers Club",
+        opportunity_type=OpportunityType.GRANT,
+        deadline=date(2026, 8, 31),
+        tags=(
+            "global",
+            "central_asia_eligible",
+            "grant",
+            "science",
+            "research",
+            "field_research",
+            "environment",
+            "conservation",
+            "ecology",
+            "biology",
+            "archaeology",
+            "anthropology",
+            "youth",
+            "undergraduate",
+            "high_school",
+            "explorers_club",
+        ),
+        eligibility=(
+            "High school students, college undergraduates and independent "
+            "researchers at an equivalent level worldwide, including applicants "
+            "from Kazakhstan, with a field-science project designed to generate "
+            "new knowledge",
+        ),
+        amount_raw=(
+            "awards average USD 2,000; funds support real-world field research "
+            "projects rather than adventure travel, school trips or non-scientific "
+            "expeditions"
+        ),
+        application_url="https://www.explorers.org/grants/rising-explorer-grant/",
+    ),
 )
 
 
