@@ -22,6 +22,9 @@ historic backup filenames, and maintainer-only evidence.
 - `GET /operator/health` must require `GRANT_RADAR_ADMIN_TOKEN`.
 - `GET` and `HEAD /opportunity/{id}` render public opportunity pages.
 - `GET` and `HEAD /funder/{slug}` render public funder pages.
+- `GET` and `HEAD /insights` render the public data-story view.
+- `GET` and `HEAD /terms`, `/data-policy`, and `/attribution` render concise
+  public guidance pages linked from every public surface.
 - `GET` and `HEAD /opportunities/{id}` return public opportunity detail availability.
 - `GET` and `HEAD /robots.txt`, `/sitemap.xml`, `/llms.txt`, and `/site-discovery.json` are public.
 - `GET /docs` and `GET /openapi.json` must stay reachable for public API consumers.

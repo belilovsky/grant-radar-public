@@ -2963,6 +2963,8 @@ def test_opportunity_page_renders_public_permalink(monkeypatch):
     assert "Закупочная документация" in response.text
     assert "Публикация и служебная записка" in response.text
     assert "не подтверждает право на участие" in response.text
+    assert 'data-avds-pattern="opportunity-readiness-meter"' in response.text
+    assert "Что уже видно из карточки" in response.text
     assert "QAZ.FUND – рабочая справка" in response.text
     assert "Проверить на официальном источнике" in response.text
     assert "Откройте страницу подачи" in response.text
@@ -3233,6 +3235,79 @@ def test_opportunity_page_lists_related_opportunities(monkeypatch):
     assert "Поддержка прикладных исследований и лабораторий." in ru_response.text
     assert "Applied labs grant" not in ru_response.text
     assert "University innovation support" not in ru_response.text
+
+
+def test_public_insights_page_renders_avds_charts(monkeypatch):
+    _reset_api_state(monkeypatch)
+    today = date.today()
+    api_main._cache.extend(
+        [
+            Opportunity(
+                source="source_a",
+                source_url="https://example.org/a",
+                type=OpportunityType.GRANT,
+                title="Local grant",
+                summary="Support for Kazakhstan teams.",
+                funder="Source A",
+                deadline=today + timedelta(days=12),
+                score=0.82,
+            ),
+            Opportunity(
+                source="source_b",
+                source_url="https://example.org/b",
+                type=OpportunityType.TENDER,
+                title="Public procurement",
+                summary="Open procurement notice.",
+                funder="Source B",
+                score=0.46,
+            ),
+        ]
+    )
+    client = TestClient(api_main.app)
+
+    response = client.get("/insights", params={"lang": "ru"})
+
+    assert response.status_code == 200
+    assert response.headers["cache-control"].startswith("public, max-age=60")
+    assert '<html lang="ru"' in response.text
+    assert "Куда сейчас направлена поддержка" in response.text
+    assert 'data-avds-component="DataViz"' in response.text
+    assert 'data-avds-pattern="format-distribution"' in response.text
+    assert 'data-avds-pattern="deadline-distribution"' in response.text
+    assert "Гранты" in response.text
+    assert "До 30 дней" in response.text
+
+
+def test_public_info_pages_are_linkable(monkeypatch):
+    _reset_api_state(monkeypatch)
+    client = TestClient(api_main.app)
+
+    root = client.get("/?lang=ru")
+    assert '/insights?lang=ru' in root.text
+    assert '/terms?lang=ru' in root.text
+    assert '/data-policy?lang=ru' in root.text
+    assert '/attribution?lang=ru' in root.text
+
+    for path, marker in (
+        ("/terms", "Как пользоваться QAZ.FUND"),
+        ("/data-policy", "Откуда берутся данные"),
+        ("/attribution", "Как ссылаться на QAZ.FUND"),
+    ):
+        response = client.get(path, params={"lang": "ru"})
+        assert response.status_code == 200
+        assert marker in response.text
+        assert 'data-avds="grant-radar"' in response.text
+
+
+def test_sitemap_includes_public_story_pages(monkeypatch):
+    _reset_api_state(monkeypatch)
+    client = TestClient(api_main.app)
+
+    response = client.get("/sitemap.xml")
+
+    assert response.status_code == 200
+    assert "/insights?lang=ru" in response.text
+    assert "/data-policy?lang=ru" in response.text
 
 
 def test_related_opportunities_diversify_sources(monkeypatch):

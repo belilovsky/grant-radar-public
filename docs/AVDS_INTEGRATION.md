@@ -21,6 +21,10 @@ is a local server-rendered adapter in `api/avds.py`, aligned to AV DS 4.3.2.
   used by the rest of the QDev ecosystem: `--color-bg`, `--color-surface`,
   `--color-text`, `--color-border`, `--color-accent`, `--color-success`,
   `--color-warning`, and `--color-danger`.
+- Public story pages use the same tokens for AV DS data visualizations: the
+  `/insights` page renders source-grounded SVG bar charts for formats, donors,
+  deadlines, freshness and match quality. Opportunity pages expose a compact
+  `opportunity-readiness-meter` showing which application facts are present.
 - The dashboard keeps AV DS as a restrained admin surface: `TabsList` /
   `TabsTrigger` tab anatomy, `avds-field`-style inputs, `StatKpiCard`-style
   metric typography, `SourceCard` source rows with the real
@@ -30,7 +34,7 @@ is a local server-rendered adapter in `api/avds.py`, aligned to AV DS 4.3.2.
   future migration: `admin-shell`, `toolbar`, `button`, `panel`, `metric-card`,
   `field`, `source-card`, `source-icon`, `source-main`, `source-meta`,
   `source-url`, `source-count`, `opportunity-card`, `badge`, `tag`, `score`,
-  `health-card`, `sticky-shell`, and `filter-summary`.
+  `health-card`, `sticky-shell`, `filter-summary`, and `DataViz`.
 - `scripts/production_smoke.py` treats the AV DS shell markers as part of the
   live release gate, so production deploys fail smoke if the rendered page
   loses `data-avds="grant-radar"`, `data-av-theme="light"`, the default

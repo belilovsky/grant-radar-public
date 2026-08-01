@@ -396,6 +396,22 @@ def render_funder_page(
         ),
         quote=True,
     )
+    insights_href = escape(
+        f"{base_path}/insights?lang={active_lang}" if base_path else f"/insights?lang={active_lang}",
+        quote=True,
+    )
+    terms_href = escape(
+        f"{base_path}/terms?lang={active_lang}" if base_path else f"/terms?lang={active_lang}",
+        quote=True,
+    )
+    data_policy_href = escape(
+        f"{base_path}/data-policy?lang={active_lang}" if base_path else f"/data-policy?lang={active_lang}",
+        quote=True,
+    )
+    attribution_href = escape(
+        f"{base_path}/attribution?lang={active_lang}" if base_path else f"/attribution?lang={active_lang}",
+        quote=True,
+    )
     back_label = escape(str(copy["funder_back_to_catalog"]))
     funder_name = escape(_label_value(str(funder["name"]), copy))
     overview = escape(_overview_sentence(funder, copy))
@@ -906,6 +922,10 @@ def render_funder_page(
       <nav class="site-footer-nav" aria-label="{escape(str(copy["views_aria"]), quote=True)}">
         <a href="{catalog_href}">{escape(str(copy["tab_opportunities"]))}</a>
         <a href="{sources_href}">{escape(str(copy["tab_sources"]))}</a>
+        <a href="{insights_href}">{escape(str(copy["insights_link"]))}</a>
+        <a href="{terms_href}">{escape(str(copy["terms_link"]))}</a>
+        <a href="{data_policy_href}">{escape(str(copy["data_policy_link"]))}</a>
+        <a href="{attribution_href}">{escape(str(copy["attribution_link"]))}</a>
         <a href="{status_href}">{escape(str(copy["status_link"]))}</a>
         <a href="{docs_href}">{escape(str(copy["api_docs"]))}</a>
       </nav>

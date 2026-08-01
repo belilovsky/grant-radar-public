@@ -41,7 +41,9 @@ from api.ecosystem import (
 )
 from api.error_page import render_not_found_page
 from api.funder_page import render_funder_page
+from api.insights_page import render_insights_page
 from api.operator_page import render_operator_page
+from api.public_info_page import render_public_info_page
 from api.opportunity_detail import build_opportunity_detail
 from api.opportunity_page import render_opportunity_page
 from api.public_meta import OG_IMAGE_SVG
@@ -1354,6 +1356,22 @@ def _render_sitemap_xml(base_url: str) -> str:
             },
         ),
     ]
+    for path, priority in (
+        ("/insights?lang=ru", "0.8"),
+        ("/terms?lang=ru", "0.4"),
+        ("/data-policy?lang=ru", "0.4"),
+        ("/attribution?lang=ru", "0.4"),
+    ):
+        ru_url = _public_url_from_base(base_url, path)
+        en_url = ru_url.replace("lang=ru", "lang=en")
+        rows.append(
+            _sitemap_entry(
+                ru_url,
+                changefreq="monthly",
+                priority=priority,
+                alternates={"ru": ru_url, "en": en_url, "x-default": ru_url},
+            )
+        )
 
     for item in opportunities[:500]:
         ru_url = _public_url_from_base(base_url, f"/opportunity/{item.id}?lang=ru")
@@ -1450,6 +1468,46 @@ async def root(request: Request) -> HTMLResponse:
             site_origin=site_origin,
         )
     )
+
+
+@app.api_route("/insights", methods=["GET", "HEAD"], response_class=HTMLResponse, include_in_schema=False)
+async def public_insights_page(request: Request) -> HTMLResponse:
+    """Render a public, source-grounded visual summary of the catalogue."""
+    root_path = _root_path(request)
+    active_lang = _public_lang(str(request.query_params.get("lang") or "").strip())
+    response = HTMLResponse(
+        render_insights_page(
+            items=_cached_public_scope_items(content_lang=active_lang),
+            coverage=_cached_coverage_payload(),
+            lang=active_lang,
+            root_path=root_path,
+            site_origin=_site_origin(request, root_path),
+        )
+    )
+    response.headers["Cache-Control"] = "public, max-age=60, stale-while-revalidate=300"
+    return response
+
+
+@app.api_route("/terms", methods=["GET", "HEAD"], response_class=HTMLResponse, include_in_schema=False)
+@app.api_route("/data-policy", methods=["GET", "HEAD"], response_class=HTMLResponse, include_in_schema=False)
+@app.api_route("/attribution", methods=["GET", "HEAD"], response_class=HTMLResponse, include_in_schema=False)
+async def public_info_page(request: Request) -> HTMLResponse:
+    """Render concise public guidance pages linked from the catalogue footer."""
+    info_kind = request.url.path.rstrip("/").rsplit("/", 1)[-1]
+    if info_kind not in {"terms", "data-policy", "attribution"}:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND)
+    root_path = _root_path(request)
+    active_lang = _public_lang(str(request.query_params.get("lang") or "").strip())
+    response = HTMLResponse(
+        render_public_info_page(
+            kind=info_kind,
+            lang=active_lang,
+            root_path=root_path,
+            site_origin=_site_origin(request, root_path),
+        )
+    )
+    response.headers["Cache-Control"] = "public, max-age=300, stale-while-revalidate=900"
+    return response
 
 
 @app.api_route("/docs", methods=["GET", "HEAD"], include_in_schema=False)

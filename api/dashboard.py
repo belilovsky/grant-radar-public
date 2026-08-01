@@ -156,6 +156,28 @@ def render_dashboard(
         else f"/docs?lang={active_lang}"
     )
     docs_href = escape(docs_path, quote=True)
+    insights_path = (
+        f"{base_raw}/insights?lang={active_lang}"
+        if base_raw
+        else f"/insights?lang={active_lang}"
+    )
+    insights_href = escape(insights_path, quote=True)
+    terms_href = escape(
+        f"{base_raw}/terms?lang={active_lang}" if base_raw else f"/terms?lang={active_lang}",
+        quote=True,
+    )
+    data_policy_href = escape(
+        f"{base_raw}/data-policy?lang={active_lang}"
+        if base_raw
+        else f"/data-policy?lang={active_lang}",
+        quote=True,
+    )
+    attribution_href = escape(
+        f"{base_raw}/attribution?lang={active_lang}"
+        if base_raw
+        else f"/attribution?lang={active_lang}",
+        quote=True,
+    )
     status_path = (
         f"{base_raw}/status?lang={active_lang}"
         if base_raw
@@ -1005,6 +1027,10 @@ def render_dashboard(
       <nav class="site-footer-nav" aria-label="{escape(str(copy["views_aria"]), quote=True)}">
         <a href="#opportunities">{escape(str(copy["tab_opportunities"]))}</a>
         <a href="#sources">{escape(str(copy["tab_sources"]))}</a>
+        <a href="{insights_href}">{escape(str(copy["insights_link"]))}</a>
+        <a href="{terms_href}">{escape(str(copy["terms_link"]))}</a>
+        <a href="{data_policy_href}">{escape(str(copy["data_policy_link"]))}</a>
+        <a href="{attribution_href}">{escape(str(copy["attribution_link"]))}</a>
         <a href="{status_href}">{escape(str(copy["status_link"]))}</a>
         <a href="{docs_href}">{escape(str(copy["api_docs"]))}</a>
       </nav>

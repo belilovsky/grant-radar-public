@@ -211,6 +211,28 @@ def _metadata_markup(
     return "".join(items)
 
 
+def _readiness_markup(detail: OpportunityDetail, copy: dict[str, object]) -> str:
+    """Turn available application facts into a quiet, source-grounded signal."""
+    raw = detail.raw if isinstance(detail.raw, dict) else {}
+    signals = [
+        ("readiness_source", bool(str(detail.source_url).strip())),
+        ("readiness_deadline", bool(detail.deadline or raw.get("deadline_policy") == "rolling")),
+        ("readiness_amount", bool(detail.amount_min is not None or detail.amount_max is not None or raw.get("amount_raw"))),
+        ("readiness_eligibility", bool(detail.eligibility or raw.get("eligibility"))),
+    ]
+    known = sum(1 for _, available in signals if available)
+    rows = "".join(
+        f'<div class="readiness-signal {"is-known" if available else "is-missing"}"><span class="readiness-dot" aria-hidden="true"></span><span>{escape(str(copy[label_key]))}</span></div>'
+        for label_key, available in signals
+    )
+    return f'''
+    <section class="readiness-panel" data-avds-component="DataViz" data-avds-pattern="opportunity-readiness-meter" aria-label="{escape(str(copy["readiness_title"]), quote=True)}">
+      <div class="readiness-head"><div><h2>{escape(str(copy["readiness_title"]))}</h2><p>{escape(str(copy["readiness_note"]))}</p></div><strong>{known}/4</strong></div>
+      <div class="readiness-track" role="img" aria-label="{known} of 4 signals available"><span style="width:{known * 25}%"></span></div>
+      <div class="readiness-grid">{rows}</div>
+    </section>'''
+
+
 def _json_ld(payload: dict[str, object]) -> str:
     return json.dumps(payload, ensure_ascii=False).replace("<", "\\u003c")
 
@@ -759,6 +781,22 @@ def render_opportunity_page(
         ),
         quote=True,
     )
+    insights_href = escape(
+        f"{detail_base}/insights?lang={active_lang}" if detail_base else f"/insights?lang={active_lang}",
+        quote=True,
+    )
+    terms_href = escape(
+        f"{detail_base}/terms?lang={active_lang}" if detail_base else f"/terms?lang={active_lang}",
+        quote=True,
+    )
+    data_policy_href = escape(
+        f"{detail_base}/data-policy?lang={active_lang}" if detail_base else f"/data-policy?lang={active_lang}",
+        quote=True,
+    )
+    attribution_href = escape(
+        f"{detail_base}/attribution?lang={active_lang}" if detail_base else f"/attribution?lang={active_lang}",
+        quote=True,
+    )
     source_href = escape(str(detail.source_url), quote=True)
     application_href = (
         escape(detail.application_url, quote=True) if detail.application_url else ""
@@ -801,6 +839,7 @@ def render_opportunity_page(
         copy=copy,
     )
     verification_markup = _verification_markup(copy)
+    readiness_markup = _readiness_markup(detail, copy)
     related_markup = _related_markup(
         related_items or [],
         lang=active_lang,
@@ -1114,6 +1153,32 @@ def render_opportunity_page(
       font-size: var(--av-text-sm);
       font-weight: 600;
     }}
+    .readiness-panel {{
+      display: grid;
+      gap: 10px;
+      margin: 0 0 14px;
+      padding: 14px 16px;
+      border: 1px solid var(--line);
+      border-radius: var(--av-radius-md);
+      background: var(--surface);
+      box-shadow: var(--av-shadow-xs);
+    }}
+    .readiness-head {{
+      display: flex;
+      align-items: start;
+      justify-content: space-between;
+      gap: 16px;
+    }}
+    .readiness-head h2 {{ margin: 0 0 3px; font-size: 16px; line-height: 1.2; }}
+    .readiness-head p {{ margin: 0; color: var(--muted); font-size: var(--av-text-sm); }}
+    .readiness-head > strong {{ color: var(--brand); font-size: 18px; line-height: 1; }}
+    .readiness-track {{ height: 7px; overflow: hidden; border-radius: 999px; background: var(--surface-subtle); }}
+    .readiness-track span {{ display: block; height: 100%; border-radius: inherit; background: var(--brand); transition: width 180ms ease; }}
+    .readiness-grid {{ display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 8px; }}
+    .readiness-signal {{ display: flex; align-items: center; gap: 7px; color: var(--muted); font-size: var(--av-text-xs); font-weight: 700; }}
+    .readiness-dot {{ width: 8px; height: 8px; flex: 0 0 auto; border-radius: 50%; background: var(--line-strong); }}
+    .readiness-signal.is-known {{ color: var(--success); }}
+    .readiness-signal.is-known .readiness-dot {{ background: var(--success); }}
     .content-grid {{
       display: grid;
       grid-template-columns: minmax(0, 1.4fr) minmax(260px, 0.8fr);
@@ -1608,6 +1673,7 @@ def render_opportunity_page(
       .hero-stats strong {{
         font-size: 14px;
       }}
+      .readiness-grid {{ grid-template-columns: repeat(2, minmax(0, 1fr)); }}
       .prepare-head h2,
       .apply-head h2,
       .related-head h2 {{
@@ -1670,6 +1736,7 @@ def render_opportunity_page(
     </section>
 
     <div class="pills">{eligibility_markup}</div>
+    {readiness_markup}
 
     <section class="{content_grid_class}">
       <div class="section-stack">
@@ -1686,6 +1753,10 @@ def render_opportunity_page(
       <nav class="site-footer-nav" aria-label="{escape(str(copy["views_aria"]), quote=True)}">
         <a href="{catalog_href}">{escape(str(copy["tab_opportunities"]))}</a>
         <a href="{sources_href}">{escape(str(copy["tab_sources"]))}</a>
+        <a href="{insights_href}">{escape(str(copy["insights_link"]))}</a>
+        <a href="{terms_href}">{escape(str(copy["terms_link"]))}</a>
+        <a href="{data_policy_href}">{escape(str(copy["data_policy_link"]))}</a>
+        <a href="{attribution_href}">{escape(str(copy["attribution_link"]))}</a>
         <a href="{status_href}">{escape(str(copy["status_link"]))}</a>
         <a href="{docs_href}">{escape(str(copy["api_docs"]))}</a>
       </nav>

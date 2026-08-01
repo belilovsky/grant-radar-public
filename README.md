@@ -40,6 +40,10 @@ The main public endpoints are:
 - `GET /opportunities/{opportunity_id}`
 - `GET /opportunity/{opportunity_id}?lang=ru|en`
 - `GET /funder/{funder_slug}?lang=ru|en`
+- `GET /insights?lang=ru|en`
+- `GET /terms?lang=ru|en`
+- `GET /data-policy?lang=ru|en`
+- `GET /attribution?lang=ru|en`
 - `GET /digest`
 - `GET /docs`
 - `GET /openapi.json`
