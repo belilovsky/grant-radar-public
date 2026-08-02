@@ -135,6 +135,8 @@ def render_operator_page(*, lang: str, root_path: str = "") -> str:
       border-radius:var(--av-radius-md);
       background:var(--brand); color:#fff; font-weight:700; cursor:pointer; }}
     button.secondary {{ background:var(--brand-soft); color:var(--brand); }}
+    button:not(:disabled):hover {{ background:color-mix(in oklab,var(--brand),black 10%); }}
+    button.secondary:not(:disabled):hover {{ background:color-mix(in oklab,var(--brand-soft),var(--brand) 10%); }}
     .hint {{ margin-top:9px; font-size:12px; }}
     .message {{ min-height:20px; margin:10px 0 0; color:var(--muted); }}
     .message.bad {{ color:var(--bad); }}

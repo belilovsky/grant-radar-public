@@ -1094,6 +1094,15 @@ def render_opportunity_page(
       background: var(--brand);
       color: white;
     }}
+    .button:hover {{
+      border-color: var(--line-strong);
+      background: var(--surface-subtle);
+    }}
+    .button.primary:hover {{
+      border-color: color-mix(in oklab, var(--brand), black 18%);
+      background: color-mix(in oklab, var(--brand), black 10%);
+      color: white;
+    }}
     .button.slim {{
       min-height: var(--av-control-height-sm);
       background: color-mix(in oklab, var(--surface), white 14%);

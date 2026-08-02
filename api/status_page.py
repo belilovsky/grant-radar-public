@@ -194,6 +194,7 @@ def render_status_page(
       color:var(--muted); text-align:center; text-decoration:none; font-size:12px;
       font-weight:700; }}
     .lang-switch a[aria-current="page"] {{ border-bottom-color:var(--brand); color:var(--ink); }}
+    .lang-switch a:not([aria-current="page"]):hover {{ color:var(--brand); }}
     .overview {{ display:grid; grid-template-columns:minmax(0,1.25fr) minmax(420px,.75fr);
       gap:0; margin-bottom:16px; border:0; border-top:1px solid var(--line);
       border-bottom:1px solid var(--line); border-radius:0;
@@ -232,6 +233,7 @@ def render_status_page(
     .site-footer-nav {{ display:flex; flex-wrap:wrap; gap:6px 16px;
       align-items:center; font-weight:650; }}
     .site-footer a {{ color:var(--ink); font-weight:700; text-decoration:none; }}
+    .site-footer a:hover {{ color:var(--brand); }}
     a:focus-visible {{ outline:2px solid var(--brand); outline-offset:2px;
       border-radius:var(--av-radius-sm); }}
     .empty {{ color:var(--muted); text-align:center; }}

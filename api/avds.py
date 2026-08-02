@@ -152,4 +152,25 @@ AVDS_CSS = """
       outline-offset: 2px;
       border-radius: var(--av-radius-sm);
     }
+
+    :where(a, button, input, select, summary) {
+      transition:
+        color var(--av-duration-base) var(--av-easing-emphasized),
+        background-color var(--av-duration-base) var(--av-easing-emphasized),
+        border-color var(--av-duration-base) var(--av-easing-emphasized),
+        box-shadow var(--av-duration-base) var(--av-easing-emphasized),
+        transform var(--av-duration-base) var(--av-easing-emphasized);
+    }
+
+    :where(.metric, .insight-metric, .stat) strong {
+      font-variant-numeric: tabular-nums;
+    }
+
+    html {
+      text-rendering: optimizeLegibility;
+    }
+
+    body {
+      -webkit-font-smoothing: antialiased;
+    }
 """

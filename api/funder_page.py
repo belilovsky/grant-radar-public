@@ -774,6 +774,14 @@ def render_funder_page(
       color: var(--brand);
       border-color: transparent;
     }}
+    .button:not(.soft):hover {{
+      background: color-mix(in oklab, var(--brand), black 10%);
+    }}
+    .button.soft:hover {{
+      border-color: var(--color-border-subtle);
+      background: var(--panel-subtle);
+      color: var(--brand);
+    }}
     .source-grid {{
       display: grid;
       grid-template-columns: 1fr;
