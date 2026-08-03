@@ -236,6 +236,10 @@ def render_status_page(
     .site-footer a:hover {{ color:var(--brand); }}
     a:focus-visible {{ outline:2px solid var(--brand); outline-offset:2px;
       border-radius:var(--av-radius-sm); }}
+    @media (min-width:1440px) {{
+      .overview {{ grid-template-columns:minmax(0,1.4fr) minmax(520px,.6fr); }}
+      .metrics {{ grid-template-columns:repeat(3,minmax(0,1fr)); margin-left:48px; }}
+    }}
     .empty {{ color:var(--muted); text-align:center; }}
     @media (max-width:860px) {{
       .overview {{ grid-template-columns:1fr; }}

@@ -1704,7 +1704,10 @@ def test_public_status_page_renders_coverage_without_operator_details(monkeypatc
     assert 'href="/docs?lang=ru"' in response.text
     assert "min-height:var(--av-control-height-lg);" in response.text
     assert ".status-topbar .back" in response.text
-    assert "--av-container-dashboard: 1280px" in response.text
+    assert (
+        "--av-container-dashboard: clamp(1280px, calc(100vw - 96px), 1920px);"
+        in response.text
+    )
     assert "World Bank Kazakhstan" in response.text
     assert "Последняя проверка" in response.text
     assert 'rel="canonical" href="https://qaz.fund/status?lang=ru"' in response.text

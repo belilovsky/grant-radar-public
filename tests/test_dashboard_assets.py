@@ -31,3 +31,6 @@ def test_dashboard_uses_extracted_static_styles() -> None:
     assert 'data-avds-pattern="decision-summary"' in html
     assert "grid-template-columns: repeat(2, minmax(0, 1fr));" in DASHBOARD_CSS
     assert ".hero-pick:last-child { grid-column: 1 / -1; }" in DASHBOARD_CSS
+    assert "@media (min-width: 1440px)" in DASHBOARD_CSS
+    assert ".hero-points {" in DASHBOARD_CSS
+    assert "grid-template-columns: repeat(3, minmax(0, 1fr));" in DASHBOARD_CSS

@@ -169,6 +169,16 @@ def render_operator_page(*, lang: str, root_path: str = "") -> str:
     .status-ok {{ color:var(--good); }}
     .status-error {{ color:var(--bad); }}
     .status-running {{ color:var(--warn); }}
+    @media (min-width:1440px) {{
+      .intro-grid {{
+        grid-template-columns:minmax(0,1.35fr) minmax(420px,.65fr);
+        gap:56px;
+      }}
+      .grid {{
+        grid-template-columns:minmax(0,.9fr) minmax(0,2.1fr);
+        gap:24px;
+      }}
+    }}
     @media(max-width:760px) {{
       .auth-controls > :is(input, button),
       .lang-switch a,

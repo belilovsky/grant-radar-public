@@ -838,6 +838,21 @@ def render_funder_page(
       outline-offset:2px;
       border-radius:var(--av-radius-sm);
     }}
+    @media (min-width:1440px) {{
+      .hero {{
+        grid-template-columns:minmax(0,1.25fr) minmax(420px,.55fr);
+        gap:56px;
+        padding:32px 0;
+      }}
+      .opportunity-card {{
+        grid-template-columns:minmax(380px,1.08fr) minmax(360px,.92fr) minmax(250px,.44fr);
+        gap:40px;
+      }}
+      .source-grid {{
+        grid-template-columns:repeat(2,minmax(0,1fr));
+        column-gap:40px;
+      }}
+    }}
     @media (max-width: 900px) {{
       .hero {{ grid-template-columns: 1fr; }}
       .stat-grid {{

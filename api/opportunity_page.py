@@ -978,7 +978,7 @@ def render_opportunity_page(
       --success-soft: var(--color-success-subtle);
       --radius: var(--av-radius-lg);
       --shadow: var(--shadow-md);
-      --container-max: min(1280px, calc(100% - 48px));
+      --container-max: min(var(--av-container-dashboard), calc(100% - 48px));
     }}
     * {{ box-sizing: border-box; }}
     body {{
@@ -1616,6 +1616,19 @@ def render_opportunity_page(
       outline:2px solid var(--brand);
       outline-offset:2px;
       border-radius:var(--av-radius-sm);
+    }}
+    @media (min-width:1440px) {{
+      .hero-grid {{
+        grid-template-columns:minmax(0,1.55fr) minmax(360px,.65fr);
+        gap:64px;
+      }}
+      .content-grid--single .section-stack {{
+        grid-template-columns:repeat(3,minmax(0,1fr));
+        column-gap:32px;
+      }}
+      .prepare-grid,
+      .related-grid {{ gap:16px; }}
+      .readiness-grid {{ gap:16px; }}
     }}
     @media (max-width: 900px) {{
       .hero-grid,

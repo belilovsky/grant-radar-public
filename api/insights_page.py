@@ -230,6 +230,15 @@ def render_insights_page(
     .data-chart{{display:block;width:100%;height:auto;min-height:130px;overflow:visible}} .chart-label{{font:600 12px var(--av-font-sans);fill:var(--color-text)}} .chart-value{{font:800 13px var(--av-font-sans);fill:var(--color-text)}} .chart-track{{fill:var(--color-bg-subtle)}}
     .method{{display:grid;grid-template-columns:auto 1fr;gap:14px;align-items:start;margin-top:22px;padding:16px 18px;border-left:4px solid var(--color-accent);border-radius:var(--av-radius-md);background:var(--color-surface)}} .method strong{{font-size:15px}} .method p{{margin:3px 0 0;color:var(--color-text-muted);font-size:14px}}
     .footer{{display:flex;justify-content:space-between;gap:16px;flex-wrap:wrap;margin-top:28px;padding-top:18px;border-top:1px solid var(--color-border);color:var(--color-text-muted);font-size:13px}} .footer a{{font-weight:700}}
+    @media(min-width:1440px){{
+      .hero{{grid-template-columns:minmax(0,1.55fr) minmax(420px,.8fr);gap:48px;padding:36px}}
+      .section-head{{margin-top:40px}}
+    }}
+    @media(min-width:1920px){{
+      .metric-grid{{grid-template-columns:repeat(4,minmax(0,1fr));gap:12px}}
+      .viz-grid{{grid-template-columns:repeat(4,minmax(0,1fr));gap:18px}}
+      .viz-card{{padding:20px}}
+    }}
     @media(max-width:760px){{.shell{{width:min(100% - 24px,680px);padding-top:12px}} .hero{{grid-template-columns:1fr;padding:20px}} .metric-grid{{grid-template-columns:repeat(4,minmax(0,1fr))}} .insight-metric{{padding:10px}} .insight-metric strong{{font-size:22px}} .viz-grid{{grid-template-columns:1fr}} .method{{grid-template-columns:1fr;gap:5px}}}}
     @media(max-width:480px){{.metric-grid{{grid-template-columns:repeat(2,minmax(0,1fr))}} h1{{font-size:34px}}}}
   </style>

@@ -3532,6 +3532,81 @@ DASHBOARD_CSS = r"""    :root {
       }
     }
 
+    /* Wide screens get a second composition, not a scaled-up mobile grid. */
+    @media (min-width: 981px) and (max-width: 1439px) {
+      .spotlight-grid {
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+      }
+      .source-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        column-gap: var(--av-spacing-5);
+      }
+    }
+
+    @media (min-width: 1440px) {
+      .shell {
+        width: min(var(--container-max), calc(100% - 96px));
+      }
+      .hero-grid {
+        grid-template-columns: minmax(0, 1.25fr) minmax(460px, 0.75fr);
+        gap: 64px;
+      }
+      .hero-copy {
+        max-width: 980px;
+      }
+      .hero-intro {
+        max-width: 58ch;
+      }
+      .hero-points {
+        display: grid;
+      }
+      .discovery-grid {
+        grid-template-columns: minmax(420px, 0.72fr) minmax(0, 1.28fr);
+        gap: var(--av-spacing-8);
+      }
+      .pathways-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+      }
+      .opportunity-main {
+        grid-template-columns: minmax(0, 1.35fr) minmax(420px, 0.65fr);
+        gap: 64px;
+      }
+      .source-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        column-gap: var(--av-spacing-8);
+      }
+      .source-card {
+        padding-inline: 8px;
+      }
+    }
+
+    @media (min-width: 1920px) {
+      .themes-grid {
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+      }
+      .source-grid {
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        column-gap: var(--av-spacing-6);
+      }
+      .filters-shell {
+        gap: var(--av-spacing-4);
+      }
+    }
+
+    @media (max-width: 560px) {
+      .profile-grid {
+        grid-template-columns: 1fr;
+      }
+      .profile-builder > summary {
+        display: grid;
+        grid-template-columns: minmax(0, 1fr) auto;
+        align-items: start;
+      }
+      .profile-builder-intro {
+        grid-column: 1 / -1;
+      }
+    }
+
     @media (prefers-reduced-motion: reduce) {
       html {
         scroll-behavior: auto;
