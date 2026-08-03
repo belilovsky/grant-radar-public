@@ -31,6 +31,10 @@ def test_public_explanation_supports_kazakh_without_russian_shell_fallback() -> 
     assert "Каталогқа оралу" in html
     assert "Пайдалану шарттары" in html
     assert 'hreflang="kk"' in html
+    assert 'href="/terms?lang=kk"' in html
+    assert 'href="/terms?lang=ru"' in html
+    assert 'href="/terms?lang=en"' in html
+    assert 'aria-current="page"' in html
     assert "Вернуться в каталог" not in html
 
 
