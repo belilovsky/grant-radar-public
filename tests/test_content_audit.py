@@ -106,6 +106,44 @@ def test_content_audit_accepts_clean_rolling_items():
     assert result.rootish_source_urls == []
 
 
+def test_content_audit_uses_recent_successful_check_for_unchanged_monitor():
+    result = analyze_content(
+        coverage={
+            "enabled_sources": 1,
+            "relevant_open_items": 1,
+            "sources": [
+                {
+                    "slug": "unchanged_monitor",
+                    "enabled": True,
+                    "items": 1,
+                    "last_discovered_at": "2026-07-01T00:00:00+00:00",
+                    "last_checked_at": "2026-08-03T00:00:00+00:00",
+                    "freshness_basis": "source_check",
+                }
+            ],
+        },
+        opportunities=[
+            {
+                "title": "Monitored support program",
+                "summary": (
+                    "An unchanged official program page checked recently; verify "
+                    "the current terms before taking action."
+                ),
+                "tags": ["rolling"],
+                "source_url": "https://example.org/programs/monitor",
+            }
+        ],
+        forbidden_terms=[],
+        min_sources=1,
+        min_opportunities=1,
+        stale_after_days=7,
+        now=datetime(2026, 8, 3, tzinfo=UTC),
+    )
+
+    assert result.status == "ok"
+    assert result.stale_sources == []
+
+
 def test_content_audit_accepts_source_policy_and_archived_items_without_dates():
     result = analyze_content(
         coverage={

@@ -136,6 +136,20 @@ def _raw_payload(item: dict[str, Any]) -> dict[str, Any]:
     return raw if isinstance(raw, dict) else {}
 
 
+def _last_source_activity(row: dict[str, Any]) -> datetime | None:
+    """Use a successful source check when a monitor has no new records.
+
+    Monitored pages can legitimately keep the same item for weeks. Treating
+    last_discovered_at as the only freshness signal marks those sources stale
+    even though the adapter has just checked the official page.
+    """
+    timestamps = [
+        _parse_datetime(row.get("last_checked_at")),
+        _parse_datetime(row.get("last_discovered_at")),
+    ]
+    return max((value for value in timestamps if value is not None), default=None)
+
+
 def _has_detail_contract(item: dict[str, Any]) -> bool:
     raw = _raw_payload(item)
     if str(raw.get("detail_text") or "").strip():
@@ -188,7 +202,7 @@ def analyze_content(
             and slug not in EXPECTED_EMPTY_SOURCE_SLUGS
         ):
             zero_item_sources.append(slug)
-        last_seen = _parse_datetime(row.get("last_discovered_at"))
+        last_seen = _last_source_activity(row)
         if row.get("enabled") and items > 0 and last_seen and last_seen < stale_cutoff:
             stale_sources.append(slug)
 
