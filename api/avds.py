@@ -57,7 +57,7 @@ AVDS_CSS = """
       --av-easing-emphasized: cubic-bezier(0.2, 0, 0.1, 1);
       --motion-duration-base: var(--av-duration-base);
       --motion-easing-standard: var(--av-easing-emphasized);
-      --av-container-dashboard: clamp(1280px, calc(100vw - 96px), 1920px);
+      --av-container-dashboard: clamp(1280px, calc(100vw - 96px), 2240px);
       --av-control-height-sm: 32px;
       --av-control-height-md: 36px;
       --av-control-height-lg: 44px;

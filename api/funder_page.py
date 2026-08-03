@@ -853,6 +853,22 @@ def render_funder_page(
         column-gap:40px;
       }}
     }}
+    @media (min-width:2200px) {{
+      .hero {{
+        grid-template-columns:minmax(0,1.45fr) minmax(520px,.65fr);
+        gap:80px;
+        padding-block:40px;
+      }}
+      .hero-copy {{ max-width:1080px; }}
+      .opportunity-card {{
+        grid-template-columns:minmax(420px,1.18fr) minmax(420px,.92fr) minmax(280px,.42fr);
+        gap:64px;
+      }}
+      .source-grid {{
+        grid-template-columns:repeat(4,minmax(0,1fr));
+        column-gap:48px;
+      }}
+    }}
     @media (max-width: 900px) {{
       .hero {{ grid-template-columns: 1fr; }}
       .stat-grid {{

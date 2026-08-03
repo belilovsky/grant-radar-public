@@ -1705,7 +1705,7 @@ def test_public_status_page_renders_coverage_without_operator_details(monkeypatc
     assert "min-height:var(--av-control-height-lg);" in response.text
     assert ".status-topbar .back" in response.text
     assert (
-        "--av-container-dashboard: clamp(1280px, calc(100vw - 96px), 1920px);"
+        "--av-container-dashboard: clamp(1280px, calc(100vw - 96px), 2240px);"
         in response.text
     )
     assert "World Bank Kazakhstan" in response.text

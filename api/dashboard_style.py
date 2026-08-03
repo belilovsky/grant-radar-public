@@ -3584,12 +3584,52 @@ DASHBOARD_CSS = r"""    :root {
       .themes-grid {
         grid-template-columns: repeat(3, minmax(0, 1fr));
       }
+      .pathways-grid {
+        grid-template-columns: repeat(4, minmax(0, 1fr));
+      }
       .source-grid {
         grid-template-columns: repeat(3, minmax(0, 1fr));
         column-gap: var(--av-spacing-6);
       }
       .filters-shell {
         gap: var(--av-spacing-4);
+      }
+    }
+
+    @media (min-width: 2200px) {
+      .shell {
+        width: min(var(--container-max), calc(100% - 128px));
+      }
+      .hero-grid {
+        grid-template-columns: minmax(0, 1.5fr) minmax(520px, 0.72fr);
+        gap: 80px;
+      }
+      .hero-copy {
+        max-width: 1080px;
+      }
+      .hero-intro {
+        max-width: 62ch;
+      }
+      .discovery-grid {
+        grid-template-columns: minmax(520px, 0.68fr) minmax(0, 1.32fr);
+        gap: var(--av-spacing-10);
+      }
+      .funder-grid {
+        grid-template-columns: repeat(4, minmax(0, 1fr));
+      }
+      .source-grid {
+        grid-template-columns: repeat(4, minmax(0, 1fr));
+        column-gap: var(--av-spacing-6);
+      }
+      .role-list {
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+      }
+      .faq-list {
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+      }
+      .opportunity-main {
+        grid-template-columns: minmax(0, 1.5fr) minmax(520px, 0.72fr);
+        gap: 80px;
       }
     }
 
