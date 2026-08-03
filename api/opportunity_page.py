@@ -1630,6 +1630,23 @@ def render_opportunity_page(
       .related-grid {{ gap:16px; }}
       .readiness-grid {{ gap:16px; }}
     }}
+    @media (min-width:2200px) {{
+      .shell {{
+        width: min(1920px, calc(100% - 160px));
+      }}
+      .hero-grid {{
+        grid-template-columns: minmax(0, 1.35fr) minmax(420px, .65fr);
+        gap: 72px;
+      }}
+      .hero h1 {{ max-width: 36ch; }}
+      .summary {{ max-width: 78ch; }}
+      .content-grid--single .section-stack > .section-card:not(.source-disclosure) {{
+        grid-column: span 2;
+      }}
+      .richtext p {{ max-width: 90ch; }}
+      .verification-head,
+      .related-head {{ max-width: 920px; }}
+    }}
     @media (max-width: 900px) {{
       .hero-grid,
       .content-grid,
