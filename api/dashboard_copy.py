@@ -450,6 +450,22 @@ COPY = {
         "collections_label": "Сохранённые подборки",
         "collections_aria": "Сохранённые фильтры для повторной работы",
         "collections_empty": "Сохраните фильтры, чтобы вернуться к этому списку.",
+        "profile_title": "Подобрать по профилю",
+        "profile_intro": (
+            "Укажите тип заявителя, географию, формат поддержки и срок – каталог "
+            "соберёт воспроизводимую подборку."
+        ),
+        "profile_audience": "Кто подаёт",
+        "profile_region": "Где проект",
+        "profile_format": "Что нужно",
+        "profile_deadline": "Когда подаёте",
+        "profile_apply": "Показать подходящие программы",
+        "profile_reset": "Очистить профиль",
+        "profile_local_note": (
+            "Профиль не отправляется на сервер. Выбранные параметры сохраняются "
+            "в ссылке и их можно переслать."
+        ),
+        "profile_applied": "Подборка по профилю обновлена.",
         "save_view": "Сохранить фильтры",
         "share_view": "Поделиться выдачей",
         "saved_view_saved": "Подборка сохранена в этом браузере.",
@@ -1414,6 +1430,22 @@ COPY = {
         "collections_label": "Saved selections",
         "collections_aria": "Saved filters for repeat work",
         "collections_empty": "Save filters to return to this list later.",
+        "profile_title": "Build a profile match",
+        "profile_intro": (
+            "Choose the applicant type, geography, support format and timing. "
+            "The catalogue will build a reproducible shortlist."
+        ),
+        "profile_audience": "Who is applying",
+        "profile_region": "Where is the project",
+        "profile_format": "What do you need",
+        "profile_deadline": "When are you applying",
+        "profile_apply": "Show matching programmes",
+        "profile_reset": "Clear profile",
+        "profile_local_note": (
+            "The profile is not sent to the server. Selected parameters stay in "
+            "the link and can be shared."
+        ),
+        "profile_applied": "Profile-based shortlist updated.",
         "save_view": "Save filters",
         "share_view": "Share results",
         "saved_view_saved": "Collection saved in this browser.",

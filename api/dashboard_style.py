@@ -1488,6 +1488,69 @@ DASHBOARD_CSS = r"""    :root {
       font-size: var(--av-text-xs);
       font-weight: 600;
     }
+    .profile-builder {
+      display: grid;
+      gap: 0;
+      margin: 0 0 var(--av-spacing-3);
+      border: 1px solid color-mix(in oklab, var(--brand), var(--line) 72%);
+      border-radius: var(--av-radius-md);
+      background: color-mix(in oklab, var(--panel), var(--brand-soft) 18%);
+      overflow: hidden;
+    }
+    .profile-builder > summary {
+      position: relative;
+      display: flex;
+      align-items: baseline;
+      justify-content: space-between;
+      gap: var(--av-spacing-3);
+      padding: 13px 14px;
+      cursor: pointer;
+      list-style: none;
+    }
+    .profile-builder > summary::-webkit-details-marker { display: none; }
+    .profile-builder > summary::after {
+      content: "+";
+      flex: 0 0 auto;
+      color: var(--brand);
+      font-size: 18px;
+      font-weight: 700;
+    }
+    .profile-builder[open] > summary::after { content: "−"; }
+    .profile-builder-title {
+      color: var(--ink);
+      font-size: var(--av-text-sm);
+      font-weight: 750;
+    }
+    .profile-builder-intro {
+      flex: 1 1 auto;
+      color: var(--muted);
+      font-size: var(--av-text-xs);
+      line-height: 1.45;
+    }
+    .profile-builder-body {
+      display: grid;
+      gap: var(--av-spacing-2);
+      padding: 0 14px 14px;
+      border-top: 1px solid color-mix(in oklab, var(--brand), var(--line) 78%);
+    }
+    .profile-grid {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: var(--av-spacing-2);
+      padding-top: 14px;
+    }
+    .profile-builder-actions {
+      display: flex;
+      align-items: center;
+      gap: var(--av-spacing-2);
+      flex-wrap: wrap;
+    }
+    .profile-builder-note {
+      margin: 0;
+      color: var(--muted);
+      font-size: var(--av-text-xs);
+      line-height: 1.45;
+    }
     .saved-view-pill {
       display: inline-flex;
       align-items: center;
@@ -2846,6 +2909,9 @@ DASHBOARD_CSS = r"""    :root {
         border: 0;
         border-top: 1px solid var(--line-subtle);
       }
+      .profile-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+      }
     }
 
     @media (max-width: 820px) {
@@ -3361,6 +3427,19 @@ DASHBOARD_CSS = r"""    :root {
           "meta"
           "fit"
           "actions";
+      }
+      .profile-grid {
+        grid-template-columns: 1fr;
+      }
+      .profile-builder > summary {
+        align-items: flex-start;
+        flex-direction: column;
+        gap: 4px;
+      }
+      .profile-builder > summary::after {
+        position: absolute;
+        right: 14px;
+        margin-top: -2px;
       }
       .saved-actions .workspace-backup,
       .saved-actions .workspace-filter:disabled { display: none; }

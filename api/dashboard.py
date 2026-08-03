@@ -776,6 +776,68 @@ def render_dashboard(
         <div class="workspace-queue-list" id="workspace-queue-list"></div>
         <span class="workspace-queue-more" id="workspace-queue-more"></span>
       </section>
+      <details
+        class="profile-builder"
+        id="profile-builder"
+        data-avds-component="profile-builder"
+      >
+        <summary>
+          <span class="profile-builder-title">{escape(str(copy["profile_title"]))}</span>
+          <span class="profile-builder-intro">{escape(str(copy["profile_intro"]))}</span>
+        </summary>
+        <div class="profile-builder-body">
+          <div class="profile-grid">
+            <label class="filter-block" for="profile-audience">
+              <span class="filter-label">{escape(str(copy["profile_audience"]))}</span>
+              <select class="field avds-field" id="profile-audience" data-avds-component="field">
+                <option value="all">{escape(str(copy["audience_all"]))}</option>
+                <option value="startup">{escape(str(copy["audience_startup"]))}</option>
+                <option value="business">{escape(str(copy["audience_business"]))}</option>
+                <option value="farmer">{escape(str(copy["audience_farmer"]))}</option>
+                <option value="ngo">{escape(str(copy["audience_ngo"]))}</option>
+                <option value="science">{escape(str(copy["audience_science"]))}</option>
+              </select>
+            </label>
+            <label class="filter-block" for="profile-region">
+              <span class="filter-label">{escape(str(copy["profile_region"]))}</span>
+              <select class="field avds-field" id="profile-region" data-avds-component="field">
+                <option value="all">{escape(str(copy["region_all"]))}</option>
+                <option value="kazakhstan">{escape(str(copy["region_kazakhstan"]))}</option>
+                <option value="central_asia">{escape(str(copy["region_central_asia"]))}</option>
+                <option value="global">{escape(str(copy["region_global"]))}</option>
+              </select>
+            </label>
+            <label class="filter-block" for="profile-format">
+              <span class="filter-label">{escape(str(copy["profile_format"]))}</span>
+              <select class="field avds-field" id="profile-format" data-avds-component="field">
+                <option value="all">{escape(str(copy["format_all"]))}</option>
+                <option value="grants">{escape(str(copy["format_grants"]))}</option>
+                <option value="support">{escape(str(copy["format_support"]))}</option>
+                <option value="accelerators">{escape(str(copy["format_accelerators"]))}</option>
+                <option value="tenders">{escape(str(copy["format_tenders"]))}</option>
+              </select>
+            </label>
+            <label class="filter-block" for="profile-deadline">
+              <span class="filter-label">{escape(str(copy["profile_deadline"]))}</span>
+              <select class="field avds-field" id="profile-deadline" data-avds-component="field">
+                <option value="all">{escape(str(copy["deadline_filter_all"]))}</option>
+                <option value="soon">{escape(str(copy["deadline_filter_soon"]))}</option>
+                <option value="month">{escape(str(copy["deadline_filter_month"]))}</option>
+                <option value="rolling">{escape(str(copy["deadline_filter_rolling"]))}</option>
+              </select>
+            </label>
+          </div>
+          <div class="profile-builder-actions">
+            <button class="button primary" type="button" id="profile-apply" data-avds-component="button">
+              {escape(str(copy["profile_apply"]))}
+            </button>
+            <button class="text-button" type="button" id="profile-reset" data-avds-component="button">
+              {escape(str(copy["profile_reset"]))}
+            </button>
+          </div>
+          <p class="profile-builder-note">{escape(str(copy["profile_local_note"]))}</p>
+        </div>
+      </details>
       <div
         id="topic-brief"
         class="topic-brief hidden"
@@ -2971,6 +3033,64 @@ def render_dashboard(
       }}
     }}
 
+    function syncProfileControls() {{
+      const controls = {{
+        "#profile-audience": state.audience,
+        "#profile-region": state.region,
+        "#profile-format": state.format,
+        "#profile-deadline": state.deadlineMode
+      }};
+      Object.entries(controls).forEach(([selector, value]) => {{
+        const control = $(selector);
+        if (control) control.value = value;
+      }});
+    }}
+
+    function applyProfile() {{
+      const profileValues = {{
+        audience: $("#profile-audience")?.value || DEFAULT_AUDIENCE,
+        region: $("#profile-region")?.value || DEFAULT_REGION,
+        format: $("#profile-format")?.value || DEFAULT_FORMAT,
+        deadline: $("#profile-deadline")?.value || DEFAULT_DEADLINE
+      }};
+      const allowed = {{
+        audience: new Set(AUDIENCE_PRESETS.map((preset) => preset.id)),
+        region: new Set(REGION_FILTERS.map((preset) => preset.id)),
+        format: new Set(FORMAT_PRESETS.map((preset) => preset.id)),
+        deadline: new Set(DEADLINE_FILTERS.map((preset) => preset.id))
+      }};
+      state.query = "";
+      state.source = "all";
+      state.sort = DEFAULT_SORT;
+      state.minScore = DEFAULT_SCORE;
+      state.lifecycle = DEFAULT_LIFECYCLE;
+      state.includeArchived = false;
+      state.savedOnly = false;
+      state.audience = allowed.audience.has(profileValues.audience)
+        ? profileValues.audience : DEFAULT_AUDIENCE;
+      state.region = allowed.region.has(profileValues.region)
+        ? profileValues.region : DEFAULT_REGION;
+      state.format = allowed.format.has(profileValues.format)
+        ? profileValues.format : DEFAULT_FORMAT;
+      state.deadlineMode = allowed.deadline.has(profileValues.deadline)
+        ? profileValues.deadline : DEFAULT_DEADLINE;
+      resetVisibleLimit();
+      syncProfileControls();
+      const builder = $("#profile-builder");
+      if (builder) builder.open = false;
+      renderOpportunities();
+      setSavedViewNotice(copy.profile_applied);
+      goToView("opportunities");
+    }}
+
+    function resetProfile() {{
+      ["#profile-audience", "#profile-region", "#profile-format", "#profile-deadline"]
+        .forEach((selector) => {{
+          const control = $(selector);
+          if (control) control.value = "all";
+        }});
+    }}
+
     function syncUrlState() {{
       const params = new URLSearchParams(window.location.search);
       params.set("lang", copy.lang || "ru");
@@ -4933,6 +5053,7 @@ def render_dashboard(
     }});
 
     applyStateFromUrl();
+    syncProfileControls();
     const filterDisclosure = $("#filter-disclosure");
     syncFilterDisclosureForViewport();
     appShellMedia.addEventListener("change", syncFilterDisclosureForViewport);
@@ -5127,6 +5248,11 @@ def render_dashboard(
     }});
     $("#export-csv").addEventListener("click", exportVisibleCsv);
     $("#export-deadlines").addEventListener("click", exportVisibleDeadlines);
+    $("#profile-apply")?.addEventListener("click", applyProfile);
+    $("#profile-reset")?.addEventListener("click", resetProfile);
+    $("#profile-builder")?.addEventListener("toggle", () => {{
+      if ($("#profile-builder")?.open) syncProfileControls();
+    }});
     document.addEventListener("click", (event) => {{
       const applyButton = event.target.closest("[data-saved-view]");
       if (applyButton) {{

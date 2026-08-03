@@ -117,6 +117,13 @@ def test_root_renders_service_landing(monkeypatch):
     assert 'id="workspace-queue"' in response.text
     assert 'id="workspace-queue-list"' in response.text
     assert 'data-avds-component="workspace-queue-item"' in response.text
+    assert 'id="profile-builder"' in response.text
+    assert 'id="profile-audience"' in response.text
+    assert 'id="profile-region"' in response.text
+    assert 'id="profile-format"' in response.text
+    assert 'id="profile-deadline"' in response.text
+    assert "function applyProfile" in response.text
+    assert "Профиль не отправляется на сервер" in response.text
     assert "function exportWorkspace" in response.text
     assert "function sanitizeWorkspacePayload" in response.text
     assert "function importWorkspace" in response.text
