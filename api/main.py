@@ -43,10 +43,10 @@ from api.error_page import render_not_found_page
 from api.funder_page import render_funder_page
 from api.insights_page import render_insights_page
 from api.operator_page import render_operator_page
-from api.public_info_page import render_public_info_page
 from api.opportunity_detail import build_opportunity_detail
 from api.opportunity_page import render_opportunity_page
-from api.public_meta import OG_IMAGE_SVG
+from api.public_info_page import render_public_info_page
+from api.public_meta import OG_IMAGE_PNG, OG_IMAGE_SVG
 from api.status_page import render_status_page
 from core.geofit import (
     is_excluded_for_kazakhstan_focus,
@@ -144,6 +144,7 @@ _PUBLIC_DISCOVERY_CACHE_PATHS = {
 }
 _PUBLIC_LONG_CACHE_PATHS = {
     "/favicon.ico",
+    "/og-image.png",
     "/og-image.svg",
     f"/{GOOGLE_SITE_VERIFICATION_FILENAME}",
 }
@@ -2005,6 +2006,11 @@ async def favicon() -> Response:
 @app.api_route("/og-image.svg", methods=["GET", "HEAD"], include_in_schema=False)
 async def og_image() -> Response:
     return Response(OG_IMAGE_SVG, media_type="image/svg+xml")
+
+
+@app.api_route("/og-image.png", methods=["GET", "HEAD"], include_in_schema=False)
+async def og_image_png() -> Response:
+    return Response(OG_IMAGE_PNG, media_type="image/png")
 
 
 @app.get(f"/{GOOGLE_SITE_VERIFICATION_FILENAME}", include_in_schema=False)

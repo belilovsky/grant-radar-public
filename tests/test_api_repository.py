@@ -221,11 +221,11 @@ def test_root_renders_service_landing(monkeypatch):
     )
     assert 'property="og:url" content="http://testserver/?lang=ru"' in response.text
     assert (
-        'property="og:image" content="http://testserver/og-image.svg"' in response.text
+        'property="og:image" content="http://testserver/og-image.png"' in response.text
     )
     assert 'name="twitter:card" content="summary_large_image"' in response.text
     assert (
-        'name="twitter:image" content="http://testserver/og-image.svg"' in response.text
+        'name="twitter:image" content="http://testserver/og-image.png"' in response.text
     )
     assert "googletagmanager.com/gtag/js?id=G-9EF720PSER" in response.text
     assert 'window.ym("109803011","init"' in response.text
@@ -3003,10 +3003,10 @@ def test_opportunity_page_renders_public_permalink(monkeypatch):
         in response.text
     )
     assert (
-        'property="og:image" content="http://testserver/og-image.svg"' in response.text
+        'property="og:image" content="http://testserver/og-image.png"' in response.text
     )
     assert (
-        'name="twitter:image" content="http://testserver/og-image.svg"' in response.text
+        'name="twitter:image" content="http://testserver/og-image.png"' in response.text
     )
     assert "googletagmanager.com/gtag/js?id=G-9EF720PSER" in response.text
     assert '"@type": "BreadcrumbList"' in response.text
@@ -3429,10 +3429,10 @@ def test_funder_page_renders_public_profile(monkeypatch):
         in response.text
     )
     assert (
-        'property="og:image" content="http://testserver/og-image.svg"' in response.text
+        'property="og:image" content="http://testserver/og-image.png"' in response.text
     )
     assert (
-        'name="twitter:image" content="http://testserver/og-image.svg"' in response.text
+        'name="twitter:image" content="http://testserver/og-image.png"' in response.text
     )
     assert "googletagmanager.com/gtag/js?id=G-9EF720PSER" in response.text
     assert '"@type": "Organization"' in response.text
@@ -3562,7 +3562,7 @@ def test_opportunity_page_prefers_public_base_url(monkeypatch):
         f'{item.id}?lang=ru"' in response.text
     )
     assert (
-        'property="og:image" content="https://qaz.fund/og-image.svg"' in response.text
+        'property="og:image" content="https://qaz.fund/og-image.png"' in response.text
     )
 
 
@@ -3578,6 +3578,15 @@ def test_og_image_route_supports_get_and_head() -> None:
     head_response = client.head("/og-image.svg")
     assert head_response.status_code == 200
     assert head_response.headers["content-type"].startswith("image/svg+xml")
+
+    png_response = client.get("/og-image.png")
+    assert png_response.status_code == 200
+    assert png_response.headers["content-type"].startswith("image/png")
+    assert png_response.content.startswith(b"\x89PNG\r\n\x1a\n")
+
+    png_head_response = client.head("/og-image.png")
+    assert png_head_response.status_code == 200
+    assert png_head_response.headers["content-type"].startswith("image/png")
 
 
 def test_opportunity_detail_endpoint_returns_404_for_unknown_id(monkeypatch):

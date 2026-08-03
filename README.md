@@ -51,6 +51,7 @@ The main public endpoints are:
 - `GET /sitemap.xml`
 - `GET /llms.txt`
 - `GET /site-discovery.json`
+- `GET /og-image.png` (crawler-safe social preview; `/og-image.svg` remains available)
 - `GET /operator` (noindex operator shell; token is never embedded in HTML)
 - `GET /operator/health` (requires `GRANT_RADAR_ADMIN_TOKEN`)
 - `POST /refresh` (requires `GRANT_RADAR_ADMIN_TOKEN`)

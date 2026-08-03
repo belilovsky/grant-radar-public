@@ -4,6 +4,8 @@ from __future__ import annotations
 
 import json
 import os
+import struct
+import zlib
 
 DEFAULT_GA4_ID = "G-9EF720PSER"
 DEFAULT_YANDEX_METRICA_ID = "109803011"
@@ -83,6 +85,114 @@ OG_IMAGE_SVG = "\n".join(
 )
 
 
+def _png_chunk(kind: bytes, payload: bytes) -> bytes:
+    """Return one standards-compliant PNG chunk without extra dependencies."""
+
+    return (
+        struct.pack(">I", len(payload))
+        + kind
+        + payload
+        + struct.pack(">I", zlib.crc32(kind + payload) & 0xFFFFFFFF)
+    )
+
+
+_OG_GLYPHS = {
+    "A": ("01110", "10001", "10001", "11111", "10001", "10001", "10001"),
+    "D": ("11110", "10001", "10001", "10001", "10001", "10001", "11110"),
+    "F": ("11111", "10000", "10000", "11110", "10000", "10000", "10000"),
+    "N": ("10001", "11001", "10101", "10011", "10001", "10001", "10001"),
+    "Q": ("01110", "10001", "10001", "10001", "10101", "10010", "01101"),
+    "U": ("10001", "10001", "10001", "10001", "10001", "10001", "01110"),
+    "Z": ("11111", "00001", "00010", "00100", "01000", "10000", "11111"),
+}
+
+
+def _build_og_image_png() -> bytes:
+    """Create a crawler-safe raster social card without optional dependencies."""
+
+    width, height = 1200, 630
+    pixels = bytearray(width * height * 3)
+
+    def put(x: int, y: int, color: tuple[int, int, int]) -> None:
+        if not (0 <= x < width and 0 <= y < height):
+            return
+        offset = (y * width + x) * 3
+        pixels[offset : offset + 3] = bytes(color)
+
+    def rect(x: int, y: int, w: int, h: int, color: tuple[int, int, int]) -> None:
+        for row in range(max(0, y), min(height, y + h)):
+            start = (row * width + max(0, x)) * 3
+            end = (row * width + min(width, x + w)) * 3
+            pixels[start:end] = bytes(color) * max(0, min(width, x + w) - max(0, x))
+
+    for y in range(height):
+        for x in range(width):
+            progress = (x + y * 0.42) / (width + height * 0.42)
+            glow = max(0.0, 1.0 - (((x - 180) / 520) ** 2 + ((y - 90) / 360) ** 2))
+            put(
+                x,
+                y,
+                (
+                    int(13 + 16 * progress + 10 * glow),
+                    int(27 + 37 * progress + 72 * glow),
+                    int(56 + 105 * progress + 32 * glow),
+                ),
+            )
+
+    rect(72, 72, 188, 10, (104, 126, 255))
+    rect(72, 102, 320, 16, (175, 193, 255))
+
+    def word(text: str, x: int, y: int, scale: int) -> None:
+        cursor = x
+        for character in text:
+            if character == ".":
+                rect(cursor + scale * 2, y + scale * 6, scale, scale, (248, 250, 252))
+                cursor += scale * 3
+                continue
+            glyph = _OG_GLYPHS[character]
+            for row, row_bits in enumerate(glyph):
+                for column, bit in enumerate(row_bits):
+                    if bit == "1":
+                        rect(
+                            cursor + column * scale,
+                            y + row * scale,
+                            scale,
+                            scale,
+                            (248, 250, 252),
+                        )
+            cursor += scale * 6
+
+    word("QAZ.FUND", 72, 164, 16)
+    rect(72, 340, 566, 14, (197, 211, 255))
+    rect(72, 374, 462, 14, (145, 168, 247))
+    rect(72, 422, 150, 44, (67, 103, 221))
+    rect(238, 422, 196, 44, (46, 78, 178))
+    rect(810, 72, 318, 486, (30, 48, 90))
+    rect(844, 112, 172, 22, (84, 222, 158))
+    rect(844, 170, 242, 108, (244, 247, 255))
+    rect(870, 204, 190, 16, (27, 50, 95))
+    rect(870, 236, 126, 14, (82, 111, 184))
+    rect(844, 314, 242, 14, (130, 152, 211))
+    rect(844, 348, 170, 14, (92, 118, 183))
+    rect(844, 418, 242, 84, (48, 83, 194))
+    rect(870, 448, 190, 14, (207, 220, 255))
+    rect(870, 478, 134, 12, (143, 168, 245))
+
+    raw = b"".join(
+        b"\x00" + bytes(pixels[row * width * 3 : (row + 1) * width * 3])
+        for row in range(height)
+    )
+    return (
+        b"\x89PNG\r\n\x1a\n"
+        + _png_chunk(b"IHDR", struct.pack(">IIBBBBB", width, height, 8, 2, 0, 0, 0))
+        + _png_chunk(b"IDAT", zlib.compress(raw, level=9))
+        + _png_chunk(b"IEND", b"")
+    )
+
+
+OG_IMAGE_PNG = _build_og_image_png()
+
+
 def _env_value(name: str, default: str) -> str:
     return os.environ.get(name, "").strip() or default
 
@@ -98,7 +208,7 @@ def _absolute_href(origin: str, path: str) -> str:
 
 def og_image_url(site_origin: str, root_path: str = "") -> str:
     base = root_path.rstrip("/")
-    path = f"{base}/og-image.svg" if base else "/og-image.svg"
+    path = f"{base}/og-image.png" if base else "/og-image.png"
     return _absolute_href(site_origin, path)
 
 
