@@ -113,6 +113,13 @@ def render_not_found_page(*, lang: str, root_path: str = "") -> str:
       text-decoration: none;
     }}
     .primary-action:focus-visible {{ outline: 0; box-shadow: var(--color-focus-ring); }}
+    @media (min-width: 901px) {{
+      main {{
+        align-self: start;
+        padding-top: 96px;
+        padding-bottom: 112px;
+      }}
+    }}
     @media (max-width: 640px) {{
       header,
       main {{ width: calc(100% - 24px); }}
