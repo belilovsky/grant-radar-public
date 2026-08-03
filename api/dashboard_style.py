@@ -65,8 +65,8 @@ DASHBOARD_CSS = r"""    :root {
     .hero-band {
       position: relative;
       overflow: hidden;
-      padding: 20px 0 0;
-      margin-bottom: 16px;
+      padding: 14px 0 0;
+      margin-bottom: 10px;
       border: 0;
       border-bottom: 1px solid var(--line);
       border-radius: 0;
@@ -85,7 +85,7 @@ DASHBOARD_CSS = r"""    :root {
       top: 0;
       z-index: 24;
       padding: 0;
-      margin-bottom: 10px;
+      margin-bottom: 8px;
       background: color-mix(in oklab, var(--bg), transparent 5%);
       backdrop-filter: blur(14px);
     }
@@ -94,8 +94,8 @@ DASHBOARD_CSS = r"""    :root {
       align-items: center;
       justify-content: space-between;
       gap: var(--av-spacing-3);
-      min-height: 52px;
-      padding: 7px 0;
+      min-height: 46px;
+      padding: 5px 0;
       border: 0;
       border-bottom: 1px solid var(--line);
       border-radius: 0;
@@ -166,13 +166,13 @@ DASHBOARD_CSS = r"""    :root {
     .hero-grid {
       display: grid;
       grid-template-columns: minmax(0, 1fr) minmax(390px, 0.6fr);
-      gap: 48px;
+      gap: 34px;
       align-items: start;
-      margin-bottom: var(--av-spacing-3);
+      margin-bottom: var(--av-spacing-2);
     }
     .hero-copy {
       display: grid;
-      gap: var(--av-spacing-3);
+      gap: var(--av-spacing-2);
       align-content: start;
       min-width: 0;
       padding: var(--av-spacing-2) 0 0;
@@ -221,10 +221,10 @@ DASHBOARD_CSS = r"""    :root {
     }
     .hero-stage {
       display: grid;
-      gap: var(--av-spacing-3);
+      gap: var(--av-spacing-2);
       min-width: 0;
       align-content: start;
-      padding: 4px 0 4px 28px;
+      padding: 2px 0 2px 22px;
       border: 0;
       border-left: 1px solid var(--line-subtle);
       border-radius: 0;
@@ -250,7 +250,7 @@ DASHBOARD_CSS = r"""    :root {
     .hero-points {
       display: none;
       grid-template-columns: repeat(3, minmax(0, 1fr));
-      gap: var(--av-spacing-2);
+      gap: 6px;
     }
     .hero-point {
       display: grid;
@@ -318,8 +318,8 @@ DASHBOARD_CSS = r"""    :root {
       border-radius: 0;
     }
     .hero-band .metric {
-      min-height: 72px;
-      padding: 14px 18px;
+      min-height: 60px;
+      padding: 10px 16px;
       border-top: 0;
     }
     .hero-band .metric span {
@@ -1156,7 +1156,7 @@ DASHBOARD_CSS = r"""    :root {
       align-items: flex-end;
       flex-wrap: wrap;
       gap: var(--av-spacing-1);
-      margin-bottom: 12px;
+      margin-bottom: 8px;
     }
     .panel-head h2 {
       margin: 0;
@@ -1184,9 +1184,9 @@ DASHBOARD_CSS = r"""    :root {
     .filter-disclosure-body { display: contents; }
     .filters-shell {
       display: grid;
-      gap: 12px;
-      margin-bottom: 12px;
-      padding: 14px 0 16px;
+      gap: 8px;
+      margin-bottom: 8px;
+      padding: 10px 0 12px;
       border: 0;
       border-bottom: 1px solid var(--line);
       border-radius: 0;
@@ -1196,7 +1196,7 @@ DASHBOARD_CSS = r"""    :root {
     .filters {
       display: grid;
       grid-template-columns: minmax(220px, 1fr) repeat(3, minmax(128px, 0.28fr));
-      gap: 10px;
+      gap: 8px;
       margin: 0;
       padding: 0;
       border: 0;
@@ -1209,7 +1209,7 @@ DASHBOARD_CSS = r"""    :root {
     }
     .advanced-filters {
       border-top: 1px solid var(--line-subtle);
-      padding-top: 10px;
+      padding-top: 8px;
     }
     .advanced-filters > summary {
       display: inline-flex;
@@ -1258,7 +1258,7 @@ DASHBOARD_CSS = r"""    :root {
       grid-template-columns: repeat(3, minmax(0, 1fr));
       gap: 0;
       margin-bottom: 0;
-      padding: 14px 0;
+      padding: 10px 0;
       border: 0;
       border-top: 1px solid var(--line);
       border-radius: 0;
@@ -1267,7 +1267,7 @@ DASHBOARD_CSS = r"""    :root {
     .preset-group {
       display: grid;
       align-content: start;
-      gap: 6px;
+      gap: 5px;
       min-width: 0;
       padding: 0 12px;
       border: 0;
@@ -1286,8 +1286,8 @@ DASHBOARD_CSS = r"""    :root {
       min-width: 0;
     }
     .preset-button {
-      min-height: 32px;
-      padding: 0 11px;
+      min-height: 28px;
+      padding: 0 10px;
       border: 1px solid transparent;
       border-radius: var(--av-radius-md);
       background: var(--panel-subtle);
@@ -1314,7 +1314,7 @@ DASHBOARD_CSS = r"""    :root {
     }
     .filter-block {
       display: grid;
-      gap: 6px;
+      gap: 5px;
     }
     .filter-label {
       display: inline-flex;
@@ -1346,9 +1346,9 @@ DASHBOARD_CSS = r"""    :root {
     }
     .saved-views {
       display: grid;
-      gap: 6px;
-      margin-bottom: var(--av-spacing-2);
-      padding: 8px 2px;
+      gap: 4px;
+      margin-bottom: var(--av-spacing-1);
+      padding: 6px 2px;
       border: 0;
       border-bottom: 1px solid var(--line-subtle);
       border-radius: 0;
@@ -1410,7 +1410,7 @@ DASHBOARD_CSS = r"""    :root {
     .workspace-queue {
       display: grid;
       gap: var(--av-spacing-2);
-      margin: 0 0 var(--av-spacing-3);
+      margin: 0 0 var(--av-spacing-2);
       padding: 12px 0;
       border: 0;
       border-bottom: 1px solid var(--line-subtle);
@@ -1503,7 +1503,7 @@ DASHBOARD_CSS = r"""    :root {
       align-items: baseline;
       justify-content: space-between;
       gap: var(--av-spacing-3);
-      padding: 13px 14px;
+      padding: 10px 12px;
       cursor: pointer;
       list-style: none;
     }
@@ -1530,14 +1530,14 @@ DASHBOARD_CSS = r"""    :root {
     .profile-builder-body {
       display: grid;
       gap: var(--av-spacing-2);
-      padding: 0 14px 14px;
+      padding: 0 12px 12px;
       border-top: 1px solid color-mix(in oklab, var(--brand), var(--line) 78%);
     }
     .profile-grid {
       display: grid;
       grid-template-columns: repeat(4, minmax(0, 1fr));
       gap: var(--av-spacing-2);
-      padding-top: 14px;
+      padding-top: 12px;
     }
     .profile-builder-actions {
       display: flex;
@@ -1713,7 +1713,7 @@ DASHBOARD_CSS = r"""    :root {
       border-top: 1px solid var(--line);
       border-radius: 0;
       background: transparent;
-      padding: 22px 4px;
+      padding: 18px 4px;
       box-shadow: none;
       position: relative;
       overflow: visible;
@@ -1730,12 +1730,12 @@ DASHBOARD_CSS = r"""    :root {
     .opportunity-main {
       display: grid;
       grid-template-columns: minmax(0, 1fr) minmax(310px, 0.36fr);
-      gap: 36px;
+      gap: 30px;
       align-items: start;
     }
     .opportunity-content {
       display: grid;
-      gap: 12px;
+      gap: 10px;
       min-width: 0;
     }
     .opportunity-rail {
@@ -1747,9 +1747,9 @@ DASHBOARD_CSS = r"""    :root {
         "fit"
         "actions";
       align-content: start;
-      gap: 12px;
+      gap: 10px;
       min-width: 0;
-      padding: 2px 0 2px 24px;
+      padding: 1px 0 1px 20px;
       border: 0;
       border-left: 1px solid var(--line-subtle);
       border-radius: 0;
