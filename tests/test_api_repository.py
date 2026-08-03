@@ -123,6 +123,8 @@ def test_root_renders_service_landing(monkeypatch):
     assert 'id="profile-format"' in response.text
     assert 'id="profile-deadline"' in response.text
     assert "function applyProfile" in response.text
+    assert "function resetProfile" in response.text
+    assert "applyProfile();" in response.text
     assert "Профиль не отправляется на сервер" in response.text
     assert "function exportWorkspace" in response.text
     assert "function sanitizeWorkspacePayload" in response.text

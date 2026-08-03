@@ -3089,6 +3089,7 @@ def render_dashboard(
           const control = $(selector);
           if (control) control.value = "all";
         }});
+      applyProfile();
     }}
 
     function syncUrlState() {{
