@@ -195,7 +195,7 @@ def _transport(
                         ),
                         "avds4": (f"{public_root}/.well-known/avds-ui-contract.json"),
                     },
-                    "languages": ["ru", "en"],
+                    "languages": ["kk", "ru", "en"],
                     "routes": {
                         "home": "/?lang={lang}",
                         "coverage": "/coverage",

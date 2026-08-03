@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from typing import cast
 
-SUPPORTED_LANGS = {"ru", "en"}
+SUPPORTED_LANGS = {"kk", "ru", "en"}
 
 COPY = {
     "ru": {
@@ -2143,7 +2143,14 @@ COPY = {
 
 
 def _copy_for(lang: str) -> dict[str, object]:
-    return cast(dict[str, object], COPY["en" if lang == "en" else "ru"])
+    if lang == "en":
+        return cast(dict[str, object], COPY["en"])
+    if lang == "kk":
+        copy = dict(cast(dict[str, object], COPY["ru"]))
+        copy["lang"] = "kk"
+        copy["locale"] = "kk-KZ"
+        return copy
+    return cast(dict[str, object], COPY["ru"])
 
 
 def dashboard_copy(lang: str) -> dict[str, object]:

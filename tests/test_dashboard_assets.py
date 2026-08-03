@@ -8,6 +8,8 @@ from api.dashboard_style import DASHBOARD_CSS
 def test_dashboard_reexports_canonical_copy_helper() -> None:
     assert dashboard.dashboard_copy is canonical_dashboard_copy
     assert dashboard.dashboard_copy("unsupported")["lang"] == "ru"
+    assert dashboard.dashboard_copy("kk")["lang"] == "kk"
+    assert dashboard.dashboard_copy("kk")["headline"] == "QAZ.FUND"
 
 
 def test_dashboard_uses_extracted_static_styles() -> None:

@@ -207,10 +207,15 @@ def test_root_renders_service_landing(monkeypatch):
     assert "Статус данных" in response.text
     assert 'href="/docs?lang=ru"' in response.text
     assert 'href="/status?lang=ru"' in response.text
+    assert 'href="/?lang=kk"' in response.text
     assert 'href="/?lang=ru"' in response.text
     assert 'href="/?lang=en"' in response.text
     assert 'name="yandex-verification" content="01df12ab51cd6b70"' in response.text
     assert 'rel="canonical" href="http://testserver/?lang=ru"' in response.text
+    assert (
+        'rel="alternate" hreflang="kk" href="http://testserver/?lang=kk"'
+        in response.text
+    )
     assert (
         'rel="alternate" hreflang="ru" href="http://testserver/?lang=ru"'
         in response.text
@@ -945,6 +950,23 @@ def test_root_supports_explicit_english_dashboard(monkeypatch):
     assert "Check the criteria on the official source." in response.text
 
 
+def test_root_supports_explicit_kazakh_dashboard_route(monkeypatch):
+    _reset_api_state(monkeypatch)
+    client = TestClient(api_main.app)
+
+    response = client.get("/?lang=kk")
+
+    assert response.status_code == 200
+    assert '<html lang="kk"' in response.text
+    assert 'data-lang="kk"' in response.text
+    assert 'href="/?lang=kk"' in response.text
+    assert 'hreflang="kk"' in response.text
+    assert 'lang="kk"' in response.text
+    assert ">KAZ</a>" in response.text
+    assert 'aria-current="page"' in response.text
+    assert 'rel="canonical" href="http://testserver/?lang=kk"' in response.text
+
+
 def test_root_head_is_available(monkeypatch):
     _reset_api_state(monkeypatch)
     client = TestClient(api_main.app)
@@ -1084,10 +1106,10 @@ def test_marketing_endpoints_are_exposed(monkeypatch):
     ) in llms.text
     assert "## AI consumption guidance" in llms.text
     assert "Prefer compact Opportunities NDJSON for bulk discovery reads" in llms.text
-    assert "Opportunity detail JSON: /opportunities/{id}?lang=ru|en" in llms.text
+    assert "Opportunity detail JSON: /opportunities/{id}?lang=kk|ru|en" in llms.text
     assert "Digest JSON: http://testserver/digest" in llms.text
-    assert "Opportunity page: /opportunity/{id}?lang=ru|en" in llms.text
-    assert "Funder page: /funder/{slug}?lang=ru|en" in llms.text
+    assert "Opportunity page: /opportunity/{id}?lang=kk|ru|en" in llms.text
+    assert "Funder page: /funder/{slug}?lang=kk|ru|en" in llms.text
     assert "Opportunities filters: q, source, lifecycle, region, tag" in llms.text
     assert "evidence_state=sourced means that a direct public source link" in llms.text
     llms_head = client.head("/llms.txt")
@@ -1114,7 +1136,7 @@ def test_marketing_endpoints_are_exposed(monkeypatch):
             "qazstack": ("http://testserver/.well-known/qazstack-consumer.json"),
             "avds4": "http://testserver/.well-known/avds-ui-contract.json",
         },
-        "languages": ["ru", "en"],
+        "languages": ["kk", "ru", "en"],
         "routes": {
             "home": "/?lang={lang}",
             "coverage": "/coverage",
@@ -1142,9 +1164,9 @@ def test_marketing_endpoints_are_exposed(monkeypatch):
             "preferred_bulk_export": (
                 "http://testserver/opportunities.ndjson?compact=true"
             ),
-            "preferred_detail_template": "/opportunities/{id}?lang=ru|en",
-            "preferred_human_template": "/opportunity/{id}?lang=ru|en",
-            "recommended_language_order": ["ru", "en"],
+            "preferred_detail_template": "/opportunities/{id}?lang=kk|ru|en",
+            "preferred_human_template": "/opportunity/{id}?lang=kk|ru|en",
+            "recommended_language_order": ["kk", "ru", "en"],
             "cache_policy": {
                 "discovery_seconds": 300,
                 "catalog_seconds": 60,

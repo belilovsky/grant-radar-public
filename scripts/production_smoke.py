@@ -269,6 +269,8 @@ def run_smoke(
         == _url(base_url, "/docs"),
         "site_discovery_status": str(discovery.get("source_status") or "")
         == _url(base_url, "/status"),
+        "site_discovery_languages": list(discovery.get("languages") or [])
+        == ["kk", "ru", "en"],
         "site_discovery_release": str(discovery.get("release") or "")
         == _url(base_url, "/.well-known/release.json"),
         "site_discovery_coverage": str(

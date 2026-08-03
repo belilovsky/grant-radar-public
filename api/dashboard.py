@@ -41,6 +41,7 @@ def _dashboard_schema(
     *,
     copy: dict[str, object],
     canonical_href: str,
+    kk_href: str,
     ru_href: str,
     en_href: str,
     items: int,
@@ -131,6 +132,7 @@ def _dashboard_schema(
     }
     # Keep explicit alternate URLs in the graph for crawlers that cross-check.
     payload["@graph"][1]["hasPart"] = [  # type: ignore[index]
+        {"@type": "WebPage", "url": kk_href, "inLanguage": "kk"},
         {"@type": "WebPage", "url": ru_href, "inLanguage": "ru"},
         {"@type": "WebPage", "url": en_href, "inLanguage": "en"},
     ]
@@ -184,10 +186,15 @@ def render_dashboard(
         else f"/status?lang={active_lang}"
     )
     status_href = escape(status_path, quote=True)
+    kk_href = escape(_root_href(base_raw, "kk"), quote=True)
     ru_href = escape(_root_href(base_raw, "ru"), quote=True)
     en_href = escape(_root_href(base_raw, "en"), quote=True)
     canonical_path = _root_href(base_raw, active_lang)
     canonical_href = escape(_absolute_href(site_origin, canonical_path), quote=True)
+    kk_canonical = escape(
+        _absolute_href(site_origin, _root_href(base_raw, "kk")),
+        quote=True,
+    )
     ru_canonical = escape(
         _absolute_href(site_origin, _root_href(base_raw, "ru")),
         quote=True,
@@ -199,6 +206,7 @@ def render_dashboard(
     schema_json = _dashboard_schema(
         copy=copy,
         canonical_href=_absolute_href(site_origin, canonical_path),
+        kk_href=_absolute_href(site_origin, _root_href(base_raw, "kk")),
         ru_href=_absolute_href(site_origin, _root_href(base_raw, "ru")),
         en_href=_absolute_href(site_origin, _root_href(base_raw, "en")),
         items=items,
@@ -216,10 +224,12 @@ def render_dashboard(
     initial_health_status = escape(str(copy["status_checking"]))
     initial_health_items = escape(str(items))
     initial_health_sources = escape(str(source_count))
+    lang_kk_class = "lang-link active" if active_lang == "kk" else "lang-link"
     lang_ru_class = "lang-link active" if active_lang == "ru" else "lang-link"
     lang_en_class = "lang-link active" if active_lang == "en" else "lang-link"
-    lang_ru_current = ' aria-current="true"' if active_lang == "ru" else ""
-    lang_en_current = ' aria-current="true"' if active_lang == "en" else ""
+    lang_kk_current = ' aria-current="page"' if active_lang == "kk" else ""
+    lang_ru_current = ' aria-current="page"' if active_lang == "ru" else ""
+    lang_en_current = ' aria-current="page"' if active_lang == "en" else ""
 
     def initial_preset_buttons(
         kind: str,
@@ -288,6 +298,7 @@ def render_dashboard(
   <meta name="description" content="{escape(str(copy["meta_description"]), quote=True)}">
   <meta name="yandex-verification" content="{YANDEX_SITE_VERIFICATION_TOKEN}">
   <link rel="canonical" href="{canonical_href}">
+  <link rel="alternate" hreflang="kk" href="{kk_canonical}">
   <link rel="alternate" hreflang="ru" href="{ru_canonical}">
   <link rel="alternate" hreflang="en" href="{en_canonical}">
   <link rel="alternate" hreflang="x-default" href="{ru_canonical}">
@@ -325,6 +336,8 @@ def render_dashboard(
       </a>
       <div class="mobile-app-actions">
         <div class="mobile-lang-switch" role="group" aria-label="{language_switch_label}">
+          <a class="{lang_kk_class}" href="{kk_href}" hreflang="kk" lang="kk"
+            {lang_kk_current}>KAZ</a>
           <a class="{lang_ru_class}" href="{ru_href}" hreflang="ru" lang="ru"
             {lang_ru_current}>RU</a>
           <a class="{lang_en_class}" href="{en_href}" hreflang="en" lang="en"
@@ -499,6 +512,13 @@ def render_dashboard(
               <a class="utility-link" href="{status_href}">{escape(str(copy["status_link"]))}</a>
             </div>
             <div class="lang-switch" role="group" aria-label="{language_switch_label}">
+              <a
+                class="{lang_kk_class}"
+                href="{kk_href}"
+                hreflang="kk"
+                lang="kk"
+                {lang_kk_current}
+              >KAZ</a>
               <a
                 class="{lang_ru_class}"
                 href="{ru_href}"

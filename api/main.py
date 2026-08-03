@@ -1332,6 +1332,7 @@ def _clear_sitemap_cache() -> None:
 
 
 def _render_sitemap_xml(base_url: str) -> str:
+    root_kk = _public_url_from_base(base_url, "/?lang=kk")
     root_ru = _public_url_from_base(base_url, "/?lang=ru")
     root_en = _public_url_from_base(base_url, "/?lang=en")
     opportunities = sorted(
@@ -1351,6 +1352,7 @@ def _render_sitemap_xml(base_url: str) -> str:
             changefreq="daily",
             priority="1.0",
             alternates={
+                "kk": root_kk,
                 "ru": root_ru,
                 "en": root_en,
                 "x-default": root_ru,
@@ -1364,17 +1366,24 @@ def _render_sitemap_xml(base_url: str) -> str:
         ("/attribution?lang=ru", "0.4"),
     ):
         ru_url = _public_url_from_base(base_url, path)
+        kk_url = ru_url.replace("lang=ru", "lang=kk")
         en_url = ru_url.replace("lang=ru", "lang=en")
         rows.append(
             _sitemap_entry(
                 ru_url,
                 changefreq="monthly",
                 priority=priority,
-                alternates={"ru": ru_url, "en": en_url, "x-default": ru_url},
+                alternates={
+                    "kk": kk_url,
+                    "ru": ru_url,
+                    "en": en_url,
+                    "x-default": ru_url,
+                },
             )
         )
 
     for item in opportunities[:500]:
+        kk_url = _public_url_from_base(base_url, f"/opportunity/{item.id}?lang=kk")
         ru_url = _public_url_from_base(base_url, f"/opportunity/{item.id}?lang=ru")
         en_url = _public_url_from_base(base_url, f"/opportunity/{item.id}?lang=en")
         rows.append(
@@ -1384,6 +1393,7 @@ def _render_sitemap_xml(base_url: str) -> str:
                 changefreq="weekly",
                 priority="0.8",
                 alternates={
+                    "kk": kk_url,
                     "ru": ru_url,
                     "en": en_url,
                     "x-default": ru_url,
@@ -1392,6 +1402,7 @@ def _render_sitemap_xml(base_url: str) -> str:
         )
 
     for slug in sorted(funders.keys())[:200]:
+        kk_url = _public_url_from_base(base_url, f"/funder/{slug}?lang=kk")
         ru_url = _public_url_from_base(base_url, f"/funder/{slug}?lang=ru")
         en_url = _public_url_from_base(base_url, f"/funder/{slug}?lang=en")
         rows.append(
@@ -1400,6 +1411,7 @@ def _render_sitemap_xml(base_url: str) -> str:
                 changefreq="monthly",
                 priority="0.5",
                 alternates={
+                    "kk": kk_url,
                     "ru": ru_url,
                     "en": en_url,
                     "x-default": ru_url,
@@ -1458,7 +1470,7 @@ async def root(request: Request) -> HTMLResponse:
         {item.source for item in public_items if str(item.source).strip()}
     )
     lang = str(request.query_params.get("lang") or "").strip().lower()
-    dashboard_lang = "en" if lang == "en" else "ru"
+    dashboard_lang = _public_lang(lang)
     return HTMLResponse(
         render_dashboard(
             root_path=root_path,
@@ -1765,7 +1777,7 @@ async def llms_txt(request: Request) -> Response:
                 f"- Opportunities JSON: {opportunities}",
                 f"- Opportunities NDJSON: {opportunities_ndjson}",
                 f"- Compact Opportunities NDJSON: {opportunities_ndjson_compact}",
-                "- Opportunity detail JSON: /opportunities/{id}?lang=ru|en",
+                "- Opportunity detail JSON: /opportunities/{id}?lang=kk|ru|en",
                 f"- Digest JSON: {digest}",
                 "",
                 "## AI consumption guidance",
@@ -1783,8 +1795,8 @@ async def llms_txt(request: Request) -> Response:
                 ),
                 "",
                 "## Public route templates",
-                "- Opportunity page: /opportunity/{id}?lang=ru|en",
-                "- Funder page: /funder/{slug}?lang=ru|en",
+                "- Opportunity page: /opportunity/{id}?lang=kk|ru|en",
+                "- Funder page: /funder/{slug}?lang=kk|ru|en",
                 "",
                 "## Query hints",
                 (
@@ -1862,7 +1874,7 @@ async def site_discovery(request: Request) -> Response:
             "qazstack": qazstack_contract,
             "avds4": avds_contract,
         },
-        "languages": ["ru", "en"],
+        "languages": ["kk", "ru", "en"],
         "routes": {
             "home": "/?lang={lang}",
             "coverage": "/coverage",
@@ -1886,9 +1898,9 @@ async def site_discovery(request: Request) -> Response:
         },
         "ai_consumption": {
             "preferred_bulk_export": opportunities_ndjson_compact,
-            "preferred_detail_template": "/opportunities/{id}?lang=ru|en",
-            "preferred_human_template": "/opportunity/{id}?lang=ru|en",
-            "recommended_language_order": ["ru", "en"],
+            "preferred_detail_template": "/opportunities/{id}?lang=kk|ru|en",
+            "preferred_human_template": "/opportunity/{id}?lang=kk|ru|en",
+            "recommended_language_order": ["kk", "ru", "en"],
             "cache_policy": {
                 "discovery_seconds": 300,
                 "catalog_seconds": 60,
