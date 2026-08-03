@@ -42,7 +42,7 @@ def test_root_renders_service_landing(monkeypatch):
     assert response.headers["cache-control"].startswith("public, max-age=60")
     assert '<html lang="ru"' in response.text
     assert (
-        "<title>QAZ.FUND – гранты и меры поддержки для Казахстана</title>"
+        "<title>QAZ.FUND – открытые программы поддержки для Казахстана</title>"
         in response.text
     )
     assert "\u2014" not in response.text
@@ -85,10 +85,10 @@ def test_root_renders_service_landing(monkeypatch):
     assert "avds-document-row" in response.text
     assert 'data-avds-component="hero-band"' in response.text
     assert "QAZ.FUND" in response.text
-    assert "Гранты, субсидии и программы поддержки для команд" in response.text
-    assert "Открытые программы для Казахстана и Центральной Азии" in response.text
+    assert "Находим открытые программы и помогаем превратить их в понятный следующий шаг." in response.text
+    assert "Гранты, субсидии, акселераторы и закупки – с источником, статусом данных и сроками." in response.text
     assert "С чего начать?" in response.text
-    assert "Открыть каталог" in response.text
+    assert "Найти поддержку" in response.text
     assert "Прямое подключение к официальному источнику" in response.text
     assert "Страница мониторинга с редакционной проверкой" in response.text
     assert "Быстрый выбор" in response.text
@@ -106,7 +106,7 @@ def test_root_renders_service_landing(monkeypatch):
     assert "function themePreviewMarkup" not in response.text
     assert "Дополнительные фильтры" in response.text
     assert "qdev.run" in response.text
-    assert "QAZ.FUND не выдаёт гранты и не принимает заявки" in response.text
+    assert "QAZ.FUND не выдаёт средства и не принимает заявки" in response.text
     assert "Обратная связь" in response.text
     assert "qazfund-opportunities.csv" in response.text
     assert "qazfund-deadlines.ics" in response.text
@@ -137,15 +137,15 @@ def test_root_renders_service_landing(monkeypatch):
     assert "Сохранить фильтры" in response.text
     assert "Поделиться выдачей" in response.text
     assert "Сроки в календарь" in response.text
-    assert "Как использовать QAZ.FUND в работе" in response.text
+    assert "Для работы, а не для бесконечного поиска" in response.text
     assert "Аналитику" in response.text
     assert "Журналисту" in response.text
     assert "Редактору" in response.text
     assert "Юристу" in response.text
     assert "Госслужащему" in response.text
     assert "С чего начать" in response.text
-    assert "Что проверить сейчас" in response.text
-    assert "Подходящие возможности" in response.text
+    assert "Что можно проверить сейчас" in response.text
+    assert "Что проверить первым" in response.text
     assert "Субсидии и меры" in response.text
     assert "Что закрывается первым" in response.text
     assert "По задаче" in response.text
@@ -159,7 +159,7 @@ def test_root_renders_service_landing(monkeypatch):
     assert "Инфраструктура, закупки и программы развития" in response.text
     assert "В фокусе сейчас" in response.text
     assert "Что здесь обычно ищут" in response.text
-    assert "Лучше всего подходит" in response.text
+    assert "Кому может быть полезно" in response.text
     assert "ИИ-пилоты и акселераторы" in response.text
     assert "Локальные субсидии и меры РК" in response.text
     assert "Убрать тему" in response.text
@@ -225,7 +225,7 @@ def test_root_renders_service_landing(monkeypatch):
     )
     assert 'property="og:type" content="website"' in response.text
     assert (
-        'property="og:title" content="QAZ.FUND – гранты и меры поддержки '
+        'property="og:title" content="QAZ.FUND – открытые программы поддержки '
         'для Казахстана"' in response.text
     )
     assert 'property="og:url" content="http://testserver/?lang=ru"' in response.text
@@ -265,7 +265,7 @@ def test_root_renders_service_landing(monkeypatch):
     assert 'id="opportunities-list"' in response.text
     assert 'id="load-more-wrap"' in response.text
     assert 'data-avds-component="discovery-library"' in response.text
-    assert "Подборки и маршруты" in response.text
+    assert "Готовые маршруты" in response.text
     assert 'id="spotlight-grid"' in response.text
     assert 'id="themes-grid"' in response.text
     assert 'id="pathways-grid"' in response.text
@@ -389,12 +389,12 @@ def test_root_renders_service_landing(monkeypatch):
     assert "Агро / вет / эко" in response.text
     assert "Все регионы" in response.text
     assert "Бессрочные" in response.text
-    assert "Кому подходит" in response.text
-    assert "Почему подходит" in response.text
+    assert "Признаки совпадения" in response.text
+    assert "Почему показана" in response.text
     assert "Мера поддержки для команд и бизнеса в Казахстане" in response.text
     assert "Для команд, работающих с госсектором" in response.text
-    assert "Проверка соответствия" in response.text
-    assert "Критерии нужно уточнить" in response.text
+    assert "Что проверить" in response.text
+    assert "Критерии нужно проверить" in response.text
     assert "Снимите один фильтр" in response.text
     assert "Сбросить всё" in response.text
     assert "Открыть весь каталог" in response.text
@@ -464,7 +464,7 @@ def test_root_renders_service_landing(monkeypatch):
     assert "color: color-mix(in oklab, var(--muted), var(--ink) 18%);" in response.text
     assert 'href="#methodology-panel"' in response.text
     assert 'id="methodology-panel"' in response.text
-    assert "Как собраны данные" in response.text
+    assert "Как мы работаем" in response.text
     assert "Как это работает" in response.text
     assert 'data-avds-component="signal-pill"' in response.text
     assert "function renderPresetControls()" in response.text
@@ -891,15 +891,15 @@ def test_root_supports_explicit_english_dashboard(monkeypatch):
     assert response.status_code == 200
     assert '<html lang="en"' in response.text
     assert (
-        "<title>QAZ.FUND – funding and support programs for Kazakhstan</title>"
+        "<title>QAZ.FUND – open support programs for Kazakhstan</title>"
         in response.text
     )
     assert "\u2014" not in response.text
     assert (
-        "Grants, subsidies, accelerators, and support programs for Kazakhstan"
+        "Find open programs and turn them into a clear next step."
         in response.text
     )
-    assert "Open programs for Kazakhstan and Central Asia" in response.text
+    assert "Grants, subsidies, accelerators, and procurement – with source links, data status, and deadlines." in response.text
     assert "What people usually look for" in response.text
     assert "Clear theme" in response.text
     assert "Where to start?" in response.text
@@ -907,7 +907,7 @@ def test_root_supports_explicit_english_dashboard(monkeypatch):
     assert "Check a program" in response.text
     assert "Deadlines this month" in response.text
     assert "Tenders and procurement" in response.text
-    assert "How to use QAZ.FUND at work" in response.text
+    assert "For working decisions, not endless browsing" in response.text
     assert "For analysts" in response.text
     assert "For journalists" in response.text
     assert "For editors" in response.text
@@ -921,10 +921,10 @@ def test_root_supports_explicit_english_dashboard(monkeypatch):
     assert "Timing" in response.text
     assert "All regions" in response.text
     assert "Rolling" in response.text
-    assert "Open catalog" in response.text
+    assert "Find support" in response.text
     assert '<strong id="health-status">Catalog available</strong>' in response.text
-    assert "What to check now" in response.text
-    assert "Relevant opportunities" in response.text
+    assert "What you can check now" in response.text
+    assert "What to check first" in response.text
     assert "Support for businesses" in response.text
     assert "By applicant type" in response.text
     assert "Accelerators, grants and cloud credits" in response.text
@@ -932,7 +932,7 @@ def test_root_supports_explicit_english_dashboard(monkeypatch):
     assert "By focus area" in response.text
     assert "AI programs, cloud credits, and digital skills" in response.text
     assert "AI and digital" in response.text
-    assert "Why it fits" in response.text
+    assert "Why it is shown" in response.text
     assert "For product and AI teams" in response.text
     assert "For teams working with public-sector delivery" in response.text
     assert "Clear one filter and try again" in response.text
@@ -3283,7 +3283,7 @@ def test_public_insights_page_renders_avds_charts(monkeypatch):
     assert response.status_code == 200
     assert response.headers["cache-control"].startswith("public, max-age=60")
     assert '<html lang="ru"' in response.text
-    assert "Где доступна поддержка" in response.text
+    assert "Где искать поддержку" in response.text
     assert 'data-avds-component="DataViz"' in response.text
     assert 'data-avds-pattern="format-distribution"' in response.text
     assert 'data-avds-pattern="deadline-distribution"' in response.text

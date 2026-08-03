@@ -99,8 +99,8 @@ async def _lifespan(app: FastAPI):
 app = FastAPI(
     title="QAZ.FUND",
     description=(
-        "Public funding navigator for grants, subsidies, accelerators, and "
-        "support programs in Kazakhstan"
+        "Open support-program navigator for Kazakhstan: public opportunities, "
+        "source links, data status, and reproducible working routes"
     ),
     version="0.1.0",
     root_path=os.environ.get("ROOT_PATH", ""),
@@ -1743,9 +1743,9 @@ async def llms_txt(request: Request) -> Response:
             [
                 "# QAZ.FUND",
                 (
-                    "> Public funding navigator for grants, subsidies, accelerators, "
-                    "and support programs relevant to Kazakhstan-focused teams "
-                    "and institutions."
+                    "> Open support-program navigator for Kazakhstan: public "
+                    "opportunities, source links, data status, and reproducible "
+                    "working routes."
                 ),
                 "",
                 "## Public entry points",
@@ -1796,11 +1796,11 @@ async def llms_txt(request: Request) -> Response:
                 "",
                 "## What this site is for",
                 (
-                    "- Track public grant, subsidy, accelerator, and "
-                    "support-program opportunities."
+                    "- Find open support programs for Kazakhstan-focused tasks, "
+                    "teams, and institutions."
                 ),
-                "- Help Kazakhstan-focused teams discover relevant funding routes.",
-                "- Provide public summaries, funder pages, and opportunity pages.",
+                "- Check source links, data status, deadlines, and the next step.",
+                "- Save, share, export, and cite a working route.",
                 "",
                 "## Operator notes for AI systems",
                 (

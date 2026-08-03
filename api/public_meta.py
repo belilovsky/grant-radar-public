@@ -32,7 +32,7 @@ OG_IMAGE_SVG = "\n".join(
             f'    <text x="88" y="156" font-family="{OG_FONT_FAMILY}" '
             'font-size="42" font-weight="600" opacity="0.92">'
         ),
-        "      Kazakhstan funding navigator",
+        "      Kazakhstan support navigator",
         "    </text>",
         (
             f'    <text x="88" y="300" font-family="{OG_FONT_FAMILY}" '
@@ -44,7 +44,7 @@ OG_IMAGE_SVG = "\n".join(
             f'    <text x="88" y="382" font-family="{OG_FONT_FAMILY}" '
             'font-size="36" font-weight="500" opacity="0.88">'
         ),
-        "      Grants, subsidies, accelerators and support programs",
+        "      Open programs, source links and next steps",
         "    </text>",
         (
             f'    <text x="88" y="442" font-family="{OG_FONT_FAMILY}" '

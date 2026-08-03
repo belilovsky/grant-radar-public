@@ -16,8 +16,8 @@ COPY = {
         "eyebrow": "Прозрачность данных",
         "heading": "Статус источников",
         "intro": (
-            "Показываем покрытие и свежесть источников. "
-            "Условия каждой программы проверяйте на официальной странице."
+            "Показываем, какие источники подключены, когда их проверяли и "
+            "где нужна дополнительная сверка."
         ),
         "back": "Вернуться в каталог",
         "sources": "Подключено",
@@ -43,8 +43,8 @@ COPY = {
         "eyebrow": "Data transparency",
         "heading": "Source status",
         "intro": (
-            "Source coverage and freshness. Verify each opportunity on the official "
-            "program page."
+            "See which sources are connected, when they were checked, and where "
+            "you need an extra review."
         ),
         "back": "Back to catalog",
         "sources": "Connected",

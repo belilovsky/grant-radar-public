@@ -1,7 +1,8 @@
 # grant-radar
 
-Opportunity radar for grants, accelerators, cloud credits, tenders, and public
-support programs relevant to Kazakhstan and Central Asia.
+QAZ.FUND is a public opportunity navigator for grants, accelerators, cloud
+credits, tenders, and support programs relevant to Kazakhstan and Central Asia.
+It helps people find a route, check the source, and keep the next step clear.
 
 ## What it does
 
