@@ -12,6 +12,8 @@
     "dashboard": {"locales": ["kk", "ru", "en"], "fallback": "ru"},
     "opportunity_detail": {"locales": ["kk", "ru", "en"], "fallback": "ru"},
     "funder_detail": {"locales": ["kk", "ru", "en"], "fallback": "ru"},
+    "insights": {"locales": ["kk", "ru", "en"], "fallback": "ru"},
+    "status": {"locales": ["kk", "ru", "en"], "fallback": "ru"},
     "public_info": {"locales": ["kk", "ru", "en"], "fallback": "ru"},
     "error_page": {"locales": ["kk", "ru", "en"], "fallback": "ru"},
     "operator": {"locales": ["kk", "ru", "en"], "fallback": "ru", "robots": "noindex"}
@@ -22,5 +24,23 @@
     "missing_translation": "show_source_or_safe_fallback_without_claiming_editorial_translation",
     "automatic_translation_publishing": false,
     "quality_owner": "qdev-platform"
+  },
+  "observability": {
+    "runtime_connected": false,
+    "mode": "contract-only",
+    "report_schema": "https://platform.qdev.run/schemas/qazstack-language-observability-v1.json",
+    "dimensions": ["ui_locale", "source_language", "content_locale"],
+    "metrics": [
+      "ui_catalog_parity_rate",
+      "public_item_language_metadata_known_rate",
+      "public_translation_coverage_rate",
+      "candidate_count",
+      "approved_count",
+      "rejected_count"
+    ],
+    "raw_text_export": false,
+    "remote_write": false,
+    "automatic_memory_promotion": false,
+    "release_boundary": "public opportunity metadata only; source payloads, operator data and PII never enter translation feedback"
   }
 }

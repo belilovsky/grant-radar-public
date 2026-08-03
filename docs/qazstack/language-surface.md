@@ -17,3 +17,19 @@ availability are data properties, not a reason to mutate a source record.
 
 The machine-readable contract is [`language-surface.json`](language-surface.json)
 and is referenced from `docs/qazstack/consumer-contract.json`.
+
+## Runtime readiness boundary
+
+The public opportunity endpoint must be checked separately from the UI
+dictionary contract. The aggregate-only runtime guard measures locale bucket
+presence, source-language metadata and approval fields without printing item
+text:
+
+```bash
+python3 scripts/check_public_translation_readiness.py
+python3 -m pytest -q tests/test_public_translation_readiness.py
+```
+
+Missing `kk` content is reported as fallback/source behavior, never as an
+approved translation. Remote write and automatic memory promotion remain
+disabled until reviewer, quality and memory-eligibility metadata are explicit.

@@ -44,6 +44,10 @@ def test_error_and_operator_surfaces_support_kazakh_alias() -> None:
     assert '<html lang="kk"' in operator
     assert "Дереккөздерді бақылау" in operator
     assert 'lang="kk"' in operator
+    assert 'href="/does-not-exist?lang=kk"' in not_found
+    assert 'href="/does-not-exist?lang=ru"' in not_found
+    assert 'href="/does-not-exist?lang=en"' in not_found
+    assert 'hreflang="kk"' in operator
 
 
 def test_language_surface_contract_matches_public_pages() -> None:
@@ -55,8 +59,18 @@ def test_language_surface_contract_matches_public_pages() -> None:
         "dashboard",
         "opportunity_detail",
         "funder_detail",
+        "insights",
+        "status",
         "public_info",
         "error_page",
         "operator",
     }
     assert contract["content_policy"]["automatic_translation_publishing"] is False
+    observability = contract["observability"]
+    assert observability["runtime_connected"] is False
+    assert observability["mode"] == "contract-only"
+    assert observability["report_schema"].endswith("qazstack-language-observability-v1.json")
+    assert observability["raw_text_export"] is False
+    assert observability["remote_write"] is False
+    assert observability["automatic_memory_promotion"] is False
+    assert "source_language" in observability["dimensions"]
