@@ -13,6 +13,22 @@ from core.russian_summary import (
 )
 
 SUPPORTED_CONTENT_LANGS = frozenset({"en", "kk", "ru"})
+LANGUAGE_ALIASES = {
+    "ru": "ru",
+    "ru-ru": "ru",
+    "rus": "ru",
+    "russian": "ru",
+    "kk": "kk",
+    "kk-kz": "kk",
+    "kz": "kk",
+    "kaz": "kk",
+    "kaz-cyrl": "kk",
+    "kazakh": "kk",
+    "en": "en",
+    "en-us": "en",
+    "eng": "en",
+    "english": "en",
+}
 _DIRECT_TRANSLATION_SUFFIXES = ("ru", "kk")
 _TRANSLATABLE_KEYS = (
     "title",
@@ -27,8 +43,8 @@ _LATIN_RE = re.compile(r"[A-Za-z]")
 
 
 def normalize_content_lang(value: str | None) -> str:
-    normalized = str(value or "").strip().lower()
-    return normalized if normalized in SUPPORTED_CONTENT_LANGS else "ru"
+    normalized = str(value or "").strip().lower().replace("_", "-")
+    return LANGUAGE_ALIASES.get(normalized, "ru")
 
 
 def raw_localization_target(raw: dict[str, Any]) -> dict[str, Any]:
