@@ -179,7 +179,7 @@ def render_operator_page(*, lang: str, root_path: str = "") -> str:
         gap:24px;
       }}
     }}
-    @media(max-width:760px) {{
+    @media(max-width:900px) {{
       .auth-controls > :is(input, button),
       .lang-switch a,
       .catalog-link {{ min-height: var(--av-control-height-lg); }}
