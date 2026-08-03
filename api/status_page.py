@@ -65,6 +65,33 @@ COPY = {
         ),
         "summary_aria": "Source status summary",
     },
+    "kk": {
+        "title": "Дереккөздер мәртебесі – QAZ.FUND",
+        "eyebrow": "Деректер ашықтығы",
+        "heading": "Дереккөздер мәртебесі",
+        "intro": (
+            "Қай дереккөздер қосылғанын, олар қашан тексерілгенін және қай жерде "
+            "қосымша тексеру қажет екенін көрсетеміз."
+        ),
+        "back": "Каталогқа оралу",
+        "sources": "Қосылғаны",
+        "fresh": "Жаңартылғаны",
+        "stale": "Назар аударуды қажет етеді",
+        "unknown": "Белгісіз",
+        "source": "Дереккөз",
+        "coverage": "Жазбалар / өзекті",
+        "updated": "Соңғы тексеру",
+        "state": "Мәртебесі",
+        "fresh_label": "Жаңартылған",
+        "stale_label": "Назар аударуды қажет етеді",
+        "unknown_label": "Дерек жоқ",
+        "empty": "Қосылған дереккөздер әзірше жоқ.",
+        "disclaimer": (
+            "Мәртебе соңғы сәтті тексеруді немесе табылған жазбаны көрсетеді. "
+            "Ол әр бағдарламаның заңдық тұрғыдан өзектілігін растамайды."
+        ),
+        "summary_aria": "Дереккөздер мәртебесінің қысқаша қорытындысы",
+    },
 }
 
 
@@ -101,6 +128,7 @@ def render_status_page(
     )
     product_copy = dashboard_copy(active_lang)
     ru_href = f"{base}/status?lang=ru" if base else "/status?lang=ru"
+    kk_href = f"{base}/status?lang=kk" if base else "/status?lang=kk"
     en_href = f"{base}/status?lang=en" if base else "/status?lang=en"
     status_path = (
         f"{base}/status?lang={active_lang}" if base else f"/status?lang={active_lang}"
@@ -109,6 +137,7 @@ def render_status_page(
         f"{site_origin.rstrip('/')}{status_path}" if site_origin else status_path
     )
     ru_current = ' aria-current="page"' if active_lang == "ru" else ""
+    kk_current = ' aria-current="page"' if active_lang == "kk" else ""
     en_current = ' aria-current="page"' if active_lang == "en" else ""
     sources = [row for row in coverage.get("sources", []) if row.get("enabled")]
     sources.sort(
@@ -283,6 +312,7 @@ def render_status_page(
     <div class="status-topbar">
       <a class="back" href="{escape(catalog_href, quote=True)}">← {escape(str(copy["back"]))}</a>
       <nav class="lang-switch" aria-label="Language">
+        <a href="{escape(kk_href, quote=True)}" lang="kk"{kk_current}>KAZ</a>
         <a href="{escape(ru_href, quote=True)}" lang="ru"{ru_current}>RU</a>
         <a href="{escape(en_href, quote=True)}" lang="en"{en_current}>EN</a>
       </nav>

@@ -29,3 +29,16 @@ def test_status_page_keeps_last_check_visible_in_mobile_rows() -> None:
     assert "Последняя проверка: 17.07.2026 08:30 UTC" in html
     assert ".mobile-updated { display:block; }" in html
     assert "contact@qaz.fund" not in html
+
+
+def test_status_page_has_editorial_kazakh_shell_and_three_language_switch() -> None:
+    html = render_status_page(
+        coverage={"sources": [], "enabled_sources": 0},
+        lang="kk",
+    )
+
+    assert '<html lang="kk"' in html
+    assert "Дереккөздер мәртебесі" in html
+    assert 'href="/status?lang=kk" lang="kk" aria-current="page"' in html
+    assert 'href="/status?lang=ru" lang="ru"' in html
+    assert 'href="/status?lang=en" lang="en"' in html
