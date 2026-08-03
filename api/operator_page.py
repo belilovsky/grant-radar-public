@@ -179,6 +179,9 @@ def render_operator_page(*, lang: str, root_path: str = "") -> str:
         gap:24px;
       }}
     }}
+    @media (min-width:2200px) {{
+      main {{ width:min(1920px,calc(100% - 160px)); }}
+    }}
     @media(max-width:900px) {{
       .auth-controls > :is(input, button),
       .lang-switch a,

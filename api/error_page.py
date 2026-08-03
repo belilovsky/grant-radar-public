@@ -120,6 +120,10 @@ def render_not_found_page(*, lang: str, root_path: str = "") -> str:
         padding-bottom: 112px;
       }}
     }}
+    @media (min-width: 2200px) {{
+      header,
+      main {{ width: min(1920px, calc(100% - 160px)); }}
+    }}
     @media (max-width: 640px) {{
       header,
       main {{ width: calc(100% - 24px); }}

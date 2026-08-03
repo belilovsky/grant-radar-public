@@ -3606,7 +3606,7 @@ DASHBOARD_CSS = r"""    :root {
 
     @media (min-width: 2200px) {
       .shell {
-        width: min(var(--container-max), calc(100% - 128px));
+        width: min(1920px, calc(100% - 160px));
       }
       .hero-grid {
         grid-template-columns: minmax(0, 1.5fr) minmax(520px, 0.72fr);
