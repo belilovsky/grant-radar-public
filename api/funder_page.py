@@ -854,15 +854,18 @@ def render_funder_page(
       }}
     }}
     @media (min-width:2200px) {{
+      .shell {{
+        width: min(1920px, calc(100% - 160px));
+      }}
       .hero {{
         grid-template-columns:minmax(0,1.45fr) minmax(520px,.65fr);
-        gap:80px;
+        gap:72px;
         padding-block:40px;
       }}
       .hero-copy {{ max-width:1080px; }}
       .opportunity-card {{
         grid-template-columns:minmax(420px,1.18fr) minmax(420px,.92fr) minmax(280px,.42fr);
-        gap:64px;
+        gap:48px;
       }}
       .source-grid {{
         grid-template-columns:repeat(4,minmax(0,1fr));

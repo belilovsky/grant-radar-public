@@ -239,6 +239,12 @@ def render_insights_page(
       .viz-grid{{grid-template-columns:repeat(4,minmax(0,1fr));gap:18px}}
       .viz-card{{padding:20px}}
     }}
+    @media(min-width:2200px){{
+      .shell{{width:min(1920px,calc(100% - 160px))}}
+      .hero{{grid-template-columns:minmax(0,1.35fr) minmax(420px,.65fr);gap:64px}}
+      h1{{max-width:24ch}}
+      .hero p{{max-width:72ch}}
+    }}
     @media(max-width:760px){{.shell{{width:min(100% - 24px,680px);padding-top:12px}} .hero{{grid-template-columns:1fr;padding:20px}} .metric-grid{{grid-template-columns:repeat(4,minmax(0,1fr))}} .insight-metric{{padding:10px}} .insight-metric strong{{font-size:22px}} .viz-grid{{grid-template-columns:1fr}} .method{{grid-template-columns:1fr;gap:5px}}}}
     @media(max-width:480px){{.metric-grid{{grid-template-columns:repeat(2,minmax(0,1fr))}} h1{{font-size:34px}}}}
   </style>

@@ -240,6 +240,12 @@ def render_status_page(
       .overview {{ grid-template-columns:minmax(0,1.4fr) minmax(520px,.6fr); }}
       .metrics {{ grid-template-columns:repeat(3,minmax(0,1fr)); margin-left:48px; }}
     }}
+    @media (min-width:2200px) {{
+      main {{ width:min(1920px,calc(100% - 160px)); }}
+      .overview {{ grid-template-columns:minmax(0,1.25fr) minmax(520px,.75fr); }}
+      .hero p {{ max-width:900px; }}
+      .metrics {{ margin-left:64px; }}
+    }}
     .empty {{ color:var(--muted); text-align:center; }}
     @media (max-width:860px) {{
       .overview {{ grid-template-columns:1fr; }}
