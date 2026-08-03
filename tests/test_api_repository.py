@@ -85,13 +85,13 @@ def test_root_renders_service_landing(monkeypatch):
     assert "avds-document-row" in response.text
     assert 'data-avds-component="hero-band"' in response.text
     assert "QAZ.FUND" in response.text
-    assert "Публичный навигатор по грантам, субсидиям" in response.text
-    assert "Гранты, субсидии и программы поддержки для Казахстана" in response.text
-    assert "Что нужно сделать сейчас?" in response.text
+    assert "Гранты, субсидии и программы поддержки для команд" in response.text
+    assert "Открытые программы для Казахстана и Центральной Азии" in response.text
+    assert "С чего начать?" in response.text
     assert "Открыть каталог" in response.text
     assert "Прямое подключение к официальному источнику" in response.text
-    assert "Внешний мониторинг и редакционная выборка" in response.text
-    assert "Рабочие сценарии" in response.text
+    assert "Страница мониторинга с редакционной проверкой" in response.text
+    assert "Быстрый выбор" in response.text
     assert "Найти поддержку" in response.text
     assert "Проверить программу" in response.text
     assert "Сроки до месяца" in response.text
@@ -122,9 +122,9 @@ def test_root_renders_service_landing(monkeypatch):
     assert "function importWorkspace" in response.text
     assert "function renderWorkspaceQueue" in response.text
     assert "workspace_action_preparing" in response.text
-    assert "Сохраняется только в этом браузере." in response.text
+    assert "Данные хранятся в этом браузере." in response.text
     assert "Уточнить данные" in response.text
-    assert "Рабочие подборки" in response.text
+    assert "Сохранённые подборки" in response.text
     assert "Сохранить фильтры" in response.text
     assert "Поделиться выдачей" in response.text
     assert "Сроки в календарь" in response.text
@@ -134,16 +134,16 @@ def test_root_renders_service_landing(monkeypatch):
     assert "Редактору" in response.text
     assert "Юристу" in response.text
     assert "Госслужащему" in response.text
-    assert "Подборки для старта" in response.text
-    assert "Актуально сейчас" in response.text
-    assert "Лучшие сигналы недели" in response.text
-    assert "Госсектор и субсидии" in response.text
-    assert "Не тянуть с подачей" in response.text
-    assert "Маршруты по задачам" in response.text
-    assert "По типу проекта" in response.text
+    assert "С чего начать" in response.text
+    assert "Что проверить сейчас" in response.text
+    assert "Подходящие возможности" in response.text
+    assert "Субсидии и меры" in response.text
+    assert "Что закрывается первым" in response.text
+    assert "По задаче" in response.text
+    assert "По типу заявителя" in response.text
     assert "Акселераторы, гранты и облачные кредиты" in response.text
     assert "Субсидии, льготы и меры поддержки РК" in response.text
-    assert "Темы для навигации" in response.text
+    assert "По теме" in response.text
     assert "По направлению" in response.text
     assert "Активные фонды и программы" in response.text
     assert "ИИ, облачные кредиты и цифровые навыки" in response.text
@@ -154,7 +154,7 @@ def test_root_renders_service_landing(monkeypatch):
     assert "ИИ-пилоты и акселераторы" in response.text
     assert "Локальные субсидии и меры РК" in response.text
     assert "Убрать тему" in response.text
-    assert "Приоритет: Казахстан и ЦА" in response.text
+    assert "Приоритет: Казахстан и Центральная Азия" in response.text
     assert (
         '<strong id="metric-strong" data-catalog-count="0">0</strong>' in response.text
     )
@@ -178,7 +178,7 @@ def test_root_renders_service_landing(monkeypatch):
     assert response.text.index(
         'data-avds-component="trust-library"'
     ) < response.text.index('data-avds-component="funder-library"')
-    assert "Оценка учитывает регион и тему" in response.text
+    assert "Регион и тема влияют на релевантность" in response.text
     assert "Это не вероятность одобрения" in response.text
     assert "По приоритету действий" in response.text
     assert "Точность совпадения" not in response.text
@@ -381,15 +381,15 @@ def test_root_renders_service_landing(monkeypatch):
     assert "Все регионы" in response.text
     assert "Бессрочные" in response.text
     assert "Кому подходит" in response.text
-    assert "Почему это в фокусе" in response.text
-    assert "Локальная мера поддержки для команд и бизнеса" in response.text
-    assert "Подходит командам, которые работают с госсектором" in response.text
-    assert "Быстрая оценка" in response.text
+    assert "Почему подходит" in response.text
+    assert "Мера поддержки для команд и бизнеса в Казахстане" in response.text
+    assert "Для команд, работающих с госсектором" in response.text
+    assert "Проверка соответствия" in response.text
     assert "Критерии нужно уточнить" in response.text
-    assert "Попробуйте ослабить один из фильтров" in response.text
+    assert "Снимите один фильтр" in response.text
     assert "Сбросить всё" in response.text
-    assert "Открыть весь индекс" in response.text
-    assert "Быстрый просмотр" in response.text
+    assert "Открыть весь каталог" in response.text
+    assert "Краткий просмотр" in response.text
     assert "Официальный источник" in response.text
     assert "Полная карточка" in response.text
     assert '"read_more": "Полная карточка"' in response.text
@@ -455,7 +455,7 @@ def test_root_renders_service_landing(monkeypatch):
     assert "color: color-mix(in oklab, var(--muted), var(--ink) 18%);" in response.text
     assert 'href="#methodology-panel"' in response.text
     assert 'id="methodology-panel"' in response.text
-    assert "Как мы собираем и показываем данные" in response.text
+    assert "Как собраны данные" in response.text
     assert "Как это работает" in response.text
     assert 'data-avds-component="signal-pill"' in response.text
     assert "function renderPresetControls()" in response.text
@@ -501,7 +501,7 @@ def test_root_renders_service_landing(monkeypatch):
     )
     assert "itemBadges(item)" in response.text
     assert "copy.reload_confirm" in response.text
-    assert "Казахстан в приоритете" in response.text
+    assert "Казахстан" in response.text
     assert "Показать ещё" in response.text
     assert "renderSavedViews();" in response.text
     assert "grantRadarOpportunityWorkflow.v1" in response.text
@@ -843,7 +843,7 @@ def test_working_brief_uses_only_available_fields_and_keeps_source_boundary():
     assert "Сумма: 10 000 000 KZT" in brief
     assert "Официальный источник: https://example.kz/program" in brief
     assert "Подача: https://example.kz/program/apply" in brief
-    assert "Проверить на официальном источнике" in brief
+    assert "Проверьте на официальном источнике условия" in brief
 
 
 def test_root_prefers_public_base_url_for_canonical_links(monkeypatch):
@@ -887,12 +887,13 @@ def test_root_supports_explicit_english_dashboard(monkeypatch):
     )
     assert "\u2014" not in response.text
     assert (
-        "Public funding navigator for grants, subsidies, accelerators" in response.text
+        "Grants, subsidies, accelerators, and support programs for Kazakhstan"
+        in response.text
     )
-    assert "Grants, subsidies and support programs for Kazakhstan" in response.text
+    assert "Open programs for Kazakhstan and Central Asia" in response.text
     assert "What people usually look for" in response.text
     assert "Clear theme" in response.text
-    assert "What do you need to do now?" in response.text
+    assert "Where to start?" in response.text
     assert "Find support" in response.text
     assert "Check a program" in response.text
     assert "Deadlines this month" in response.text
@@ -913,25 +914,25 @@ def test_root_supports_explicit_english_dashboard(monkeypatch):
     assert "Rolling" in response.text
     assert "Open catalog" in response.text
     assert '<strong id="health-status">Catalog available</strong>' in response.text
-    assert "Current opportunities" in response.text
-    assert "Best signals this week" in response.text
-    assert "Support for businesses and teams" in response.text
-    assert "By project type" in response.text
+    assert "What to check now" in response.text
+    assert "Relevant opportunities" in response.text
+    assert "Support for businesses" in response.text
+    assert "By applicant type" in response.text
     assert "Accelerators, grants and cloud credits" in response.text
-    assert "Theme routes" in response.text
+    assert "By topic" in response.text
     assert "By focus area" in response.text
     assert "AI programs, cloud credits, and digital skills" in response.text
     assert "AI and digital" in response.text
-    assert "Why this is worth a look" in response.text
-    assert "Useful for product and AI teams" in response.text
-    assert "Useful for teams working with public sector delivery" in response.text
-    assert "Try relaxing one of the filters" in response.text
+    assert "Why it fits" in response.text
+    assert "For product and AI teams" in response.text
+    assert "For teams working with public-sector delivery" in response.text
+    assert "Clear one filter and try again" in response.text
     assert 'rel="canonical" href="http://testserver/?lang=en"' in response.text
     assert "Load more" in response.text
     assert 'aria-label="Saved collection status"' in response.text
-    assert "Copy the link to the current collection" in response.text
+    assert "Copy the link to this collection" in response.text
     assert "Next actions" in response.text
-    assert "Stored only in this browser." in response.text
+    assert "Stored in this browser." in response.text
     assert "Check the criteria on the official source." in response.text
 
 
@@ -2958,15 +2959,15 @@ def test_opportunity_page_renders_public_permalink(monkeypatch):
     assert 'id="copy-working-brief"' in response.text
     assert 'id="copy-working-brief-status"' in response.text
     assert "Рабочая справка скопирована." in response.text
-    assert "Перед использованием карточки" in response.text
+    assert "Перед подачей" in response.text
     assert "Право на участие" in response.text
     assert "Закупочная документация" in response.text
-    assert "Публикация и служебная записка" in response.text
+    assert "Источник и дата проверки" in response.text
     assert "не подтверждает право на участие" in response.text
     assert 'data-avds-pattern="opportunity-readiness-meter"' in response.text
     assert "Что уже видно из карточки" in response.text
     assert "QAZ.FUND – рабочая справка" in response.text
-    assert "Проверить на официальном источнике" in response.text
+    assert "Проверьте на официальном источнике условия" in response.text
     assert "Откройте страницу подачи" in response.text
     assert "Сверьте критерии" in response.text
     assert (
@@ -3144,7 +3145,7 @@ def test_opportunity_page_tailors_prepare_checklist_for_subsidies(monkeypatch):
     assert 'aria-label="Breadcrumbs"' in response.text
     assert "What to prepare" in response.text
     assert "Copy working brief" in response.text
-    assert "Before using this card" in response.text
+    assert "Before applying" in response.text
     assert "Procurement documents" in response.text
     assert "does not confirm eligibility" in response.text
     assert "Prepare local documents" in response.text
@@ -3270,7 +3271,7 @@ def test_public_insights_page_renders_avds_charts(monkeypatch):
     assert response.status_code == 200
     assert response.headers["cache-control"].startswith("public, max-age=60")
     assert '<html lang="ru"' in response.text
-    assert "Куда сейчас направлена поддержка" in response.text
+    assert "Где доступна поддержка" in response.text
     assert 'data-avds-component="DataViz"' in response.text
     assert 'data-avds-pattern="format-distribution"' in response.text
     assert 'data-avds-pattern="deadline-distribution"' in response.text
@@ -3397,9 +3398,9 @@ def test_funder_page_renders_public_profile(monkeypatch):
     assert "Профиль фонда" in response.text
     assert "--brand: var(--color-accent);" in response.text
     assert "--av-color-primary-700" not in response.text
-    assert "Живые и рабочие возможности" in response.text
+    assert "Открытые возможности" in response.text
     assert "min-height: var(--av-control-height-lg);" in response.text
-    assert "Архив и исторический след" in response.text
+    assert "Архив" in response.text
     assert (
         "Профиль построен по опубликованным программам и объявлениям." in response.text
     )

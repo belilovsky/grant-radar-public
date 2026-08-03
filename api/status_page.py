@@ -16,8 +16,8 @@ COPY = {
         "eyebrow": "Прозрачность данных",
         "heading": "Статус источников",
         "intro": (
-            "Показываем покрытие и свежесть подключённых источников. "
-            "Карточки всегда нужно сверять с официальной страницей программы."
+            "Показываем покрытие и свежесть источников. "
+            "Условия каждой программы проверяйте на официальной странице."
         ),
         "back": "Вернуться в каталог",
         "sources": "Подключено",
@@ -31,10 +31,10 @@ COPY = {
         "fresh_label": "Свежий",
         "stale_label": "Требует внимания",
         "unknown_label": "Нет данных",
-        "empty": "Подключённые источники пока не найдены.",
+        "empty": "Подключённых источников пока нет.",
         "disclaimer": (
-            "Статус отражает время последней успешной проверки или обнаруженной "
-            "записи, а не юридическую актуальность каждой программы."
+            "Статус показывает время последней успешной проверки или найденной записи. "
+            "Он не подтверждает юридическую актуальность каждой программы."
         ),
         "summary_aria": "Сводка состояния источников",
     },
@@ -43,8 +43,8 @@ COPY = {
         "eyebrow": "Data transparency",
         "heading": "Source status",
         "intro": (
-            "Coverage and freshness of connected sources. Always verify each "
-            "opportunity against the official program page."
+            "Source coverage and freshness. Verify each opportunity on the official "
+            "program page."
         ),
         "back": "Back to catalog",
         "sources": "Connected",
@@ -60,8 +60,8 @@ COPY = {
         "unknown_label": "No data",
         "empty": "No connected sources are available yet.",
         "disclaimer": (
-            "Freshness reflects the latest successful check or discovered record, "
-            "not the legal validity of every program."
+            "Status shows the latest successful check or discovered record. It does "
+            "not confirm the legal validity of every program."
         ),
         "summary_aria": "Source status summary",
     },

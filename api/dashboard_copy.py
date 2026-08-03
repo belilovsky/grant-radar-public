@@ -12,114 +12,106 @@ COPY = {
         "locale": "ru-KZ",
         "title": "QAZ.FUND – гранты и меры поддержки для Казахстана",
         "meta_description": (
-            "QAZ.FUND – публичный навигатор по грантам, субсидиям, акселераторам "
-            "и программам поддержки для Казахстана."
+            "Гранты, субсидии, акселераторы и программы поддержки для Казахстана."
         ),
-        "eyebrow": "Казахстанский навигатор",
+        "eyebrow": "Навигатор поддержки в Казахстане",
         "headline": "QAZ.FUND",
         "subtitle": (
-            "Публичный навигатор по грантам, субсидиям, акселераторам и "
-            "программам поддержки для Казахстана."
+            "Гранты, субсидии и программы поддержки для команд и организаций "
+            "в Казахстане."
         ),
-        "hero_intro": (
-            "Гранты, субсидии и программы поддержки для Казахстана и "
-            "Центральной Азии."
-        ),
+        "hero_intro": "Открытые программы для Казахстана и Центральной Азии.",
         "hero_primary_cta": "Открыть каталог",
-        "hero_stage_eyebrow": "Рабочие сценарии",
-        "hero_stage_title": "Что нужно сделать сейчас?",
-        "hero_stage_point_one": "Отфильтруйте каталог и сохраните ссылку на точную выдачу",
-        "hero_stage_point_two": "Скопируйте рабочую справку с источником и полями для проверки",
-        "hero_stage_point_three": "Выгрузите таблицу или добавьте ближайшие сроки в календарь",
-        "hero_picks_label": "Рабочие сценарии",
+        "hero_stage_eyebrow": "В три шага",
+        "hero_stage_title": "С чего начать?",
+        "hero_stage_point_one": "Отфильтруйте каталог и сохраните ссылку на результат.",
+        "hero_stage_point_two": "Откройте карточку и проверьте условия на источнике.",
+        "hero_stage_point_three": "Выгрузите список или добавьте сроки в календарь.",
+        "hero_picks_label": "Быстрый выбор",
         "hero_pick_startup": "Найти поддержку",
         "hero_pick_business": "Проверить программу",
         "hero_pick_farmer": "Сроки до месяца",
         "hero_pick_science": "Господдержка РК",
         "hero_pick_tenders": "Тендеры и закупки",
-        "spotlight_section_eyebrow": "Подборки для старта",
-        "spotlight_section_title": "Актуально сейчас",
+        "spotlight_section_eyebrow": "С чего начать",
+        "spotlight_section_title": "Что проверить сейчас",
         "spotlight_section_description": (
-            "Главные сигналы каталога: сильные совпадения, локальные меры поддержки "
-            "и ближайшие сроки."
+            "Сильные совпадения, местные меры поддержки и ближайшие сроки."
         ),
-        "spotlight_count": "В подборке: {count}",
-        "spotlight_action_open": "Открыть подборку",
-        "spotlight_empty": "В этой подборке сейчас нет активных карточек.",
+        "spotlight_count": "Карточек: {count}",
+        "spotlight_action_open": "Открыть список",
+        "spotlight_empty": "В списке пока нет открытых карточек.",
         "spotlight_preview_more": "+ ещё {count}",
-        "spotlight_trending_kicker": "Популярно сейчас",
-        "spotlight_trending_title": "Лучшие сигналы недели",
+        "spotlight_trending_kicker": "Высокое совпадение",
+        "spotlight_trending_title": "Подходящие возможности",
         "spotlight_trending_note": (
-            "Высокая релевантность и живые программы, которые стоит открыть первыми."
+            "Карточки с высокой релевантностью и открытым статусом."
         ),
-        "spotlight_kazakhstan_kicker": "Казахстан в приоритете",
-        "spotlight_kazakhstan_title": "Фокус на локальные возможности",
+        "spotlight_kazakhstan_kicker": "Казахстан",
+        "spotlight_kazakhstan_title": "Возможности для Казахстана",
         "spotlight_kazakhstan_note": (
-            "Гранты и программы с прямым сигналом по Казахстану и местным условиям."
+            "Программы с условиями для заявителей из Казахстана."
         ),
-        "spotlight_support_kicker": "Госсектор и субсидии",
-        "spotlight_support_title": "Поддержка для бизнеса и команд",
+        "spotlight_support_kicker": "Субсидии и меры",
+        "spotlight_support_title": "Поддержка для бизнеса",
         "spotlight_support_note": (
-            "Субсидии, льготы и инструменты поддержки, где важны прикладные условия."
+            "Субсидии, льготы и другие меры с понятными условиями подачи."
         ),
-        "spotlight_deadline_kicker": "Скоро закрываются",
-        "spotlight_deadline_title": "Не тянуть с подачей",
+        "spotlight_deadline_kicker": "Ближайшие сроки",
+        "spotlight_deadline_title": "Что закрывается первым",
         "spotlight_deadline_note": (
-            "Возможности с ближайшим сроком, которые лучше просмотреть сейчас."
+            "Откройте карточки заранее и проверьте требования."
         ),
-        "pathways_section_eyebrow": "Маршруты по задачам",
-        "pathways_section_title": "По типу проекта",
+        "pathways_section_eyebrow": "По задаче",
+        "pathways_section_title": "По типу заявителя",
         "pathways_section_description": (
-            "Выберите, кому нужна поддержка, и сразу получите подходящую выдачу."
+            "Выберите тип заявителя – каталог покажет подходящие карточки."
         ),
-        "pathways_count": "Сейчас: {count}",
-        "pathways_action_open": "Открыть направление",
-        "pathways_empty": "Для этого типа проекта сейчас нет активных карточек.",
+        "pathways_count": "Карточек: {count}",
+        "pathways_action_open": "Открыть список",
+        "pathways_empty": "Для этого типа заявителя пока нет открытых карточек.",
         "pathway_startup_kicker": "Стартапам",
         "pathway_startup_title": "Акселераторы, гранты и облачные кредиты",
         "pathway_startup_note": (
-            "Для продуктовых команд, ИИ-стартапов и тех, кто ищет быстрый путь к "
-            "пилотам и ресурсам."
+            "Для продуктовых команд и ИИ-стартапов, которым нужны пилоты, кредиты "
+            "или акселерация."
         ),
         "pathway_business_kicker": "Бизнесу",
         "pathway_business_title": "Субсидии, льготы и меры поддержки РК",
         "pathway_business_note": (
-            "Для ИП, ТОО и операционного бизнеса, где важны локальные условия и "
-            "механика подачи."
+            "Для ИП, ТОО и компаний, которым важны местные условия и порядок подачи."
         ),
         "pathway_farmer_kicker": "Фермерам",
         "pathway_farmer_title": "Агро, животноводство и прикладные технологии",
         "pathway_farmer_note": (
-            "Для хозяйств и агрокоманд, которым нужны программы с прямой "
-            "практической пользой."
+            "Для хозяйств и агрокоманд с задачами в агро, животноводстве и технологиях."
         ),
         "pathway_science_kicker": "Исследователям",
         "pathway_science_title": "Наука, коммерциализация и научные гранты",
         "pathway_science_note": (
-            "Для университетов, лабораторий и команд, которые ищут финансирование под "
-            "исследования и внедрение."
+            "Для университетов, лабораторий и команд, которым нужно финансирование "
+            "исследований и внедрения."
         ),
-        "themes_section_eyebrow": "Темы для навигации",
+        "themes_section_eyebrow": "По теме",
         "themes_section_title": "По направлению",
         "themes_section_description": (
-            "Откройте возможности по теме без ручного просмотра всего каталога."
+            "Выберите тему – каталог покажет подходящие карточки."
         ),
         "discovery_library_summary": "Подборки и маршруты",
         "discovery_library_description": (
-            "Готовые срезы для первого знакомства с каталогом."
+            "Готовые списки для первого знакомства с каталогом."
         ),
-        "themes_count": "Сейчас: {count}",
-        "themes_action_open": "Открыть тему",
-        "themes_empty": "По этому направлению сейчас нет активных карточек.",
+        "themes_count": "Карточек: {count}",
+        "themes_action_open": "Открыть список",
+        "themes_empty": "По этой теме пока нет открытых карточек.",
         "funder_section_eyebrow": "Фонды и доноры",
         "funder_section_title": "Активные фонды и программы",
         "funder_section_description": (
-            "Сводка по фондам и программам: где есть живые возможности, какие "
-            "темы они обычно поддерживают и куда смотреть дальше."
+            "Фонды и программы, их направления и открытые возможности."
         ),
-        "funder_open_profile": "Профиль фонда",
-        "funder_empty": "Активные профили фондов сейчас не найдены.",
-        "funder_live_now": "Живые возможности",
+        "funder_open_profile": "Открыть профиль",
+        "funder_empty": "Профили фондов пока не найдены.",
+        "funder_live_now": "Открытые возможности",
         "funder_total_items": "Всего в индексе",
         "funder_next_deadline": "Ближайший срок",
         "funder_overview_intro": (
@@ -130,25 +122,20 @@ COPY = {
         "funder_overview_regions": "Фокус по регионам: {regions}.",
         "funder_page_eyebrow": "Профиль фонда",
         "funder_focus_title": "Что обычно поддерживается",
-        "funder_focus_note": (
-            "Собрали профиль по текущему индексу: форматы, регионы и рабочие "
-            "темы без ручного просмотра всех карточек по одной."
-        ),
+        "funder_focus_note": "Форматы, регионы и темы по текущему индексу.",
         "funder_focus_types": "Форматы",
         "funder_focus_regions": "Регионы",
         "funder_focus_indexed": "В индексе",
-        "funder_live_title": "Живые и рабочие возможности",
-        "funder_live_note": (
-            "Открытые, бессрочные и прогнозные записи, которые можно брать в работу."
-        ),
-        "funder_live_empty": "Сейчас у этого фонда нет открытых или прогнозных записей.",
-        "funder_archive_title": "Архив и исторический след",
+        "funder_live_title": "Открытые возможности",
+        "funder_live_note": "Открытые, бессрочные и прогнозные записи для проверки.",
+        "funder_live_empty": "У этого фонда нет открытых или прогнозных записей.",
+        "funder_archive_title": "Архив",
         "funder_archive_note": (
-            "Закрытые и завершённые записи полезны для понимания ритма и профиля фонда."
+            "Закрытые записи показывают профиль фонда и сроки его программ."
         ),
-        "funder_archive_empty": "Архивных записей пока не накопилось.",
-        "funder_sources_title": "Откуда собран профиль",
-        "funder_sources_note": "Официальные источники и страницы, из которых строится профиль.",
+        "funder_archive_empty": "Архивных записей нет.",
+        "funder_sources_title": "Источники профиля",
+        "funder_sources_note": "Официальные страницы, использованные для профиля.",
         "funder_back_to_catalog": "Вернуться в каталог",
         "funder_open_card": "Открыть карточку",
         "topic_brief_eyebrow": "В фокусе сейчас",
@@ -217,8 +204,8 @@ COPY = {
             "партнерские треки."
         ),
         "focus_aria": "Текущий продуктовый фокус",
-        "focus_primary": "Приоритет: Казахстан и ЦА",
-        "focus_secondary": "Темы: ИИ, образование, госсектор, агро, вет, эко, медиа",
+        "focus_primary": "Приоритет: Казахстан и Центральная Азия",
+        "focus_secondary": "Темы: ИИ, образование, госсектор, агро, ветеринария, экология, медиа",
         "status_checking": "Каталог доступен",
         "api_docs": "API",
         "insights_link": "Аналитика",
@@ -226,7 +213,7 @@ COPY = {
         "data_policy_link": "Политика данных",
         "attribution_link": "Использование данных",
         "readiness_title": "Что уже видно из карточки",
-        "readiness_note": "Четыре сигнала для быстрой проверки перед переходом к заявке.",
+        "readiness_note": "Четыре поля для проверки перед подачей.",
         "readiness_source": "Источник",
         "readiness_deadline": "Срок",
         "readiness_amount": "Сумма",
@@ -244,12 +231,11 @@ COPY = {
         "metric_sources": "Источники",
         "opportunities_title": "Возможности",
         "opportunities_description": (
-            "Открытые и бессрочные программы с приоритетом показа для Казахстана "
-            "и Центральной Азии."
+            "Открытые и бессрочные программы с приоритетом для Казахстана и "
+            "Центральной Азии."
         ),
         "opportunities_description_all": (
-            "Открытые, бессрочные и архивные записи индекса для аудита покрытия "
-            "и источников."
+            "Открытые, бессрочные и архивные записи для проверки покрытия и источников."
         ),
         "search_label": "Поиск",
         "search_placeholder": "Название, фонд, теги, регион",
@@ -316,40 +302,36 @@ COPY = {
         "score_option_05": "Хорошая релевантность",
         "score_option_07": "Высокая релевантность",
         "score_help": (
-            "Оценка учитывает регион и тему, а порядок – ещё и доступный срок. "
-            "Это не вероятность одобрения; условия сверяйте с первоисточником."
+            "Регион и тема влияют на релевантность, срок – на порядок показа. "
+            "Это не вероятность одобрения; условия смотрите у источника."
         ),
         "all_sources": "Все источники",
         "clear_filters": "Сбросить фильтры",
-        "loading_opportunities": "Загружаем возможности...",
+        "loading_opportunities": "Загрузка возможностей",
         "load_more": "Показать ещё",
         "sources_title": "Покрытие источников",
         "sources_description": (
-            "Прямые адаптеры и отобранные страницы мониторинга, которые сейчас "
-            "подключены к радару."
+            "Официальные источники и страницы мониторинга, подключённые к каталогу."
         ),
-        "loading_sources": "Загружаем покрытие источников...",
+        "loading_sources": "Загрузка источников",
         "show_all_sources": "Показать все источники",
         "show_fewer_sources": "Показать меньше",
         "trust_library_summary": "Источники и прозрачность",
-        "trust_library_description": (
-            "Покрытие, свежесть данных, активные фонды и методология."
-        ),
+        "trust_library_description": "Покрытие, свежесть данных, фонды и методика.",
         "funder_library_summary": "Профили фондов",
         "funder_library_description": (
-            "Кто предоставляет возможности и какие программы сейчас в работе."
+            "Кто публикует программы и где есть открытые возможности."
         ),
         "methodology_library_summary": "Проверка данных и методика",
         "methodology_library_description": (
-            "Статус источников, принципы отбора и правила использования."
+            "Статус источников, отбор и правила проверки."
         ),
         "source_refresh_title": "Последнее успешное обновление источника",
         "source_refresh_value": "Обновлено {date}",
         "source_refresh_unknown": "Дата обновления не указана",
         "health_title": "Статус данных",
         "health_description": (
-            "Показываем, что каталог доступен и сколько источников сейчас участвует "
-            "в витрине."
+            "Показываем доступность каталога и число активных источников."
         ),
         "health_ok_value": "Данные актуальны",
         "health_attention_value": "Проверить",
@@ -371,7 +353,7 @@ COPY = {
         "api_online": "Данные актуальны",
         "api_failed": "Нужна проверка данных",
         "api_error": "Ошибка загрузки данных",
-        "source_catalog_unavailable": "Каталог источников сейчас недоступен.",
+        "source_catalog_unavailable": "Каталог источников временно недоступен.",
         "showing_sources": "Показываем {shown} из {total} источников",
         "sources_connected": "Подключено источников: {total}",
         "show_all_sources_with_total": "Показать все {total} источников",
@@ -381,8 +363,8 @@ COPY = {
         "direct_badge": "Прямой",
         "watchlist_badge": "Мониторинг",
         "source_direct_note": "Прямое подключение к официальному источнику",
-        "source_watchlist_note": "Внешний мониторинг и редакционная выборка",
-        "regional_badge_kazakhstan": "Казахстан в приоритете",
+        "source_watchlist_note": "Страница мониторинга с редакционной проверкой",
+        "regional_badge_kazakhstan": "Казахстан",
         "regional_badge_central_asia": "Центральная Азия",
         "summary_matches": "Совпадений: {count}",
         "summary_search": "Поиск: {value}",
@@ -395,39 +377,34 @@ COPY = {
         "summary_sort": "Сортировка: {value}",
         "summary_score": "Релевантность: {value}",
         "summary_scope_all": "Включая архив",
-        "methodology_title": "Как мы собираем и показываем данные",
+        "methodology_title": "Как собраны данные",
         "methodology_description": (
-            "Коротко объясняем, откуда берется каталог, что означает релевантность и "
-            "что нужно обязательно перепроверять перед подачей."
+            "Откуда берутся карточки, как определяется релевантность и что проверить "
+            "перед подачей."
         ),
         "method_card_sources_title": "Источники и обновление",
         "method_card_sources_text": (
-            "Каталог собирается из официальных источников, открытых реестров и "
-            "отобранных страниц мониторинга. Мы регулярно перепроверяем ссылки, "
-            "дедлайны и наличие активных карточек."
+            "Каталог объединяет официальные источники, открытые реестры и страницы "
+            "мониторинга. Ссылки и сроки регулярно перепроверяются."
         ),
         "method_card_relevance_title": "Почему карточка показана",
         "method_card_relevance_text": (
-            "Релевантность учитывает регион и тему; порядок – ещё и доступный срок. "
-            "Компоненты ограничены и объяснимы. Это не вероятность одобрения и не "
-            "юридическое заключение."
+            "Регион и тема влияют на релевантность, срок – на порядок показа. Это не "
+            "вероятность одобрения и не юридическая оценка."
         ),
-        "method_card_trust_title": "Что считать финальной версией",
+        "method_card_trust_title": "Что проверить на источнике",
         "method_card_trust_text": (
-            "QAZ.FUND помогает быстро найти и структурировать возможность, но "
-            "финальные условия, формы и требования всегда нужно сверять на "
-            "официальном сайте программы."
+            "Карточка помогает начать проверку. Окончательные условия, формы и "
+            "требования смотрите на официальной странице программы."
         ),
         "method_disclaimer_title": "Важно перед подачей",
         "method_disclaimer_text": (
-            "Если карточка выглядит подходящей, откройте официальный источник и "
-            "проверьте дедлайн, критерии участия, состав документов и способ отправки "
-            "заявки."
+            "Перед подачей проверьте на официальном источнике срок, критерии, "
+            "документы и способ отправки заявки."
         ),
         "role_guide_title": "Как использовать QAZ.FUND в работе",
         "role_guide_description": (
-            "Одни и те же данные можно быстро превратить в проверяемую подборку, "
-            "редакционную справку или служебный материал."
+            "Используйте данные каталога для списка, справки или рабочей заметки."
         ),
         "role_analyst_title": "Аналитику",
         "role_analyst_text": (
@@ -452,42 +429,40 @@ COPY = {
         "faq_title": "Частые вопросы",
         "faq_q1": "QAZ.FUND сам выдает гранты?",
         "faq_a1": (
-            "Нет. Платформа агрегирует и упорядочивает возможности, а подача всегда "
-            "происходит через официальный источник программы."
+            "Нет. QAZ.FUND собирает и упорядочивает открытые возможности; заявку "
+            "подают организатору."
         ),
         "faq_q2": "Как часто обновляются данные?",
         "faq_a2": (
-            "Мы регулярно перепроверяем индекс и состояние подключенных источников. "
-            "Для оперативной оценки смотрите блок со статусом данных и последнее "
-            "обновление витрины."
+            "Источники и индекс регулярно перепроверяются. Текущее состояние видно "
+            "в блоке «Статус данных»."
         ),
         "faq_q3": "Что означает точность совпадения?",
         "faq_a3": (
-            "Это не оценка качества программы, а порог того, насколько карточка "
-            "совпадает с выбранной темой, регионом, форматом и фокусом QAZ.FUND."
+            "Это не оценка программы. Порог показывает, насколько карточка совпадает "
+            "с выбранными темой, регионом и форматом."
         ),
         "faq_q4": "Почему в выдаче бывают меры поддержки рядом с грантами?",
         "faq_a4": (
-            "Некоторые программы юридически оформлены как мера поддержки или "
-            "субсидия, но по смыслу полезны той же аудитории. Мы показываем их, "
-            "если они действительно подходят по задаче."
+            "Некоторые меры поддержки не являются грантами, но подходят той же "
+            "аудитории. Мы оставляем их при совпадении с задачей."
         ),
-        "collections_label": "Рабочие подборки",
-        "collections_aria": "Сохранённые фильтры и инструменты для повторной работы",
-        "collections_empty": "Сохраните текущие фильтры, чтобы быстро вернуться к этой выдаче.",
+        "collections_label": "Сохранённые подборки",
+        "collections_aria": "Сохранённые фильтры для повторной работы",
+        "collections_empty": "Сохраните фильтры, чтобы вернуться к этому списку.",
         "save_view": "Сохранить фильтры",
         "share_view": "Поделиться выдачей",
-        "saved_view_saved": "Подборка сохранена локально.",
+        "saved_view_saved": "Подборка сохранена в этом браузере.",
         "saved_view_removed": "Подборка удалена.",
         "saved_view_shared": "Ссылка на текущую подборку скопирована.",
         "saved_view_default_name": "Моя подборка",
         "saved_view_remove_aria": "Удалить подборку",
         "saved_view_status_label": "Статус подборок",
-        "saved_view_share_prompt": "Скопируйте ссылку на текущую подборку",
+        "saved_view_share_prompt": "Скопируйте ссылку на эту подборку",
         "advanced_filters": "Дополнительные фильтры",
         "mobile_filters_summary": "Настроить выдачу",
         "mobile_app_navigation": "Основные разделы QAZ.FUND",
-        "mobile_app_tagline": "Навигатор возможностей",
+        "mobile_app_tagline": "Навигатор поддержки",
         "mobile_catalog": "Каталог",
         "mobile_sources": "Источники",
         "mobile_saved": "Сохранённое",
@@ -497,13 +472,13 @@ COPY = {
         "mobile_show_results": "Показать результаты",
         "export_csv": "Таблица CSV",
         "export_deadlines": "Сроки в календарь",
-        "saved_opportunity_saved": "Карточка сохранена локально.",
-        "saved_opportunity_removed": "Карточка удалена из локальных сохранённых.",
+        "saved_opportunity_saved": "Карточка сохранена в этом браузере.",
+        "saved_opportunity_removed": "Карточка удалена из сохранённых.",
         "save_opportunity": "Сохранить",
         "unsave_opportunity": "Убрать",
-        "workspace_filter": "Сохранённые",
-        "workspace_filter_count": "Сохранённые: {count}",
-        "workspace_filter_empty": "Сначала сохраните подходящую карточку.",
+        "workspace_filter": "Сохранённые карточки",
+        "workspace_filter_count": "Сохранённые карточки: {count}",
+        "workspace_filter_empty": "Сначала сохраните карточку.",
         "workflow_label": "Этап работы",
         "workflow_review": "На проверке",
         "workflow_fit": "Подходит",
@@ -511,11 +486,11 @@ COPY = {
         "workflow_submitted": "Отправлено",
         "workflow_result": "Получен результат",
         "workflow_updated": "Этап карточки обновлён.",
-        "workspace_queue_title": "Следующие действия",
-        "workspace_queue_aria": "Очередь действий по сохранённым возможностям",
-        "workspace_queue_local": "Сохраняется только в этом браузере.",
-        "workspace_queue_empty": "В текущем каталоге нет активных сохранённых карточек.",
-        "workspace_queue_more": "Ещё в работе: {count}",
+        "workspace_queue_title": "Следующие шаги",
+        "workspace_queue_aria": "Следующие шаги для сохранённых карточек",
+        "workspace_queue_local": "Данные хранятся в этом браузере.",
+        "workspace_queue_empty": "Нет сохранённых открытых карточек.",
+        "workspace_queue_more": "Ещё карточек: {count}",
         "workspace_action_review": "Проверьте критерии на официальном источнике.",
         "workspace_action_fit": "Подтвердите соответствие требованиям и срок.",
         "workspace_action_preparing": "Соберите пакет и зафиксируйте срок подачи.",
@@ -534,10 +509,10 @@ COPY = {
         "workspace_import_error": "Не удалось прочитать резервную копию.",
         "report_issue": "Уточнить данные",
         "open_source_short": "Официальный источник",
-        "footer_owner": "QAZ.FUND – публичный навигатор возможностей. Сделано",
+        "footer_owner": "QAZ.FUND – открытый навигатор поддержки. Сделано",
         "footer_disclaimer": (
-            "QAZ.FUND не выдаёт гранты и не принимает заявки. Финальные условия, "
-            "сроки и формы подачи проверяйте на официальном источнике."
+            "QAZ.FUND не выдаёт гранты и не принимает заявки. Условия, сроки и формы "
+            "проверяйте на официальном источнике."
         ),
         "footer_support": "Обратная связь",
         "footer_qdev": "qdev.run",
@@ -546,46 +521,39 @@ COPY = {
         "fit_unknown": "Критерии нужно уточнить",
         "fit_deadline_soon": "Скоро закрывается",
         "fit_global": "Глобальная подача",
-        "signal_label": "Почему это в фокусе",
+        "signal_label": "Почему подходит",
         "card_meta_label": "Параметры",
         "signal_support_kz": (
-            "Локальная мера поддержки для команд и бизнеса в Казахстане с "
-            "практическими условиями подачи."
+            "Мера поддержки для команд и бизнеса в Казахстане с понятным порядком "
+            "подачи."
         ),
         "signal_public_sector": (
-            "Подходит командам, которые работают с госсектором, инфраструктурой "
-            "или крупными программами развития."
+            "Для команд, работающих с госсектором, инфраструктурой и программами "
+            "развития."
         ),
         "signal_business": (
-            "Практическая возможность для бизнеса, где важны условия, пакет "
-            "документов и механика подачи."
+            "Подходит бизнесу, если важны условия, документы и порядок подачи."
         ),
         "signal_startup": (
-            "Полезно продуктовым и ИИ-командам, которым важны акселерация, "
-            "пилоты или облачные кредиты."
+            "Для продуктовых и ИИ-команд, которым нужны акселерация, пилоты или "
+            "облачные кредиты."
         ),
         "signal_tender": (
-            "Стоит быстро проверить требования к участнику, объем работ и состав заявки."
+            "Проверьте требования к участнику, объём работ и пакет заявки."
         ),
-        "signal_science": (
-            "Есть научный или коммерциализационный сигнал для университетов, "
-            "лабораторий и научных команд."
-        ),
-        "signal_farmer": (
-            "Есть прикладной агро-сигнал для хозяйств, ферм и отраслевых команд."
-        ),
+        "signal_science": "Для университетов, лабораторий и научных команд.",
+        "signal_farmer": "Для хозяйств, ферм и агрокоманд.",
         "signal_ngo": (
-            "Полезно НКО, медиа и командам с гражданским или социальным профилем."
+            "Для НКО, медиа и проектов с гражданским или социальным эффектом."
         ),
         "signal_kazakhstan": (
-            "Есть прямой сигнал по Казахстану или локальным условиям подачи."
+            "В условиях прямо указан Казахстан или местный порядок подачи."
         ),
         "signal_central_asia": (
             "Подходит проектам из Центральной Азии без узкой привязки к одной стране."
         ),
         "signal_global": (
-            "Международная возможность, которую стоит проверить по критериям "
-            "для вашей команды."
+            "Международная возможность – проверьте критерии для своей команды."
         ),
         "meta_format_label": "Формат",
         "meta_region_label": "Регион",
@@ -597,44 +565,39 @@ COPY = {
         "meta_deadline_soon_days": "Через {count} дн.",
         "meta_deadline_month": "До месяца",
         "meta_deadline_later": "Позже месяца",
-        "detail_fit_title": "Быстрая оценка",
+        "detail_fit_title": "Проверка соответствия",
         "detail_source_status_title": "Статус источника",
-        "detail_fit_good": "Скорее всего подходит",
-        "detail_fit_review": "Нужна ручная проверка критериев",
-        "no_indexed_items": "Каталог временно не содержит доступных карточек.",
+        "detail_fit_good": "Похоже, подходит",
+        "detail_fit_review": "Проверьте критерии вручную",
+        "no_indexed_items": "В каталоге пока нет доступных карточек.",
         "no_filtered_items": "По текущим фильтрам ничего не найдено.",
-        "no_filtered_items_hint": (
-            "Попробуйте ослабить один из фильтров – каталог сразу пересчитает выдачу."
-        ),
+        "no_filtered_items_hint": "Снимите один фильтр и попробуйте снова.",
         "empty_action_clear": "Сбросить всё",
         "empty_action_region": "Все регионы",
         "empty_action_deadline": "Любые сроки",
-        "empty_action_score": "Стандартный порог",
-        "empty_action_scope": "Открыть весь индекс",
-        "open_details": "Быстрый просмотр",
+        "empty_action_score": "Базовый порог",
+        "empty_action_scope": "Открыть весь каталог",
+        "open_details": "Краткий просмотр",
         "read_more": "Полная карточка",
         "open_rolling": "Открыто / бессрочно",
-        "score_title": "Объяснимая релевантность каталога; не вероятность одобрения",
+        "score_title": "Релевантность по правилам каталога; это не вероятность одобрения",
         "score_exact": "Высокая",
         "score_high": "Хорошая",
         "score_base": "Базовая",
         "source_agency": "Источник: {agency}",
-        "no_summary": "Источник не передал краткое описание.",
-        "reload_confirm": "Перечитать live-данные из всех источников?",
+        "no_summary": "Источник не передал описание.",
+        "reload_confirm": "Перезагрузить данные из всех источников?",
         "results_button": "Показать ещё {count}",
         "unknown_url": "URL недоступен",
         "views_aria": "Навигация по разделам панели",
         "breadcrumbs_aria": "Навигационная цепочка",
-        "detail_panel_label": "Локальная карточка возможности",
-        "detail_shell_title": "Локальная карточка",
+        "detail_panel_label": "Подробности возможности",
+        "detail_shell_title": "Подробности",
         "detail_title_fallback": "Карточка возможности",
-        "detail_loading": "Подтягиваем локальный текст и параметры...",
-        "detail_error": (
-            "Локальная карточка сейчас недоступна. Ниже оставили прямой путь к источнику."
-        ),
+        "detail_loading": "Загрузка описания и параметров",
+        "detail_error": "Локальное описание недоступно. Откройте источник ниже.",
         "detail_empty": (
-            "Источник пока не отдал расширенный текст. Показываем краткое описание "
-            "и структурированные поля."
+            "Расширенного описания нет. Показываем краткое описание и поля."
         ),
         "detail_close": "Закрыть",
         "detail_open_page": "Открыть страницу",
@@ -668,14 +631,14 @@ COPY = {
         "detail_brief_official_url": "Официальный источник",
         "detail_brief_application_url": "Подача",
         "detail_brief_caveat": (
-            "Проверить на официальном источнике: действующие условия, право на "
-            "участие, документы, срок и канал подачи."
+            "Проверьте на официальном источнике условия, право на участие, документы, "
+            "срок и способ подачи."
         ),
-        "verification_eyebrow": "Проверка и передача",
-        "verification_title": "Перед использованием карточки",
+        "verification_eyebrow": "Проверка",
+        "verification_title": "Перед подачей",
         "verification_description": (
-            "Карточка подходит для первичного анализа и рабочей справки, но не "
-            "подтверждает право на участие и не заменяет официальные условия."
+            "Карточка помогает начать проверку, но не подтверждает право на участие "
+            "и не заменяет официальные условия."
         ),
         "verification_eligibility_title": "Право на участие",
         "verification_eligibility_text": (
@@ -689,9 +652,9 @@ COPY = {
         "verification_procurement_text": (
             "Для тендеров отдельно проверьте лоты, квалификацию, приложения и изменения."
         ),
-        "verification_publication_title": "Публикация и служебная записка",
+        "verification_publication_title": "Источник и дата проверки",
         "verification_publication_text": (
-            "Укажите официальный источник и дату фактической проверки сведений."
+            "Укажите официальный источник и дату проверки."
         ),
         "detail_missing_labels": {
             "deadline": "срок",
@@ -699,12 +662,12 @@ COPY = {
             "eligibility": "требования к заявителю",
             "application": "путь подачи",
         },
-        "detail_sections_title": "Текст и выдержки",
+        "detail_sections_title": "Описание и выдержки",
         "detail_status_ok": "Описание и ключевые поля собраны с официального источника",
-        "detail_status_structured_only": "Показываем краткое описание и структурированные поля",
-        "detail_status_blocked": "Источник не дал забрать полный текст автоматически",
+        "detail_status_structured_only": "Показываем краткое описание и поля",
+        "detail_status_blocked": "Источник не разрешил автоматическую загрузку полного текста",
         "detail_status_not_allowed": "Для этого источника локальная загрузка отключена",
-        "detail_status_too_large": "Страница слишком тяжелая для локального чтения",
+        "detail_status_too_large": "Страница слишком большая для локального чтения",
         "detail_status_unsupported_media": "Источник отдал неподдерживаемый формат",
         "detail_status_parse_error": "Не удалось корректно разобрать страницу источника",
         "detail_source_excerpt": "Выдержка с источника",
@@ -712,8 +675,8 @@ COPY = {
         "prepare_section_eyebrow": "Перед подачей",
         "prepare_section_title": "Что подготовить",
         "prepare_section_description": (
-            "Короткий практический чек-лист по типу возможности. Финальные "
-            "требования все равно сверяйте с официальным источником."
+            "Чек-лист для этой возможности. Окончательные требования смотрите на "
+            "официальном источнике."
         ),
         "prepare_eligibility_title": "Проверьте критерии",
         "prepare_eligibility_text": (
@@ -765,8 +728,7 @@ COPY = {
         "apply_section_eyebrow": "Подача",
         "apply_section_title": "Как подать",
         "apply_section_description": (
-            "Короткий маршрут до отправки заявки. Он помогает не потерять шаги, "
-            "но не заменяет официальную инструкцию источника."
+            "Короткий порядок действий. Он не заменяет инструкцию источника."
         ),
         "apply_step_open_apply_title": "Откройте страницу подачи",
         "apply_step_open_apply_text": (
@@ -792,11 +754,10 @@ COPY = {
             "После отправки сохраните номер заявки, копию письма или снимок "
             "экрана с подтверждением."
         ),
-        "related_section_eyebrow": "Продолжить просмотр",
+        "related_section_eyebrow": "Похожие карточки",
         "related_section_title": "Похожие возможности",
         "related_section_description": (
-            "Еще несколько близких карточек из того же потока, чтобы не возвращаться "
-            "в каталог вслепую."
+            "Ещё несколько карточек с похожими параметрами."
         ),
         "related_reason_source": "Тот же источник",
         "related_reason_funder": "Похожий фонд",
@@ -1025,111 +986,93 @@ COPY = {
         "locale": "en-KZ",
         "title": "QAZ.FUND – funding and support programs for Kazakhstan",
         "meta_description": (
-            "QAZ.FUND is a public funding navigator for grants, subsidies, "
-            "accelerators, and support programs in Kazakhstan."
+            "Grants, subsidies, accelerators, and support programs for Kazakhstan."
         ),
-        "eyebrow": "Kazakhstan funding navigator",
+        "eyebrow": "Funding navigator for Kazakhstan",
         "headline": "QAZ.FUND",
         "subtitle": (
-            "Public funding navigator for grants, subsidies, accelerators, "
-            "and support programs in Kazakhstan."
+            "Grants, subsidies, and support programs for teams and organizations "
+            "in Kazakhstan."
         ),
-        "hero_intro": (
-            "Grants, subsidies and support programs for Kazakhstan and Central Asia."
-        ),
+        "hero_intro": "Open programs for Kazakhstan and Central Asia.",
         "hero_primary_cta": "Open catalog",
-        "hero_stage_eyebrow": "Workflows",
-        "hero_stage_title": "What do you need to do now?",
-        "hero_stage_point_one": "Filter the catalog and save a link to the exact result set",
-        "hero_stage_point_two": "Copy a working brief with its source and verification fields",
-        "hero_stage_point_three": "Export a table or add the nearest deadlines to your calendar",
-        "hero_picks_label": "Workflows",
+        "hero_stage_eyebrow": "Three steps",
+        "hero_stage_title": "Where to start?",
+        "hero_stage_point_one": "Filter the catalog and save the result link.",
+        "hero_stage_point_two": "Open a card and verify its terms at the source.",
+        "hero_stage_point_three": "Export the list or add deadlines to your calendar.",
+        "hero_picks_label": "Quick picks",
         "hero_pick_startup": "Find support",
         "hero_pick_business": "Check a program",
         "hero_pick_farmer": "Deadlines this month",
         "hero_pick_science": "Kazakhstan support",
         "hero_pick_tenders": "Tenders and procurement",
         "spotlight_section_eyebrow": "Start here",
-        "spotlight_section_title": "Current opportunities",
+        "spotlight_section_title": "What to check now",
         "spotlight_section_description": (
-            "The catalog's strongest signals: high-fit opportunities, Kazakhstan "
-            "support measures, and approaching deadlines."
+            "High-fit cards, local support measures, and upcoming deadlines."
         ),
-        "spotlight_count": "In view: {count}",
-        "spotlight_action_open": "Open collection",
-        "spotlight_empty": "There are no active items in this collection right now.",
+        "spotlight_count": "Cards: {count}",
+        "spotlight_action_open": "Open list",
+        "spotlight_empty": "There are no open cards in this list yet.",
         "spotlight_preview_more": "+ {count} more",
-        "spotlight_trending_kicker": "Trending now",
-        "spotlight_trending_title": "Best signals this week",
-        "spotlight_trending_note": (
-            "High-relevance, active opportunities that deserve the first click."
-        ),
-        "spotlight_kazakhstan_kicker": "Kazakhstan first",
-        "spotlight_kazakhstan_title": "Focus on local opportunities",
-        "spotlight_kazakhstan_note": (
-            "Grants and programs with direct Kazakhstan relevance and local context."
-        ),
-        "spotlight_support_kicker": "Support programs",
-        "spotlight_support_title": "Support for businesses and teams",
-        "spotlight_support_note": (
-            "Subsidies, incentives and support tools with practical application rules."
-        ),
-        "spotlight_deadline_kicker": "Closing soon",
-        "spotlight_deadline_title": "Worth reviewing today",
-        "spotlight_deadline_note": (
-            "Opportunities with upcoming deadlines so visitors can act in time."
-        ),
-        "pathways_section_eyebrow": "Routes by use case",
-        "pathways_section_title": "By project type",
+        "spotlight_trending_kicker": "High match",
+        "spotlight_trending_title": "Relevant opportunities",
+        "spotlight_trending_note": "High-fit cards with an open status.",
+        "spotlight_kazakhstan_kicker": "Kazakhstan",
+        "spotlight_kazakhstan_title": "Kazakhstan opportunities",
+        "spotlight_kazakhstan_note": "Programs with terms for applicants in Kazakhstan.",
+        "spotlight_support_kicker": "Subsidies and support",
+        "spotlight_support_title": "Support for businesses",
+        "spotlight_support_note": "Subsidies, incentives, and other programs with clear application rules.",
+        "spotlight_deadline_kicker": "Upcoming deadlines",
+        "spotlight_deadline_title": "What closes first",
+        "spotlight_deadline_note": "Open these cards early and check the requirements.",
+        "pathways_section_eyebrow": "By use case",
+        "pathways_section_title": "By applicant type",
         "pathways_section_description": (
-            "Choose who needs support and open a focused result set immediately."
+            "Choose an applicant type – the catalog shows matching cards."
         ),
-        "pathways_count": "Now: {count}",
-        "pathways_action_open": "Open route",
-        "pathways_empty": "There are no active items for this project type right now.",
+        "pathways_count": "Cards: {count}",
+        "pathways_action_open": "Open list",
+        "pathways_empty": "No open cards for this applicant type yet.",
         "pathway_startup_kicker": "For startups",
         "pathway_startup_title": "Accelerators, grants and cloud credits",
         "pathway_startup_note": (
-            "For product teams and AI startups looking for the fastest route to "
-            "pilots, credits and support."
+            "For product teams and AI startups looking for pilots, credits, or "
+            "acceleration."
         ),
         "pathway_business_kicker": "For businesses",
         "pathway_business_title": "Subsidies, incentives and Kazakhstan support",
         "pathway_business_note": (
-            "For SMBs and operating companies where local rules and application "
-            "mechanics matter most."
+            "For SMBs and companies where local rules and application steps matter."
         ),
         "pathway_farmer_kicker": "For farmers",
         "pathway_farmer_title": "Agri support, livestock and practical AgroTech",
-        "pathway_farmer_note": (
-            "For farms and agri teams looking for programs with direct practical value."
-        ),
+        "pathway_farmer_note": "For farms and agri teams working in agriculture, livestock, and technology.",
         "pathway_science_kicker": "For researchers",
         "pathway_science_title": "Science funding, commercialization and research grants",
-        "pathway_science_note": (
-            "For universities, labs and teams seeking funding for research and transfer."
-        ),
-        "themes_section_eyebrow": "Theme routes",
+        "pathway_science_note": "For universities, labs, and teams seeking research and implementation funding.",
+        "themes_section_eyebrow": "By topic",
         "themes_section_title": "By focus area",
         "themes_section_description": (
-            "Open opportunities by topic without scanning the full catalog."
+            "Choose a topic – the catalog shows matching cards."
         ),
         "discovery_library_summary": "Collections and routes",
         "discovery_library_description": (
-            "Ready-made views for getting acquainted with the catalog."
+            "Ready-made lists for a first look at the catalog."
         ),
-        "themes_count": "Now: {count}",
-        "themes_action_open": "Open theme",
-        "themes_empty": "There are no active items in this focus area right now.",
+        "themes_count": "Cards: {count}",
+        "themes_action_open": "Open list",
+        "themes_empty": "There are no open cards for this topic yet.",
         "funder_section_eyebrow": "Funders",
         "funder_section_title": "Active funders and programs",
         "funder_section_description": (
-            "A quick funder layer: where live opportunities exist, what they "
-            "usually support, and which profiles are worth opening next."
+            "Funders and programs, their focus areas, and open opportunities."
         ),
-        "funder_open_profile": "Funder profile",
-        "funder_empty": "No active funder profiles are available right now.",
-        "funder_live_now": "Live opportunities",
+        "funder_open_profile": "Open profile",
+        "funder_empty": "No funder profiles were found yet.",
+        "funder_live_now": "Open opportunities",
         "funder_total_items": "Total indexed",
         "funder_next_deadline": "Nearest deadline",
         "funder_overview_intro": (
@@ -1140,25 +1083,18 @@ COPY = {
         "funder_overview_regions": "Regional focus: {regions}.",
         "funder_page_eyebrow": "Funder profile",
         "funder_focus_title": "What this funder usually backs",
-        "funder_focus_note": (
-            "This profile is derived from the current index so visitors can see "
-            "formats, regions, and themes without opening every record one by one."
-        ),
+        "funder_focus_note": "Formats, regions, and themes in the current index.",
         "funder_focus_types": "Formats",
         "funder_focus_regions": "Regions",
         "funder_focus_indexed": "Indexed",
-        "funder_live_title": "Live and actionable opportunities",
-        "funder_live_note": (
-            "Open, rolling, and forecast records that are worth checking now."
-        ),
-        "funder_live_empty": "There are no open or forecast records for this funder right now.",
-        "funder_archive_title": "Archive and historical trail",
-        "funder_archive_note": (
-            "Closed and completed records help explain the cadence and shape of this funder."
-        ),
-        "funder_archive_empty": "No archive records have accumulated yet.",
-        "funder_sources_title": "Where this profile comes from",
-        "funder_sources_note": "Official sources and program pages used for this profile.",
+        "funder_live_title": "Open opportunities",
+        "funder_live_note": "Open, rolling, and forecast records available to review.",
+        "funder_live_empty": "There are no open or forecast records for this funder.",
+        "funder_archive_title": "Archive",
+        "funder_archive_note": "Closed records show the funder's profile and program timing.",
+        "funder_archive_empty": "There are no archive records.",
+        "funder_sources_title": "Profile sources",
+        "funder_sources_note": "Official pages used for this profile.",
         "funder_back_to_catalog": "Back to catalog",
         "funder_open_card": "Open card",
         "topic_brief_eyebrow": "Active focus",
@@ -1228,10 +1164,10 @@ COPY = {
             "For NGOs, media teams, and civic projects looking for grants and "
             "partnership-led tracks."
         ),
-        "focus_aria": "Current product focus",
+        "focus_aria": "Current focus",
         "focus_primary": "Priority: Kazakhstan and Central Asia",
         "focus_secondary": (
-            "Themes: AI, EdTech, GovTech, AgroTech, VetTech, EcoTech, media"
+            "Themes: AI, education, public sector, agriculture, veterinary, climate, media"
         ),
         "status_checking": "Catalog available",
         "api_docs": "API",
@@ -1240,7 +1176,7 @@ COPY = {
         "data_policy_link": "Data policy",
         "attribution_link": "Data use",
         "readiness_title": "What the card already shows",
-        "readiness_note": "Four signals for a quick check before opening the application route.",
+        "readiness_note": "Four fields to check before applying.",
         "readiness_source": "Source",
         "readiness_deadline": "Deadline",
         "readiness_amount": "Amount",
@@ -1258,10 +1194,10 @@ COPY = {
         "metric_sources": "Sources",
         "opportunities_title": "Opportunities",
         "opportunities_description": (
-            "Open and rolling programs with Kazakhstan and Central Asia shown first."
+            "Open and rolling programs prioritized for Kazakhstan and Central Asia."
         ),
         "opportunities_description_all": (
-            "Open, rolling and archived index records for coverage and source audits."
+            "Open, rolling, and archived records for coverage and source checks."
         ),
         "search_label": "Search",
         "search_placeholder": "Title, funder, tags, region",
@@ -1328,39 +1264,38 @@ COPY = {
         "score_option_05": "Good relevance",
         "score_option_07": "High relevance",
         "score_help": (
-            "The estimate considers region and topic; ordering also uses deadline "
-            "runway. It is not an award probability; verify the official source."
+            "Region and topic affect relevance; deadlines affect order. This is not "
+            "an award probability. Verify the source."
         ),
         "all_sources": "All sources",
         "clear_filters": "Clear filters",
-        "loading_opportunities": "Loading opportunities...",
+        "loading_opportunities": "Loading opportunities",
         "load_more": "Load more",
         "sources_title": "Source coverage",
         "sources_description": (
-            "Direct adapters and curated watch pages currently wired into the radar."
+            "Official sources and monitored pages connected to the catalog."
         ),
-        "loading_sources": "Loading source coverage...",
+        "loading_sources": "Loading sources",
         "show_all_sources": "Show all sources",
         "show_fewer_sources": "Show fewer",
         "trust_library_summary": "Sources and transparency",
         "trust_library_description": (
-            "Coverage, data freshness, active funders, and methodology."
+            "Coverage, data freshness, funders, and methodology."
         ),
         "funder_library_summary": "Funder profiles",
         "funder_library_description": (
-            "Who provides opportunities and which programs are active now."
+            "Who publishes programs and where open opportunities are listed."
         ),
         "methodology_library_summary": "Data checks and methodology",
         "methodology_library_description": (
-            "Source status, selection principles and usage guidance."
+            "Source status, selection, and verification guidance."
         ),
         "source_refresh_title": "Latest successful source refresh",
         "source_refresh_value": "Updated {date}",
         "source_refresh_unknown": "Refresh date unavailable",
         "health_title": "Data status",
         "health_description": (
-            "Shows whether the catalog is reachable and how many sources are "
-            "currently active in the public feed."
+            "Shows whether the catalog is available and how many sources are active."
         ),
         "health_ok_value": "Data is current",
         "health_attention_value": "Needs review",
@@ -1375,14 +1310,14 @@ COPY = {
             "next source refresh."
         ),
         "reload_live_data": "Refresh data",
-        "api_status": "Data stream",
+        "api_status": "Data feed",
         "stored_items": "Catalog entries",
         "health_sources": "Active sources",
         "health_stale_sources": "Stale sources",
         "api_online": "Data is current",
         "api_failed": "Data needs attention",
         "api_error": "Data load error",
-        "source_catalog_unavailable": "Source catalog is unavailable right now.",
+        "source_catalog_unavailable": "Source catalog is temporarily unavailable.",
         "showing_sources": "Showing {shown} of {total} sources",
         "sources_connected": "{total} sources connected",
         "show_all_sources_with_total": "Show all {total} sources",
@@ -1392,8 +1327,8 @@ COPY = {
         "direct_badge": "Direct",
         "watchlist_badge": "Watchlist",
         "source_direct_note": "Direct connection to the official source",
-        "source_watchlist_note": "External watch feed with curated monitoring",
-        "regional_badge_kazakhstan": "Kazakhstan priority",
+        "source_watchlist_note": "Monitored page with editorial review",
+        "regional_badge_kazakhstan": "Kazakhstan",
         "regional_badge_central_asia": "Central Asia",
         "summary_matches": "{count} matches",
         "summary_search": "Search: {value}",
@@ -1406,38 +1341,34 @@ COPY = {
         "summary_sort": "Sort: {value}",
         "summary_score": "Relevance: {value}",
         "summary_scope_all": "Including archive",
-        "methodology_title": "How we collect and present data",
+        "methodology_title": "How the data is collected",
         "methodology_description": (
-            "A short explanation of where the catalog comes from, what relevance "
-            "means, and what you should still verify before applying."
+            "Where cards come from, how relevance is determined, and what to verify "
+            "before applying."
         ),
         "method_card_sources_title": "Sources and refresh",
         "method_card_sources_text": (
-            "The catalog combines official sources, open registers, and curated "
-            "watch pages. We regularly recheck links, deadlines, and whether an "
-            "item is still active."
+            "The catalog combines official sources, open registers, and monitored "
+            "pages. Links and deadlines are rechecked regularly."
         ),
         "method_card_relevance_title": "Why an item is shown",
         "method_card_relevance_text": (
-            "Relevance considers region and topic; ordering also uses deadline "
-            "runway. Components are bounded and explainable. This is not an award "
-            "probability or legal classification."
+            "Region and topic affect relevance; deadline runway affects order. This "
+            "is not an award probability or legal assessment."
         ),
-        "method_card_trust_title": "What counts as final",
+        "method_card_trust_title": "What to verify at the source",
         "method_card_trust_text": (
-            "QAZ.FUND helps you find and structure opportunities quickly, but the "
-            "final rules, forms, and requirements should always be verified on the "
-            "official program website."
+            "Use the card as a starting point. Verify final rules, forms, and "
+            "requirements on the official program page."
         ),
         "method_disclaimer_title": "Before you apply",
         "method_disclaimer_text": (
-            "If a card looks relevant, open the official source and verify the "
-            "deadline, eligibility, required documents, and submission route."
+            "Before applying, verify the deadline, eligibility, documents, and "
+            "submission route on the official source."
         ),
         "role_guide_title": "How to use QAZ.FUND at work",
         "role_guide_description": (
-            "Turn the same source data into a reproducible selection, an editorial "
-            "brief, or a working note."
+            "Use catalog data for a selection, brief, or working note."
         ),
         "role_analyst_title": "For analysts",
         "role_analyst_text": (
@@ -1462,42 +1393,40 @@ COPY = {
         "faq_title": "FAQ",
         "faq_q1": "Does QAZ.FUND award grants itself?",
         "faq_a1": (
-            "No. The platform aggregates and structures opportunities, while the "
-            "actual application always happens through the official program source."
+            "No. QAZ.FUND organizes public opportunities; applications go to the "
+            "program organizer."
         ),
         "faq_q2": "How often is the data refreshed?",
         "faq_a2": (
-            "We regularly recheck the index and connected sources. For the current "
-            "state, use the data status block and the latest feed refresh note."
+            "Sources and the index are rechecked regularly. See Data status for the "
+            "current state."
         ),
         "faq_q3": "What does match precision mean?",
         "faq_a3": (
-            "It is not a quality rating. It is the threshold for how closely an "
-            "item matches the selected theme, region, format, and current QAZ.FUND "
-            "focus."
+            "It is not a program rating. The threshold shows how closely a card "
+            "matches the selected theme, region, and format."
         ),
         "faq_q4": "Why do support measures sometimes appear near grants?",
         "faq_a4": (
-            "Some programs are legally structured as support measures or subsidies "
-            "but are still useful to the same audience. We keep them visible when "
-            "they genuinely match the task."
+            "Some support measures are not grants but serve the same audience. We "
+            "keep them when they match the use case."
         ),
-        "collections_label": "Working selections",
-        "collections_aria": "Saved filters and tools for repeat work",
-        "collections_empty": "Save the current filters to return to this result set later.",
+        "collections_label": "Saved selections",
+        "collections_aria": "Saved filters for repeat work",
+        "collections_empty": "Save filters to return to this list later.",
         "save_view": "Save filters",
         "share_view": "Share results",
-        "saved_view_saved": "Collection saved locally.",
+        "saved_view_saved": "Collection saved in this browser.",
         "saved_view_removed": "Collection removed.",
         "saved_view_shared": "Copied a link to the current collection.",
         "saved_view_default_name": "My collection",
         "saved_view_remove_aria": "Remove collection",
         "saved_view_status_label": "Saved collection status",
-        "saved_view_share_prompt": "Copy the link to the current collection",
+        "saved_view_share_prompt": "Copy the link to this collection",
         "advanced_filters": "Advanced filters",
         "mobile_filters_summary": "Refine results",
         "mobile_app_navigation": "Main QAZ.FUND sections",
-        "mobile_app_tagline": "Opportunity navigator",
+        "mobile_app_tagline": "Funding navigator",
         "mobile_catalog": "Catalogue",
         "mobile_sources": "Sources",
         "mobile_saved": "Saved",
@@ -1523,7 +1452,7 @@ COPY = {
         "workflow_updated": "Card stage updated.",
         "workspace_queue_title": "Next actions",
         "workspace_queue_aria": "Action queue for saved opportunities",
-        "workspace_queue_local": "Stored only in this browser.",
+        "workspace_queue_local": "Stored in this browser.",
         "workspace_queue_empty": "There are no active saved cards in the current catalogue.",
         "workspace_queue_more": "Still in progress: {count}",
         "workspace_action_review": "Check the criteria on the official source.",
@@ -1544,10 +1473,10 @@ COPY = {
         "workspace_import_error": "The workspace backup could not be read.",
         "report_issue": "Correct the data",
         "open_source_short": "Official source",
-        "footer_owner": "QAZ.FUND is a public opportunity navigator. Built by",
+        "footer_owner": "QAZ.FUND is an open funding navigator. Built by",
         "footer_disclaimer": (
-            "QAZ.FUND does not award grants or process applications. Always verify "
-            "final terms, deadlines, and forms on the official source."
+            "QAZ.FUND does not award grants or process applications. Verify terms, "
+            "deadlines, and forms on the official source."
         ),
         "footer_support": "Feedback",
         "footer_qdev": "qdev.run",
@@ -1556,45 +1485,37 @@ COPY = {
         "fit_unknown": "Check eligibility",
         "fit_deadline_soon": "Closing soon",
         "fit_global": "Global application",
-        "signal_label": "Why this is worth a look",
+        "signal_label": "Why it fits",
         "card_meta_label": "Key details",
         "signal_support_kz": (
-            "A local support measure for Kazakhstan-based teams and businesses "
-            "with practical application mechanics."
+            "A support measure for teams and businesses in Kazakhstan with clear "
+            "application steps."
         ),
         "signal_public_sector": (
-            "Useful for teams working with public sector delivery, infrastructure, "
-            "or large development programs."
+            "For teams working with public-sector delivery, infrastructure, and "
+            "development programs."
         ),
         "signal_business": (
-            "A practical route for businesses where terms, document pack, and "
-            "application mechanics matter."
+            "For businesses where terms, documents, and application steps matter."
         ),
         "signal_startup": (
-            "Useful for product and AI teams looking for acceleration, pilots, "
-            "or cloud credits."
+            "For product and AI teams looking for acceleration, pilots, or cloud "
+            "credits."
         ),
         "signal_tender": (
-            "Worth a quick check of applicant requirements, scope, and submission pack."
+            "Check applicant requirements, scope, and submission documents."
         ),
-        "signal_science": (
-            "Has a research or commercialization signal for universities, labs, "
-            "and science teams."
-        ),
-        "signal_farmer": (
-            "Has a practical agri signal for farms, producers, and sector teams."
-        ),
-        "signal_ngo": (
-            "Useful for NGOs, media teams, and projects with a civic or social impact angle."
-        ),
+        "signal_science": "For universities, labs, and research teams.",
+        "signal_farmer": "For farms, producers, and agri teams.",
+        "signal_ngo": "For NGOs, media teams, and civic or social-impact projects.",
         "signal_kazakhstan": (
-            "Has a direct Kazakhstan signal or local application conditions."
+            "The terms name Kazakhstan or local application conditions."
         ),
         "signal_central_asia": (
             "Works for Central Asia teams without being tied to a single country."
         ),
         "signal_global": (
-            "A global opportunity that is still worth checking for your team's eligibility."
+            "A global opportunity – check the eligibility rules for your team."
         ),
         "meta_format_label": "Format",
         "meta_region_label": "Region",
@@ -1606,45 +1527,41 @@ COPY = {
         "meta_deadline_soon_days": "In {count} days",
         "meta_deadline_month": "Within a month",
         "meta_deadline_later": "More than a month",
-        "detail_fit_title": "Quick fit check",
+        "detail_fit_title": "Eligibility check",
         "detail_source_status_title": "Source status",
-        "detail_fit_good": "Likely a fit",
-        "detail_fit_review": "Manual eligibility review needed",
-        "no_indexed_items": "The catalog currently has no available items.",
+        "detail_fit_good": "Looks like a fit",
+        "detail_fit_review": "Check eligibility manually",
+        "no_indexed_items": "The catalog has no available cards yet.",
         "no_filtered_items": "No opportunities match the selected filters.",
-        "no_filtered_items_hint": (
-            "Try relaxing one of the filters and the catalog will recalculate right away."
-        ),
+        "no_filtered_items_hint": "Clear one filter and try again.",
         "empty_action_clear": "Clear all",
         "empty_action_region": "All regions",
         "empty_action_deadline": "Any timing",
-        "empty_action_score": "Standard threshold",
-        "empty_action_scope": "Open full index",
-        "open_details": "Quick view",
+        "empty_action_score": "Baseline threshold",
+        "empty_action_scope": "Open full catalog",
+        "open_details": "Brief view",
         "read_more": "Full card",
         "open_rolling": "Open / Rolling",
-        "score_title": "Explainable catalog relevance; not an award probability",
+        "score_title": "Rule-based catalog relevance; not an award probability",
         "score_exact": "High",
         "score_high": "Good",
         "score_base": "Baseline",
         "source_agency": "Source agency: {agency}",
-        "no_summary": "No summary provided by source.",
-        "reload_confirm": "Reload live data from all sources?",
+        "no_summary": "No description provided by source.",
+        "reload_confirm": "Reload data from all sources?",
         "results_button": "Load {count} more",
         "unknown_url": "Unknown URL",
         "views_aria": "Dashboard section navigation",
         "breadcrumbs_aria": "Breadcrumbs",
-        "detail_panel_label": "Local opportunity detail",
-        "detail_shell_title": "Local detail",
+        "detail_panel_label": "Opportunity details",
+        "detail_shell_title": "Details",
         "detail_title_fallback": "Opportunity detail",
-        "detail_loading": "Loading local text and structured fields...",
+        "detail_loading": "Loading description and fields",
         "detail_error": (
-            "The local detail view is unavailable right now. The direct source link "
-            "is still available below."
+            "The local description is unavailable. Open the source below."
         ),
         "detail_empty": (
-            "The source did not provide a richer local text yet. Showing the "
-            "stored summary and structured fields."
+            "No expanded description is available. Showing the summary and fields."
         ),
         "detail_close": "Close",
         "detail_open_page": "Open page",
@@ -1678,14 +1595,14 @@ COPY = {
         "detail_brief_official_url": "Official source",
         "detail_brief_application_url": "Application",
         "detail_brief_caveat": (
-            "Verify at the official source: current terms, eligibility, required "
-            "documents, deadline, and submission route."
+            "Verify terms, eligibility, documents, deadline, and submission route "
+            "on the official source."
         ),
-        "verification_eyebrow": "Verification and handoff",
-        "verification_title": "Before using this card",
+        "verification_eyebrow": "Verification",
+        "verification_title": "Before applying",
         "verification_description": (
-            "The card supports initial analysis and working briefs, but does not "
-            "confirm eligibility or replace the official terms."
+            "Use the card to start a check. It does not confirm eligibility or replace "
+            "the official terms."
         ),
         "verification_eligibility_title": "Eligibility",
         "verification_eligibility_text": (
@@ -1699,9 +1616,9 @@ COPY = {
         "verification_procurement_text": (
             "For tenders, check lots, qualifications, attachments, and amendments separately."
         ),
-        "verification_publication_title": "Publication and internal notes",
+        "verification_publication_title": "Source and verification date",
         "verification_publication_text": (
-            "Record the official source and the date when the information was verified."
+            "Record the official source and verification date."
         ),
         "detail_missing_labels": {
             "deadline": "deadline",
@@ -1709,12 +1626,12 @@ COPY = {
             "eligibility": "applicant eligibility",
             "application": "application route",
         },
-        "detail_sections_title": "Text and excerpts",
+        "detail_sections_title": "Description and excerpts",
         "detail_status_ok": "Description and key fields were collected from the official source",
-        "detail_status_structured_only": "Showing the stored summary and structured fields",
-        "detail_status_blocked": "The source blocked automatic full-text retrieval",
+        "detail_status_structured_only": "Showing the stored summary and fields",
+        "detail_status_blocked": "The source did not allow automatic full-text retrieval",
         "detail_status_not_allowed": "Local fetch is disabled for this source",
-        "detail_status_too_large": "The source page is too large for the local reader",
+        "detail_status_too_large": "The source page is too large for local reading",
         "detail_status_unsupported_media": "The source returned an unsupported format",
         "detail_status_parse_error": "The source page could not be parsed cleanly",
         "detail_source_excerpt": "Source excerpt",
@@ -1722,8 +1639,8 @@ COPY = {
         "prepare_section_eyebrow": "Before applying",
         "prepare_section_title": "What to prepare",
         "prepare_section_description": (
-            "A short practical checklist for this kind of opportunity. Always "
-            "confirm final requirements on the official source."
+            "A checklist for this opportunity. Verify final requirements on the "
+            "official source."
         ),
         "prepare_eligibility_title": "Check eligibility",
         "prepare_eligibility_text": (
@@ -1771,8 +1688,7 @@ COPY = {
         "apply_section_eyebrow": "Application",
         "apply_section_title": "How to apply",
         "apply_section_description": (
-            "A short route to submission. It helps keep the steps visible, but does "
-            "not replace the official source instructions."
+            "A short sequence of steps. It does not replace the source instructions."
         ),
         "apply_step_open_apply_title": "Open the application page",
         "apply_step_open_apply_text": (
@@ -1798,12 +1714,9 @@ COPY = {
             "After submission, save the application number, email copy, or confirmation "
             "screenshot."
         ),
-        "related_section_eyebrow": "Keep exploring",
+        "related_section_eyebrow": "Similar cards",
         "related_section_title": "Related opportunities",
-        "related_section_description": (
-            "A few nearby cards from the same stream so visitors can keep moving "
-            "without jumping back into the full catalog."
-        ),
+        "related_section_description": "A few cards with similar parameters.",
         "related_reason_source": "Same source",
         "related_reason_funder": "Similar funder",
         "related_reason_theme": "Related theme",

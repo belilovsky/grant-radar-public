@@ -12,8 +12,7 @@ COPY = {
         "eyebrow": "Ошибка 404",
         "heading": "Такой страницы нет",
         "text": (
-            "Возможно, ссылка устарела или адрес введён с ошибкой. "
-            "Вернитесь в каталог и продолжите поиск возможностей."
+            "Ссылка устарела или адрес введён с ошибкой. Вернитесь в каталог."
         ),
         "action": "Вернуться в каталог",
     },
@@ -22,8 +21,7 @@ COPY = {
         "eyebrow": "Error 404",
         "heading": "This page does not exist",
         "text": (
-            "The link may be outdated or the address may be incorrect. "
-            "Return to the catalog to continue exploring opportunities."
+            "The link is outdated or the address is incorrect. Return to the catalog."
         ),
         "action": "Back to catalog",
     },

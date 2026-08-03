@@ -1520,18 +1520,12 @@ async def swagger_docs(request: Request) -> HTMLResponse:
         "ru": {
             "back": "Вернуться на сайт",
             "heading": "Документация API",
-            "description": (
-                "Интерактивное описание публичного API QAZ.FUND для каталогов, "
-                "источников, возможностей и статуса данных."
-            ),
+            "description": "Публичный API QAZ.FUND: каталог, источники, возможности и статус данных.",
         },
         "en": {
             "back": "Back to site",
             "heading": "API documentation",
-            "description": (
-                "Interactive reference for the public QAZ.FUND API covering the "
-                "catalog, sources, opportunities, and data status."
-            ),
+            "description": "Public QAZ.FUND API reference for the catalog, sources, opportunities, and data status.",
         },
     }[docs_lang]
     canonical_href = _public_url(request, root_path, f"/docs?lang={docs_lang}")
