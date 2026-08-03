@@ -99,6 +99,13 @@ COPY: dict[str, dict[str, str]] = {
 
 
 def _copy(lang: str) -> dict[str, str]:
+    if lang == "kk":
+        copy = dict(COPY["ru"])
+        copy["language_fallback_note"] = (
+            "Қазақша редакция әзірге дайын емес. Негізгі мәтін бастапқы тілде "
+            "көрсетіледі; соңғы шарттарды ұйымдастырушының ресми бетінен тексеріңіз."
+        )
+        return copy
     return COPY.get(lang, COPY["ru"])
 
 
@@ -173,6 +180,7 @@ def render_insights_page(
     sources = f"{base}/?lang={lang}#sources" if base else f"/?lang={lang}#sources"
     en_href = f"{base}/insights?lang=en" if base else "/insights?lang=en"
     ru_href = f"{base}/insights?lang=ru" if base else "/insights?lang=ru"
+    kk_href = f"{base}/insights?lang=kk" if base else "/insights?lang=kk"
     open_items = _open_items(items)
     today = date.today()
     soon = sum(1 for item in open_items if item.deadline and today <= item.deadline <= today + timedelta(days=30))
@@ -200,6 +208,12 @@ def render_insights_page(
         (copy["base"], sum(1 for item in open_items if item.score < 0.5)),
     ]
     html_lang = escape(lang, quote=True)
+    fallback_note = escape(str(copy.get("language_fallback_note") or ""))
+    fallback_note_markup = (
+        f'<p class="language-fallback-note" lang="kk" data-language-fallback="ru">{fallback_note}</p>'
+        if fallback_note
+        else ""
+    )
     canonical = f"{site_origin.rstrip('/')}{base}/insights?lang={lang}" if site_origin else f"{base}/insights?lang={lang}"
     return f'''<!doctype html>
 <html lang="{html_lang}" data-avds="grant-radar" data-av-theme="light" data-theme="light">
@@ -208,6 +222,7 @@ def render_insights_page(
   <title>{escape(copy["title"])}</title>
   <meta name="description" content="{escape(copy["description"], quote=True)}">
   <link rel="canonical" href="{escape(canonical, quote=True)}">
+  <link rel="alternate" hreflang="kk" href="{escape((site_origin.rstrip('/') if site_origin else '') + kk_href, quote=True)}">
   <link rel="alternate" hreflang="ru" href="{escape((site_origin.rstrip('/') if site_origin else '') + ru_href, quote=True)}">
   <link rel="alternate" hreflang="en" href="{escape((site_origin.rstrip('/') if site_origin else '') + en_href, quote=True)}">
   <meta property="og:title" content="{escape(copy["title"], quote=True)}"><meta property="og:description" content="{escape(copy["description"], quote=True)}">
@@ -219,6 +234,7 @@ def render_insights_page(
     a{{color:inherit}} .shell{{width:min(var(--av-container-dashboard),calc(100% - 48px));margin:0 auto;padding:20px 0 44px}}
     .topbar{{display:flex;justify-content:space-between;align-items:center;gap:16px;margin-bottom:18px}}
     .back{{color:var(--color-text-muted);font-size:14px;font-weight:700;text-decoration:none}} .back:hover{{color:var(--color-accent)}}
+    .language-fallback-note{{margin:0 0 14px;padding:9px 12px;border-left:3px solid var(--color-accent);color:var(--color-text-muted);background:var(--color-bg-subtle);font-size:12px;line-height:1.45}}
     .langs{{display:flex;gap:6px}} .langs a{{padding:5px 9px;font-size:12px;font-weight:700;text-decoration:none;color:var(--color-text-muted);border-bottom:2px solid transparent}} .langs a.active{{color:var(--color-text);border-color:var(--color-accent)}}
     .hero{{display:grid;grid-template-columns:minmax(0,1.45fr) minmax(260px,.8fr);gap:28px;padding:28px;border:1px solid var(--color-border);border-radius:var(--av-radius-lg);background:linear-gradient(135deg,var(--color-surface),var(--color-accent-subtle));box-shadow:var(--shadow-md)}}
     .eyebrow{{color:var(--color-accent);font-size:12px;font-weight:800;letter-spacing:.06em;text-transform:uppercase}} h1{{font-size:clamp(30px,5vw,48px);line-height:1.05;margin:8px 0 12px;max-width:16ch}} .hero p{{max-width:60ch;color:var(--color-text-muted);margin:0;font-size:16px}}
@@ -250,7 +266,8 @@ def render_insights_page(
   </style>
 </head>
 <body><main class="shell">
-  <div class="topbar"><a class="back" href="{escape(home, quote=True)}">← {escape(copy["back"])}</a><nav class="langs" aria-label="Language"><a class="{'active' if lang == 'ru' else ''}" href="{escape(ru_href, quote=True)}">RU</a><a class="{'active' if lang == 'en' else ''}" href="{escape(en_href, quote=True)}">EN</a></nav></div>
+  <div class="topbar"><a class="back" href="{escape(home, quote=True)}">← {escape(copy["back"])}</a><nav class="langs" aria-label="Language"><a class="{'active' if lang == 'kk' else ''}" href="{escape(kk_href, quote=True)}" lang="kk">KAZ</a><a class="{'active' if lang == 'ru' else ''}" href="{escape(ru_href, quote=True)}" lang="ru">RU</a><a class="{'active' if lang == 'en' else ''}" href="{escape(en_href, quote=True)}" lang="en">EN</a></nav></div>
+  {fallback_note_markup}
   <section class="hero" data-avds-component="hero-band"><div><span class="eyebrow">{escape(copy["eyebrow"])}</span><h1>{escape(copy["heading"])}</h1><p>{escape(copy["intro"])}</p><div class="hero-actions"><a class="button primary" href="{escape(home, quote=True)}">{escape(copy["catalog_link"])}</a><a class="button" href="{escape(status, quote=True)}">{escape(copy["source_link"])}</a></div></div><div class="metric-grid" aria-label="Key catalog metrics">{_metric(copy["total"],len(open_items),"good")}{_metric(copy["sources"],int(coverage.get("enabled_sources") or 0))}{_metric(copy["soon"],soon,"warn")}{_metric(copy["rolling"],rolling)}</div></section>
   <div class="section-head"><h2>{escape(copy["formats"])}</h2><p>{escape(copy["formats_note"])}</p></div>
   <div class="viz-grid"><article class="viz-card"><h3>{escape(copy["formats"])}</h3><p>{escape(copy["formats_note"])}</p>{_bar_chart(type_rows,chart_id="format-distribution",color="#315fdc",empty_label=copy["no_data"])}</article><article class="viz-card"><h3>{escape(copy["sources_title"])}</h3><p>{escape(copy["sources_note"])}</p>{_bar_chart(source_rows,chart_id="source-distribution",color="#15724e",empty_label=copy["no_data"])}</article><article class="viz-card"><h3>{escape(copy["deadlines"])}</h3><p>{escape(copy["deadlines_note"])}</p>{_bar_chart(deadline_rows,chart_id="deadline-distribution",color="#9a6414",empty_label=copy["no_data"])}</article><article class="viz-card"><h3>{escape(copy["freshness"])}</h3><p>{escape(copy["freshness_note"])}</p>{_bar_chart(freshness_rows,chart_id="source-freshness",color="#7c3aed",empty_label=copy["no_data"])}</article></div>

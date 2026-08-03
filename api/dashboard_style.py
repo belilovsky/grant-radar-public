@@ -108,6 +108,15 @@ DASHBOARD_CSS = r"""    :root {
       gap: var(--av-spacing-1);
       margin-bottom: var(--av-spacing-2);
     }
+    .language-fallback-note {
+      margin: 0 0 var(--av-spacing-3);
+      padding: 9px 12px;
+      border-left: 3px solid var(--brand);
+      color: var(--muted);
+      background: var(--panel-wash);
+      font-size: var(--av-text-xs);
+      line-height: 1.45;
+    }
     .brand {
       min-width: 0;
       display: grid;

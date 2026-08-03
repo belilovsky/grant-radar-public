@@ -120,6 +120,9 @@ def render_operator_page(*, lang: str, root_path: str = "") -> str:
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="robots" content="noindex,nofollow">
   <title>{escape(str(copy["title"]))}</title>
+  <link rel="alternate" hreflang="kk" href="{escape(kk_href, quote=True)}">
+  <link rel="alternate" hreflang="ru" href="{escape(ru_href, quote=True)}">
+  <link rel="alternate" hreflang="en" href="{escape(en_href, quote=True)}">
   {AVDS_FONT_HEAD}
   <style>
     {AVDS_CSS}

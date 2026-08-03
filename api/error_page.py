@@ -43,6 +43,12 @@ def render_not_found_page(*, lang: str, root_path: str = "") -> str:
     copy = COPY[active_lang]
     base = root_path.rstrip("/")
     catalog_href = f"{base}/?lang={active_lang}" if base else f"/?lang={active_lang}"
+    ru_href = f"{base}/does-not-exist?lang=ru" if base else "/does-not-exist?lang=ru"
+    kk_href = f"{base}/does-not-exist?lang=kk" if base else "/does-not-exist?lang=kk"
+    en_href = f"{base}/does-not-exist?lang=en" if base else "/does-not-exist?lang=en"
+    ru_current = ' aria-current="page"' if active_lang == "ru" else ""
+    kk_current = ' aria-current="page"' if active_lang == "kk" else ""
+    en_current = ' aria-current="page"' if active_lang == "en" else ""
     return f"""<!doctype html>
 <html lang="{active_lang}" data-avds="grant-radar" data-av-theme="light" data-theme="light">
 <head>
@@ -69,6 +75,10 @@ def render_not_found_page(*, lang: str, root_path: str = "") -> str:
     header {{
       width: min(var(--av-container-dashboard), calc(100% - 48px));
       margin: 0 auto;
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:16px;
     }}
     header {{
       padding: 22px 0 16px;
@@ -80,6 +90,11 @@ def render_not_found_page(*, lang: str, root_path: str = "") -> str:
       font-weight: 800;
       text-decoration: none;
     }}
+    .lang-switch {{ display:inline-flex; align-items:center; gap:4px; }}
+    .lang-switch a {{ min-width:34px; padding:6px 8px; border-bottom:2px solid transparent;
+      color:var(--color-text-muted); text-align:center; text-decoration:none;
+      font-size:12px; font-weight:700; }}
+    .lang-switch a[aria-current="page"] {{ border-bottom-color:var(--color-accent); color:var(--color-text); }}
     main {{
       align-self: center;
       justify-self: stretch;
@@ -143,6 +158,11 @@ def render_not_found_page(*, lang: str, root_path: str = "") -> str:
 <body>
   <header>
     <a class="brand" href="{escape(catalog_href, quote=True)}">QAZ.FUND</a>
+    <nav class="lang-switch" aria-label="Language">
+      <a href="{escape(kk_href, quote=True)}" lang="kk"{kk_current}>KAZ</a>
+      <a href="{escape(ru_href, quote=True)}" lang="ru"{ru_current}>RU</a>
+      <a href="{escape(en_href, quote=True)}" lang="en"{en_current}>EN</a>
+    </nav>
   </header>
   <main>
     <span class="eyebrow">{escape(copy["eyebrow"])}</span>

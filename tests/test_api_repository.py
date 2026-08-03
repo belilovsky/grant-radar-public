@@ -3050,6 +3050,15 @@ def test_opportunity_page_renders_public_permalink(monkeypatch):
     head_response = client.head(f"/opportunity/{item.id}", params={"lang": "ru"})
     assert head_response.status_code == 200
 
+    kk_response = client.get(f"/opportunity/{item.id}", params={"lang": "kk"})
+    assert kk_response.status_code == 200
+    assert '<html lang="kk"' in kk_response.text
+    assert 'data-language-fallback="ru"' in kk_response.text
+    assert (
+        f'href="http://testserver/opportunity/{item.id}?lang=kk" lang="kk">KAZ</a>'
+        in kk_response.text
+    )
+
 
 def test_opportunity_page_defaults_to_russian_without_lang(monkeypatch):
     _reset_api_state(monkeypatch)
@@ -3311,6 +3320,14 @@ def test_public_insights_page_renders_avds_charts(monkeypatch):
     assert 'data-avds-pattern="deadline-distribution"' in response.text
     assert "Гранты" in response.text
     assert "До 30 дней" in response.text
+    assert 'href="/insights?lang=kk"' in response.text
+    assert 'rel="alternate" hreflang="kk"' in response.text
+
+    kk_response = client.get("/insights", params={"lang": "kk"})
+    assert kk_response.status_code == 200
+    assert '<html lang="kk"' in kk_response.text
+    assert 'data-language-fallback="ru"' in kk_response.text
+    assert "Қазақша редакция әзірге дайын емес." in kk_response.text
 
 
 def test_public_info_pages_are_linkable(monkeypatch):
@@ -3463,6 +3480,11 @@ def test_funder_page_renders_public_profile(monkeypatch):
         in response.text
     )
     assert (
+        'rel="alternate" hreflang="kk" href="http://testserver/funder/science-fund?lang=kk"'
+        in response.text
+    )
+    assert 'href="http://testserver/funder/science-fund?lang=kk" lang="kk">KAZ</a>' in response.text
+    assert (
         'property="og:image" content="http://testserver/og-image.png"' in response.text
     )
     assert (
@@ -3471,6 +3493,15 @@ def test_funder_page_renders_public_profile(monkeypatch):
     assert "googletagmanager.com/gtag/js?id=G-9EF720PSER" in response.text
     assert '"@type": "Organization"' in response.text
     assert '"@type": "CollectionPage"' in response.text
+
+    kk_response = client.get("/funder/science-fund", params={"lang": "kk"})
+    assert kk_response.status_code == 200
+    assert '<html lang="kk"' in kk_response.text
+    assert 'data-language-fallback="ru"' in kk_response.text
+    assert (
+        'href="http://testserver/funder/science-fund?lang=kk" lang="kk">KAZ</a>'
+        in kk_response.text
+    )
 
 
 def test_funder_labels_keep_acronyms_and_normalized_case():
@@ -3594,6 +3625,10 @@ def test_opportunity_page_prefers_public_base_url(monkeypatch):
     assert (
         'rel="alternate" hreflang="ru" href="https://qaz.fund/opportunity/'
         f'{item.id}?lang=ru"' in response.text
+    )
+    assert (
+        'rel="alternate" hreflang="kk" href="https://qaz.fund/opportunity/'
+        f'{item.id}?lang=kk"' in response.text
     )
     assert (
         'property="og:image" content="https://qaz.fund/og-image.png"' in response.text

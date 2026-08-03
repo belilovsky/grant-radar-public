@@ -139,6 +139,10 @@ def render_status_page(
     ru_current = ' aria-current="page"' if active_lang == "ru" else ""
     kk_current = ' aria-current="page"' if active_lang == "kk" else ""
     en_current = ' aria-current="page"' if active_lang == "en" else ""
+    origin = site_origin.rstrip("/") if site_origin else ""
+    kk_canonical = f"{origin}{kk_href}" if origin else kk_href
+    ru_canonical = f"{origin}{ru_href}" if origin else ru_href
+    en_canonical = f"{origin}{en_href}" if origin else en_href
     sources = [row for row in coverage.get("sources", []) if row.get("enabled")]
     sources.sort(
         key=lambda row: (
@@ -188,6 +192,9 @@ def render_status_page(
   <title>{escape(str(copy["title"]))}</title>
   <meta name="description" content="{escape(str(copy["intro"]), quote=True)}">
   <link rel="canonical" href="{escape(canonical, quote=True)}">
+  <link rel="alternate" hreflang="kk" href="{escape(kk_canonical, quote=True)}">
+  <link rel="alternate" hreflang="ru" href="{escape(ru_canonical, quote=True)}">
+  <link rel="alternate" hreflang="en" href="{escape(en_canonical, quote=True)}">
   {AVDS_FONT_HEAD}
   <style>
     {AVDS_CSS}

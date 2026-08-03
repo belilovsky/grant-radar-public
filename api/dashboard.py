@@ -230,6 +230,13 @@ def render_dashboard(
     lang_kk_current = ' aria-current="page"' if active_lang == "kk" else ""
     lang_ru_current = ' aria-current="page"' if active_lang == "ru" else ""
     lang_en_current = ' aria-current="page"' if active_lang == "en" else ""
+    fallback_note = str(copy.get("language_fallback_note") or "").strip()
+    fallback_note_markup = (
+        f'<p class="language-fallback-note" lang="kk" data-language-fallback="ru">'
+        f"{escape(fallback_note)}</p>"
+        if fallback_note
+        else ""
+    )
 
     def initial_preset_buttons(
         kind: str,
@@ -378,6 +385,7 @@ def render_dashboard(
           </div>
         </div>
       </header>
+      {fallback_note_markup}
       <div class="hero-grid">
         <div class="hero-copy">
           <p class="hero-intro">{escape(str(copy["hero_intro"]))}</p>

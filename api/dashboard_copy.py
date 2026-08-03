@@ -2149,6 +2149,10 @@ def _copy_for(lang: str) -> dict[str, object]:
         copy = dict(cast(dict[str, object], COPY["ru"]))
         copy["lang"] = "kk"
         copy["locale"] = "kk-KZ"
+        copy["language_fallback_note"] = (
+            "Қазақша редакция әзірге дайын емес. Негізгі мәтін бастапқы тілде "
+            "көрсетіледі; соңғы шарттарды ұйымдастырушының ресми бетінен тексеріңіз."
+        )
         return copy
     return cast(dict[str, object], COPY["ru"])
 

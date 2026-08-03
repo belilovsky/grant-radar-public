@@ -755,6 +755,10 @@ def render_opportunity_page(
         _absolute_href(site_origin, _page_path(root_path, str(detail.id), "en")),
         quote=True,
     )
+    kk_href = escape(
+        _absolute_href(site_origin, _page_path(root_path, str(detail.id), "kk")),
+        quote=True,
+    )
     catalog_href = escape(_catalog_path(root_path, active_lang), quote=True)
     detail_base = root_path.rstrip("/")
     sources_href = escape(
@@ -889,7 +893,14 @@ def render_opportunity_page(
     social_image = escape(og_image_url(site_origin, root_path), quote=True)
     analytics_head = analytics_head_html()
     ru_lang_class = "active" if active_lang == "ru" else ""
+    kk_lang_class = "active" if active_lang == "kk" else ""
     en_lang_class = "active" if active_lang == "en" else ""
+    fallback_note = str(copy.get("language_fallback_note") or "").strip()
+    fallback_note_markup = (
+        f'<p class="language-fallback-note" lang="kk" data-language-fallback="ru">{escape(fallback_note)}</p>'
+        if fallback_note
+        else ""
+    )
     eligibility = [
         escape(_label_value(value, copy))
         for value in detail.eligibility
@@ -940,6 +951,7 @@ def render_opportunity_page(
   <title>{escape(page_title)}</title>
   <meta name="description" content="{escape(seo_summary, quote=True)}">
   <link rel="canonical" href="{canonical_href}">
+  <link rel="alternate" hreflang="kk" href="{kk_href}">
   <link rel="alternate" hreflang="ru" href="{ru_href}">
   <link rel="alternate" hreflang="en" href="{en_href}">
   <link rel="alternate" hreflang="x-default" href="{ru_href}">
@@ -1011,6 +1023,8 @@ def render_opportunity_page(
       color: var(--muted);
       font-size: var(--av-text-sm);
     }}
+    .language-fallback-note {{ margin:0 0 14px; padding:9px 12px; border-left:3px solid var(--brand);
+      color:var(--muted); background:var(--surface-subtle); font-size:12px; line-height:1.45; }}
     .breadcrumbs a:hover {{
       color: var(--brand);
     }}
@@ -1732,10 +1746,12 @@ def render_opportunity_page(
         <span>{escape(title)}</span>
       </nav>
       <nav class="lang-switch" aria-label="{escape(str(copy['language_switch']), quote=True)}">
+        <a class="{kk_lang_class}" href="{kk_href}" lang="kk">KAZ</a>
         <a class="{ru_lang_class}" href="{ru_href}" lang="ru">RU</a>
         <a class="{en_lang_class}" href="{en_href}" lang="en">EN</a>
       </nav>
     </div>
+    {fallback_note_markup}
 
     <section class="hero">
       <div class="hero-grid">

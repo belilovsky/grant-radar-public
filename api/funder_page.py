@@ -365,6 +365,12 @@ def render_funder_page(
         ),
         quote=True,
     )
+    kk_href = escape(
+        _absolute_href(
+            site_origin, _funder_path(root_path.rstrip("/"), str(funder["slug"]), "kk")
+        ),
+        quote=True,
+    )
     html_lang = escape(active_lang, quote=True)
     canonical_path = _funder_path(
         root_path.rstrip("/"), str(funder["slug"]), active_lang
@@ -489,7 +495,14 @@ def render_funder_page(
     social_image = escape(og_image_url(site_origin, root_path), quote=True)
     analytics_head = analytics_head_html()
     ru_lang_class = "active" if active_lang == "ru" else ""
+    kk_lang_class = "active" if active_lang == "kk" else ""
     en_lang_class = "active" if active_lang == "en" else ""
+    fallback_note = str(copy.get("language_fallback_note") or "").strip()
+    fallback_note_markup = (
+        f'<p class="language-fallback-note" lang="kk" data-language-fallback="ru">{escape(fallback_note)}</p>'
+        if fallback_note
+        else ""
+    )
 
     return f"""<!doctype html>
 <html lang="{html_lang}" {html_theme_attrs}>
@@ -499,6 +512,7 @@ def render_funder_page(
   <title>{funder_name} – QAZ.FUND</title>
   <meta name="description" content="{overview}">
   <link rel="canonical" href="{canonical_href}">
+  <link rel="alternate" hreflang="kk" href="{kk_href}">
   <link rel="alternate" hreflang="ru" href="{ru_href}">
   <link rel="alternate" hreflang="en" href="{en_href}">
   <link rel="alternate" hreflang="x-default" href="{ru_href}">
@@ -556,6 +570,8 @@ def render_funder_page(
       margin-bottom: 14px;
     }}
     .back-link:hover {{ color: var(--brand); }}
+    .language-fallback-note {{ margin:0 0 14px; padding:9px 12px; border-left:3px solid var(--brand);
+      color:var(--muted); background:var(--panel-wash); font-size:12px; line-height:1.45; }}
     .topbar {{
       display: flex;
       align-items: center;
@@ -927,10 +943,12 @@ def render_funder_page(
     <div class="topbar">
       <a class="back-link" href="{catalog_href}">{back_label}</a>
       <nav class="lang-switch" aria-label="{escape(str(copy['language_switch']), quote=True)}">
+        <a class="{kk_lang_class}" href="{kk_href}" lang="kk">KAZ</a>
         <a class="{ru_lang_class}" href="{ru_href}" lang="ru">RU</a>
         <a class="{en_lang_class}" href="{en_href}" lang="en">EN</a>
       </nav>
     </div>
+    {fallback_note_markup}
     <section class="hero">
       <span class="eyebrow">{escape(str(copy["funder_page_eyebrow"]))}</span>
       <div class="hero-copy">
