@@ -1769,6 +1769,10 @@ async def llms_txt(request: Request) -> Response:
     avds_contract = _public_url(
         request, root_path, "/.well-known/avds-ui-contract.json"
     )
+    insights = _public_url(request, root_path, "/insights")
+    terms = _public_url(request, root_path, "/terms")
+    data_policy = _public_url(request, root_path, "/data-policy")
+    attribution = _public_url(request, root_path, "/attribution")
     status_page = _public_url(request, root_path, "/status")
     coverage = _public_url(request, root_path, "/coverage")
     opportunities = _public_url(request, root_path, "/opportunities")
@@ -1798,6 +1802,10 @@ async def llms_txt(request: Request) -> Response:
                 f"- QazStack consumer contract: {qazstack_contract}",
                 f"- AV DS 4 UI contract: {avds_contract}",
                 f"- Source status page: {status_page}",
+                f"- Catalog insights: {insights}",
+                f"- Terms of use: {terms}",
+                f"- Data policy: {data_policy}",
+                f"- Data attribution: {attribution}",
                 "",
                 "## Public data endpoints",
                 f"- Coverage JSON: {coverage}",
@@ -1824,6 +1832,10 @@ async def llms_txt(request: Request) -> Response:
                 "## Public route templates",
                 "- Opportunity page: /opportunity/{id}?lang=kk|ru|en",
                 "- Funder page: /funder/{slug}?lang=kk|ru|en",
+                "- Insights page: /insights?lang=kk|ru|en",
+                "- Terms page: /terms?lang=kk|ru|en",
+                "- Data policy page: /data-policy?lang=kk|ru|en",
+                "- Attribution page: /attribution?lang=kk|ru|en",
                 "",
                 "## Query hints",
                 (
@@ -1886,6 +1898,10 @@ async def site_discovery(request: Request) -> Response:
     avds_contract = _public_url(
         request, root_path, "/.well-known/avds-ui-contract.json"
     )
+    insights = _public_url(request, root_path, "/insights")
+    terms = _public_url(request, root_path, "/terms")
+    data_policy = _public_url(request, root_path, "/data-policy")
+    attribution = _public_url(request, root_path, "/attribution")
     payload = {
         "site": "QAZ.FUND",
         "type": "public-funding-navigator",
@@ -1915,6 +1931,10 @@ async def site_discovery(request: Request) -> Response:
             "opportunity": "/opportunity/{id}?lang={lang}",
             "funder": "/funder/{slug}?lang={lang}",
             "digest": "/digest?lang={lang}",
+            "insights": "/insights?lang={lang}",
+            "terms": "/terms?lang={lang}",
+            "data_policy": "/data-policy?lang={lang}",
+            "attribution": "/attribution?lang={lang}",
         },
         "data_endpoints": {
             "coverage": coverage,
@@ -1922,6 +1942,10 @@ async def site_discovery(request: Request) -> Response:
             "opportunities_ndjson": opportunities_ndjson,
             "opportunities_ndjson_compact": opportunities_ndjson_compact,
             "digest": digest,
+            "insights": insights,
+            "terms": terms,
+            "data_policy": data_policy,
+            "attribution": attribution,
         },
         "ai_consumption": {
             "preferred_bulk_export": opportunities_ndjson_compact,
@@ -1972,6 +1996,8 @@ async def site_discovery(request: Request) -> Response:
         "capabilities": [
             "public opportunity pages",
             "public funder pages",
+            "public insights page",
+            "public data-policy pages",
             "machine-readable opportunity api",
             "cache-aware ndjson export",
             "machine-readable source coverage",

@@ -1103,6 +1103,10 @@ def test_marketing_endpoints_are_exposed(monkeypatch):
         "AV DS 4 UI contract: " "http://testserver/.well-known/avds-ui-contract.json"
     ) in llms.text
     assert "Source status page: http://testserver/status" in llms.text
+    assert "Catalog insights: http://testserver/insights" in llms.text
+    assert "Terms of use: http://testserver/terms" in llms.text
+    assert "Data policy: http://testserver/data-policy" in llms.text
+    assert "Data attribution: http://testserver/attribution" in llms.text
     assert "Coverage JSON: http://testserver/coverage" in llms.text
     assert "Opportunities JSON: http://testserver/opportunities" in llms.text
     assert "Opportunities NDJSON: http://testserver/opportunities.ndjson" in llms.text
@@ -1116,6 +1120,7 @@ def test_marketing_endpoints_are_exposed(monkeypatch):
     assert "Digest JSON: http://testserver/digest" in llms.text
     assert "Opportunity page: /opportunity/{id}?lang=kk|ru|en" in llms.text
     assert "Funder page: /funder/{slug}?lang=kk|ru|en" in llms.text
+    assert "Insights page: /insights?lang=kk|ru|en" in llms.text
     assert "Opportunities filters: q, source, lifecycle, region, tag" in llms.text
     assert "evidence_state=sourced means that a direct public source link" in llms.text
     llms_head = client.head("/llms.txt")
@@ -1156,6 +1161,10 @@ def test_marketing_endpoints_are_exposed(monkeypatch):
             "opportunity": "/opportunity/{id}?lang={lang}",
             "funder": "/funder/{slug}?lang={lang}",
             "digest": "/digest?lang={lang}",
+            "insights": "/insights?lang={lang}",
+            "terms": "/terms?lang={lang}",
+            "data_policy": "/data-policy?lang={lang}",
+            "attribution": "/attribution?lang={lang}",
         },
         "data_endpoints": {
             "coverage": "http://testserver/coverage",
@@ -1165,6 +1174,10 @@ def test_marketing_endpoints_are_exposed(monkeypatch):
                 "http://testserver/opportunities.ndjson?compact=true"
             ),
             "digest": "http://testserver/digest",
+            "insights": "http://testserver/insights",
+            "terms": "http://testserver/terms",
+            "data_policy": "http://testserver/data-policy",
+            "attribution": "http://testserver/attribution",
         },
         "ai_consumption": {
             "preferred_bulk_export": (
@@ -1217,6 +1230,8 @@ def test_marketing_endpoints_are_exposed(monkeypatch):
         "capabilities": [
             "public opportunity pages",
             "public funder pages",
+            "public insights page",
+            "public data-policy pages",
             "machine-readable opportunity api",
             "cache-aware ndjson export",
             "machine-readable source coverage",
