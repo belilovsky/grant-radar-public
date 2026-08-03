@@ -8,12 +8,14 @@ input boundary and are normalized before rendering or content lookup:
 - Russian: `ru`, `ru-RU`, `rus`, `russian`;
 - English: `en`, `en-US`, `eng`, `english`.
 
-The dashboard, opportunity/funder pages, public explanations, branded 404 and
-the noindex operator shell all expose the same three locales. The source
-payload remains separate from localized display fields. Missing localized
-content may use a source or safe fallback, but that fallback must not be
-described as an editor-approved translation. Source language and translation
-availability are data properties, not a reason to mutate a source record.
+The dashboard, opportunity/funder pages, insights, source status, public
+explanations, branded 404 and the noindex operator shell all expose the same
+three locales. On a page with no reviewed Kazakh copy, a compact notice makes
+the source-language fallback explicit. The source payload remains separate
+from localized display fields. Missing localized content may use a source or
+safe fallback, but that fallback must not be described as an editor-approved
+translation. Source language and translation availability are data properties,
+not a reason to mutate a source record.
 
 The machine-readable contract is [`language-surface.json`](language-surface.json)
 and is referenced from `docs/qazstack/consumer-contract.json`.
