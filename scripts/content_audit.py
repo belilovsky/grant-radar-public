@@ -92,6 +92,24 @@ def _visible_item_text(item: dict[str, Any]) -> str:
     return " ".join(parts)
 
 
+def _has_deadline_policy(item: dict[str, Any]) -> bool:
+    """Return whether the public record explains why a date is absent."""
+    if item.get("deadline"):
+        return True
+    policy = item.get("deadline_policy")
+    raw = item.get("raw")
+    if isinstance(raw, dict):
+        policy = policy or raw.get("deadline_policy")
+        if raw.get("source_watch") and (
+            raw.get("verification_note") or raw.get("status_note")
+        ):
+            return True
+    if policy:
+        return True
+    lifecycle = str(item.get("lifecycle") or item.get("opportunity_status") or "")
+    return lifecycle.lower() in {"closed", "archived", "awarded"}
+
+
 def _rootish_source_url(value: Any) -> bool:
     if not value:
         return True
@@ -209,7 +227,8 @@ def analyze_content(
     missing_deadline_titles = [
         str(item.get("title") or "")
         for item in opportunities
-        if not item.get("deadline") and "rolling" not in (item.get("tags") or [])
+        if not _has_deadline_policy(item)
+        and "rolling" not in {str(tag).strip().lower() for tag in (item.get("tags") or [])}
     ][:20]
     if missing_deadline_titles:
         issues.append(
@@ -220,6 +239,11 @@ def analyze_content(
         str(item.get("source_url") or "")
         for item in opportunities
         if _rootish_source_url(item.get("source_url"))
+        and not (
+            isinstance(item.get("raw"), dict)
+            and item["raw"].get("source_watch")
+            and item.get("source_url")
+        )
     ][:20]
     if rootish_source_urls:
         issues.append(f"{len(rootish_source_urls)} opportunities have weak source_url")
