@@ -26,6 +26,7 @@
     "unverified-source-promotion",
     "secret-export"
   ],
+  "language_surface": "docs/qazstack/language-surface.json",
   "evidence": {
     "source_files": [
       "core/qazstack_bridge.py",

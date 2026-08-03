@@ -9,7 +9,9 @@ It helps people find a route, check the source, and keep the next step clear.
 - collects opportunities from public source adapters;
 - normalizes, deduplicates, and scores them;
 - serves a public FastAPI dashboard and JSON endpoints;
-- supports localized Russian detail pages and public shareable permalinks.
+- supports localized Kazakh, Russian, and English detail pages and public
+  shareable permalinks; original source language and translation availability
+  remain explicit in each record.
 
 The repository is structured for clean local development, reproducible
 validation, and public-safe deployment documentation.
@@ -34,17 +36,17 @@ The main public endpoints are:
 - `GET /ready`
 - `GET /sources`
 - `GET /coverage`
-- `GET /status?lang=ru|en`
+- `GET /status?lang=kk|ru|en`
 - `GET /funders`
 - `GET /opportunities`
 - `GET /opportunities.ndjson`
 - `GET /opportunities/{opportunity_id}`
-- `GET /opportunity/{opportunity_id}?lang=ru|en`
-- `GET /funder/{funder_slug}?lang=ru|en`
-- `GET /insights?lang=ru|en`
-- `GET /terms?lang=ru|en`
-- `GET /data-policy?lang=ru|en`
-- `GET /attribution?lang=ru|en`
+- `GET /opportunity/{opportunity_id}?lang=kk|ru|en`
+- `GET /funder/{funder_slug}?lang=kk|ru|en`
+- `GET /insights?lang=kk|ru|en`
+- `GET /terms?lang=kk|ru|en`
+- `GET /data-policy?lang=kk|ru|en`
+- `GET /attribution?lang=kk|ru|en`
 - `GET /digest`
 - `GET /docs`
 - `GET /openapi.json`

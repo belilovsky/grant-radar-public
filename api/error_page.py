@@ -5,6 +5,7 @@ from __future__ import annotations
 from html import escape
 
 from api.avds import AVDS_CSS, AVDS_FONT_HEAD
+from core.localization import normalize_content_lang
 
 COPY = {
     "ru": {
@@ -25,13 +26,20 @@ COPY = {
         ),
         "action": "Back to catalog",
     },
+    "kk": {
+        "title": "Бет табылмады – QAZ.FUND",
+        "eyebrow": "404 қатесі",
+        "heading": "Мұндай бет жоқ",
+        "text": "Сілтеме ескірген немесе мекенжай қате енгізілген. Каталогқа оралыңыз.",
+        "action": "Каталогқа оралу",
+    },
 }
 
 
 def render_not_found_page(*, lang: str, root_path: str = "") -> str:
     """Render a concise noindex 404 page for browser navigation."""
 
-    active_lang = lang if lang in COPY else "ru"
+    active_lang = normalize_content_lang(lang)
     copy = COPY[active_lang]
     base = root_path.rstrip("/")
     catalog_href = f"{base}/?lang={active_lang}" if base else f"/?lang={active_lang}"

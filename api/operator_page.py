@@ -6,6 +6,7 @@ import json
 from html import escape
 
 from api.avds import AVDS_CSS, AVDS_FONT_HEAD
+from core.localization import normalize_content_lang
 
 COPY = {
     "ru": {
@@ -66,20 +67,51 @@ COPY = {
         "message": "Message",
         "empty": "No records.",
     },
+    "kk": {
+        "title": "Операторлық бақылау – QAZ.FUND",
+        "brand_context": "Операторлық контур",
+        "eyebrow": "Конвейер күйі",
+        "heading": "Дереккөздерді бақылау",
+        "intro": "Жинаушылардың техникалық күйі және соңғы іске қосулар.",
+        "token": "Оператор токені",
+        "connect": "Қосылу",
+        "disconnect": "Шығу",
+        "back": "Каталог",
+        "hint": "Токен тек осы браузер қойындысында сақталады және URL мекенжайына жазылмайды.",
+        "loading": "Күй жүктелуде",
+        "unauthorized": "Токен қабылданбады немесе операторлық қолжетімділік бапталмаған.",
+        "error": "Оператор деректерін жүктеу мүмкін болмады.",
+        "catalog": "Жазбалар",
+        "relevant": "Өзекті",
+        "sources": "Дереккөздер",
+        "fresh": "Жаңа",
+        "stale": "Назар аударуды қажет етеді",
+        "failed": "Сәтсіз іске қосулар",
+        "recent": "Соңғы іске қосулар",
+        "source": "Дереккөз",
+        "status": "Күйі",
+        "started": "Басталды",
+        "seen": "Алынды",
+        "new": "Жаңа",
+        "message": "Хабарлама",
+        "empty": "Жазба жоқ.",
+    },
 }
 
 
 def render_operator_page(*, lang: str, root_path: str = "") -> str:
-    active_lang = lang if lang in COPY else "ru"
+    active_lang = normalize_content_lang(lang)
     copy = COPY[active_lang]
     base = root_path.rstrip("/")
     catalog_href = f"{base}/?lang={active_lang}" if base else f"/?lang={active_lang}"
     ru_href = f"{base}/operator?lang=ru" if base else "/operator?lang=ru"
+    kk_href = f"{base}/operator?lang=kk" if base else "/operator?lang=kk"
     en_href = f"{base}/operator?lang=en" if base else "/operator?lang=en"
     health_path = f"{base}/operator/health" if base else "/operator/health"
     copy_json = json.dumps(copy, ensure_ascii=False)
     endpoint_json = json.dumps(health_path, ensure_ascii=False)
     ru_current = ' aria-current="page"' if active_lang == "ru" else ""
+    kk_current = ' aria-current="page"' if active_lang == "kk" else ""
     en_current = ' aria-current="page"' if active_lang == "en" else ""
     return f"""<!doctype html>
 <html lang="{active_lang}" data-avds="grant-radar" data-av-theme="light" data-theme="light">
@@ -211,6 +243,7 @@ def render_operator_page(*, lang: str, root_path: str = "") -> str:
         <div class="operator-tools">
           <nav class="lang-switch" aria-label="Language">
             <a href="{escape(ru_href, quote=True)}" lang="ru"{ru_current}>RU</a>
+            <a href="{escape(kk_href, quote=True)}" lang="kk"{kk_current}>ҚАЗ</a>
             <a href="{escape(en_href, quote=True)}" lang="en"{en_current}>EN</a>
           </nav>
           <a class="catalog-link" href="{escape(catalog_href, quote=True)}">
