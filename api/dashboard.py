@@ -165,19 +165,27 @@ def render_dashboard(
     )
     insights_href = escape(insights_path, quote=True)
     terms_href = escape(
-        f"{base_raw}/terms?lang={active_lang}" if base_raw else f"/terms?lang={active_lang}",
+        (
+            f"{base_raw}/terms?lang={active_lang}"
+            if base_raw
+            else f"/terms?lang={active_lang}"
+        ),
         quote=True,
     )
     data_policy_href = escape(
-        f"{base_raw}/data-policy?lang={active_lang}"
-        if base_raw
-        else f"/data-policy?lang={active_lang}",
+        (
+            f"{base_raw}/data-policy?lang={active_lang}"
+            if base_raw
+            else f"/data-policy?lang={active_lang}"
+        ),
         quote=True,
     )
     attribution_href = escape(
-        f"{base_raw}/attribution?lang={active_lang}"
-        if base_raw
-        else f"/attribution?lang={active_lang}",
+        (
+            f"{base_raw}/attribution?lang={active_lang}"
+            if base_raw
+            else f"/attribution?lang={active_lang}"
+        ),
         quote=True,
     )
     status_path = (
@@ -856,10 +864,12 @@ def render_dashboard(
             </label>
           </div>
           <div class="profile-builder-actions">
-            <button class="button primary" type="button" id="profile-apply" data-avds-component="button">
+            <button class="button primary" type="button" id="profile-apply"
+              data-avds-component="button">
               {escape(str(copy["profile_apply"]))}
             </button>
-            <button class="text-button" type="button" id="profile-reset" data-avds-component="button">
+            <button class="text-button" type="button" id="profile-reset"
+              data-avds-component="button">
               {escape(str(copy["profile_reset"]))}
             </button>
           </div>

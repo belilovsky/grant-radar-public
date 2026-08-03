@@ -12,11 +12,11 @@ from datetime import date, timedelta
 from html import escape
 from typing import Any
 
+from qazstack.opportunities import public_lifecycle
+
 from api.avds import AVDS_CSS, AVDS_FONT_HEAD
 from api.public_meta import analytics_head_html, og_image_url
 from core.models import Opportunity
-from qazstack.opportunities import public_lifecycle
-
 
 COPY: dict[str, dict[str, str]] = {
     "ru": {
@@ -118,7 +118,9 @@ def _label(raw: str, lang: str) -> str:
         "tender": ("Тендеры", "Tenders"),
         "fellowship": ("Стипендии", "Fellowships"),
     }
-    return labels.get(raw, (raw.replace("_", " ").title(), raw.replace("_", " ").title()))[lang == "en"]
+    return labels.get(
+        raw, (raw.replace("_", " ").title(), raw.replace("_", " ").title())
+    )[lang == "en"]
 
 
 def _open_items(items: list[Opportunity]) -> list[Opportunity]:
@@ -131,12 +133,18 @@ def _open_items(items: list[Opportunity]) -> list[Opportunity]:
     ]
 
 
-def _count_rows(counter: Counter[str], labels: dict[str, str], limit: int = 6) -> list[tuple[str, int]]:
-    rows = [(labels.get(key, key), int(value)) for key, value in counter.most_common(limit)]
+def _count_rows(
+    counter: Counter[str], labels: dict[str, str], limit: int = 6
+) -> list[tuple[str, int]]:
+    rows = [
+        (labels.get(key, key), int(value)) for key, value in counter.most_common(limit)
+    ]
     return rows or [("–", 0)]
 
 
-def _bar_chart(rows: list[tuple[str, int]], *, chart_id: str, color: str, empty_label: str) -> str:
+def _bar_chart(
+    rows: list[tuple[str, int]], *, chart_id: str, color: str, empty_label: str
+) -> str:
     max_value = max((value for _, value in rows), default=0)
     width = 620
     bar_height = 24
@@ -162,7 +170,9 @@ def _bar_chart(rows: list[tuple[str, int]], *, chart_id: str, color: str, empty_
 
 
 def _metric(label: str, value: int, tone: str = "") -> str:
-    return f'<div class="insight-metric {tone}"><span>{escape(label)}</span><strong>{value:,}</strong></div>'.replace(",", " ")
+    return f'<div class="insight-metric {tone}"><span>{escape(label)}</span><strong>{value:,}</strong></div>'.replace(
+        ",", " "
+    )
 
 
 def render_insights_page(
@@ -175,7 +185,9 @@ def render_insights_page(
 ) -> str:
     copy = _copy(lang)
     base = root_path.rstrip("/")
-    home = f"{base}/?lang={lang}#opportunities" if base else f"/?lang={lang}#opportunities"
+    home = (
+        f"{base}/?lang={lang}#opportunities" if base else f"/?lang={lang}#opportunities"
+    )
     status = f"{base}/status?lang={lang}" if base else f"/status?lang={lang}"
     sources = f"{base}/?lang={lang}#sources" if base else f"/?lang={lang}#sources"
     en_href = f"{base}/insights?lang=en" if base else "/insights?lang=en"
@@ -183,19 +195,67 @@ def render_insights_page(
     kk_href = f"{base}/insights?lang=kk" if base else "/insights?lang=kk"
     open_items = _open_items(items)
     today = date.today()
-    soon = sum(1 for item in open_items if item.deadline and today <= item.deadline <= today + timedelta(days=30))
+    soon = sum(
+        1
+        for item in open_items
+        if item.deadline and today <= item.deadline <= today + timedelta(days=30)
+    )
     rolling = sum(1 for item in open_items if item.deadline is None)
     type_rows = _count_rows(Counter(item.type.value for item in open_items), {}, 6)
     type_rows = [(_label(label, lang), value) for label, value in type_rows]
-    source_rows = _count_rows(Counter(item.funder or item.source for item in open_items), {}, 6)
+    source_rows = _count_rows(
+        Counter(item.funder or item.source for item in open_items), {}, 6
+    )
     deadline_rows = [
         (copy["within_30"], soon),
-        (copy["within_90"], sum(1 for item in open_items if item.deadline and today + timedelta(days=30) < item.deadline <= today + timedelta(days=90))),
-        (copy["later"], sum(1 for item in open_items if item.deadline and item.deadline > today + timedelta(days=90))),
+        (
+            copy["within_90"],
+            sum(
+                1
+                for item in open_items
+                if item.deadline
+                and today + timedelta(days=30)
+                < item.deadline
+                <= today + timedelta(days=90)
+            ),
+        ),
+        (
+            copy["later"],
+            sum(
+                1
+                for item in open_items
+                if item.deadline and item.deadline > today + timedelta(days=90)
+            ),
+        ),
         (copy["rolling_label"], rolling),
-        (copy["no_deadline"], max(0, len(open_items) - soon - rolling - sum(1 for item in open_items if item.deadline and item.deadline > today + timedelta(days=90)) - sum(1 for item in open_items if item.deadline and today + timedelta(days=30) < item.deadline <= today + timedelta(days=90)))),
+        (
+            copy["no_deadline"],
+            max(
+                0,
+                len(open_items)
+                - soon
+                - rolling
+                - sum(
+                    1
+                    for item in open_items
+                    if item.deadline and item.deadline > today + timedelta(days=90)
+                )
+                - sum(
+                    1
+                    for item in open_items
+                    if item.deadline
+                    and today + timedelta(days=30)
+                    < item.deadline
+                    <= today + timedelta(days=90)
+                ),
+            ),
+        ),
     ]
-    freshness = Counter(str(row.get("freshness_status") or "unknown") for row in coverage.get("sources", []) if isinstance(row, dict))
+    freshness = Counter(
+        str(row.get("freshness_status") or "unknown")
+        for row in coverage.get("sources", [])
+        if isinstance(row, dict)
+    )
     freshness_rows = [
         (copy["fresh"], freshness.get("fresh", 0)),
         (copy["watch"], freshness.get("watch", 0)),
@@ -214,8 +274,12 @@ def render_insights_page(
         if fallback_note
         else ""
     )
-    canonical = f"{site_origin.rstrip('/')}{base}/insights?lang={lang}" if site_origin else f"{base}/insights?lang={lang}"
-    return f'''<!doctype html>
+    canonical = (
+        f"{site_origin.rstrip('/')}{base}/insights?lang={lang}"
+        if site_origin
+        else f"{base}/insights?lang={lang}"
+    )
+    return f"""<!doctype html>
 <html lang="{html_lang}" data-avds="grant-radar" data-av-theme="light" data-theme="light">
 <head>
   <meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
@@ -274,4 +338,4 @@ def render_insights_page(
   <section class="viz-card" style="margin-top:14px"><h3>{escape(copy["good"])}</h3><p>{escape(copy["formats_note"])}</p>{_bar_chart(score_rows,chart_id="match-quality",color="#315fdc",empty_label=copy["no_data"])}</section>
   <aside class="method" data-avds-component="method-card"><strong>{escape(copy["method"])}</strong><p>{escape(copy["method_text"])}</p></aside>
   <footer class="footer"><span>{escape(copy["footer"])}</span><span><a href="{escape(home, quote=True)}">{escape(copy["catalog_link"])}</a> · <a href="{escape(sources, quote=True)}">{escape(copy["source_link"])}</a></span></footer>
-</main></body></html>'''
+</main></body></html>"""

@@ -85,8 +85,14 @@ def test_root_renders_service_landing(monkeypatch):
     assert "avds-document-row" in response.text
     assert 'data-avds-component="hero-band"' in response.text
     assert "QAZ.FUND" in response.text
-    assert "Находим открытые программы и помогаем превратить их в понятный следующий шаг." in response.text
-    assert "Гранты, субсидии, акселераторы и закупки – с источником, статусом данных и сроками." in response.text
+    assert (
+        "Находим открытые программы и помогаем превратить их в понятный следующий шаг."
+        in response.text
+    )
+    assert (
+        "Гранты, субсидии, акселераторы и закупки – с источником, статусом данных и сроками."
+        in response.text
+    )
     assert "С чего начать?" in response.text
     assert "Найти поддержку" in response.text
     assert "Прямое подключение к официальному источнику" in response.text
@@ -900,11 +906,11 @@ def test_root_supports_explicit_english_dashboard(monkeypatch):
         in response.text
     )
     assert "\u2014" not in response.text
+    assert "Find open programs and turn them into a clear next step." in response.text
     assert (
-        "Find open programs and turn them into a clear next step."
-        in response.text
+        "Grants, subsidies, accelerators, and procurement – with source links, "
+        "data status, and deadlines." in response.text
     )
-    assert "Grants, subsidies, accelerators, and procurement – with source links, data status, and deadlines." in response.text
     assert "What people usually look for" in response.text
     assert "Clear theme" in response.text
     assert "Where to start?" in response.text
@@ -3335,10 +3341,10 @@ def test_public_info_pages_are_linkable(monkeypatch):
     client = TestClient(api_main.app)
 
     root = client.get("/?lang=ru")
-    assert '/insights?lang=ru' in root.text
-    assert '/terms?lang=ru' in root.text
-    assert '/data-policy?lang=ru' in root.text
-    assert '/attribution?lang=ru' in root.text
+    assert "/insights?lang=ru" in root.text
+    assert "/terms?lang=ru" in root.text
+    assert "/data-policy?lang=ru" in root.text
+    assert "/attribution?lang=ru" in root.text
 
     for path, marker in (
         ("/terms", "Как пользоваться QAZ.FUND"),
@@ -3483,7 +3489,10 @@ def test_funder_page_renders_public_profile(monkeypatch):
         'rel="alternate" hreflang="kk" href="http://testserver/funder/science-fund?lang=kk"'
         in response.text
     )
-    assert 'href="http://testserver/funder/science-fund?lang=kk" lang="kk">KAZ</a>' in response.text
+    assert (
+        'href="http://testserver/funder/science-fund?lang=kk" lang="kk">KAZ</a>'
+        in response.text
+    )
     assert (
         'property="og:image" content="http://testserver/og-image.png"' in response.text
     )

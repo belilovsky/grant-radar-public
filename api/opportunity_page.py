@@ -216,8 +216,18 @@ def _readiness_markup(detail: OpportunityDetail, copy: dict[str, object]) -> str
     raw = detail.raw if isinstance(detail.raw, dict) else {}
     signals = [
         ("readiness_source", bool(str(detail.source_url).strip())),
-        ("readiness_deadline", bool(detail.deadline or raw.get("deadline_policy") == "rolling")),
-        ("readiness_amount", bool(detail.amount_min is not None or detail.amount_max is not None or raw.get("amount_raw"))),
+        (
+            "readiness_deadline",
+            bool(detail.deadline or raw.get("deadline_policy") == "rolling"),
+        ),
+        (
+            "readiness_amount",
+            bool(
+                detail.amount_min is not None
+                or detail.amount_max is not None
+                or raw.get("amount_raw")
+            ),
+        ),
         ("readiness_eligibility", bool(detail.eligibility or raw.get("eligibility"))),
     ]
     known = sum(1 for _, available in signals if available)
@@ -225,12 +235,12 @@ def _readiness_markup(detail: OpportunityDetail, copy: dict[str, object]) -> str
         f'<div class="readiness-signal {"is-known" if available else "is-missing"}"><span class="readiness-dot" aria-hidden="true"></span><span>{escape(str(copy[label_key]))}</span></div>'
         for label_key, available in signals
     )
-    return f'''
+    return f"""
     <section class="readiness-panel" data-avds-component="DataViz" data-avds-pattern="opportunity-readiness-meter" aria-label="{escape(str(copy["readiness_title"]), quote=True)}">
       <div class="readiness-head"><div><h2>{escape(str(copy["readiness_title"]))}</h2><p>{escape(str(copy["readiness_note"]))}</p></div><strong>{known}/4</strong></div>
       <div class="readiness-track" role="img" aria-label="{known} of 4 signals available"><span style="width:{known * 25}%"></span></div>
       <div class="readiness-grid">{rows}</div>
-    </section>'''
+    </section>"""
 
 
 def _json_ld(payload: dict[str, object]) -> str:
@@ -786,19 +796,35 @@ def render_opportunity_page(
         quote=True,
     )
     insights_href = escape(
-        f"{detail_base}/insights?lang={active_lang}" if detail_base else f"/insights?lang={active_lang}",
+        (
+            f"{detail_base}/insights?lang={active_lang}"
+            if detail_base
+            else f"/insights?lang={active_lang}"
+        ),
         quote=True,
     )
     terms_href = escape(
-        f"{detail_base}/terms?lang={active_lang}" if detail_base else f"/terms?lang={active_lang}",
+        (
+            f"{detail_base}/terms?lang={active_lang}"
+            if detail_base
+            else f"/terms?lang={active_lang}"
+        ),
         quote=True,
     )
     data_policy_href = escape(
-        f"{detail_base}/data-policy?lang={active_lang}" if detail_base else f"/data-policy?lang={active_lang}",
+        (
+            f"{detail_base}/data-policy?lang={active_lang}"
+            if detail_base
+            else f"/data-policy?lang={active_lang}"
+        ),
         quote=True,
     )
     attribution_href = escape(
-        f"{detail_base}/attribution?lang={active_lang}" if detail_base else f"/attribution?lang={active_lang}",
+        (
+            f"{detail_base}/attribution?lang={active_lang}"
+            if detail_base
+            else f"/attribution?lang={active_lang}"
+        ),
         quote=True,
     )
     source_href = escape(str(detail.source_url), quote=True)

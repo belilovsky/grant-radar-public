@@ -1095,9 +1095,7 @@ COPY = {
         ),
         "eyebrow": "A working navigator for support in Kazakhstan",
         "headline": "QAZ.FUND",
-        "subtitle": (
-            "Find open programs and turn them into a clear next step."
-        ),
+        "subtitle": ("Find open programs and turn them into a clear next step."),
         "hero_intro": (
             "Grants, subsidies, accelerators, and procurement – with source links, "
             "data status, and deadlines."
@@ -1132,7 +1130,9 @@ COPY = {
         "spotlight_kazakhstan_note": "Programs with terms for applicants in Kazakhstan.",
         "spotlight_support_kicker": "Subsidies and support",
         "spotlight_support_title": "Support for businesses",
-        "spotlight_support_note": "Subsidies, incentives, and other programs with clear application rules.",
+        "spotlight_support_note": (
+            "Subsidies, incentives, and other programs with clear application rules."
+        ),
         "spotlight_deadline_kicker": "Upcoming deadlines",
         "spotlight_deadline_title": "What closes first",
         "spotlight_deadline_note": "Open these cards early and check the requirements.",
@@ -1157,10 +1157,14 @@ COPY = {
         ),
         "pathway_farmer_kicker": "For farmers",
         "pathway_farmer_title": "Agri support, livestock and practical AgroTech",
-        "pathway_farmer_note": "For farms and agri teams working in agriculture, livestock, and technology.",
+        "pathway_farmer_note": (
+            "For farms and agri teams working in agriculture, livestock, and technology."
+        ),
         "pathway_science_kicker": "For researchers",
         "pathway_science_title": "Science funding, commercialization and research grants",
-        "pathway_science_note": "For universities, labs, and teams seeking research and implementation funding.",
+        "pathway_science_note": (
+            "For universities, labs, and teams seeking research and implementation funding."
+        ),
         "themes_section_eyebrow": "By topic",
         "themes_section_title": "By focus area",
         "themes_section_description": (

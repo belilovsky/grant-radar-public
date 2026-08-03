@@ -12,9 +12,7 @@ COPY = {
         "title": "Страница не найдена – QAZ.FUND",
         "eyebrow": "Ошибка 404",
         "heading": "Такой страницы нет",
-        "text": (
-            "Ссылка устарела или адрес введён с ошибкой. Вернитесь в каталог."
-        ),
+        "text": ("Ссылка устарела или адрес введён с ошибкой. Вернитесь в каталог."),
         "action": "Вернуться в каталог",
     },
     "en": {
@@ -94,7 +92,9 @@ def render_not_found_page(*, lang: str, root_path: str = "") -> str:
     .lang-switch a {{ min-width:34px; padding:6px 8px; border-bottom:2px solid transparent;
       color:var(--color-text-muted); text-align:center; text-decoration:none;
       font-size:12px; font-weight:700; }}
-    .lang-switch a[aria-current="page"] {{ border-bottom-color:var(--color-accent); color:var(--color-text); }}
+    .lang-switch a[aria-current="page"] {{
+      border-bottom-color:var(--color-accent); color:var(--color-text);
+    }}
     main {{
       align-self: center;
       justify-self: stretch;

@@ -5,15 +5,18 @@ from __future__ import annotations
 
 import argparse
 import json
-from pathlib import Path
 from typing import Any
 from urllib.parse import urlencode
 from urllib.request import urlopen
 
-
 DEFAULT_BASE_URL = "https://qaz.fund"
 LOCALES = ("kk", "ru", "en")
-APPROVAL_FIELDS = ("review_status", "memory_eligibility", "reviewer_ref", "quality_score")
+APPROVAL_FIELDS = (
+    "review_status",
+    "memory_eligibility",
+    "reviewer_ref",
+    "quality_score",
+)
 
 
 def present(value: Any) -> bool:
@@ -76,11 +79,9 @@ def summarize_items(items: list[dict[str, Any]]) -> dict[str, Any]:
         "item_count": item_count,
         "locale_item_counts": locale_item_counts,
         "locale_field_counts": locale_field_counts,
-        "kk_content_coverage_rate": round(
-            locale_item_counts["kk"] / item_count, 6
-        )
-        if item_count
-        else 0.0,
+        "kk_content_coverage_rate": (
+            round(locale_item_counts["kk"] / item_count, 6) if item_count else 0.0
+        ),
         "source_language_metadata_count": source_language_count,
         "reviewer_ref_count": field_counts["reviewer_ref"],
         "quality_score_count": field_counts["quality_score"],
@@ -109,15 +110,22 @@ def build_public_report(base_url: str = DEFAULT_BASE_URL) -> dict[str, Any]:
             "project_id": "qaz-fund",
             "surface": "qaz.fund.public.opportunities",
             "approved_only": True,
-            "decision": "pass"
-            if report["approved_only_ready_count"] and report["kk_content_coverage_rate"] == 1.0
-            else "hold",
+            "decision": (
+                "pass"
+                if report["approved_only_ready_count"]
+                and report["kk_content_coverage_rate"] == 1.0
+                else "hold"
+            ),
             "runtime": {
                 "base_url": base,
                 "endpoint": "/opportunities?lang=kk&scope=all",
-                "health_item_count": health.get("items") if isinstance(health, dict) else None,
+                "health_item_count": (
+                    health.get("items") if isinstance(health, dict) else None
+                ),
                 "returned_item_count": len(items),
-                "health_status": health.get("status") if isinstance(health, dict) else None,
+                "health_status": (
+                    health.get("status") if isinstance(health, dict) else None
+                ),
             },
             "blockers": [
                 "kk_content_coverage",
@@ -145,7 +153,14 @@ def main() -> int:
     parser = argparse.ArgumentParser()
     parser.add_argument("--base-url", default=DEFAULT_BASE_URL)
     args = parser.parse_args()
-    print(json.dumps(build_public_report(args.base_url), ensure_ascii=False, sort_keys=True, indent=2))
+    print(
+        json.dumps(
+            build_public_report(args.base_url),
+            ensure_ascii=False,
+            sort_keys=True,
+            indent=2,
+        )
+    )
     return 0
 
 

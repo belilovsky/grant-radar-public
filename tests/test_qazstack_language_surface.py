@@ -8,7 +8,6 @@ from api.operator_page import render_operator_page
 from api.public_info_page import render_public_info_page
 from core.localization import normalize_content_lang
 
-
 ROOT = Path(__file__).resolve().parents[1]
 
 
@@ -69,7 +68,9 @@ def test_language_surface_contract_matches_public_pages() -> None:
     observability = contract["observability"]
     assert observability["runtime_connected"] is False
     assert observability["mode"] == "contract-only"
-    assert observability["report_schema"].endswith("qazstack-language-observability-v1.json")
+    assert observability["report_schema"].endswith(
+        "qazstack-language-observability-v1.json"
+    )
     assert observability["raw_text_export"] is False
     assert observability["remote_write"] is False
     assert observability["automatic_memory_promotion"] is False

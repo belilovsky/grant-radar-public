@@ -403,19 +403,35 @@ def render_funder_page(
         quote=True,
     )
     insights_href = escape(
-        f"{base_path}/insights?lang={active_lang}" if base_path else f"/insights?lang={active_lang}",
+        (
+            f"{base_path}/insights?lang={active_lang}"
+            if base_path
+            else f"/insights?lang={active_lang}"
+        ),
         quote=True,
     )
     terms_href = escape(
-        f"{base_path}/terms?lang={active_lang}" if base_path else f"/terms?lang={active_lang}",
+        (
+            f"{base_path}/terms?lang={active_lang}"
+            if base_path
+            else f"/terms?lang={active_lang}"
+        ),
         quote=True,
     )
     data_policy_href = escape(
-        f"{base_path}/data-policy?lang={active_lang}" if base_path else f"/data-policy?lang={active_lang}",
+        (
+            f"{base_path}/data-policy?lang={active_lang}"
+            if base_path
+            else f"/data-policy?lang={active_lang}"
+        ),
         quote=True,
     )
     attribution_href = escape(
-        f"{base_path}/attribution?lang={active_lang}" if base_path else f"/attribution?lang={active_lang}",
+        (
+            f"{base_path}/attribution?lang={active_lang}"
+            if base_path
+            else f"/attribution?lang={active_lang}"
+        ),
         quote=True,
     )
     back_label = escape(str(copy["funder_back_to_catalog"]))
@@ -499,7 +515,8 @@ def render_funder_page(
     en_lang_class = "active" if active_lang == "en" else ""
     fallback_note = str(copy.get("language_fallback_note") or "").strip()
     fallback_note_markup = (
-        f'<p class="language-fallback-note" lang="kk" data-language-fallback="ru">{escape(fallback_note)}</p>'
+        f'<p class="language-fallback-note" lang="kk" '
+        f'data-language-fallback="ru">{escape(fallback_note)}</p>'
         if fallback_note
         else ""
     )

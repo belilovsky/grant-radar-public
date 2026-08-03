@@ -242,7 +242,8 @@ def analyze_content(
         str(item.get("title") or "")
         for item in opportunities
         if not _has_deadline_policy(item)
-        and "rolling" not in {str(tag).strip().lower() for tag in (item.get("tags") or [])}
+        and "rolling"
+        not in {str(tag).strip().lower() for tag in (item.get("tags") or [])}
     ][:20]
     if missing_deadline_titles:
         issues.append(

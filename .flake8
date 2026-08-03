@@ -1,2 +1,10 @@
 [flake8]
-extend-ignore = E203,W503
+max-line-length = 100
+extend-ignore = E203
+
+# Server-rendered HTML and localized copy intentionally keep a few long
+# literals together so the public markup remains easy to audit as one block.
+per-file-ignores =
+    api/insights_page.py:E501,E231
+    api/opportunity_page.py:E501
+    api/public_info_page.py:E501

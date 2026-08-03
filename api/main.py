@@ -1483,7 +1483,12 @@ async def root(request: Request) -> HTMLResponse:
     )
 
 
-@app.api_route("/insights", methods=["GET", "HEAD"], response_class=HTMLResponse, include_in_schema=False)
+@app.api_route(
+    "/insights",
+    methods=["GET", "HEAD"],
+    response_class=HTMLResponse,
+    include_in_schema=False,
+)
 async def public_insights_page(request: Request) -> HTMLResponse:
     """Render a public, source-grounded visual summary of the catalogue."""
     root_path = _root_path(request)
@@ -1501,9 +1506,24 @@ async def public_insights_page(request: Request) -> HTMLResponse:
     return response
 
 
-@app.api_route("/terms", methods=["GET", "HEAD"], response_class=HTMLResponse, include_in_schema=False)
-@app.api_route("/data-policy", methods=["GET", "HEAD"], response_class=HTMLResponse, include_in_schema=False)
-@app.api_route("/attribution", methods=["GET", "HEAD"], response_class=HTMLResponse, include_in_schema=False)
+@app.api_route(
+    "/terms",
+    methods=["GET", "HEAD"],
+    response_class=HTMLResponse,
+    include_in_schema=False,
+)
+@app.api_route(
+    "/data-policy",
+    methods=["GET", "HEAD"],
+    response_class=HTMLResponse,
+    include_in_schema=False,
+)
+@app.api_route(
+    "/attribution",
+    methods=["GET", "HEAD"],
+    response_class=HTMLResponse,
+    include_in_schema=False,
+)
 async def public_info_page(request: Request) -> HTMLResponse:
     """Render concise public guidance pages linked from the catalogue footer."""
     info_kind = request.url.path.rstrip("/").rsplit("/", 1)[-1]
@@ -1519,7 +1539,9 @@ async def public_info_page(request: Request) -> HTMLResponse:
             site_origin=_site_origin(request, root_path),
         )
     )
-    response.headers["Cache-Control"] = "public, max-age=300, stale-while-revalidate=900"
+    response.headers["Cache-Control"] = (
+        "public, max-age=300, stale-while-revalidate=900"
+    )
     return response
 
 
@@ -1533,12 +1555,17 @@ async def swagger_docs(request: Request) -> HTMLResponse:
         "ru": {
             "back": "Вернуться на сайт",
             "heading": "Документация API",
-            "description": "Публичный API QAZ.FUND: каталог, источники, возможности и статус данных.",
+            "description": (
+                "Публичный API QAZ.FUND: каталог, источники, возможности и статус данных."
+            ),
         },
         "en": {
             "back": "Back to site",
             "heading": "API documentation",
-            "description": "Public QAZ.FUND API reference for the catalog, sources, opportunities, and data status.",
+            "description": (
+                "Public QAZ.FUND API reference for the catalog, sources, opportunities, "
+                "and data status."
+            ),
         },
     }[docs_lang]
     canonical_href = _public_url(request, root_path, f"/docs?lang={docs_lang}")
