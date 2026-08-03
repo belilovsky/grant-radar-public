@@ -32,6 +32,12 @@ _SUPPORT_TYPE_PATTERNS = {
         "call for proposals",
         "call for applications",
     ),
+    "contest": (
+        "contest",
+        "competition",
+        "конкурс",
+        "конкурсный отбор",
+    ),
     "subsidy": ("subsid", "субсид", "возмещение", "reimbursement"),
     "preferential_financing": (
         "льготн",
