@@ -75,7 +75,11 @@ def _display(value: Any, *, field: str, lang: str) -> str:
     if isinstance(value, dict):
         return str(value.get("display") or "")
     if isinstance(value, list):
-        return " · ".join(str(part) for part in value if str(part).strip())
+        return " · ".join(
+            str(part).replace("_", " ").replace("-", " ").strip()
+            for part in value
+            if str(part).strip()
+        )
     normalized = str(value or "")
     return _VALUE_LABELS.get(field, {}).get(lang, {}).get(normalized, normalized)
 
@@ -128,6 +132,14 @@ def render_comparison_page(
             raw_value = (card.get("fields") or {}).get(field)
             if field == "source":
                 raw_value = card.get("source_label") or raw_value
+            if field == "source_url" and str(raw_value or "").strip():
+                cells.append(
+                    '<td><a class="source-link" target="_blank" '
+                    'rel="noopener noreferrer" href="'
+                    f'{escape(str(raw_value), quote=True)}">'
+                    f'{escape(copy["source_link"])}</a></td>'
+                )
+                continue
             value = _display(raw_value, field=field, lang=lang) or copy["unknown"]
             cells.append(f"<td>{escape(value)}</td>")
         rows.append(
@@ -167,7 +179,7 @@ def render_comparison_page(
     *{{box-sizing:border-box}} body{{margin:0;background:var(--color-bg);color:var(--color-text);font-family:var(--av-font-sans);line-height:1.5}}
     .shell{{width:min(1920px,calc(100% - 48px));margin:0 auto;padding:20px 0 48px}} .topbar{{display:flex;justify-content:space-between;align-items:center;gap:18px;margin-bottom:16px}} .back{{font-size:13px;font-weight:750;text-decoration:none;color:var(--color-text-muted)}} .back:hover{{color:var(--color-accent)}} .langs{{display:flex;gap:6px}} .langs a{{padding:5px 8px;border-bottom:2px solid transparent;color:var(--color-text-muted);font-size:12px;font-weight:800;text-decoration:none}} .langs a.active{{color:var(--color-text);border-color:var(--color-accent)}}
     .hero{{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:24px;align-items:end;padding:28px;border:1px solid var(--color-border);border-radius:var(--av-radius-lg);background:linear-gradient(135deg,var(--color-surface),var(--color-accent-subtle));box-shadow:var(--shadow-md)}} .eyebrow{{color:var(--color-accent);font-size:12px;font-weight:800;letter-spacing:.06em;text-transform:uppercase}} h1{{margin:8px 0 10px;font-size:clamp(30px,4vw,48px);line-height:1.06}} .hero p{{max-width:70ch;margin:0;color:var(--color-text-muted);font-size:15px}} .hero-meta{{display:grid;grid-template-columns:repeat(2,minmax(120px,1fr));gap:10px}} .meta{{padding:13px;border:1px solid var(--color-border);border-radius:var(--av-radius-md);background:rgb(255 255 255 / .76)}} .meta strong{{display:block;font-size:25px;line-height:1}} .meta span{{display:block;margin-top:5px;color:var(--color-text-muted);font-size:11px;font-weight:750}}
-    .section{{margin-top:22px;padding:22px;border:1px solid var(--color-border);border-radius:var(--av-radius-lg);background:var(--color-surface);box-shadow:var(--shadow-xs)}} .section-head{{display:flex;justify-content:space-between;align-items:end;gap:16px;margin-bottom:15px}} .section h2{{margin:0;font-size:23px;line-height:1.15}} .section-note{{margin:3px 0 0;color:var(--color-text-muted);font-size:13px}} .json-link{{color:var(--color-accent);font-size:12px;font-weight:750;text-decoration:none;white-space:nowrap}} .table-wrap{{overflow:auto;border:1px solid var(--color-border);border-radius:var(--av-radius-md)}} .compare-table{{width:100%;min-width:760px;border-collapse:collapse;font-size:13px}} .compare-table th,.compare-table td{{padding:13px 14px;border-bottom:1px solid var(--color-border-subtle);text-align:left;vertical-align:top}} .compare-table thead th{{background:var(--color-surface-subtle);font-size:13px}} .compare-table thead th:not(:first-child){{min-width:190px}} .compare-table thead a{{color:var(--color-text);font-size:14px;font-weight:800;text-decoration:none}} .compare-table tbody th{{width:150px;background:var(--color-surface-subtle);color:var(--color-text-muted);font-size:12px;font-weight:800}} .compare-table tbody tr:last-child th,.compare-table tbody tr:last-child td{{border-bottom:0}} .notice{{margin-top:14px;padding:12px 14px;border-left:4px solid var(--color-accent);border-radius:var(--av-radius-md);background:var(--color-accent-subtle);color:var(--color-text-muted);font-size:13px}} .empty{{padding:36px 20px;text-align:center;color:var(--color-text-muted)}} .footer{{display:flex;justify-content:space-between;gap:14px;flex-wrap:wrap;margin-top:22px;padding-top:16px;border-top:1px solid var(--color-border);color:var(--color-text-muted);font-size:12px}} .footer a{{font-weight:750}}
+    .section{{margin-top:22px;padding:22px;border:1px solid var(--color-border);border-radius:var(--av-radius-lg);background:var(--color-surface);box-shadow:var(--shadow-xs)}} .section-head{{display:flex;justify-content:space-between;align-items:end;gap:16px;margin-bottom:15px}} .section h2{{margin:0;font-size:23px;line-height:1.15}} .section-note{{margin:3px 0 0;color:var(--color-text-muted);font-size:13px}} .json-link{{color:var(--color-accent);font-size:12px;font-weight:750;text-decoration:none;white-space:nowrap}} .table-wrap{{overflow:auto;border:1px solid var(--color-border);border-radius:var(--av-radius-md)}} .compare-table{{width:100%;min-width:760px;border-collapse:collapse;font-size:13px}} .compare-table th,.compare-table td{{padding:13px 14px;border-bottom:1px solid var(--color-border-subtle);text-align:left;vertical-align:top}} .compare-table thead th{{background:var(--color-surface-subtle);font-size:13px}} .compare-table thead th:not(:first-child){{min-width:190px}} .compare-table thead a{{color:var(--color-text);font-size:14px;font-weight:800;text-decoration:none}} .compare-table tbody th{{width:150px;background:var(--color-surface-subtle);color:var(--color-text-muted);font-size:12px;font-weight:800}} .compare-table tbody tr:last-child th,.compare-table tbody tr:last-child td{{border-bottom:0}} .source-link{{color:var(--color-accent);font-weight:750;text-decoration:none}} .notice{{margin-top:14px;padding:12px 14px;border-left:4px solid var(--color-accent);border-radius:var(--av-radius-md);background:var(--color-accent-subtle);color:var(--color-text-muted);font-size:13px}} .empty{{padding:36px 20px;text-align:center;color:var(--color-text-muted)}} .footer{{display:flex;justify-content:space-between;gap:14px;flex-wrap:wrap;margin-top:22px;padding-top:16px;border-top:1px solid var(--color-border);color:var(--color-text-muted);font-size:12px}} .footer a{{font-weight:750}}
     @media(min-width:1800px){{.shell{{width:min(2080px,calc(100% - 128px))}} .hero{{grid-template-columns:minmax(0,1fr) 440px;padding:34px 38px}} .section{{padding:28px}} .compare-table{{font-size:14px}} .compare-table thead th:not(:first-child){{min-width:240px}}}}
     @media(max-width:760px){{.shell{{width:min(100% - 24px,680px);padding-top:12px}} .hero{{grid-template-columns:1fr;padding:20px}} .section{{padding:16px}} .section-head{{align-items:start;flex-direction:column}} .hero-meta{{grid-template-columns:repeat(2,minmax(0,1fr))}} .compare-table{{min-width:680px}}}}
   </style>

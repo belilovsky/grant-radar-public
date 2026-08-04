@@ -94,6 +94,8 @@ def test_public_compare_json_is_source_grounded(monkeypatch) -> None:
     assert 'data-avds-component="comparison-table"' in page.text
     assert "Бағдарламаларды салыстыру" in page.text
     assert "JSON" in page.text
+    assert "another_source" not in page.text
+    assert "Дереккөзді ашу" in page.text
 
     empty_page = client.get("/compare", params={"lang": "en"})
     assert empty_page.status_code == 200
