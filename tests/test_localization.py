@@ -154,6 +154,31 @@ def test_english_localization_expands_short_world_bank_procurement_summary():
     assert len(localized.summary) >= 120
 
 
+def test_english_localization_expands_short_grants_gov_summary_with_region_context():
+    item = Opportunity(
+        source="grants_gov",
+        source_url=HttpUrl("https://example.org/grants/notice"),
+        type=OpportunityType.GRANT,
+        title="Supporting Groups Targeted for TNR in Europe and Eurasia",
+        summary=(
+            "Grants.gov opportunity from Bureau of Democracy Human Rights and Labor "
+            "closing 08/13/2026."
+        ),
+        funder="Bureau of Democracy Human Rights and Labor",
+        raw={
+            "agencyName": "Bureau of Democracy Human Rights and Labor",
+            "closeDate": "08/13/2026",
+        },
+    )
+
+    localized = localize_opportunity(item, "en")
+
+    assert localized.summary.startswith("Grants.gov notice from Bureau of Democracy")
+    assert "Kazakhstan and Central Asia" in localized.summary
+    assert "official notice" in localized.summary
+    assert len(localized.summary) >= 120
+
+
 def test_russian_procurement_title_keeps_reference_for_distinction():
     item = Opportunity(
         source="undp_procurement",

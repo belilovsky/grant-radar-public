@@ -156,6 +156,22 @@ def _english_source_fallback(
     item: Opportunity, title: str, summary: str
 ) -> tuple[str, str]:
     """Keep the English surface readable when an official notice is Russian-only."""
+    if item.source == "grants_gov" and len(summary) < 120:
+        raw = item.raw if isinstance(item.raw, dict) else {}
+        agency = _string_value(
+            raw.get("agencyName") or raw.get("agency") or item.funder
+        )
+        close_date = _string_value(raw.get("closeDate") or raw.get("deadline"))
+        prefix = "Grants.gov notice"
+        if agency:
+            prefix += f" from {agency}"
+        if close_date:
+            prefix += f" closing {close_date}"
+        summary = (
+            f"{prefix}. The card is included for Kazakhstan and Central Asia "
+            "monitoring. The official notice determines eligible countries, applicant "
+            "type, budget ceiling and submission requirements."
+        )
     if item.source == "eeas_kazakhstan" and len(summary) < 80:
         summary = (
             f"Official EEAS Kazakhstan call: {title.rstrip('.')}. Review the source "
