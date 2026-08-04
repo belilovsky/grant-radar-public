@@ -47,6 +47,7 @@ from api.ecosystem import (
 )
 from api.error_page import render_not_found_page
 from api.funder_page import render_funder_page
+from api.history import build_history_snapshot
 from api.insights_page import build_insights_snapshot, render_insights_page
 from api.notification_contract import notification_contract
 from api.operator_page import render_operator_page
@@ -1925,6 +1926,9 @@ async def llms_txt(request: Request) -> Response:
     opportunities_ndjson_compact = _public_url(
         request, root_path, "/opportunities.ndjson?compact=true"
     )
+    history_template = _public_url(
+        request, root_path, "/opportunities/{id}/history.json"
+    )
     digest = _public_url(request, root_path, "/digest")
     return Response(
         "\n".join(
@@ -1961,6 +1965,7 @@ async def llms_txt(request: Request) -> Response:
                 f"- Opportunities NDJSON: {opportunities_ndjson}",
                 f"- Compact Opportunities NDJSON: {opportunities_ndjson_compact}",
                 "- Opportunity detail JSON: /opportunities/{id}?lang=kk|ru|en",
+                f"- Opportunity history JSON: {history_template}?lang=kk|ru|en&limit={{n}}",
                 f"- Digest JSON: {digest}",
                 f"- Insights JSON: {insights_json}?lang=ru|kk|en",
                 f"- Comparison JSON: {compare_json}?ids={{id}},{{id}}&lang=ru|kk|en",
@@ -1983,6 +1988,7 @@ async def llms_txt(request: Request) -> Response:
                 "",
                 "## Public route templates",
                 "- Opportunity page: /opportunity/{id}?lang=kk|ru|en",
+                "- Opportunity history: /opportunities/{id}/history.json?lang=kk|ru|en&limit={n}",
                 "- Funder page: /funder/{slug}?lang=kk|ru|en",
                 "- Insights page: /insights?lang=kk|ru|en",
                 "- Insights JSON: /insights.json?lang=kk|ru|en",
@@ -2046,6 +2052,9 @@ async def site_discovery(request: Request) -> Response:
     opportunities_ndjson_compact = _public_url(
         request, root_path, "/opportunities.ndjson?compact=true"
     )
+    history_template = _public_url(
+        request, root_path, "/opportunities/{id}/history.json"
+    )
     digest = _public_url(request, root_path, "/digest")
     ecosystem = _public_url(request, root_path, "/.well-known/qdev-ecosystem.json")
     release = _public_url(request, root_path, "/.well-known/release.json")
@@ -2089,6 +2098,9 @@ async def site_discovery(request: Request) -> Response:
                 "/opportunities.ndjson?lang={lang}&compact=true"
             ),
             "opportunity_api": "/opportunities/{id}?lang={lang}",
+            "opportunity_history": (
+                "/opportunities/{id}/history.json?lang={lang}&limit={n}"
+            ),
             "opportunity": "/opportunity/{id}?lang={lang}",
             "funder": "/funder/{slug}?lang={lang}",
             "digest": "/digest?lang={lang}",
@@ -2106,6 +2118,7 @@ async def site_discovery(request: Request) -> Response:
             "opportunities": opportunities,
             "opportunities_ndjson": opportunities_ndjson,
             "opportunities_ndjson_compact": opportunities_ndjson_compact,
+            "opportunity_history": history_template,
             "digest": digest,
             "insights": insights,
             "insights_json": insights_json,
@@ -2120,6 +2133,7 @@ async def site_discovery(request: Request) -> Response:
             "preferred_bulk_export": opportunities_ndjson_compact,
             "preferred_detail_template": "/opportunities/{id}?lang=kk|ru|en",
             "preferred_human_template": "/opportunity/{id}?lang=kk|ru|en",
+            "history_template": history_template + "?lang={lang}&limit={n}",
             "recommended_language_order": ["kk", "ru", "en"],
             "cache_policy": {
                 "discovery_seconds": 300,
@@ -2175,6 +2189,7 @@ async def site_discovery(request: Request) -> Response:
             "cache-aware ndjson export",
             "machine-readable source coverage",
             "public source freshness status",
+            "public opportunity change history",
             "official source links",
             "read-only public catalog",
             "qdev ecosystem contract",
@@ -2753,6 +2768,56 @@ async def get_opportunity_detail(
         lang=content_lang,
         allow_remote_fetch=False,
     )
+
+
+@app.api_route(
+    "/opportunities/{opportunity_id}/history.json",
+    methods=["GET", "HEAD"],
+    include_in_schema=False,
+)
+async def get_opportunity_history(
+    request: Request,
+    opportunity_id: UUID,
+    lang: str | None = Query(None),
+    limit: int = Query(50, ge=1, le=200),
+) -> JSONResponse:
+    """Return source-grounded public field changes for one opportunity."""
+
+    content_lang = _public_lang(lang)
+    item = _find_opportunity(opportunity_id, content_lang=content_lang)
+    if item is None:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND)
+
+    repository = _configured_repository()
+    backend_available = repository is not None
+    entries = (
+        repository.history_for(item.fingerprint(), limit=limit)
+        if repository is not None
+        else []
+    )
+    root_path = _root_path(request)
+    item_id = str(item.id)
+    payload = build_history_snapshot(
+        item=item,
+        entries=entries,
+        lang=content_lang,
+        links={
+            "current": _public_url(
+                request,
+                root_path,
+                f"/opportunities/{item_id}?lang={content_lang}",
+            ),
+            "human": _public_url(
+                request,
+                root_path,
+                f"/opportunity/{item_id}?lang={content_lang}",
+            ),
+        },
+        backend_available=backend_available,
+    )
+    response = JSONResponse(payload)
+    response.headers["Cache-Control"] = "public, max-age=60, stale-while-revalidate=300"
+    return response
 
 
 @app.head("/opportunities/{opportunity_id}", include_in_schema=False)

@@ -57,3 +57,7 @@ Consumers should:
 QazPipe may transport this profile as public provenance. QazLake may archive it
 with the public record. QazCompute may use it as a feature envelope, but the
 profile itself is not a decision-ready eligibility result.
+
+Для истории изменений нормализованных публичных полей используется отдельный
+контракт [`HISTORY_CONTRACT.md`](HISTORY_CONTRACT.md). `observed_at` в истории
+означает момент обнаружения изменения и не заменяет `last_verified_at`.

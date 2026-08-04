@@ -20,15 +20,18 @@ from sqlalchemy import (
     Date,
     DateTime,
     Float,
+    Integer,
     Numeric,
     String,
     Text,
     create_engine,
+    delete,
     func,
     select,
 )
 from sqlalchemy.orm import DeclarativeBase, sessionmaker
 
+from .history import changed_fields, history_entry, public_snapshot, snapshot_hash
 from .localization import preserve_localized_raw
 from .persistence import compute_fingerprint
 
@@ -74,6 +77,21 @@ class OpportunityRow(Base):
     @property
     def payload(self) -> str:
         return json.dumps(self.raw or {}, default=str, ensure_ascii=False)
+
+
+class OpportunityVersionRow(Base):
+    """Public change snapshots for an opportunity's source-grounded fields."""
+
+    __tablename__ = "opportunity_versions"
+
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    opportunity_id = Column(String(255), nullable=False)
+    version = Column(Integer, nullable=False)
+    observed_at = Column(DateTime, nullable=False)
+    content_hash = Column(String(80), nullable=False)
+    changed_fields = Column(JSON, nullable=False)
+    fields = Column(JSON, nullable=False)
+    created_at = Column(DateTime, default=_utcnow, nullable=False)
 
 
 def _get(record: Any, key: str) -> Optional[Any]:
@@ -191,8 +209,21 @@ class SqlRepository:
             existing = s.get(OpportunityRow, new_row.id)
             if existing is None:
                 s.add(new_row)
+                s.flush()
+                new_id = cast(str, new_row.id)
+                observed_at = cast(datetime | None, new_row.discovered_at) or _utcnow()
+                self._append_history(
+                    s,
+                    opportunity_id=new_id,
+                    observed_at=observed_at,
+                    snapshot=public_snapshot(record),
+                    changed=["initial"],
+                )
                 s.commit()
                 return True
+            previous_snapshot = public_snapshot(existing)
+            next_snapshot = public_snapshot(record)
+            now = _utcnow()
             existing.title = new_row.title or existing.title
             existing.source_url = new_row.source_url or existing.source_url
             existing.summary = new_row.summary or existing.summary
@@ -204,11 +235,7 @@ class SqlRepository:
             existing.score = (
                 new_row.score if new_row.score is not None else existing.score
             )
-            setattr(
-                existing,
-                "discovered_at",
-                _utcnow(),
-            )
+            setattr(existing, "discovered_at", now)
             existing_raw = cast(dict[str, Any] | None, existing.raw)
             new_raw = cast(dict[str, Any] | None, new_row.raw)
             setattr(
@@ -216,6 +243,27 @@ class SqlRepository:
                 "raw",
                 preserve_localized_raw(existing_raw, new_raw),
             )
+            if snapshot_hash(previous_snapshot) != snapshot_hash(next_snapshot):
+                latest = s.scalar(
+                    select(OpportunityVersionRow)
+                    .where(OpportunityVersionRow.opportunity_id == new_row.id)
+                    .order_by(OpportunityVersionRow.version.desc())
+                )
+                previous_fields = (
+                    cast(dict[str, Any] | None, latest.fields)
+                    if latest is not None
+                    else previous_snapshot
+                )
+                previous_fields = previous_fields or previous_snapshot
+                next_version = int(latest.version) + 1 if latest is not None else 1
+                self._append_history(
+                    s,
+                    opportunity_id=cast(str, new_row.id),
+                    observed_at=now,
+                    snapshot=next_snapshot,
+                    changed=changed_fields(previous_fields, next_snapshot),
+                    version=next_version,
+                )
             s.commit()
             return False
 
@@ -229,5 +277,56 @@ class SqlRepository:
 
     def clear(self) -> None:
         with self._Session() as s:
+            s.execute(delete(OpportunityVersionRow))
             s.query(OpportunityRow).delete()
             s.commit()
+
+    @staticmethod
+    def _append_history(
+        session: Any,
+        *,
+        opportunity_id: str,
+        observed_at: datetime,
+        snapshot: dict[str, Any],
+        changed: list[str],
+        version: int = 1,
+    ) -> None:
+        entry = history_entry(
+            version=version,
+            observed_at=observed_at,
+            snapshot=snapshot,
+            changed=changed,
+        )
+        session.add(
+            OpportunityVersionRow(
+                opportunity_id=opportunity_id,
+                version=entry["version"],
+                observed_at=observed_at,
+                content_hash=entry["content_hash"],
+                changed_fields=entry["changed_fields"],
+                fields=entry["fields"],
+            )
+        )
+
+    def history_for(self, fingerprint: str, *, limit: int = 50) -> list[dict[str, Any]]:
+        bounded_limit = max(1, min(int(limit), 200))
+        with self._Session() as s:
+            rows = list(
+                s.scalars(
+                    select(OpportunityVersionRow)
+                    .where(OpportunityVersionRow.opportunity_id == fingerprint[:255])
+                    .order_by(OpportunityVersionRow.version.desc())
+                    .limit(bounded_limit)
+                ).all()
+            )
+        rows.reverse()
+        return [
+            {
+                "version": row.version,
+                "observed_at": row.observed_at.isoformat(),
+                "content_hash": row.content_hash,
+                "changed_fields": list(row.changed_fields or []),
+                "fields": dict(row.fields or {}),
+            }
+            for row in rows
+        ]

@@ -1119,6 +1119,10 @@ def test_marketing_endpoints_are_exposed(monkeypatch):
     assert "## AI consumption guidance" in llms.text
     assert "Prefer compact Opportunities NDJSON for bulk discovery reads" in llms.text
     assert "Opportunity detail JSON: /opportunities/{id}?lang=kk|ru|en" in llms.text
+    assert (
+        "Opportunity history JSON: http://testserver/opportunities/{id}/history.json"
+        in llms.text
+    )
     assert "Digest JSON: http://testserver/digest" in llms.text
     assert (
         "Comparison JSON: http://testserver/compare.json?ids={id},{id}&lang=ru|kk|en"
@@ -1167,6 +1171,9 @@ def test_marketing_endpoints_are_exposed(monkeypatch):
                 "/opportunities.ndjson?lang={lang}&compact=true"
             ),
             "opportunity_api": "/opportunities/{id}?lang={lang}",
+            "opportunity_history": (
+                "/opportunities/{id}/history.json?lang={lang}&limit={n}"
+            ),
             "opportunity": "/opportunity/{id}?lang={lang}",
             "funder": "/funder/{slug}?lang={lang}",
             "digest": "/digest?lang={lang}",
@@ -1186,6 +1193,9 @@ def test_marketing_endpoints_are_exposed(monkeypatch):
             "opportunities_ndjson_compact": (
                 "http://testserver/opportunities.ndjson?compact=true"
             ),
+            "opportunity_history": (
+                "http://testserver/opportunities/{id}/history.json"
+            ),
             "digest": "http://testserver/digest",
             "insights": "http://testserver/insights",
             "insights_json": "http://testserver/insights.json",
@@ -1204,6 +1214,9 @@ def test_marketing_endpoints_are_exposed(monkeypatch):
             ),
             "preferred_detail_template": "/opportunities/{id}?lang=kk|ru|en",
             "preferred_human_template": "/opportunity/{id}?lang=kk|ru|en",
+            "history_template": (
+                "http://testserver/opportunities/{id}/history.json?lang={lang}&limit={n}"
+            ),
             "recommended_language_order": ["kk", "ru", "en"],
             "cache_policy": {
                 "discovery_seconds": 300,
@@ -1259,6 +1272,7 @@ def test_marketing_endpoints_are_exposed(monkeypatch):
             "cache-aware ndjson export",
             "machine-readable source coverage",
             "public source freshness status",
+            "public opportunity change history",
             "official source links",
             "read-only public catalog",
             "qdev ecosystem contract",

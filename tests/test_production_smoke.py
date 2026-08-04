@@ -88,6 +88,24 @@ def _transport(
                     for index in range(44)
                 ],
             )
+        if endpoint_path.startswith("/opportunities/") and endpoint_path.endswith(
+            "/history.json"
+        ):
+            return httpx.Response(
+                200,
+                json={
+                    "schema_version": "history.v1",
+                    "status": "ready",
+                    "items": [
+                        {
+                            "version": 1,
+                            "changed_fields": ["initial"],
+                            "fields": {"title": opportunity_title},
+                        }
+                    ],
+                },
+                headers={"cache-control": "public, max-age=60"},
+            )
         if endpoint_path == "/compare.json":
             return httpx.Response(
                 200,
@@ -188,6 +206,8 @@ def _transport(
                     f"{public_root}/.well-known/notification-contract.json\n"
                     f"- Comparison JSON: "
                     f"{public_root}/compare.json?ids={{id}},{{id}}&lang=ru|kk|en\n"
+                    f"- Opportunity history JSON: "
+                    f"{public_root}/opportunities/{{id}}/history.json?lang=ru|kk|en\n"
                     f"- Source status page: {public_root}/status\n"
                     f"- Coverage JSON: {public_root}/coverage\n"
                     f"- Opportunities JSON: {public_root}/opportunities\n"
@@ -262,6 +282,9 @@ def _transport(
                             "/opportunities.ndjson?lang={lang}&compact=true"
                         ),
                         "opportunity_api": "/opportunities/{id}?lang={lang}",
+                        "opportunity_history": (
+                            "/opportunities/{id}/history.json?lang={lang}&limit={n}"
+                        ),
                         "opportunity": "/opportunity/{id}?lang={lang}",
                         "funder": "/funder/{slug}?lang={lang}",
                         "digest": "/digest?lang={lang}",
@@ -280,6 +303,9 @@ def _transport(
                         "opportunities_ndjson_compact": (
                             f"{public_root}/opportunities.ndjson?compact=true"
                         ),
+                        "opportunity_history": (
+                            f"{public_root}/opportunities/{{id}}/history.json"
+                        ),
                         "digest": f"{public_root}/digest",
                         "insights": f"{public_root}/insights",
                         "insights_json": f"{public_root}/insights.json",
@@ -292,6 +318,10 @@ def _transport(
                     "ai_consumption": {
                         "preferred_bulk_export": (
                             f"{public_root}/opportunities.ndjson?compact=true"
+                        ),
+                        "history_template": (
+                            f"{public_root}/opportunities/{{id}}/history.json"
+                            "?lang={lang}&limit={n}"
                         ),
                         "cache_policy": {"ndjson_seconds": 300},
                     },
@@ -308,6 +338,7 @@ def _transport(
                         "public funder pages",
                         "machine-readable opportunity api",
                         "machine-readable opportunity comparison",
+                        "public opportunity change history",
                         "machine-readable source coverage",
                         "official source links",
                         "notification contract (delivery disabled)",

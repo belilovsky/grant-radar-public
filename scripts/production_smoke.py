@@ -143,6 +143,17 @@ def run_smoke(
             for item in opportunities[:4]
             if str(item.get("id") or "")
         ]
+        history_id = compare_ids[0] if compare_ids else ""
+        history = _get_json(
+            client,
+            base_url,
+            f"/opportunities/{history_id}/history.json?lang=ru&limit=50",
+        )
+        history_head = _head(
+            client,
+            base_url,
+            f"/opportunities/{history_id}/history.json?lang=ru&limit=50",
+        )
         comparison = _get_json(
             client,
             base_url,
@@ -263,6 +274,12 @@ def run_smoke(
             and isinstance(insights_snapshot.get("decision_readiness"), dict)
             and _is_public_cacheable(insights_snapshot_head, 60)
         ),
+        "opportunity_history": (
+            history.get("schema_version") == "history.v1"
+            and history.get("status") in {"ready", "not_available"}
+            and isinstance(history.get("items"), list)
+            and _is_public_cacheable(history_head, 60)
+        ),
         "llms_home": f"Home: {_url(base_url, '/')}" in llms,
         "llms_sitemap": f"Sitemap: {_url(base_url, '/sitemap.xml')}" in llms,
         "llms_openapi": f"OpenAPI schema: {_url(base_url, '/openapi.json')}" in llms,
@@ -292,6 +309,11 @@ def run_smoke(
         "llms_comparison": (
             "Comparison JSON: "
             f"{_url(base_url, '/compare.json')}?ids={{id}},{{id}}&lang=ru|kk|en" in llms
+        ),
+        "llms_history": (
+            "Opportunity history JSON: "
+            f"{_url(base_url, '/opportunities/{id}/history.json')}?lang=ru|kk|en"
+            in llms
         ),
         "llms_ai_guidance": "## AI consumption guidance" in llms,
         "llms_ndjson_guidance": (
@@ -343,11 +365,19 @@ def run_smoke(
             or ""
         )
         == _url(base_url, "/opportunities.ndjson?compact=true"),
+        "site_discovery_history": str(
+            (discovery.get("data_endpoints") or {}).get("opportunity_history") or ""
+        )
+        == _url(base_url, "/opportunities/{id}/history.json"),
         "site_discovery_cache": _is_public_cacheable(discovery_head, 300),
         "site_discovery_ai_bulk_export": str(
             (discovery.get("ai_consumption") or {}).get("preferred_bulk_export") or ""
         )
         == _url(base_url, "/opportunities.ndjson?compact=true"),
+        "site_discovery_ai_history_template": str(
+            (discovery.get("ai_consumption") or {}).get("history_template") or ""
+        )
+        == _url(base_url, "/opportunities/{id}/history.json?lang={lang}&limit={n}"),
         "site_discovery_ai_cache_policy": int(
             ((discovery.get("ai_consumption") or {}).get("cache_policy") or {}).get(
                 "ndjson_seconds"

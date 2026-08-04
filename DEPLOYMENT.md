@@ -96,6 +96,7 @@ curl -fsS https://example.org/ready
 curl -fsSI https://example.org/ready
 curl -fsSI https://example.org/favicon.ico
 curl -fsS 'https://example.org/opportunities?limit=3'
+curl -fsS 'https://example.org/opportunities/<uuid>/history.json?lang=ru&limit=50'
 ```
 
 ## Backups

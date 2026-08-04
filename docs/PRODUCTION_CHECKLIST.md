@@ -32,6 +32,9 @@ historic backup filenames, and maintainer-only evidence.
 - `GET` and `HEAD /compare?ids=...` render the same comparison in the public AVDS4
   shell with working language links and a JSON alternate.
 - `GET` and `HEAD /opportunities/{id}` return public opportunity detail availability.
+- `GET` and `HEAD /opportunities/{id}/history.json` expose only normalized public
+  field changes; `status=not_available` must remain explicit when the history
+  backend or snapshot is absent.
 - `GET` and `HEAD /robots.txt`, `/sitemap.xml`, `/llms.txt`, and `/site-discovery.json` are public.
 - `GET /docs` and `GET /openapi.json` must stay reachable for public API consumers.
 - `llms.txt` and `site-discovery.json` should expose the read-only data endpoints
@@ -91,6 +94,7 @@ curl -fsS https://example.org/llms.txt
 curl -fsS https://example.org/site-discovery.json
 curl -fsS https://example.org/.well-known/notification-contract.json
 curl -fsS 'https://example.org/compare.json?ids=<id>,<id>&lang=ru'
+curl -fsS 'https://example.org/opportunities/<uuid>/history.json?lang=ru&limit=50'
 curl -fsSI 'https://example.org/status?lang=ru'
 curl -fsSI 'https://example.org/operator?lang=ru'
 curl -fsSI https://example.org/docs
@@ -104,6 +108,9 @@ curl -fsS 'https://example.org/digest?limit=5&tag=ai'
 ## Operational notes
 
 - Run Alembic migrations before serving traffic.
+- Migration `0005_opportunity_versions` seeds an `initial` public snapshot and
+  future refreshes append only changed normalized fields; verify the history
+  endpoint after applying it.
 - Set `PUBLIC_URL` for every public deploy. A green container readiness check is
   insufficient when edge and application origin are separate; the deploy must
   verify the exact revision through the public route.

@@ -179,6 +179,7 @@ def ecosystem_manifest(origin: str) -> dict[str, Any]:
 
     opportunities = _url(origin, "/opportunities")
     opportunities_ndjson = _url(origin, "/opportunities.ndjson")
+    opportunity_history = _url(origin, "/opportunities/{id}/history.json")
     return {
         "schema_version": "qdev-ecosystem-integration-v1",
         "project": {
@@ -197,6 +198,8 @@ def ecosystem_manifest(origin: str) -> dict[str, Any]:
         "data_plane": {
             "read_only_feed": opportunities,
             "machine_export": opportunities_ndjson,
+            "history_read_model": opportunity_history,
+            "history_schema": "history.v1",
             "format": "application/json",
             "formats": ["application/json", "application/x-ndjson"],
             "pagination": {"limit": "1..5000", "offset": "integer >= 0"},

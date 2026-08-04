@@ -41,6 +41,7 @@ The main public endpoints are:
 - `GET /opportunities`
 - `GET /opportunities.ndjson`
 - `GET /opportunities/{opportunity_id}`
+- `GET /opportunities/{opportunity_id}/history.json?lang=kk|ru|en`
 - `GET /opportunity/{opportunity_id}?lang=kk|ru|en`
 - `GET /funder/{funder_slug}?lang=kk|ru|en`
 - `GET /insights?lang=kk|ru|en`
@@ -61,6 +62,8 @@ The main public endpoints are:
 
 For machine consumers, `llms.txt` and `site-discovery.json` publish the public
 entry points, read-only JSON/NDJSON endpoints, and supported query templates.
+The history endpoint exposes only normalized public field changes and returns an
+explicit `not_available` status when no snapshot backend is configured.
 Use `/opportunities.ndjson?compact=true` for bulk discovery; keep the full
 `/opportunities.ndjson` export for consumers that explicitly need raw source
 payloads.
