@@ -567,7 +567,9 @@ def _parser() -> argparse.ArgumentParser:
         default=["AI3 Action Institute", "Technical Difficulties"],
         help="Text that must not appear in the current relevant opportunity feed.",
     )
-    parser.add_argument("--timeout", type=float, default=20.0)
+    # The gate performs a deliberately sequential public-route matrix. Keep
+    # enough headroom for a healthy deployment when the origin is cold.
+    parser.add_argument("--timeout", type=float, default=60.0)
     return parser
 
 
