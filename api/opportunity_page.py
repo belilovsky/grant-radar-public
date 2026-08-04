@@ -1011,6 +1011,8 @@ def render_opportunity_page(
       --surface-subtle: var(--color-bg-subtle);
       --surface-raised: var(--color-surface-raised);
       --surface-wash: color-mix(in oklab, var(--surface), var(--surface-subtle) 42%);
+      --surface-wash-soft: color-mix(in oklab, var(--surface), var(--surface-subtle) 28%);
+      --surface-wash-card: color-mix(in oklab, var(--surface), var(--surface-subtle) 36%);
       --accent-wash: color-mix(in oklab, var(--surface), var(--brand-soft) 24%);
       --text: var(--color-text);
       --muted: var(--color-text-muted);
@@ -1362,8 +1364,12 @@ def render_opportunity_page(
     .verification-section {{
       display: grid;
       gap: 12px;
-      padding: 18px 0;
-      border-bottom: 1px solid var(--line);
+      margin-bottom: 12px;
+      padding: 16px;
+      border: 1px solid var(--line-subtle);
+      border-radius: var(--av-radius-lg);
+      background: var(--surface-wash-soft);
+      box-shadow: var(--av-shadow-2xs);
     }}
     .verification-head {{
       display: grid;
@@ -1407,13 +1413,12 @@ def render_opportunity_page(
     .prepare-section {{
       display: grid;
       gap: 10px;
-      margin-bottom: 0;
-      padding: 18px 0;
-      border: 0;
-      border-bottom: 1px solid var(--line);
-      border-radius: 0;
-      background: transparent;
-      box-shadow: none;
+      margin-bottom: 12px;
+      padding: 16px;
+      border: 1px solid var(--line-subtle);
+      border-radius: var(--av-radius-lg);
+      background: var(--surface-wash-soft);
+      box-shadow: var(--av-shadow-2xs);
     }}
     .prepare-head {{
       display: grid;
@@ -1436,20 +1441,20 @@ def render_opportunity_page(
     .prepare-grid {{
       display: grid;
       grid-template-columns: repeat(4, minmax(0, 1fr));
-      gap: 0;
+      gap: 8px;
     }}
     .prepare-card {{
       display: grid;
       gap: 6px;
       min-height: 0;
-      padding: 6px 14px;
-      border: 0;
-      border-left: 1px solid var(--line-subtle);
-      border-radius: 0;
-      background: transparent;
-      box-shadow: none;
+      padding: 12px;
+      border: 1px solid var(--line-subtle);
+      border-left: 3px solid color-mix(in oklab, var(--brand), white 36%);
+      border-radius: var(--av-radius-md);
+      background: var(--surface-wash-card);
+      box-shadow: var(--av-shadow-2xs);
     }}
-    .prepare-card:first-child {{ border-left: 0; padding-left: 0; }}
+    .prepare-card:first-child {{ border-left-color: var(--brand); }}
     .prepare-index {{
       display: inline-flex;
       align-items: center;
@@ -1477,13 +1482,12 @@ def render_opportunity_page(
     .apply-section {{
       display: grid;
       gap: 10px;
-      margin-bottom: 0;
-      padding: 18px 0;
-      border: 0;
-      border-bottom: 1px solid var(--line);
-      border-radius: 0;
-      background: transparent;
-      box-shadow: none;
+      margin-bottom: 12px;
+      padding: 16px;
+      border: 1px solid var(--line-subtle);
+      border-radius: var(--av-radius-lg);
+      background: var(--surface-wash-soft);
+      box-shadow: var(--av-shadow-2xs);
     }}
     .apply-head {{
       display: grid;
@@ -1506,7 +1510,7 @@ def render_opportunity_page(
     .apply-list {{
       display: grid;
       grid-template-columns: repeat(4, minmax(0, 1fr));
-      gap: 0;
+      gap: 8px;
       padding: 0;
       margin: 0;
       list-style: none;
@@ -1516,13 +1520,13 @@ def render_opportunity_page(
       grid-template-columns: 28px minmax(0, 1fr);
       gap: 8px;
       align-items: start;
-      padding: 6px 14px;
-      border: 0;
-      border-left: 1px solid var(--line-subtle);
-      border-radius: 0;
-      background: transparent;
+      padding: 12px;
+      border: 1px solid var(--line-subtle);
+      border-left: 3px solid color-mix(in oklab, var(--success), white 34%);
+      border-radius: var(--av-radius-md);
+      background: var(--surface-wash-card);
     }}
-    .apply-step:first-child {{ border-left: 0; padding-left: 0; }}
+    .apply-step:first-child {{ border-left-color: var(--success); }}
     .apply-index {{
       display: inline-flex;
       align-items: center;
@@ -1716,12 +1720,18 @@ def render_opportunity_page(
       .prepare-card:first-child,
       .apply-step,
       .apply-step:first-child {{
-        padding: 10px 0;
-        border-left: 0;
+        padding: 12px;
+        border-left: 3px solid color-mix(in oklab, var(--brand), white 36%);
         border-top: 1px solid var(--line-subtle);
+        border-radius: var(--av-radius-md);
+        background: var(--surface-wash-card);
       }}
-      .prepare-card:first-child,
-      .apply-step:first-child {{ border-top: 0; }}
+      .prepare-card:first-child {{ border-left-color: var(--brand); }}
+      .apply-step,
+      .apply-step:first-child {{
+        border-left-color: color-mix(in oklab, var(--success), white 34%);
+      }}
+      .apply-step:first-child {{ border-left-color: var(--success); }}
     }}
     @media (max-width: 640px) {{
       .hero-actions .button,

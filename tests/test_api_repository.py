@@ -3197,6 +3197,9 @@ def test_opportunity_page_renders_public_permalink(monkeypatch):
     assert "QAZ.FUND – рабочая справка" in response.text
     assert "Проверьте на официальном источнике условия" in response.text
     assert "Откройте страницу подачи" in response.text
+    assert "--surface-wash-card:" in response.text
+    assert "background: var(--surface-wash-soft);" in response.text
+    assert "background: var(--surface-wash-card);" in response.text
     assert "Сверьте критерии" in response.text
     assert (
         "Описание и ключевые поля собраны с официального источника" not in response.text
