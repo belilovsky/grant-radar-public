@@ -312,7 +312,7 @@ def run_smoke(
         ),
         "llms_history": (
             "Opportunity history JSON: "
-            f"{_url(base_url, '/opportunities/{id}/history.json')}?lang=ru|kk|en&limit={{n}}"
+            f"{_url(base_url, '/opportunities/{id}/history.json')}?lang=kk|ru|en&limit={{n}}"
             in llms
         ),
         "llms_ai_guidance": "## AI consumption guidance" in llms,
