@@ -95,15 +95,53 @@ COPY: dict[str, dict[str, str]] = {
         "no_data": "There is not enough data for this view yet.",
         "footer": "QAZ.FUND does not award funds or process applications. Check the organizer's terms before acting.",
     },
+    "kk": {
+        "title": "Мүмкіндіктер шолуы – QAZ.FUND",
+        "description": "Ағымдағы каталогтағы қолдау бағдарламалары, форматтар, мерзімдер мен дереккөздердің ашық шолуы.",
+        "back": "Каталогқа оралу",
+        "eyebrow": "Каталог шолуы",
+        "heading": "Қолдауды қайдан іздеу керек",
+        "intro": "Ағымдағы каталогтағы мүмкіндіктер, мерзімдер мен дереккөздердің ашық көрінісі.",
+        "total": "Ашық бағдарламалар",
+        "sources": "Ресми дереккөздер",
+        "soon": "30 күн ішіндегі мерзім",
+        "rolling": "Нақты мерзімі жоқ бағдарламалар",
+        "formats": "Қолдау форматтары",
+        "formats_note": "Каталогта жиі кездесетін форматтар.",
+        "sources_title": "Бағдарламаларды кім жариялайды",
+        "sources_note": "Ашық карточкалары ең көп дереккөздер.",
+        "deadlines": "Мерзімдер бөлінісі",
+        "deadlines_note": "Мерзім қай бағдарламаны алдымен тексеру керегін көрсетеді.",
+        "freshness": "Дереккөздер мәртебесі",
+        "freshness_note": "Соңғы сәтті жаңартудың нәтижесі көрсетілген.",
+        "high": "Күшті белгілер",
+        "good": "Орташа белгілер",
+        "base": "Негізгі белгілер",
+        "within_30": "30 күнге дейін",
+        "within_90": "31–90 күн",
+        "later": "90 күннен кейін",
+        "rolling_label": "Мерзімсіз",
+        "no_deadline": "Мерзім көрсетілмеген",
+        "fresh": "Жаңартылған",
+        "watch": "Назар аударуды қажет етеді",
+        "stale": "Ескірген",
+        "unknown": "Белгіленбеген",
+        "method": "Бұл шолуды қалай оқу керек",
+        "method_text": "Бұл донорлардың рейтингі де, қаржыландыру болжамы да емес. Диаграммалар QAZ.FUND жұмыс белгілері бойынша карточкалардың бөлінісін көрсетеді; шарттарды ұйымдастырушыдан тексеріңіз.",
+        "source_link": "Дереккөздерді тексеру",
+        "catalog_link": "Қолдау іздеу",
+        "no_data": "Бұл көрініс үшін дерек әзірге жеткіліксіз.",
+        "footer": "QAZ.FUND қаражат бөлмейді және өтінім қабылдамайды. Әрекет етпес бұрын ұйымдастырушының шарттарын тексеріңіз.",
+    },
 }
 
 
 def _copy(lang: str) -> dict[str, str]:
     if lang == "kk":
-        copy = dict(COPY["ru"])
+        copy = dict(COPY["kk"])
         copy["language_fallback_note"] = (
-            "Қазақша редакция әзірге дайын емес. Негізгі мәтін бастапқы тілде "
-            "көрсетіледі; соңғы шарттарды ұйымдастырушының ресми бетінен тексеріңіз."
+            "Кейбір карточкалардағы сипаттама әзірге бастапқы тілде көрсетіледі. "
+            "Соңғы шарттарды ұйымдастырушының ресми бетінен тексеріңіз."
         )
         return copy
     return COPY.get(lang, COPY["ru"])
@@ -111,16 +149,26 @@ def _copy(lang: str) -> dict[str, str]:
 
 def _label(raw: str, lang: str) -> str:
     labels = {
-        "grant": ("Гранты", "Grants"),
-        "contest": ("Конкурсы", "Contests"),
-        "accelerator": ("Акселераторы", "Accelerators"),
-        "cloud_credit": ("Облачные кредиты", "Cloud credits"),
-        "tender": ("Тендеры", "Tenders"),
-        "fellowship": ("Стипендии", "Fellowships"),
+        "grant": ("Гранты", "Grants", "Гранттар"),
+        "contest": ("Конкурсы", "Contests", "Конкурстар"),
+        "accelerator": ("Акселераторы", "Accelerators", "Акселераторлар"),
+        "cloud_credit": ("Облачные кредиты", "Cloud credits", "Бұлттық кредиттер"),
+        "tender": ("Тендеры", "Tenders", "Тендерлер"),
+        "fellowship": ("Стипендии", "Fellowships", "Стипендиялар"),
     }
-    return labels.get(
-        raw, (raw.replace("_", " ").title(), raw.replace("_", " ").title())
-    )[lang == "en"]
+    values = labels.get(
+        raw,
+        (
+            raw.replace("_", " ").title(),
+            raw.replace("_", " ").title(),
+            raw.replace("_", " ").title(),
+        ),
+    )
+    if lang == "en":
+        return values[1]
+    if lang == "kk":
+        return values[2]
+    return values[0]
 
 
 def _open_items(items: list[Opportunity]) -> list[Opportunity]:
@@ -270,7 +318,7 @@ def render_insights_page(
     html_lang = escape(lang, quote=True)
     fallback_note = escape(str(copy.get("language_fallback_note") or ""))
     fallback_note_markup = (
-        f'<p class="language-fallback-note" lang="kk" data-language-fallback="ru">{fallback_note}</p>'
+        f'<p class="language-fallback-note" lang="kk" data-language-fallback="source">{fallback_note}</p>'
         if fallback_note
         else ""
     )

@@ -2739,6 +2739,12 @@ def test_api_localizes_english_detail_section_headings_for_russian_detail_view(
     assert data["detail_sections"][2]["heading"] == "Кто может подать заявку"
     assert data["detail_sections"][3]["heading"] == "Статус источника"
 
+    kk_response = client.get(f"/opportunities/{item.id}", params={"lang": "kk"})
+
+    assert kk_response.status_code == 200
+    kk_data = kk_response.json()
+    assert kk_data["detail_sections"][0]["heading"] == "Шолу"
+
 
 def test_api_excludes_legacy_irrelevant_grants_gov_rows(tmp_path, monkeypatch):
     _reset_api_state(monkeypatch)
@@ -3347,8 +3353,13 @@ def test_public_insights_page_renders_avds_charts(monkeypatch):
     kk_response = client.get("/insights", params={"lang": "kk"})
     assert kk_response.status_code == 200
     assert '<html lang="kk"' in kk_response.text
-    assert 'data-language-fallback="ru"' in kk_response.text
-    assert "Қазақша редакция әзірге дайын емес." in kk_response.text
+    assert 'data-language-fallback="source"' in kk_response.text
+    assert "Қолдауды қайдан іздеу керек" in kk_response.text
+    assert "Гранттар" in kk_response.text
+    assert (
+        "Кейбір карточкалардағы сипаттама әзірге бастапқы тілде көрсетіледі."
+        in kk_response.text
+    )
 
 
 def test_public_info_pages_are_linkable(monkeypatch):

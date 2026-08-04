@@ -9,6 +9,12 @@ from core.models import Opportunity, OpportunityType
 respx = pytest.importorskip("respx")
 
 
+def test_section_headings_have_kazakh_labels() -> None:
+    assert detail_api._section_heading("overview", "kk") == "Шолу"
+    assert detail_api._section_heading("eligibility", "kk") == "Кім өтінім бере алады"
+    assert detail_api._section_heading("source_status", "kk") == "Дереккөз мәртебесі"
+
+
 @pytest.fixture(autouse=True)
 def _clear_detail_cache() -> None:
     detail_api._DETAIL_CACHE.clear()

@@ -134,6 +134,11 @@ _SECTION_HEADINGS = {
         "eligibility": "Кто может подать заявку",
         "source_status": "Статус источника",
     },
+    "kk": {
+        "overview": "Шолу",
+        "eligibility": "Кім өтінім бере алады",
+        "source_status": "Дереккөз мәртебесі",
+    },
 }
 
 _SECTION_HEADING_ALIASES = {

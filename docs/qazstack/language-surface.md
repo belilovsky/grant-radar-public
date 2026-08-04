@@ -17,6 +17,11 @@ safe fallback, but that fallback must not be described as an editor-approved
 translation. Source language and translation availability are data properties,
 not a reason to mutate a source record.
 
+The public insights page has curated Kazakh interface copy for its metrics and
+charts. Opportunity descriptions and source excerpts remain in their published
+language until a native-language editorial pass approves the corresponding
+`raw.i18n.kk` fields.
+
 The machine-readable contract is [`language-surface.json`](language-surface.json)
 and is referenced from `docs/qazstack/consumer-contract.json`.
 
