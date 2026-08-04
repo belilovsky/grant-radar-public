@@ -103,7 +103,6 @@ except ImportError:  # pragma: no cover - Python < 3.11 compatibility
 async def _lifespan(app: FastAPI):
     _warm_public_sitemap_cache()
     _warm_public_items_cache()
-    _start_public_query_warm()
     yield
 
 
@@ -653,27 +652,6 @@ def _warm_public_items_cache() -> None:
             _cached_public_scope_items(content_lang)
     with suppress(Exception):
         _cached_coverage_payload()
-
-
-def _warm_public_query_cache() -> None:
-    """Warm the expensive sorted dashboard view without delaying readiness."""
-    for content_lang in ("en", "ru"):
-        with suppress(Exception):
-            _query_opportunities(
-                min_score=0.0,
-                deadline_after=date.today(),
-                limit=5000,
-                lang=content_lang,
-                compact=True,
-            )
-
-
-def _start_public_query_warm() -> None:
-    threading.Thread(
-        target=_warm_public_query_cache,
-        name="qazfund-query-warm",
-        daemon=True,
-    ).start()
 
 
 def _compact_dashboard_item(item: Opportunity) -> Opportunity:
