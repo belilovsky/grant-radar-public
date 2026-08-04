@@ -10,6 +10,7 @@ def test_status_page_keeps_last_check_visible_in_mobile_rows() -> None:
                 {
                     "enabled": True,
                     "name": "Example source",
+                    "slug": "kazakhstan_domestic_support",
                     "base_url": "https://example.org/programs",
                     "items": 4,
                     "relevant_open_items": 2,
@@ -29,6 +30,8 @@ def test_status_page_keeps_last_check_visible_in_mobile_rows() -> None:
     assert "Последняя проверка: 17.07.2026 08:30 UTC" in html
     assert ".mobile-updated { display:block; }" in html
     assert "contact@qaz.fund" not in html
+    assert "Поддержка РК" in html
+    assert "tbody tr:nth-child(even)" in html
 
 
 def test_status_page_has_editorial_kazakh_shell_and_three_language_switch() -> None:
@@ -42,3 +45,27 @@ def test_status_page_has_editorial_kazakh_shell_and_three_language_switch() -> N
     assert 'href="/status?lang=kk" lang="kk" aria-current="page"' in html
     assert 'href="/status?lang=ru" lang="ru"' in html
     assert 'href="/status?lang=en" lang="en"' in html
+
+
+def test_status_page_localizes_source_names_in_kazakh() -> None:
+    html = render_status_page(
+        coverage={
+            "sources": [
+                {
+                    "enabled": True,
+                    "name": "Kazakhstan domestic support",
+                    "slug": "kazakhstan_domestic_support",
+                    "base_url": "https://example.org/programs",
+                    "items": 2,
+                    "relevant_open_items": 1,
+                    "freshness_status": "fresh",
+                }
+            ],
+            "enabled_sources": 1,
+            "fresh_sources": 1,
+        },
+        lang="kk",
+    )
+
+    assert "Қазақстандағы қолдау бағдарламалары" in html
+    assert "Kazakhstan domestic support" not in html

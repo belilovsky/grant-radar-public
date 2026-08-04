@@ -9,6 +9,7 @@ from urllib.parse import urlparse
 
 from api.avds import AVDS_CSS, AVDS_FONT_HEAD
 from api.dashboard_copy import dashboard_copy
+from api.insights_page import _source_label
 
 COPY = {
     "ru": {
@@ -165,10 +166,13 @@ def render_status_page(
         )
         freshness = str(row.get("freshness_status") or "unknown")
         mobile_updated = f'{copy["updated"]}: {last_checked}'
+        source_name = _source_label(
+            str(row.get("slug") or row.get("name") or ""), active_lang
+        )
         rendered_rows.append(f"""
             <tr>
               <td>
-                <strong>{escape(str(row.get("name") or row.get("slug") or ""))}</strong>
+                <strong>{escape(source_name)}</strong>
                 <span>{escape(_host(row.get("base_url")))}</span>
                 <span class="mobile-updated">{escape(mobile_updated)}</span>
               </td>
@@ -254,6 +258,7 @@ def render_status_page(
     th {{ position:sticky; top:0; z-index:1; color:var(--muted); background:var(--wash);
       font-size:12px; font-weight:700; }}
     td {{ font-size:14px; }}
+    tbody tr:nth-child(even) {{ background:var(--panel-wash-soft); }}
     tbody tr:hover {{ background:color-mix(in oklab,var(--panel),var(--brand-soft) 10%); }}
     td strong,td span {{ display:block; }}
     td > span:not(.state) {{ margin-top:3px; color:var(--muted); font-size:12px; }}

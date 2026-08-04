@@ -1829,7 +1829,7 @@ def test_public_status_page_renders_coverage_without_operator_details(monkeypatc
         "--av-container-dashboard: clamp(1280px, calc(100vw - 96px), 2240px);"
         in response.text
     )
-    assert "World Bank Kazakhstan" in response.text
+    assert "Всемирный банк Казахстан" in response.text
     assert "Последняя проверка" in response.text
     assert 'rel="canonical" href="https://qaz.fund/status?lang=ru"' in response.text
     assert "error" not in response.text.lower()
