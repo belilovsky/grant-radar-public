@@ -47,7 +47,9 @@ def upgrade() -> None:
             ),
         )
         inspector = sa.inspect(bind)
-    index_names = {index["name"] for index in inspector.get_indexes("opportunity_versions")}
+    index_names = {
+        index["name"] for index in inspector.get_indexes("opportunity_versions")
+    }
     if "ix_opportunity_versions_opportunity_id" not in index_names:
         op.create_index(
             "ix_opportunity_versions_opportunity_id",
@@ -92,9 +94,7 @@ def upgrade() -> None:
         return
     existing_ids = {
         str(row[0])
-        for row in bind.execute(
-            sa.select(versions.c.opportunity_id).distinct()
-        ).all()
+        for row in bind.execute(sa.select(versions.c.opportunity_id).distinct()).all()
     }
     values = []
     for row in rows:

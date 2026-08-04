@@ -207,7 +207,7 @@ def _transport(
                     f"- Comparison JSON: "
                     f"{public_root}/compare.json?ids={{id}},{{id}}&lang=ru|kk|en\n"
                     f"- Opportunity history JSON: "
-                    f"{public_root}/opportunities/{{id}}/history.json?lang=ru|kk|en\n"
+                    f"{public_root}/opportunities/{{id}}/history.json?lang=ru|kk|en&limit={{n}}\n"
                     f"- Source status page: {public_root}/status\n"
                     f"- Coverage JSON: {public_root}/coverage\n"
                     f"- Opportunities JSON: {public_root}/opportunities\n"
