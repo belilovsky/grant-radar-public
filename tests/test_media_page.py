@@ -46,7 +46,7 @@ def test_media_snapshot_is_source_grounded_and_deterministic() -> None:
 
 
 def test_media_pages_have_three_locales_and_machine_contract(monkeypatch) -> None:
-    items = [_item("Медиаобновление")]
+    items = [_item("Медиаобновление"), _item("Второе обновление")]
     monkeypatch.setattr(
         api_main, "_cached_public_scope_items", lambda content_lang="ru": list(items)
     )
@@ -58,11 +58,13 @@ def test_media_pages_have_three_locales_and_machine_contract(monkeypatch) -> Non
         assert f'<html lang="{lang}"' in response.text
         assert 'data-avds-component="media-lead"' in response.text
         assert 'data-avds-component="live-feed"' in response.text
+        assert f'lang="{lang}" aria-current="page"' in response.text
         assert 'hreflang="kk"' in response.text
         assert 'hreflang="ru"' in response.text
         assert 'hreflang="en"' in response.text
         assert 'type="application/feed+json"' in response.text
         assert 'type="application/rss+xml"' in response.text
+        assert 'datetime="' in response.text
         assert "topic=ai" in response.text
         assert "source=official_source" in response.text
         assert "\u2014" not in response.text
