@@ -61,6 +61,8 @@ def test_media_pages_have_three_locales_and_machine_contract(monkeypatch) -> Non
         assert 'hreflang="kk"' in response.text
         assert 'hreflang="ru"' in response.text
         assert 'hreflang="en"' in response.text
+        assert 'type="application/feed+json"' in response.text
+        assert 'type="application/rss+xml"' in response.text
         assert "topic=ai" in response.text
         assert "source=official_source" in response.text
         assert "\u2014" not in response.text
@@ -71,3 +73,20 @@ def test_media_pages_have_three_locales_and_machine_contract(monkeypatch) -> Non
     assert payload["links"]["human"].endswith("/media?lang=en")
     assert payload["sources"][0]["slug"] == "official_source"
     assert "raw" not in str(payload)
+
+    feed_response = client.get("/media/feed.json?lang=en")
+    assert feed_response.status_code == 200
+    feed = feed_response.json()
+    assert feed["version"] == "https://jsonfeed.org/version/1.1"
+    assert feed["feed_url"].endswith("/media/feed.json?lang=en")
+    assert feed["items"][0]["url"].startswith("http://testserver/opportunity/")
+    assert feed["items"][0]["external_url"] == "https://example.org/program"
+    assert "raw" not in str(feed)
+
+    rss_response = client.get("/media/rss.xml?lang=en")
+    assert rss_response.status_code == 200
+    assert rss_response.headers["content-type"].startswith("application/rss+xml")
+    assert '<rss version="2.0"' in rss_response.text
+    assert "<link>http://testserver/opportunity/" in rss_response.text
+    assert "https://example.org/program" in rss_response.text
+    assert "raw" not in rss_response.text

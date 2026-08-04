@@ -19,6 +19,8 @@ ORTCOM.
 
 - человекочитаемая страница: `/media?lang=kk|ru|en`;
 - машинный срез: `/media.json?lang=kk|ru|en`;
+- JSON Feed 1.1: `/media/feed.json?lang=kk|ru|en`;
+- RSS 2.0: `/media/rss.xml?lang=kk|ru|en`;
 - версия read model: `media.v1`;
 - тематические полки возвращают в каталог с его штатным фильтром `topic`, а
   карточки источников – с фильтром `source`; внешняя ссылка на первоисточник

@@ -11,10 +11,12 @@ QAZ.FUND opportunity and links back to its primary source.
 from __future__ import annotations
 
 from collections import Counter
-from datetime import date, datetime
+from datetime import UTC, date, datetime
+from email.utils import format_datetime
 from html import escape
 from typing import Any
 from urllib.parse import quote
+from xml.sax.saxutils import escape as xml_escape
 
 from qazstack.opportunities import public_lifecycle
 
@@ -201,6 +203,13 @@ def _copy(lang: str) -> dict[str, str]:
     return MEDIA_COPY.get(lang, MEDIA_COPY["ru"])
 
 
+def media_feed_metadata(lang: str) -> tuple[str, str]:
+    """Return localized feed title and description for transport layers."""
+
+    copy = _copy(lang)
+    return copy["title"], copy["description"]
+
+
 def _item_is_open(item: Opportunity, today: date) -> bool:
     if public_lifecycle(item) in {"closed", "awarded"}:
         return False
@@ -236,6 +245,13 @@ def _date_label(value: Any) -> str:
     return value.strftime("%d.%m.%Y") if isinstance(value, date) else ""
 
 
+def _timestamp_label(value: Any) -> str:
+    if not isinstance(value, datetime):
+        return ""
+    aware = value if value.tzinfo is not None else value.replace(tzinfo=UTC)
+    return aware.astimezone(UTC).isoformat().replace("+00:00", "Z")
+
+
 def _record(
     item: Opportunity, *, lang: str, base: str, copy: dict[str, str]
 ) -> dict[str, Any]:
@@ -255,6 +271,7 @@ def _record(
         "tags": [str(tag).strip() for tag in item.tags if str(tag).strip()][:4],
         "topic": _topic_key(item),
         "observed": _date_label(item.discovered_at),
+        "observed_at": _timestamp_label(item.discovered_at),
         "deadline": _date_label(item.deadline),
         "rolling": bool((item.raw or {}).get("deadline_policy") == "rolling"),
         "score": round(float(item.score or 0.0), 3),
@@ -326,6 +343,129 @@ def build_media_snapshot(
     }
 
 
+def build_media_feed(
+    *,
+    snapshot: dict[str, Any],
+    lang: str,
+    human_url: str,
+    feed_url: str,
+    public_root: str = "",
+    title: str,
+    description: str,
+) -> dict[str, Any]:
+    """Build a JSON Feed 1.1 projection from the public media snapshot."""
+
+    feed_items: list[dict[str, Any]] = []
+    for record in snapshot.get("cards") or []:
+        item_url = str(record.get("href") or "")
+        item_source = str(record.get("source_url") or "")
+        if item_url.startswith("/") and public_root:
+            item_url = f"{public_root.rstrip('/')}{item_url}"
+        entry: dict[str, Any] = {
+            "id": str(record.get("id") or item_url),
+            "url": item_url,
+            "external_url": item_source,
+            "title": str(record.get("title") or ""),
+            "content_text": str(record.get("summary") or record.get("title") or ""),
+            "author": {
+                "name": str(record.get("source") or "QAZ.FUND"),
+                "url": item_source,
+            },
+            "tags": [str(tag) for tag in record.get("tags") or []],
+        }
+        if record.get("observed_at"):
+            entry["date_published"] = str(record["observed_at"])
+        feed_items.append(entry)
+    return {
+        "version": "https://jsonfeed.org/version/1.1",
+        "title": title,
+        "home_page_url": human_url,
+        "feed_url": feed_url,
+        "description": description,
+        "language": lang,
+        "items": feed_items,
+    }
+
+
+def _rss_date_label(value: Any) -> str:
+    """Convert a public ISO timestamp to the RFC 822 form expected by RSS."""
+
+    if not value:
+        return ""
+    try:
+        parsed = datetime.fromisoformat(str(value).replace("Z", "+00:00"))
+    except ValueError:
+        return ""
+    aware = parsed if parsed.tzinfo is not None else parsed.replace(tzinfo=UTC)
+    return format_datetime(aware.astimezone(UTC), usegmt=True)
+
+
+def build_media_rss(
+    *,
+    snapshot: dict[str, Any],
+    human_url: str,
+    feed_url: str,
+    public_root: str = "",
+    title: str,
+    description: str,
+) -> str:
+    """Build a compact RSS 2.0 projection from the public media snapshot."""
+
+    def text(value: Any) -> str:
+        return xml_escape(str(value or ""))
+
+    def attr(value: Any) -> str:
+        return xml_escape(str(value or ""), {'"': "&quot;", "'": "&apos;"})
+
+    entries: list[str] = []
+    for record in snapshot.get("cards") or []:
+        item_url = str(record.get("href") or "")
+        source_url = str(record.get("source_url") or "")
+        if item_url.startswith("/") and public_root:
+            item_url = f"{public_root.rstrip('/')}{item_url}"
+        summary = str(record.get("summary") or record.get("title") or "")
+        categories = "".join(
+            f"<category>{text(tag)}</category>"
+            for tag in (record.get("tags") or [])[:4]
+        )
+        published = _rss_date_label(record.get("observed_at"))
+        published_markup = f"<pubDate>{text(published)}</pubDate>" if published else ""
+        source_markup = (
+            f'<source url="{attr(source_url)}">{text(record.get("source"))}</source>'
+            if source_url
+            else ""
+        )
+        entries.append(
+            "<item>"
+            f"<title>{text(record.get('title'))}</title>"
+            f"<link>{text(item_url)}</link>"
+            f'<guid isPermaLink="true">{text(item_url)}</guid>'
+            f"<description>{text(summary)}</description>"
+            f"{published_markup}{categories}{source_markup}"
+            "</item>"
+        )
+    first = (snapshot.get("cards") or [None])[0] or {}
+    last_build = _rss_date_label(first.get("observed_at"))
+    last_build_markup = (
+        f"<lastBuildDate>{text(last_build)}</lastBuildDate>" if last_build else ""
+    )
+    return (
+        '<?xml version="1.0" encoding="UTF-8"?>'
+        '<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">'
+        "<channel>"
+        f"<title>{text(title)}</title>"
+        f"<link>{text(human_url)}</link>"
+        f"<description>{text(description)}</description>"
+        f'<atom:link href="{attr(feed_url)}" rel="self" type="application/rss+xml"/>'
+        f"{last_build_markup}"
+        "<language>"
+        f"{text(snapshot.get('language') or 'ru')}"
+        "</language>"
+        f"{''.join(entries)}"
+        "</channel></rss>"
+    )
+
+
 def _tag_markup(record: dict[str, Any]) -> str:
     return "".join(
         f'<span class="media-tag">{escape(str(tag))}</span>'
@@ -374,6 +514,16 @@ def render_media_page(
         f"{base}/media.json?lang={active_lang}"
         if base
         else f"/media.json?lang={active_lang}"
+    )
+    media_feed = (
+        f"{base}/media/feed.json?lang={active_lang}"
+        if base
+        else f"/media/feed.json?lang={active_lang}"
+    )
+    media_rss = (
+        f"{base}/media/rss.xml?lang={active_lang}"
+        if base
+        else f"/media/rss.xml?lang={active_lang}"
     )
     canonical = (
         f"{site_origin.rstrip('/')}{paths[active_lang]}"
@@ -429,7 +579,7 @@ def render_media_page(
     return f"""<!doctype html>
 <html lang="{escape(active_lang, quote=True)}" data-avds="grant-radar" data-av-theme="light" data-theme="light"><head>
   <meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>{escape(copy["title"])}</title><meta name="description" content="{escape(copy["description"], quote=True)}"><link rel="canonical" href="{escape(canonical, quote=True)}">
-  <link rel="alternate" hreflang="kk" href="{escape((site_origin.rstrip('/') if site_origin else '') + paths['kk'], quote=True)}"><link rel="alternate" hreflang="ru" href="{escape((site_origin.rstrip('/') if site_origin else '') + paths['ru'], quote=True)}"><link rel="alternate" hreflang="en" href="{escape((site_origin.rstrip('/') if site_origin else '') + paths['en'], quote=True)}"><link rel="alternate" type="application/json" href="{escape((site_origin.rstrip('/') if site_origin else '') + media_json, quote=True)}">
+  <link rel="alternate" hreflang="kk" href="{escape((site_origin.rstrip('/') if site_origin else '') + paths['kk'], quote=True)}"><link rel="alternate" hreflang="ru" href="{escape((site_origin.rstrip('/') if site_origin else '') + paths['ru'], quote=True)}"><link rel="alternate" hreflang="en" href="{escape((site_origin.rstrip('/') if site_origin else '') + paths['en'], quote=True)}"><link rel="alternate" type="application/json" href="{escape((site_origin.rstrip('/') if site_origin else '') + media_json, quote=True)}"><link rel="alternate" type="application/feed+json" href="{escape((site_origin.rstrip('/') if site_origin else '') + media_feed, quote=True)}"><link rel="alternate" type="application/rss+xml" href="{escape((site_origin.rstrip('/') if site_origin else '') + media_rss, quote=True)}">
   <meta property="og:title" content="{escape(copy['title'], quote=True)}"><meta property="og:description" content="{escape(copy['description'], quote=True)}"><meta property="og:type" content="website"><meta property="og:url" content="{escape(canonical, quote=True)}"><meta property="og:image" content="{escape(og_image_url(site_origin, root_path), quote=True)}"><meta name="twitter:card" content="summary_large_image"><meta name="twitter:title" content="{escape(copy['title'], quote=True)}"><meta name="twitter:description" content="{escape(copy['description'], quote=True)}"><meta name="twitter:image" content="{escape(og_image_url(site_origin, root_path), quote=True)}">
   {analytics_head_html()}{AVDS_FONT_HEAD}<style>
     {AVDS_CSS}

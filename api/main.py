@@ -49,7 +49,13 @@ from api.error_page import render_not_found_page
 from api.funder_page import render_funder_page
 from api.history import build_history_snapshot
 from api.insights_page import build_insights_snapshot, render_insights_page
-from api.media_page import build_media_snapshot, render_media_page
+from api.media_page import (
+    build_media_feed,
+    build_media_rss,
+    build_media_snapshot,
+    media_feed_metadata,
+    render_media_page,
+)
 from api.notification_contract import notification_contract
 from api.operator_page import render_operator_page
 from api.opportunity_detail import build_opportunity_detail
@@ -1563,6 +1569,61 @@ async def public_media_json(request: Request) -> JSONResponse:
     return response
 
 
+@app.api_route("/media/feed.json", methods=["GET", "HEAD"], include_in_schema=False)
+async def public_media_feed(request: Request) -> Response:
+    """Return a standard JSON Feed projection of public media records."""
+
+    root_path = _root_path(request)
+    active_lang = _public_lang(str(request.query_params.get("lang") or "").strip())
+    human_url = _public_url(request, root_path, f"/media?lang={active_lang}")
+    feed_url = _public_url(request, root_path, f"/media/feed.json?lang={active_lang}")
+    snapshot = build_media_snapshot(
+        items=_cached_public_scope_items(content_lang=active_lang),
+        lang=active_lang,
+        root_path=root_path,
+    )
+    feed_title, feed_description = media_feed_metadata(active_lang)
+    payload = build_media_feed(
+        snapshot=snapshot,
+        lang=active_lang,
+        human_url=human_url,
+        feed_url=feed_url,
+        public_root=_public_root_base(request, root_path),
+        title=feed_title,
+        description=feed_description,
+    )
+    response = JSONResponse(payload, media_type="application/feed+json")
+    response.headers["Cache-Control"] = "public, max-age=60, stale-while-revalidate=300"
+    return response
+
+
+@app.api_route("/media/rss.xml", methods=["GET", "HEAD"], include_in_schema=False)
+async def public_media_rss(request: Request) -> Response:
+    """Return an RSS 2.0 projection for newsroom and digest integrations."""
+
+    root_path = _root_path(request)
+    active_lang = _public_lang(str(request.query_params.get("lang") or "").strip())
+    human_url = _public_url(request, root_path, f"/media?lang={active_lang}")
+    feed_url = _public_url(request, root_path, f"/media/rss.xml?lang={active_lang}")
+    snapshot = build_media_snapshot(
+        items=_cached_public_scope_items(content_lang=active_lang),
+        lang=active_lang,
+        root_path=root_path,
+    )
+    feed_title, feed_description = media_feed_metadata(active_lang)
+    payload = build_media_rss(
+        snapshot=snapshot,
+        human_url=human_url,
+        feed_url=feed_url,
+        public_root=_public_root_base(request, root_path),
+        title=feed_title,
+        description=feed_description,
+    )
+    response = Response(payload, media_type="application/rss+xml")
+    response.headers["Cache-Control"] = "public, max-age=60, stale-while-revalidate=300"
+    return response
+
+
 @app.api_route(
     "/insights",
     methods=["GET", "HEAD"],
@@ -2031,6 +2092,8 @@ async def llms_txt(request: Request) -> Response:
     coverage = _public_url(request, root_path, "/coverage")
     insights_json = _public_url(request, root_path, "/insights.json")
     media_json = _public_url(request, root_path, "/media.json")
+    media_feed = _public_url(request, root_path, "/media/feed.json")
+    media_rss = _public_url(request, root_path, "/media/rss.xml")
     compare_json = _public_url(request, root_path, "/compare.json")
     opportunities = _public_url(request, root_path, "/opportunities")
     opportunities_ndjson = _public_url(request, root_path, "/opportunities.ndjson")
@@ -2068,6 +2131,8 @@ async def llms_txt(request: Request) -> Response:
                 f"- Media page: {media}",
                 f"- Catalog insights JSON: {insights_json}",
                 f"- Media JSON: {media_json}",
+                f"- Media JSON Feed: {media_feed}",
+                f"- Media RSS: {media_rss}",
                 f"- Comparison JSON: {compare_json}?ids={{id}},{{id}}&lang=ru|kk|en",
                 f"- Terms of use: {terms}",
                 f"- Data policy: {data_policy}",
@@ -2109,6 +2174,8 @@ async def llms_txt(request: Request) -> Response:
                 "- Media page: /media?lang=kk|ru|en",
                 "- Insights JSON: /insights.json?lang=kk|ru|en",
                 "- Media JSON: /media.json?lang=kk|ru|en",
+                "- Media JSON Feed: /media/feed.json?lang=kk|ru|en",
+                "- Media RSS: /media/rss.xml?lang=kk|ru|en",
                 "- Comparison JSON: /compare.json?ids={id},{id}&lang=kk|ru|en",
                 "- Notification contract: /.well-known/notification-contract.json",
                 "- Source onboarding contract: /.well-known/source-onboarding.json",
@@ -2166,6 +2233,8 @@ async def site_discovery(request: Request) -> Response:
     insights_json = _public_url(request, root_path, "/insights.json")
     media = _public_url(request, root_path, "/media")
     media_json = _public_url(request, root_path, "/media.json")
+    media_feed = _public_url(request, root_path, "/media/feed.json")
+    media_rss = _public_url(request, root_path, "/media/rss.xml")
     compare_json = _public_url(request, root_path, "/compare.json")
     opportunities = _public_url(request, root_path, "/opportunities")
     opportunities_ndjson = _public_url(request, root_path, "/opportunities.ndjson")
@@ -2232,6 +2301,8 @@ async def site_discovery(request: Request) -> Response:
             "insights_json": "/insights.json?lang={lang}",
             "media": "/media?lang={lang}",
             "media_json": "/media.json?lang={lang}",
+            "media_feed": "/media/feed.json?lang={lang}",
+            "media_rss": "/media/rss.xml?lang={lang}",
             "compare": "/compare?ids={id},{id}&lang={lang}",
             "compare_json": "/compare.json?ids={id},{id}&lang={lang}",
             "notification_contract": "/.well-known/notification-contract.json",
@@ -2251,6 +2322,8 @@ async def site_discovery(request: Request) -> Response:
             "insights_json": insights_json,
             "media": media,
             "media_json": media_json,
+            "media_feed": media_feed,
+            "media_rss": media_rss,
             "compare": compare_json,
             "compare_json": compare_json,
             "notification_contract": notification_contract_url,
@@ -2314,6 +2387,8 @@ async def site_discovery(request: Request) -> Response:
             "public media page",
             "machine-readable insights snapshot",
             "machine-readable media snapshot",
+            "machine-readable media JSON Feed",
+            "machine-readable media RSS",
             "machine-readable opportunity comparison",
             "notification contract (delivery disabled)",
             "public data-policy pages",

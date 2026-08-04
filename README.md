@@ -48,6 +48,8 @@ The main public endpoints are:
 - `GET /funder/{funder_slug}?lang=kk|ru|en`
 - `GET /media?lang=kk|ru|en`
 - `GET /media.json?lang=kk|ru|en`
+- `GET /media/feed.json?lang=kk|ru|en` (JSON Feed 1.1)
+- `GET /media/rss.xml?lang=kk|ru|en` (RSS 2.0)
 - `GET /insights?lang=kk|ru|en`
 - `GET /terms?lang=kk|ru|en`
 - `GET /data-policy?lang=kk|ru|en`
