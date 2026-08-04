@@ -29,8 +29,8 @@ and is referenced from `docs/qazstack/consumer-contract.json`.
 
 The public opportunity endpoint must be checked separately from the UI
 dictionary contract. The aggregate-only runtime guard measures locale bucket
-presence, source-language metadata and approval fields without printing item
-text:
+presence, source-language metadata (`languages`, `source_language`, `language`
+or `detail_language`) and approval fields without printing item text:
 
 ```bash
 python3 scripts/check_public_translation_readiness.py

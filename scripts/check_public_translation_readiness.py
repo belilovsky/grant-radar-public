@@ -72,6 +72,7 @@ def summarize_items(items: list[dict[str, Any]]) -> dict[str, Any]:
         present(item.get("languages"))
         or present(item_value(item, "source_language"))
         or present(item_value(item, "language"))
+        or present(item_value(item, "detail_language"))
         for item in items
     )
     item_count = len(items)

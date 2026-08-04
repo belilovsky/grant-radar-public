@@ -39,3 +39,11 @@ def test_public_readiness_uses_aggregate_only_and_holds_without_approval() -> No
     assert report["approved_only_ready_count"] == 0
     assert "RU source" not in str(report)
     assert "KK candidate" not in str(report)
+
+
+def test_public_readiness_counts_detail_language_as_source_metadata() -> None:
+    report = MODULE.summarize_items(
+        [{"raw": {"detail_language": "ru"}}, {"raw": {"title": "No language"}}]
+    )
+
+    assert report["source_language_metadata_count"] == 1
