@@ -41,13 +41,13 @@
     ],
     "runtime_urls": [
       "https://qaz.fund/.well-known/qazstack-consumer.json",
-      "https://qaz.fund/health"
+      "https://qaz.fund/ready"
     ],
-    "verified_at": "2026-07-24T15:50:00+05:00",
+    "verified_at": "2026-08-04T00:47:27Z",
     "environment": "production",
     "source_revision": "a0a4bfc6ea6b2fce205afe24fbf732fb3de3bc68",
     "schema_digest": "sha256:6ca8e38c09315d02993e3600b7a05dc23d695cd152545f8a970566e303fc158c",
-    "checked_by": "codex"
+    "checked_by": "qazfund-release-gate"
   },
   "owner": "qdev-platform",
   "notes": "Checked-in discovery copy of the live QAZ.FUND QazStack consumer contract. Product-specific grant relevance remains owned by QAZ.FUND."

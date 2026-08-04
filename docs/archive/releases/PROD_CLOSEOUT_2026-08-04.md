@@ -4,13 +4,13 @@
 
 - Canonical checkout: `/Users/belilovsky/Documents/Codex/2026-05-21/grant-radar-public`
 - Branch: `codex/qaz-fund-reuse-boundary-20260728`
-- Application revision audited by the checks below: `a698bb073d8388986eb9368c29ab91fb802f26f3`
+- The application and integration-contract revisions are audited by the
+  checks below; the final deployed revision is always the exact value returned
+  by `/.well-known/release.json`.
 - Runtime: `root@148.230.117.131:/opt/grant-radar`
 - Public surface: `https://qaz.fund`
-- The final deployed revision is always the exact value returned by
-  `/.well-known/release.json`; this closeout is itself included in that
-  release, so the document intentionally does not duplicate its own commit
-  hash.
+- This closeout is itself included in the release, so the document intentionally
+  does not duplicate its own commit hash.
 
 ## Scope
 
