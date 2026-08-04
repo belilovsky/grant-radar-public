@@ -1001,6 +1001,14 @@ def test_root_supports_explicit_kazakh_dashboard_route(monkeypatch):
     assert ">KAZ</a>" in response.text
     assert 'aria-current="page"' in response.text
     assert 'rel="canonical" href="http://testserver/?lang=kk"' in response.text
+    assert "Қазақстандағы қолдауды іздеу навигаторы" in response.text
+    assert "Қолдауды табу" in response.text
+    assert "Дереккөздер және ашықтық" in response.text
+    assert "Қазір нені тексеруге болады" in response.text
+    assert "Дайын маршруттар" in response.text
+    assert "Рабочий навигатор поддержки" not in response.text
+    assert "Найти поддержку" not in response.text
+    assert "Источники и прозрачность" not in response.text
 
 
 def test_root_head_is_available(monkeypatch):
