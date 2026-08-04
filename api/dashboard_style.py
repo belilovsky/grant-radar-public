@@ -65,13 +65,12 @@ DASHBOARD_CSS = r"""    :root {
     .hero-band {
       position: relative;
       overflow: hidden;
-      padding: 14px 0 0;
-      margin-bottom: 10px;
-      border: 0;
-      border-bottom: 1px solid var(--line);
-      border-radius: 0;
-      background: transparent;
-      box-shadow: none;
+      padding: 16px 18px 0;
+      margin-bottom: 12px;
+      border: 1px solid var(--line-subtle);
+      border-radius: var(--av-radius-lg);
+      background: var(--accent-wash);
+      box-shadow: var(--shadow-xs);
       isolation: isolate;
     }
     .hero-band::before {
@@ -1194,13 +1193,12 @@ DASHBOARD_CSS = r"""    :root {
     .filters-shell {
       display: grid;
       gap: 8px;
-      margin-bottom: 8px;
-      padding: 10px 0 12px;
-      border: 0;
-      border-bottom: 1px solid var(--line);
-      border-radius: 0;
-      background: transparent;
-      box-shadow: none;
+      margin: 8px 0;
+      padding: 10px 12px 12px;
+      border: 1px solid var(--line-subtle);
+      border-radius: var(--av-radius-md);
+      background: var(--panel-wash);
+      box-shadow: var(--shadow-2xs);
     }
     .filters {
       display: grid;
@@ -1734,6 +1732,11 @@ DASHBOARD_CSS = r"""    :root {
       background: color-mix(in oklab, var(--panel), var(--brand-soft) 7%);
       box-shadow: none;
     }
+    .list > .opportunity:nth-child(even) {
+      padding-inline: 12px;
+      border-radius: var(--av-radius-md);
+      background: var(--panel-wash);
+    }
     .opportunity.good,
     .opportunity.warn { border-left-color: transparent; }
     .opportunity-main {
@@ -2109,6 +2112,10 @@ DASHBOARD_CSS = r"""    :root {
       display: grid;
       grid-template-columns: 1fr;
       gap: var(--av-spacing-1);
+      padding: 8px 12px;
+      border: 1px solid var(--line-subtle);
+      border-radius: var(--av-radius-md);
+      background: var(--panel-wash);
     }
     .source-card {
       display: flex;
@@ -2951,10 +2958,10 @@ DASHBOARD_CSS = r"""    :root {
       .hero-band {
         padding: 12px 12px 0;
         margin-bottom: 8px;
-        border: 0;
-        border-radius: 0;
-        background: transparent;
-        box-shadow: none;
+        border: 1px solid var(--line-subtle);
+        border-radius: var(--av-radius-lg);
+        background: var(--accent-wash);
+        box-shadow: var(--shadow-xs);
       }
       .topic-brief {
         padding: 14px 16px;
