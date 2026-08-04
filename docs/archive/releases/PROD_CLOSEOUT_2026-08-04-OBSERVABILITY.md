@@ -2,7 +2,7 @@
 
 ## Релиз
 
-- кодовый релиз: `5b6b8c83a82ffddd52d81745565cb2a74cfc1e02`;
+- кодовый релиз: `50acb93e342a109ea522eb3a8cb0e25250706f18`;
 - публичный домен: `https://qaz.fund`;
 - публичный маркер подтверждает тот же SHA;
 - развёртывание: `/opt/grant-radar` на production-host;
@@ -31,6 +31,8 @@
   `vendor/qazstack-1.40.0-py3-none-any.whl` и отсутствует в индексе PyPI;
 - production smoke: `status=ok`, `394` релевантные открытые записи, `26`
   включённых источников, stale/unknown источников `0`;
+- production smoke дополнительно проверяет HTML opportunity/funder pages,
+  языковые оболочки и cache-control этих публичных маршрутов;
 - operator health после восстановления UNICEF: `status=ok`, unresolved
   `failed_runs=[]`; исправленная ошибка остаётся в `recent_runs` для аудита;
 - браузерные проверки desktop/mobile для RU, ҚАЗ и EN: переполнения и
