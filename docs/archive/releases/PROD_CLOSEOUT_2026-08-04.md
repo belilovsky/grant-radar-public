@@ -36,6 +36,9 @@
   block consistently in all three public languages.
 - Corrected the wide-screen analytics grid so the shorter quality card no longer
   stretches to the height of the deadline list and creates an empty panel.
+- Separated strict open-card counts from the source-coverage aggregate in
+  `insights.v1`, so lifecycle `awarded` records cannot inflate the public
+  analytical total.
 
 ## Verification
 

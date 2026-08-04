@@ -296,7 +296,10 @@ def build_insights_snapshot(
         "catalog": {
             "open_items": len(open_items),
             "official_sources": int(coverage.get("enabled_sources") or 0),
-            "relevant_open_items": int(coverage.get("relevant_open_items") or 0),
+            "relevant_open_items": len(open_items),
+            "coverage_relevant_open_items": int(
+                coverage.get("relevant_open_items") or 0
+            ),
         },
         "formats": {
             key: int(value)

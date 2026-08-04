@@ -3407,6 +3407,8 @@ def test_insights_snapshot_is_reproducible(monkeypatch):
         as_of=as_of,
     )
     assert snapshot["as_of"] == "2026-08-04"
+    assert snapshot["catalog"]["relevant_open_items"] == 1
+    assert snapshot["catalog"]["coverage_relevant_open_items"] == 1
     assert snapshot["deadlines"]["buckets"] == {
         "within_30": 0,
         "within_90": 0,
