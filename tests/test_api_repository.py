@@ -648,7 +648,9 @@ def test_docs_exposes_swagger_with_return_link(monkeypatch):
     assert "SwaggerUIBundle" in response.text
     assert '<html lang="ru" data-avds="grant-radar"' in response.text
     assert '<span class="qazfund-docs-title">Документация API</span>' in response.text
-    assert '<main id="swagger-ui"></main>' in response.text
+    assert (
+        '<main id="swagger-ui" data-avds-component="api-docs"></main>' in response.text
+    )
     assert 'data-avds="grant-radar" data-av-theme="light"' in response.text
     assert "--av-color-primary: var(--av-color-blue-700);" in response.text
     assert 'meta name="description"' in response.text
@@ -663,6 +665,9 @@ def test_docs_exposes_swagger_with_return_link(monkeypatch):
     assert ".swagger-ui .info .url" in response.text
     assert ".swagger-ui .json-schema-2020-12-expand-deep-button" in response.text
     assert '"deepLinking": false' in response.text
+    assert 'href="/docs?lang=kk" lang="kk">KAZ</a>' in response.text
+    assert 'href="/docs?lang=ru" lang="ru" aria-current="page">RU</a>' in response.text
+    assert 'href="/docs?lang=en" lang="en">EN</a>' in response.text
 
 
 def test_docs_supports_english_return_link(monkeypatch):
@@ -678,6 +683,22 @@ def test_docs_supports_english_return_link(monkeypatch):
     assert 'href="/?lang=en"' in response.text
     assert "Back to site" in response.text
     assert response.headers["content-length"] == str(len(response.content))
+
+
+def test_docs_supports_kazakh_shell_and_language_switch(monkeypatch):
+    _reset_api_state(monkeypatch)
+    client = TestClient(api_main.app)
+
+    response = client.get("/docs?lang=kk", headers={"Accept-Encoding": "identity"})
+
+    assert response.status_code == 200
+    assert '<html lang="kk" data-avds="grant-radar"' in response.text
+    assert '<span class="qazfund-docs-title">API құжаттамасы</span>' in response.text
+    assert 'rel="canonical" href="http://testserver/docs?lang=kk"' in response.text
+    assert 'href="/?lang=kk"' in response.text
+    assert 'href="/docs?lang=kk" lang="kk" aria-current="page">KAZ</a>' in response.text
+    assert 'href="/docs?lang=ru" lang="ru">RU</a>' in response.text
+    assert 'href="/docs?lang=en" lang="en">EN</a>' in response.text
 
 
 def test_docs_preserves_root_path_prefix(monkeypatch):

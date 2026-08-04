@@ -1724,7 +1724,21 @@ async def swagger_docs(request: Request) -> HTMLResponse:
                 "and data status."
             ),
         },
+        "kk": {
+            "back": "Сайтқа оралу",
+            "heading": "API құжаттамасы",
+            "description": (
+                "QAZ.FUND ашық API: каталог, дереккөздер, мүмкіндіктер және "
+                "деректер мәртебесі."
+            ),
+        },
     }[docs_lang]
+    docs_hrefs = {
+        locale: (
+            f"{root_path}/docs?lang={locale}" if root_path else f"/docs?lang={locale}"
+        )
+        for locale in ("kk", "ru", "en")
+    }
     canonical_href = _public_url(request, root_path, f"/docs?lang={docs_lang}")
     swagger = get_swagger_ui_html(
         openapi_url=openapi_href,
@@ -1732,12 +1746,19 @@ async def swagger_docs(request: Request) -> HTMLResponse:
         swagger_favicon_url=f"{root_path}/favicon.ico" if root_path else "/favicon.ico",
         swagger_ui_parameters={"deepLinking": False},
     )
+    docs_languages = "".join(
+        f'<a href="{escape(docs_hrefs[locale], quote=True)}" lang="{locale}"'
+        f'{" aria-current=\"page\"" if docs_lang == locale else ""}>'
+        f'{"KAZ" if locale == "kk" else locale.upper()}</a>'
+        for locale in ("kk", "ru", "en")
+    )
     page_header = (
-        '<header class="qazfund-docs-header">'
+        '<header class="qazfund-docs-header" data-avds-component="api-docs">'
         f'<a href="{escape(home_href, quote=True)}" '
         f'aria-label="{escape(str(docs_copy["back"]), quote=True)}">'
         f'← {escape(str(docs_copy["back"]))}</a>'
         f'<span class="qazfund-docs-title">{escape(str(docs_copy["heading"]))}</span>'
+        f'<nav class="qazfund-docs-langs" aria-label="Language">{docs_languages}</nav>'
         "</header>"
     )
     head_markup = f"""
@@ -1772,6 +1793,26 @@ async def swagger_docs(request: Request) -> HTMLResponse:
       font-size: 14px;
       line-height: 1.3;
       font-weight: 700;
+    }}
+    .qazfund-docs-langs {{
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-left: auto;
+    }}
+    .qazfund-docs-langs a {{
+      min-width: 32px;
+      padding: 6px 4px;
+      color: var(--color-muted);
+      font-size: 11px;
+      font-weight: 700;
+      text-align: center;
+      text-decoration: none;
+      border-bottom: 2px solid transparent;
+    }}
+    .qazfund-docs-langs a[aria-current="page"] {{
+      color: var(--color-text);
+      border-bottom-color: var(--av-color-blue-700);
     }}
     .qazfund-docs-header a:focus-visible {{
       outline: 2px solid currentColor;
@@ -1847,7 +1888,7 @@ async def swagger_docs(request: Request) -> HTMLResponse:
     body = body.replace("<body>", f"<body>{page_header}", 1)
     body = body.replace(
         '<div id="swagger-ui">\n    </div>',
-        '<main id="swagger-ui"></main>',
+        '<main id="swagger-ui" data-avds-component="api-docs"></main>',
         1,
     )
     headers = dict(swagger.headers)
