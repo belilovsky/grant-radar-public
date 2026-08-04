@@ -121,6 +121,10 @@ def run_smoke(
         dashboard_en = client.get(_url(base_url, "/?lang=en"))
         dashboard_en.raise_for_status()
         dashboard_en_html = dashboard_en.text
+        insights_page = _get_text(client, base_url, "/insights?lang=ru")
+        insights_page_head = _head(client, base_url, "/insights?lang=ru")
+        insights_snapshot = _get_json(client, base_url, "/insights.json?lang=ru")
+        insights_snapshot_head = _head(client, base_url, "/insights.json?lang=ru")
 
         health = _get_json(client, base_url, "/health")
         release = _get_json(client, base_url, "/.well-known/release.json")
@@ -249,6 +253,16 @@ def run_smoke(
     _require(english_dashboard, "english dashboard variant is missing")
 
     discovery_status = {
+        "insights_page": (
+            '<html lang="ru"' in insights_page
+            and 'data-avds-pattern="decision-readiness"' in insights_page
+            and _is_public_cacheable(insights_page_head, 60)
+        ),
+        "insights_snapshot": (
+            insights_snapshot.get("schema_version") == "insights.v1"
+            and isinstance(insights_snapshot.get("decision_readiness"), dict)
+            and _is_public_cacheable(insights_snapshot_head, 60)
+        ),
         "llms_home": f"Home: {_url(base_url, '/')}" in llms,
         "llms_sitemap": f"Sitemap: {_url(base_url, '/sitemap.xml')}" in llms,
         "llms_openapi": f"OpenAPI schema: {_url(base_url, '/openapi.json')}" in llms,

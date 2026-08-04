@@ -75,6 +75,8 @@
   production smoke checks its schema, bounded card count and discovery links.
 - `/compare` verified as the AVDS4 server-rendered view with localized language
   links, explicit missing values and a JSON alternate.
+- `insights.v1` and `/insights` now include a decision-readiness distribution
+  based only on fields present in each public card; it is not an eligibility score.
 - Browser proof for `/insights?lang=kk` and a live opportunity detail:
   `lang=kk`, Kazakh headings, transparent source fallback, and no horizontal
   overflow at 390px and 2560px viewports.

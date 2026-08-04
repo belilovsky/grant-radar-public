@@ -3365,6 +3365,8 @@ def test_public_insights_page_renders_avds_charts(monkeypatch):
                 summary="Support for Kazakhstan teams.",
                 funder="Source A",
                 deadline=today + timedelta(days=12),
+                amount_min=1000,
+                eligibility=["Kazakhstan teams"],
                 score=0.82,
             ),
             Opportunity(
@@ -3389,6 +3391,7 @@ def test_public_insights_page_renders_avds_charts(monkeypatch):
     assert 'data-avds-component="DataViz"' in response.text
     assert 'data-avds-pattern="format-distribution"' in response.text
     assert 'data-avds-pattern="deadline-distribution"' in response.text
+    assert 'data-avds-pattern="decision-readiness"' in response.text
     assert "Гранты" in response.text
     assert "До 30 дней" in response.text
     assert 'href="/insights?lang=kk"' in response.text
@@ -3404,6 +3407,8 @@ def test_public_insights_page_renders_avds_charts(monkeypatch):
     assert data["deadlines"]["buckets"]["within_30"] == 1
     assert data["deadlines"]["buckets"]["no_deadline"] == 1
     assert data["deadlines"]["upcoming"][0]["title"] == "Local grant"
+    assert data["decision_readiness"]["complete"] == 1
+    assert data["decision_readiness"]["partial"] == 1
     assert data["links"]["human"].endswith("/insights?lang=ru")
 
     kk_response = client.get("/insights", params={"lang": "kk"})

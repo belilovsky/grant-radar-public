@@ -98,6 +98,28 @@ def _transport(
                 },
                 headers={"cache-control": "public, max-age=60"},
             )
+        if endpoint_path == "/insights":
+            return httpx.Response(
+                200,
+                text=(
+                    '<html lang="ru" data-avds="grant-radar">'
+                    '<svg data-avds-pattern="decision-readiness"></svg>'
+                    "</html>"
+                ),
+                headers={
+                    "content-type": "text/html; charset=utf-8",
+                    "cache-control": "public, max-age=60",
+                },
+            )
+        if endpoint_path == "/insights.json":
+            return httpx.Response(
+                200,
+                json={
+                    "schema_version": "insights.v1",
+                    "decision_readiness": {"complete": 1, "partial": 1},
+                },
+                headers={"cache-control": "public, max-age=60"},
+            )
         if endpoint_path == "/compare":
             return httpx.Response(
                 200,

@@ -40,6 +40,10 @@ COPY: dict[str, dict[str, str]] = {
         "freshness_note": "Показан результат последнего успешного обновления.",
         "quality": "Качество совпадения",
         "quality_note": "Распределение карточек по рабочему сигналу релевантности.",
+        "readiness": "Готовность карточек",
+        "readiness_note": "Какие ключевые поля уже опубликованы в карточках.",
+        "complete": "Ключевые поля на месте",
+        "partial": "Нужно уточнить",
         "high": "Сильные сигналы",
         "good": "Умеренные сигналы",
         "base": "Базовые сигналы",
@@ -84,6 +88,10 @@ COPY: dict[str, dict[str, str]] = {
         "freshness_note": "Shows the latest successful update.",
         "quality": "Match quality",
         "quality_note": "Cards grouped by the working relevance signal.",
+        "readiness": "Card readiness",
+        "readiness_note": "Which key fields are already published in the cards.",
+        "complete": "Key fields present",
+        "partial": "Needs checking",
         "high": "Strong signals",
         "good": "Moderate signals",
         "base": "Baseline signals",
@@ -128,6 +136,10 @@ COPY: dict[str, dict[str, str]] = {
         "freshness_note": "Соңғы сәтті жаңартудың нәтижесі көрсетілген.",
         "quality": "Сәйкестік сапасы",
         "quality_note": "Карточкалар жұмыс істейтін өзектілік белгісі бойынша бөлінген.",
+        "readiness": "Карточкалардың дайындығы",
+        "readiness_note": "Карточкаларда негізгі өрістердің қаншасы жарияланғанын көрсетеді.",
+        "complete": "Негізгі өрістер бар",
+        "partial": "Нақтылау керек",
         "high": "Күшті белгілер",
         "good": "Орташа белгілер",
         "base": "Негізгі белгілер",
@@ -290,6 +302,25 @@ def build_insights_snapshot(
         for row in coverage.get("sources", [])
         if isinstance(row, dict)
     )
+    readiness_fields = {"deadline": 0, "amount": 0, "eligibility": 0, "application": 0}
+    complete_count = 0
+    for item in open_items:
+        raw = item.raw if isinstance(item.raw, dict) else {}
+        present = {
+            "deadline": bool(item.deadline or raw.get("deadline_policy") == "rolling"),
+            "amount": bool(
+                item.amount_min is not None
+                or item.amount_max is not None
+                or raw.get("amount_raw")
+            ),
+            "eligibility": bool(item.eligibility or raw.get("eligibility")),
+            "application": bool(item.source_url or raw.get("application_url")),
+        }
+        for field, available in present.items():
+            if available:
+                readiness_fields[field] += 1
+        if all(present.values()):
+            complete_count += 1
     return {
         "schema_version": "insights.v1",
         "as_of": today.isoformat(),
@@ -327,6 +358,11 @@ def build_insights_snapshot(
             "high": sum(1 for item in open_items if item.score >= 0.7),
             "good": sum(1 for item in open_items if 0.5 <= item.score < 0.7),
             "base": sum(1 for item in open_items if item.score < 0.5),
+        },
+        "decision_readiness": {
+            "complete": complete_count,
+            "partial": len(open_items) - complete_count,
+            "field_coverage": readiness_fields,
         },
     }
 
@@ -401,6 +437,10 @@ def render_insights_page(
         (copy["high"], int(snapshot["match_quality"]["high"])),
         (copy["good"], int(snapshot["match_quality"]["good"])),
         (copy["base"], int(snapshot["match_quality"]["base"])),
+    ]
+    readiness_rows = [
+        (copy["complete"], int(snapshot["decision_readiness"]["complete"])),
+        (copy["partial"], int(snapshot["decision_readiness"]["partial"])),
     ]
     upcoming_rows = list(snapshot["deadlines"]["upcoming"])
     html_lang = escape(lang, quote=True)
@@ -499,7 +539,7 @@ def render_insights_page(
   {fallback_note_markup}
   <section class="hero" data-avds-component="hero-band"><div><span class="eyebrow">{escape(copy["eyebrow"])}</span><h1>{escape(copy["heading"])}</h1><p>{escape(copy["intro"])}</p><div class="hero-actions"><a class="button primary" href="{escape(home, quote=True)}">{escape(copy["catalog_link"])}</a><a class="button" href="{escape(status, quote=True)}">{escape(copy["source_link"])}</a></div></div><div class="metric-grid" aria-label="Key catalog metrics">{_metric(copy["total"],open_count,"good")}{_metric(copy["sources"],int(coverage.get("enabled_sources") or 0))}{_metric(copy["soon"],soon,"warn")}{_metric(copy["rolling"],rolling)}</div></section>
   <div class="section-head"><h2>{escape(copy["formats"])}</h2><p>{escape(copy["formats_note"])}</p></div>
-  <div class="viz-grid"><article class="viz-card"><h3>{escape(copy["formats"])}</h3><p>{escape(copy["formats_note"])}</p>{_bar_chart(type_rows,chart_id="format-distribution",color="#315fdc",empty_label=copy["no_data"],aria_label=copy["formats"])}</article><article class="viz-card"><h3>{escape(copy["sources_title"])}</h3><p>{escape(copy["sources_note"])}</p>{_bar_chart(source_rows,chart_id="source-distribution",color="#15724e",empty_label=copy["no_data"],aria_label=copy["sources_title"])}</article><article class="viz-card"><h3>{escape(copy["deadlines"])}</h3><p>{escape(copy["deadlines_note"])}</p>{_bar_chart(deadline_rows,chart_id="deadline-distribution",color="#9a6414",empty_label=copy["no_data"],aria_label=copy["deadlines"])}</article><article class="viz-card"><h3>{escape(copy["freshness"])}</h3><p>{escape(copy["freshness_note"])}</p>{_bar_chart(freshness_rows,chart_id="source-freshness",color="#7c3aed",empty_label=copy["no_data"],aria_label=copy["freshness"])}</article></div>
+  <div class="viz-grid"><article class="viz-card"><h3>{escape(copy["formats"])}</h3><p>{escape(copy["formats_note"])}</p>{_bar_chart(type_rows,chart_id="format-distribution",color="#315fdc",empty_label=copy["no_data"],aria_label=copy["formats"])}</article><article class="viz-card"><h3>{escape(copy["sources_title"])}</h3><p>{escape(copy["sources_note"])}</p>{_bar_chart(source_rows,chart_id="source-distribution",color="#15724e",empty_label=copy["no_data"],aria_label=copy["sources_title"])}</article><article class="viz-card"><h3>{escape(copy["deadlines"])}</h3><p>{escape(copy["deadlines_note"])}</p>{_bar_chart(deadline_rows,chart_id="deadline-distribution",color="#9a6414",empty_label=copy["no_data"],aria_label=copy["deadlines"])}</article><article class="viz-card"><h3>{escape(copy["freshness"])}</h3><p>{escape(copy["freshness_note"])}</p>{_bar_chart(freshness_rows,chart_id="source-freshness",color="#7c3aed",empty_label=copy["no_data"],aria_label=copy["freshness"])}</article><article class="viz-card"><h3>{escape(copy["readiness"])}</h3><p>{escape(copy["readiness_note"])}</p>{_bar_chart(readiness_rows,chart_id="decision-readiness",color="#0f766e",empty_label=copy["no_data"],aria_label=copy["readiness"])}</article></div>
   <div class="insight-lower"><section class="viz-card"><h3>{escape(copy["quality"])}</h3><p>{escape(copy["quality_note"])}</p>{_bar_chart(score_rows,chart_id="match-quality",color="#315fdc",empty_label=copy["no_data"],aria_label=copy["quality"])}</section><section class="viz-card" data-avds-component="DataViz"><h3>{escape(copy["upcoming"])}</h3><p>{escape(copy["upcoming_note"])}</p>{upcoming_markup}</section></div>
   <aside class="method" data-avds-component="method-card"><strong>{escape(copy["method"])}</strong><p>{escape(copy["method_text"])}</p></aside>
   <footer class="footer"><span>{escape(copy["footer"])}</span><span><a href="{escape(home, quote=True)}">{escape(copy["catalog_link"])}</a> · <a href="{escape(sources, quote=True)}">{escape(copy["source_link"])}</a></span></footer>
