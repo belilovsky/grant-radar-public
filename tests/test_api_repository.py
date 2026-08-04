@@ -3170,8 +3170,8 @@ def test_opportunity_page_renders_public_permalink(monkeypatch):
     assert '<html lang="kk"' in kk_response.text
     assert 'data-language-fallback="source"' in kk_response.text
     assert (
-        f'href="http://testserver/opportunity/{item.id}?lang=kk" lang="kk">KAZ</a>'
-        in kk_response.text
+        f'href="http://testserver/opportunity/{item.id}?lang=kk" lang="kk" '
+        'aria-current="page">KAZ</a>' in kk_response.text
     )
 
 
@@ -3439,6 +3439,9 @@ def test_public_insights_page_renders_avds_charts(monkeypatch):
     assert "Гранты" in response.text
     assert "До 30 дней" in response.text
     assert 'href="/insights?lang=kk"' in response.text
+    assert (
+        'href="/insights?lang=ru" lang="ru" aria-current="page">RU</a>' in response.text
+    )
     assert 'rel="alternate" hreflang="kk"' in response.text
     assert 'type="application/json"' in response.text
 
@@ -3653,6 +3656,10 @@ def test_funder_page_renders_public_profile(monkeypatch):
         in response.text
     )
     assert (
+        'href="http://testserver/funder/science-fund?lang=ru" lang="ru" '
+        'aria-current="page">RU</a>' in response.text
+    )
+    assert (
         'property="og:image" content="http://testserver/og-image.png"' in response.text
     )
     assert (
@@ -3667,8 +3674,8 @@ def test_funder_page_renders_public_profile(monkeypatch):
     assert '<html lang="kk"' in kk_response.text
     assert 'data-language-fallback="source"' in kk_response.text
     assert (
-        'href="http://testserver/funder/science-fund?lang=kk" lang="kk">KAZ</a>'
-        in kk_response.text
+        'href="http://testserver/funder/science-fund?lang=kk" lang="kk" '
+        'aria-current="page">KAZ</a>' in kk_response.text
     )
 
 

@@ -513,6 +513,9 @@ def render_funder_page(
     ru_lang_class = "active" if active_lang == "ru" else ""
     kk_lang_class = "active" if active_lang == "kk" else ""
     en_lang_class = "active" if active_lang == "en" else ""
+    ru_lang_current = ' aria-current="page"' if active_lang == "ru" else ""
+    kk_lang_current = ' aria-current="page"' if active_lang == "kk" else ""
+    en_lang_current = ' aria-current="page"' if active_lang == "en" else ""
     fallback_note = str(copy.get("language_fallback_note") or "").strip()
     fallback_note_markup = (
         f'<p class="language-fallback-note" lang="kk" '
@@ -958,9 +961,9 @@ def render_funder_page(
     <div class="topbar">
       <a class="back-link" href="{catalog_href}">{back_label}</a>
       <nav class="lang-switch" aria-label="{escape(str(copy['language_switch']), quote=True)}">
-        <a class="{kk_lang_class}" href="{kk_href}" lang="kk">KAZ</a>
-        <a class="{ru_lang_class}" href="{ru_href}" lang="ru">RU</a>
-        <a class="{en_lang_class}" href="{en_href}" lang="en">EN</a>
+        <a class="{kk_lang_class}" href="{kk_href}" lang="kk"{kk_lang_current}>KAZ</a>
+        <a class="{ru_lang_class}" href="{ru_href}" lang="ru"{ru_lang_current}>RU</a>
+        <a class="{en_lang_class}" href="{en_href}" lang="en"{en_lang_current}>EN</a>
       </nav>
     </div>
     {fallback_note_markup}

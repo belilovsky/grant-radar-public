@@ -410,6 +410,9 @@ def render_insights_page(
     en_href = f"{base}/insights?lang=en" if base else "/insights?lang=en"
     ru_href = f"{base}/insights?lang=ru" if base else "/insights?lang=ru"
     kk_href = f"{base}/insights?lang=kk" if base else "/insights?lang=kk"
+    kk_current = ' aria-current="page"' if lang == "kk" else ""
+    ru_current = ' aria-current="page"' if lang == "ru" else ""
+    en_current = ' aria-current="page"' if lang == "en" else ""
     insights_json_href = (
         f"{base}/insights.json?lang={lang}" if base else f"/insights.json?lang={lang}"
     )
@@ -535,7 +538,7 @@ def render_insights_page(
   </style>
 </head>
 <body><main class="shell">
-  <div class="topbar"><a class="back" href="{escape(home, quote=True)}">← {escape(copy["back"])}</a><nav class="langs" aria-label="Language"><a class="{'active' if lang == 'kk' else ''}" href="{escape(kk_href, quote=True)}" lang="kk">KAZ</a><a class="{'active' if lang == 'ru' else ''}" href="{escape(ru_href, quote=True)}" lang="ru">RU</a><a class="{'active' if lang == 'en' else ''}" href="{escape(en_href, quote=True)}" lang="en">EN</a></nav></div>
+  <div class="topbar"><a class="back" href="{escape(home, quote=True)}">← {escape(copy["back"])}</a><nav class="langs" aria-label="Language"><a class="{'active' if lang == 'kk' else ''}" href="{escape(kk_href, quote=True)}" lang="kk"{kk_current}>KAZ</a><a class="{'active' if lang == 'ru' else ''}" href="{escape(ru_href, quote=True)}" lang="ru"{ru_current}>RU</a><a class="{'active' if lang == 'en' else ''}" href="{escape(en_href, quote=True)}" lang="en"{en_current}>EN</a></nav></div>
   {fallback_note_markup}
   <section class="hero" data-avds-component="hero-band"><div><span class="eyebrow">{escape(copy["eyebrow"])}</span><h1>{escape(copy["heading"])}</h1><p>{escape(copy["intro"])}</p><div class="hero-actions"><a class="button primary" href="{escape(home, quote=True)}">{escape(copy["catalog_link"])}</a><a class="button" href="{escape(status, quote=True)}">{escape(copy["source_link"])}</a></div></div><div class="metric-grid" aria-label="Key catalog metrics">{_metric(copy["total"],open_count,"good")}{_metric(copy["sources"],int(coverage.get("enabled_sources") or 0))}{_metric(copy["soon"],soon,"warn")}{_metric(copy["rolling"],rolling)}</div></section>
   <div class="section-head"><h2>{escape(copy["formats"])}</h2><p>{escape(copy["formats_note"])}</p></div>

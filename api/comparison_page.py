@@ -110,6 +110,10 @@ def render_comparison_page(
         )
         for value in ("kk", "ru", "en")
     }
+    language_current = {
+        value: ' aria-current="page"' if lang == value else ""
+        for value in ("kk", "ru", "en")
+    }
     canonical = (
         f"{site_origin.rstrip('/')}{base}/compare{suffix}"
         if site_origin
@@ -185,7 +189,7 @@ def render_comparison_page(
   </style>
 </head>
 <body><main class="shell">
-  <div class="topbar"><a class="back" href="{escape(home, quote=True)}">← {escape(copy["back"])}</a><nav class="langs" aria-label="Language"><a class="{'active' if lang == 'kk' else ''}" href="{escape(language_hrefs['kk'], quote=True)}" lang="kk">KAZ</a><a class="{'active' if lang == 'ru' else ''}" href="{escape(language_hrefs['ru'], quote=True)}" lang="ru">RU</a><a class="{'active' if lang == 'en' else ''}" href="{escape(language_hrefs['en'], quote=True)}" lang="en">EN</a></nav></div>
+  <div class="topbar"><a class="back" href="{escape(home, quote=True)}">← {escape(copy["back"])}</a><nav class="langs" aria-label="Language"><a class="{'active' if lang == 'kk' else ''}" href="{escape(language_hrefs['kk'], quote=True)}" lang="kk"{language_current['kk']}>KAZ</a><a class="{'active' if lang == 'ru' else ''}" href="{escape(language_hrefs['ru'], quote=True)}" lang="ru"{language_current['ru']}>RU</a><a class="{'active' if lang == 'en' else ''}" href="{escape(language_hrefs['en'], quote=True)}" lang="en"{language_current['en']}>EN</a></nav></div>
   <section class="hero" data-avds-component="hero-band"><div><span class="eyebrow">QAZ.FUND</span><h1>{escape(copy["heading"])}</h1><p>{escape(copy["intro"])}</p></div><div class="hero-meta"><div class="meta"><strong>{len(cards)}</strong><span>{escape(copy["cards"])}</span></div><div class="meta"><strong>{escape(status_label)}</strong><span>{escape(copy["status"])}</span></div></div></section>
   <section class="section"><div class="section-head"><div><h2>{escape(copy["heading"])}</h2><p class="section-note">{escape(copy["warning"])}</p></div><a class="json-link" href="{escape(json_href, quote=True)}">JSON</a></div>{table_markup}{warning_markup}</section>
   <footer class="footer"><span>{escape(copy["footer"])}</span><a href="{escape(home, quote=True)}">{escape(copy["back"])}</a></footer>
