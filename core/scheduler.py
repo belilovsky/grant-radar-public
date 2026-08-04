@@ -99,6 +99,24 @@ class SourceScheduler:
                 count += 1
                 if self.queue is not None:
                     await self.queue.put(record)
+            fetch_error = str(getattr(parser, "last_fetch_error", "") or "").strip()
+            if fetch_error:
+                # Some parsers intentionally swallow transport errors to
+                # preserve the worker loop.  Honour their explicit marker so
+                # observability does not publish a false successful run.
+                errors = 1
+                status = "error"
+                logger.warning(
+                    "parser=%s reported_fetch_error: %s", parser.name, fetch_error
+                )
+                if recorder is not None and run_id is not None:
+                    try:
+                        recorder.record_error(run_id)
+                    except Exception:
+                        logger.exception(
+                            "source_recorder_record_error_failed source=%s",
+                            source,
+                        )
         except asyncio.CancelledError:
             status = "cancelled"
             raise

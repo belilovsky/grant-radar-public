@@ -1554,6 +1554,20 @@ async def test_undp_procurement_skips_russian_operational_service_notice():
     assert items == []
 
 
+@pytest.mark.asyncio
+@respx.mock
+async def test_undp_procurement_marks_transport_error_for_scheduler():
+    respx.get(UNDP_LISTING_URL).mock(
+        side_effect=httpx.ConnectError("upstream unavailable")
+    )
+
+    source = UndpProcurementSource()
+    items = await _collect(source)
+
+    assert items == []
+    assert source.last_fetch_error == ("ConnectError: upstream unavailable")
+
+
 def test_grants_gov_does_not_publish_query_keyword_without_content_signal():
     item = GrantsGovSource()._to_opportunity(
         {

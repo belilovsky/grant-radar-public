@@ -74,6 +74,11 @@ class BaseSourceParser(abc.ABC):
             },
             follow_redirects=True,
         )
+        # Parsers historically log and swallow transport errors so one
+        # source cannot stop the worker.  A parser that does so can set this
+        # marker, allowing the scheduler to record the run as failed while
+        # keeping the resilient fetch contract.
+        self.last_fetch_error: str | None = None
         self._log = log.bind(source=self.name)
 
     @abc.abstractmethod
