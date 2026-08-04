@@ -163,6 +163,55 @@ def _transport(
                 },
                 headers={"cache-control": "public, max-age=60"},
             )
+        if endpoint_path == "/media":
+            return httpx.Response(
+                200,
+                text=(
+                    '<html lang="ru" data-avds="grant-radar">'
+                    '<section data-avds-component="media-lead">'
+                    '<link rel="alternate" type="application/feed+json">'
+                    '<link rel="alternate" type="application/rss+xml">'
+                    "</section></html>"
+                ),
+                headers={
+                    "content-type": "text/html; charset=utf-8",
+                    "cache-control": "public, max-age=60",
+                },
+            )
+        if endpoint_path == "/media.json":
+            return httpx.Response(
+                200,
+                json={
+                    "schema_version": "media.v1",
+                    "language": "ru",
+                    "cards": [{"id": "sample", "title": "AI grant"}],
+                },
+                headers={"cache-control": "public, max-age=60"},
+            )
+        if endpoint_path == "/media/feed.json":
+            return httpx.Response(
+                200,
+                json={
+                    "version": "https://jsonfeed.org/version/1.1",
+                    "language": "ru",
+                    "items": [
+                        {"id": "sample", "url": f"{public_root}/opportunity/sample"}
+                    ],
+                },
+                headers={"cache-control": "public, max-age=60"},
+            )
+        if endpoint_path == "/media/rss.xml":
+            return httpx.Response(
+                200,
+                text=(
+                    '<?xml version="1.0" encoding="UTF-8"?>'
+                    '<rss version="2.0"><channel><title>Media</title></channel></rss>'
+                ),
+                headers={
+                    "content-type": "application/rss+xml",
+                    "cache-control": "public, max-age=60",
+                },
+            )
         if endpoint_path == "/compare":
             return httpx.Response(
                 200,
@@ -237,6 +286,10 @@ def _transport(
                     f"{public_root}/opportunities/{{id}}/history.json?lang=kk|ru|en&limit={{n}}\n"
                     f"- Source status page: {public_root}/status\n"
                     f"- Coverage JSON: {public_root}/coverage\n"
+                    f"- Media page: {public_root}/media\n"
+                    f"- Media JSON: {public_root}/media.json\n"
+                    f"- Media JSON Feed: {public_root}/media/feed.json\n"
+                    f"- Media RSS: {public_root}/media/rss.xml\n"
                     f"- Opportunities JSON: {public_root}/opportunities\n"
                     f"- Opportunities NDJSON: {public_root}/opportunities.ndjson\n"
                     "- Compact Opportunities NDJSON: "
@@ -320,6 +373,10 @@ def _transport(
                         "digest": "/digest?lang={lang}",
                         "insights": "/insights?lang={lang}",
                         "insights_json": "/insights.json?lang={lang}",
+                        "media": "/media?lang={lang}",
+                        "media_json": "/media.json?lang={lang}",
+                        "media_feed": "/media/feed.json?lang={lang}",
+                        "media_rss": "/media/rss.xml?lang={lang}",
                         "compare": "/compare?ids={id},{id}&lang={lang}",
                         "compare_json": "/compare.json?ids={id},{id}&lang={lang}",
                         "notification_contract": (
@@ -340,6 +397,10 @@ def _transport(
                         "digest": f"{public_root}/digest",
                         "insights": f"{public_root}/insights",
                         "insights_json": f"{public_root}/insights.json",
+                        "media": f"{public_root}/media",
+                        "media_json": f"{public_root}/media.json",
+                        "media_feed": f"{public_root}/media/feed.json",
+                        "media_rss": f"{public_root}/media/rss.xml",
                         "compare": f"{public_root}/compare.json",
                         "compare_json": f"{public_root}/compare.json",
                         "notification_contract": (
@@ -465,6 +526,8 @@ def test_run_smoke_passes_for_expected_live_contract():
     assert result.coverage_unknown_freshness_sources == 2
     assert result.opportunities == 44
     assert result.ndjson_items == 1
+    assert result.media_items == 1
+    assert result.media_feed_items == 1
     assert all(result.dashboard_markers.values())
     assert result.english_dashboard is True
     assert all(result.discovery_surfaces.values())

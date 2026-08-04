@@ -57,6 +57,8 @@ class SmokeResult:
     opportunities: int
     ndjson_items: int
     digest_items: int
+    media_items: int
+    media_feed_items: int
     forbidden_hits: list[str]
     dashboard_markers: dict[str, bool]
     english_dashboard: bool
@@ -125,6 +127,14 @@ def run_smoke(
         insights_page_head = _head(client, base_url, "/insights?lang=ru")
         insights_snapshot = _get_json(client, base_url, "/insights.json?lang=ru")
         insights_snapshot_head = _head(client, base_url, "/insights.json?lang=ru")
+        media_page = _get_text(client, base_url, "/media?lang=ru")
+        media_page_head = _head(client, base_url, "/media?lang=ru")
+        media_snapshot = _get_json(client, base_url, "/media.json?lang=ru")
+        media_snapshot_head = _head(client, base_url, "/media.json?lang=ru")
+        media_feed = _get_json(client, base_url, "/media/feed.json?lang=ru")
+        media_feed_head = _head(client, base_url, "/media/feed.json?lang=ru")
+        media_rss = _get_text(client, base_url, "/media/rss.xml?lang=ru")
+        media_rss_head = _head(client, base_url, "/media/rss.xml?lang=ru")
 
         health = _get_json(client, base_url, "/health")
         release = _get_json(client, base_url, "/.well-known/release.json")
@@ -308,6 +318,32 @@ def run_smoke(
             and isinstance(insights_snapshot.get("decision_readiness"), dict)
             and _is_public_cacheable(insights_snapshot_head, 60)
         ),
+        "media_page": (
+            '<html lang="ru"' in media_page
+            and 'data-avds="grant-radar"' in media_page
+            and 'data-avds-component="media-lead"' in media_page
+            and 'type="application/feed+json"' in media_page
+            and 'type="application/rss+xml"' in media_page
+            and _is_public_cacheable(media_page_head, 60)
+        ),
+        "media_snapshot": (
+            media_snapshot.get("schema_version") == "media.v1"
+            and isinstance(media_snapshot.get("cards"), list)
+            and "raw" not in json.dumps(media_snapshot, ensure_ascii=False)
+            and _is_public_cacheable(media_snapshot_head, 60)
+        ),
+        "media_json_feed": (
+            media_feed.get("version") == "https://jsonfeed.org/version/1.1"
+            and isinstance(media_feed.get("items"), list)
+            and str(media_feed.get("language") or "") == "ru"
+            and _is_public_cacheable(media_feed_head, 60)
+        ),
+        "media_rss": (
+            '<rss version="2.0"' in media_rss
+            and "<channel>" in media_rss
+            and "raw" not in media_rss
+            and _is_public_cacheable(media_rss_head, 60)
+        ),
         "opportunity_history": (
             history.get("schema_version") == "history.v1"
             and history.get("status") in {"ready", "not_available"}
@@ -328,6 +364,12 @@ def run_smoke(
         "llms_sitemap": f"Sitemap: {_url(base_url, '/sitemap.xml')}" in llms,
         "llms_openapi": f"OpenAPI schema: {_url(base_url, '/openapi.json')}" in llms,
         "llms_coverage": f"Coverage JSON: {_url(base_url, '/coverage')}" in llms,
+        "llms_media": f"Media page: {_url(base_url, '/media')}" in llms,
+        "llms_media_json": f"Media JSON: {_url(base_url, '/media.json')}" in llms,
+        "llms_media_feed": (
+            f"Media JSON Feed: {_url(base_url, '/media/feed.json')}" in llms
+        ),
+        "llms_media_rss": f"Media RSS: {_url(base_url, '/media/rss.xml')}" in llms,
         "llms_opportunities": (
             f"Opportunities JSON: {_url(base_url, '/opportunities')}" in llms
         ),
@@ -417,6 +459,22 @@ def run_smoke(
             (discovery.get("data_endpoints") or {}).get("opportunity_history") or ""
         )
         == _url(base_url, "/opportunities/{id}/history.json"),
+        "site_discovery_media": str(
+            (discovery.get("data_endpoints") or {}).get("media") or ""
+        )
+        == _url(base_url, "/media"),
+        "site_discovery_media_json": str(
+            (discovery.get("data_endpoints") or {}).get("media_json") or ""
+        )
+        == _url(base_url, "/media.json"),
+        "site_discovery_media_feed": str(
+            (discovery.get("data_endpoints") or {}).get("media_feed") or ""
+        )
+        == _url(base_url, "/media/feed.json"),
+        "site_discovery_media_rss": str(
+            (discovery.get("data_endpoints") or {}).get("media_rss") or ""
+        )
+        == _url(base_url, "/media/rss.xml"),
         "site_discovery_cache": _is_public_cacheable(discovery_head, 300),
         "site_discovery_ai_bulk_export": str(
             (discovery.get("ai_consumption") or {}).get("preferred_bulk_export") or ""
@@ -538,6 +596,8 @@ def run_smoke(
         opportunities=len(opportunities),
         ndjson_items=len(ndjson_items),
         digest_items=len(digest.get("items") or []),
+        media_items=len(media_snapshot.get("cards") or []),
+        media_feed_items=len(media_feed.get("items") or []),
         forbidden_hits=forbidden_hits,
         dashboard_markers=marker_status,
         english_dashboard=english_dashboard,
