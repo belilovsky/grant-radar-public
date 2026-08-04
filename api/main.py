@@ -55,6 +55,7 @@ from api.opportunity_detail import build_opportunity_detail
 from api.opportunity_page import render_opportunity_page
 from api.public_info_page import render_public_info_page
 from api.public_meta import OG_IMAGE_PNG, OG_IMAGE_SVG
+from api.source_onboarding import source_onboarding_contract
 from api.status_page import render_status_page
 from core.geofit import (
     is_excluded_for_kazakhstan_focus,
@@ -143,6 +144,7 @@ _PUBLIC_FAST_CACHE_PATHS = {
     "/.well-known/qazstack-consumer.json",
     "/.well-known/qdev-ecosystem.json",
     "/.well-known/notification-contract.json",
+    "/.well-known/source-onboarding.json",
     "/compare",
     "/compare.json",
     "/coverage",
@@ -1913,6 +1915,9 @@ async def llms_txt(request: Request) -> Response:
     notification_contract_url = _public_url(
         request, root_path, "/.well-known/notification-contract.json"
     )
+    source_onboarding_url = _public_url(
+        request, root_path, "/.well-known/source-onboarding.json"
+    )
     insights = _public_url(request, root_path, "/insights")
     terms = _public_url(request, root_path, "/terms")
     data_policy = _public_url(request, root_path, "/data-policy")
@@ -1951,6 +1956,7 @@ async def llms_txt(request: Request) -> Response:
                 f"- QazStack consumer contract: {qazstack_contract}",
                 f"- AV DS 4 UI contract: {avds_contract}",
                 f"- Notification contract: {notification_contract_url}",
+                f"- Source onboarding contract: {source_onboarding_url}",
                 f"- Source status page: {status_page}",
                 f"- Catalog insights: {insights}",
                 f"- Catalog insights JSON: {insights_json}",
@@ -1970,6 +1976,7 @@ async def llms_txt(request: Request) -> Response:
                 f"- Insights JSON: {insights_json}?lang=ru|kk|en",
                 f"- Comparison JSON: {compare_json}?ids={{id}},{{id}}&lang=ru|kk|en",
                 f"- Notification contract JSON: {notification_contract_url}",
+                f"- Source onboarding contract JSON: {source_onboarding_url}",
                 "",
                 "## AI consumption guidance",
                 (
@@ -1994,6 +2001,7 @@ async def llms_txt(request: Request) -> Response:
                 "- Insights JSON: /insights.json?lang=kk|ru|en",
                 "- Comparison JSON: /compare.json?ids={id},{id}&lang=kk|ru|en",
                 "- Notification contract: /.well-known/notification-contract.json",
+                "- Source onboarding contract: /.well-known/source-onboarding.json",
                 "- Terms page: /terms?lang=kk|ru|en",
                 "- Data policy page: /data-policy?lang=kk|ru|en",
                 "- Attribution page: /attribution?lang=kk|ru|en",
@@ -2067,6 +2075,9 @@ async def site_discovery(request: Request) -> Response:
     notification_contract_url = _public_url(
         request, root_path, "/.well-known/notification-contract.json"
     )
+    source_onboarding_url = _public_url(
+        request, root_path, "/.well-known/source-onboarding.json"
+    )
     insights = _public_url(request, root_path, "/insights")
     terms = _public_url(request, root_path, "/terms")
     data_policy = _public_url(request, root_path, "/data-policy")
@@ -2086,6 +2097,7 @@ async def site_discovery(request: Request) -> Response:
             "qazstack": qazstack_contract,
             "avds4": avds_contract,
             "notifications": notification_contract_url,
+            "source_onboarding": source_onboarding_url,
         },
         "languages": ["kk", "ru", "en"],
         "routes": {
@@ -2109,6 +2121,7 @@ async def site_discovery(request: Request) -> Response:
             "compare": "/compare?ids={id},{id}&lang={lang}",
             "compare_json": "/compare.json?ids={id},{id}&lang={lang}",
             "notification_contract": "/.well-known/notification-contract.json",
+            "source_onboarding": "/.well-known/source-onboarding.json",
             "terms": "/terms?lang={lang}",
             "data_policy": "/data-policy?lang={lang}",
             "attribution": "/attribution?lang={lang}",
@@ -2125,6 +2138,7 @@ async def site_discovery(request: Request) -> Response:
             "compare": compare_json,
             "compare_json": compare_json,
             "notification_contract": notification_contract_url,
+            "source_onboarding": source_onboarding_url,
             "terms": terms,
             "data_policy": data_policy,
             "attribution": attribution,
@@ -2193,6 +2207,7 @@ async def site_discovery(request: Request) -> Response:
             "official source links",
             "read-only public catalog",
             "qdev ecosystem contract",
+            "source onboarding contract",
         ],
     }
     return JSONResponse(payload)
@@ -2226,6 +2241,17 @@ async def public_avds_ui_contract() -> Response:
 async def public_notification_contract(request: Request) -> Response:
     root_path = _root_path(request)
     return JSONResponse(notification_contract(_public_root_base(request, root_path)))
+
+
+@app.api_route(
+    "/.well-known/source-onboarding.json",
+    methods=["GET", "HEAD"],
+    include_in_schema=False,
+)
+async def public_source_onboarding_contract(request: Request) -> Response:
+    root_path = _root_path(request)
+    origin = _public_root_base(request, root_path)
+    return JSONResponse(source_onboarding_contract(origin, PARSERS.keys()))
 
 
 @app.api_route(

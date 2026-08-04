@@ -214,6 +214,12 @@ def run_smoke(
         notification_head = _head(
             client, base_url, "/.well-known/notification-contract.json"
         )
+        source_onboarding = _get_json(
+            client, base_url, "/.well-known/source-onboarding.json"
+        )
+        source_onboarding_head = _head(
+            client, base_url, "/.well-known/source-onboarding.json"
+        )
 
     _require(health.get("status") == "ok", "health status is not ok")
     _require(
@@ -315,6 +321,10 @@ def run_smoke(
             f"{_url(base_url, '/opportunities/{id}/history.json')}?lang=kk|ru|en&limit={{n}}"
             in llms
         ),
+        "llms_source_onboarding": (
+            "Source onboarding contract: "
+            f"{_url(base_url, '/.well-known/source-onboarding.json')}" in llms
+        ),
         "llms_ai_guidance": "## AI consumption guidance" in llms,
         "llms_ndjson_guidance": (
             "Prefer compact Opportunities NDJSON for bulk discovery reads" in llms
@@ -397,6 +407,10 @@ def run_smoke(
             (discovery.get("contracts") or {}).get("notifications") or ""
         )
         == _url(base_url, "/.well-known/notification-contract.json"),
+        "site_discovery_source_onboarding": str(
+            (discovery.get("data_endpoints") or {}).get("source_onboarding") or ""
+        )
+        == _url(base_url, "/.well-known/source-onboarding.json"),
         "site_discovery_comparison": str(
             (discovery.get("data_endpoints") or {}).get("compare_json") or ""
         )
@@ -431,6 +445,15 @@ def run_smoke(
             and (notification_contract.get("delivery") or {}).get("worker_running")
             is False
             and _is_public_cacheable(notification_head, 60)
+        ),
+        "source_onboarding_contract": (
+            source_onboarding.get("schema_version") == "source-onboarding.v1"
+            and (source_onboarding.get("policy") or {}).get(
+                "credentials_in_public_contract"
+            )
+            is False
+            and isinstance(source_onboarding.get("candidates"), list)
+            and _is_public_cacheable(source_onboarding_head, 60)
         ),
         "ecosystem_contract": (
             ecosystem.get("schema_version") == "qdev-ecosystem-integration-v1"

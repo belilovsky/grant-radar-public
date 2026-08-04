@@ -42,6 +42,8 @@ The main public endpoints are:
 - `GET /opportunities.ndjson`
 - `GET /opportunities/{opportunity_id}`
 - `GET /opportunities/{opportunity_id}/history.json?lang=kk|ru|en`
+- `GET /.well-known/source-onboarding.json` – machine-readable admission
+  boundary for active and prospective sources
 - `GET /opportunity/{opportunity_id}?lang=kk|ru|en`
 - `GET /funder/{funder_slug}?lang=kk|ru|en`
 - `GET /insights?lang=kk|ru|en`

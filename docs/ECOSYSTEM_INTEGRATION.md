@@ -29,6 +29,8 @@ prove.
 - `/.well-known/qazstack-consumer.json` – strict QazStack production contract.
 - `/.well-known/avds-ui-contract.json` – AV DS 4 component-family boundary.
 - `/.well-known/qdev-ecosystem.json` – implemented and deferred integrations.
+- `/.well-known/source-onboarding.json` – active adapters and gated source
+  candidates with admission checks.
 - `/site-discovery.json` – public routes, query templates and contracts.
 - `/llms.txt` – compact discovery guidance for AI systems.
 - `/openapi.json` – executable API contract.
@@ -66,6 +68,8 @@ contract is documented in [`DATA_PROVENANCE_CONTRACT.md`](DATA_PROVENANCE_CONTRA
    execution still requires fixture parity and a private server-side sync path.
 7. New visual patterns use AV DS 4 component families; a local SSR exception is
    documented instead of forking React source.
+8. Candidate sources remain outside the public opportunity feed until the
+   source-onboarding contract is satisfied.
 
 ## Next safe integrations
 
@@ -113,7 +117,8 @@ to a versioned QazStack contract rather than adding product-to-product imports.
 
 - Full QAZ.FUND tests, lint and type checks pass.
 - Strict QazStack consumer validation passes from the installed wheel.
-- Production smoke verifies all three `/.well-known/` documents.
+- Production smoke verifies the ecosystem, AVDS4, notification, QazStack and
+  source-onboarding `/.well-known/` contracts.
 - QazStack registry probes are added only after the public endpoints are live.
 - Platform catalog status changes only from runtime evidence, never from this
   document alone.

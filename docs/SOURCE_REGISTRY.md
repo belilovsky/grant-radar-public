@@ -277,6 +277,13 @@ Mark for manual review if:
 
 ## Remaining source gaps
 
+The machine-readable admission boundary is published at
+`/.well-known/source-onboarding.json` and documented in
+[`SOURCE_ONBOARDING_CONTRACT.md`](SOURCE_ONBOARDING_CONTRACT.md). It keeps
+OpenAlex, data.egov.kz, UNGM and the U.S. Embassy pages separate from enabled
+opportunity adapters until access, licensing, item-level evidence and parser
+fixtures are approved.
+
 The production feed now has item-level coverage for Grants.gov, Astana Hub,
 Internews, IsDB project procurement, EBRD ECEPP procurement, Erasmus+
 Kazakhstan, Opportunity Desk, FundsforNGOs, EEAS Kazakhstan, World Bank

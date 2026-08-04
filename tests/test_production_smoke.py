@@ -204,6 +204,8 @@ def _transport(
                     f"{public_root}/.well-known/avds-ui-contract.json\n"
                     f"- Notification contract: "
                     f"{public_root}/.well-known/notification-contract.json\n"
+                    f"- Source onboarding contract: "
+                    f"{public_root}/.well-known/source-onboarding.json\n"
                     f"- Comparison JSON: "
                     f"{public_root}/compare.json?ids={{id}},{{id}}&lang=ru|kk|en\n"
                     f"- Opportunity history JSON: "
@@ -271,6 +273,9 @@ def _transport(
                         "notifications": (
                             f"{public_root}/.well-known/notification-contract.json"
                         ),
+                        "source_onboarding": (
+                            f"{public_root}/.well-known/source-onboarding.json"
+                        ),
                     },
                     "languages": ["kk", "ru", "en"],
                     "routes": {
@@ -295,6 +300,7 @@ def _transport(
                         "notification_contract": (
                             "/.well-known/notification-contract.json"
                         ),
+                        "source_onboarding": "/.well-known/source-onboarding.json",
                     },
                     "data_endpoints": {
                         "coverage": f"{public_root}/coverage",
@@ -313,6 +319,9 @@ def _transport(
                         "compare_json": f"{public_root}/compare.json",
                         "notification_contract": (
                             f"{public_root}/.well-known/notification-contract.json"
+                        ),
+                        "source_onboarding": (
+                            f"{public_root}/.well-known/source-onboarding.json"
                         ),
                     },
                     "ai_consumption": {
@@ -342,6 +351,7 @@ def _transport(
                         "machine-readable source coverage",
                         "official source links",
                         "notification contract (delivery disabled)",
+                        "source onboarding contract",
                         "read-only public catalog",
                     ],
                 },
@@ -373,6 +383,16 @@ def _transport(
                     "schema_version": "notification-v1",
                     "status": "not_enabled",
                     "delivery": {"enabled": False, "worker_running": False},
+                },
+                headers={"cache-control": "public, max-age=60"},
+            )
+        if endpoint_path == "/.well-known/source-onboarding.json":
+            return httpx.Response(
+                200,
+                json={
+                    "schema_version": "source-onboarding.v1",
+                    "policy": {"credentials_in_public_contract": False},
+                    "candidates": [{"slug": "openalex_context"}],
                 },
                 headers={"cache-control": "public, max-age=60"},
             )

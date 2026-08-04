@@ -1104,6 +1104,10 @@ def test_marketing_endpoints_are_exposed(monkeypatch):
     assert (
         "AV DS 4 UI contract: " "http://testserver/.well-known/avds-ui-contract.json"
     ) in llms.text
+    assert (
+        "Source onboarding contract: "
+        "http://testserver/.well-known/source-onboarding.json"
+    ) in llms.text
     assert "Source status page: http://testserver/status" in llms.text
     assert "Catalog insights: http://testserver/insights" in llms.text
     assert "Terms of use: http://testserver/terms" in llms.text
@@ -1159,6 +1163,9 @@ def test_marketing_endpoints_are_exposed(monkeypatch):
             "notifications": (
                 "http://testserver/.well-known/notification-contract.json"
             ),
+            "source_onboarding": (
+                "http://testserver/.well-known/source-onboarding.json"
+            ),
         },
         "languages": ["kk", "ru", "en"],
         "routes": {
@@ -1182,6 +1189,7 @@ def test_marketing_endpoints_are_exposed(monkeypatch):
             "compare": "/compare?ids={id},{id}&lang={lang}",
             "compare_json": "/compare.json?ids={id},{id}&lang={lang}",
             "notification_contract": "/.well-known/notification-contract.json",
+            "source_onboarding": "/.well-known/source-onboarding.json",
             "terms": "/terms?lang={lang}",
             "data_policy": "/data-policy?lang={lang}",
             "attribution": "/attribution?lang={lang}",
@@ -1203,6 +1211,9 @@ def test_marketing_endpoints_are_exposed(monkeypatch):
             "compare_json": "http://testserver/compare.json",
             "notification_contract": (
                 "http://testserver/.well-known/notification-contract.json"
+            ),
+            "source_onboarding": (
+                "http://testserver/.well-known/source-onboarding.json"
             ),
             "terms": "http://testserver/terms",
             "data_policy": "http://testserver/data-policy",
@@ -1276,6 +1287,7 @@ def test_marketing_endpoints_are_exposed(monkeypatch):
             "official source links",
             "read-only public catalog",
             "qdev ecosystem contract",
+            "source onboarding contract",
         ],
     }
     discovery_head = client.head("/site-discovery.json")

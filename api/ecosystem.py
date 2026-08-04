@@ -192,6 +192,7 @@ def ecosystem_manifest(origin: str) -> dict[str, Any]:
             "qazstack": _url(origin, "/.well-known/qazstack-consumer.json"),
             "avds4": _url(origin, "/.well-known/avds-ui-contract.json"),
             "notifications": _url(origin, "/.well-known/notification-contract.json"),
+            "source_onboarding": _url(origin, "/.well-known/source-onboarding.json"),
             "openapi": _url(origin, "/openapi.json"),
             "discovery": _url(origin, "/site-discovery.json"),
         },
