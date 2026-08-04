@@ -279,6 +279,7 @@ class EeasKazakhstanSource(BaseSource):
             response = await self.client.get(LISTING_URL)
             response.raise_for_status()
         except Exception as exc:  # noqa: BLE001
+            self._mark_fetch_error(exc)
             log.warning("eeas_kazakhstan.listing_failed", error=str(exc))
             return
 
@@ -295,6 +296,7 @@ class EeasKazakhstanSource(BaseSource):
                 detail_response.raise_for_status()
                 detail_html = detail_response.text
             except Exception as exc:  # noqa: BLE001
+                self._mark_fetch_error(exc)
                 log.warning(
                     "eeas_kazakhstan.detail_failed",
                     url=entry.url,

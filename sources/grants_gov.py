@@ -64,6 +64,7 @@ class GrantsGovSource(BaseSource):
                 resp = await self.client.post(SEARCH_URL, json=payload)
                 resp.raise_for_status()
             except Exception as e:
+                self._mark_fetch_error(e)
                 log.warning("grants_gov.fetch_failed", keyword=kw, error=str(e))
                 continue
 

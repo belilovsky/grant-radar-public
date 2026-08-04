@@ -94,6 +94,8 @@ class SourceScheduler:
         count = 0
         errors = 0
         status = "ok"
+        if hasattr(parser, "last_fetch_error"):
+            parser.last_fetch_error = None
         try:
             async for record in self._iter_records(parser):
                 count += 1

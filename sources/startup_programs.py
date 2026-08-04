@@ -160,6 +160,7 @@ class StartupProgramSource(BaseSource):
             response = await self.client.get(self.program.url)
             response.raise_for_status()
         except Exception as exc:  # noqa: BLE001
+            self._mark_fetch_error(exc)
             log.warning(
                 "startup_program.fetch_failed",
                 source=self.program.slug,

@@ -179,6 +179,7 @@ class EbrdEceppProcurementSource(BaseSource):
             response = await self.client.get(ECEPP_SEARCH_URL)
             response.raise_for_status()
         except Exception as exc:  # noqa: BLE001
+            self._mark_fetch_error(exc)
             log.warning("ebrd_ecepp_procurement.fetch_failed", error=str(exc))
             return
 

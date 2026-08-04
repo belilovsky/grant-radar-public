@@ -67,6 +67,7 @@ class CanadaCfliCentralAsiaSource(BaseSource):
             response = await self.client.get(CFLI_INDEX_URL)
             response.raise_for_status()
         except Exception as exc:  # noqa: BLE001
+            self._mark_fetch_error(exc)
             log.warning("canada_cfli.fetch_failed", error=str(exc))
             return
 

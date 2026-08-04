@@ -241,7 +241,7 @@ class UndpProcurementSource(BaseSource):
             response = await self.client.get(LISTING_URL)
             response.raise_for_status()
         except Exception as exc:  # noqa: BLE001
-            self.last_fetch_error = f"{type(exc).__name__}: {exc}"
+            self._mark_fetch_error(exc)
             log.warning("undp_procurement.fetch_failed", error=str(exc))
             return
 

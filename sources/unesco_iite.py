@@ -234,6 +234,7 @@ class UnescoIiteSource(BaseSource):
             response = await self.client.get(UNESCO_IITE_ANNOUNCEMENTS_URL)
             response.raise_for_status()
         except Exception as exc:  # noqa: BLE001
+            self._mark_fetch_error(exc)
             log.warning(
                 "unesco_iite.listing_failed",
                 url=UNESCO_IITE_ANNOUNCEMENTS_URL,
@@ -247,6 +248,7 @@ class UnescoIiteSource(BaseSource):
                 detail = await self.client.get(url)
                 detail.raise_for_status()
             except Exception as exc:  # noqa: BLE001
+                self._mark_fetch_error(exc)
                 log.warning("unesco_iite.detail_failed", url=url, error=str(exc))
                 continue
 

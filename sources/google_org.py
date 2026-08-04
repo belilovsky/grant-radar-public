@@ -48,6 +48,7 @@ class GoogleOrgAiOpportunitySource(BaseSource):
             response = await self.client.get(GOOGLE_ORG_KNOWLEDGE_URL)
             response.raise_for_status()
         except Exception as exc:  # noqa: BLE001
+            self._mark_fetch_error(exc)
             log.warning(
                 "google_org_ai_opportunity.fetch_failed",
                 url=GOOGLE_ORG_KNOWLEDGE_URL,

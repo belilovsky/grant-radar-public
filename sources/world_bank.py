@@ -145,6 +145,7 @@ class WorldBankKazakhstanSource(BaseSource):
             response.raise_for_status()
             payload = response.json()
         except Exception as exc:  # noqa: BLE001
+            self._mark_fetch_error(exc)
             log.warning("world_bank_kazakhstan.fetch_failed", error=str(exc))
             return
 

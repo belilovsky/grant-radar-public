@@ -338,6 +338,7 @@ class ErasmusKazakhstanSource(BaseSource):
                 response = await self.client.get(listing_url)
                 response.raise_for_status()
             except Exception as exc:  # noqa: BLE001
+                self._mark_fetch_error(exc)
                 log.warning(
                     "erasmus_kazakhstan.listing_failed",
                     url=listing_url,
@@ -357,6 +358,7 @@ class ErasmusKazakhstanSource(BaseSource):
                 detail_response = await self.client.get(entry.url)
                 detail_response.raise_for_status()
             except Exception as exc:  # noqa: BLE001
+                self._mark_fetch_error(exc)
                 log.warning(
                     "erasmus_kazakhstan.detail_failed",
                     url=entry.url,

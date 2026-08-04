@@ -1012,6 +1012,7 @@ class KazakhstanDomesticSupportSource(BaseSource):
                 if response.status_code == 404 or response.status_code >= 500:
                     response.raise_for_status()
             except Exception as exc:  # noqa: BLE001
+                self._mark_fetch_error(exc)
                 if program.retain_on_fetch_error and not isinstance(
                     exc, httpx.HTTPStatusError
                 ):

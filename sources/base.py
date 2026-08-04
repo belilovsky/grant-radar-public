@@ -81,6 +81,20 @@ class BaseSourceParser(abc.ABC):
         self.last_fetch_error: str | None = None
         self._log = log.bind(source=self.name)
 
+    def _mark_fetch_error(self, error: BaseException | str) -> None:
+        """Expose a swallowed fetch failure to the scheduler.
+
+        Source adapters keep transport failures isolated so one broken
+        upstream cannot stop the worker.  The marker preserves that contract
+        while allowing run accounting to distinguish an empty result from a
+        failed fetch.
+        """
+
+        if isinstance(error, BaseException):
+            self.last_fetch_error = f"{type(error).__name__}: {error}"
+        else:
+            self.last_fetch_error = str(error)
+
     @abc.abstractmethod
     def fetch(self) -> AsyncIterator[GrantRecord | Opportunity]:
         """Yield normalized records from the source."""
@@ -117,6 +131,7 @@ class BaseSource(BaseSourceParser):
             },
             follow_redirects=True,
         )
+        self.last_fetch_error: str | None = None
 
     @abc.abstractmethod
     def fetch(self) -> AsyncIterator[Opportunity]:

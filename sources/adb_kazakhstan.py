@@ -253,6 +253,7 @@ class AdbKazakhstanSource(BaseSource):
             response.raise_for_status()
             root = ET.fromstring(response.content, parser=_secure_xml_parser())
         except Exception as exc:  # noqa: BLE001
+            self._mark_fetch_error(exc)
             log.warning("adb_kazakhstan.fetch_failed", error=str(exc))
             return
 

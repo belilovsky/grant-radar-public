@@ -173,6 +173,7 @@ class AstanaHubSource(BaseSource):
                 return
             resp.raise_for_status()
         except Exception as e:  # noqa: BLE001
+            self._mark_fetch_error(e)
             log.warning("astana_hub.fetch_failed", error=str(e))
             return
 
@@ -205,6 +206,7 @@ class AstanaHubSource(BaseSource):
                 resp = await self.client.get(url)
                 resp.raise_for_status()
             except Exception as e:  # noqa: BLE001
+                self._mark_fetch_error(e)
                 log.warning("astana_hub.fallback_failed", url=url, error=str(e))
                 continue
 
