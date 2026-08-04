@@ -85,7 +85,9 @@ the repository root, and the runtime environment is defined in
 
 - Baseline: `alembic/versions/0001_initial.py` creates `opportunities` and
   `dedup_keys`.
-- Revision `0005_opportunity_versions.py` creates and backfills one `initial`
+- Revision `0005_opportunity_observations.py` is retained as the already deployed
+  observation ledger.
+- Revision `0006_opportunity_versions.py` creates and backfills one `initial`
   snapshot per existing opportunity, then records only changed public fields.
 - Migration smoke tests live in `tests/test_alembic_migrations.py` and cover a
   sqlite upgrade/downgrade cycle.

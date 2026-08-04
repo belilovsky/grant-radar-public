@@ -108,7 +108,8 @@ curl -fsS 'https://example.org/digest?limit=5&tag=ai'
 ## Operational notes
 
 - Run Alembic migrations before serving traffic.
-- Migration `0005_opportunity_versions` seeds an `initial` public snapshot and
+- Migration `0006_opportunity_versions` (after the already deployed
+  `0005_opportunity_observations`) seeds an `initial` public snapshot and
   future refreshes append only changed normalized fields; verify the history
   endpoint after applying it.
 - Set `PUBLIC_URL` for every public deploy. A green container readiness check is
