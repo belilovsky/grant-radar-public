@@ -1335,7 +1335,24 @@ def test_marketing_endpoints_are_exposed(monkeypatch):
     assert notifications.json()["schema_version"] == "notification-v1"
     assert notifications.json()["status"] == "not_enabled"
     assert notifications.json()["delivery"]["worker_running"] is False
+    assert notifications.json()["identity"] == {
+        "anonymous_read_access": True,
+        "authenticated_owner": False,
+        "server_side_profile": False,
+        "cross_device_sync": False,
+        "local_browser_storage_only": True,
+    }
+    assert notifications.json()["consent"] == {
+        "collection_enabled": False,
+        "version": None,
+        "purpose": None,
+        "frequency": None,
+        "withdrawal_path": "not_available_until_activation",
+    }
+    assert notifications.json()["storage"]["server_side_saved_views"] is False
     assert notifications.json()["public_behavior"]["subscription_ui"] is False
+    assert notifications.json()["public_behavior"]["account_ui"] is False
+    assert notifications.json()["public_behavior"]["sync_ui"] is False
     assert client.head("/.well-known/notification-contract.json").status_code == 200
 
     ecosystem = client.get("/.well-known/qdev-ecosystem.json")

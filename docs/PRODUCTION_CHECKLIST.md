@@ -26,7 +26,8 @@ historic backup filenames, and maintainer-only evidence.
 - `GET` and `HEAD /terms`, `/data-policy`, and `/attribution` render concise
   public guidance pages linked from every public surface.
 - `GET` and `HEAD /.well-known/notification-contract.json` expose the explicit
-  delivery-disabled boundary; the route must not imply an active subscription.
+  identity, consent and delivery-disabled boundary; the route must not imply an
+  account, cross-device sync or active subscription.
 - `GET` and `HEAD /.well-known/source-onboarding.json` expose only the public
   admission policy and candidate statuses; credentials and private responses
   must never appear there.

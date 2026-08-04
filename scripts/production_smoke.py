@@ -444,6 +444,13 @@ def run_smoke(
             and (notification_contract.get("delivery") or {}).get("enabled") is False
             and (notification_contract.get("delivery") or {}).get("worker_running")
             is False
+            and (notification_contract.get("identity") or {}).get("authenticated_owner")
+            is False
+            and (notification_contract.get("identity") or {}).get("cross_device_sync")
+            is False
+            and (notification_contract.get("consent") or {}).get("collection_enabled")
+            is False
+            and (notification_contract.get("consent") or {}).get("version") is None
             and _is_public_cacheable(notification_head, 60)
         ),
         "source_onboarding_contract": (

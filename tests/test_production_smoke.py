@@ -383,6 +383,11 @@ def _transport(
                     "schema_version": "notification-v1",
                     "status": "not_enabled",
                     "delivery": {"enabled": False, "worker_running": False},
+                    "identity": {
+                        "authenticated_owner": False,
+                        "cross_device_sync": False,
+                    },
+                    "consent": {"collection_enabled": False, "version": None},
                 },
                 headers={"cache-control": "public, max-age=60"},
             )
