@@ -3635,6 +3635,11 @@ def test_public_info_pages_are_linkable(monkeypatch):
         assert response.status_code == 200
         assert marker in response.text
         assert 'data-avds="grant-radar"' in response.text
+        assert ".info-layout { align-items: start; min-height: 0; }" in response.text
+        assert (
+            ".cards { height: auto; grid-template-rows: none; gap: 12px; }"
+            in response.text
+        )
         language_nav = response.text.split('<nav class="langs"', 1)[1].split(
             "</nav>", 1
         )[0]
