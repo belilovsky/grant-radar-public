@@ -69,3 +69,27 @@ def test_status_page_localizes_source_names_in_kazakh() -> None:
 
     assert "Қазақстандағы қолдау бағдарламалары" in html
     assert "Kazakhstan domestic support" not in html
+
+
+def test_status_page_keeps_official_name_when_slug_has_no_curated_label() -> None:
+    html = render_status_page(
+        coverage={
+            "sources": [
+                {
+                    "enabled": True,
+                    "name": "Grants.gov (US Federal)",
+                    "slug": "grants_gov",
+                    "base_url": "https://grants.gov",
+                    "items": 1,
+                    "relevant_open_items": 1,
+                    "freshness_status": "fresh",
+                }
+            ],
+            "enabled_sources": 1,
+            "fresh_sources": 1,
+        },
+        lang="en",
+    )
+
+    assert "Grants.gov (US Federal)" in html
+    assert "grants gov" not in html

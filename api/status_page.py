@@ -112,6 +112,21 @@ def _host(value: Any) -> str:
     return (urlparse(str(value or "")).hostname or "").removeprefix("www.")
 
 
+def _source_display_name(row: dict[str, Any], lang: str) -> str:
+    """Prefer a curated label, then preserve the source's official name."""
+
+    slug = str(row.get("slug") or "").strip()
+    name = str(row.get("name") or "").strip()
+    if slug:
+        label = _source_label(slug, lang)
+        normalized_slug = slug.lower().replace("-", "_").replace(" ", "_")
+        if label and label != normalized_slug.replace("_", " "):
+            return label
+    if name:
+        return _source_label(name, lang)
+    return _source_label(slug, lang)
+
+
 def render_status_page(
     *,
     coverage: dict[str, Any],
@@ -166,9 +181,7 @@ def render_status_page(
         )
         freshness = str(row.get("freshness_status") or "unknown")
         mobile_updated = f'{copy["updated"]}: {last_checked}'
-        source_name = _source_label(
-            str(row.get("slug") or row.get("name") or ""), active_lang
-        )
+        source_name = _source_display_name(row, active_lang)
         rendered_rows.append(f"""
             <tr>
               <td>
