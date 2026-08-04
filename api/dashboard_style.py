@@ -9,6 +9,8 @@ DASHBOARD_CSS = r"""    :root {
       --panel-subtle: var(--color-bg-subtle);
       --panel-strong: color-mix(in oklab, var(--panel), var(--brand-soft) 16%);
       --panel-wash: color-mix(in oklab, var(--panel), var(--panel-subtle) 44%);
+      --panel-wash-soft: color-mix(in oklab, var(--panel), var(--panel-subtle) 18%);
+      --panel-wash-strong: color-mix(in oklab, var(--panel), var(--panel-subtle) 68%);
       --accent-wash: color-mix(in oklab, var(--panel), var(--brand-soft) 26%);
       --ink: var(--color-text);
       --muted: var(--color-text-muted);
@@ -505,7 +507,7 @@ DASHBOARD_CSS = r"""    :root {
       padding: 0 12px;
       border: 1px solid var(--line-subtle);
       border-radius: var(--av-radius-md);
-      background: var(--panel-wash);
+      background: var(--panel-wash-strong);
     }
     .discovery-library > summary,
     .trust-library > summary {
@@ -1197,7 +1199,7 @@ DASHBOARD_CSS = r"""    :root {
       padding: 10px 12px 12px;
       border: 1px solid var(--line-subtle);
       border-radius: var(--av-radius-md);
-      background: var(--panel-wash);
+      background: var(--panel-wash-strong);
       box-shadow: var(--shadow-2xs);
     }
     .filters {
@@ -1719,7 +1721,7 @@ DASHBOARD_CSS = r"""    :root {
       border: 0;
       border-top: 1px solid var(--line);
       border-radius: 0;
-      background: transparent;
+      background: var(--panel-wash-soft);
       padding: 18px 4px;
       box-shadow: none;
       position: relative;
@@ -1735,7 +1737,7 @@ DASHBOARD_CSS = r"""    :root {
     .list > .opportunity:nth-child(even) {
       padding-inline: 12px;
       border-radius: var(--av-radius-md);
-      background: var(--panel-wash);
+      background: var(--panel-wash-strong);
     }
     .opportunity.good,
     .opportunity.warn { border-left-color: transparent; }
@@ -1765,7 +1767,7 @@ DASHBOARD_CSS = r"""    :root {
       border: 0;
       border-left: 1px solid var(--line-subtle);
       border-radius: 0;
-      background: transparent;
+      background: color-mix(in oklab, var(--panel), var(--panel-subtle) 24%);
     }
     .opportunity-heading {
       display: grid;
