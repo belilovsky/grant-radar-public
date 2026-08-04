@@ -14,6 +14,7 @@ from uuid import UUID
 from qazstack.opportunities import public_lifecycle
 
 from core.models import Opportunity
+from sources import PARSERS
 
 COMPARISON_SCHEMA_VERSION = "comparison.v1"
 MAX_COMPARISON_ITEMS = 4
@@ -112,6 +113,13 @@ def _text(value: Any) -> str | None:
     return normalized or None
 
 
+def _source_label(item: Opportunity) -> str:
+    source_cls = PARSERS.get(item.source)
+    if source_cls is not None:
+        return str(source_cls.name)
+    return str(item.source).replace("_", " ").strip().title() or "Source"
+
+
 def _amount(item: Opportunity, unknown: str) -> dict[str, Any]:
     minimum = item.amount_min
     maximum = item.amount_max
@@ -207,6 +215,7 @@ def build_comparison_snapshot(
                 "id": str(item.id),
                 "title": item.title,
                 "summary": item.summary,
+                "source_label": _source_label(item),
                 "fields": {
                     field: _field_value(item, field, unknown=copy["unknown"])
                     for field in fields

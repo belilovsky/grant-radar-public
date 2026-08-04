@@ -125,10 +125,10 @@ def render_comparison_page(
     for field in fields:
         cells = []
         for card in cards:
-            value = (
-                _display((card.get("fields") or {}).get(field), field=field, lang=lang)
-                or copy["unknown"]
-            )
+            raw_value = (card.get("fields") or {}).get(field)
+            if field == "source":
+                raw_value = card.get("source_label") or raw_value
+            value = _display(raw_value, field=field, lang=lang) or copy["unknown"]
             cells.append(f"<td>{escape(value)}</td>")
         rows.append(
             f'<tr><th scope="row">{escape(labels[field])}</th>{"".join(cells)}</tr>'
