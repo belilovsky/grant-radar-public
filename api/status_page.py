@@ -10,6 +10,7 @@ from urllib.parse import urlparse
 from api.avds import AVDS_CSS, AVDS_FONT_HEAD
 from api.dashboard_copy import dashboard_copy
 from api.insights_page import _source_label
+from api.public_meta import og_image_url
 
 COPY = {
     "ru": {
@@ -208,6 +209,15 @@ def render_status_page(
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>{escape(str(copy["title"]))}</title>
   <meta name="description" content="{escape(str(copy["intro"]), quote=True)}">
+  <meta property="og:type" content="website">
+  <meta property="og:title" content="{escape(str(copy["title"]), quote=True)}">
+  <meta property="og:description" content="{escape(str(copy["intro"]), quote=True)}">
+  <meta property="og:url" content="{escape(canonical, quote=True)}">
+  <meta property="og:image" content="{escape(og_image_url(site_origin, root_path), quote=True)}">
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="{escape(str(copy["title"]), quote=True)}">
+  <meta name="twitter:description" content="{escape(str(copy["intro"]), quote=True)}">
+  <meta name="twitter:image" content="{escape(og_image_url(site_origin, root_path), quote=True)}">
   <link rel="canonical" href="{escape(canonical, quote=True)}">
   <link rel="alternate" hreflang="kk" href="{escape(kk_canonical, quote=True)}">
   <link rel="alternate" hreflang="ru" href="{escape(ru_canonical, quote=True)}">

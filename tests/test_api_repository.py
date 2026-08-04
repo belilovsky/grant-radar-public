@@ -3519,6 +3519,15 @@ def test_public_insights_page_renders_avds_charts(monkeypatch):
     assert 'data-avds-pattern="decision-readiness"' in response.text
     assert "Гранты" in response.text
     assert "До 30 дней" in response.text
+    assert 'property="og:type" content="website"' in response.text
+    assert (
+        'property="og:url" content="http://testserver/insights?lang=ru"'
+        in response.text
+    )
+    assert 'name="twitter:card" content="summary_large_image"' in response.text
+    assert (
+        'name="twitter:image" content="http://testserver/og-image.png"' in response.text
+    )
     assert 'href="/insights?lang=kk"' in response.text
     assert (
         'href="/insights?lang=ru" lang="ru" aria-current="page">RU</a>' in response.text

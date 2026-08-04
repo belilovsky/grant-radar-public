@@ -47,6 +47,20 @@ def test_status_page_has_editorial_kazakh_shell_and_three_language_switch() -> N
     assert 'href="/status?lang=en" lang="en"' in html
 
 
+def test_status_page_has_share_preview_metadata() -> None:
+    html = render_status_page(
+        coverage={"sources": [], "enabled_sources": 0},
+        lang="en",
+        site_origin="https://qaz.fund",
+    )
+
+    assert 'property="og:type" content="website"' in html
+    assert 'property="og:url" content="https://qaz.fund/status?lang=en"' in html
+    assert 'property="og:image" content="https://qaz.fund/og-image.png"' in html
+    assert 'name="twitter:card" content="summary_large_image"' in html
+    assert 'name="twitter:image" content="https://qaz.fund/og-image.png"' in html
+
+
 def test_status_page_localizes_source_names_in_kazakh() -> None:
     html = render_status_page(
         coverage={

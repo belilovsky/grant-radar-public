@@ -528,7 +528,9 @@ def render_insights_page(
   <link rel="alternate" hreflang="en" href="{escape((site_origin.rstrip('/') if site_origin else '') + en_href, quote=True)}">
   <link rel="alternate" type="application/json" href="{escape((site_origin.rstrip('/') if site_origin else '') + insights_json_href, quote=True)}">
   <meta property="og:title" content="{escape(copy["title"], quote=True)}"><meta property="og:description" content="{escape(copy["description"], quote=True)}">
+  <meta property="og:type" content="website"><meta property="og:url" content="{escape(canonical, quote=True)}">
   <meta property="og:image" content="{escape(og_image_url(site_origin, root_path), quote=True)}">
+  <meta name="twitter:card" content="summary_large_image"><meta name="twitter:title" content="{escape(copy["title"], quote=True)}"><meta name="twitter:description" content="{escape(copy["description"], quote=True)}"><meta name="twitter:image" content="{escape(og_image_url(site_origin, root_path), quote=True)}">
   {analytics_head_html()}{AVDS_FONT_HEAD}
   <style>
     {AVDS_CSS}
