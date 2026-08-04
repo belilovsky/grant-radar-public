@@ -3596,7 +3596,7 @@ DASHBOARD_CSS = r"""    :root {
       }
     }
 
-    @media (min-width: 1440px) and (max-width: 1919px) {
+    @media (min-width: 1280px) and (max-width: 1919px) {
       .list {
         grid-template-columns: repeat(2, minmax(0, 1fr));
         column-gap: var(--av-spacing-6);
