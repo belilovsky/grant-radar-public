@@ -1878,7 +1878,7 @@ async def opportunity_page(
         lang=content_lang,
         allow_remote_fetch=False,
     )
-    return HTMLResponse(
+    response = HTMLResponse(
         render_opportunity_page(
             detail=detail,
             lang=content_lang,
@@ -1887,6 +1887,8 @@ async def opportunity_page(
             related_items=related_items,
         )
     )
+    response.headers["Cache-Control"] = "public, max-age=60, stale-while-revalidate=300"
+    return response
 
 
 @app.api_route("/robots.txt", methods=["GET", "HEAD"], include_in_schema=False)
@@ -2514,7 +2516,7 @@ async def funder_page(
         for item in items
         if public_lifecycle(item) in {"closed", "awarded"}
     ][:6]
-    return HTMLResponse(
+    response = HTMLResponse(
         render_funder_page(
             funder=_funder_payload(group),
             live_items=live_items,
@@ -2524,6 +2526,8 @@ async def funder_page(
             site_origin=site_origin,
         )
     )
+    response.headers["Cache-Control"] = "public, max-age=60, stale-while-revalidate=300"
+    return response
 
 
 def _persist_items(items: list[Opportunity]) -> None:

@@ -3139,6 +3139,7 @@ def test_opportunity_page_renders_public_permalink(monkeypatch):
     response = client.get(f"/opportunity/{item.id}", params={"lang": "ru"})
 
     assert response.status_code == 200
+    assert "public, max-age=60" in response.headers["cache-control"]
     assert '<html lang="ru"' in response.text
     assert "<title>Цифровое ускорение Казахстана – QAZ.FUND</title>" in response.text
     assert (
@@ -3250,6 +3251,7 @@ def test_opportunity_page_defaults_to_russian_without_lang(monkeypatch):
     response = client.get(f"/opportunity/{item.id}")
 
     assert response.status_code == 200
+    assert "public, max-age=60" in response.headers["cache-control"]
     assert '<html lang="ru"' in response.text
     assert "Цифровое ускорение без параметра языка" in response.text
 
@@ -3301,6 +3303,7 @@ def test_funder_page_defaults_to_russian_without_lang(monkeypatch):
     response = client.get("/funder/science-fund")
 
     assert response.status_code == 200
+    assert "public, max-age=60" in response.headers["cache-control"]
     assert '<html lang="ru"' in response.text
     assert "Фонд науки" in response.text
 

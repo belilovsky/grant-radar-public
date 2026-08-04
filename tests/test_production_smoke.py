@@ -84,6 +84,7 @@ def _transport(
                         "id": f"00000000-0000-0000-0000-{index + 1:012d}",
                         "title": opportunity_title,
                         "source": "world_bank_kazakhstan",
+                        "funder_slug": "world-bank",
                     }
                     for index in range(44)
                 ],
@@ -105,6 +106,30 @@ def _transport(
                     ],
                 },
                 headers={"cache-control": "public, max-age=60"},
+            )
+        if endpoint_path.startswith("/opportunity/"):
+            return httpx.Response(
+                200,
+                text=(
+                    '<html lang="ru" data-avds="grant-radar">'
+                    "<body>Opportunity page</body></html>"
+                ),
+                headers={
+                    "content-type": "text/html; charset=utf-8",
+                    "cache-control": "public, max-age=60",
+                },
+            )
+        if endpoint_path.startswith("/funder/"):
+            return httpx.Response(
+                200,
+                text=(
+                    '<html lang="en" data-avds="grant-radar">'
+                    "<body>Funder page</body></html>"
+                ),
+                headers={
+                    "content-type": "text/html; charset=utf-8",
+                    "cache-control": "public, max-age=60",
+                },
             )
         if endpoint_path == "/compare.json":
             return httpx.Response(

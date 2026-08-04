@@ -154,6 +154,34 @@ def run_smoke(
             base_url,
             f"/opportunities/{history_id}/history.json?lang=ru&limit=50",
         )
+        opportunity_page = _get_text(
+            client,
+            base_url,
+            f"/opportunity/{history_id}?lang=ru",
+        )
+        opportunity_page_head = _head(
+            client,
+            base_url,
+            f"/opportunity/{history_id}?lang=ru",
+        )
+        funder_slug = next(
+            (
+                str(item.get("funder_slug") or "").strip()
+                for item in opportunities
+                if str(item.get("funder_slug") or "").strip()
+            ),
+            "world-bank",
+        )
+        funder_page = _get_text(
+            client,
+            base_url,
+            f"/funder/{funder_slug}?lang=en",
+        )
+        funder_page_head = _head(
+            client,
+            base_url,
+            f"/funder/{funder_slug}?lang=en",
+        )
         comparison = _get_json(
             client,
             base_url,
@@ -285,6 +313,16 @@ def run_smoke(
             and history.get("status") in {"ready", "not_available"}
             and isinstance(history.get("items"), list)
             and _is_public_cacheable(history_head, 60)
+        ),
+        "opportunity_page": (
+            '<html lang="ru"' in opportunity_page
+            and 'data-avds="grant-radar"' in opportunity_page
+            and _is_public_cacheable(opportunity_page_head, 60)
+        ),
+        "funder_page": (
+            '<html lang="en"' in funder_page
+            and 'data-avds="grant-radar"' in funder_page
+            and _is_public_cacheable(funder_page_head, 60)
         ),
         "llms_home": f"Home: {_url(base_url, '/')}" in llms,
         "llms_sitemap": f"Sitemap: {_url(base_url, '/sitemap.xml')}" in llms,
