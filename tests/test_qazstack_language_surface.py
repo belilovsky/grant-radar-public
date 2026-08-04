@@ -49,6 +49,15 @@ def test_error_and_operator_surfaces_support_kazakh_alias() -> None:
     assert '<html lang="kk"' in operator
     assert "Дереккөздерді бақылау" in operator
     assert ">KAZ</a>" in operator
+    operator_language_nav = operator.split('<nav class="lang-switch"', 1)[1].split(
+        "</nav>", 1
+    )[0]
+    assert operator_language_nav.index('lang="kk"') < operator_language_nav.index(
+        'lang="ru"'
+    )
+    assert operator_language_nav.index('lang="ru"') < operator_language_nav.index(
+        'lang="en"'
+    )
     assert 'lang="kk"' in operator
     assert 'href="/does-not-exist?lang=kk"' in not_found
     assert 'href="/does-not-exist?lang=ru"' in not_found
