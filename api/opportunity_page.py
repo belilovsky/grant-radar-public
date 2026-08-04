@@ -1078,13 +1078,11 @@ def render_opportunity_page(
     .hero {{
       display: grid;
       gap: 12px;
-      padding: 24px 0;
-      border: 0;
-      border-top: 1px solid var(--line);
-      border-bottom: 1px solid var(--line);
-      border-radius: 0;
-      background: transparent;
-      box-shadow: none;
+      padding: 24px 26px;
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      background: var(--accent-wash);
+      box-shadow: var(--shadow);
       margin-bottom: 14px;
     }}
     .eyebrow {{
@@ -1734,7 +1732,7 @@ def render_opportunity_page(
       .related-card {{
         padding: 12px;
       }}
-      .hero {{ padding-inline: 0; }}
+      .hero {{ padding: 16px; }}
       .hero h1 {{
         font-size: 24px;
       }}

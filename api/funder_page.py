@@ -620,13 +620,11 @@ def render_funder_page(
       display: grid;
       grid-template-columns: minmax(0, 1fr) minmax(250px, 0.44fr);
       gap: 14px 36px;
-      padding: 24px 0;
-      border: 0;
-      border-top: 1px solid var(--line);
-      border-bottom: 1px solid var(--line);
-      border-radius: 0;
-      background: transparent;
-      box-shadow: none;
+      padding: 24px 26px;
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      background: color-mix(in oklab, var(--panel), var(--brand-soft) 22%);
+      box-shadow: var(--shadow);
     }}
     .hero > .eyebrow {{ grid-column: 1 / -1; }}
     .eyebrow {{
@@ -875,7 +873,7 @@ def render_funder_page(
       .hero {{
         grid-template-columns:minmax(0,1.25fr) minmax(420px,.55fr);
         gap:56px;
-        padding:32px 0;
+        padding:32px 36px;
       }}
       .opportunity-card {{
         grid-template-columns:minmax(380px,1.08fr) minmax(360px,.92fr) minmax(250px,.44fr);
@@ -935,7 +933,7 @@ def render_funder_page(
         padding-top: 16px;
       }}
       .hero {{
-        padding: 16px 0;
+        padding: 16px;
       }}
       .stat-grid {{
         grid-template-columns: repeat(2, minmax(0, 1fr));
