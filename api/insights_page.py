@@ -257,8 +257,10 @@ def _bar_chart(
         y = 12 + index * (bar_height + gap)
         ratio = value / max_value if max_value else 0
         bar_width = max(0, round(390 * ratio))
+        chart_label = label if len(label) <= 24 else f"{label[:23].rstrip()}…"
         chunks.append(
-            f'<g class="chart-row"><text x="0" y="{y + 16}" class="chart-label">{escape(label)}</text>'
+            f'<g class="chart-row"><title>{escape(label)}: {value}</title>'
+            f'<text x="0" y="{y + 16}" class="chart-label">{escape(chart_label)}</text>'
             f'<rect x="188" y="{y}" width="390" height="{bar_height}" rx="8" class="chart-track" />'
             f'<rect x="188" y="{y}" width="{bar_width}" height="{bar_height}" rx="8" fill="{color}" />'
             f'<text x="596" y="{y + 16}" text-anchor="end" class="chart-value">{value}</text></g>'

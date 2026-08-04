@@ -9,7 +9,7 @@ from api import funder_page as funder_page_module
 from api import main as api_main
 from api import opportunity_page as opportunity_page_module
 from api.dashboard import dashboard_copy
-from api.insights_page import _source_label, build_insights_snapshot
+from api.insights_page import _bar_chart, _source_label, build_insights_snapshot
 from core.db import SqlRepository
 from core.models import (
     Opportunity,
@@ -3510,6 +3510,17 @@ def test_insights_source_labels_hide_adapter_identifiers():
         "БҰҰ-ның Даму бағдарламасы (БҰҰДБ)"
     )
     assert _source_label("custom_source", "ru") == "custom source"
+
+
+def test_insights_chart_keeps_full_label_in_svg_title():
+    chart = _bar_chart(
+        [("Очень длинное название официального источника", 4)],
+        chart_id="source-distribution",
+        color="#15724e",
+        empty_label="Нет данных",
+    )
+    assert "Очень длинное название официального источника: 4" in chart
+    assert "Очень длинное название…" in chart
 
 
 def test_public_info_pages_are_linkable(monkeypatch):
