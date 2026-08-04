@@ -598,7 +598,8 @@ def test_browser_404_is_branded_while_api_404_stays_json(monkeypatch):
     assert 'href="/?lang=en"' in browser_response.text
     assert 'class="primary-action"' in browser_response.text
     assert ".primary-action {" in browser_response.text
-    assert "grid-template-rows: auto 1fr auto;" in browser_response.text
+    assert "display: block;" in browser_response.text
+    assert "min-height: 0;" in browser_response.text
     assert 'class="brand"' in browser_response.text
     assert "contact@qaz.fund" not in browser_response.text
     assert api_response.status_code == 404

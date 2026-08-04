@@ -61,10 +61,8 @@ def render_not_found_page(*, lang: str, root_path: str = "") -> str:
     * {{ box-sizing: border-box; }}
     body {{
       margin: 0;
-      min-height: 100vh;
-      display: grid;
-      grid-template-rows: auto 1fr auto;
-      place-items: stretch;
+      min-height: 0;
+      display: block;
       padding: 0;
       background: var(--color-bg);
       color: var(--color-text);
@@ -96,11 +94,9 @@ def render_not_found_page(*, lang: str, root_path: str = "") -> str:
       border-bottom-color:var(--color-accent); color:var(--color-text);
     }}
     main {{
-      align-self: center;
-      justify-self: stretch;
       width: min(var(--av-container-dashboard), calc(100% - 48px));
       margin: 0 auto;
-      padding: 64px 0;
+      padding: 64px 0 72px;
       border: 0;
       border-bottom: 1px solid var(--color-border-subtle);
       border-radius: 0;
@@ -138,9 +134,8 @@ def render_not_found_page(*, lang: str, root_path: str = "") -> str:
     .primary-action:focus-visible {{ outline: 0; box-shadow: var(--color-focus-ring); }}
     @media (min-width: 901px) {{
       main {{
-        align-self: start;
-        padding-top: 96px;
-        padding-bottom: 112px;
+        padding-top: 72px;
+        padding-bottom: 80px;
       }}
     }}
     @media (min-width: 2200px) {{
@@ -150,7 +145,7 @@ def render_not_found_page(*, lang: str, root_path: str = "") -> str:
     @media (max-width: 640px) {{
       header,
       main {{ width: calc(100% - 24px); }}
-      main {{ padding: 44px 0; }}
+      main {{ padding: 40px 0 48px; }}
       h1 {{ font-size: 36px; }}
     }}
   </style>
