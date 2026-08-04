@@ -156,7 +156,12 @@ def _english_source_fallback(
     item: Opportunity, title: str, summary: str
 ) -> tuple[str, str]:
     """Keep the English surface readable when an official notice is Russian-only."""
-    if item.source == "grants_gov" and len(summary) < 120:
+    grants_summary_lower = summary.casefold()
+    if item.source == "grants_gov" and (
+        len(summary) < 120
+        or "regional screening rules" in grants_summary_lower
+        or "record is retained for kazakhstan" in grants_summary_lower
+    ):
         raw = item.raw if isinstance(item.raw, dict) else {}
         agency = _string_value(
             raw.get("agencyName") or raw.get("agency") or item.funder

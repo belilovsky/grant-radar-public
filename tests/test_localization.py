@@ -179,6 +179,31 @@ def test_english_localization_expands_short_grants_gov_summary_with_region_conte
     assert len(localized.summary) >= 120
 
 
+def test_english_localization_rewrites_technical_grants_gov_legacy_copy():
+    item = Opportunity(
+        source="grants_gov",
+        source_url=HttpUrl("https://example.org/grants/legacy"),
+        type=OpportunityType.GRANT,
+        title="Coordinating Agricultural Development and Innovation",
+        summary=(
+            "Grants.gov grant opportunity closing 09/28/2026. The record is retained "
+            "for Kazakhstan and Central Asia monitoring because the title, agency or "
+            "source metadata matched the regional screening rules. Review the official "
+            "notice for eligible countries and submission requirements."
+        ),
+        funder="Foreign Agricultural Service",
+        raw={"closeDate": "09/28/2026"},
+    )
+
+    localized = localize_opportunity(item, "en")
+
+    assert "regional screening rules" not in localized.summary
+    assert (
+        "The card is included for Kazakhstan and Central Asia monitoring."
+        in localized.summary
+    )
+
+
 def test_russian_procurement_title_keeps_reference_for_distinction():
     item = Opportunity(
         source="undp_procurement",
