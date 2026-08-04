@@ -61,6 +61,7 @@ from core.models import Digest, Opportunity, OpportunityDetail, OpportunityType
 from core.nlp import clean_source_summary
 from core.persistence import Repository
 from core.pipeline import run_all
+from core.provenance import provenance_profile
 from core.qazcompute_bridge import (
     duplicate_cluster_envelope,
     opportunity_deadline_anomaly,
@@ -207,6 +208,7 @@ _DASHBOARD_RAW_FIELDS = frozenset(
         "lifecycle",
         "notice_type",
         "opportunity_status",
+        "provenance",
         "project_status",
         "projectstatusdisplay",
         "qazcompute_evidence_readiness",
@@ -665,6 +667,7 @@ def _with_decision_readiness(
         update={
             "raw": {
                 **raw,
+                "provenance": provenance_profile(item),
                 "decision_readiness": readiness,
                 "qazcompute_evidence_readiness": opportunity_evidence_readiness(item),
                 "qazcompute_deadline_anomaly": opportunity_deadline_anomaly(item),
@@ -1964,6 +1967,7 @@ async def site_discovery(request: Request) -> Response:
                 "deadline",
                 "score",
                 "evidence_state",
+                "raw.provenance",
                 "raw.decision_readiness",
                 "raw.qazcompute_evidence_readiness",
                 "raw.ranking",

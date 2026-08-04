@@ -1198,6 +1198,7 @@ def test_marketing_endpoints_are_exposed(monkeypatch):
                 "deadline",
                 "score",
                 "evidence_state",
+                "raw.provenance",
                 "raw.decision_readiness",
                 "raw.qazcompute_evidence_readiness",
                 "raw.ranking",
@@ -2348,6 +2349,7 @@ def test_api_returns_clean_source_raw_for_persisted_opportunity(tmp_path, monkey
             "ranking",
             "qazcompute_evidence_readiness",
             "qazcompute_deadline_anomaly",
+            "provenance",
         }
     } == {
         "external_id": "RAW-1",
@@ -2452,6 +2454,7 @@ def test_compact_opportunities_keep_dashboard_fields_without_ingestion_payload(
             "ranking",
             "qazcompute_evidence_readiness",
             "qazcompute_deadline_anomaly",
+            "provenance",
         }
     } == {
         "agency": "Example Agency",
@@ -2465,6 +2468,10 @@ def test_compact_opportunities_keep_dashboard_fields_without_ingestion_payload(
         },
     }
     ranking = raw["ranking"]
+    assert raw["provenance"]["schema_version"] == "provenance.v1"
+    assert raw["provenance"]["evidence_state"] == "sourced"
+    assert raw["provenance"]["deadline_confidence"] == "supported"
+    assert raw["provenance"]["amount_confidence"] == "unknown"
     assert ranking["model_version"] == "qazfund-relevance-v2"
     assert ranking["relevance"] == data[0]["score"]
     readiness = raw["qazcompute_evidence_readiness"]
@@ -2704,6 +2711,8 @@ def test_opportunities_detail_endpoint_defaults_to_russian_without_lang(monkeypa
     assert data["summary"] == "Резюме на русском."
     assert data["detail_sections"][0]["heading"] == "Обзор"
     assert data["detail_sections"][0]["text"] == "Резюме на русском."
+    assert data["raw"]["provenance"]["schema_version"] == "provenance.v1"
+    assert data["raw"]["provenance"]["evidence_state"] == "sourced"
 
 
 def test_api_localizes_english_detail_section_headings_for_russian_detail_view(

@@ -47,7 +47,8 @@ computations. AV DS owns visual primitives and semantic UI roles.
 
 Private operator credentials, saved user selections and internal refresh tokens
 must never enter the public feed. Public records sent downstream retain at least
-`source`, `source_url` and `discovered_at`.
+`source`, `source_url`, `discovered_at` and `raw.provenance`. The provenance
+contract is documented in [`DATA_PROVENANCE_CONTRACT.md`](DATA_PROVENANCE_CONTRACT.md).
 
 ## Development pipeline
 
@@ -87,6 +88,9 @@ The enabled contracts are:
   `qazcompute_source_freshness`.
 - `duplicate_cluster.v1` at `/opportunities/duplicate-candidates` as a
   review-only candidate queue.
+- `provenance.v1` in public opportunity payloads as `raw.provenance`; this
+  distinguishes parser observation from explicit source verification and keeps
+  field-level confidence visible to downstream consumers.
 
 All four keep `decision_ready=false`; they are technical review signals, not
 legal eligibility, publication, funding or source-control decisions.

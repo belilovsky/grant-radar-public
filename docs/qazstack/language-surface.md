@@ -25,6 +25,11 @@ language until a native-language editorial pass approves the corresponding
 The machine-readable contract is [`language-surface.json`](language-surface.json)
 and is referenced from `docs/qazstack/consumer-contract.json`.
 
+Every public opportunity also carries the separate
+[`provenance.v1`](../DATA_PROVENANCE_CONTRACT.md) profile under
+`raw.provenance`. Its `source_language` field is metadata about the source, not
+proof that a localized copy was editorially approved.
+
 ## Runtime readiness boundary
 
 The public opportunity endpoint must be checked separately from the UI

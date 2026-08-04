@@ -26,6 +26,7 @@ from core.models import (
     OpportunityDetailSection,
     OpportunityMetadataField,
 )
+from core.provenance import provenance_profile
 from sources import PARSERS
 
 try:
@@ -808,8 +809,16 @@ async def build_opportunity_detail(
     detail_fetch_status = str(remote.get("detail_fetch_status") or "structured_only")
     if content_lang != "en" and not has_localized_remote:
         detail_fetch_status = "structured_only"
+    localized_item = item.model_copy(
+        update={
+            "raw": {
+                **raw,
+                "provenance": provenance_profile(item),
+            }
+        }
+    )
     return OpportunityDetail(
-        **item.model_dump(),
+        **localized_item.model_dump(),
         application_url=application_url,
         detail_available=detail_available,
         detail_fetch_status=detail_fetch_status,
