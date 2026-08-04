@@ -3699,6 +3699,16 @@ def test_funder_labels_keep_acronyms_and_normalized_case():
         == "Программа развития ООН (ПРООН)"
     )
     assert funder_page_module._label_value("dod-amraa", copy) == "DOD-AMRAA"
+    assert (
+        funder_page_module._label_value("national_institutes_of_health", copy)
+        == "Национальные институты здравоохранения США (NIH)"
+    )
+    assert (
+        funder_page_module._label_value(
+            "national_institutes_of_health", dashboard_copy("en")
+        )
+        == "National Institutes of Health (NIH)"
+    )
 
 
 def test_funder_topics_do_not_repeat_opportunity_format():

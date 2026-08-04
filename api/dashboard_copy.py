@@ -1077,6 +1077,7 @@ COPY = {
             "kazakhstan_opportunity_watch": "Мониторинг возможностей Казахстана",
             "dod_amraa": "DOD-AMRAA",
             "hhs_nih11": "HHS-NIH",
+            "national_institutes_of_health": "Национальные институты здравоохранения США (NIH)",
             "united_nations_development_programme": "Программа развития ООН (ПРООН)",
             "european_bank_for_reconstruction_and_development": (
                 "Европейский банк реконструкции и развития (ЕБРР)"
@@ -2141,6 +2142,7 @@ COPY = {
             "kazakhstan_opportunity_watch": "Kazakhstan opportunity watch",
             "dod_amraa": "DOD-AMRAA",
             "hhs_nih11": "HHS-NIH",
+            "national_institutes_of_health": "National Institutes of Health (NIH)",
             "united_nations_development_programme": (
                 "United Nations Development Programme (UNDP)"
             ),
