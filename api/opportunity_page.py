@@ -1766,7 +1766,7 @@ def render_opportunity_page(
   </style>
 </head>
 <body>
-  <main class="shell">
+  <main class="shell" data-avds-component="opportunity-page">
     <div class="topbar">
       <nav class="breadcrumbs" aria-label="{escape(str(copy["breadcrumbs_aria"]), quote=True)}">
         <a href="{catalog_href}">QAZ.FUND</a>
@@ -1783,7 +1783,7 @@ def render_opportunity_page(
     </div>
     {fallback_note_markup}
 
-    <section class="hero">
+    <section class="hero" data-avds-component="hero-band">
       <div class="hero-grid">
         <div>
           <div class="eyebrow">QAZ.FUND</div>

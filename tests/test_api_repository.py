@@ -602,6 +602,7 @@ def test_browser_404_is_branded_while_api_404_stays_json(monkeypatch):
     assert "display: block;" in browser_response.text
     assert "min-height: 0;" in browser_response.text
     assert 'class="brand"' in browser_response.text
+    assert 'data-avds-component="not-found"' in browser_response.text
     assert "contact@qaz.fund" not in browser_response.text
     assert api_response.status_code == 404
     assert api_response.headers["content-type"].startswith("application/json")
@@ -1820,6 +1821,9 @@ def test_public_status_page_renders_coverage_without_operator_details(monkeypatc
     assert "Статус источников" in response.text
     assert 'aria-label="Сводка состояния источников"' in response.text
     assert 'data-av-theme="light" data-theme="light"' in response.text
+    assert 'data-avds-component="status-page"' in response.text
+    assert 'data-avds-component="hero-band"' in response.text
+    assert 'data-avds-component="data-table"' in response.text
     assert 'class="status-topbar"' in response.text
     assert 'class="lang-switch"' in response.text
     assert 'href="/status?lang=en"' in response.text
@@ -3142,6 +3146,8 @@ def test_opportunity_page_renders_public_permalink(monkeypatch):
     assert response.status_code == 200
     assert "public, max-age=60" in response.headers["cache-control"]
     assert '<html lang="ru"' in response.text
+    assert 'data-avds-component="opportunity-page"' in response.text
+    assert 'data-avds-component="hero-band"' in response.text
     assert "<title>Цифровое ускорение Казахстана – QAZ.FUND</title>" in response.text
     assert (
         'rel="canonical" href="http://testserver/opportunity/'
@@ -3723,6 +3729,8 @@ def test_funder_page_renders_public_profile(monkeypatch):
     assert f'href="/opportunity/{forecast_item.id}?lang=ru"' in response.text
     assert 'href="/?lang=ru#opportunities"' in response.text
     assert 'class="hero-copy"' in response.text
+    assert 'data-avds-component="funder-page"' in response.text
+    assert 'data-avds-component="hero-band"' in response.text
     assert 'class="site-footer-nav"' in response.text
     assert 'href="/?lang=ru#sources"' in response.text
     assert 'href="/status?lang=ru"' in response.text

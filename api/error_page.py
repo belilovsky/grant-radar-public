@@ -159,7 +159,7 @@ def render_not_found_page(*, lang: str, root_path: str = "") -> str:
       <a href="{escape(en_href, quote=True)}" lang="en"{en_current}>EN</a>
     </nav>
   </header>
-  <main>
+  <main data-avds-component="not-found">
     <span class="eyebrow">{escape(copy["eyebrow"])}</span>
     <h1>{escape(copy["heading"])}</h1>
     <p>{escape(copy["text"])}</p>

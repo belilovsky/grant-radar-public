@@ -957,7 +957,7 @@ def render_funder_page(
   </style>
 </head>
 <body>
-  <main class="shell">
+  <main class="shell" data-avds-component="funder-page">
     <div class="topbar">
       <a class="back-link" href="{catalog_href}">{back_label}</a>
       <nav class="lang-switch" aria-label="{escape(str(copy['language_switch']), quote=True)}">
@@ -967,7 +967,7 @@ def render_funder_page(
       </nav>
     </div>
     {fallback_note_markup}
-    <section class="hero">
+    <section class="hero" data-avds-component="hero-band">
       <span class="eyebrow">{escape(str(copy["funder_page_eyebrow"]))}</span>
       <div class="hero-copy">
         <h1>{funder_name}</h1>

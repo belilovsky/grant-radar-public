@@ -334,7 +334,7 @@ def render_status_page(
   </style>
 </head>
 <body>
-  <main>
+  <main data-avds-component="status-page">
     <div class="status-topbar">
       <a class="back" href="{escape(catalog_href, quote=True)}">← {escape(str(copy["back"]))}</a>
       <nav class="lang-switch" aria-label="Language">
@@ -343,13 +343,14 @@ def render_status_page(
         <a href="{escape(en_href, quote=True)}" lang="en"{en_current}>EN</a>
       </nav>
     </div>
-    <section class="overview">
+    <section class="overview" data-avds-component="hero-band">
       <div class="hero">
         <span class="eyebrow">{escape(str(copy["eyebrow"]))}</span>
         <h1>{escape(str(copy["heading"]))}</h1>
         <p>{escape(str(copy["intro"]))}</p>
       </div>
-      <div class="metrics" aria-label="{escape(str(copy["summary_aria"]), quote=True)}">
+      <div class="metrics" data-avds-component="stat-group"
+        aria-label="{escape(str(copy["summary_aria"]), quote=True)}">
         <div class="metric"><span>{escape(str(copy["sources"]))}</span>
           <strong>{int(coverage.get("enabled_sources") or 0)}</strong></div>
         <div class="metric"><span>{escape(str(copy["fresh"]))}</span>
@@ -360,7 +361,7 @@ def render_status_page(
           <strong>{int(coverage.get("unknown_freshness_sources") or 0)}</strong></div>
       </div>
     </section>
-    <div class="table-wrap">
+    <div class="table-wrap" data-avds-component="data-table">
       <table>
         <thead><tr><th>{escape(str(copy["source"]))}</th>
           <th>{escape(str(copy["coverage"]))}</th>
