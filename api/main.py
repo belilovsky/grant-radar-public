@@ -206,9 +206,15 @@ _sitemap_cache: dict[tuple[str, str], tuple[datetime, str]] = {}
 _PUBLIC_ITEMS_CACHE_TTL = timedelta(
     seconds=max(30, int(os.environ.get("PUBLIC_ITEMS_CACHE_TTL_SECONDS", "300")))
 )
+_PUBLIC_QUERY_CACHE_TTL = timedelta(
+    seconds=max(10, int(os.environ.get("PUBLIC_QUERY_CACHE_TTL_SECONDS", "45")))
+)
 _public_items_cache_lock = threading.Lock()
 _public_items_cache: dict[str, tuple[datetime, list[Opportunity]]] = {}
 _public_scope_cache: dict[tuple[str, bool], tuple[datetime, list[Opportunity]]] = {}
+_public_query_cache: dict[
+    tuple[object, ...], tuple[datetime, tuple[tuple[Opportunity, ...], int]]
+] = {}
 _coverage_cache: tuple[datetime, dict[str, Any]] | None = None
 LEGACY_FUNDER_REDIRECTS: dict[str, str] = {
     "dod-amraa": "DOD-AMRAA",
@@ -634,6 +640,7 @@ def _clear_public_items_cache() -> None:
     with _public_items_cache_lock:
         _public_items_cache.clear()
         _public_scope_cache.clear()
+        _public_query_cache.clear()
         _coverage_cache = None
 
 
@@ -643,6 +650,13 @@ def _warm_public_items_cache() -> None:
         with suppress(Exception):
             _cached_public_items(content_lang)
             _cached_public_scope_items(content_lang)
+            _query_opportunities(
+                min_score=0.0,
+                deadline_after=date.today(),
+                limit=5000,
+                lang=content_lang,
+                compact=True,
+            )
     with suppress(Exception):
         _cached_coverage_payload()
 
@@ -2548,6 +2562,27 @@ def _query_opportunities(
     compact: bool = Query(False),
 ) -> tuple[list[Opportunity], int]:
     content_lang = _public_lang(lang)
+    query_key = (
+        tag,
+        q,
+        source,
+        lifecycle,
+        region,
+        min_score,
+        deadline_before,
+        deadline_after,
+        include_irrelevant,
+        limit,
+        offset,
+        content_lang,
+        compact,
+    )
+    now = datetime.now(UTC)
+    with _public_items_cache_lock:
+        cached_query = _public_query_cache.get(query_key)
+        if cached_query is not None and now - cached_query[0] < _PUBLIC_QUERY_CACHE_TTL:
+            cached_items, cached_total = cached_query[1]
+            return list(cached_items), cached_total
     items = _cached_public_scope_items(
         content_lang=content_lang, include_irrelevant=include_irrelevant
     )
@@ -2589,7 +2624,11 @@ def _query_opportunities(
         for item in items[offset : offset + limit]
     ]
     if compact:
-        return [_compact_dashboard_item(item) for item in results], total_count
+        results = [_compact_dashboard_item(item) for item in results]
+    with _public_items_cache_lock:
+        if len(_public_query_cache) >= 256:
+            _public_query_cache.pop(next(iter(_public_query_cache)))
+        _public_query_cache[query_key] = (now, (tuple(results), total_count))
     return results, total_count
 
 

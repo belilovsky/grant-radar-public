@@ -2635,6 +2635,54 @@ def test_public_items_cache_reuses_loaded_items_until_invalidated(monkeypatch):
     assert calls["count"] == 2
 
 
+def test_public_query_cache_reuses_sorted_dashboard_result(monkeypatch):
+    _reset_api_state(monkeypatch)
+    item = Opportunity(
+        source="grants_gov",
+        source_url="https://example.org/query-cache",
+        type=OpportunityType.GRANT,
+        title="Query cache grant",
+        summary="Query cache opportunity for Kazakhstan teams.",
+        deadline=date(2027, 2, 1),
+        tags=["kazakhstan"],
+        score=0.8,
+    )
+    calls = {"scope": 0, "priority": 0}
+
+    def fake_scope_items(content_lang: str = "en", *, include_irrelevant: bool = False):
+        calls["scope"] += 1
+        return [item]
+
+    def fake_priority_score(*args, **kwargs):
+        calls["priority"] += 1
+        return 0.8
+
+    monkeypatch.setattr(api_main, "_cached_public_scope_items", fake_scope_items)
+    monkeypatch.setattr(api_main, "priority_score", fake_priority_score)
+    query = {
+        "tag": None,
+        "q": None,
+        "source": None,
+        "lifecycle": None,
+        "region": None,
+        "min_score": 0.0,
+        "deadline_after": date(2026, 8, 4),
+        "deadline_before": None,
+        "include_irrelevant": False,
+        "limit": 5000,
+        "offset": 0,
+        "lang": "ru",
+        "compact": True,
+    }
+
+    first, first_total = api_main._query_opportunities(**query)
+    second, second_total = api_main._query_opportunities(**query)
+
+    assert first_total == second_total == 1
+    assert first[0].title == second[0].title == "Query cache grant"
+    assert calls == {"scope": 1, "priority": 1}
+
+
 def test_find_opportunity_falls_back_across_language_dedupe_models(monkeypatch):
     _reset_api_state(monkeypatch)
     english = Opportunity(
