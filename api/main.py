@@ -118,6 +118,7 @@ app = FastAPI(
     docs_url=None,
     redoc_url=None,
 )
+app.add_middleware(GZipMiddleware, minimum_size=1024, compresslevel=6)
 
 _MACHINE_ROUTE_PREFIXES = (
     "/.well-known",
