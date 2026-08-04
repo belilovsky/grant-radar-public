@@ -61,10 +61,13 @@ def test_media_pages_have_three_locales_and_machine_contract(monkeypatch) -> Non
         assert 'hreflang="kk"' in response.text
         assert 'hreflang="ru"' in response.text
         assert 'hreflang="en"' in response.text
+        assert "topic=ai" in response.text
+        assert "source=official_source" in response.text
         assert "\u2014" not in response.text
 
     payload = client.get("/media.json?lang=en").json()
     assert payload["schema_version"] == "media.v1"
     assert payload["language"] == "en"
     assert payload["links"]["human"].endswith("/media?lang=en")
+    assert payload["sources"][0]["slug"] == "official_source"
     assert "raw" not in str(payload)

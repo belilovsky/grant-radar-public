@@ -14,6 +14,7 @@ from collections import Counter
 from datetime import date, datetime
 from html import escape
 from typing import Any
+from urllib.parse import quote
 
 from qazstack.opportunities import public_lifecycle
 
@@ -186,6 +187,15 @@ _TOPIC_RULES: tuple[tuple[str, tuple[str, ...]], ...] = (
     ("topic_ngo", ("ngo", "media", "journal", "civil", "нко", "медиа", "азамат")),
 )
 
+_CATALOG_TOPIC_FILTERS = {
+    "topic_ai": "ai",
+    "topic_agro": "agro",
+    "topic_science": "science",
+    "topic_public": "public",
+    "topic_business": "business",
+    "topic_ngo": "ngo",
+}
+
 
 def _copy(lang: str) -> dict[str, str]:
     return MEDIA_COPY.get(lang, MEDIA_COPY["ru"])
@@ -239,6 +249,7 @@ def _record(
         "title": str(item.title or "").strip() or copy["heading"],
         "summary": str(item.summary or "").strip(),
         "source": _source_name(item),
+        "source_slug": str(item.source).strip(),
         "source_url": str(item.source_url),
         "type": str(getattr(item.type, "value", item.type)),
         "tags": [str(tag).strip() for tag in item.tags if str(tag).strip()][:4],
@@ -293,6 +304,7 @@ def build_media_snapshot(
     sources = [
         {
             "name": name,
+            "slug": str(group[0]["source_slug"]),
             "count": len(group),
             "href": group[0]["source_url"],
             "latest": group[0]["observed"],
@@ -347,11 +359,8 @@ def render_media_page(
     copy = _copy(active_lang)
     base = root_path.rstrip("/")
     snapshot = build_media_snapshot(items=items, lang=active_lang, root_path=base)
-    home = (
-        f"{base}/?lang={active_lang}#opportunities"
-        if base
-        else f"/?lang={active_lang}#opportunities"
-    )
+    catalog_base = f"{base}/?lang={active_lang}" if base else f"/?lang={active_lang}"
+    home = f"{catalog_base}#opportunities"
     insights = (
         f"{base}/insights?lang={active_lang}"
         if base
@@ -388,19 +397,30 @@ def render_media_page(
     else:
         lead_markup = f'<div class="media-empty">{escape(copy["empty"])}</div>'
         live_markup = f'<div class="media-empty">{escape(copy["empty"])}</div>'
-    topics = (
-        "".join(
-            f'<a class="topic-shelf" href="{escape(home, quote=True)}"><span class="topic-shelf-index">{index:02d}</span><span><strong>{escape(str(topic["label"]))}</strong><small>{int(topic["count"])} {escape(copy["programs"])}</small></span><span class="topic-shelf-arrow" aria-hidden="true">↗</span></a>'
-            for index, topic in enumerate(snapshot.get("topics") or [], 1)
+    topic_markup: list[str] = []
+    for index, topic in enumerate(snapshot.get("topics") or [], 1):
+        topic_id = _CATALOG_TOPIC_FILTERS.get(str(topic["key"]))
+        topic_href = (
+            f"{catalog_base}&topic={quote(topic_id, safe='')}#opportunities"
+            if topic_id
+            else home
         )
-        or f'<div class="media-empty">{escape(copy["empty"])}</div>'
+        topic_markup.append(
+            f'<a class="topic-shelf" href="{escape(topic_href, quote=True)}"><span class="topic-shelf-index">{index:02d}</span><span><strong>{escape(str(topic["label"]))}</strong><small>{int(topic["count"])} {escape(copy["programs"])}</small></span><span class="topic-shelf-arrow" aria-hidden="true">↗</span></a>'
+        )
+    topics = "".join(topic_markup) or (
+        f'<div class="media-empty">{escape(copy["empty"])}</div>'
     )
-    sources = (
-        "".join(
-            f'<a class="source-shelf" href="{escape(str(source["href"]), quote=True)}" target="_blank" rel="noopener"><span class="source-shelf-avatar" aria-hidden="true">{escape(str(source["name"])[:2].upper())}</span><span><strong>{escape(str(source["name"]))}</strong><small>{int(source["count"])} {escape(copy["items_count"])} · {escape(str(source.get("latest") or "–"))}</small></span><span class="topic-shelf-arrow" aria-hidden="true">↗</span></a>'
-            for source in snapshot.get("sources") or []
+    source_markup: list[str] = []
+    for source in snapshot.get("sources") or []:
+        catalog_href = (
+            f'{catalog_base}&source={quote(str(source["slug"]), safe="")}#opportunities'
         )
-        or f'<div class="media-empty">{escape(copy["empty"])}</div>'
+        source_markup.append(
+            f'<div class="source-shelf"><a class="source-shelf-main" href="{escape(catalog_href, quote=True)}"><span class="source-shelf-avatar" aria-hidden="true">{escape(str(source["name"])[:2].upper())}</span><span><strong>{escape(str(source["name"]))}</strong><small>{int(source["count"])} {escape(copy["items_count"])} · {escape(str(source.get("latest") or "–"))}</small></span></a><a class="source-shelf-arrow" href="{escape(str(source["href"]), quote=True)}" target="_blank" rel="noopener" aria-label="{escape(copy["open_source"], quote=True)}">↗</a></div>'
+        )
+    sources = "".join(source_markup) or (
+        f'<div class="media-empty">{escape(copy["empty"])}</div>'
     )
     latest_cards = (
         "".join(_card_markup(record, copy=copy) for record in cards[1:10])
@@ -417,7 +437,7 @@ def render_media_page(
     .media-hero{{display:grid;grid-template-columns:minmax(0,1.35fr) minmax(300px,.65fr);gap:24px;padding:28px;border:1px solid var(--color-border);border-radius:var(--av-radius-lg);background:linear-gradient(130deg,var(--color-surface),var(--color-accent-subtle));box-shadow:var(--shadow-md)}}.eyebrow,.section-eyebrow{{color:var(--color-accent);font-size:11px;font-weight:850;letter-spacing:.06em;text-transform:uppercase}}h1{{max-width:14ch;margin:8px 0 12px;font-size:clamp(32px,5vw,58px);line-height:1.02;letter-spacing:-.035em}}.hero-intro{{max-width:62ch;margin:0;color:var(--color-text-muted);font-size:17px}}.hero-note{{margin:16px 0 0;color:var(--color-text-muted);font-size:12px}}.hero-signal{{display:grid;align-content:center;gap:10px;padding:22px;border:1px solid var(--color-border);border-radius:var(--av-radius-md);background:rgb(255 255 255 / .78)}}.hero-signal-kicker{{color:var(--color-text-muted);font-size:12px;font-weight:750}}.hero-signal strong{{font-size:48px;line-height:1;color:var(--color-accent)}}.hero-signal span{{color:var(--color-text-muted);font-size:13px}}.signal-rule{{height:8px;border-radius:999px;background:linear-gradient(90deg,var(--color-accent) 0 68%,var(--color-success) 68% 100%)}}
     .section{{margin-top:24px;padding:22px;border:1px solid var(--color-border);border-radius:var(--av-radius-lg);background:var(--color-surface);box-shadow:var(--shadow-xs)}}.section-head{{display:flex;justify-content:space-between;align-items:end;gap:18px;margin-bottom:16px}}.section-head h2{{margin:4px 0 0;font-size:24px;line-height:1.08}}.section-head p{{max-width:58ch;margin:0;color:var(--color-text-muted);font-size:13px}}.section-head a{{color:var(--color-accent);font-size:12px;font-weight:800;text-decoration:none;white-space:nowrap}}.lead-layout{{display:grid;grid-template-columns:minmax(0,1.45fr) minmax(320px,.75fr);gap:16px}}.media-card{{display:grid;grid-template-rows:112px 1fr;min-width:0;overflow:hidden;border:1px solid var(--color-border);border-radius:var(--av-radius-md);background:var(--color-surface);box-shadow:var(--shadow-2xs)}}.media-card--lead{{grid-template-rows:168px 1fr;min-height:100%}}.media-card-media{{display:flex;align-items:flex-end;justify-content:space-between;gap:10px;padding:14px;text-decoration:none;background:linear-gradient(135deg,#0f2b65,#315fdc 52%,#147a66);color:#fff}}.media-card-mark{{max-width:12ch;font-size:12px;font-weight:850;letter-spacing:.06em;text-transform:uppercase}}.media-card-date{{font-size:12px;font-weight:750;opacity:.9}}.media-card-body{{display:grid;align-content:start;gap:10px;padding:16px}}.media-card-kicker{{display:flex;flex-wrap:wrap;align-items:center;gap:6px;color:var(--color-text-muted);font-size:11px;font-weight:750}}.media-tag{{padding:3px 7px;border-radius:999px;background:var(--color-bg-subtle);color:var(--color-text-muted);font-size:10px}}.media-card h3{{margin:0;font-size:19px;line-height:1.12}}.media-card:not(.media-card--lead) h3{{font-size:16px}}.media-card h3 a{{text-decoration:none}}.media-card h3 a:hover{{color:var(--color-accent)}}.media-card-summary{{margin:0;color:var(--color-text-muted);font-size:13px;display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden}}.media-card-footer{{display:flex;justify-content:space-between;align-items:center;gap:10px;margin-top:auto;padding-top:8px;border-top:1px solid var(--color-border)}}.media-card-link,.media-card-source{{color:var(--color-accent);font-size:11px;font-weight:850;text-decoration:none}}.media-card-source{{color:var(--color-text-muted);font-weight:700}}
     .live-feed{{padding:16px;border:1px solid var(--color-border);border-radius:var(--av-radius-md);background:var(--color-bg-subtle)}}.live-feed-head{{display:flex;justify-content:space-between;align-items:center;gap:10px;margin-bottom:8px}}.live-feed-head strong{{font-size:16px}}.live-pill{{display:inline-flex;align-items:center;gap:5px;color:var(--color-success);font-size:11px;font-weight:850}}.live-pill::before{{content:"";width:7px;height:7px;border-radius:50%;background:currentColor}}.live-feed-list{{display:grid;gap:0;margin:0;padding:0;list-style:none}}.live-feed-row{{display:grid;grid-template-columns:70px minmax(0,1fr);gap:5px 10px;padding:11px 0;border-top:1px solid var(--color-border)}}.live-feed-row:first-child{{border-top:0}}.live-feed-row time{{color:var(--color-accent);font-size:11px;font-weight:850}}.live-feed-row a{{grid-column:2;overflow:hidden;font-size:13px;font-weight:750;text-decoration:none;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical}}.live-feed-row a:hover{{color:var(--color-accent)}}.live-feed-row span{{grid-column:2;overflow:hidden;color:var(--color-text-muted);font-size:11px;text-overflow:ellipsis;white-space:nowrap}}
-    .cards-grid{{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:14px}}.shelves-grid{{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px}}.shelf{{display:grid;gap:10px}}.shelf-head{{display:flex;justify-content:space-between;align-items:end;gap:10px;margin-bottom:2px}}.shelf-head h2{{margin:4px 0 0;font-size:21px}}.shelf-head p{{margin:0;color:var(--color-text-muted);font-size:12px}}.topic-shelf,.source-shelf{{display:flex;align-items:center;gap:12px;padding:13px;border:1px solid var(--color-border);border-radius:var(--av-radius-md);text-decoration:none;background:var(--color-bg-subtle)}}.topic-shelf:hover,.source-shelf:hover{{border-color:var(--color-accent);background:var(--color-surface)}}.topic-shelf-index{{display:grid;place-items:center;width:28px;height:28px;border-radius:50%;background:var(--color-accent);color:#fff;font-size:11px;font-weight:850}}.topic-shelf strong,.source-shelf strong{{display:block;font-size:13px}}.topic-shelf small,.source-shelf small{{display:block;margin-top:3px;color:var(--color-text-muted);font-size:11px}}.topic-shelf-arrow{{margin-left:auto;color:var(--color-accent);font-size:17px;font-weight:850}}.source-shelf-avatar{{display:grid;place-items:center;width:32px;height:32px;border-radius:50%;background:var(--color-primary-subtle);color:var(--color-accent);font-size:11px;font-weight:850}}.media-empty{{display:grid;place-items:center;min-height:120px;padding:18px;color:var(--color-text-muted);font-size:13px;text-align:center;border:1px dashed var(--color-border-strong);border-radius:var(--av-radius-md)}}.method{{display:grid;grid-template-columns:auto minmax(0,1fr);gap:14px;margin-top:20px;padding:14px 16px;border-left:4px solid var(--color-accent);border-radius:var(--av-radius-md);background:var(--color-surface)}}.method strong{{font-size:14px}}.method p{{margin:0;color:var(--color-text-muted);font-size:13px}}.footer{{display:flex;justify-content:space-between;flex-wrap:wrap;gap:12px;margin-top:24px;padding-top:16px;border-top:1px solid var(--color-border);color:var(--color-text-muted);font-size:12px}}.footer a{{font-weight:800;color:var(--color-text)}}
+    .cards-grid{{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:14px}}.shelves-grid{{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px}}.shelf{{display:grid;gap:10px}}.shelf-head{{display:flex;justify-content:space-between;align-items:end;gap:10px;margin-bottom:2px}}.shelf-head h2{{margin:4px 0 0;font-size:21px}}.shelf-head p{{margin:0;color:var(--color-text-muted);font-size:12px}}.topic-shelf,.source-shelf{{display:flex;align-items:center;gap:12px;padding:13px;border:1px solid var(--color-border);border-radius:var(--av-radius-md);background:var(--color-bg-subtle)}}.topic-shelf:hover,.source-shelf:hover{{border-color:var(--color-accent);background:var(--color-surface)}}.topic-shelf,.source-shelf-main{{text-decoration:none}}.source-shelf-main{{display:flex;align-items:center;gap:12px;min-width:0;flex:1}}.topic-shelf-index{{display:grid;place-items:center;width:28px;height:28px;border-radius:50%;background:var(--color-accent);color:#fff;font-size:11px;font-weight:850}}.topic-shelf strong,.source-shelf strong{{display:block;font-size:13px}}.topic-shelf small,.source-shelf small{{display:block;margin-top:3px;color:var(--color-text-muted);font-size:11px}}.topic-shelf-arrow,.source-shelf-arrow{{margin-left:auto;color:var(--color-accent);font-size:17px;font-weight:850;text-decoration:none}}.source-shelf-avatar{{display:grid;place-items:center;width:32px;height:32px;border-radius:50%;background:var(--color-primary-subtle);color:var(--color-accent);font-size:11px;font-weight:850}}.media-empty{{display:grid;place-items:center;min-height:120px;padding:18px;color:var(--color-text-muted);font-size:13px;text-align:center;border:1px dashed var(--color-border-strong);border-radius:var(--av-radius-md)}}.method{{display:grid;grid-template-columns:auto minmax(0,1fr);gap:14px;margin-top:20px;padding:14px 16px;border-left:4px solid var(--color-accent);border-radius:var(--av-radius-md);background:var(--color-surface)}}.method strong{{font-size:14px}}.method p{{margin:0;color:var(--color-text-muted);font-size:13px}}.footer{{display:flex;justify-content:space-between;flex-wrap:wrap;gap:12px;margin-top:24px;padding-top:16px;border-top:1px solid var(--color-border);color:var(--color-text-muted);font-size:12px}}.footer a{{font-weight:800;color:var(--color-text)}}
     @media(min-width:1440px){{.shell{{width:min(1760px,calc(100% - 96px))}}.media-hero{{grid-template-columns:minmax(0,1.45fr) minmax(360px,.55fr);padding:34px 38px}}.section{{padding:24px}}.cards-grid{{grid-template-columns:repeat(4,minmax(0,1fr))}}}}@media(min-width:2200px){{.shell{{width:min(2080px,calc(100% - 160px))}}.media-hero{{grid-template-columns:minmax(0,1.55fr) minmax(440px,.45fr);padding:38px 46px}}.section{{padding:28px}}.lead-layout{{grid-template-columns:minmax(0,1.6fr) minmax(420px,.7fr)}}}}@media(max-width:900px){{.media-hero,.lead-layout{{grid-template-columns:1fr}}.cards-grid{{grid-template-columns:repeat(2,minmax(0,1fr))}}.shelves-grid{{grid-template-columns:1fr}}}}@media(max-width:640px){{.shell{{width:min(100% - 24px,680px);padding-top:12px}}.topbar{{align-items:flex-start}}.media-hero,.section{{padding:18px}}h1{{font-size:38px}}.hero-intro{{font-size:15px}}.hero-signal strong{{font-size:40px}}.section-head{{display:grid;gap:8px;align-items:start}}.cards-grid{{grid-template-columns:1fr}}.media-card--lead{{grid-template-rows:132px 1fr}}.method{{grid-template-columns:1fr;gap:6px}}}}
   </style></head>
 <body><main class="shell">
