@@ -3080,7 +3080,7 @@ def test_opportunity_page_renders_public_permalink(monkeypatch):
     kk_response = client.get(f"/opportunity/{item.id}", params={"lang": "kk"})
     assert kk_response.status_code == 200
     assert '<html lang="kk"' in kk_response.text
-    assert 'data-language-fallback="ru"' in kk_response.text
+    assert 'data-language-fallback="source"' in kk_response.text
     assert (
         f'href="http://testserver/opportunity/{item.id}?lang=kk" lang="kk">KAZ</a>'
         in kk_response.text
@@ -3532,7 +3532,7 @@ def test_funder_page_renders_public_profile(monkeypatch):
     kk_response = client.get("/funder/science-fund", params={"lang": "kk"})
     assert kk_response.status_code == 200
     assert '<html lang="kk"' in kk_response.text
-    assert 'data-language-fallback="ru"' in kk_response.text
+    assert 'data-language-fallback="source"' in kk_response.text
     assert (
         'href="http://testserver/funder/science-fund?lang=kk" lang="kk">KAZ</a>'
         in kk_response.text

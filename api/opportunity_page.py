@@ -923,7 +923,7 @@ def render_opportunity_page(
     en_lang_class = "active" if active_lang == "en" else ""
     fallback_note = str(copy.get("language_fallback_note") or "").strip()
     fallback_note_markup = (
-        f'<p class="language-fallback-note" lang="kk" data-language-fallback="ru">{escape(fallback_note)}</p>'
+        f'<p class="language-fallback-note" lang="kk" data-language-fallback="source">{escape(fallback_note)}</p>'
         if fallback_note
         else ""
     )

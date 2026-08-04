@@ -240,7 +240,7 @@ def render_dashboard(
     lang_en_current = ' aria-current="page"' if active_lang == "en" else ""
     fallback_note = str(copy.get("language_fallback_note") or "").strip()
     fallback_note_markup = (
-        f'<p class="language-fallback-note" lang="kk" data-language-fallback="ru">'
+        f'<p class="language-fallback-note" lang="kk" data-language-fallback="source">'
         f"{escape(fallback_note)}</p>"
         if fallback_note
         else ""
