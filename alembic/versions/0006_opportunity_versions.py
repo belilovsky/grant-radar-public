@@ -110,6 +110,7 @@ def upgrade() -> None:
                 "content_hash": snapshot_hash(snapshot),
                 "changed_fields": ["initial"],
                 "fields": snapshot,
+                "created_at": _now(),
             }
         )
     if values:
