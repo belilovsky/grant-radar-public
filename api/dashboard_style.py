@@ -3596,6 +3596,20 @@ DASHBOARD_CSS = r"""    :root {
       }
     }
 
+    @media (min-width: 1440px) and (max-width: 1919px) {
+      .list {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        column-gap: var(--av-spacing-6);
+      }
+      .opportunity-main {
+        grid-template-columns: minmax(0, 1.18fr) minmax(250px, 0.82fr);
+        gap: var(--av-spacing-6);
+      }
+      .opportunity-rail {
+        padding-left: 14px;
+      }
+    }
+
     @media (min-width: 1920px) {
       .list {
         grid-template-columns: repeat(2, minmax(0, 1fr));
