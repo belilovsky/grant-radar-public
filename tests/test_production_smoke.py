@@ -5,7 +5,12 @@ import json
 import httpx
 import pytest
 
-from scripts.production_smoke import SmokeError, run_smoke
+from scripts.production_smoke import SmokeError, _contains_key, run_smoke
+
+
+def test_contains_key_checks_nested_structures_without_matching_text() -> None:
+    assert _contains_key({"cards": [{"title": "raw materials"}]}, "raw") is False
+    assert _contains_key({"cards": [{"raw": {"title": "private"}}]}, "raw") is True
 
 
 def _transport(

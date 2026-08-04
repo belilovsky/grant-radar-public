@@ -97,6 +97,16 @@ def _is_public_cacheable(response: httpx.Response, min_age: int) -> bool:
     return "public" in cache_control and f"max-age={min_age}" in cache_control
 
 
+def _contains_key(value: Any, key: str) -> bool:
+    if isinstance(value, dict):
+        return key in value or any(
+            _contains_key(child, key) for child in value.values()
+        )
+    if isinstance(value, list):
+        return any(_contains_key(child, key) for child in value)
+    return False
+
+
 def run_smoke(
     *,
     base_url: str,
@@ -329,7 +339,7 @@ def run_smoke(
         "media_snapshot": (
             media_snapshot.get("schema_version") == "media.v1"
             and isinstance(media_snapshot.get("cards"), list)
-            and "raw" not in json.dumps(media_snapshot, ensure_ascii=False)
+            and not _contains_key(media_snapshot, "raw")
             and _is_public_cacheable(media_snapshot_head, 60)
         ),
         "media_json_feed": (
