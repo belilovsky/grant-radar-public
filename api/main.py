@@ -41,7 +41,7 @@ from api.ecosystem import (
 )
 from api.error_page import render_not_found_page
 from api.funder_page import render_funder_page
-from api.insights_page import render_insights_page
+from api.insights_page import build_insights_snapshot, render_insights_page
 from api.operator_page import render_operator_page
 from api.opportunity_detail import build_opportunity_detail
 from api.opportunity_page import render_opportunity_page
@@ -116,6 +116,7 @@ _MACHINE_ROUTE_PREFIXES = (
     "/digest",
     "/funders",
     "/health",
+    "/insights.json",
     "/openapi.json",
     "/opportunities",
     "/operator/health",
@@ -134,6 +135,7 @@ _PUBLIC_FAST_CACHE_PATHS = {
     "/.well-known/qdev-ecosystem.json",
     "/coverage",
     "/funders",
+    "/insights.json",
     "/opportunities",
 }
 _PUBLIC_DISCOVERY_CACHE_PATHS = {
@@ -1509,6 +1511,28 @@ async def public_insights_page(request: Request) -> HTMLResponse:
     return response
 
 
+@app.api_route("/insights.json", methods=["GET", "HEAD"], include_in_schema=False)
+async def public_insights_json(request: Request) -> JSONResponse:
+    """Return the same reproducible analytics read model used by ``/insights``."""
+
+    root_path = _root_path(request)
+    active_lang = _public_lang(str(request.query_params.get("lang") or "").strip())
+    payload = build_insights_snapshot(
+        items=_cached_public_scope_items(content_lang=active_lang),
+        coverage=_cached_coverage_payload(),
+    )
+    payload["language"] = active_lang
+    payload["links"] = {
+        "human": _public_url(request, root_path, f"/insights?lang={active_lang}"),
+        "catalog": _public_url(
+            request, root_path, f"/?lang={active_lang}#opportunities"
+        ),
+    }
+    response = JSONResponse(payload)
+    response.headers["Cache-Control"] = "public, max-age=60, stale-while-revalidate=300"
+    return response
+
+
 @app.api_route(
     "/terms",
     methods=["GET", "HEAD"],
@@ -1778,6 +1802,7 @@ async def llms_txt(request: Request) -> Response:
     attribution = _public_url(request, root_path, "/attribution")
     status_page = _public_url(request, root_path, "/status")
     coverage = _public_url(request, root_path, "/coverage")
+    insights_json = _public_url(request, root_path, "/insights.json")
     opportunities = _public_url(request, root_path, "/opportunities")
     opportunities_ndjson = _public_url(request, root_path, "/opportunities.ndjson")
     opportunities_ndjson_compact = _public_url(
@@ -1806,6 +1831,7 @@ async def llms_txt(request: Request) -> Response:
                 f"- AV DS 4 UI contract: {avds_contract}",
                 f"- Source status page: {status_page}",
                 f"- Catalog insights: {insights}",
+                f"- Catalog insights JSON: {insights_json}",
                 f"- Terms of use: {terms}",
                 f"- Data policy: {data_policy}",
                 f"- Data attribution: {attribution}",
@@ -1817,6 +1843,7 @@ async def llms_txt(request: Request) -> Response:
                 f"- Compact Opportunities NDJSON: {opportunities_ndjson_compact}",
                 "- Opportunity detail JSON: /opportunities/{id}?lang=kk|ru|en",
                 f"- Digest JSON: {digest}",
+                f"- Insights JSON: {insights_json}?lang=ru|kk|en",
                 "",
                 "## AI consumption guidance",
                 (
@@ -1836,6 +1863,7 @@ async def llms_txt(request: Request) -> Response:
                 "- Opportunity page: /opportunity/{id}?lang=kk|ru|en",
                 "- Funder page: /funder/{slug}?lang=kk|ru|en",
                 "- Insights page: /insights?lang=kk|ru|en",
+                "- Insights JSON: /insights.json?lang=kk|ru|en",
                 "- Terms page: /terms?lang=kk|ru|en",
                 "- Data policy page: /data-policy?lang=kk|ru|en",
                 "- Attribution page: /attribution?lang=kk|ru|en",
@@ -1887,6 +1915,7 @@ async def site_discovery(request: Request) -> Response:
     llms = _public_url(request, root_path, "/llms.txt")
     status_page = _public_url(request, root_path, "/status")
     coverage = _public_url(request, root_path, "/coverage")
+    insights_json = _public_url(request, root_path, "/insights.json")
     opportunities = _public_url(request, root_path, "/opportunities")
     opportunities_ndjson = _public_url(request, root_path, "/opportunities.ndjson")
     opportunities_ndjson_compact = _public_url(
@@ -1935,6 +1964,7 @@ async def site_discovery(request: Request) -> Response:
             "funder": "/funder/{slug}?lang={lang}",
             "digest": "/digest?lang={lang}",
             "insights": "/insights?lang={lang}",
+            "insights_json": "/insights.json?lang={lang}",
             "terms": "/terms?lang={lang}",
             "data_policy": "/data-policy?lang={lang}",
             "attribution": "/attribution?lang={lang}",
@@ -1946,6 +1976,7 @@ async def site_discovery(request: Request) -> Response:
             "opportunities_ndjson_compact": opportunities_ndjson_compact,
             "digest": digest,
             "insights": insights,
+            "insights_json": insights_json,
             "terms": terms,
             "data_policy": data_policy,
             "attribution": attribution,
@@ -2001,6 +2032,7 @@ async def site_discovery(request: Request) -> Response:
             "public opportunity pages",
             "public funder pages",
             "public insights page",
+            "machine-readable insights snapshot",
             "public data-policy pages",
             "machine-readable opportunity api",
             "cache-aware ndjson export",

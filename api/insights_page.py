@@ -46,6 +46,10 @@ COPY: dict[str, dict[str, str]] = {
         "later": "Позже 90 дней",
         "rolling_label": "Бессрочные",
         "no_deadline": "Срок не указан",
+        "upcoming": "Ближайшие сроки",
+        "upcoming_note": "Карточки, которые стоит проверить в первую очередь.",
+        "today": "сегодня",
+        "day_many": "дн.",
         "fresh": "Свежие",
         "watch": "Требуют внимания",
         "stale": "Устаревшие",
@@ -84,6 +88,10 @@ COPY: dict[str, dict[str, str]] = {
         "later": "More than 90 days",
         "rolling_label": "Rolling",
         "no_deadline": "No deadline shown",
+        "upcoming": "Upcoming deadlines",
+        "upcoming_note": "Cards worth checking first.",
+        "today": "today",
+        "day_many": "days",
         "fresh": "Fresh",
         "watch": "Needs attention",
         "stale": "Stale",
@@ -122,6 +130,10 @@ COPY: dict[str, dict[str, str]] = {
         "later": "90 күннен кейін",
         "rolling_label": "Мерзімсіз",
         "no_deadline": "Мерзім көрсетілмеген",
+        "upcoming": "Жақын мерзімдер",
+        "upcoming_note": "Алдымен тексеруге тұрарлық карточкалар.",
+        "today": "бүгін",
+        "day_many": "күн",
         "fresh": "Жаңартылған",
         "watch": "Назар аударуды қажет етеді",
         "stale": "Ескірген",
@@ -171,16 +183,6 @@ def _label(raw: str, lang: str) -> str:
     return values[0]
 
 
-def _open_items(items: list[Opportunity]) -> list[Opportunity]:
-    today = date.today()
-    return [
-        item
-        for item in items
-        if public_lifecycle(item) not in {"closed", "awarded"}
-        and (item.deadline is None or item.deadline >= today)
-    ]
-
-
 def _count_rows(
     counter: Counter[str], labels: dict[str, str], limit: int = 6
 ) -> list[tuple[str, int]]:
@@ -223,6 +225,123 @@ def _metric(label: str, value: int, tone: str = "") -> str:
     )
 
 
+def build_insights_snapshot(
+    *,
+    items: list[Opportunity],
+    coverage: dict[str, Any],
+    as_of: date | None = None,
+    upcoming_limit: int = 8,
+) -> dict[str, Any]:
+    """Build the versioned analytics read model used by the page and API.
+
+    The snapshot deliberately contains counts and source-grounded next steps,
+    not recommendations inferred from missing fields. ``as_of`` is injectable
+    so contract tests and downstream jobs can reproduce the same bucket logic.
+    """
+
+    today = as_of or date.today()
+    open_items = _open_items_as_of(items, today)
+    deadline_buckets = {
+        "within_30": 0,
+        "within_90": 0,
+        "later": 0,
+        "rolling": 0,
+        "no_deadline": 0,
+    }
+    for item in open_items:
+        if item.deadline is None:
+            policy = str((item.raw or {}).get("deadline_policy") or "").strip().lower()
+            deadline_buckets["rolling" if policy == "rolling" else "no_deadline"] += 1
+        elif item.deadline <= today + timedelta(days=30):
+            deadline_buckets["within_30"] += 1
+        elif item.deadline <= today + timedelta(days=90):
+            deadline_buckets["within_90"] += 1
+        else:
+            deadline_buckets["later"] += 1
+
+    upcoming = sorted(
+        (item for item in open_items if item.deadline is not None),
+        key=lambda item: (item.deadline, -item.score, item.title.casefold()),
+    )[: max(1, upcoming_limit)]
+    upcoming_rows = [
+        {
+            "id": str(item.id),
+            "title": item.title,
+            "source": item.funder or item.source,
+            "deadline": item.deadline.isoformat() if item.deadline else None,
+            "days_left": (item.deadline - today).days if item.deadline else None,
+            "score": round(float(item.score), 4),
+        }
+        for item in upcoming
+    ]
+    freshness = Counter(
+        str(row.get("freshness_status") or "unknown")
+        for row in coverage.get("sources", [])
+        if isinstance(row, dict)
+    )
+    return {
+        "schema_version": "insights.v1",
+        "as_of": today.isoformat(),
+        "catalog": {
+            "open_items": len(open_items),
+            "official_sources": int(coverage.get("enabled_sources") or 0),
+            "relevant_open_items": int(coverage.get("relevant_open_items") or 0),
+        },
+        "formats": {
+            key: int(value)
+            for key, value in Counter(
+                item.type.value for item in open_items
+            ).most_common()
+        },
+        "sources": {
+            str(key): int(value)
+            for key, value in Counter(
+                item.funder or item.source for item in open_items
+            ).most_common(12)
+        },
+        "deadlines": {
+            "buckets": deadline_buckets,
+            "upcoming": upcoming_rows,
+        },
+        "freshness": {
+            "fresh": int(freshness.get("fresh", 0)),
+            "watch": int(freshness.get("watch", 0)),
+            "stale": int(freshness.get("stale", 0)),
+            "unknown": int(freshness.get("unknown", 0)),
+        },
+        "match_quality": {
+            "high": sum(1 for item in open_items if item.score >= 0.7),
+            "good": sum(1 for item in open_items if 0.5 <= item.score < 0.7),
+            "base": sum(1 for item in open_items if item.score < 0.5),
+        },
+    }
+
+
+def _open_items_as_of(items: list[Opportunity], as_of: date) -> list[Opportunity]:
+    """Return public open items using a supplied calendar date."""
+
+    return [
+        item
+        for item in items
+        if public_lifecycle(item) not in {"closed", "awarded"}
+        and (item.deadline is None or item.deadline >= as_of)
+    ]
+
+
+def _days_label(days_left: int, *, lang: str, copy: dict[str, str]) -> str:
+    if days_left <= 0:
+        return copy["today"]
+    if lang == "ru":
+        if days_left == 1:
+            return "1 день"
+        return f"{days_left} {copy['day_many']}"
+    if lang == "kk":
+        return f"{days_left} {copy['day_many']}"
+    if days_left == 1:
+        return "1 day"
+    return f"{days_left} {copy['day_many']}"
+
+
 def render_insights_page(
     *,
     items: list[Opportunity],
@@ -241,80 +360,35 @@ def render_insights_page(
     en_href = f"{base}/insights?lang=en" if base else "/insights?lang=en"
     ru_href = f"{base}/insights?lang=ru" if base else "/insights?lang=ru"
     kk_href = f"{base}/insights?lang=kk" if base else "/insights?lang=kk"
-    open_items = _open_items(items)
-    today = date.today()
-    soon = sum(
-        1
-        for item in open_items
-        if item.deadline and today <= item.deadline <= today + timedelta(days=30)
+    insights_json_href = (
+        f"{base}/insights.json?lang={lang}" if base else f"/insights.json?lang={lang}"
     )
-    rolling = sum(1 for item in open_items if item.deadline is None)
-    type_rows = _count_rows(Counter(item.type.value for item in open_items), {}, 6)
+    snapshot = build_insights_snapshot(items=items, coverage=coverage)
+    open_count = int(snapshot["catalog"]["open_items"])
+    soon = int(snapshot["deadlines"]["buckets"]["within_30"])
+    rolling = int(snapshot["deadlines"]["buckets"]["rolling"])
+    type_rows = _count_rows(Counter(snapshot["formats"]), {}, 6)
     type_rows = [(_label(label, lang), value) for label, value in type_rows]
-    source_rows = _count_rows(
-        Counter(item.funder or item.source for item in open_items), {}, 6
-    )
+    source_rows = _count_rows(Counter(snapshot["sources"]), {}, 6)
     deadline_rows = [
-        (copy["within_30"], soon),
-        (
-            copy["within_90"],
-            sum(
-                1
-                for item in open_items
-                if item.deadline
-                and today + timedelta(days=30)
-                < item.deadline
-                <= today + timedelta(days=90)
-            ),
-        ),
-        (
-            copy["later"],
-            sum(
-                1
-                for item in open_items
-                if item.deadline and item.deadline > today + timedelta(days=90)
-            ),
-        ),
+        (copy["within_30"], int(snapshot["deadlines"]["buckets"]["within_30"])),
+        (copy["within_90"], int(snapshot["deadlines"]["buckets"]["within_90"])),
+        (copy["later"], int(snapshot["deadlines"]["buckets"]["later"])),
         (copy["rolling_label"], rolling),
-        (
-            copy["no_deadline"],
-            max(
-                0,
-                len(open_items)
-                - soon
-                - rolling
-                - sum(
-                    1
-                    for item in open_items
-                    if item.deadline and item.deadline > today + timedelta(days=90)
-                )
-                - sum(
-                    1
-                    for item in open_items
-                    if item.deadline
-                    and today + timedelta(days=30)
-                    < item.deadline
-                    <= today + timedelta(days=90)
-                ),
-            ),
-        ),
+        (copy["no_deadline"], int(snapshot["deadlines"]["buckets"]["no_deadline"])),
     ]
-    freshness = Counter(
-        str(row.get("freshness_status") or "unknown")
-        for row in coverage.get("sources", [])
-        if isinstance(row, dict)
-    )
     freshness_rows = [
-        (copy["fresh"], freshness.get("fresh", 0)),
-        (copy["watch"], freshness.get("watch", 0)),
-        (copy["stale"], freshness.get("stale", 0)),
-        (copy["unknown"], freshness.get("unknown", 0)),
+        (copy["fresh"], int(snapshot["freshness"]["fresh"])),
+        (copy["watch"], int(snapshot["freshness"]["watch"])),
+        (copy["stale"], int(snapshot["freshness"]["stale"])),
+        (copy["unknown"], int(snapshot["freshness"]["unknown"])),
     ]
     score_rows = [
-        (copy["high"], sum(1 for item in open_items if item.score >= 0.7)),
-        (copy["good"], sum(1 for item in open_items if 0.5 <= item.score < 0.7)),
-        (copy["base"], sum(1 for item in open_items if item.score < 0.5)),
+        (copy["high"], int(snapshot["match_quality"]["high"])),
+        (copy["good"], int(snapshot["match_quality"]["good"])),
+        (copy["base"], int(snapshot["match_quality"]["base"])),
     ]
+    upcoming_rows = list(snapshot["deadlines"]["upcoming"])
     html_lang = escape(lang, quote=True)
     fallback_note = escape(str(copy.get("language_fallback_note") or ""))
     fallback_note_markup = (
@@ -327,6 +401,32 @@ def render_insights_page(
         if site_origin
         else f"{base}/insights?lang={lang}"
     )
+    if upcoming_rows:
+        upcoming_items: list[str] = []
+        for row in upcoming_rows:
+            deadline = str(row["deadline"])
+            detail_href = (
+                f"{base}/opportunity/{row['id']}?lang={lang}"
+                if base
+                else f"/opportunity/{row['id']}?lang={lang}"
+            )
+            upcoming_items.append(
+                '<li class="upcoming-item">'
+                f'<time class="upcoming-date" datetime="{escape(deadline, quote=True)}">'
+                f"{escape(deadline[8:10] + '.' + deadline[5:7])}</time>"
+                "<div>"
+                f'<a class="upcoming-title" href="{escape(detail_href, quote=True)}">'
+                f"{escape(str(row['title']))}</a>"
+                f'<span class="upcoming-source">{escape(str(row["source"]))}</span>'
+                "</div>"
+                f'<span class="upcoming-days">{escape(_days_label(int(row["days_left"]), lang=lang, copy=copy))}</span>'
+                "</li>"
+            )
+        upcoming_markup = (
+            '<ul class="upcoming-list">' + "".join(upcoming_items) + "</ul>"
+        )
+    else:
+        upcoming_markup = f'<p class="no-data">{escape(copy["no_data"])}</p>'
     return f"""<!doctype html>
 <html lang="{html_lang}" data-avds="grant-radar" data-av-theme="light" data-theme="light">
 <head>
@@ -337,6 +437,7 @@ def render_insights_page(
   <link rel="alternate" hreflang="kk" href="{escape((site_origin.rstrip('/') if site_origin else '') + kk_href, quote=True)}">
   <link rel="alternate" hreflang="ru" href="{escape((site_origin.rstrip('/') if site_origin else '') + ru_href, quote=True)}">
   <link rel="alternate" hreflang="en" href="{escape((site_origin.rstrip('/') if site_origin else '') + en_href, quote=True)}">
+  <link rel="alternate" type="application/json" href="{escape((site_origin.rstrip('/') if site_origin else '') + insights_json_href, quote=True)}">
   <meta property="og:title" content="{escape(copy["title"], quote=True)}"><meta property="og:description" content="{escape(copy["description"], quote=True)}">
   <meta property="og:image" content="{escape(og_image_url(site_origin, root_path), quote=True)}">
   {analytics_head_html()}{AVDS_FONT_HEAD}
@@ -355,6 +456,7 @@ def render_insights_page(
     .insight-metric.good strong{{color:var(--color-success)}} .insight-metric.warn strong{{color:var(--color-warning)}}
     .section-head{{display:grid;gap:5px;margin:30px 0 12px}} .section-head h2{{margin:0;font-size:24px;line-height:1.15}} .section-head p{{margin:0;color:var(--color-text-muted);font-size:14px}}
     .viz-grid{{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px}} .viz-card{{padding:18px;border:1px solid var(--color-border);border-radius:var(--av-radius-lg);background:var(--color-surface);box-shadow:var(--shadow-xs)}} .viz-card h3{{margin:0;font-size:17px}} .viz-card p{{margin:4px 0 14px;color:var(--color-text-muted);font-size:13px}}
+    .insight-lower{{display:grid;grid-template-columns:minmax(0,.8fr) minmax(0,1.2fr);gap:14px;margin-top:14px}} .upcoming-list{{display:grid;gap:0;margin:0;padding:0;list-style:none}} .upcoming-item{{display:grid;grid-template-columns:74px minmax(0,1fr) auto;align-items:center;gap:10px;padding:10px 0;border-top:1px solid var(--color-border)}} .upcoming-item:first-child{{border-top:0;padding-top:0}} .upcoming-date{{color:var(--color-accent);font-size:12px;font-weight:800;white-space:nowrap}} .upcoming-title{{display:block;overflow:hidden;color:var(--color-text);font-size:13px;font-weight:750;text-overflow:ellipsis;white-space:nowrap;text-decoration:none}} .upcoming-source{{display:block;overflow:hidden;color:var(--color-text-muted);font-size:11px;text-overflow:ellipsis;white-space:nowrap}} .upcoming-days{{color:var(--color-text-muted);font-size:11px;font-weight:700;white-space:nowrap}}
     .data-chart{{display:block;width:100%;height:auto;min-height:130px;overflow:visible}} .chart-label{{font:600 12px var(--av-font-sans);fill:var(--color-text)}} .chart-value{{font:800 13px var(--av-font-sans);fill:var(--color-text)}} .chart-track{{fill:var(--color-bg-subtle)}}
     .method{{display:grid;grid-template-columns:auto 1fr;gap:14px;align-items:start;margin-top:22px;padding:16px 18px;border-left:4px solid var(--color-accent);border-radius:var(--av-radius-md);background:var(--color-surface)}} .method strong{{font-size:15px}} .method p{{margin:3px 0 0;color:var(--color-text-muted);font-size:14px}}
     .footer{{display:flex;justify-content:space-between;gap:16px;flex-wrap:wrap;margin-top:28px;padding-top:18px;border-top:1px solid var(--color-border);color:var(--color-text-muted);font-size:13px}} .footer a{{font-weight:700}}
@@ -365,6 +467,7 @@ def render_insights_page(
     @media(min-width:1920px){{
       .metric-grid{{grid-template-columns:repeat(4,minmax(0,1fr));gap:12px}}
       .viz-grid{{grid-template-columns:repeat(4,minmax(0,1fr));gap:18px}}
+      .insight-lower{{grid-template-columns:minmax(0,.75fr) minmax(0,1.25fr);gap:18px}}
       .viz-card{{padding:20px}}
     }}
     @media(min-width:2200px){{
@@ -373,17 +476,17 @@ def render_insights_page(
       h1{{max-width:24ch}}
       .hero p{{max-width:72ch}}
     }}
-    @media(max-width:760px){{.shell{{width:min(100% - 24px,680px);padding-top:12px}} .hero{{grid-template-columns:1fr;padding:20px}} .metric-grid{{grid-template-columns:repeat(4,minmax(0,1fr))}} .insight-metric{{padding:10px}} .insight-metric strong{{font-size:22px}} .viz-grid{{grid-template-columns:1fr}} .method{{grid-template-columns:1fr;gap:5px}}}}
+    @media(max-width:760px){{.shell{{width:min(100% - 24px,680px);padding-top:12px}} .hero{{grid-template-columns:1fr;padding:20px}} .metric-grid{{grid-template-columns:repeat(4,minmax(0,1fr))}} .insight-metric{{padding:10px}} .insight-metric strong{{font-size:22px}} .viz-grid{{grid-template-columns:1fr}} .insight-lower{{grid-template-columns:1fr}} .upcoming-item{{grid-template-columns:66px minmax(0,1fr);gap:8px}} .upcoming-days{{grid-column:2}} .method{{grid-template-columns:1fr;gap:5px}}}}
     @media(max-width:480px){{.metric-grid{{grid-template-columns:repeat(2,minmax(0,1fr))}} h1{{font-size:34px}}}}
   </style>
 </head>
 <body><main class="shell">
   <div class="topbar"><a class="back" href="{escape(home, quote=True)}">← {escape(copy["back"])}</a><nav class="langs" aria-label="Language"><a class="{'active' if lang == 'kk' else ''}" href="{escape(kk_href, quote=True)}" lang="kk">KAZ</a><a class="{'active' if lang == 'ru' else ''}" href="{escape(ru_href, quote=True)}" lang="ru">RU</a><a class="{'active' if lang == 'en' else ''}" href="{escape(en_href, quote=True)}" lang="en">EN</a></nav></div>
   {fallback_note_markup}
-  <section class="hero" data-avds-component="hero-band"><div><span class="eyebrow">{escape(copy["eyebrow"])}</span><h1>{escape(copy["heading"])}</h1><p>{escape(copy["intro"])}</p><div class="hero-actions"><a class="button primary" href="{escape(home, quote=True)}">{escape(copy["catalog_link"])}</a><a class="button" href="{escape(status, quote=True)}">{escape(copy["source_link"])}</a></div></div><div class="metric-grid" aria-label="Key catalog metrics">{_metric(copy["total"],len(open_items),"good")}{_metric(copy["sources"],int(coverage.get("enabled_sources") or 0))}{_metric(copy["soon"],soon,"warn")}{_metric(copy["rolling"],rolling)}</div></section>
+  <section class="hero" data-avds-component="hero-band"><div><span class="eyebrow">{escape(copy["eyebrow"])}</span><h1>{escape(copy["heading"])}</h1><p>{escape(copy["intro"])}</p><div class="hero-actions"><a class="button primary" href="{escape(home, quote=True)}">{escape(copy["catalog_link"])}</a><a class="button" href="{escape(status, quote=True)}">{escape(copy["source_link"])}</a></div></div><div class="metric-grid" aria-label="Key catalog metrics">{_metric(copy["total"],open_count,"good")}{_metric(copy["sources"],int(coverage.get("enabled_sources") or 0))}{_metric(copy["soon"],soon,"warn")}{_metric(copy["rolling"],rolling)}</div></section>
   <div class="section-head"><h2>{escape(copy["formats"])}</h2><p>{escape(copy["formats_note"])}</p></div>
   <div class="viz-grid"><article class="viz-card"><h3>{escape(copy["formats"])}</h3><p>{escape(copy["formats_note"])}</p>{_bar_chart(type_rows,chart_id="format-distribution",color="#315fdc",empty_label=copy["no_data"])}</article><article class="viz-card"><h3>{escape(copy["sources_title"])}</h3><p>{escape(copy["sources_note"])}</p>{_bar_chart(source_rows,chart_id="source-distribution",color="#15724e",empty_label=copy["no_data"])}</article><article class="viz-card"><h3>{escape(copy["deadlines"])}</h3><p>{escape(copy["deadlines_note"])}</p>{_bar_chart(deadline_rows,chart_id="deadline-distribution",color="#9a6414",empty_label=copy["no_data"])}</article><article class="viz-card"><h3>{escape(copy["freshness"])}</h3><p>{escape(copy["freshness_note"])}</p>{_bar_chart(freshness_rows,chart_id="source-freshness",color="#7c3aed",empty_label=copy["no_data"])}</article></div>
-  <section class="viz-card" style="margin-top:14px"><h3>{escape(copy["good"])}</h3><p>{escape(copy["formats_note"])}</p>{_bar_chart(score_rows,chart_id="match-quality",color="#315fdc",empty_label=copy["no_data"])}</section>
+  <div class="insight-lower"><section class="viz-card"><h3>{escape(copy["good"])}</h3><p>{escape(copy["formats_note"])}</p>{_bar_chart(score_rows,chart_id="match-quality",color="#315fdc",empty_label=copy["no_data"])}</section><section class="viz-card" data-avds-component="DataViz"><h3>{escape(copy["upcoming"])}</h3><p>{escape(copy["upcoming_note"])}</p>{upcoming_markup}</section></div>
   <aside class="method" data-avds-component="method-card"><strong>{escape(copy["method"])}</strong><p>{escape(copy["method_text"])}</p></aside>
   <footer class="footer"><span>{escape(copy["footer"])}</span><span><a href="{escape(home, quote=True)}">{escape(copy["catalog_link"])}</a> · <a href="{escape(sources, quote=True)}">{escape(copy["source_link"])}</a></span></footer>
 </main></body></html>"""

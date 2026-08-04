@@ -29,10 +29,13 @@
   funder-graph and visualization slices.
 - Added mobile-friendly system sharing for filtered catalog links and individual
   opportunity cards, with clipboard and prompt fallbacks.
+- Added the reproducible `insights.v1` read model at `/insights.json`, wired it
+  into site discovery and `llms.txt`, and added an AVDS4 upcoming-deadlines
+  block to the public insights page.
 
 ## Verification
 
-- `./.venv/bin/python -m pytest -q`: 475 passed.
+- `PYTHONPATH=. .venv/bin/pytest -q`: 476 passed.
 - `make lint`: Black, isort, flake8, mypy and vulture passed.
 - `git diff --check`: passed; working tree clean and branch matches origin.
 - Production smoke: passed; 26 sources, 393 open relevant opportunities, 0
@@ -47,6 +50,10 @@
 - Public provenance sample verified on `/opportunities`: `schema_version`
   `provenance.v1`, `evidence_state=sourced`, separate `observed_at` and
   `last_verified_at` fields.
+- `/insights.json?lang=ru` verified with `schema_version=insights.v1`, explicit
+  deadline buckets, an upcoming-card list and links back to the human page;
+  `/insights` exposes the same values with no horizontal overflow at 390px and
+  2560px viewports.
 - Browser proof for `/insights?lang=kk` and a live opportunity detail:
   `lang=kk`, Kazakh headings, transparent source fallback, and no horizontal
   overflow at 390px and 2560px viewports.

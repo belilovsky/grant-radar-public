@@ -9,6 +9,7 @@ from api import funder_page as funder_page_module
 from api import main as api_main
 from api import opportunity_page as opportunity_page_module
 from api.dashboard import dashboard_copy
+from api.insights_page import build_insights_snapshot
 from core.db import SqlRepository
 from core.models import (
     Opportunity,
@@ -1163,6 +1164,7 @@ def test_marketing_endpoints_are_exposed(monkeypatch):
             "funder": "/funder/{slug}?lang={lang}",
             "digest": "/digest?lang={lang}",
             "insights": "/insights?lang={lang}",
+            "insights_json": "/insights.json?lang={lang}",
             "terms": "/terms?lang={lang}",
             "data_policy": "/data-policy?lang={lang}",
             "attribution": "/attribution?lang={lang}",
@@ -1176,6 +1178,7 @@ def test_marketing_endpoints_are_exposed(monkeypatch):
             ),
             "digest": "http://testserver/digest",
             "insights": "http://testserver/insights",
+            "insights_json": "http://testserver/insights.json",
             "terms": "http://testserver/terms",
             "data_policy": "http://testserver/data-policy",
             "attribution": "http://testserver/attribution",
@@ -1233,6 +1236,7 @@ def test_marketing_endpoints_are_exposed(monkeypatch):
             "public opportunity pages",
             "public funder pages",
             "public insights page",
+            "machine-readable insights snapshot",
             "public data-policy pages",
             "machine-readable opportunity api",
             "cache-aware ndjson export",
@@ -3361,6 +3365,18 @@ def test_public_insights_page_renders_avds_charts(monkeypatch):
     assert "До 30 дней" in response.text
     assert 'href="/insights?lang=kk"' in response.text
     assert 'rel="alternate" hreflang="kk"' in response.text
+    assert 'type="application/json"' in response.text
+
+    data_response = client.get("/insights.json", params={"lang": "ru"})
+    assert data_response.status_code == 200
+    assert data_response.headers["cache-control"].startswith("public, max-age=60")
+    data = data_response.json()
+    assert data["schema_version"] == "insights.v1"
+    assert data["language"] == "ru"
+    assert data["deadlines"]["buckets"]["within_30"] == 1
+    assert data["deadlines"]["buckets"]["no_deadline"] == 1
+    assert data["deadlines"]["upcoming"][0]["title"] == "Local grant"
+    assert data["links"]["human"].endswith("/insights?lang=ru")
 
     kk_response = client.get("/insights", params={"lang": "kk"})
     assert kk_response.status_code == 200
@@ -3372,6 +3388,32 @@ def test_public_insights_page_renders_avds_charts(monkeypatch):
         "Кейбір карточкалардағы сипаттама әзірге бастапқы тілде көрсетіледі."
         in kk_response.text
     )
+
+
+def test_insights_snapshot_is_reproducible(monkeypatch):
+    _reset_api_state(monkeypatch)
+    as_of = date(2026, 8, 4)
+    item = Opportunity(
+        source="source_a",
+        source_url="https://example.org/a",
+        type=OpportunityType.GRANT,
+        title="Rolling support",
+        deadline=None,
+        raw={"deadline_policy": "rolling"},
+    )
+    snapshot = build_insights_snapshot(
+        items=[item],
+        coverage={"enabled_sources": 1, "relevant_open_items": 1, "sources": []},
+        as_of=as_of,
+    )
+    assert snapshot["as_of"] == "2026-08-04"
+    assert snapshot["deadlines"]["buckets"] == {
+        "within_30": 0,
+        "within_90": 0,
+        "later": 0,
+        "rolling": 1,
+        "no_deadline": 0,
+    }
 
 
 def test_public_info_pages_are_linkable(monkeypatch):
