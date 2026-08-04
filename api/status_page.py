@@ -232,10 +232,11 @@ def render_status_page(
     .lang-switch a[aria-current="page"] {{ border-bottom-color:var(--brand); color:var(--ink); }}
     .lang-switch a:not([aria-current="page"]):hover {{ color:var(--brand); }}
     .overview {{ display:grid; grid-template-columns:minmax(0,1.25fr) minmax(420px,.75fr);
-      gap:0; margin-bottom:16px; border:0; border-top:1px solid var(--line);
-      border-bottom:1px solid var(--line); border-radius:0;
-      background:transparent; box-shadow:none; }}
-    .hero {{ padding:24px 0; }}
+      gap:0; margin-bottom:16px; border:1px solid var(--line);
+      border-radius:var(--av-radius-lg);
+      background:color-mix(in oklab,var(--panel),var(--brand-soft) 24%);
+      box-shadow:var(--shadow-xs); }}
+    .hero {{ padding:24px; }}
     .eyebrow {{ color:var(--brand); font-size:var(--av-text-xs); font-weight:700; }}
     h1 {{ margin:5px 0; font-size:36px; line-height:1.08; letter-spacing:0; }}
     .hero p {{ max-width:720px; margin:0; color:var(--muted); line-height:1.5; }}
@@ -245,8 +246,8 @@ def render_status_page(
       border-bottom:1px solid var(--line-subtle); background:transparent; }}
     .metric span {{ display:block; color:var(--muted); font-size:12px; }}
     .metric strong {{ display:block; margin-top:3px; font-size:22px; line-height:1; }}
-    .table-wrap {{ overflow-x:auto; border:0; border-top:1px solid var(--line);
-      border-bottom:1px solid var(--line); border-radius:0; background:transparent; }}
+    .table-wrap {{ overflow-x:auto; border:1px solid var(--line);
+      border-radius:var(--av-radius-lg); background:var(--panel); box-shadow:var(--shadow-xs); }}
     table {{ width:100%; border-collapse:collapse; }}
     th,td {{ padding:10px 14px; border-bottom:1px solid var(--line-subtle); text-align:left;
       vertical-align:middle; }}
@@ -297,7 +298,7 @@ def render_status_page(
       }}
       .status-topbar .back {{ min-height:var(--av-control-height-lg); }}
       main {{ width:min(100% - 20px,var(--av-container-dashboard)); padding-top:10px; }}
-      .hero {{ padding:18px 0; }}
+      .hero {{ padding:18px 16px; }}
       .metrics {{ grid-template-columns:repeat(2,minmax(0,1fr)); }}
       thead {{ display:none; }}
       tbody, tr, td {{ display:block; }}
