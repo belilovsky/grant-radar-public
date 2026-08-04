@@ -22,10 +22,15 @@
 - Refreshed the QazStack contract evidence and made the checked-in contract
   fail tests when it drifts from the runtime contract.
 - Documented the language-surface and translation holdout boundary.
+- Added the public `provenance.v1` profile to opportunity JSON, compact
+  dashboard payloads, NDJSON and detail responses. It keeps parser observation,
+  explicit verification, source language and field confidence separate.
+- Added the benchmark and upgrade plan for the next discovery, workflow,
+  funder-graph and visualization slices.
 
 ## Verification
 
-- `./.venv/bin/python -m pytest -q`: 473 passed.
+- `./.venv/bin/python -m pytest -q`: 475 passed.
 - `make lint`: Black, isort, flake8, mypy and vulture passed.
 - `git diff --check`: passed; working tree clean and branch matches origin.
 - Production smoke: passed; 26 sources, 393 open relevant opportunities, 0
@@ -37,6 +42,9 @@
 - Translation readiness remains intentionally held: `kk_content_coverage_rate`
   is `0.0`; source-language metadata is present for 45 of 616 records, while
   reviewer, quality and approval metadata are not present.
+- Public provenance sample verified on `/opportunities`: `schema_version`
+  `provenance.v1`, `evidence_state=sourced`, separate `observed_at` and
+  `last_verified_at` fields.
 - Browser proof for `/insights?lang=kk` and a live opportunity detail:
   `lang=kk`, Kazakh headings, transparent source fallback, and no horizontal
   overflow at 390px and 2560px viewports.
