@@ -3259,6 +3259,9 @@ def test_opportunity_page_renders_public_permalink(monkeypatch):
         f'href="http://testserver/opportunity/{item.id}?lang=kk" lang="kk" '
         'aria-current="page">KAZ</a>' in kk_response.text
     )
+    assert "Деректер мәртебесі" in kk_response.text
+    assert "QAZ.FUND қаражат бөлмейді және өтінім қабылдамайды." in kk_response.text
+    assert "QAZ.FUND не выдаёт средства и не принимает заявки." not in kk_response.text
 
 
 def test_opportunity_page_defaults_to_russian_without_lang(monkeypatch):
@@ -3773,6 +3776,15 @@ def test_funder_page_renders_public_profile(monkeypatch):
     assert "Ближайший срок" in response.text
     assert f'href="/opportunity/{open_item.id}?lang=ru"' in response.text
     assert f'href="/opportunity/{forecast_item.id}?lang=ru"' in response.text
+
+    kk_response = client.get("/funder/science-fund", params={"lang": "kk"})
+    assert kk_response.status_code == 200
+    assert '<html lang="kk"' in kk_response.text
+    assert "Қор профилі" in kk_response.text
+    assert "Ашық мүмкіндіктер" in kk_response.text
+    assert "Деректер мәртебесі" in kk_response.text
+    assert "QAZ.FUND қаражат бөлмейді және өтінім қабылдамайды." in kk_response.text
+    assert "QAZ.FUND не выдаёт средства и не принимает заявки." not in kk_response.text
     assert 'href="/?lang=ru#opportunities"' in response.text
     assert 'class="hero-copy"' in response.text
     assert 'data-avds-component="funder-page"' in response.text

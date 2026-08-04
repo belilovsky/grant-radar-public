@@ -2154,11 +2154,116 @@ COPY = {
 }
 
 
+KK_PUBLIC_UI_COPY = {
+    "api_docs": "API",
+    "apply_section_description": (
+        "Нақты тәртіпті ұйымдастырушының ресми бетінен тексеріңіз."
+    ),
+    "apply_section_eyebrow": "Өтінім беру",
+    "apply_section_title": "Қалай өтінім беруге болады",
+    "attribution_link": "Деректерді пайдалану көзі",
+    "breadcrumbs_aria": "Навигация жолы",
+    "data_policy_link": "Деректер саясаты",
+    "detail_brief_amount": "Сома",
+    "detail_brief_application_url": "Өтінім беру сілтемесі",
+    "detail_brief_caveat": "Ескерту",
+    "detail_brief_deadline": "Мерзім",
+    "detail_brief_format": "Формат",
+    "detail_brief_heading": "QAZ.FUND – жұмыс анықтамасы",
+    "detail_brief_official_url": "Ресми сілтеме",
+    "detail_brief_region": "Өңір",
+    "detail_brief_source": "Дереккөз",
+    "detail_brief_summary": "Қысқаша сипаттама",
+    "detail_copy_brief": "Қысқаша анықтаманы көшіру",
+    "detail_copy_brief_done": "Анықтама көшірілді.",
+    "detail_copy_brief_prompt": "Қысқаша анықтама",
+    "detail_empty": "Бұл мүмкіндік бойынша қосымша мәлімет жарияланбаған.",
+    "detail_expand_source": "Мәтінді ашу",
+    "detail_meta_title": "Параметрлер",
+    "detail_open_application": "Өтінім беруге өту",
+    "detail_open_source": "Ресми дереккөзді ашу",
+    "detail_share": "Бөлісу",
+    "detail_share_done": "Сілтеме дайын.",
+    "detail_share_prompt": "Осы мүмкіндікті бөлісу",
+    "detail_source_excerpt": "Бастапқы дереккөзден үзінді",
+    "detail_title_fallback": "Қолдау бағдарламасы",
+    "footer_disclaimer": (
+        "QAZ.FUND қаражат бөлмейді және өтінім қабылдамайды. Соңғы шарттарды "
+        "әрқашан бастапқы дереккөз бетінен тексеріңіз."
+    ),
+    "footer_owner": "QAZ.FUND – қолдау мүмкіндіктерінің ашық навигаторы. Жобаны іске асырған",
+    "footer_qdev": "qdev.run",
+    "funder_archive_note": (
+        "Жабылған жазбалар қордың профилі мен бағдарламаларының мерзімін көрсетеді."
+    ),
+    "funder_archive_title": "Архив",
+    "funder_back_to_catalog": "Каталогқа оралу",
+    "funder_focus_indexed": "Индексте",
+    "funder_focus_note": "Ағымдағы индекстегі форматтар, өңірлер мен тақырыптар.",
+    "funder_focus_regions": "Өңірлер",
+    "funder_focus_title": "Ағымдағы индекстен не көруге болады",
+    "funder_focus_types": "Форматтар",
+    "funder_live_empty": "Бұл қор бойынша ашық немесе жоспарланған жазбалар жоқ.",
+    "funder_live_note": "Тексеруге болатын ашық, тұрақты және жоспарланған жазбалар.",
+    "funder_live_now": "Ашық мүмкіндіктер",
+    "funder_live_title": "Ашық мүмкіндіктер",
+    "funder_next_deadline": "Ең жақын мерзім",
+    "funder_open_card": "Карточканы ашу",
+    "funder_open_profile": "Профильді ашу",
+    "funder_overview_intro": (
+        "Профиль жарияланған бағдарламалар мен хабарландырулар негізінде жасалған."
+    ),
+    "funder_overview_regions": "Өңірлік бағыт: {regions}.",
+    "funder_overview_topics": "Негізгі тақырыптар: {topics}.",
+    "funder_overview_types": "Форматтар: {types}.",
+    "funder_page_eyebrow": "Қор профилі",
+    "funder_sources_note": "Профиль үшін пайдаланылған ресми беттер.",
+    "funder_sources_title": "Профиль дереккөздері",
+    "funder_total_items": "Индекстегі жалпы саны",
+    "insights_link": "Талдау",
+    "lang": "kk",
+    "lifecycle_forecast": "Жоспарланған",
+    "lifecycle_rolling": "Тұрақты қабылдау",
+    "meta_format_label": "Формат",
+    "no_summary": "Сипаттама жарияланбаған.",
+    "open_rolling": "Тұрақты қабылдау",
+    "opportunities_title": "Мүмкіндіктер",
+    "prepare_section_description": (
+        "Талаптар бағдарламаға қарай өзгереді. Соңғы нұсқаны ресми дереккөзден тексеріңіз."
+    ),
+    "prepare_section_eyebrow": "Өтінімге дайындық",
+    "prepare_section_title": "Не дайындау керек",
+    "readiness_note": (
+        "Толтырылған өрістер карточканы жылдам бағалауға көмектеседі. Соңғы "
+        "шарттарды ресми дереккөзден тексеріңіз."
+    ),
+    "readiness_title": "Деректердің толықтығы",
+    "related_open": "Карточканы ашу",
+    "related_reason_theme": "Ұқсас тақырып",
+    "related_section_description": "Бір дереккөзге, форматқа немесе бағытқа жақын карточкалар.",
+    "related_section_eyebrow": "Көруді жалғастыру",
+    "related_section_title": "Ұқсас бағдарламалар",
+    "source_catalog_unavailable": "Дереккөздер каталогы уақытша қолжетімсіз.",
+    "status_link": "Деректер мәртебесі",
+    "tab_opportunities": "Мүмкіндіктер",
+    "tab_sources": "Дереккөздер",
+    "terms_link": "Пайдалану шарттары",
+    "verification_description": (
+        "Карточка бастапқы бағалауға арналған. Өтінім берер алдында ресми "
+        "дереккөздегі шарттарды қайта тексеріңіз."
+    ),
+    "verification_eyebrow": "Өтінім берер алдында",
+    "verification_title": "Нені қайта тексеру керек",
+    "views_aria": "QAZ.FUND негізгі бөлімдері",
+}
+
+
 def _copy_for(lang: str) -> dict[str, object]:
     if lang == "en":
         return cast(dict[str, object], COPY["en"])
     if lang == "kk":
         copy = dict(cast(dict[str, object], COPY["ru"]))
+        copy.update(KK_PUBLIC_UI_COPY)
         copy["lang"] = "kk"
         copy["locale"] = "kk-KZ"
         copy["language_fallback_note"] = (
