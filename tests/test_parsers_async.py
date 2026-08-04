@@ -1748,7 +1748,8 @@ async def test_unicef_kazakhstan_fetch_yields_only_open_tenders():
         return_value=httpx.Response(200, text=UNICEF_TENDERS_HTML)
     )
 
-    items = await _collect(UnicefKazakhstanSource())
+    source = UnicefKazakhstanSource()
+    items = await _collect(source)
 
     assert len(items) == 1
     item = items[0]
@@ -1761,6 +1762,13 @@ async def test_unicef_kazakhstan_fetch_yields_only_open_tenders():
     assert "hotel" not in item.title.lower()
     assert (
         item.raw["application_url"] == "https://drive.google.com/drive/folders/example"
+    )
+
+
+def test_unicef_reader_fallback_uses_single_proxy_hop():
+    assert "r.jina.ai/http://r.jina.ai" not in UNICEF_KAZAKHSTAN_TENDERS_READER_URL
+    assert UNICEF_KAZAKHSTAN_TENDERS_READER_URL.endswith(
+        "/http://www.unicef.org/kazakhstan/en/tenders"
     )
 
 
@@ -1816,7 +1824,8 @@ async def test_unicef_kazakhstan_uses_reader_fallback_when_vps_is_blocked():
         return_value=httpx.Response(200, text=UNICEF_TENDERS_MARKDOWN)
     )
 
-    items = await _collect(UnicefKazakhstanSource())
+    source = UnicefKazakhstanSource()
+    items = await _collect(source)
 
     assert len(items) == 1
     assert items[0].raw["reference"] == "RFP/KAZA/2099/001"
@@ -1824,6 +1833,7 @@ async def test_unicef_kazakhstan_uses_reader_fallback_when_vps_is_blocked():
         items[0].raw["application_url"]
         == "https://drive.google.com/drive/folders/example"
     )
+    assert source.last_fetch_error is None
 
 
 @pytest.mark.asyncio

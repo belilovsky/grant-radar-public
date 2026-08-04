@@ -19,8 +19,12 @@ log = structlog.get_logger()
 
 UNICEF_KAZAKHSTAN_TENDERS_URL = "https://www.unicef.org/kazakhstan/en/tenders"
 UNICEF_KAZAKHSTAN_TENDERS_READER_URL = (
-    "https://r.jina.ai/http://r.jina.ai/http://" f"{UNICEF_KAZAKHSTAN_TENDERS_URL}"
+    "https://r.jina.ai/http://www.unicef.org/kazakhstan/en/tenders"
 )
+UNICEF_READER_HEADERS = {
+    "User-Agent": "grant-radar/1.0 (+https://qaz.fund)",
+    "Accept": "text/plain,text/markdown;q=0.9,*/*;q=0.8",
+}
 UNICEF_FETCH_HEADERS: list[dict[str, str]] = [
     {
         "User-Agent": (
@@ -326,10 +330,7 @@ class UnicefKazakhstanSource(BaseSource):
             try:
                 candidate = await self.client.get(
                     UNICEF_KAZAKHSTAN_TENDERS_READER_URL,
-                    headers={
-                        "User-Agent": UNICEF_FETCH_HEADERS[-1]["User-Agent"],
-                        "Accept": "text/plain,text/markdown;q=0.9,*/*;q=0.8",
-                    },
+                    headers=UNICEF_READER_HEADERS,
                 )
             except Exception as exc:  # noqa: BLE001
                 self._mark_fetch_error(exc)
