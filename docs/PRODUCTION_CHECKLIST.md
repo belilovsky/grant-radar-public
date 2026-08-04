@@ -29,6 +29,8 @@ historic backup filenames, and maintainer-only evidence.
   delivery-disabled boundary; the route must not imply an active subscription.
 - `GET` and `HEAD /compare.json?ids=...` expose the bounded comparison read model;
   missing values must remain explicit and the endpoint must not imply eligibility.
+- `GET` and `HEAD /compare?ids=...` render the same comparison in the public AVDS4
+  shell with working language links and a JSON alternate.
 - `GET` and `HEAD /opportunities/{id}` return public opportunity detail availability.
 - `GET` and `HEAD /robots.txt`, `/sitemap.xml`, `/llms.txt`, and `/site-discovery.json` are public.
 - `GET /docs` and `GET /openapi.json` must stay reachable for public API consumers.

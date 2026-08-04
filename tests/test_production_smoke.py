@@ -98,6 +98,20 @@ def _transport(
                 },
                 headers={"cache-control": "public, max-age=60"},
             )
+        if endpoint_path == "/compare":
+            return httpx.Response(
+                200,
+                text=(
+                    '<html lang="ru" data-avds="grant-radar">'
+                    '<link rel="alternate" type="application/json">'
+                    '<table data-avds-component="comparison-table"></table>'
+                    "</html>"
+                ),
+                headers={
+                    "content-type": "text/html; charset=utf-8",
+                    "cache-control": "public, max-age=60",
+                },
+            )
         if endpoint_path == "/opportunities.ndjson":
             return httpx.Response(
                 200,

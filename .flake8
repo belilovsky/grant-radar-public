@@ -8,3 +8,4 @@ per-file-ignores =
     api/insights_page.py:E501,E231
     api/opportunity_page.py:E501
     api/public_info_page.py:E501
+    api/comparison_page.py:E501

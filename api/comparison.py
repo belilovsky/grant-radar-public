@@ -48,6 +48,9 @@ _COPY: dict[str, dict[str, str]] = {
         "missing": "Карточка не найдена в текущем каталоге.",
         "warning": "Пустое значение означает, что поле не опубликовано в текущей карточке.",
         "back": "Вернуться в каталог",
+        "cards": "Карточки",
+        "status": "Статус",
+        "footer": "QAZ.FUND не выдаёт средства и не принимает заявки.",
     },
     "kk": {
         "title": "Бағдарламаларды салыстыру – QAZ.FUND",
@@ -62,6 +65,9 @@ _COPY: dict[str, dict[str, str]] = {
         "missing": "Карточка ағымдағы каталогтан табылмады.",
         "warning": "Бос мән бұл өрістің ағымдағы карточкада жарияланбағанын білдіреді.",
         "back": "Каталогқа оралу",
+        "cards": "Карточкалар",
+        "status": "Мәртебе",
+        "footer": "QAZ.FUND қаражат бөлмейді және өтінім қабылдамайды.",
     },
     "en": {
         "title": "Compare programs – QAZ.FUND",
@@ -73,6 +79,9 @@ _COPY: dict[str, dict[str, str]] = {
         "missing": "The card is not present in the current catalog.",
         "warning": "An empty value means that the field is not published in the current card.",
         "back": "Back to catalog",
+        "cards": "Cards",
+        "status": "Status",
+        "footer": "QAZ.FUND does not award funds or process applications.",
     },
 }
 
@@ -237,3 +246,10 @@ def comparison_copy(lang: str) -> dict[str, str]:
     """Return the small public copy set for a future server-rendered view."""
 
     return dict(_COPY.get(lang, _COPY["ru"]))
+
+
+def comparison_field_labels(lang: str) -> dict[str, str]:
+    """Return localized labels without exposing the internal label table."""
+
+    active_lang = lang if lang in _COPY else "ru"
+    return {field: values[active_lang] for field, values in _FIELD_LABELS.items()}

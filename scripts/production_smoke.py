@@ -149,6 +149,16 @@ def run_smoke(
             base_url,
             f"/compare.json?ids={','.join(compare_ids)}&lang=ru",
         )
+        comparison_page = _get_text(
+            client,
+            base_url,
+            f"/compare?ids={','.join(compare_ids)}&lang=ru",
+        )
+        comparison_page_head = _head(
+            client,
+            base_url,
+            f"/compare?ids={','.join(compare_ids)}&lang=ru",
+        )
         ndjson_response = client.get(
             _url(base_url, "/opportunities.ndjson?limit=20&min_score=0.3")
         )
@@ -352,6 +362,12 @@ def run_smoke(
             and comparison.get("status") in {"ready", "partial", "insufficient"}
             and len(comparison.get("cards") or []) <= 4
             and _is_public_cacheable(comparison_head, 60)
+        ),
+        "comparison_page": (
+            '<html lang="ru"' in comparison_page
+            and 'data-avds-component="comparison-table"' in comparison_page
+            and 'rel="alternate" type="application/json"' in comparison_page
+            and _is_public_cacheable(comparison_page_head, 60)
         ),
         "qazstack_contract": (
             qazstack_contract.get("schema_version") == "qazstack-consumer-v1"

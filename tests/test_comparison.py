@@ -85,6 +85,20 @@ def test_public_compare_json_is_source_grounded(monkeypatch) -> None:
     )
     assert payload["cards"][0]["fields"]["source_url"] == str(first.source_url)
 
+    page = client.get(
+        "/compare",
+        params={"ids": f"{first.id},{second.id}", "lang": "kk"},
+    )
+    assert page.status_code == 200
+    assert '<html lang="kk"' in page.text
+    assert 'data-avds-component="comparison-table"' in page.text
+    assert "Бағдарламаларды салыстыру" in page.text
+    assert "JSON" in page.text
+
+    empty_page = client.get("/compare", params={"lang": "en"})
+    assert empty_page.status_code == 200
+    assert "Choose at least two cards to compare." in empty_page.text
+
     invalid = client.get("/compare.json", params={"ids": "not-a-uuid"})
     assert invalid.status_code == 400
 

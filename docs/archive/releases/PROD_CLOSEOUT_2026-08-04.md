@@ -73,6 +73,8 @@
   and the ecosystem manifest.
 - `/compare.json` verified as a cacheable machine-readable read model; the
   production smoke checks its schema, bounded card count and discovery links.
+- `/compare` verified as the AVDS4 server-rendered view with localized language
+  links, explicit missing values and a JSON alternate.
 - Browser proof for `/insights?lang=kk` and a live opportunity detail:
   `lang=kk`, Kazakh headings, transparent source fallback, and no horizontal
   overflow at 390px and 2560px viewports.
