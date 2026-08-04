@@ -248,7 +248,7 @@ def render_operator_page(*, lang: str, root_path: str = "") -> str:
         <div class="operator-tools">
           <nav class="lang-switch" aria-label="Language">
             <a href="{escape(ru_href, quote=True)}" lang="ru"{ru_current}>RU</a>
-            <a href="{escape(kk_href, quote=True)}" lang="kk"{kk_current}>ҚАЗ</a>
+            <a href="{escape(kk_href, quote=True)}" lang="kk"{kk_current}>KAZ</a>
             <a href="{escape(en_href, quote=True)}" lang="en"{en_current}>EN</a>
           </nav>
           <a class="catalog-link" href="{escape(catalog_href, quote=True)}">

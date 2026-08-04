@@ -36,6 +36,7 @@ def test_public_explanation_supports_kazakh_without_russian_shell_fallback() -> 
     assert 'href="/terms?lang=ru"' in html
     assert 'href="/terms?lang=en"' in html
     assert 'aria-current="page"' in html
+    assert ">KAZ</a>" in html
     assert "Вернуться в каталог" not in html
 
 
@@ -47,6 +48,7 @@ def test_error_and_operator_surfaces_support_kazakh_alias() -> None:
     assert "Мұндай бет жоқ" in not_found
     assert '<html lang="kk"' in operator
     assert "Дереккөздерді бақылау" in operator
+    assert ">KAZ</a>" in operator
     assert 'lang="kk"' in operator
     assert 'href="/does-not-exist?lang=kk"' in not_found
     assert 'href="/does-not-exist?lang=ru"' in not_found
