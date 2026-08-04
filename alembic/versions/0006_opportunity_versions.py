@@ -26,35 +26,42 @@ def _now() -> datetime:
 
 
 def upgrade() -> None:
-    op.create_table(
-        "opportunity_versions",
-        sa.Column("id", sa.Integer(), primary_key=True, autoincrement=True),
-        sa.Column("opportunity_id", sa.String(length=255), nullable=False),
-        sa.Column("version", sa.Integer(), nullable=False),
-        sa.Column("observed_at", sa.DateTime(timezone=True), nullable=False),
-        sa.Column("content_hash", sa.String(length=80), nullable=False),
-        sa.Column("changed_fields", sa.JSON(), nullable=False),
-        sa.Column("fields", sa.JSON(), nullable=False),
-        sa.Column(
-            "created_at",
-            sa.DateTime(timezone=True),
-            nullable=False,
-            server_default=sa.func.now(),
-        ),
-    )
-    op.create_index(
-        "ix_opportunity_versions_opportunity_id",
-        "opportunity_versions",
-        ["opportunity_id"],
-    )
-    op.create_index(
-        "uq_opportunity_versions_opportunity_version",
-        "opportunity_versions",
-        ["opportunity_id", "version"],
-        unique=True,
-    )
-
     bind = op.get_bind()
+    inspector = sa.inspect(bind)
+    table_names = set(inspector.get_table_names())
+    if "opportunity_versions" not in table_names:
+        op.create_table(
+            "opportunity_versions",
+            sa.Column("id", sa.Integer(), primary_key=True, autoincrement=True),
+            sa.Column("opportunity_id", sa.String(length=255), nullable=False),
+            sa.Column("version", sa.Integer(), nullable=False),
+            sa.Column("observed_at", sa.DateTime(timezone=True), nullable=False),
+            sa.Column("content_hash", sa.String(length=80), nullable=False),
+            sa.Column("changed_fields", sa.JSON(), nullable=False),
+            sa.Column("fields", sa.JSON(), nullable=False),
+            sa.Column(
+                "created_at",
+                sa.DateTime(timezone=True),
+                nullable=False,
+                server_default=sa.func.now(),
+            ),
+        )
+        inspector = sa.inspect(bind)
+    index_names = {index["name"] for index in inspector.get_indexes("opportunity_versions")}
+    if "ix_opportunity_versions_opportunity_id" not in index_names:
+        op.create_index(
+            "ix_opportunity_versions_opportunity_id",
+            "opportunity_versions",
+            ["opportunity_id"],
+        )
+    if "uq_opportunity_versions_opportunity_version" not in index_names:
+        op.create_index(
+            "uq_opportunity_versions_opportunity_version",
+            "opportunity_versions",
+            ["opportunity_id", "version"],
+            unique=True,
+        )
+
     opportunities = sa.table(
         "opportunities",
         sa.column("id", sa.String()),
@@ -82,13 +89,22 @@ def upgrade() -> None:
     rows = list(bind.execute(sa.select(opportunities)).mappings())
     if not rows:
         return
+    existing_ids = {
+        str(row[0])
+        for row in bind.execute(
+            sa.select(versions.c.opportunity_id).distinct()
+        ).all()
+    }
     values = []
     for row in rows:
         row_dict = dict(row)
+        opportunity_id = str(row_dict["id"])
+        if opportunity_id in existing_ids:
+            continue
         snapshot = public_snapshot(row_dict)
         values.append(
             {
-                "opportunity_id": str(row_dict["id"]),
+                "opportunity_id": opportunity_id,
                 "version": 1,
                 "observed_at": row_dict.get("discovered_at") or _now(),
                 "content_hash": snapshot_hash(snapshot),
@@ -96,7 +112,8 @@ def upgrade() -> None:
                 "fields": snapshot,
             }
         )
-    bind.execute(versions.insert(), values)
+    if values:
+        bind.execute(versions.insert(), values)
 
 
 def downgrade() -> None:
