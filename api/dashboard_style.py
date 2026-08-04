@@ -1150,15 +1150,19 @@ DASHBOARD_CSS = r"""    :root {
       font-feature-settings: "tnum" 1, "lnum" 1;
     }
     .panel {
-      padding: calc(var(--section-gap) * 0.58) 0 0;
+      padding: calc(var(--section-gap) * 0.58) 14px 14px;
       margin-top: calc(var(--section-gap) * 0.58);
-      border-top: 1px solid var(--line);
+      border: 1px solid var(--line-subtle);
+      border-radius: var(--av-radius-lg);
+      background: color-mix(in oklab, var(--panel), var(--panel-subtle) 18%);
+      box-shadow: var(--shadow-2xs);
       scroll-margin-top: 156px;
     }
     .panel.primary {
-      border-top: 0;
+      border-top: 1px solid var(--line-subtle);
       margin-top: 0;
-      padding-top: var(--av-spacing-1);
+      padding-top: 14px;
+      background: color-mix(in oklab, var(--panel), var(--panel-subtle) 12%);
     }
     .panel-head {
       display: flex;
@@ -1267,24 +1271,23 @@ DASHBOARD_CSS = r"""    :root {
       grid-template-columns: repeat(3, minmax(0, 1fr));
       gap: 0;
       margin-bottom: 0;
-      padding: 10px 0;
-      border: 0;
-      border-top: 1px solid var(--line);
-      border-radius: 0;
-      background: transparent;
+      padding: 8px;
+      border: 1px solid var(--line-subtle);
+      border-radius: var(--av-radius-md);
+      background: color-mix(in oklab, var(--panel), var(--panel-subtle) 42%);
     }
     .preset-group {
       display: grid;
       align-content: start;
       gap: 5px;
       min-width: 0;
-      padding: 0 12px;
+      padding: 8px 10px;
       border: 0;
-      border-radius: 0;
-      background: transparent;
+      border-radius: var(--av-radius-sm);
+      background: color-mix(in oklab, var(--panel), var(--panel-subtle) 24%);
     }
-    .preset-group:first-child { padding-left: 0; }
-    .preset-group:last-child { padding-right: 0; }
+    .preset-group:first-child,
+    .preset-group:last-child { padding-inline: 10px; }
     .preset-group + .preset-group {
       border-left: 1px solid var(--line-subtle);
     }
@@ -1721,7 +1724,7 @@ DASHBOARD_CSS = r"""    :root {
       border: 0;
       border-top: 1px solid var(--line);
       border-radius: 0;
-      background: var(--panel-wash-soft);
+      background: color-mix(in oklab, var(--panel), var(--panel-subtle) 28%);
       padding: 18px 4px;
       box-shadow: none;
       position: relative;
@@ -1737,7 +1740,7 @@ DASHBOARD_CSS = r"""    :root {
     .list > .opportunity:nth-child(even) {
       padding-inline: 12px;
       border-radius: var(--av-radius-md);
-      background: var(--panel-wash-strong);
+      background: color-mix(in oklab, var(--panel), var(--panel-subtle) 52%);
     }
     .opportunity.good,
     .opportunity.warn { border-left-color: transparent; }
@@ -1767,7 +1770,7 @@ DASHBOARD_CSS = r"""    :root {
       border: 0;
       border-left: 1px solid var(--line-subtle);
       border-radius: 0;
-      background: color-mix(in oklab, var(--panel), var(--panel-subtle) 24%);
+      background: color-mix(in oklab, var(--panel), var(--panel-subtle) 42%);
     }
     .opportunity-heading {
       display: grid;
