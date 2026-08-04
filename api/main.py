@@ -49,6 +49,7 @@ from api.error_page import render_not_found_page
 from api.funder_page import render_funder_page
 from api.history import build_history_snapshot
 from api.insights_page import build_insights_snapshot, render_insights_page
+from api.media_page import build_media_snapshot, render_media_page
 from api.notification_contract import notification_contract
 from api.operator_page import render_operator_page
 from api.opportunity_detail import build_opportunity_detail
@@ -1393,6 +1394,7 @@ def _render_sitemap_xml(base_url: str) -> str:
         ),
     ]
     for path, priority in (
+        ("/media?lang=ru", "0.85"),
         ("/insights?lang=ru", "0.8"),
         ("/terms?lang=ru", "0.4"),
         ("/data-policy?lang=ru", "0.4"),
@@ -1514,6 +1516,51 @@ async def root(request: Request) -> HTMLResponse:
             site_origin=site_origin,
         )
     )
+
+
+@app.api_route(
+    "/media",
+    methods=["GET", "HEAD"],
+    response_class=HTMLResponse,
+    include_in_schema=False,
+)
+async def public_media_page(request: Request) -> HTMLResponse:
+    """Render the editorial-style public media surface."""
+
+    root_path = _root_path(request)
+    active_lang = _public_lang(str(request.query_params.get("lang") or "").strip())
+    response = HTMLResponse(
+        render_media_page(
+            items=_cached_public_scope_items(content_lang=active_lang),
+            lang=active_lang,
+            root_path=root_path,
+            site_origin=_site_origin(request, root_path),
+        )
+    )
+    response.headers["Cache-Control"] = "public, max-age=60, stale-while-revalidate=300"
+    return response
+
+
+@app.api_route("/media.json", methods=["GET", "HEAD"], include_in_schema=False)
+async def public_media_json(request: Request) -> JSONResponse:
+    """Return the source-grounded media read model for people and AI systems."""
+
+    root_path = _root_path(request)
+    active_lang = _public_lang(str(request.query_params.get("lang") or "").strip())
+    payload = build_media_snapshot(
+        items=_cached_public_scope_items(content_lang=active_lang),
+        lang=active_lang,
+        root_path=root_path,
+    )
+    payload["links"] = {
+        "human": _public_url(request, root_path, f"/media?lang={active_lang}"),
+        "catalog": _public_url(
+            request, root_path, f"/?lang={active_lang}#opportunities"
+        ),
+    }
+    response = JSONResponse(payload)
+    response.headers["Cache-Control"] = "public, max-age=60, stale-while-revalidate=300"
+    return response
 
 
 @app.api_route(
@@ -1976,12 +2023,14 @@ async def llms_txt(request: Request) -> Response:
         request, root_path, "/.well-known/source-onboarding.json"
     )
     insights = _public_url(request, root_path, "/insights")
+    media = _public_url(request, root_path, "/media")
     terms = _public_url(request, root_path, "/terms")
     data_policy = _public_url(request, root_path, "/data-policy")
     attribution = _public_url(request, root_path, "/attribution")
     status_page = _public_url(request, root_path, "/status")
     coverage = _public_url(request, root_path, "/coverage")
     insights_json = _public_url(request, root_path, "/insights.json")
+    media_json = _public_url(request, root_path, "/media.json")
     compare_json = _public_url(request, root_path, "/compare.json")
     opportunities = _public_url(request, root_path, "/opportunities")
     opportunities_ndjson = _public_url(request, root_path, "/opportunities.ndjson")
@@ -2016,7 +2065,9 @@ async def llms_txt(request: Request) -> Response:
                 f"- Source onboarding contract: {source_onboarding_url}",
                 f"- Source status page: {status_page}",
                 f"- Catalog insights: {insights}",
+                f"- Media page: {media}",
                 f"- Catalog insights JSON: {insights_json}",
+                f"- Media JSON: {media_json}",
                 f"- Comparison JSON: {compare_json}?ids={{id}},{{id}}&lang=ru|kk|en",
                 f"- Terms of use: {terms}",
                 f"- Data policy: {data_policy}",
@@ -2055,7 +2106,9 @@ async def llms_txt(request: Request) -> Response:
                 "- Opportunity history: /opportunities/{id}/history.json?lang=kk|ru|en&limit={n}",
                 "- Funder page: /funder/{slug}?lang=kk|ru|en",
                 "- Insights page: /insights?lang=kk|ru|en",
+                "- Media page: /media?lang=kk|ru|en",
                 "- Insights JSON: /insights.json?lang=kk|ru|en",
+                "- Media JSON: /media.json?lang=kk|ru|en",
                 "- Comparison JSON: /compare.json?ids={id},{id}&lang=kk|ru|en",
                 "- Notification contract: /.well-known/notification-contract.json",
                 "- Source onboarding contract: /.well-known/source-onboarding.json",
@@ -2111,6 +2164,8 @@ async def site_discovery(request: Request) -> Response:
     status_page = _public_url(request, root_path, "/status")
     coverage = _public_url(request, root_path, "/coverage")
     insights_json = _public_url(request, root_path, "/insights.json")
+    media = _public_url(request, root_path, "/media")
+    media_json = _public_url(request, root_path, "/media.json")
     compare_json = _public_url(request, root_path, "/compare.json")
     opportunities = _public_url(request, root_path, "/opportunities")
     opportunities_ndjson = _public_url(request, root_path, "/opportunities.ndjson")
@@ -2175,6 +2230,8 @@ async def site_discovery(request: Request) -> Response:
             "digest": "/digest?lang={lang}",
             "insights": "/insights?lang={lang}",
             "insights_json": "/insights.json?lang={lang}",
+            "media": "/media?lang={lang}",
+            "media_json": "/media.json?lang={lang}",
             "compare": "/compare?ids={id},{id}&lang={lang}",
             "compare_json": "/compare.json?ids={id},{id}&lang={lang}",
             "notification_contract": "/.well-known/notification-contract.json",
@@ -2192,6 +2249,8 @@ async def site_discovery(request: Request) -> Response:
             "digest": digest,
             "insights": insights,
             "insights_json": insights_json,
+            "media": media,
+            "media_json": media_json,
             "compare": compare_json,
             "compare_json": compare_json,
             "notification_contract": notification_contract_url,
@@ -2252,7 +2311,9 @@ async def site_discovery(request: Request) -> Response:
             "public opportunity pages",
             "public funder pages",
             "public insights page",
+            "public media page",
             "machine-readable insights snapshot",
+            "machine-readable media snapshot",
             "machine-readable opportunity comparison",
             "notification contract (delivery disabled)",
             "public data-policy pages",
