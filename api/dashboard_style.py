@@ -11,6 +11,9 @@ DASHBOARD_CSS = r"""    :root {
       --panel-wash: color-mix(in oklab, var(--panel), var(--panel-subtle) 44%);
       --panel-wash-soft: color-mix(in oklab, var(--panel), var(--panel-subtle) 18%);
       --panel-wash-strong: color-mix(in oklab, var(--panel), var(--panel-subtle) 68%);
+      --panel-wash-list: color-mix(in oklab, var(--panel), var(--panel-subtle) 34%);
+      --panel-wash-card: color-mix(in oklab, var(--panel), var(--panel-subtle) 42%);
+      --panel-wash-card-alt: color-mix(in oklab, var(--panel), var(--panel-subtle) 60%);
       --accent-wash: color-mix(in oklab, var(--panel), var(--brand-soft) 26%);
       --ink: var(--color-text);
       --muted: var(--color-text-muted);
@@ -322,7 +325,7 @@ DASHBOARD_CSS = r"""    :root {
       margin-bottom: 0;
       border: 0;
       border-top: 1px solid var(--line-subtle);
-      background: transparent;
+      background: var(--panel-wash-soft);
       box-shadow: none;
       backdrop-filter: none;
       border-radius: 0;
@@ -1154,7 +1157,7 @@ DASHBOARD_CSS = r"""    :root {
       margin-top: calc(var(--section-gap) * 0.58);
       border: 1px solid var(--line-subtle);
       border-radius: var(--av-radius-lg);
-      background: color-mix(in oklab, var(--panel), var(--panel-subtle) 18%);
+      background: color-mix(in oklab, var(--panel), var(--panel-subtle) 32%);
       box-shadow: var(--shadow-2xs);
       scroll-margin-top: 156px;
     }
@@ -1162,7 +1165,7 @@ DASHBOARD_CSS = r"""    :root {
       border-top: 1px solid var(--line-subtle);
       margin-top: 0;
       padding-top: 14px;
-      background: color-mix(in oklab, var(--panel), var(--panel-subtle) 12%);
+      background: color-mix(in oklab, var(--panel), var(--panel-subtle) 24%);
     }
     .panel-head {
       display: flex;
@@ -1274,7 +1277,7 @@ DASHBOARD_CSS = r"""    :root {
       padding: 8px;
       border: 1px solid var(--line-subtle);
       border-radius: var(--av-radius-md);
-      background: color-mix(in oklab, var(--panel), var(--panel-subtle) 42%);
+      background: color-mix(in oklab, var(--panel), var(--panel-subtle) 58%);
     }
     .preset-group {
       display: grid;
@@ -1284,7 +1287,7 @@ DASHBOARD_CSS = r"""    :root {
       padding: 8px 10px;
       border: 0;
       border-radius: var(--av-radius-sm);
-      background: color-mix(in oklab, var(--panel), var(--panel-subtle) 24%);
+      background: color-mix(in oklab, var(--panel), var(--panel-subtle) 36%);
     }
     .preset-group:first-child,
     .preset-group:last-child { padding-inline: 10px; }
@@ -1712,8 +1715,11 @@ DASHBOARD_CSS = r"""    :root {
     }
     .list {
       display: grid;
-      gap: 0;
-      border-bottom: 1px solid var(--line);
+      gap: 4px;
+      padding: 6px;
+      border: 1px solid var(--line-subtle);
+      border-radius: var(--av-radius-md);
+      background: var(--panel-wash-list);
     }
     .list-actions {
       display: flex;
@@ -1721,11 +1727,10 @@ DASHBOARD_CSS = r"""    :root {
       margin-top: var(--av-spacing-3);
     }
     .opportunity {
-      border: 0;
-      border-top: 1px solid var(--line);
-      border-radius: 0;
-      background: color-mix(in oklab, var(--panel), var(--panel-subtle) 28%);
-      padding: 18px 4px;
+      border: 1px solid var(--line-subtle);
+      border-radius: var(--av-radius-md);
+      background: var(--panel-wash-card);
+      padding: 16px 14px;
       box-shadow: none;
       position: relative;
       overflow: visible;
@@ -1738,9 +1743,8 @@ DASHBOARD_CSS = r"""    :root {
       box-shadow: none;
     }
     .list > .opportunity:nth-child(even) {
-      padding-inline: 12px;
-      border-radius: var(--av-radius-md);
-      background: color-mix(in oklab, var(--panel), var(--panel-subtle) 52%);
+      padding-inline: 14px;
+      background: var(--panel-wash-card-alt);
     }
     .opportunity.good,
     .opportunity.warn { border-left-color: transparent; }

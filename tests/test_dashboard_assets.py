@@ -36,3 +36,6 @@ def test_dashboard_uses_extracted_static_styles() -> None:
     assert "@media (min-width: 1440px)" in DASHBOARD_CSS
     assert ".hero-points {" in DASHBOARD_CSS
     assert "grid-template-columns: repeat(3, minmax(0, 1fr));" in DASHBOARD_CSS
+    assert "--panel-wash-card: color-mix" in DASHBOARD_CSS
+    assert "background: var(--panel-wash-list);" in DASHBOARD_CSS
+    assert "border-radius: var(--av-radius-md);" in DASHBOARD_CSS

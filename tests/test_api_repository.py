@@ -560,8 +560,8 @@ def test_root_renders_service_landing(monkeypatch):
     assert "contain-intrinsic-size:" not in response.text
     assert ".opportunity {" in response.text
     opportunity_css = response.text.split(".opportunity {", 1)[1].split("}", 1)[0]
-    assert "border: 0;" in opportunity_css
-    assert "border-top: 1px solid var(--line);" in opportunity_css
+    assert "border: 1px solid var(--line-subtle);" in opportunity_css
+    assert "background: var(--panel-wash-card);" in opportunity_css
     assert "border-left:" not in opportunity_css
     assert ".opportunity-content {" in response.text
     assert ".opportunity-rail {" in response.text
