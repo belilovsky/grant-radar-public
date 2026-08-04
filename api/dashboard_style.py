@@ -1197,6 +1197,8 @@ DASHBOARD_CSS = r"""    :root {
       color: var(--muted);
       font-size: var(--av-text-sm);
     }
+    /* Keep native disclosure semantics when a component styles its body. */
+    details:not([open]) > :not(summary) { display: none !important; }
     .filter-disclosure > summary { display: none; }
     .filter-disclosure-body { display: contents; }
     .filters-shell {

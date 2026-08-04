@@ -202,6 +202,10 @@ def test_root_renders_service_landing(monkeypatch):
     assert "медиа" in response.text
     assert "-webkit-line-clamp: 2;" in response.text
     assert ".hero-band" in response.text
+    assert (
+        "details:not([open]) > :not(summary) { display: none !important; }"
+        in response.text
+    )
     assert ".hero-grid" in response.text
     assert ".sticky-bar" in response.text
     assert ".spotlight-grid" in response.text
