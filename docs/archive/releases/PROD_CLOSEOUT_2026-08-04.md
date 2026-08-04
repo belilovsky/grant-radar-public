@@ -34,6 +34,8 @@
   block to the public insights page.
 - Gave each inline chart a meaningful accessible label and named the relevance
   block consistently in all three public languages.
+- Corrected the wide-screen analytics grid so the shorter quality card no longer
+  stretches to the height of the deadline list and creates an empty panel.
 
 ## Verification
 
