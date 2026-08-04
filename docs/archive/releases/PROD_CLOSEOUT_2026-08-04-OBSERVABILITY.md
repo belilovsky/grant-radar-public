@@ -2,7 +2,7 @@
 
 ## Релиз
 
-- кодовый релиз: `27535bdd9e1f5a096762a66ece043f74be0795e0`;
+- кодовый релиз: `5b6b8c83a82ffddd52d81745565cb2a74cfc1e02`;
 - публичный домен: `https://qaz.fund`;
 - публичный маркер подтверждает тот же SHA;
 - развёртывание: `/opt/grant-radar` на production-host;
@@ -23,7 +23,7 @@
 
 ## Проверки
 
-- `499 passed` — полный набор тестов;
+- `501 passed` — полный набор тестов;
 - Black, isort, flake8, mypy, vulture — без замечаний;
 - `compileall` и `pip check` — без ошибок;
 - `pip-audit` для PyPI-зависимостей — `No known vulnerabilities found`;
@@ -31,6 +31,8 @@
   `vendor/qazstack-1.40.0-py3-none-any.whl` и отсутствует в индексе PyPI;
 - production smoke: `status=ok`, `394` релевантные открытые записи, `26`
   включённых источников, stale/unknown источников `0`;
+- operator health после восстановления UNICEF: `status=ok`, unresolved
+  `failed_runs=[]`; исправленная ошибка остаётся в `recent_runs` для аудита;
 - браузерные проверки desktop/mobile для RU, ҚАЗ и EN: переполнения и
   консольные ошибки не обнаружены.
 
