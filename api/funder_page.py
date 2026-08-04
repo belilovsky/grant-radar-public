@@ -558,6 +558,8 @@ def render_funder_page(
       --panel: var(--color-surface);
       --panel-subtle: color-mix(in oklab, var(--panel), var(--av-color-background) 28%);
       --panel-wash: color-mix(in oklab, var(--panel), var(--av-color-background) 42%);
+      --panel-wash-section: color-mix(in oklab, var(--panel), var(--av-color-background) 20%);
+      --panel-wash-card: color-mix(in oklab, var(--panel), var(--av-color-background) 32%);
       --line: var(--color-border);
       --muted: var(--color-text-muted);
       --ink: var(--color-text);
@@ -687,9 +689,12 @@ def render_funder_page(
       font-family: var(--av-font-sans, Arial, sans-serif);
     }}
     .section {{
-      padding-top: 18px;
-      margin-top: 18px;
-      border-top: 1px solid var(--line);
+      padding: 16px;
+      margin-top: 14px;
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      background: var(--panel-wash-section);
+      box-shadow: var(--av-shadow-2xs);
     }}
     .section h2 {{
       margin: 0 0 8px;
@@ -731,8 +736,7 @@ def render_funder_page(
     .opportunity-list {{
       display: grid;
       grid-template-columns: 1fr;
-      gap: 0;
-      border-bottom: 1px solid var(--line);
+      gap: 8px;
     }}
     .opportunity-card {{
       display: grid;
@@ -740,13 +744,14 @@ def render_funder_page(
       gap: 24px;
       align-items: start;
       align-content: start;
-      border: 0;
-      border-top: 1px solid var(--line);
-      border-radius: 0;
-      background: transparent;
-      padding: 20px 4px;
-      box-shadow: none;
+      border: 1px solid var(--line-subtle);
+      border-left: 3px solid color-mix(in oklab, var(--brand), white 38%);
+      border-radius: var(--av-radius-md);
+      background: var(--panel-wash-card);
+      padding: 16px 14px;
+      box-shadow: var(--av-shadow-2xs);
     }}
+    .opportunity-card:first-child {{ border-left-color: var(--brand); }}
     .opportunity-head {{
       display: grid;
       grid-template-columns: 1fr;
@@ -819,18 +824,17 @@ def render_funder_page(
     .source-grid {{
       display: grid;
       grid-template-columns: 1fr;
-      gap: 0;
+      gap: 8px;
     }}
     .source-link {{
       display: grid;
       gap: 4px;
-      padding: 10px 2px;
-      border: 0;
-      border-bottom: 1px solid var(--line);
-      border-radius: 0;
-      background: transparent;
+      padding: 12px;
+      border: 1px solid var(--line-subtle);
+      border-radius: var(--av-radius-md);
+      background: var(--panel-wash-card);
       text-decoration: none;
-      box-shadow: none;
+      box-shadow: var(--av-shadow-2xs);
     }}
     .source-link strong {{
       font-size: 15px;
@@ -947,7 +951,8 @@ def render_funder_page(
       .opportunity-head {{
         grid-template-columns: 1fr;
       }}
-      .opportunity-card {{ padding: 18px 2px; }}
+      .section {{ padding: 14px; }}
+      .opportunity-card {{ padding: 14px 12px; }}
       .card-actions {{
         display: grid;
         grid-template-columns: repeat(2, minmax(0, 1fr));

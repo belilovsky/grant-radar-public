@@ -3739,6 +3739,10 @@ def test_funder_page_renders_public_profile(monkeypatch):
     assert "<h1>Фонд науки</h1>" in response.text
     assert "Профиль фонда" in response.text
     assert "--brand: var(--color-accent);" in response.text
+    assert "--panel-wash-section:" in response.text
+    assert "background: var(--panel-wash-section);" in response.text
+    assert "background: var(--panel-wash-card);" in response.text
+    assert "border-left: 3px solid color-mix" in response.text
     assert "--av-color-primary-700" not in response.text
     assert "Открытые возможности" in response.text
     assert "min-height: var(--av-control-height-lg);" in response.text
