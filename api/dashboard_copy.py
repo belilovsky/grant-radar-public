@@ -635,8 +635,8 @@ COPY = {
             "Подтверждено {known} из {total}. На источнике проверьте: {missing}."
         ),
         "detail_compute_readiness": (
-            "QazCompute: {score} / 100, {tier}. Это техническая оценка полноты, "
-            "не решение о праве на участие."
+            "Оценка полноты данных: {score} / 100, {tier}. Это вспомогательный "
+            "показатель, а не решение о праве на участие."
         ),
         "detail_compute_ready": "данных достаточно",
         "detail_compute_watch": "нужна сверка",
@@ -1710,8 +1710,8 @@ COPY = {
             "{known} of {total} fields confirmed. Verify at source: {missing}."
         ),
         "detail_compute_readiness": (
-            "QazCompute: {score} / 100, {tier}. This is a technical completeness "
-            "signal, not an eligibility decision."
+            "Data completeness: {score} / 100, {tier}. This is a supporting "
+            "indicator, not an eligibility decision."
         ),
         "detail_compute_ready": "data is sufficient",
         "detail_compute_watch": "review needed",

@@ -80,7 +80,8 @@ def test_root_renders_service_landing(monkeypatch):
     assert "avds-source-card" in response.text
     assert "avds-source-card__icon" in response.text
     assert "detail-compute-readiness-text" in response.text
-    assert "QazCompute:" in response.text
+    assert "Оценка полноты данных:" in response.text
+    assert "QazCompute:" not in response.text
     assert "avds-source-card__arrow" in response.text
     assert 'data-avds-component="source-icon"' in response.text
     assert "avds-document-row" in response.text
