@@ -19,11 +19,13 @@
   descriptions or excerpts.
 - Made source-language fallback explicit in the dashboard, opportunity and
   funder pages; it is not presented as an approved translation.
+- Refreshed the QazStack contract evidence and made the checked-in contract
+  fail tests when it drifts from the runtime contract.
 - Documented the language-surface and translation holdout boundary.
 
 ## Verification
 
-- `./.venv/bin/python -m pytest -q`: 471 passed.
+- `./.venv/bin/python -m pytest -q`: 473 passed.
 - `make lint`: Black, isort, flake8, mypy and vulture passed.
 - `git diff --check`: passed; working tree clean and branch matches origin.
 - Production smoke: passed; 26 sources, 393 open relevant opportunities, 0
@@ -32,6 +34,9 @@
   deadlines, detail statuses, or forbidden text.
 - RU and EN NLP audits: 150 records per locale, zero issues.
 - `/ready`: database backend healthy, 1280 records.
+- Translation readiness remains intentionally held: `kk_content_coverage_rate`
+  is `0.0`; source-language metadata is present for 45 of 616 records, while
+  reviewer, quality and approval metadata are not present.
 - Browser proof for `/insights?lang=kk` and a live opportunity detail:
   `lang=kk`, Kazakh headings, transparent source fallback, and no horizontal
   overflow at 390px and 2560px viewports.
