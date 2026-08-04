@@ -166,6 +166,13 @@ COPY: dict[str, dict[str, str]] = {
     },
 }
 
+_KK_SOURCE_LABELS = {
+    "kazakhstan_domestic_support": "Қазақстандағы қолдау бағдарламалары",
+    "national_institutes_of_health": "АҚШ Ұлттық денсаулық сақтау институттары (NIH)",
+    "world_bank": "Дүниежүзілік банк",
+    "united_nations_development_programme": "БҰҰ-ның Даму бағдарламасы (БҰҰДБ)",
+}
+
 
 def _copy(lang: str) -> dict[str, str]:
     if lang == "kk":
@@ -209,6 +216,12 @@ def _source_label(raw: str, lang: str) -> str:
     if not value:
         return "–"
     label_map = dashboard_copy(lang).get("label_map")
+    if lang == "kk":
+        localized = _KK_SOURCE_LABELS.get(
+            value.lower().replace("-", "_").replace(" ", "_")
+        )
+        if localized:
+            return localized
     if isinstance(label_map, dict):
         normalized = value.lower().replace("-", "_").replace(" ", "_")
         mapped = label_map.get(normalized) or label_map.get(value.lower())

@@ -3505,6 +3505,10 @@ def test_insights_source_labels_hide_adapter_identifiers():
     )
     assert _source_label("world_bank", "ru") == "Всемирный банк"
     assert _source_label("kazakhstan_domestic_support", "en") == "KZ domestic support"
+    assert _source_label("world_bank", "kk") == "Дүниежүзілік банк"
+    assert _source_label("United Nations Development Programme", "kk") == (
+        "БҰҰ-ның Даму бағдарламасы (БҰҰДБ)"
+    )
     assert _source_label("custom_source", "ru") == "custom source"
 
 
