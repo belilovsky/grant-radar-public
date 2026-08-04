@@ -3341,6 +3341,19 @@ def render_dashboard(
     async function shareCurrentView() {{
       syncUrlState();
       const href = window.location.href;
+      if (typeof navigator.share === "function") {{
+        try {{
+          await navigator.share({{
+            title: document.title,
+            text: copy.share_view,
+            url: href
+          }});
+          setSavedViewNotice(copy.saved_view_shared);
+          return;
+        }} catch (error) {{
+          if (error && error.name === "AbortError") return;
+        }}
+      }}
       try {{
         await navigator.clipboard.writeText(href);
         setSavedViewNotice(copy.saved_view_shared);

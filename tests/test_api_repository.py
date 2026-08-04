@@ -534,6 +534,7 @@ def test_root_renders_service_landing(monkeypatch):
     assert "setSavedViewNotice(copy.saved_view_shared);" in response.text
     assert "window.alert(" not in response.text
     assert "window.prompt(copy.saved_view_share_prompt, href);" in response.text
+    assert "navigator.share" in response.text
     assert 'aria-pressed="true"' in response.text
     assert "goToView(button.dataset.view)" in response.text
     assert "function goToView(view, options = {})" in response.text
@@ -3027,8 +3028,10 @@ def test_opportunity_page_renders_public_permalink(monkeypatch):
     assert "Как подать" in response.text
     assert "Скопировать справку" in response.text
     assert 'id="copy-working-brief"' in response.text
+    assert 'id="share-opportunity"' in response.text
     assert 'id="copy-working-brief-status"' in response.text
     assert "Рабочая справка скопирована." in response.text
+    assert "navigator.share" in response.text
     assert "Перед подачей" in response.text
     assert "Право на участие" in response.text
     assert "Закупочная документация" in response.text

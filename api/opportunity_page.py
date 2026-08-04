@@ -905,6 +905,9 @@ def render_opportunity_page(
     brief_prompt_json = json.dumps(
         str(copy["detail_copy_brief_prompt"]), ensure_ascii=False
     )
+    share_title_json = json.dumps(title, ensure_ascii=False).replace("<", "\\u003c")
+    share_done_json = json.dumps(str(copy["detail_share_done"]), ensure_ascii=False)
+    share_prompt_json = json.dumps(str(copy["detail_share_prompt"]), ensure_ascii=False)
     og_locale = escape(active_lang.replace("-", "_") + "_KZ", quote=True)
     canonical_url = _absolute_href(site_origin, canonical_path)
     catalog_url = _absolute_href(site_origin, _catalog_path(root_path, active_lang))
@@ -1792,6 +1795,9 @@ def render_opportunity_page(
             <button class="button slim" type="button" id="copy-working-brief">
               {escape(str(copy["detail_copy_brief"]))}
             </button>
+            <button class="button slim" type="button" id="share-opportunity">
+              {escape(str(copy["detail_share"]))}
+            </button>
             {application_button}
           </div>
           <p class="hero-action-status" id="copy-working-brief-status" aria-live="polite"></p>
@@ -1862,6 +1868,30 @@ def render_opportunity_page(
           status.textContent = doneMessage;
         }} catch {{
           window.prompt(promptLabel, brief);
+        }}
+      }});
+      const shareButton = document.getElementById("share-opportunity");
+      const shareStatus = document.getElementById("copy-working-brief-status");
+      const shareTitle = {share_title_json};
+      const shareDoneMessage = {share_done_json};
+      const sharePromptLabel = {share_prompt_json};
+      shareButton?.addEventListener("click", async () => {{
+        const shareUrl = window.location.href;
+        if (typeof navigator.share === "function") {{
+          try {{
+            await navigator.share({{ title: shareTitle, text: shareTitle, url: shareUrl }});
+            if (shareStatus) shareStatus.textContent = shareDoneMessage;
+            return;
+          }} catch (error) {{
+            if (error && error.name === "AbortError") return;
+          }}
+        }}
+        try {{
+          if (!navigator.clipboard || !window.isSecureContext) throw new Error("clipboard");
+          await navigator.clipboard.writeText(shareUrl);
+          if (shareStatus) shareStatus.textContent = shareDoneMessage;
+        }} catch {{
+          window.prompt(sharePromptLabel, shareUrl);
         }}
       }});
     }})();

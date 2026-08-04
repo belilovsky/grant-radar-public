@@ -27,6 +27,8 @@
   explicit verification, source language and field confidence separate.
 - Added the benchmark and upgrade plan for the next discovery, workflow,
   funder-graph and visualization slices.
+- Added mobile-friendly system sharing for filtered catalog links and individual
+  opportunity cards, with clipboard and prompt fallbacks.
 
 ## Verification
 
