@@ -134,6 +134,21 @@ def run_smoke(
                 f"&deadline_after={deadline_after}"
             ),
         )
+        compare_ids = [
+            str(item.get("id") or "")
+            for item in opportunities[:4]
+            if str(item.get("id") or "")
+        ]
+        comparison = _get_json(
+            client,
+            base_url,
+            f"/compare.json?ids={','.join(compare_ids)}&lang=ru",
+        )
+        comparison_head = _head(
+            client,
+            base_url,
+            f"/compare.json?ids={','.join(compare_ids)}&lang=ru",
+        )
         ndjson_response = client.get(
             _url(base_url, "/opportunities.ndjson?limit=20&min_score=0.3")
         )
@@ -250,6 +265,10 @@ def run_smoke(
             f"Notification contract: "
             f"{_url(base_url, '/.well-known/notification-contract.json')}" in llms
         ),
+        "llms_comparison": (
+            "Comparison JSON: "
+            f"{_url(base_url, '/compare.json')}?ids={{id}},{{id}}&lang=ru|kk|en" in llms
+        ),
         "llms_ai_guidance": "## AI consumption guidance" in llms,
         "llms_ndjson_guidance": (
             "Prefer compact Opportunities NDJSON for bulk discovery reads" in llms
@@ -324,6 +343,16 @@ def run_smoke(
             (discovery.get("contracts") or {}).get("notifications") or ""
         )
         == _url(base_url, "/.well-known/notification-contract.json"),
+        "site_discovery_comparison": str(
+            (discovery.get("data_endpoints") or {}).get("compare_json") or ""
+        )
+        == _url(base_url, "/compare.json"),
+        "comparison_contract": (
+            comparison.get("schema_version") == "comparison.v1"
+            and comparison.get("status") in {"ready", "partial", "insufficient"}
+            and len(comparison.get("cards") or []) <= 4
+            and _is_public_cacheable(comparison_head, 60)
+        ),
         "qazstack_contract": (
             qazstack_contract.get("schema_version") == "qazstack-consumer-v1"
             and qazstack_contract.get("qazstack_version") == "1.40.0"

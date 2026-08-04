@@ -42,6 +42,9 @@
 - Added `notification-v1` as an explicit delivery-disabled contract and
   documented its activation gate; no subscription UI, notification worker or
   server-side personal data was introduced.
+- Added the bounded `comparison.v1` read model for two to four public cards;
+  field coverage and unknown values remain explicit, with no eligibility verdict
+  or synthetic winner.
 
 ## Verification
 
@@ -68,6 +71,8 @@
   `status=not_enabled`, `delivery.enabled=false` and
   `delivery.worker_running=false`; its URL is present in discovery, `llms.txt`
   and the ecosystem manifest.
+- `/compare.json` verified as a cacheable machine-readable read model; the
+  production smoke checks its schema, bounded card count and discovery links.
 - Browser proof for `/insights?lang=kk` and a live opportunity detail:
   `lang=kk`, Kazakh headings, transparent source fallback, and no horizontal
   overflow at 390px and 2560px viewports.

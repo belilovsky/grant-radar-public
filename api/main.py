@@ -29,6 +29,11 @@ from starlette.middleware.gzip import GZipMiddleware
 from starlette.middleware.trustedhost import TrustedHostMiddleware
 
 from api.avds import AVDS_CSS
+from api.comparison import (
+    MAX_COMPARISON_ITEMS,
+    build_comparison_snapshot,
+    parse_comparison_ids,
+)
 from api.dashboard import (
     GOOGLE_SITE_VERIFICATION_CONTENT,
     GOOGLE_SITE_VERIFICATION_FILENAME,
@@ -135,6 +140,7 @@ _PUBLIC_FAST_CACHE_PATHS = {
     "/.well-known/qazstack-consumer.json",
     "/.well-known/qdev-ecosystem.json",
     "/.well-known/notification-contract.json",
+    "/compare.json",
     "/coverage",
     "/funders",
     "/insights.json",
@@ -1535,6 +1541,52 @@ async def public_insights_json(request: Request) -> JSONResponse:
     return response
 
 
+@app.api_route("/compare.json", methods=["GET", "HEAD"], include_in_schema=False)
+async def public_compare_json(
+    request: Request,
+    ids: str | None = Query(None, max_length=2000),
+    lang: str | None = Query(None),
+) -> JSONResponse:
+    """Return a source-grounded comparison of up to four public cards."""
+
+    try:
+        requested_ids = parse_comparison_ids(ids)
+    except ValueError as exc:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=str(exc),
+        ) from exc
+    if len(requested_ids) > MAX_COMPARISON_ITEMS:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=f"comparison supports at most {MAX_COMPARISON_ITEMS} items",
+        )
+
+    root_path = _root_path(request)
+    active_lang = _public_lang(str(lang or request.query_params.get("lang") or ""))
+    selected_items = _cached_public_scope_items(content_lang=active_lang)
+    payload = build_comparison_snapshot(
+        selected_items,
+        requested_ids,
+        lang=active_lang,
+        links={
+            "human": _public_url(
+                request,
+                root_path,
+                f"/compare?ids={','.join(requested_ids)}&lang={active_lang}",
+            ),
+            "catalog": _public_url(
+                request,
+                root_path,
+                f"/?lang={active_lang}#opportunities",
+            ),
+        },
+    )
+    response = JSONResponse(payload)
+    response.headers["Cache-Control"] = "public, max-age=60, stale-while-revalidate=300"
+    return response
+
+
 @app.api_route(
     "/terms",
     methods=["GET", "HEAD"],
@@ -1808,6 +1860,7 @@ async def llms_txt(request: Request) -> Response:
     status_page = _public_url(request, root_path, "/status")
     coverage = _public_url(request, root_path, "/coverage")
     insights_json = _public_url(request, root_path, "/insights.json")
+    compare_json = _public_url(request, root_path, "/compare.json")
     opportunities = _public_url(request, root_path, "/opportunities")
     opportunities_ndjson = _public_url(request, root_path, "/opportunities.ndjson")
     opportunities_ndjson_compact = _public_url(
@@ -1838,6 +1891,7 @@ async def llms_txt(request: Request) -> Response:
                 f"- Source status page: {status_page}",
                 f"- Catalog insights: {insights}",
                 f"- Catalog insights JSON: {insights_json}",
+                f"- Comparison JSON: {compare_json}?ids={{id}},{{id}}&lang=ru|kk|en",
                 f"- Terms of use: {terms}",
                 f"- Data policy: {data_policy}",
                 f"- Data attribution: {attribution}",
@@ -1850,6 +1904,7 @@ async def llms_txt(request: Request) -> Response:
                 "- Opportunity detail JSON: /opportunities/{id}?lang=kk|ru|en",
                 f"- Digest JSON: {digest}",
                 f"- Insights JSON: {insights_json}?lang=ru|kk|en",
+                f"- Comparison JSON: {compare_json}?ids={{id}},{{id}}&lang=ru|kk|en",
                 f"- Notification contract JSON: {notification_contract_url}",
                 "",
                 "## AI consumption guidance",
@@ -1872,6 +1927,7 @@ async def llms_txt(request: Request) -> Response:
                 "- Funder page: /funder/{slug}?lang=kk|ru|en",
                 "- Insights page: /insights?lang=kk|ru|en",
                 "- Insights JSON: /insights.json?lang=kk|ru|en",
+                "- Comparison JSON: /compare.json?ids={id},{id}&lang=kk|ru|en",
                 "- Notification contract: /.well-known/notification-contract.json",
                 "- Terms page: /terms?lang=kk|ru|en",
                 "- Data policy page: /data-policy?lang=kk|ru|en",
@@ -1925,6 +1981,7 @@ async def site_discovery(request: Request) -> Response:
     status_page = _public_url(request, root_path, "/status")
     coverage = _public_url(request, root_path, "/coverage")
     insights_json = _public_url(request, root_path, "/insights.json")
+    compare_json = _public_url(request, root_path, "/compare.json")
     opportunities = _public_url(request, root_path, "/opportunities")
     opportunities_ndjson = _public_url(request, root_path, "/opportunities.ndjson")
     opportunities_ndjson_compact = _public_url(
@@ -1978,6 +2035,8 @@ async def site_discovery(request: Request) -> Response:
             "digest": "/digest?lang={lang}",
             "insights": "/insights?lang={lang}",
             "insights_json": "/insights.json?lang={lang}",
+            "compare": "/compare?ids={id},{id}&lang={lang}",
+            "compare_json": "/compare.json?ids={id},{id}&lang={lang}",
             "notification_contract": "/.well-known/notification-contract.json",
             "terms": "/terms?lang={lang}",
             "data_policy": "/data-policy?lang={lang}",
@@ -1991,6 +2050,8 @@ async def site_discovery(request: Request) -> Response:
             "digest": digest,
             "insights": insights,
             "insights_json": insights_json,
+            "compare": compare_json,
+            "compare_json": compare_json,
             "notification_contract": notification_contract_url,
             "terms": terms,
             "data_policy": data_policy,
@@ -2048,6 +2109,7 @@ async def site_discovery(request: Request) -> Response:
             "public funder pages",
             "public insights page",
             "machine-readable insights snapshot",
+            "machine-readable opportunity comparison",
             "notification contract (delivery disabled)",
             "public data-policy pages",
             "machine-readable opportunity api",

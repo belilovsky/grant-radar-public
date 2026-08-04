@@ -1120,6 +1120,10 @@ def test_marketing_endpoints_are_exposed(monkeypatch):
     assert "Prefer compact Opportunities NDJSON for bulk discovery reads" in llms.text
     assert "Opportunity detail JSON: /opportunities/{id}?lang=kk|ru|en" in llms.text
     assert "Digest JSON: http://testserver/digest" in llms.text
+    assert (
+        "Comparison JSON: http://testserver/compare.json?ids={id},{id}&lang=ru|kk|en"
+        in llms.text
+    )
     assert "Opportunity page: /opportunity/{id}?lang=kk|ru|en" in llms.text
     assert "Funder page: /funder/{slug}?lang=kk|ru|en" in llms.text
     assert "Insights page: /insights?lang=kk|ru|en" in llms.text
@@ -1168,6 +1172,8 @@ def test_marketing_endpoints_are_exposed(monkeypatch):
             "digest": "/digest?lang={lang}",
             "insights": "/insights?lang={lang}",
             "insights_json": "/insights.json?lang={lang}",
+            "compare": "/compare?ids={id},{id}&lang={lang}",
+            "compare_json": "/compare.json?ids={id},{id}&lang={lang}",
             "notification_contract": "/.well-known/notification-contract.json",
             "terms": "/terms?lang={lang}",
             "data_policy": "/data-policy?lang={lang}",
@@ -1183,6 +1189,8 @@ def test_marketing_endpoints_are_exposed(monkeypatch):
             "digest": "http://testserver/digest",
             "insights": "http://testserver/insights",
             "insights_json": "http://testserver/insights.json",
+            "compare": "http://testserver/compare.json",
+            "compare_json": "http://testserver/compare.json",
             "notification_contract": (
                 "http://testserver/.well-known/notification-contract.json"
             ),
@@ -1244,6 +1252,7 @@ def test_marketing_endpoints_are_exposed(monkeypatch):
             "public funder pages",
             "public insights page",
             "machine-readable insights snapshot",
+            "machine-readable opportunity comparison",
             "notification contract (delivery disabled)",
             "public data-policy pages",
             "machine-readable opportunity api",

@@ -80,9 +80,23 @@ def _transport(
             return httpx.Response(
                 200,
                 json=[
-                    {"title": opportunity_title, "source": "world_bank_kazakhstan"}
-                    for _ in range(44)
+                    {
+                        "id": f"00000000-0000-0000-0000-{index + 1:012d}",
+                        "title": opportunity_title,
+                        "source": "world_bank_kazakhstan",
+                    }
+                    for index in range(44)
                 ],
+            )
+        if endpoint_path == "/compare.json":
+            return httpx.Response(
+                200,
+                json={
+                    "schema_version": "comparison.v1",
+                    "status": "ready",
+                    "cards": [{"id": "sample"}, {"id": "sample-2"}],
+                },
+                headers={"cache-control": "public, max-age=60"},
             )
         if endpoint_path == "/opportunities.ndjson":
             return httpx.Response(
@@ -136,6 +150,8 @@ def _transport(
                     f"{public_root}/.well-known/avds-ui-contract.json\n"
                     f"- Notification contract: "
                     f"{public_root}/.well-known/notification-contract.json\n"
+                    f"- Comparison JSON: "
+                    f"{public_root}/compare.json?ids={{id}},{{id}}&lang=ru|kk|en\n"
                     f"- Source status page: {public_root}/status\n"
                     f"- Coverage JSON: {public_root}/coverage\n"
                     f"- Opportunities JSON: {public_root}/opportunities\n"
@@ -215,6 +231,8 @@ def _transport(
                         "digest": "/digest?lang={lang}",
                         "insights": "/insights?lang={lang}",
                         "insights_json": "/insights.json?lang={lang}",
+                        "compare": "/compare?ids={id},{id}&lang={lang}",
+                        "compare_json": "/compare.json?ids={id},{id}&lang={lang}",
                         "notification_contract": (
                             "/.well-known/notification-contract.json"
                         ),
@@ -229,6 +247,8 @@ def _transport(
                         "digest": f"{public_root}/digest",
                         "insights": f"{public_root}/insights",
                         "insights_json": f"{public_root}/insights.json",
+                        "compare": f"{public_root}/compare.json",
+                        "compare_json": f"{public_root}/compare.json",
                         "notification_contract": (
                             f"{public_root}/.well-known/notification-contract.json"
                         ),
@@ -251,6 +271,7 @@ def _transport(
                         "public opportunity pages",
                         "public funder pages",
                         "machine-readable opportunity api",
+                        "machine-readable opportunity comparison",
                         "machine-readable source coverage",
                         "official source links",
                         "notification contract (delivery disabled)",

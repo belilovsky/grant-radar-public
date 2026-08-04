@@ -27,6 +27,8 @@ historic backup filenames, and maintainer-only evidence.
   public guidance pages linked from every public surface.
 - `GET` and `HEAD /.well-known/notification-contract.json` expose the explicit
   delivery-disabled boundary; the route must not imply an active subscription.
+- `GET` and `HEAD /compare.json?ids=...` expose the bounded comparison read model;
+  missing values must remain explicit and the endpoint must not imply eligibility.
 - `GET` and `HEAD /opportunities/{id}` return public opportunity detail availability.
 - `GET` and `HEAD /robots.txt`, `/sitemap.xml`, `/llms.txt`, and `/site-discovery.json` are public.
 - `GET /docs` and `GET /openapi.json` must stay reachable for public API consumers.
@@ -86,6 +88,7 @@ curl -fsSI https://example.org/favicon.ico
 curl -fsS https://example.org/llms.txt
 curl -fsS https://example.org/site-discovery.json
 curl -fsS https://example.org/.well-known/notification-contract.json
+curl -fsS 'https://example.org/compare.json?ids=<id>,<id>&lang=ru'
 curl -fsSI 'https://example.org/status?lang=ru'
 curl -fsSI 'https://example.org/operator?lang=ru'
 curl -fsSI https://example.org/docs
