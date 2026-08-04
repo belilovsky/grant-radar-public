@@ -3517,6 +3517,11 @@ def test_public_info_pages_are_linkable(monkeypatch):
         assert response.status_code == 200
         assert marker in response.text
         assert 'data-avds="grant-radar"' in response.text
+        language_nav = response.text.split('<nav class="langs"', 1)[1].split(
+            "</nav>", 1
+        )[0]
+        assert language_nav.index('lang="kk"') < language_nav.index('lang="ru"')
+        assert language_nav.index('lang="ru"') < language_nav.index('lang="en"')
 
 
 def test_sitemap_includes_public_story_pages(monkeypatch):
