@@ -51,6 +51,7 @@ historic backup filenames, and maintainer-only evidence.
 ```bash
 make lint
 make ci-fast
+PYTHONPATH=. ./.venv/bin/python -m pytest -q tests/test_workbench.py
 PYTHONPATH=. ./.venv/bin/python -m scripts.production_smoke --base-url https://example.org
 PYTHONPATH=. ./.venv/bin/python -m scripts.content_audit --base-url https://example.org
 PYTHONPATH=. ./.venv/bin/python -m scripts.nlp_quality_audit --base-url https://example.org --lang ru --limit 150

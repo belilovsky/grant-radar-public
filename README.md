@@ -114,6 +114,12 @@ Useful commands:
 - `make db-upgrade`
 - `make show-runs`
 
+The local workbench export creates a safe editorial handoff from public
+Opportunities NDJSON. It writes normalized `workbench.json`,
+`opportunities.csv`, and `README.md` files without carrying the `raw` payload,
+storing user selections, or enabling notifications. See
+[docs/WORKBENCH_EXPORT.md](docs/WORKBENCH_EXPORT.md).
+
 ## Active source coverage
 
 Current ingestion includes public programs and monitors such as:
