@@ -2434,7 +2434,20 @@ async def operator_health(_: None = Depends(require_admin_token)) -> dict[str, A
         for row in coverage_payload.get("sources", [])
         if row.get("enabled") and row.get("freshness_status") == "stale"
     ]
-    failed_runs = [row for row in recent_runs if row.get("status") == "error"]
+    # Keep the full run history for diagnosis, but do not leave the operator
+    # surface in an alert state after a source has recovered.  A failure is
+    # unresolved only while it is the latest observed run for that source.
+    latest_run_by_source: dict[str, dict[str, Any]] = {}
+    for row in recent_runs:
+        source = str(row.get("source") or "").strip()
+        if source and source not in latest_run_by_source:
+            latest_run_by_source[source] = row
+    failed_runs = [
+        row
+        for row in recent_runs
+        if row.get("status") == "error"
+        and latest_run_by_source.get(str(row.get("source") or "").strip()) is row
+    ]
     return {
         "status": "attention" if stale_sources or failed_runs else "ok",
         "generated_at": datetime.now(UTC).isoformat(),

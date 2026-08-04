@@ -3984,6 +3984,35 @@ def test_operator_health_requires_token_and_returns_actionable_summary(monkeypat
     assert data["failed_runs"][0]["error"] == "sample failure"
 
 
+def test_operator_health_clears_recovered_source_failure(monkeypatch):
+    _reset_api_state(monkeypatch)
+    monkeypatch.setenv("GRANT_RADAR_ADMIN_TOKEN", "secret")
+    monkeypatch.setattr(
+        api_main,
+        "_operator_run_rows",
+        lambda limit=50: [
+            {"id": 9, "source": "unicef_kazakhstan", "status": "ok"},
+            {
+                "id": 8,
+                "source": "unicef_kazakhstan",
+                "status": "error",
+                "error": "HTTP 403",
+            },
+        ],
+    )
+    client = TestClient(api_main.app)
+
+    response = client.get(
+        "/operator/health", headers={"Authorization": "Bearer secret"}
+    )
+
+    assert response.status_code == 200
+    data = response.json()
+    assert data["status"] == "ok"
+    assert data["failed_runs"] == []
+    assert len(data["recent_runs"]) == 2
+
+
 def test_operator_run_rows_accepts_success_without_error_text(monkeypatch):
     from types import SimpleNamespace
 
