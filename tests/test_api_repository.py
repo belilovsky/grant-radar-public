@@ -1779,8 +1779,10 @@ def test_coverage_reports_source_counts(monkeypatch):
     assert data["items"] == 2
     assert data["enabled_sources"] >= 9
     assert data["fresh_sources"] >= 2
+    assert data["fresh_sources"] <= data["enabled_sources"]
     assert data["stale_sources"] == 0
     assert data["unknown_freshness_sources"] >= 1
+    assert data["unknown_freshness_sources"] <= data["enabled_sources"]
     sources = {item["slug"]: item for item in data["sources"]}
     assert sources["world_bank_kazakhstan"]["items"] == 1
     assert sources["world_bank_kazakhstan"]["relevant_open_items"] == 1

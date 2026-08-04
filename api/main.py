@@ -1218,13 +1218,19 @@ def _cached_coverage_payload() -> dict[str, Any]:
         "enabled_sources": sum(1 for row in source_rows if row["enabled"]),
         "relevant_open_items": sum(row["relevant_open_items"] for row in source_rows),
         "fresh_sources": sum(
-            1 for row in source_rows if row.get("freshness_status") == "fresh"
+            1
+            for row in source_rows
+            if row.get("enabled") and row.get("freshness_status") == "fresh"
         ),
         "stale_sources": sum(
-            1 for row in source_rows if row.get("freshness_status") == "stale"
+            1
+            for row in source_rows
+            if row.get("enabled") and row.get("freshness_status") == "stale"
         ),
         "unknown_freshness_sources": sum(
-            1 for row in source_rows if row.get("freshness_status") == "unknown"
+            1
+            for row in source_rows
+            if row.get("enabled") and row.get("freshness_status") == "unknown"
         ),
     }
     with _public_items_cache_lock:
@@ -2418,7 +2424,7 @@ async def operator_health(_: None = Depends(require_admin_token)) -> dict[str, A
             "age_hours": row.get("age_hours"),
         }
         for row in coverage_payload.get("sources", [])
-        if row.get("freshness_status") == "stale"
+        if row.get("enabled") and row.get("freshness_status") == "stale"
     ]
     failed_runs = [row for row in recent_runs if row.get("status") == "error"]
     return {
