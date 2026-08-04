@@ -15,6 +15,7 @@ from typing import Any
 from qazstack.opportunities import public_lifecycle
 
 from api.avds import AVDS_CSS, AVDS_FONT_HEAD
+from api.dashboard_copy import dashboard_copy
 from api.public_meta import analytics_head_html, og_image_url
 from core.models import Opportunity
 
@@ -199,6 +200,21 @@ def _label(raw: str, lang: str) -> str:
     if lang == "kk":
         return values[2]
     return values[0]
+
+
+def _source_label(raw: str, lang: str) -> str:
+    """Render a source name for people without exposing adapter identifiers."""
+
+    value = str(raw or "").strip()
+    if not value:
+        return "–"
+    label_map = dashboard_copy(lang).get("label_map")
+    if isinstance(label_map, dict):
+        normalized = value.lower().replace("-", "_").replace(" ", "_")
+        mapped = label_map.get(normalized) or label_map.get(value.lower())
+        if isinstance(mapped, str) and mapped.strip():
+            return mapped.strip()
+    return value.replace("_", " ").strip()
 
 
 def _count_rows(
@@ -423,6 +439,7 @@ def render_insights_page(
     type_rows = _count_rows(Counter(snapshot["formats"]), {}, 6)
     type_rows = [(_label(label, lang), value) for label, value in type_rows]
     source_rows = _count_rows(Counter(snapshot["sources"]), {}, 6)
+    source_rows = [(_source_label(label, lang), value) for label, value in source_rows]
     deadline_rows = [
         (copy["within_30"], int(snapshot["deadlines"]["buckets"]["within_30"])),
         (copy["within_90"], int(snapshot["deadlines"]["buckets"]["within_90"])),
@@ -474,7 +491,7 @@ def render_insights_page(
                 "<div>"
                 f'<a class="upcoming-title" href="{escape(detail_href, quote=True)}">'
                 f"{escape(str(row['title']))}</a>"
-                f'<span class="upcoming-source">{escape(str(row["source"]))}</span>'
+                f'<span class="upcoming-source">{escape(_source_label(str(row["source"]), lang))}</span>'
                 "</div>"
                 f'<span class="upcoming-days">{escape(_days_label(int(row["days_left"]), lang=lang, copy=copy))}</span>'
                 "</li>"

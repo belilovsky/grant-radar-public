@@ -9,7 +9,7 @@ from api import funder_page as funder_page_module
 from api import main as api_main
 from api import opportunity_page as opportunity_page_module
 from api.dashboard import dashboard_copy
-from api.insights_page import build_insights_snapshot
+from api.insights_page import _source_label, build_insights_snapshot
 from core.db import SqlRepository
 from core.models import (
     Opportunity,
@@ -3496,6 +3496,16 @@ def test_insights_snapshot_is_reproducible(monkeypatch):
         "rolling": 1,
         "no_deadline": 0,
     }
+
+
+def test_insights_source_labels_hide_adapter_identifiers():
+    assert _source_label("kazakhstan_domestic_support", "ru") == "Поддержка РК"
+    assert _source_label("national_institutes_of_health", "ru") == (
+        "Национальные институты здравоохранения США (NIH)"
+    )
+    assert _source_label("world_bank", "ru") == "Всемирный банк"
+    assert _source_label("kazakhstan_domestic_support", "en") == "KZ domestic support"
+    assert _source_label("custom_source", "ru") == "custom source"
 
 
 def test_public_info_pages_are_linkable(monkeypatch):
