@@ -42,6 +42,7 @@ from api.ecosystem import (
 from api.error_page import render_not_found_page
 from api.funder_page import render_funder_page
 from api.insights_page import build_insights_snapshot, render_insights_page
+from api.notification_contract import notification_contract
 from api.operator_page import render_operator_page
 from api.opportunity_detail import build_opportunity_detail
 from api.opportunity_page import render_opportunity_page
@@ -133,6 +134,7 @@ _PUBLIC_FAST_CACHE_PATHS = {
     "/.well-known/avds-ui-contract.json",
     "/.well-known/qazstack-consumer.json",
     "/.well-known/qdev-ecosystem.json",
+    "/.well-known/notification-contract.json",
     "/coverage",
     "/funders",
     "/insights.json",
@@ -1796,6 +1798,9 @@ async def llms_txt(request: Request) -> Response:
     avds_contract = _public_url(
         request, root_path, "/.well-known/avds-ui-contract.json"
     )
+    notification_contract_url = _public_url(
+        request, root_path, "/.well-known/notification-contract.json"
+    )
     insights = _public_url(request, root_path, "/insights")
     terms = _public_url(request, root_path, "/terms")
     data_policy = _public_url(request, root_path, "/data-policy")
@@ -1829,6 +1834,7 @@ async def llms_txt(request: Request) -> Response:
                 f"- Release metadata JSON: {release}",
                 f"- QazStack consumer contract: {qazstack_contract}",
                 f"- AV DS 4 UI contract: {avds_contract}",
+                f"- Notification contract: {notification_contract_url}",
                 f"- Source status page: {status_page}",
                 f"- Catalog insights: {insights}",
                 f"- Catalog insights JSON: {insights_json}",
@@ -1844,6 +1850,7 @@ async def llms_txt(request: Request) -> Response:
                 "- Opportunity detail JSON: /opportunities/{id}?lang=kk|ru|en",
                 f"- Digest JSON: {digest}",
                 f"- Insights JSON: {insights_json}?lang=ru|kk|en",
+                f"- Notification contract JSON: {notification_contract_url}",
                 "",
                 "## AI consumption guidance",
                 (
@@ -1858,12 +1865,14 @@ async def llms_txt(request: Request) -> Response:
                     "- Cache public discovery documents for at least 300 seconds "
                     "unless HTTP headers say otherwise."
                 ),
+                "- Notifications are not enabled; do not infer subscriptions from local saves.",
                 "",
                 "## Public route templates",
                 "- Opportunity page: /opportunity/{id}?lang=kk|ru|en",
                 "- Funder page: /funder/{slug}?lang=kk|ru|en",
                 "- Insights page: /insights?lang=kk|ru|en",
                 "- Insights JSON: /insights.json?lang=kk|ru|en",
+                "- Notification contract: /.well-known/notification-contract.json",
                 "- Terms page: /terms?lang=kk|ru|en",
                 "- Data policy page: /data-policy?lang=kk|ru|en",
                 "- Attribution page: /attribution?lang=kk|ru|en",
@@ -1930,6 +1939,9 @@ async def site_discovery(request: Request) -> Response:
     avds_contract = _public_url(
         request, root_path, "/.well-known/avds-ui-contract.json"
     )
+    notification_contract_url = _public_url(
+        request, root_path, "/.well-known/notification-contract.json"
+    )
     insights = _public_url(request, root_path, "/insights")
     terms = _public_url(request, root_path, "/terms")
     data_policy = _public_url(request, root_path, "/data-policy")
@@ -1948,6 +1960,7 @@ async def site_discovery(request: Request) -> Response:
         "contracts": {
             "qazstack": qazstack_contract,
             "avds4": avds_contract,
+            "notifications": notification_contract_url,
         },
         "languages": ["kk", "ru", "en"],
         "routes": {
@@ -1965,6 +1978,7 @@ async def site_discovery(request: Request) -> Response:
             "digest": "/digest?lang={lang}",
             "insights": "/insights?lang={lang}",
             "insights_json": "/insights.json?lang={lang}",
+            "notification_contract": "/.well-known/notification-contract.json",
             "terms": "/terms?lang={lang}",
             "data_policy": "/data-policy?lang={lang}",
             "attribution": "/attribution?lang={lang}",
@@ -1977,6 +1991,7 @@ async def site_discovery(request: Request) -> Response:
             "digest": digest,
             "insights": insights,
             "insights_json": insights_json,
+            "notification_contract": notification_contract_url,
             "terms": terms,
             "data_policy": data_policy,
             "attribution": attribution,
@@ -2033,6 +2048,7 @@ async def site_discovery(request: Request) -> Response:
             "public funder pages",
             "public insights page",
             "machine-readable insights snapshot",
+            "notification contract (delivery disabled)",
             "public data-policy pages",
             "machine-readable opportunity api",
             "cache-aware ndjson export",
@@ -2064,6 +2080,16 @@ async def public_qazstack_consumer_contract(request: Request) -> Response:
 )
 async def public_avds_ui_contract() -> Response:
     return JSONResponse(avds_ui_contract())
+
+
+@app.api_route(
+    "/.well-known/notification-contract.json",
+    methods=["GET", "HEAD"],
+    include_in_schema=False,
+)
+async def public_notification_contract(request: Request) -> Response:
+    root_path = _root_path(request)
+    return JSONResponse(notification_contract(_public_root_base(request, root_path)))
 
 
 @app.api_route(

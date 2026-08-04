@@ -168,6 +168,12 @@ def run_smoke(
         avds_head = _head(client, base_url, "/.well-known/avds-ui-contract.json")
         ecosystem = _get_json(client, base_url, "/.well-known/qdev-ecosystem.json")
         ecosystem_head = _head(client, base_url, "/.well-known/qdev-ecosystem.json")
+        notification_contract = _get_json(
+            client, base_url, "/.well-known/notification-contract.json"
+        )
+        notification_head = _head(
+            client, base_url, "/.well-known/notification-contract.json"
+        )
 
     _require(health.get("status") == "ok", "health status is not ok")
     _require(
@@ -240,6 +246,10 @@ def run_smoke(
             f"Release metadata JSON: "
             f"{_url(base_url, '/.well-known/release.json')}" in llms
         ),
+        "llms_notification_contract": (
+            f"Notification contract: "
+            f"{_url(base_url, '/.well-known/notification-contract.json')}" in llms
+        ),
         "llms_ai_guidance": "## AI consumption guidance" in llms,
         "llms_ndjson_guidance": (
             "Prefer compact Opportunities NDJSON for bulk discovery reads" in llms
@@ -310,6 +320,10 @@ def run_smoke(
             (discovery.get("contracts") or {}).get("avds4") or ""
         )
         == _url(base_url, "/.well-known/avds-ui-contract.json"),
+        "site_discovery_notification_contract": str(
+            (discovery.get("contracts") or {}).get("notifications") or ""
+        )
+        == _url(base_url, "/.well-known/notification-contract.json"),
         "qazstack_contract": (
             qazstack_contract.get("schema_version") == "qazstack-consumer-v1"
             and qazstack_contract.get("qazstack_version") == "1.40.0"
@@ -320,6 +334,14 @@ def run_smoke(
             avds_contract.get("schema_version") == "avds-ui-contract-v1"
             and (avds_contract.get("avds_source") or {}).get("version") == "4.3.2"
             and _is_public_cacheable(avds_head, 60)
+        ),
+        "notification_contract": (
+            notification_contract.get("schema_version") == "notification-v1"
+            and notification_contract.get("status") == "not_enabled"
+            and (notification_contract.get("delivery") or {}).get("enabled") is False
+            and (notification_contract.get("delivery") or {}).get("worker_running")
+            is False
+            and _is_public_cacheable(notification_head, 60)
         ),
         "ecosystem_contract": (
             ecosystem.get("schema_version") == "qdev-ecosystem-integration-v1"

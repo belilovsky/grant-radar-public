@@ -39,6 +39,9 @@
 - Separated strict open-card counts from the source-coverage aggregate in
   `insights.v1`, so lifecycle `awarded` records cannot inflate the public
   analytical total.
+- Added `notification-v1` as an explicit delivery-disabled contract and
+  documented its activation gate; no subscription UI, notification worker or
+  server-side personal data was introduced.
 
 ## Verification
 
@@ -61,6 +64,10 @@
   deadline buckets, an upcoming-card list and links back to the human page;
   `/insights` exposes the same values with no horizontal overflow at 390px and
   2560px viewports.
+- `/.well-known/notification-contract.json` verified with
+  `status=not_enabled`, `delivery.enabled=false` and
+  `delivery.worker_running=false`; its URL is present in discovery, `llms.txt`
+  and the ecosystem manifest.
 - Browser proof for `/insights?lang=kk` and a live opportunity detail:
   `lang=kk`, Kazakh headings, transparent source fallback, and no horizontal
   overflow at 390px and 2560px viewports.

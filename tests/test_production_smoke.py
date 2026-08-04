@@ -134,6 +134,8 @@ def _transport(
                     f"{public_root}/.well-known/qazstack-consumer.json\n"
                     f"- AV DS 4 UI contract: "
                     f"{public_root}/.well-known/avds-ui-contract.json\n"
+                    f"- Notification contract: "
+                    f"{public_root}/.well-known/notification-contract.json\n"
                     f"- Source status page: {public_root}/status\n"
                     f"- Coverage JSON: {public_root}/coverage\n"
                     f"- Opportunities JSON: {public_root}/opportunities\n"
@@ -194,6 +196,9 @@ def _transport(
                             f"{public_root}/.well-known/qazstack-consumer.json"
                         ),
                         "avds4": (f"{public_root}/.well-known/avds-ui-contract.json"),
+                        "notifications": (
+                            f"{public_root}/.well-known/notification-contract.json"
+                        ),
                     },
                     "languages": ["kk", "ru", "en"],
                     "routes": {
@@ -208,6 +213,11 @@ def _transport(
                         "opportunity": "/opportunity/{id}?lang={lang}",
                         "funder": "/funder/{slug}?lang={lang}",
                         "digest": "/digest?lang={lang}",
+                        "insights": "/insights?lang={lang}",
+                        "insights_json": "/insights.json?lang={lang}",
+                        "notification_contract": (
+                            "/.well-known/notification-contract.json"
+                        ),
                     },
                     "data_endpoints": {
                         "coverage": f"{public_root}/coverage",
@@ -217,6 +227,11 @@ def _transport(
                             f"{public_root}/opportunities.ndjson?compact=true"
                         ),
                         "digest": f"{public_root}/digest",
+                        "insights": f"{public_root}/insights",
+                        "insights_json": f"{public_root}/insights.json",
+                        "notification_contract": (
+                            f"{public_root}/.well-known/notification-contract.json"
+                        ),
                     },
                     "ai_consumption": {
                         "preferred_bulk_export": (
@@ -238,6 +253,7 @@ def _transport(
                         "machine-readable opportunity api",
                         "machine-readable source coverage",
                         "official source links",
+                        "notification contract (delivery disabled)",
                         "read-only public catalog",
                     ],
                 },
@@ -262,6 +278,16 @@ def _transport(
                 },
                 headers={"cache-control": "public, max-age=60"},
             )
+        if endpoint_path == "/.well-known/notification-contract.json":
+            return httpx.Response(
+                200,
+                json={
+                    "schema_version": "notification-v1",
+                    "status": "not_enabled",
+                    "delivery": {"enabled": False, "worker_running": False},
+                },
+                headers={"cache-control": "public, max-age=60"},
+            )
         if endpoint_path == "/.well-known/qdev-ecosystem.json":
             return httpx.Response(
                 200,
@@ -270,6 +296,7 @@ def _transport(
                     "integrations": {
                         "qazstack": {"status": "runtime-proven"},
                         "qazlake": {"direct_write": False},
+                        "notifications": {"delivery_enabled": False},
                     },
                 },
                 headers={"cache-control": "public, max-age=60"},

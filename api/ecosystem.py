@@ -190,6 +190,7 @@ def ecosystem_manifest(origin: str) -> dict[str, Any]:
         "contracts": {
             "qazstack": _url(origin, "/.well-known/qazstack-consumer.json"),
             "avds4": _url(origin, "/.well-known/avds-ui-contract.json"),
+            "notifications": _url(origin, "/.well-known/notification-contract.json"),
             "openapi": _url(origin, "/openapi.json"),
             "discovery": _url(origin, "/site-discovery.json"),
         },
@@ -263,6 +264,15 @@ def ecosystem_manifest(origin: str) -> dict[str, Any]:
                 ],
                 "decision_ready": False,
                 "candidate_jobs": [],
+            },
+            "notifications": {
+                "status": "not-enabled",
+                "mode": "contract-only",
+                "delivery_enabled": False,
+                "reason": (
+                    "Identity, explicit opt-in, delivery receipts, unsubscribe, "
+                    "deletion and retention rules are not enabled yet."
+                ),
             },
             "edpol": {
                 "status": "query-ready",

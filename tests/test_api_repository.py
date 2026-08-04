@@ -1148,6 +1148,9 @@ def test_marketing_endpoints_are_exposed(monkeypatch):
         "contracts": {
             "qazstack": ("http://testserver/.well-known/qazstack-consumer.json"),
             "avds4": "http://testserver/.well-known/avds-ui-contract.json",
+            "notifications": (
+                "http://testserver/.well-known/notification-contract.json"
+            ),
         },
         "languages": ["kk", "ru", "en"],
         "routes": {
@@ -1165,6 +1168,7 @@ def test_marketing_endpoints_are_exposed(monkeypatch):
             "digest": "/digest?lang={lang}",
             "insights": "/insights?lang={lang}",
             "insights_json": "/insights.json?lang={lang}",
+            "notification_contract": "/.well-known/notification-contract.json",
             "terms": "/terms?lang={lang}",
             "data_policy": "/data-policy?lang={lang}",
             "attribution": "/attribution?lang={lang}",
@@ -1179,6 +1183,9 @@ def test_marketing_endpoints_are_exposed(monkeypatch):
             "digest": "http://testserver/digest",
             "insights": "http://testserver/insights",
             "insights_json": "http://testserver/insights.json",
+            "notification_contract": (
+                "http://testserver/.well-known/notification-contract.json"
+            ),
             "terms": "http://testserver/terms",
             "data_policy": "http://testserver/data-policy",
             "attribution": "http://testserver/attribution",
@@ -1237,6 +1244,7 @@ def test_marketing_endpoints_are_exposed(monkeypatch):
             "public funder pages",
             "public insights page",
             "machine-readable insights snapshot",
+            "notification contract (delivery disabled)",
             "public data-policy pages",
             "machine-readable opportunity api",
             "cache-aware ndjson export",
@@ -1287,6 +1295,14 @@ def test_marketing_endpoints_are_exposed(monkeypatch):
     }
     assert client.head("/.well-known/avds-ui-contract.json").status_code == 200
 
+    notifications = client.get("/.well-known/notification-contract.json")
+    assert notifications.status_code == 200
+    assert notifications.json()["schema_version"] == "notification-v1"
+    assert notifications.json()["status"] == "not_enabled"
+    assert notifications.json()["delivery"]["worker_running"] is False
+    assert notifications.json()["public_behavior"]["subscription_ui"] is False
+    assert client.head("/.well-known/notification-contract.json").status_code == 200
+
     ecosystem = client.get("/.well-known/qdev-ecosystem.json")
     assert ecosystem.status_code == 200
     ecosystem_payload = ecosystem.json()
@@ -1299,6 +1315,9 @@ def test_marketing_endpoints_are_exposed(monkeypatch):
         "profile-compatible-local-fallback"
     )
     assert ecosystem_payload["integrations"]["qazcompute"]["decision_ready"] is False
+    assert (
+        ecosystem_payload["integrations"]["notifications"]["delivery_enabled"] is False
+    )
     assert client.head("/.well-known/qdev-ecosystem.json").status_code == 200
 
     release = client.get("/.well-known/release.json")

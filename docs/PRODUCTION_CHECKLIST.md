@@ -25,6 +25,8 @@ historic backup filenames, and maintainer-only evidence.
 - `GET` and `HEAD /insights` render the public data-story view.
 - `GET` and `HEAD /terms`, `/data-policy`, and `/attribution` render concise
   public guidance pages linked from every public surface.
+- `GET` and `HEAD /.well-known/notification-contract.json` expose the explicit
+  delivery-disabled boundary; the route must not imply an active subscription.
 - `GET` and `HEAD /opportunities/{id}` return public opportunity detail availability.
 - `GET` and `HEAD /robots.txt`, `/sitemap.xml`, `/llms.txt`, and `/site-discovery.json` are public.
 - `GET /docs` and `GET /openapi.json` must stay reachable for public API consumers.
@@ -83,6 +85,7 @@ curl -fsSI https://example.org/ready
 curl -fsSI https://example.org/favicon.ico
 curl -fsS https://example.org/llms.txt
 curl -fsS https://example.org/site-discovery.json
+curl -fsS https://example.org/.well-known/notification-contract.json
 curl -fsSI 'https://example.org/status?lang=ru'
 curl -fsSI 'https://example.org/operator?lang=ru'
 curl -fsSI https://example.org/docs
