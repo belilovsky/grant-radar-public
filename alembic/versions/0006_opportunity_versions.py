@@ -85,6 +85,7 @@ def upgrade() -> None:
         sa.column("content_hash", sa.String()),
         sa.column("changed_fields", sa.JSON()),
         sa.column("fields", sa.JSON()),
+        sa.column("created_at", sa.DateTime()),
     )
     rows = list(bind.execute(sa.select(opportunities)).mappings())
     if not rows:
