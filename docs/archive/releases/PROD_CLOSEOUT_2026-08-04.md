@@ -32,6 +32,8 @@
 - Added the reproducible `insights.v1` read model at `/insights.json`, wired it
   into site discovery and `llms.txt`, and added an AVDS4 upcoming-deadlines
   block to the public insights page.
+- Gave each inline chart a meaningful accessible label and named the relevance
+  block consistently in all three public languages.
 
 ## Verification
 

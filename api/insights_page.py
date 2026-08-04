@@ -38,6 +38,8 @@ COPY: dict[str, dict[str, str]] = {
         "deadlines_note": "Срок помогает выбрать, что проверить первым.",
         "freshness": "Статус источников",
         "freshness_note": "Показан результат последнего успешного обновления.",
+        "quality": "Качество совпадения",
+        "quality_note": "Распределение карточек по рабочему сигналу релевантности.",
         "high": "Сильные сигналы",
         "good": "Умеренные сигналы",
         "base": "Базовые сигналы",
@@ -80,6 +82,8 @@ COPY: dict[str, dict[str, str]] = {
         "deadlines_note": "Deadlines show what to check first.",
         "freshness": "Source status",
         "freshness_note": "Shows the latest successful update.",
+        "quality": "Match quality",
+        "quality_note": "Cards grouped by the working relevance signal.",
         "high": "Strong signals",
         "good": "Moderate signals",
         "base": "Baseline signals",
@@ -122,6 +126,8 @@ COPY: dict[str, dict[str, str]] = {
         "deadlines_note": "Мерзім қай бағдарламаны алдымен тексеру керегін көрсетеді.",
         "freshness": "Дереккөздер мәртебесі",
         "freshness_note": "Соңғы сәтті жаңартудың нәтижесі көрсетілген.",
+        "quality": "Сәйкестік сапасы",
+        "quality_note": "Карточкалар жұмыс істейтін өзектілік белгісі бойынша бөлінген.",
         "high": "Күшті белгілер",
         "good": "Орташа белгілер",
         "base": "Негізгі белгілер",
@@ -193,7 +199,12 @@ def _count_rows(
 
 
 def _bar_chart(
-    rows: list[tuple[str, int]], *, chart_id: str, color: str, empty_label: str
+    rows: list[tuple[str, int]],
+    *,
+    chart_id: str,
+    color: str,
+    empty_label: str,
+    aria_label: str | None = None,
 ) -> str:
     max_value = max((value for _, value in rows), default=0)
     width = 620
@@ -213,7 +224,7 @@ def _bar_chart(
         )
     return (
         f'<svg class="data-chart" data-avds-component="DataViz" data-avds-pattern="{escape(chart_id)}" '
-        f'viewBox="0 0 {width} {height}" role="img" aria-label="{escape(empty_label)}">'
+        f'viewBox="0 0 {width} {height}" role="img" aria-label="{escape(aria_label or empty_label)}">'
         + "".join(chunks)
         + "</svg>"
     )
@@ -485,8 +496,8 @@ def render_insights_page(
   {fallback_note_markup}
   <section class="hero" data-avds-component="hero-band"><div><span class="eyebrow">{escape(copy["eyebrow"])}</span><h1>{escape(copy["heading"])}</h1><p>{escape(copy["intro"])}</p><div class="hero-actions"><a class="button primary" href="{escape(home, quote=True)}">{escape(copy["catalog_link"])}</a><a class="button" href="{escape(status, quote=True)}">{escape(copy["source_link"])}</a></div></div><div class="metric-grid" aria-label="Key catalog metrics">{_metric(copy["total"],open_count,"good")}{_metric(copy["sources"],int(coverage.get("enabled_sources") or 0))}{_metric(copy["soon"],soon,"warn")}{_metric(copy["rolling"],rolling)}</div></section>
   <div class="section-head"><h2>{escape(copy["formats"])}</h2><p>{escape(copy["formats_note"])}</p></div>
-  <div class="viz-grid"><article class="viz-card"><h3>{escape(copy["formats"])}</h3><p>{escape(copy["formats_note"])}</p>{_bar_chart(type_rows,chart_id="format-distribution",color="#315fdc",empty_label=copy["no_data"])}</article><article class="viz-card"><h3>{escape(copy["sources_title"])}</h3><p>{escape(copy["sources_note"])}</p>{_bar_chart(source_rows,chart_id="source-distribution",color="#15724e",empty_label=copy["no_data"])}</article><article class="viz-card"><h3>{escape(copy["deadlines"])}</h3><p>{escape(copy["deadlines_note"])}</p>{_bar_chart(deadline_rows,chart_id="deadline-distribution",color="#9a6414",empty_label=copy["no_data"])}</article><article class="viz-card"><h3>{escape(copy["freshness"])}</h3><p>{escape(copy["freshness_note"])}</p>{_bar_chart(freshness_rows,chart_id="source-freshness",color="#7c3aed",empty_label=copy["no_data"])}</article></div>
-  <div class="insight-lower"><section class="viz-card"><h3>{escape(copy["good"])}</h3><p>{escape(copy["formats_note"])}</p>{_bar_chart(score_rows,chart_id="match-quality",color="#315fdc",empty_label=copy["no_data"])}</section><section class="viz-card" data-avds-component="DataViz"><h3>{escape(copy["upcoming"])}</h3><p>{escape(copy["upcoming_note"])}</p>{upcoming_markup}</section></div>
+  <div class="viz-grid"><article class="viz-card"><h3>{escape(copy["formats"])}</h3><p>{escape(copy["formats_note"])}</p>{_bar_chart(type_rows,chart_id="format-distribution",color="#315fdc",empty_label=copy["no_data"],aria_label=copy["formats"])}</article><article class="viz-card"><h3>{escape(copy["sources_title"])}</h3><p>{escape(copy["sources_note"])}</p>{_bar_chart(source_rows,chart_id="source-distribution",color="#15724e",empty_label=copy["no_data"],aria_label=copy["sources_title"])}</article><article class="viz-card"><h3>{escape(copy["deadlines"])}</h3><p>{escape(copy["deadlines_note"])}</p>{_bar_chart(deadline_rows,chart_id="deadline-distribution",color="#9a6414",empty_label=copy["no_data"],aria_label=copy["deadlines"])}</article><article class="viz-card"><h3>{escape(copy["freshness"])}</h3><p>{escape(copy["freshness_note"])}</p>{_bar_chart(freshness_rows,chart_id="source-freshness",color="#7c3aed",empty_label=copy["no_data"],aria_label=copy["freshness"])}</article></div>
+  <div class="insight-lower"><section class="viz-card"><h3>{escape(copy["quality"])}</h3><p>{escape(copy["quality_note"])}</p>{_bar_chart(score_rows,chart_id="match-quality",color="#315fdc",empty_label=copy["no_data"],aria_label=copy["quality"])}</section><section class="viz-card" data-avds-component="DataViz"><h3>{escape(copy["upcoming"])}</h3><p>{escape(copy["upcoming_note"])}</p>{upcoming_markup}</section></div>
   <aside class="method" data-avds-component="method-card"><strong>{escape(copy["method"])}</strong><p>{escape(copy["method_text"])}</p></aside>
   <footer class="footer"><span>{escape(copy["footer"])}</span><span><a href="{escape(home, quote=True)}">{escape(copy["catalog_link"])}</a> · <a href="{escape(sources, quote=True)}">{escape(copy["source_link"])}</a></span></footer>
 </main></body></html>"""
