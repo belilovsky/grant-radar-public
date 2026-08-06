@@ -45,6 +45,7 @@ from api.ecosystem import (
     ecosystem_manifest,
     qazstack_consumer_contract,
 )
+from api.embed_page import render_coverage_embed, render_opportunities_embed
 from api.error_page import render_not_found_page
 from api.funder_page import render_funder_page
 from api.history import build_history_snapshot
@@ -259,7 +260,18 @@ async def add_security_headers(
 ) -> Response:
     response = await call_next(request)
     response.headers.setdefault("X-Content-Type-Options", "nosniff")
-    response.headers.setdefault("X-Frame-Options", "SAMEORIGIN")
+    if request.url.path.startswith("/embed/"):
+        if "X-Frame-Options" in response.headers:
+            del response.headers["X-Frame-Options"]
+        response.headers["Content-Security-Policy"] = (
+            "default-src 'none'; script-src 'none'; style-src 'unsafe-inline'; "
+            "img-src 'none'; font-src 'none'; connect-src 'none'; object-src 'none'; "
+            "base-uri 'none'; form-action 'none'; "
+            "frame-ancestors https://qaz.support https://www.qaz.support"
+        )
+        response.headers["X-Robots-Tag"] = "noindex, nofollow"
+    else:
+        response.headers.setdefault("X-Frame-Options", "SAMEORIGIN")
     response.headers.setdefault("Referrer-Policy", "strict-origin-when-cross-origin")
     response.headers.setdefault(
         "Permissions-Policy",
@@ -1536,6 +1548,54 @@ async def public_insights_page(request: Request) -> HTMLResponse:
         )
     )
     response.headers["Cache-Control"] = "public, max-age=60, stale-while-revalidate=300"
+    return response
+
+
+@app.api_route(
+    "/embed/opportunities",
+    methods=["GET", "HEAD"],
+    response_class=HTMLResponse,
+    include_in_schema=False,
+)
+async def public_opportunities_embed(request: Request) -> HTMLResponse:
+    """Render a compact, read-only opportunity list for trusted consumers."""
+    active_lang = _public_lang(str(request.query_params.get("lang") or "").strip())
+    response = HTMLResponse(
+        render_opportunities_embed(
+            items=_cached_public_scope_items(content_lang=active_lang),
+            lang=active_lang,
+            catalog_url=_public_url(
+                request, _root_path(request), f"/?lang={active_lang}#opportunities"
+            ),
+        )
+    )
+    response.headers["Cache-Control"] = (
+        "public, max-age=300, stale-while-revalidate=1800"
+    )
+    return response
+
+
+@app.api_route(
+    "/embed/coverage",
+    methods=["GET", "HEAD"],
+    response_class=HTMLResponse,
+    include_in_schema=False,
+)
+async def public_coverage_embed(request: Request) -> HTMLResponse:
+    """Render compact source-freshness signals for trusted consumers."""
+    active_lang = _public_lang(str(request.query_params.get("lang") or "").strip())
+    response = HTMLResponse(
+        render_coverage_embed(
+            coverage=_cached_coverage_payload(),
+            lang=active_lang,
+            catalog_url=_public_url(
+                request, _root_path(request), f"/status?lang={active_lang}"
+            ),
+        )
+    )
+    response.headers["Cache-Control"] = (
+        "public, max-age=300, stale-while-revalidate=1800"
+    )
     return response
 
 
