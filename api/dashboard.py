@@ -164,6 +164,12 @@ def render_dashboard(
         else f"/insights?lang={active_lang}"
     )
     insights_href = escape(insights_path, quote=True)
+    media_path = (
+        f"{base_raw}/media?lang={active_lang}"
+        if base_raw
+        else f"/media?lang={active_lang}"
+    )
+    media_href = escape(media_path, quote=True)
     terms_href = escape(
         (
             f"{base_raw}/terms?lang={active_lang}"
@@ -522,6 +528,7 @@ def render_dashboard(
           <div class="topbar-actions">
             <div class="utility-links">
               <a class="utility-link" href="{docs_href}">{escape(str(copy["api_docs"]))}</a>
+              <a class="utility-link" href="{media_href}">{escape(str(copy["media_link"]))}</a>
               <a class="utility-link" href="#methodology-panel"
                 >{escape(str(copy["methodology_link"]))}</a
               >
@@ -1111,6 +1118,7 @@ def render_dashboard(
         <a href="#opportunities">{escape(str(copy["tab_opportunities"]))}</a>
         <a href="#sources">{escape(str(copy["tab_sources"]))}</a>
         <a href="{insights_href}">{escape(str(copy["insights_link"]))}</a>
+        <a href="{media_href}">{escape(str(copy["media_link"]))}</a>
         <a href="{terms_href}">{escape(str(copy["terms_link"]))}</a>
         <a href="{data_policy_href}">{escape(str(copy["data_policy_link"]))}</a>
         <a href="{attribution_href}">{escape(str(copy["attribution_link"]))}</a>

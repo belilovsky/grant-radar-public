@@ -46,6 +46,10 @@ The main public endpoints are:
   boundary for active and prospective sources
 - `GET /opportunity/{opportunity_id}?lang=kk|ru|en`
 - `GET /funder/{funder_slug}?lang=kk|ru|en`
+- `GET /media?lang=kk|ru|en`
+- `GET /media.json?lang=kk|ru|en`
+- `GET /media/feed.json?lang=kk|ru|en` (JSON Feed 1.1)
+- `GET /media/rss.xml?lang=kk|ru|en` (RSS 2.0)
 - `GET /insights?lang=kk|ru|en`
 - `GET /terms?lang=kk|ru|en`
 - `GET /data-policy?lang=kk|ru|en`

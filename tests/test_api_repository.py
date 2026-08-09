@@ -1146,6 +1146,7 @@ def test_marketing_endpoints_are_exposed(monkeypatch):
     ) in llms.text
     assert "Source status page: http://testserver/status" in llms.text
     assert "Catalog insights: http://testserver/insights" in llms.text
+    assert "Media page: http://testserver/media" in llms.text
     assert "Terms of use: http://testserver/terms" in llms.text
     assert "Data policy: http://testserver/data-policy" in llms.text
     assert "Data attribution: http://testserver/attribution" in llms.text
@@ -1171,6 +1172,10 @@ def test_marketing_endpoints_are_exposed(monkeypatch):
     assert "Opportunity page: /opportunity/{id}?lang=kk|ru|en" in llms.text
     assert "Funder page: /funder/{slug}?lang=kk|ru|en" in llms.text
     assert "Insights page: /insights?lang=kk|ru|en" in llms.text
+    assert "Media page: /media?lang=kk|ru|en" in llms.text
+    assert "Media JSON: /media.json?lang=kk|ru|en" in llms.text
+    assert "Media JSON Feed: /media/feed.json?lang=kk|ru|en" in llms.text
+    assert "Media RSS: /media/rss.xml?lang=kk|ru|en" in llms.text
     assert "Opportunities filters: q, source, lifecycle, region, tag" in llms.text
     assert "evidence_state=sourced means that a direct public source link" in llms.text
     llms_head = client.head("/llms.txt")
@@ -1222,6 +1227,10 @@ def test_marketing_endpoints_are_exposed(monkeypatch):
             "digest": "/digest?lang={lang}",
             "insights": "/insights?lang={lang}",
             "insights_json": "/insights.json?lang={lang}",
+            "media": "/media?lang={lang}",
+            "media_json": "/media.json?lang={lang}",
+            "media_feed": "/media/feed.json?lang={lang}",
+            "media_rss": "/media/rss.xml?lang={lang}",
             "compare": "/compare?ids={id},{id}&lang={lang}",
             "compare_json": "/compare.json?ids={id},{id}&lang={lang}",
             "notification_contract": "/.well-known/notification-contract.json",
@@ -1243,6 +1252,10 @@ def test_marketing_endpoints_are_exposed(monkeypatch):
             "digest": "http://testserver/digest",
             "insights": "http://testserver/insights",
             "insights_json": "http://testserver/insights.json",
+            "media": "http://testserver/media",
+            "media_json": "http://testserver/media.json",
+            "media_feed": "http://testserver/media/feed.json",
+            "media_rss": "http://testserver/media/rss.xml",
             "compare": "http://testserver/compare.json",
             "compare_json": "http://testserver/compare.json",
             "notification_contract": (
@@ -1311,7 +1324,11 @@ def test_marketing_endpoints_are_exposed(monkeypatch):
             "public opportunity pages",
             "public funder pages",
             "public insights page",
+            "public media page",
             "machine-readable insights snapshot",
+            "machine-readable media snapshot",
+            "machine-readable media JSON Feed",
+            "machine-readable media RSS",
             "machine-readable opportunity comparison",
             "notification contract (delivery disabled)",
             "public data-policy pages",
