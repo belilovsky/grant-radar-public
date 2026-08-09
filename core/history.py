@@ -15,6 +15,8 @@ from datetime import date, datetime
 from decimal import Decimal
 from typing import Any
 
+from core.typography_policy import normalize_text
+
 HISTORY_SCHEMA_VERSION = "history.v1"
 HISTORY_FIELDS = (
     "source",
@@ -61,7 +63,7 @@ def _raw_layers(record: Any) -> tuple[dict[str, Any], dict[str, Any]]:
 def _text(value: Any) -> str | None:
     if value is None:
         return None
-    text = str(value).strip()
+    text = normalize_text(str(value).strip())
     return text or None
 
 
@@ -88,7 +90,9 @@ def _list_value(value: Any) -> list[str]:
         values = value
     else:
         values = [value]
-    normalized = {str(item).strip() for item in values if str(item).strip()}
+    normalized = {
+        normalize_text(str(item).strip()) for item in values if str(item).strip()
+    }
     return sorted(normalized, key=str.casefold)
 
 

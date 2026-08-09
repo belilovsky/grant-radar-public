@@ -1076,28 +1076,11 @@ def render_dashboard(
         <div class="role-guide-head">
           <h3>{escape(str(copy["role_guide_title"]))}</h3>
           <p>{escape(str(copy["role_guide_description"]))}</p>
-        </div>
-        <div class="role-list">
-          <article class="role-item">
-            <h4>{escape(str(copy["role_analyst_title"]))}</h4>
-            <p>{escape(str(copy["role_analyst_text"]))}</p>
-          </article>
-          <article class="role-item">
-            <h4>{escape(str(copy["role_journalist_title"]))}</h4>
-            <p>{escape(str(copy["role_journalist_text"]))}</p>
-          </article>
-          <article class="role-item">
-            <h4>{escape(str(copy["role_editor_title"]))}</h4>
-            <p>{escape(str(copy["role_editor_text"]))}</p>
-          </article>
-          <article class="role-item">
-            <h4>{escape(str(copy["role_lawyer_title"]))}</h4>
-            <p>{escape(str(copy["role_lawyer_text"]))}</p>
-          </article>
-          <article class="role-item">
-            <h4>{escape(str(copy["role_official_title"]))}</h4>
-            <p>{escape(str(copy["role_official_text"]))}</p>
-          </article>
+          <p>
+            <a class="operator-link" href="/operator?lang={html_lang}">
+              {escape(str(copy["role_guide_link_label"]))}
+            </a>
+          </p>
         </div>
       </section>
       <div class="faq-list" data-avds-component="faq-list">

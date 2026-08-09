@@ -27,6 +27,7 @@ from core.models import (
     OpportunityMetadataField,
 )
 from core.provenance import provenance_profile
+from core.typography_policy import normalize_public_detail
 from sources import PARSERS
 
 try:
@@ -817,7 +818,7 @@ async def build_opportunity_detail(
             }
         }
     )
-    return OpportunityDetail(
+    detail = OpportunityDetail(
         **localized_item.model_dump(),
         application_url=application_url,
         detail_available=detail_available,
@@ -828,3 +829,4 @@ async def build_opportunity_detail(
         detail_sections=merged_sections,
         metadata=_metadata_fields(item, lang=content_lang),
     )
+    return normalize_public_detail(detail)

@@ -11,6 +11,7 @@ from core.russian_summary import (
     russian_opportunity_title_fallback,
     russian_summary_fallback,
 )
+from core.typography_policy import normalize_public_opportunity
 
 SUPPORTED_CONTENT_LANGS = frozenset({"en", "kk", "ru"})
 LANGUAGE_ALIASES = {
@@ -330,7 +331,7 @@ def localize_opportunity(item: Opportunity, lang: str) -> Opportunity:
         title = localized_text(raw, content_lang, "title", fallback=item.title)
         summary = localized_text(raw, content_lang, "summary", fallback=item.summary)
         title, summary = _english_source_fallback(item, title, summary)
-        return item.model_copy(
+        localized = item.model_copy(
             update={
                 "title": title,
                 "summary": _remove_repeated_title_prefix(summary, title),
@@ -342,6 +343,7 @@ def localize_opportunity(item: Opportunity, lang: str) -> Opportunity:
                 ),
             }
         )
+        return normalize_public_opportunity(localized)
     raw = item.raw if isinstance(item.raw, dict) else {}
     summary = localized_text(
         raw,
@@ -354,7 +356,7 @@ def localize_opportunity(item: Opportunity, lang: str) -> Opportunity:
     )
     summary_item = item.model_copy(update={"title": title})
     public_summary = russian_summary_fallback(summary_item, summary)
-    return item.model_copy(
+    localized = item.model_copy(
         update={
             "title": title,
             "summary": _remove_repeated_title_prefix(public_summary, title),
@@ -366,6 +368,7 @@ def localize_opportunity(item: Opportunity, lang: str) -> Opportunity:
             ),
         }
     )
+    return normalize_public_opportunity(localized)
 
 
 def preserve_localized_raw(

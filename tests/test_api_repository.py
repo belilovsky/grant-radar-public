@@ -146,11 +146,9 @@ def test_root_renders_service_landing(monkeypatch):
     assert "Поделиться выдачей" in response.text
     assert "Сроки в календарь" in response.text
     assert "Для работы, а не для бесконечного поиска" in response.text
-    assert "Аналитику" in response.text
-    assert "Журналисту" in response.text
-    assert "Редактору" in response.text
-    assert "Юристу" in response.text
-    assert "Госслужащему" in response.text
+    assert "Открыть операторский раздел" in response.text
+    assert 'href="/operator?lang=ru"' in response.text
+    assert "<h4>Аналитику</h4>" not in response.text
     assert "С чего начать" in response.text
     assert "Что можно проверить сейчас" in response.text
     assert "Что проверить первым" in response.text
@@ -163,12 +161,14 @@ def test_root_renders_service_landing(monkeypatch):
     assert "По теме" in response.text
     assert "По направлению" in response.text
     assert "Активные фонды и программы" in response.text
-    assert "ИИ, облачные кредиты и цифровые навыки" in response.text
+    assert (
+        "Искусственный интеллект, облачные кредиты и цифровые навыки" in response.text
+    )
     assert "Инфраструктура, закупки и программы развития" in response.text
     assert "В фокусе сейчас" in response.text
     assert "Что здесь обычно ищут" in response.text
     assert "Кому может быть полезно" in response.text
-    assert "ИИ-пилоты и акселераторы" in response.text
+    assert "Программы для искусственного интеллекта и акселераторы" in response.text
     assert "Локальные субсидии и меры РК" in response.text
     assert "Убрать тему" in response.text
     assert "Приоритет: Казахстан и Центральная Азия" in response.text
@@ -402,7 +402,7 @@ def test_root_renders_service_landing(monkeypatch):
     assert "Срок" in response.text
     assert "Стартапам" in response.text
     assert "Субсидии и меры" in response.text
-    assert "ИИ и цифровые решения" in response.text
+    assert "Искусственный интеллект и цифровые решения" in response.text
     assert "Агро / вет / эко" in response.text
     assert "Все регионы" in response.text
     assert "Бессрочные" in response.text

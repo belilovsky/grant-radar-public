@@ -5,7 +5,7 @@ PY_MODULES ?= api/ core/ sources/ tests/ scripts/ alembic/
 MYPY_MODULES ?= api/ core/ sources/ scripts/
 COMPOSE ?= $(shell if command -v docker-compose >/dev/null 2>&1; then echo docker-compose; elif command -v docker >/dev/null 2>&1; then echo "docker compose"; else echo docker-compose; fi)
 
-.PHONY: help bootstrap bootstrap-reset playwright-install export-public-repo dev dev-logs dev-down lint format test test-cov db-shell build build-prod install-hooks db-init db-reset test-db ci ci-fast ci-local smoke-prod content-audit ranking-review-sample ranking-evaluate workbench-export db-upgrade db-downgrade db-revision db-migrate migrate translate-ru
+.PHONY: help bootstrap bootstrap-reset playwright-install export-public-repo dev dev-logs dev-down lint format test test-cov db-shell build build-prod install-hooks db-init db-reset test-db ci ci-fast ci-local smoke-prod content-audit ranking-review-sample ranking-evaluate workbench-export db-upgrade db-downgrade db-revision db-migrate migrate translate-ru typography
 
 RANKING_REVIEW ?= output/ranking-evaluation/review-v1.jsonl
 RANKING_REPORT ?= output/ranking-evaluation/report-v1.json
@@ -118,6 +118,7 @@ test-db:
 	$(COMPOSE) -f docker-compose.yml -f docker-compose.dev.yml run --rm api pytest tests/test_db_repository.py tests/test_runner_factory.py tests/test_init_db.py -v
 
 ci-fast:
+	$(PYTHON) scripts/check_typography.py
 	$(PYTEST) tests/ -v
 
 ci-local:
@@ -140,7 +141,10 @@ workbench-export:
 	PYTHONPATH=. $(PYTHON) -m scripts.export_workbench --output $(WORKBENCH_OUTPUT) $(ARGS)
 
 ci:
-	$(COMPOSE) -f docker-compose.yml -f docker-compose.dev.yml run --rm api sh -c "black --check api/ core/ sources/ tests/ scripts/ alembic/ && isort --check-only api/ core/ sources/ tests/ scripts/ alembic/ && flake8 api/ core/ sources/ tests/ scripts/ alembic/ --max-line-length=100 && pytest tests/ -v"
+	$(COMPOSE) -f docker-compose.yml -f docker-compose.dev.yml run --rm api sh -c "black --check api/ core/ sources/ tests/ scripts/ alembic/ && isort --check-only api/ core/ sources/ tests/ scripts/ alembic/ && flake8 api/ core/ sources/ tests/ scripts/ alembic/ --max-line-length=100 && python scripts/check_typography.py && pytest tests/ -v"
+
+typography:
+	$(PYTHON) scripts/check_typography.py
 
 
 db-upgrade:
