@@ -6,13 +6,14 @@ import argparse
 import json
 import re
 from dataclasses import asdict, dataclass, field
-from datetime import date, datetime, timedelta, timezone
+from datetime import datetime, timedelta, timezone
 from typing import Any
 from urllib.parse import urljoin, urlparse
 
 import httpx
 
 from api.dashboard import dashboard_copy
+from core.public_clock import public_today
 
 try:
     from datetime import UTC
@@ -46,6 +47,7 @@ class ContentAuditResult:
     html_entity_titles: list[str] = field(default_factory=list)
     missing_detail_status_titles: list[str] = field(default_factory=list)
     unlocalized_tags: dict[str, list[str]] = field(default_factory=dict)
+    unlocalized_sources: dict[str, list[str]] = field(default_factory=dict)
     forbidden_hits: dict[str, list[str]] = field(default_factory=dict)
     issues: list[str] = field(default_factory=list)
 
@@ -209,6 +211,11 @@ def analyze_content(
     source_count = int(coverage.get("enabled_sources") or 0)
     relevant_open_items = int(coverage.get("relevant_open_items") or 0)
     opportunity_count = len(opportunities)
+    if relevant_open_items != opportunity_count:
+        issues.append(
+            "coverage and deadline-filtered catalog counts differ: "
+            f"{relevant_open_items} != {opportunity_count}"
+        )
     if zero_item_sources:
         issues.append(
             f"enabled sources with zero items: {', '.join(zero_item_sources)}"
@@ -284,6 +291,7 @@ def analyze_content(
         )
 
     unlocalized_tags: dict[str, list[str]] = {}
+    unlocalized_sources: dict[str, list[str]] = {}
     if label_maps:
         tags = {
             str(tag).strip()
@@ -300,6 +308,22 @@ def analyze_content(
                 unlocalized_tags[lang] = missing
         if unlocalized_tags:
             issues.append("public tags are missing localized display labels")
+        source_slugs = {
+            str(row.get("slug") or "").strip()
+            for row in source_rows
+            if row.get("enabled") and str(row.get("slug") or "").strip()
+        }
+        for lang, label_map in label_maps.items():
+            normalized_labels = {_label_key(key) for key in label_map}
+            missing = sorted(
+                slug
+                for slug in source_slugs
+                if _label_key(slug) not in normalized_labels
+            )
+            if missing:
+                unlocalized_sources[lang] = missing
+        if unlocalized_sources:
+            issues.append("public sources are missing localized display labels")
 
     forbidden_hits: dict[str, list[str]] = {}
     for term in forbidden_terms:
@@ -328,6 +352,7 @@ def analyze_content(
         html_entity_titles=html_entity_titles,
         missing_detail_status_titles=missing_detail_status_titles,
         unlocalized_tags=unlocalized_tags,
+        unlocalized_sources=unlocalized_sources,
         forbidden_hits=forbidden_hits,
         issues=issues,
     )
@@ -350,7 +375,7 @@ def run_audit(
             _url(
                 base_url,
                 (
-                    "/opportunities?limit=1000&min_score=0.3"
+                    "/opportunities?limit=5000&min_score=0.3"
                     f"&deadline_after={deadline_after}"
                 ),
             )
@@ -370,7 +395,7 @@ def run_audit(
 def _parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--base-url", default="https://qaz.fund")
-    parser.add_argument("--deadline-after", default=date.today().isoformat())
+    parser.add_argument("--deadline-after", default=public_today().isoformat())
     parser.add_argument("--min-sources", type=int, default=26)
     parser.add_argument("--min-opportunities", type=int, default=45)
     parser.add_argument("--stale-after-days", type=int, default=7)

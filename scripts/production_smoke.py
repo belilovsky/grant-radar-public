@@ -6,11 +6,12 @@ import argparse
 import json
 import re
 from dataclasses import asdict, dataclass
-from datetime import date
 from typing import Any
 from urllib.parse import urljoin
 
 import httpx
+
+from core.public_clock import public_today
 
 DASHBOARD_MARKERS = (
     '<html lang="ru"',
@@ -20,6 +21,8 @@ DASHBOARD_MARKERS = (
     'data-avds-component="admin-shell"',
     'data-avds-component="sticky-shell"',
     'data-avds-component="filter-summary"',
+    'data-avds-component="quick-links-rail"',
+    'data-avds-component="public-summary-strip"',
     'class="toolbar avds-tabs-list"',
     "avds-tabs-trigger",
     "avds-field",
@@ -154,7 +157,7 @@ def run_smoke(
             client,
             base_url,
             (
-                "/opportunities?limit=1000&min_score=0.3"
+                "/opportunities?limit=5000&min_score=0.3"
                 f"&deadline_after={deadline_after}"
             ),
         )
@@ -231,6 +234,11 @@ def run_smoke(
             for line in ndjson_response.text.splitlines()
             if line.strip()
         ]
+        ndjson_head = _head(
+            client,
+            base_url,
+            "/opportunities.ndjson?limit=20&min_score=0.3",
+        )
         digest = _get_json(client, base_url, "/digest?limit=5&tag=ai")
         robots = _get_text(client, base_url, "/robots.txt")
         sitemap = _get_text(client, base_url, "/sitemap.xml")
@@ -244,6 +252,62 @@ def run_smoke(
         status_head = _head(client, base_url, "/status?lang=ru")
         operator_page = _get_text(client, base_url, "/operator?lang=ru")
         operator_head = _head(client, base_url, "/operator?lang=ru")
+        insights_page = _get_text(client, base_url, "/insights?lang=ru")
+        insights_head = _head(client, base_url, "/insights?lang=ru")
+        detail_page = _get_text(
+            client,
+            base_url,
+            f"/opportunity/{opportunity_id}?lang=ru",
+        )
+        detail_head = _head(
+            client,
+            base_url,
+            f"/opportunity/{opportunity_id}?lang=ru",
+        )
+        prepare_page = _get_text(
+            client,
+            base_url,
+            f"/opportunity/{opportunity_id}/prepare?lang=ru",
+        )
+        prepare_head = _head(
+            client,
+            base_url,
+            f"/opportunity/{opportunity_id}/prepare?lang=ru",
+        )
+        funder_page = _get_text(
+            client,
+            base_url,
+            f"/funder/{funder_slug}?lang=ru",
+        )
+        policy_terms = _get_text(client, base_url, "/terms?lang=ru")
+        policy_data = _get_text(client, base_url, "/data-policy?lang=ru")
+        policy_attribution = _get_text(client, base_url, "/attribution?lang=ru")
+        missing_page = client.get(
+            _url(base_url, "/opportunity/not-a-valid-id?lang=ru"),
+            headers={"Accept": "text/html"},
+        )
+        api_index = _get_json(client, base_url, "/api/v1")
+        insights_api = _get_json(client, base_url, "/api/v1/insights?lang=ru")
+        insights_api_head = _head(
+            client,
+            base_url,
+            "/api/v1/insights?lang=ru",
+        )
+        api_v1_ndjson_head = _head(
+            client,
+            base_url,
+            "/api/v1/opportunities.ndjson?lang=ru",
+        )
+        changes_api = _get_json(
+            client,
+            base_url,
+            "/api/v1/changes?hours=24&lang=ru",
+        )
+        daily_digest = _get_json(
+            client,
+            base_url,
+            "/media/v1/digest/daily.json?lang=ru",
+        )
         discovery = _get_json(client, base_url, "/site-discovery.json")
         discovery_head = _head(client, base_url, "/site-discovery.json")
         qazstack_contract = _get_json(
@@ -254,6 +318,16 @@ def run_smoke(
             client, base_url, "/.well-known/avds-ui-contract.json"
         )
         avds_head = _head(client, base_url, "/.well-known/avds-ui-contract.json")
+        qazpipe_contract = _get_json(
+            client, base_url, "/.well-known/qazpipe-source.json"
+        )
+        qazpipe_head = _head(client, base_url, "/.well-known/qazpipe-source.json")
+        qazcompute_contract = _get_json(
+            client, base_url, "/.well-known/qazcompute-profiles.json"
+        )
+        qazcompute_head = _head(
+            client, base_url, "/.well-known/qazcompute-profiles.json"
+        )
         ecosystem = _get_json(client, base_url, "/.well-known/qdev-ecosystem.json")
         ecosystem_head = _head(client, base_url, "/.well-known/qdev-ecosystem.json")
         notification_contract = _get_json(
@@ -288,6 +362,21 @@ def run_smoke(
     _require(
         len(opportunities) >= min_opportunities,
         "opportunity count is below production threshold",
+    )
+    current_catalog_count = len(opportunities)
+    coverage_current_count = int(coverage.get("relevant_open_items") or 0)
+    insights_current_count = int(
+        (insights_api.get("scope") or {}).get("current_catalog") or 0
+    )
+    _require(
+        coverage_current_count == current_catalog_count,
+        "coverage and deadline-filtered current catalog counts differ: "
+        f"{coverage_current_count} != {current_catalog_count}",
+    )
+    _require(
+        insights_current_count == current_catalog_count,
+        "insights and deadline-filtered current catalog counts differ: "
+        f"{insights_current_count} != {current_catalog_count}",
     )
     _require(bool(ndjson_items), "NDJSON export is empty")
     _require(
@@ -436,6 +525,87 @@ def run_smoke(
         ),
         "operator_noindex": "noindex"
         in operator_head.headers.get("x-robots-tag", "").lower(),
+        "insights_page": (
+            'data-avds-component="data-centre"' in insights_page
+            and 'data-avds-pattern="data-quality-scorecard"' in insights_page
+            and "В текущем каталоге" in insights_page
+            and "Релевантных карточек в индексе" in insights_page
+            and "\u2014" not in insights_page
+        ),
+        "insights_head": insights_head.headers.get("content-type", "").startswith(
+            "text/html"
+        ),
+        "detail_page": (
+            'data-avds-component="lite-reading-surface"' in detail_page
+            and "Ключевые условия" in detail_page
+            and "\u2014" not in detail_page
+        ),
+        "detail_head": detail_head.headers.get("content-type", "").startswith(
+            "text/html"
+        ),
+        "application_workspace": (
+            'data-avds-component="application-workspace"' in prepare_page
+            and "Данные остаются в этом браузере" in prepare_page
+            and "localStorage.setItem" in prepare_page
+            and "\u2014" not in prepare_page
+        ),
+        "application_workspace_head": prepare_head.headers.get(
+            "content-type", ""
+        ).startswith("text/html"),
+        "funder_page": (
+            "QAZ.FUND" in funder_page
+            and 'data-avds="grant-radar"' in funder_page
+            and "\u2014" not in funder_page
+        ),
+        "policy_routes": (
+            "Условия использования" in policy_terms
+            and "Политика данных" in policy_data
+            and "Цитирование и повторное использование" in policy_attribution
+        ),
+        "browser_404": (
+            missing_page.status_code == 404
+            and "Такой страницы нет" in missing_page.text
+            and "Вернуться в каталог" in missing_page.text
+        ),
+        "api_v1_daily_digest": (
+            str((api_index.get("routes") or {}).get("daily_digest_json") or "")
+            == _url(base_url, "/media/v1/digest/daily.json")
+            and str((api_index.get("routes") or {}).get("daily_digest_text") or "")
+            == _url(base_url, "/media/v1/digest/daily.txt")
+        ),
+        "insights_api": (
+            insights_api.get("schema_version") == "qazfund-insights.v1"
+            and int((insights_api.get("scope") or {}).get("current_catalog") or 0)
+            == int(coverage.get("relevant_open_items") or 0)
+            and int((insights_api.get("scope") or {}).get("active") or 0)
+            == int(coverage.get("relevant_open_items") or 0)
+            and int((insights_api.get("scope") or {}).get("indexed_relevant") or 0)
+            >= int((insights_api.get("scope") or {}).get("current_catalog") or 0)
+        ),
+        "insights_api_head": (
+            insights_api_head.headers.get("content-type", "").startswith(
+                "application/json"
+            )
+            and _is_public_cacheable(insights_api_head, 60)
+        ),
+        "legacy_ndjson_head": (
+            ndjson_head.headers.get("content-type", "").startswith(
+                "application/x-ndjson"
+            )
+            and _is_public_cacheable(ndjson_head, 300)
+        ),
+        "api_v1_ndjson_head": (
+            api_v1_ndjson_head.headers.get("content-type", "").startswith(
+                "application/x-ndjson"
+            )
+            and _is_public_cacheable(api_v1_ndjson_head, 300)
+        ),
+        "changes_api": changes_api.get("schema_version") == "qazfund-changes.v1",
+        "daily_digest": (
+            daily_digest.get("schema_version") == "qazfund-daily-digest.v1"
+            and daily_digest.get("state") in {"collecting", "no_changes", "ready"}
+            and (daily_digest.get("delivery") or {}).get("automatic") is False
+        ),
         "site_discovery_openapi": str(discovery.get("openapi") or "")
         == _url(base_url, "/openapi.json"),
         "site_discovery_llms": str(discovery.get("llms") or "")
@@ -489,6 +659,11 @@ def run_smoke(
         "site_discovery_ai_bulk_export": str(
             (discovery.get("ai_consumption") or {}).get("preferred_bulk_export") or ""
         )
+        == _url(base_url, "/api/v1/opportunities.ndjson"),
+        "site_discovery_ai_legacy_bulk_export": str(
+            (discovery.get("ai_consumption") or {}).get("preferred_legacy_bulk_export")
+            or ""
+        )
         == _url(base_url, "/opportunities.ndjson?compact=true"),
         "site_discovery_ai_history_template": str(
             (discovery.get("ai_consumption") or {}).get("history_template") or ""
@@ -535,13 +710,25 @@ def run_smoke(
         ),
         "qazstack_contract": (
             qazstack_contract.get("schema_version") == "qazstack-consumer-v1"
-            and qazstack_contract.get("qazstack_version") == "1.40.0"
+            and qazstack_contract.get("qazstack_version") == "1.41.2"
+            and {
+                "opportunity-public-contract",
+                "opportunity-ranking-evaluation",
+            }.issubset(set(qazstack_contract.get("primitives") or []))
             and qazstack_contract.get("integration_mode") == "python-package"
             and _is_public_cacheable(qazstack_head, 60)
         ),
         "avds4_contract": (
             avds_contract.get("schema_version") == "avds-ui-contract-v1"
-            and (avds_contract.get("avds_source") or {}).get("version") == "4.3.2"
+            and (avds_contract.get("avds_source") or {}).get("version") == "4.6.0"
+            and (avds_contract.get("runtime_neutral_patterns") or {}).get("adopted")
+            == [
+                "evidence-summary",
+                "filter-state-summary",
+                "decision-summary",
+                "evidence-disclosure",
+                "action-path",
+            ]
             and _is_public_cacheable(avds_head, 60)
         ),
         "notification_contract": (
@@ -572,10 +759,16 @@ def run_smoke(
             ecosystem.get("schema_version") == "qdev-ecosystem-integration-v1"
             and (ecosystem.get("integrations") or {}).get("qazstack", {}).get("status")
             == "runtime-proven"
+            and (ecosystem.get("integrations") or {}).get("qazpipe", {}).get("status")
+            == "producer-ready"
             and (ecosystem.get("integrations") or {})
             .get("qazlake", {})
             .get("direct_write")
             is False
+            and (ecosystem.get("integrations") or {})
+            .get("qazcompute", {})
+            .get("status")
+            == "local-runtime-proven"
             and _is_public_cacheable(ecosystem_head, 60)
         ),
     }
@@ -624,7 +817,7 @@ def _parser() -> argparse.ArgumentParser:
     )
     parser.add_argument(
         "--deadline-after",
-        default=date.today().isoformat(),
+        default=public_today().isoformat(),
         help="ISO date used for open-opportunity filtering.",
     )
     parser.add_argument("--min-sources", type=int, default=26)

@@ -48,6 +48,12 @@ The worker records one `runs` row per source cycle using the existing schema.
 This is also the freshness evidence for sources that return no records. Do not
 seed or update these rows manually: a successful real fetch cycle is the gate.
 
+Production starts two Uvicorn workers through `WEB_CONCURRENCY=2`. The source
+scheduler limits simultaneous fetches to four through
+`GRANT_RADAR_MAX_SOURCE_CONCURRENCY` and updates the worker heartbeat used by
+the Compose healthcheck. Override these values only after measuring the same
+public routes with `scripts.performance_smoke`.
+
 ## Reverse proxy
 
 Put the API behind a reverse proxy that forwards the public host to the
@@ -72,6 +78,7 @@ PYTHONPATH=. ./.venv/bin/python -m scripts.production_smoke --base-url https://e
 PYTHONPATH=. ./.venv/bin/python -m scripts.content_audit --base-url https://example.org
 PYTHONPATH=. ./.venv/bin/python -m scripts.nlp_quality_audit --base-url https://example.org --lang ru --limit 150
 PYTHONPATH=. ./.venv/bin/python -m scripts.nlp_quality_audit --base-url https://example.org --lang en --limit 150
+PYTHONPATH=. ./.venv/bin/python -m scripts.performance_smoke --base-url https://example.org --samples 5
 ```
 
 For a production release, set both the private deployment target and the public
@@ -105,15 +112,20 @@ curl -fsS https://example.org/.well-known/source-onboarding.json
 
 ## Backups
 
-Create encrypted database dumps outside the repository and verify a restore
-regularly. The helper retains the newest fourteen archives by default:
+Create database dumps outside the repository and verify a restore regularly.
+Pass an existing GPG recipient to encrypt the archive; the helper also writes a
+SHA-256 checksum and retains archives for fourteen days by default:
 
 ```bash
-BACKUP_DIR=/var/backups/grant-radar ./scripts/backup_postgres.sh
+BACKUP_DIR=/var/backups/grant-radar \
+BACKUP_GPG_RECIPIENT=operations@example.org \
+./scripts/backup_postgres.sh
 ```
 
-Schedule this command from the private maintainer runbook only after a restore
-drill. Do not commit dump files or host-specific backup paths.
+Without `BACKUP_GPG_RECIPIENT`, the helper creates a mode-0600 archive and emits
+a warning; use that fallback only on a protected host filesystem. Schedule this
+command from the private maintainer runbook only after a restore drill. Do not
+commit dump files or host-specific backup paths.
 
 ## Automation
 

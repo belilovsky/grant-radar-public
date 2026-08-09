@@ -14,10 +14,15 @@ def test_contains_key_checks_nested_structures_without_matching_text() -> None:
 
 
 def _transport(
-    *, opportunity_title: str = "Kazakhstan AI grant"
+    *,
+    opportunity_title: str = "Kazakhstan AI grant",
+    opportunity_count: int = 44,
+    coverage_current: int = 44,
+    insights_current: int = 44,
 ) -> httpx.MockTransport:
     def handler(request: httpx.Request) -> httpx.Response:
         path = request.url.path
+        sample_id = "00000000-0000-4000-8000-000000000001"
         root = str(request.url.copy_with(path="/", query=None)).rstrip("/")
         base_prefix = "/grant-radar" if path.startswith("/grant-radar") else ""
         public_root = f"{root}{base_prefix}"
@@ -41,6 +46,11 @@ def _transport(
                 "</nav>"
                 '<input class="field avds-field">'
                 '<div data-avds-component="filter-summary"></div>'
+                '<div data-avds-component="quick-links-rail"></div>'
+                '<div data-avds-component="public-summary-strip">'
+                '<strong id="metric-strong" data-catalog-count="44">44</strong>'
+                '<strong id="metric-sources">23</strong>'
+                "</div>"
                 '<div data-avds-component="source-card"></div>'
                 '<span data-avds-component="source-icon"></span>'
                 '<span class="avds-source-card__arrow"></span>'
@@ -76,7 +86,7 @@ def _transport(
                 json={
                     "status": "ok",
                     "enabled_sources": 23,
-                    "relevant_open_items": 44,
+                    "relevant_open_items": coverage_current,
                     "stale_sources": 1,
                     "unknown_freshness_sources": 2,
                 },
@@ -238,7 +248,19 @@ def _transport(
                     '{"title":"Kazakhstan AI grant","source":"world_bank_kazakhstan",'
                     '"evidence_state":"sourced"}\n'
                 ),
-                headers={"content-type": "application/x-ndjson"},
+                headers={
+                    "content-type": "application/x-ndjson",
+                    "cache-control": "public, max-age=300",
+                },
+            )
+        if endpoint_path == "/api/v1/opportunities.ndjson":
+            return httpx.Response(
+                200,
+                text="",
+                headers={
+                    "content-type": "application/x-ndjson; charset=utf-8",
+                    "cache-control": "public, max-age=300",
+                },
             )
         if endpoint_path == "/digest":
             return httpx.Response(200, json={"items": [{"title": "AI digest"}]})
@@ -334,6 +356,116 @@ def _transport(
                     "x-robots-tag": "noindex, nofollow",
                 },
             )
+        if endpoint_path == "/insights":
+            return httpx.Response(
+                200,
+                text=(
+                    '<html lang="ru" data-avds="grant-radar">'
+                    '<main data-avds-component="data-centre">'
+                    "<span>В текущем каталоге</span>"
+                    "<span>Релевантных карточек в индексе</span>"
+                    '<section data-avds-pattern="data-quality-scorecard"></section>'
+                    "</main></html>"
+                ),
+                headers={"content-type": "text/html; charset=utf-8"},
+            )
+        if endpoint_path == f"/opportunity/{sample_id}":
+            return httpx.Response(
+                200,
+                text=(
+                    '<html lang="ru" data-avds="grant-radar">'
+                    '<main data-avds-component="lite-reading-surface">'
+                    "<h1>Kazakhstan AI grant</h1><h2>Ключевые условия</h2>"
+                    "</main></html>"
+                ),
+                headers={"content-type": "text/html; charset=utf-8"},
+            )
+        if endpoint_path == f"/opportunity/{sample_id}/prepare":
+            return httpx.Response(
+                200,
+                text=(
+                    '<html lang="ru" data-avds="grant-radar">'
+                    '<main data-avds-component="application-workspace">'
+                    "<p>Данные остаются в этом браузере</p>"
+                    "<script>localStorage.setItem('draft','value')</script>"
+                    "</main></html>"
+                ),
+                headers={"content-type": "text/html; charset=utf-8"},
+            )
+        if endpoint_path == "/funder/development-fund":
+            return httpx.Response(
+                200,
+                text=(
+                    '<html lang="ru" data-avds="grant-radar">'
+                    "<main><h1>Development Fund</h1><span>QAZ.FUND</span></main>"
+                    "</html>"
+                ),
+                headers={"content-type": "text/html; charset=utf-8"},
+            )
+        if endpoint_path in {"/terms", "/data-policy", "/attribution"}:
+            labels = {
+                "/terms": "Условия использования",
+                "/data-policy": "Политика данных",
+                "/attribution": "Цитирование и повторное использование",
+            }
+            return httpx.Response(
+                200,
+                text=f"<html lang='ru'><h1>{labels[endpoint_path]}</h1></html>",
+                headers={"content-type": "text/html; charset=utf-8"},
+            )
+        if endpoint_path == "/opportunity/not-a-valid-id":
+            return httpx.Response(
+                404,
+                text=(
+                    "<html lang='ru'><h1>Такой страницы нет</h1>"
+                    "<a href='/'>Вернуться в каталог</a></html>"
+                ),
+                headers={"content-type": "text/html; charset=utf-8"},
+            )
+        if endpoint_path == "/api/v1":
+            return httpx.Response(
+                200,
+                json={
+                    "routes": {
+                        "daily_digest_json": (
+                            f"{public_root}/media/v1/digest/daily.json"
+                        ),
+                        "daily_digest_text": (
+                            f"{public_root}/media/v1/digest/daily.txt"
+                        ),
+                    }
+                },
+            )
+        if endpoint_path == "/api/v1/insights":
+            return httpx.Response(
+                200,
+                json={
+                    "schema_version": "qazfund-insights.v1",
+                    "scope": {
+                        "indexed_relevant": 55,
+                        "current_catalog": insights_current,
+                        "active": insights_current,
+                    },
+                },
+                headers={
+                    "content-type": "application/json",
+                    "cache-control": "public, max-age=60",
+                },
+            )
+        if endpoint_path == "/api/v1/changes":
+            return httpx.Response(
+                200,
+                json={"schema_version": "qazfund-changes.v1"},
+            )
+        if endpoint_path == "/media/v1/digest/daily.json":
+            return httpx.Response(
+                200,
+                json={
+                    "schema_version": "qazfund-daily-digest.v1",
+                    "state": "collecting",
+                    "delivery": {"automatic": False},
+                },
+            )
         if endpoint_path == "/site-discovery.json" or path == "/site-discovery.json":
             return httpx.Response(
                 200,
@@ -415,8 +547,12 @@ def _transport(
                             f"{public_root}/.well-known/source-onboarding.json"
                         ),
                     },
+                    "versioned_api": f"{public_root}/api/v1",
                     "ai_consumption": {
                         "preferred_bulk_export": (
+                            f"{public_root}/api/v1/opportunities.ndjson"
+                        ),
+                        "preferred_legacy_bulk_export": (
                             f"{public_root}/opportunities.ndjson?compact=true"
                         ),
                         "history_template": (
@@ -453,8 +589,12 @@ def _transport(
                 200,
                 json={
                     "schema_version": "qazstack-consumer-v1",
-                    "qazstack_version": "1.40.0",
+                    "qazstack_version": "1.41.2",
                     "integration_mode": "python-package",
+                    "primitives": [
+                        "opportunity-public-contract",
+                        "opportunity-ranking-evaluation",
+                    ],
                 },
                 headers={"cache-control": "public, max-age=60"},
             )
@@ -463,7 +603,54 @@ def _transport(
                 200,
                 json={
                     "schema_version": "avds-ui-contract-v1",
-                    "avds_source": {"version": "4.3.2"},
+                    "avds_source": {"version": "4.6.0"},
+                    "runtime_neutral_patterns": {
+                        "adopted": [
+                            "evidence-summary",
+                            "filter-state-summary",
+                            "decision-summary",
+                            "evidence-disclosure",
+                            "action-path",
+                        ]
+                    },
+                },
+                headers={"cache-control": "public, max-age=60"},
+            )
+        if endpoint_path == "/.well-known/qazpipe-source.json":
+            return httpx.Response(
+                200,
+                json={
+                    "schema_version": "qazpipe-pull-source-v1",
+                    "mode": "pull",
+                    "direction": "outbound-read-only",
+                    "endpoints": {
+                        "bulk_ndjson": (f"{public_root}/api/v1/opportunities.ndjson")
+                    },
+                    "required_provenance": [
+                        "source.url",
+                        "provenance.content_hash",
+                        "provenance.verification_method",
+                    ],
+                    "qazlake_handoff": {"direct_write": False},
+                },
+                headers={"cache-control": "public, max-age=60"},
+            )
+        if endpoint_path == "/.well-known/qazcompute-profiles.json":
+            return httpx.Response(
+                200,
+                json={
+                    "schema_version": "qazcompute-profile-contract-v1",
+                    "execution": {
+                        "runtime_status": "proven",
+                        "remote_execution_active": False,
+                        "decision_ready": False,
+                    },
+                    "profiles": [
+                        {"schema_version": "evidence_readiness.v1"},
+                        {"schema_version": "deadline_anomaly.v1"},
+                        {"schema_version": "source_freshness.v1"},
+                        {"schema_version": "duplicate_cluster.v1"},
+                    ],
                 },
                 headers={"cache-control": "public, max-age=60"},
             )
@@ -499,6 +686,7 @@ def _transport(
                     "schema_version": "qdev-ecosystem-integration-v1",
                     "integrations": {
                         "qazstack": {"status": "runtime-proven"},
+                        "qazpipe": {"status": "producer-ready"},
                         "qazlake": {"direct_write": False},
                         "notifications": {"delivery_enabled": False},
                     },
@@ -571,6 +759,34 @@ def test_run_smoke_rejects_forbidden_content():
             transport=_transport(
                 opportunity_title="AI3 Action Institute - Artificial Intelligence"
             ),
+        )
+
+
+def test_run_smoke_rejects_cross_surface_current_catalog_mismatch():
+    with pytest.raises(SmokeError, match="coverage and deadline-filtered"):
+        run_smoke(
+            base_url="https://example.org/grant-radar",
+            deadline_after="2026-05-23",
+            min_sources=23,
+            min_opportunities=40,
+            min_digest_items=1,
+            expect_backend="database",
+            forbidden=[],
+            timeout=1.0,
+            transport=_transport(coverage_current=45),
+        )
+
+    with pytest.raises(SmokeError, match="insights and deadline-filtered"):
+        run_smoke(
+            base_url="https://example.org/grant-radar",
+            deadline_after="2026-05-23",
+            min_sources=23,
+            min_opportunities=40,
+            min_digest_items=1,
+            expect_backend="database",
+            forbidden=[],
+            timeout=1.0,
+            transport=_transport(insights_current=45),
         )
 
 

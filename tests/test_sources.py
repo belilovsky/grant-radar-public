@@ -13,6 +13,7 @@ from sources.ebrd_ecepp import EbrdEceppProcurementParser
 from sources.eeas_kazakhstan import EeasKazakhstanParser
 from sources.erasmus_kazakhstan import ErasmusKazakhstanParser
 from sources.eu_funding_tenders import EuFundingTendersCentralAsiaParser
+from sources.global_training import GlobalTrainingOpportunitiesParser
 from sources.google_org import GoogleOrgAiOpportunityParser
 from sources.grants_gov import GrantsGovParser
 from sources.internews import InternewsParser
@@ -59,6 +60,7 @@ PARSER_CLASSES = [
     MongoDbStartupsParser,
     UnicefKazakhstanParser,
     GoogleOrgAiOpportunityParser,
+    GlobalTrainingOpportunitiesParser,
     UnescoIiteParser,
     UndpProcurementParser,
 ]
@@ -90,8 +92,16 @@ def test_registry_contains_all_parsers():
         "mongodb_startups",
         "unicef_kazakhstan",
         "google_org_ai_opportunity",
+        "global_training_opportunities",
         "unesco_iite",
         "undp_procurement",
+        "ungm_opportunities",
+        "osce_procurement",
+        "iom_kazakhstan_procurement",
+        "edb_procurement",
+        "daad_central_asia",
+        "gef_sgp_kazakhstan",
+        "global_innovation_fund",
     }
     for cls in PARSERS.values():
         assert issubclass(cls, BaseSourceParser)

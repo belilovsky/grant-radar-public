@@ -1,11 +1,14 @@
 from pydantic import HttpUrl
 
+from api.dashboard_copy import dashboard_copy
 from core.localization import (
     localize_opportunity,
     localized_section_list,
     localized_text,
 )
 from core.models import Opportunity, OpportunityType
+from sources.astana_hub import FALLBACK_PROGRAM_EXTRA_TAGS
+from sources.kazakhstan_domestic import DOMESTIC_PROGRAMS
 
 
 def test_russian_source_detail_beats_shorter_i18n_fallback():
@@ -30,6 +33,24 @@ def test_russian_source_detail_beats_shorter_i18n_fallback():
 
     assert localized_text(raw, "ru", "detail_text") == raw["detail_text"]
     assert localized_section_list(raw, "ru") == raw["detail_sections"]
+
+
+def test_domestic_support_tags_have_public_labels():
+    tags = sorted({tag for program in DOMESTIC_PROGRAMS for tag in program.tags})
+
+    for lang in ("ru", "en"):
+        labels = dashboard_copy(lang)["label_map"]
+        assert all(tag in labels for tag in tags)
+
+
+def test_astana_hub_curated_tags_have_public_labels():
+    tags = sorted(
+        {tag for tags in FALLBACK_PROGRAM_EXTRA_TAGS.values() for tag in tags}
+    )
+
+    for lang in ("ru", "en"):
+        labels = dashboard_copy(lang)["label_map"]
+        assert all(tag in labels for tag in tags)
 
 
 def test_localized_summary_removes_source_ui_noise():
@@ -115,6 +136,20 @@ def test_english_localization_uses_curated_astana_hub_fallback():
 
     assert localized.title == "Tech Orda program"
     assert localized.summary.startswith("Astana Hub digital-skills program.")
+
+
+def test_russian_localization_uses_editorial_startup_program_title():
+    item = Opportunity(
+        source="google_cloud_startup",
+        source_url=HttpUrl("https://startup.google.com/cloud/"),
+        type=OpportunityType.CLOUD_CREDIT,
+        title="Google for Startups Cloud Program",
+        summary="Global startup support program with cloud credits.",
+    )
+
+    localized = localize_opportunity(item, "ru")
+
+    assert localized.title == "Google Cloud для стартапов"
 
 
 def test_english_localization_expands_short_eeas_summary():

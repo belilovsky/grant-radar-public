@@ -1,10 +1,14 @@
-# AV DS 4 integration
+# Связь с AV DS 4
 
-Grant Radar has a server-rendered FastAPI dashboard, so it does not depend on
-the React-only `@sgeo/ui-kit` package at runtime. The production-safe contract
-is a local server-rendered adapter in `api/avds.py`, aligned to AV DS 4.3.2.
+QAZ.FUND формирует страницы на сервере через FastAPI и не зависит в рабочей
+среде от React-пакета `@sgeo/ui-kit`. Связь с AV DS 4.6.0 обеспечивает локальный
+адаптер в `api/avds.py`; канонический каталог компонентов находится на
+`https://avds.digital`. Публичный сайт и выпуск 4.6.0 повторно проверены
+27 июля 2026 года. `ui.qdev.run` перенаправляет на тот же канонический адрес.
 
-## Contract
+Архитектурная запись AV DS отдельно фиксирует основу `4.0.0-rc.1`. Это не
+противоречит публичному выпуску 4.6.0: первая версия обозначает базовый кандидат
+пакетов, вторая – действующую витрину и потребительский контракт QAZ.FUND.
 
 - The root document declares `data-avds="grant-radar"` and
   `data-av-theme="light"`.
@@ -48,31 +52,64 @@ is a local server-rendered adapter in `api/avds.py`, aligned to AV DS 4.3.2.
   instances are marked with `data-avds-pattern`; the Python service continues
   to own rendering, filtering, localization and all relevance calculations.
 
-## Why local adapter
+Корневой документ содержит признаки `data-avds="grant-radar"` и
+`data-av-theme="light"`. Адаптер определяет используемые цвета, интервалы,
+скругления, тени, движение, типографику, плотность элементов и общий стиль
+фокуса. Семантические переменные AV DS связаны с переменными интерфейса
+QAZ.FUND, поэтому визуальные роли сохраняются без копирования исходного кода
+React-компонентов.
 
-This project deploys as a small Python/Docker service on VPS. Pulling private
-frontend packages during production deploy would make the service dependent on
-registry credentials. The adapter keeps the visual contract aligned with AV DS
-while preserving a simple, reproducible Docker build.
+Рабочие элементы обозначены атрибутом `data-avds-component`. Проверка выпуска
+контролирует оболочку, поля, кнопки, панели, показатели, карточки источников,
+состояния, быстрые ссылки и сводную полосу показателей. Машиночитаемая граница
+опубликована в `/.well-known/avds-ui-contract.json`; значение
+`direct_package_import: false` честно указывает на серверный адаптер, а не на
+прямой импорт React-пакета.
 
-The adapter should be replaced only if AV DS publishes a framework-neutral CSS
-artifact suitable for a Python-only image. Until then, parity is maintained by
-semantic roles, component-family mapping, visual tests and production smoke,
-not by copying React component source.
+QAZ.FUND использует `QuickLinksRail`, `PublicSummaryStrip`, `TrustStrip`,
+`TrustFactsPanel`, `EditorialLeadRail`, `LiteReadingSurface` и `DocumentCard`.
+Центр данных использует `DataQualityScorecard`, `Progress`, `Table`, `Card`,
+`Alert` и `Button`. Рабочее место заявки собирается из `FormField`,
+`TextInput`, `Textarea`, `Checkbox`, `Progress`, `Card`, `Alert` и `Button`.
+Общие контракты `@av/patterns` охватывают `EvidenceSummary`,
+`FilterStateSummary`, `DecisionSummary`, `EvidenceDisclosure` и `ActionPath`;
+их рабочие экземпляры отмечены атрибутом `data-avds-pattern`.
 
-## Deliberate non-adoptions
+Главная страница следует модели компактного рабочего каталога: один сильный
+первый экран, спокойная полоса доверия, плотные фильтры и карточки без вложенных
+служебных панелей. Страница программы использует редакционный первый экран и
+единую полосу чтения. Точные выдержки из первоисточника раскрываются по запросу,
+а расширенные сведения не конкурируют с условиями и действиями пользователя.
 
-The AV platform registry also contains search, jobs, forms, notification and
-telemetry packages. QAZ.FUND does not import them merely for nominal parity:
+Диаграммы, журнал изменений, машинные точки входа и рабочее место заявки
+остаются композициями QAZ.FUND. Они обозначены `data-avds-pattern`, но не
+выдаются за отдельные компоненты пакета AV DS. Это соответствует границе
+системы: аналитика и прикладное поведение принадлежат продукту, а AV DS задаёт
+переменные, состояния и базовые элементы.
 
-- PostgreSQL-backed public queries and the released QazStack helpers remain the
-  production search path; an in-memory search adapter would regress scale and
-  filtering semantics.
-- QAZ.FUND keeps its audited scheduler and run records; a generic scheduler is
-  not a replacement until it has the same persistence and safety contract.
-- Product authentication, messaging and editor workflows are not present on the
-  public catalog, so forms and notification runtimes would add unused attack
-  surface.
+`EvidenceDisclosure` и `ActionPath` появились в QAZ.FUND и затем были
+перенесены в AVDS как независимые от React шаблоны. Точная ревизия обмена
+закреплена в публичном контракте.
 
-This keeps AV DS focused on reusable presentation contracts and prevents a
-cross-language dependency from complicating the Python production image.
+## Почему адаптер остается локальным
+
+QAZ.FUND работает как компактная служба Python в контейнере. Загрузка закрытых
+пакетов интерфейса при выпуске потребовала бы учетных данных реестра и усложнила
+бы воспроизводимость сборки. Локальный адаптер сохраняет визуальный договор с
+AV DS без новой зависимости рабочей среды.
+
+Переход на прямой пакет оправдан только после появления независимого от
+прикладной среды набора стилей AV DS, пригодного для образа Python. До этого
+соответствие подтверждают семантические роли, карта компонентов, проверки
+разметки, настольная и мобильная визуальная проверка и контроль рабочего сайта.
+
+## Что намеренно не переносится
+
+Поиск в PostgreSQL и выпущенные средства QazStack остаются основой каталога:
+памятный поисковый модуль не обеспечит ту же выборку и разбиение на страницы.
+QAZ.FUND также сохраняет проверенное расписание обновлений и журнал запусков.
+Общие формы, уведомления и вход пользователя не подключаются, пока на публичном
+сайте нет соответствующих процессов.
+
+Так AV DS отвечает за повторно используемое представление, а QAZ.FUND – за
+данные, правила продукта, безопасность и выпуск.

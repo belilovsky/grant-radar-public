@@ -14,7 +14,7 @@ import ssl
 import tempfile
 from collections.abc import AsyncIterator, Iterable
 from dataclasses import dataclass
-from datetime import datetime, timezone
+from datetime import date, datetime, timezone
 from decimal import Decimal
 from pathlib import Path
 from typing import Any, ClassVar
@@ -117,8 +117,13 @@ class DomesticProgram:
     tags: tuple[str, ...]
     type: OpportunityType = OpportunityType.GRANT
     rolling: bool = True
+    deadline: date | None = None
+    opportunity_status: str | None = None
+    lifecycle: str | None = None
     retain_on_fetch_error: bool = True
     eligibility: tuple[str, ...] = ()
+    title_ru: str = ""
+    summary_ru: str = ""
     amount_raw: str | None = None
     amount_min: Decimal | None = None
     amount_max: Decimal | None = None
@@ -142,6 +147,491 @@ DOMESTIC_PROGRAMS = (
             "business_support",
             "qazinnovations",
         ),
+    ),
+    DomesticProgram(
+        url="https://www.gov.kz/memleket/entities/sci/press/news/details/1243733?lang=ru",
+        title="Kazakhstan state educational grants competition",
+        summary=(
+            "Official Ministry of Science and Higher Education notice for the "
+            "2026 state educational-grant competition. Applications were accepted "
+            "from 13 to 20 July 2026 through university admission offices, virtual "
+            "admission offices and eGov; grant-holder lists are expected by 10 August."
+        ),
+        title_ru="Конкурс государственных образовательных грантов",
+        summary_ru=(
+            "Официальное сообщение Министерства науки и высшего образования "
+            "о конкурсе образовательных грантов 2026 года. Заявления принимались "
+            "с 13 по 20 июля через приёмные комиссии вузов, виртуальные приёмные "
+            "и eGov; списки обладателей грантов должны быть опубликованы до 10 августа."
+        ),
+        tags=(
+            "grant",
+            "scholarship",
+            "education",
+            "higher_education",
+            "citizen_support",
+            "egov",
+            "ministry_science_higher_education",
+        ),
+        eligibility=(
+            "Kazakhstan applicants entering higher education under the official admission rules",
+        ),
+        application_url="https://egov.kz/cms/ru/services/university_degree/182pass_mon",
+    ),
+    DomesticProgram(
+        url="https://www.gov.kz/memleket/entities/sci/press/news/details/1260614?lang=ru",
+        title="Kazakhstan master's degree state educational grants",
+        summary=(
+            "Official Ministry of Science and Higher Education notice on the "
+            "2026 master's admission cycle. Around 11,000 state educational "
+            "grants are allocated for master's training in priority fields; "
+            "applications for the grant competition are accepted from 12 to "
+            "18 August 2026, with results expected by 25 August."
+        ),
+        title_ru="Государственные образовательные гранты в магистратуру",
+        summary_ru=(
+            "Официальное сообщение Министерства науки и высшего образования "
+            "о приёмной кампании в магистратуру 2026 года. На подготовку "
+            "магистрантов выделено около 11 тысяч государственных грантов "
+            "по востребованным направлениям; документы на конкурс принимаются "
+            "с 12 по 18 августа 2026 года, списки обладателей грантов должны "
+            "быть опубликованы до 25 августа."
+        ),
+        tags=(
+            "grant",
+            "scholarship",
+            "education",
+            "higher_education",
+            "research",
+            "citizen_support",
+            "ministry_science_higher_education",
+        ),
+        rolling=False,
+        deadline=date(2026, 8, 18),
+        opportunity_status="upcoming",
+        lifecycle="forecast",
+        eligibility=(
+            "Kazakhstan applicants to master's programmes who meet the official "
+            "complex-testing thresholds and admission requirements",
+        ),
+        amount_raw="around 11,000 state educational grants for master's training in 2026",
+        application_url="https://egov.kz/cms/ru/services/university_degree/182pass_mon",
+    ),
+    DomesticProgram(
+        url="https://www.gov.kz/memleket/entities/sci/press/news/details/1262257?lang=ru",
+        title="State educational grants for the Taraz RCTU branch",
+        summary=(
+            "Official Ministry notice on the 2026-2027 admission campaign for the "
+            "Taraz branch of D. Mendeleev University. The state allocated 100 "
+            "educational grants for inorganic chemical technology and analytical "
+            "chemistry programmes; documents are accepted until 9 August 2026."
+        ),
+        title_ru="100 образовательных грантов для Таразского филиала РХТУ",
+        summary_ru=(
+            "Официальное сообщение Министерства науки и высшего образования "
+            "о приёме документов в Таразский филиал РХТУ имени Д. И. Менделеева. "
+            "На 2026-2027 учебный год выделено 100 государственных грантов по "
+            "программам химической технологии неорганических веществ и аналитической "
+            "химии; документы принимаются до 9 августа 2026 года."
+        ),
+        tags=(
+            "grant",
+            "scholarship",
+            "education",
+            "higher_education",
+            "engineering",
+            "chemistry",
+            "citizen_support",
+            "ministry_science_higher_education",
+        ),
+        rolling=False,
+        deadline=date(2026, 8, 9),
+        opportunity_status="open",
+        lifecycle="open",
+        eligibility=(
+            "Applicants to the Taraz branch admission campaign who meet the "
+            "official competition requirements",
+        ),
+        amount_raw="100 state educational grants for 2026-2027",
+    ),
+    DomesticProgram(
+        url="https://www.gov.kz/memleket/entities/sci/press/news/details/1263399?lang=ru",
+        title="State educational grants for Anhalt International University",
+        summary=(
+            "Official Ministry notice on state educational grants at Anhalt "
+            "International University in Almaty. Kazakhstan applicants can apply "
+            "for electrical engineering, information technology and biomedical "
+            "engineering programmes; documents are accepted until 10 August 2026."
+        ),
+        title_ru="Государственные образовательные гранты Anhalt International University",
+        summary_ru=(
+            "Официальное сообщение Министерства науки и высшего образования "
+            "о государственных образовательных грантах в Anhalt International "
+            "University в Алматы. Абитуриенты из Казахстана могут подать документы "
+            "на направления «Электротехника и информационные технологии» и "
+            "«Биомедицинская инженерия» до 10 августа 2026 года."
+        ),
+        tags=(
+            "grant",
+            "scholarship",
+            "education",
+            "higher_education",
+            "engineering",
+            "it",
+            "citizen_support",
+            "ministry_science_higher_education",
+        ),
+        rolling=False,
+        deadline=date(2026, 8, 10),
+        opportunity_status="open",
+        lifecycle="open",
+        eligibility=(
+            "Kazakhstan applicants meeting the official admission criteria, "
+            "including UNT and English-language requirements",
+        ),
+    ),
+    DomesticProgram(
+        url="https://www.gov.kz/memleket/entities/pavlodar-edu/press/events/details/47017",
+        title="Pavlodar region college state-funded places",
+        summary=(
+            "Official Pavlodar Region Education Department notice on the "
+            "2026-2027 technical, vocational and post-secondary admission cycle. "
+            "The region allocated 6,300 state-funded college places. Applications "
+            "are accepted through eGov.kz or directly by colleges, with deadlines "
+            "depending on the track: 10 August for pedagogy and some medical "
+            "routes, 15 August for medical routes after grade 11 or TVET, "
+            "22 August for middle-specialist and applied-bachelor programmes, "
+            "27 August for working qualifications and 20 September for part-time study."
+        ),
+        title_ru="6300 грантовых мест в колледжах Павлодарской области",
+        summary_ru=(
+            "Официальное сообщение Управления образования Павлодарской области "
+            "о приёме в колледжи на 2026-2027 учебный год. Регион выделил "
+            "6300 мест по государственному образовательному заказу. Документы "
+            "подаются через eGov.kz или напрямую в колледж; сроки зависят от "
+            "траектории: до 10 августа для педагогических и части медицинских "
+            "направлений, до 15 августа для медицинских направлений после 11 класса "
+            "или ТиПО, до 22 августа для специальностей среднего звена и прикладного "
+            "бакалавриата, до 27 августа для рабочих квалификаций и до 20 сентября "
+            "для заочной формы."
+        ),
+        tags=(
+            "grant",
+            "scholarship",
+            "education",
+            "citizen_support",
+            "regional_development",
+            "govkz",
+        ),
+        rolling=False,
+        deadline=date(2026, 9, 20),
+        opportunity_status="open",
+        lifecycle="open",
+        eligibility=(
+            "Applicants to technical, vocational and post-secondary education "
+            "organizations in Pavlodar Region under the official admission rules",
+        ),
+        amount_raw="6,300 state-funded college places for 2026-2027",
+        application_url="https://egov.kz/cms/ru/online-services/for_citizen/pr_5",
+    ),
+    DomesticProgram(
+        url="https://www.gov.kz/memleket/entities/astana/press/news/details/1247988?lang=ru",
+        title="Astana college state-funded places",
+        summary=(
+            "Official Astana akimat notice on the 2026-2027 college admission "
+            "campaign. The city allocated 10,300 state-funded college places, "
+            "including working qualifications, middle-specialist and applied "
+            "bachelor programmes, target orders with employers and inclusive "
+            "education places. Applications are accepted online through eGov.kz; "
+            "published deadlines run by track from 20 July to 20 September 2026."
+        ),
+        title_ru="10 300 грантовых мест в колледжах Астаны",
+        summary_ru=(
+            "Официальное сообщение акимата Астаны о приёме в колледжи на "
+            "2026-2027 учебный год. В городе выделено 10 300 грантовых мест, "
+            "включая рабочие квалификации, специальности среднего звена и "
+            "прикладного бакалавриата, целевой заказ с работодателями и места "
+            "по инклюзивному образованию. Документы принимаются онлайн через "
+            "eGov.kz; опубликованные сроки зависят от траектории и идут с "
+            "20 июля до 20 сентября 2026 года."
+        ),
+        tags=(
+            "grant",
+            "scholarship",
+            "education",
+            "citizen_support",
+            "regional_development",
+            "govkz",
+        ),
+        rolling=False,
+        deadline=date(2026, 9, 20),
+        opportunity_status="open",
+        lifecycle="open",
+        eligibility=(
+            "Applicants to technical, vocational and post-secondary education "
+            "organizations in Astana under the official admission rules",
+        ),
+        amount_raw="10,300 state-funded college places for 2026-2027",
+        application_url="https://egov.kz/cms/ru/online-services/for_citizen/pr_5",
+    ),
+    DomesticProgram(
+        url="https://www.gov.kz/memleket/entities/mfa-delhi/press/news/details/1228534?lang=ru",
+        title="Astana AI Film Festival international contest",
+        summary=(
+            "Official Kazakhstan MFA notice on the Astana AI Film Festival "
+            "international contest for AI-created short films. Applications are "
+            "open to individual authors and teams worldwide until 15 August 2026; "
+            "the festival will select 25 finalists and has a total prize fund "
+            "of USD 1 million."
+        ),
+        title_ru="Международный конкурс Astana AI Film Festival",
+        summary_ru=(
+            "Официальное сообщение МИД Казахстана о международном конкурсе "
+            "короткометражных фильмов, созданных с использованием искусственного "
+            "интеллекта. Заявки принимаются от индивидуальных авторов и команд "
+            "со всего мира до 15 августа 2026 года; фестиваль отберёт 25 "
+            "финалистов, общий призовой фонд составляет 1 млн долларов США."
+        ),
+        tags=(
+            "contest",
+            "ai",
+            "creative_industries",
+            "culture",
+            "media",
+            "digital",
+            "international",
+        ),
+        type=OpportunityType.CONTEST,
+        rolling=False,
+        deadline=date(2026, 8, 15),
+        opportunity_status="open",
+        lifecycle="open",
+        eligibility=(
+            "Individual authors and teams from any country submitting an "
+            "AI-created short film under the official festival rules",
+        ),
+        amount_raw="total prize fund of USD 1,000,000",
+        amount_max=Decimal("1000000"),
+        currency="USD",
+        application_url="https://aaiff.ai/",
+    ),
+    DomesticProgram(
+        url="https://www.gov.kz/memleket/entities/mam/press/news/details/1214247?lang=ru",
+        title="Aiboz national literary prize",
+        summary=(
+            "Official Ministry of Culture and Information notice on the Aiboz "
+            "national literary prize for Kazakhstan authors. The 2026 contest "
+            "accepts unpublished works in seven nominations until 1 September "
+            "2026; the total prize fund is 35 million KZT, with 5 million KZT "
+            "planned for each nomination."
+        ),
+        title_ru="Национальная литературная премия «Айбоз»",
+        summary_ru=(
+            "Официальное сообщение Министерства культуры и информации о "
+            "Национальной литературной премии «Айбоз» для казахстанских авторов. "
+            "В 2026 году принимаются ранее не опубликованные произведения по "
+            "семи номинациям; заявки принимаются до 1 сентября, общий призовой "
+            "фонд составляет 35 млн тенге, по 5 млн тенге на каждую номинацию."
+        ),
+        tags=(
+            "contest",
+            "culture",
+            "literature",
+            "creative_industries",
+            "translation",
+            "comics",
+        ),
+        type=OpportunityType.CONTEST,
+        rolling=False,
+        deadline=date(2026, 9, 1),
+        opportunity_status="open",
+        lifecycle="open",
+        eligibility=(
+            "Kazakhstan authors submitting previously unpublished literary works "
+            "under the official Aiboz prize rules",
+        ),
+        amount_raw="total prize fund of 35,000,000 KZT; 5,000,000 KZT per nomination",
+        amount_max=Decimal("35000000"),
+        currency="KZT",
+        application_url="https://www.aiboz.kz/",
+    ),
+    DomesticProgram(
+        url="https://www.gov.kz/memleket/entities/mfa-gorgan/press/news/details/1245087?lang=ru",
+        title="Kazakhstan Through My Eyes international drawing contest",
+        summary=(
+            "Official Kazakhstan MFA notice on the Otandastar Qory international "
+            "online drawing contest for ethnic Kazakh children aged 12-17 living "
+            "abroad. Works on Kazakhstan-related themes are accepted by email "
+            "until 28 August 2026; winners receive a laptop, tablet, smart watch "
+            "and other prizes."
+        ),
+        title_ru="Международный конкурс рисунков «Казахстан моими глазами»",
+        summary_ru=(
+            "Официальное сообщение МИД Казахстана о международном онлайн-конкурсе "
+            "рисунков Фонда «Отандастар» для этнических казахских детей "
+            "12–17 лет, проживающих за рубежом. Работы о природе, культуре, "
+            "наследии и будущем Казахстана принимаются по электронной почте "
+            "до 28 августа 2026 года; победителей наградят ноутбуком, планшетом, "
+            "смарт-часами и другими призами."
+        ),
+        tags=(
+            "contest",
+            "culture",
+            "creative_industries",
+            "diaspora",
+            "children",
+            "visual_arts",
+            "drawing",
+            "youth",
+        ),
+        type=OpportunityType.CONTEST,
+        rolling=False,
+        deadline=date(2026, 8, 28),
+        opportunity_status="open",
+        lifecycle="open",
+        eligibility=(
+            "Ethnic Kazakh children aged 12-17 living outside Kazakhstan under "
+            "the official contest rules",
+        ),
+        amount_raw=(
+            "prizes include a laptop, tablet, smart watch and incentive prizes"
+        ),
+        application_url="mailto:oqbaiqau@gmail.com",
+    ),
+    DomesticProgram(
+        url=(
+            "https://bolashak.gov.kz/ru/allnews/"
+            "100-obrazovatelnyh-grantov-dlya-kazahstancev-vydelili-vuzy-"
+            "respubliki-tadzhikistan"
+        ),
+        title="Tajikistan intergovernmental education grants for Kazakhstan citizens",
+        summary=(
+            "Official Center for International Programs notice on 100 education "
+            "grants for Kazakhstan citizens at universities in Tajikistan for the "
+            "2026-2027 academic year. The package covers tuition, monthly "
+            "stipend and medical service; documents are accepted from 17 to "
+            "28 July 2026 through eGov or the Center."
+        ),
+        title_ru="100 образовательных грантов в вузах Таджикистана для казахстанцев",
+        summary_ru=(
+            "Официальное сообщение АО «Центр международных программ» о 100 "
+            "образовательных грантах для граждан Казахстана в вузах Республики "
+            "Таджикистан на 2026-2027 учебный год. Грант покрывает обучение, "
+            "ежемесячную стипендию и медицинское обслуживание; документы "
+            "принимаются с 17 по 28 июля 2026 года через eGov или Центр."
+        ),
+        tags=(
+            "grant",
+            "scholarship",
+            "education",
+            "higher_education",
+            "mobility",
+            "student_exchange",
+            "citizen_support",
+            "intergovernmental_grant",
+            "bolashak",
+            "tajikistan",
+        ),
+        rolling=False,
+        deadline=date(2026, 7, 28),
+        opportunity_status="open",
+        lifecycle="open",
+        eligibility=(
+            "Kazakhstan citizens applying under the official intergovernmental "
+            "education-grant selection rules",
+        ),
+        amount_raw="100 education grants for 2026-2027",
+        application_url="https://egov.kz/cms/ru/services/higher_education/pass_203_mon",
+    ),
+    DomesticProgram(
+        url=(
+            "https://bolashak.gov.kz/ru/allnews/"
+            "10-obrazovatelnyh-grantov-dlya-kazahstancev-vydelili-vuzy-"
+            "kyrgyzskoj-respubliki"
+        ),
+        title="Kyrgyzstan intergovernmental education grants for Kazakhstan citizens",
+        summary=(
+            "Official Center for International Programs notice on 10 education "
+            "grants for Kazakhstan citizens at universities in Kyrgyzstan for the "
+            "2026-2027 academic year. The package covers tuition and monthly "
+            "stipend; documents are accepted from 17 to 28 July 2026 through "
+            "eGov or the Center."
+        ),
+        title_ru="10 образовательных грантов в вузах Кыргызстана для казахстанцев",
+        summary_ru=(
+            "Официальное сообщение АО «Центр международных программ» о 10 "
+            "образовательных грантах для граждан Казахстана в вузах Кыргызской "
+            "Республики на 2026-2027 учебный год. Грант покрывает обучение и "
+            "ежемесячную стипендию; документы принимаются с 17 по 28 июля "
+            "2026 года через eGov или Центр."
+        ),
+        tags=(
+            "grant",
+            "scholarship",
+            "education",
+            "higher_education",
+            "mobility",
+            "student_exchange",
+            "citizen_support",
+            "intergovernmental_grant",
+            "bolashak",
+            "kyrgyzstan",
+        ),
+        rolling=False,
+        deadline=date(2026, 7, 28),
+        opportunity_status="open",
+        lifecycle="open",
+        eligibility=(
+            "Kazakhstan citizens applying under the official intergovernmental "
+            "education-grant selection rules",
+        ),
+        amount_raw="10 education grants for 2026-2027",
+        application_url="https://egov.kz/cms/ru/services/higher_education/pass_203_mon",
+    ),
+    DomesticProgram(
+        url="https://bolashak.gov.kz/en/allnews/otkryt-priem-dokumentov-dlya-obucheniya-v-marokko",
+        title="Morocco intergovernmental education grants for Kazakhstan citizens",
+        summary=(
+            "Official Center for International Programs notice on 20 Moroccan "
+            "government education grants with scholarships for the 2026-2027 "
+            "academic year. The programme covers study in public higher, "
+            "technical and vocational institutions in Morocco; the final-stage "
+            "deadline for submitting baccalaureate exam results is 31 July 2026."
+        ),
+        title_ru="20 образовательных грантов Марокко для казахстанцев",
+        summary_ru=(
+            "Официальное сообщение АО «Центр международных программ» о 20 "
+            "образовательных грантах Королевства Марокко со стипендией на "
+            "2026-2027 учебный год. Программа охватывает обучение в государственных "
+            "высших, технических и профессиональных учебных заведениях Марокко; "
+            "срок представления результатов экзаменов на финальном этапе – "
+            "31 июля 2026 года."
+        ),
+        tags=(
+            "grant",
+            "scholarship",
+            "education",
+            "higher_education",
+            "vocational_training",
+            "mobility",
+            "student_exchange",
+            "citizen_support",
+            "intergovernmental_grant",
+            "bolashak",
+            "morocco",
+        ),
+        rolling=False,
+        deadline=date(2026, 7, 31),
+        opportunity_status="open",
+        lifecycle="open",
+        eligibility=(
+            "Kazakhstan citizens applying under the official Moroccan "
+            "intergovernmental education-grant selection rules",
+        ),
+        amount_raw=(
+            "20 education grants with scholarship for the 2026-2027 academic year"
+        ),
+        application_url="mailto:studyinmorocco.kz@gmail.com",
     ),
     DomesticProgram(
         url="https://egov.kz/cms/ru/mobile-services/pass455_mir",
@@ -266,6 +756,86 @@ DOMESTIC_PROGRAMS = (
         amount_max=Decimal("5000000"),
         currency="KZT",
         application_url="https://egov.kz/cms/ru/services/state_support_measures/260_pass",
+    ),
+    DomesticProgram(
+        url="https://www.gov.kz/memleket/entities/kyzylorda-kasipkerlik/activities/37552",
+        title="Kyzylorda regional grants for social entrepreneurship",
+        summary=(
+            "Official Kyzylorda Entrepreneurship and Industry Department guidance "
+            "on regional state grants for social-entrepreneurship entities. Grants "
+            "are awarded through competitive selection for business projects up "
+            "to 18 months, with at least 20% co-financing, new jobs and required "
+            "project infrastructure."
+        ),
+        title_ru="Региональные гранты Кызылординской области для социального предпринимательства",
+        summary_ru=(
+            "Официальная справка Управления предпринимательства и промышленности "
+            "Кызылординской области о государственных грантах для субъектов "
+            "социального предпринимательства. Гранты выдаются по итогам конкурсного "
+            "отбора на бизнес-проекты сроком до 18 месяцев; обязательны "
+            "софинансирование не менее 20%, создание рабочих мест и наличие "
+            "инфраструктуры для проекта."
+        ),
+        tags=(
+            "grant",
+            "social_entrepreneurship",
+            "sme",
+            "business_support",
+            "regional_development",
+            "one_village_one_product",
+            "kezekte",
+            "kyzylorda",
+            "govkz",
+        ),
+        eligibility=(
+            "Social-entrepreneurship entities and One Village One Product finalists "
+            "under Kyzylorda regional competition conditions",
+        ),
+        amount_raw="up to 5,000,000 KZT",
+        amount_max=Decimal("5000000"),
+        currency="KZT",
+        application_url="https://kezekte.kz/",
+    ),
+    DomesticProgram(
+        url="https://www.gov.kz/memleket/entities/mangystau-upp/press/article/details/212349",
+        title="Mangystau regional grants for social entrepreneurship",
+        summary=(
+            "Official Mangystau Entrepreneurship and Trade Department guidance "
+            "on non-repayable regional grants for social entrepreneurs and One "
+            "Village One Product finalists. The page explains eligible spending "
+            "on raw materials, repairs, new equipment, technologies, franchise "
+            "and research work, with at least 20% co-financing, documented "
+            "cashless payments and new jobs."
+        ),
+        title_ru="Региональные гранты Мангистауской области для социального предпринимательства",
+        summary_ru=(
+            "Официальная справка Управления предпринимательства и торговли "
+            "Мангистауской области о безвозмездных грантах для социальных "
+            "предпринимателей и финалистов программы «Одно село – один продукт». "
+            "Средства можно направлять на сырье, ремонт, новое оборудование, "
+            "технологии, франшизу и исследовательские работы; требуются "
+            "софинансирование не менее 20%, безналичная оплата с подтверждающими "
+            "документами и создание рабочих мест."
+        ),
+        tags=(
+            "grant",
+            "social_entrepreneurship",
+            "sme",
+            "business_support",
+            "regional_development",
+            "one_village_one_product",
+            "kezekte",
+            "mangystau",
+            "govkz",
+        ),
+        eligibility=(
+            "Social entrepreneurs and One Village One Product finalists under "
+            "Mangystau regional grant conditions",
+        ),
+        amount_raw="up to 5,000,000 KZT",
+        amount_max=Decimal("5000000"),
+        currency="KZT",
+        application_url="https://kezekte.kz/",
     ),
     DomesticProgram(
         url="https://www.enbek.kz/ru/node/3481",
@@ -626,6 +1196,29 @@ DOMESTIC_PROGRAMS = (
         ),
         tags=("tax_benefit", "startup", "it", "business_support", "astana_hub"),
     ),
+    DomesticProgram(
+        url="https://astanahub.com/en/l/SeedMoneySmartCity",
+        title="Astana Hub Seed Money Smart City",
+        summary=(
+            "Official Astana Hub financing route for smart-city technology "
+            "startups. Applicants submit documents through the Astana Hub "
+            "platform, pass eligibility review and present the project before "
+            "agreement signing and escrow-based disbursement."
+        ),
+        title_ru="Astana Hub Seed Money Smart City",
+        summary_ru=(
+            "Официальная программа финансирования Astana Hub для технологических "
+            "стартапов в сфере умного города. Заявитель подаёт документы через "
+            "платформу Astana Hub, проходит проверку условий и презентацию проекта; "
+            "после одобрения финансирование перечисляется через эскроу."
+        ),
+        tags=("grant", "startup", "innovation", "smart_city", "astana_hub"),
+        eligibility=(
+            "Technology startups meeting the Astana Hub programme requirements, "
+            "including legal-entity, team and activity-priority conditions",
+        ),
+        application_url="https://astanahub.com/en/l/SeedMoneySmartCity",
+    ),
 )
 
 ACTIVE_DOMESTIC_URLS = frozenset(program.url for program in DOMESTIC_PROGRAMS)
@@ -831,6 +1424,17 @@ def _amount_raw_payload(program: DomesticProgram) -> dict[str, Any]:
     return payload
 
 
+def _i18n_payload(program: DomesticProgram) -> dict[str, Any]:
+    if not program.title_ru and not program.summary_ru:
+        return {}
+    ru: dict[str, str] = {}
+    if program.title_ru:
+        ru["title"] = program.title_ru
+    if program.summary_ru:
+        ru["summary"] = program.summary_ru
+    return {"i18n": {"ru": ru}}
+
+
 def _detail_snapshot(html: str) -> dict[str, Any] | None:
     sections, excerpt_only = _extract_detail_sections(html)
     sections = _drop_leading_navigation_section(sections)
@@ -974,8 +1578,11 @@ class KazakhstanDomesticSupportSource(BaseSource):
             amount_min=program.amount_min,
             amount_max=program.amount_max,
             currency=program.currency,
+            deadline=program.deadline,
             eligibility=list(program.eligibility),
             tags=_program_tags(program, self.default_tags),
+            opportunity_status=program.opportunity_status,
+            lifecycle=program.lifecycle,
             raw=raw,
         )
 
@@ -1029,6 +1636,14 @@ class KazakhstanDomesticSupportSource(BaseSource):
                             "page_title": program.title,
                             "status_code": None,
                             "deadline_policy": ("rolling" if program.rolling else None),
+                            "deadline": (
+                                program.deadline.isoformat()
+                                if program.deadline
+                                else None
+                            ),
+                            "opportunity_status": program.opportunity_status,
+                            "lifecycle": program.lifecycle,
+                            **_i18n_payload(program),
                             **_amount_raw_payload(program),
                             "application_url": program.application_url,
                             "eligibility_raw": list(program.eligibility),
@@ -1060,6 +1675,12 @@ class KazakhstanDomesticSupportSource(BaseSource):
                 "page_title": page_title,
                 "status_code": response.status_code,
                 "deadline_policy": "rolling" if program.rolling else None,
+                "deadline": (
+                    program.deadline.isoformat() if program.deadline else None
+                ),
+                "opportunity_status": program.opportunity_status,
+                "lifecycle": program.lifecycle,
+                **_i18n_payload(program),
                 **_amount_raw_payload(program),
                 "application_url": program.application_url,
                 "eligibility_raw": list(program.eligibility),

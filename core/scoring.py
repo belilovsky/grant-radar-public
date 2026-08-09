@@ -15,6 +15,7 @@ from core.geofit import (
     is_low_confidence_for_kazakhstan_focus,
 )
 from core.models import Opportunity
+from core.public_clock import public_today
 
 MODEL_VERSION = "qazfund-relevance-v2"
 PUBLIC_RELEVANCE_THRESHOLD = 0.3
@@ -197,7 +198,7 @@ def _deadline_actionability(opp: Opportunity, today: date) -> tuple[float, str]:
 def score_breakdown(opp: Opportunity, today: date | None = None) -> ScoreBreakdown:
     """Calculate bounded relevance and a separate action-priority score."""
 
-    today = today or date.today()
+    today = today or public_today()
     text = f"{_primary_theme_text(opp)} {opp.summary}".lower()
     thematic, matched_themes = _thematic_component(opp)
     geographic, geography = _geographic_component(opp, text)

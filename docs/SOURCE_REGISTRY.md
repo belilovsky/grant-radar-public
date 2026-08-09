@@ -44,13 +44,16 @@ These sources are high-value because they produce directly actionable opportunit
 | World Bank procurement and project pages | tenders / multilateral | Major route for education and digital transformation projects | daily | Active `world_bank_kazakhstan` project adapter plus `world_bank_procurement_ca` for current procurement notices across Central Asia |
 | EU Funding & Tenders Portal | grants / R&D / partnerships | Major official surface for research, innovation, digital and consortium calls | daily | Active `eu_funding_tenders_ca` API adapter; every result is marked for eligibility verification |
 | Canada Fund for Local Initiatives | local small grants | Recurring official route for locally designed civil-society projects | daily during call windows | Active `canada_cfli_ca` annual-status monitor; emits only officially open Central Asia rows |
+| UNGM procurement opportunities | procurement / grants / partner calls | Official UN marketplace includes RFPs, EOIs, grant-support calls, consultant calls and implementing-partner calls | daily | Active `ungm_opportunities` official watch source; item-level API integration should follow |
 | ADB procurement and consulting notices | tenders / multilateral | Strong relevance in education and digital public sector | weekly | Active `adb_kazakhstan` IATI adapter monitors Kazakhstan project pipeline |
 | IsDB project procurement | tenders / development funding | Relevant for education, infrastructure, water, finance and digital capacity projects across member countries | weekly | Active `isdb_project_procurement` adapter filters active Kazakhstan/Central Asia notices |
+| OSCE open tenders | procurement / implementing partner | Relevant for Central Asia programme offices, civic technology, research, training and partner implementation | daily | Active `osce_procurement` official watch source |
 | EBRD ECEPP procurement | tenders / multilateral | Relevant for digital modernization, municipal infrastructure, water, transport and energy lots | weekly | Active `ebrd_ecepp_procurement` adapter filters open Kazakhstan/Central Asia notices |
 | Erasmus+ Kazakhstan | grants / education partnerships | High-fit institutional call surface for universities and academic organizations in Kazakhstan | weekly | Active `erasmus_kazakhstan` adapter expands official call posts into action-level opportunities with deadlines |
 | UNICEF procurement / innovation / education | grants / tenders / partnerships | Relevant for education and child-focused digital programs | weekly | Active `unicef_kazakhstan` tender parser |
 | UNESCO calls and participation programs | grants / partnerships | Good fit for education, AI literacy, teacher training | weekly | Active `unesco_iite` item-level announcements parser |
 | UNDP procurement and challenges | tenders / innovation | Useful for public sector and DPI-related pilots | weekly | Active `undp_procurement` parser on country notices |
+| GEF Small Grants Programme Kazakhstan | grants / environment / civil society | Strong official route for local climate, biodiversity, community resilience and NGO projects | weekly | Active `gef_sgp_kazakhstan` official watch source |
 
 ### Tier 2 – Strong strategic sources
 
@@ -66,8 +69,11 @@ These are highly relevant but less predictable or more partnership-dependent.
 | Islamic Development Bank country programs | development funding | Relevant in education and digital capacity building beyond tender notices | biweekly | Project procurement is covered by `isdb_project_procurement`; watch country program pages next |
 | KOICA | grants / development cooperation | Good fit for digital skills and education programs | biweekly | Often enters through country programs |
 | GIZ | grants / implementation programs | Practical route through local partners | biweekly | Good for digital transformation and skills |
-| Astana Hub | accelerator / local ecosystem | High practical relevance for Kazakhstan-based startups | weekly | Includes competitions, acceleration, and ecosystem links |
-| Kazakhstan domestic support programs | grants / subsidies / preferential finance / leasing / reimbursements / tax benefits | Direct Kazakhstan routes for innovation grants, SME subsidies, Baiterek finance, agro support, science commercialization, NGO grants, export support, industrial finance, investment support and IT tax benefits | weekly | Active `kazakhstan_domestic_support` bridge covers official QazInnovations, Damu, Business Enbek, eGov Road Map of Business, eGov social-entrepreneurship grants, Baiterek/BGov, eGov agriculture and business-support services, gov.kz grant guidance, KazAgroFinance, Agrarian Credit Corporation, NCSTE, CISC small grants, QazIndustry, QazTrade/export.gov.kz, KazakhExport, DBK, IDF, KAZAKH INVEST, Astana Hub and QIC fund news pages. Fetchable official pages store sanitized local detail snapshots; blocked pages store explicit detail status. Homepage-only entries are excluded until an actionable detail URL is available |
+| IOM Kazakhstan procurement | procurement / consulting | Relevant for research, training, migration, services and supplier opportunities in Kazakhstan | biweekly | Active `iom_kazakhstan_procurement` official watch source; preserves blocked CDN status when the source denies fetches |
+| Eurasian Development Bank procurement | procurement / regional development | Kazakhstan-headquartered regional bank with supplier, consulting and development-project notices | weekly | Active `edb_procurement` official watch source |
+| DAAD Central Asia | scholarships / research funding | High-quality academic funding route for Kazakhstan, Kyrgyzstan, Tajikistan and Uzbekistan | weekly | Active `daad_central_asia` official watch source |
+| Astana Hub | accelerator / local ecosystem | High practical relevance for Kazakhstan-based startups and startups entering Kazakhstan | weekly | Includes competitions, acceleration, ecosystem links, Tech Orda, Silkway, Regional IT Hub, Central Eurasia Market Entry and AI'Preneurs |
+| Kazakhstan domestic support programs | grants / subsidies / preferential finance / leasing / reimbursements / tax benefits | Direct Kazakhstan routes for innovation grants, SME subsidies, education grants, Baiterek finance, agro support, science commercialization, NGO grants, export support, industrial finance, investment support and IT tax benefits | weekly | Active `kazakhstan_domestic_support` bridge covers official QazInnovations, Damu, Business Enbek, eGov Road Map of Business, eGov social-entrepreneurship grants, Kyzylorda and Mangystau regional social-entrepreneurship grants, Ministry of Science and Higher Education educational-grant notices including bachelor and master's grant competitions, Anhalt International University and Taraz RCTU branch grants, regional college state-funded places, Bolashak / Center for International Programs intergovernmental education-grant notices, Baiterek/BGov, eGov agriculture and business-support services, gov.kz grant guidance, KazAgroFinance, Agrarian Credit Corporation, NCSTE, CISC small grants, QazIndustry, QazTrade/export.gov.kz, KazakhExport, DBK, IDF, KAZAKH INVEST, Astana Hub participant benefits, Astana Hub Seed Money Smart City and QIC fund news pages. Fetchable official pages store sanitized local detail snapshots; blocked pages store explicit detail status. Homepage-only entries are excluded until an actionable detail URL is available |
 | NVIDIA Inception | startup / AI ecosystem | Useful for AI tooling, GPU ecosystem, technical support and investor exposure | weekly | Active `nvidia_inception` monitor |
 | Cloudflare Startups | cloud credits / startup support | Useful for edge, security, serverless and Workers AI credits | weekly | Active `cloudflare_startups` monitor |
 | MongoDB Startups | cloud credits / database support | Useful for Atlas credits and database-heavy AI/EdTech products | weekly | Active `mongodb_startups` monitor |
@@ -86,6 +92,7 @@ These sources are worth tracking but should not dominate the pipeline.
 | Philanthropic education foundations | grants | Useful for nonprofit wrapper strategy | monthly | Often requires NGO or academic lead |
 | Regional ministry / agency sites | tenders / pilots | Can surface local procurement or pilot windows | weekly | Especially education ministries and digital ministries |
 | University innovation funds | pilots / partnerships | Useful for validation and pilot co-financing | monthly | Better for research or training modules |
+| Global Innovation Fund | development innovation grants | Relevant for scalable social innovation, but the latest public application page is not an open call | monthly | Active `global_innovation_fund` forecast monitor; do not present as open until the source publishes a new call |
 
 ## Country-specific pages to track
 
@@ -225,7 +232,14 @@ Recommended parser order:
 24. UNICEF – active `unicef_kazakhstan`
 25. UNESCO – active `unesco_iite`
 26. UNDP procurement – active `undp_procurement`
-27. country ministry pages
+27. UNGM – active official watch `ungm_opportunities`; item-level API adapter next
+28. OSCE procurement – active official watch `osce_procurement`
+29. IOM Kazakhstan procurement – active official watch `iom_kazakhstan_procurement`
+30. EDB procurement – active official watch `edb_procurement`
+31. DAAD Central Asia – active official watch `daad_central_asia`
+32. GEF SGP Kazakhstan – active official watch `gef_sgp_kazakhstan`
+33. Global Innovation Fund – active forecast monitor `global_innovation_fund`
+34. country ministry pages
 
 ## Data capture fields
 
@@ -287,13 +301,17 @@ fixtures are approved.
 The production feed now has item-level coverage for Grants.gov, Astana Hub,
 Internews, IsDB project procurement, EBRD ECEPP procurement, Erasmus+
 Kazakhstan, Opportunity Desk, FundsforNGOs, EEAS Kazakhstan, World Bank
-Kazakhstan, ADB Kazakhstan and UNICEF Kazakhstan, plus evergreen startup/cloud-credit
-program monitors, a curated Kazakhstan watch bridge, and a dedicated Kazakhstan
-domestic-support bridge for official grants, subsidies, preferential finance,
-leasing, reimbursements, tax benefits and state programs.
+Kazakhstan, ADB Kazakhstan, UNICEF Kazakhstan, UNGM, OSCE, IOM Kazakhstan,
+EDB, DAAD Central Asia, GEF SGP Kazakhstan and Global Innovation Fund, plus
+evergreen startup/cloud-credit program monitors, a curated Kazakhstan watch
+bridge, and a dedicated Kazakhstan domestic-support bridge for official grants,
+subsidies, preferential finance, leasing, reimbursements, tax benefits and
+state programs.
 
 Next useful item-level adapters:
 
+- UNGM item-level API or form-backed parser
+- OSCE item-level tender parser with Central Asia office filtering
 - Google.org grant and nonprofit pages
 - UNDP procurement pages remain covered by `undp_procurement`
 - U.S. Embassy small grants pages across Central Asia

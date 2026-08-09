@@ -4,15 +4,15 @@
 
 | Source | Adapter | Signal | Current role |
 |---|---|---|---|
-| Grants.gov | API | US federal grants | High-volume upstream source for AI, education, media, governance, agriculture and environment themes |
-| Astana Hub | HTML + curated fallback | Kazakhstan startup/program ecosystem | Local startup and accelerator coverage |
+| Grants.gov | API | US federal grants | High-volume upstream source for AI, education, media, governance, agriculture and environment themes; `DOS-KAZ` / U.S. Mission to Kazakhstan notices are retained even when the short search synopsis lacks an explicit geography phrase |
+| Astana Hub | HTML + curated fallback | Kazakhstan startup/program ecosystem | Local startup and accelerator coverage, including curated stable pages for Tech Orda, Silkway, Regional IT Hub, Central Eurasia Market Entry and AI'Preneurs |
 | Internews | HTML + RSS fallback | Media grants and fellowships | Media and journalism opportunities; no-date terms of reference are marked `rolling` instead of surfacing as broken deadline records |
 | IsDB project procurement | HTML listing | Central Asia development procurement | Item-level active IsDB tender coverage for Kazakhstan and neighboring Central Asia countries |
 | EBRD ECEPP procurement | HTML table | EBRD procurement notices | Item-level active ECEPP tenders filtered to Kazakhstan and neighboring Central Asia countries |
 | Erasmus+ Kazakhstan | HTML news + detail pages | Higher-education grant calls | Item-level Erasmus+ call coverage for Kazakhstani universities and organizations with action-specific deadlines |
 | Opportunity Desk | RSS main feed + grants/fellowships/competitions feeds | Fellowships, contests, scholarships, grants | Global bridge source with category-feed coverage and roundup/blog-post filtering |
 | FundsforNGOs | RSS | NGO grants, education, media, agriculture, environment, animal welfare | Donor bridge source with expanded category coverage for AgroTech, VetTech and EcoTech signals; raw categories are still not blindly trusted for scoring |
-| Kazakhstan Domestic Support | curated official page checks + local detail snapshots | Kazakhstan grants, subsidies, preferential finance, leasing, reimbursements, tax benefits and state programs | Production bridge for official domestic-support entry points with actionable detail pages: QazInnovations, Damu, Business Enbek, eGov Road Map of Business, eGov social-entrepreneurship grants, Baiterek/BGov, eGov agriculture and business-support services, gov.kz grant guidance, KazAgroFinance, Agrarian Credit Corporation, NCSTE, CISC small grants, QazIndustry, QazTrade/export.gov.kz, KazakhExport, Development Bank of Kazakhstan, Industrial Development Fund, KAZAKH INVEST, Astana Hub participant benefits and QIC fund news |
+| Kazakhstan Domestic Support | curated official page checks + local detail snapshots | Kazakhstan grants, subsidies, education grants, startup financing, preferential finance, leasing, reimbursements, tax benefits and state programs | Production bridge for official domestic-support entry points with actionable detail pages: QazInnovations, Damu, Business Enbek, eGov Road Map of Business, eGov social-entrepreneurship grants, Kyzylorda and Mangystau regional social-entrepreneurship grants, Ministry of Science and Higher Education educational-grant notices including Anhalt International University and Taraz RCTU branch grants, regional college state-funded places, Bolashak / Center for International Programs intergovernmental education-grant notices, Baiterek/BGov, eGov agriculture and business-support services, gov.kz grant guidance, KazAgroFinance, Agrarian Credit Corporation, NCSTE, CISC small grants, QazIndustry, QazTrade/export.gov.kz, KazakhExport, Development Bank of Kazakhstan, Industrial Development Fund, KAZAKH INVEST, Astana Hub participant benefits, Astana Hub Seed Money Smart City and QIC fund news |
 | Kazakhstan Watch | curated page checks | Kazakhstan donor/procurement entry points | Production bridge for Embassy, EBRD, Erasmus+ and British Council pages without stable item-level adapters yet |
 | EEAS Kazakhstan | HTML listing + detail pages | Kazakhstan delegation grant calls | Item-level EU grant coverage with deadline/reference extraction |
 | UNDP procurement notices | HTML listing | UNDP procurement and tender opportunities | Active item-level parser for Kazakhstan and Central Asia-relevant notices |
@@ -28,8 +28,9 @@
 | Cloudflare Startups | page monitor | Global startup cloud credits | Edge/serverless/security/Workers AI credit monitor |
 | MongoDB Startups | page monitor | Global startup database credits | Atlas/database startup support monitor |
 | UNICEF Kazakhstan | HTML tender page | Kazakhstan procurement | Item-level UNICEF Kazakhstan tender parser with browser-like retry headers; recent closed tenders can remain as coverage-only records while expired tenders stay out of the default feed |
-| Google.org AI Opportunity | page monitor | AI education philanthropy | Global AI/digital-skills grant and partner-program watch for nonprofit, government and academic routes |
+| Google.org AI Opportunity | page monitor | AI education philanthropy | Forecast monitor for future grant and partner calls; it is not presented as an open application until the official page confirms a current window |
 | UNESCO IITE | HTML announcements | AI and education calls | Item-level UNESCO IITE parser for AI/EdTech awards, proposals and consultancy calls; expired notices are excluded |
+| Strategic official watches | curated official page checks | UNGM, OSCE, IOM Kazakhstan, EDB, DAAD Central Asia, GEF SGP Kazakhstan and Global Innovation Fund | Page-level discovery records with curated Russian copy; all carry `upcoming` / `forecast` status until an item-level call with confirmed conditions is available |
 
 ## Quality rules now enforced
 
@@ -92,6 +93,9 @@
 - Official curated watch pages that block automated fetches with `403` or
   rate limits are retained with the curated title and a raw status note, so
   CDN error text such as `Access Denied` does not enter the public content.
+- Page-level strategic watches are never represented as open applications.
+  Their `upcoming` status and `forecast` lifecycle survive SQL persistence,
+  and the public card tells the user to verify an item-level call at source.
 - Selected official service pages can also be retained when the VPS cannot
   complete TLS/HTTP fetches, again using curated text plus a raw status note
   instead of surfacing transport errors to users.
@@ -112,7 +116,9 @@
   official detail page is available.
 - `make content-audit` checks live source coverage, forbidden terms, missing
   summaries, short summaries, unmarked no-deadline records, weak homepage-like
-  source URLs and leaked HTML entities.
+  source URLs, leaked HTML entities, untranslated public labels and equality
+  between the coverage count and the deadline-filtered catalog. The same audit
+  requires a localized display name for every enabled source.
 - `/coverage` reports per-source indexed/open/relevant counts so the dashboard
   can show whether a source is only registered or actually contributing items.
 - Production `GRANT_RADAR_SOURCES` must include the full source registry, not

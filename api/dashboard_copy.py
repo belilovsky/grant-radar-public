@@ -122,7 +122,7 @@ COPY = {
         "funder_total_items": "Всего в индексе",
         "funder_next_deadline": "Ближайший срок",
         "funder_overview_intro": (
-            "Профиль построен по опубликованным программам и объявлениям."
+            "Сведения собраны по опубликованным программам и объявлениям."
         ),
         "funder_overview_types": "Форматы: {types}.",
         "funder_overview_topics": "Основные темы: {topics}.",
@@ -145,8 +145,8 @@ COPY = {
         "funder_sources_note": "Официальные страницы, использованные для профиля.",
         "funder_back_to_catalog": "Вернуться в каталог",
         "funder_open_card": "Открыть карточку",
-        "topic_brief_eyebrow": "В фокусе сейчас",
-        "topic_brief_count": "В срезе: {count}",
+        "topic_brief_eyebrow": "Текущая подборка",
+        "topic_brief_count": "В подборке: {count}",
         "topic_brief_what": "Что здесь обычно ищут",
         "topic_brief_best_for": "Кому может быть полезно",
         "topic_brief_reset": "Убрать тему",
@@ -164,18 +164,18 @@ COPY = {
         "topic_science_best": "Университетам, лабораториям и исследовательским командам.",
         "topic_science_focus_1": "Коммерциализация исследований",
         "topic_science_focus_2": "Научные гранты, лаборатории и академическая мобильность",
-        "topic_science_focus_3": "Образовательные и университетские треки",
+        "topic_science_focus_3": "Образовательные и университетские программы",
         "topic_public_best": "Командам, работающим с госсектором, закупками и инфраструктурой.",
         "topic_public_focus_1": "Закупки, тендеры и запросы предложений",
         "topic_public_focus_2": "Программы развития и реализация",
-        "topic_public_focus_3": "Гостех и крупные проектные линии",
-        "topic_business_best": "ИП, ТОО и операционному бизнесу в Казахстане.",
+        "topic_public_focus_3": "Цифровые решения для госсектора и крупные проекты",
+        "topic_business_best": "ИП, ТОО и действующему бизнесу в Казахстане.",
         "topic_business_focus_1": "Локальные субсидии и меры РК",
         "topic_business_focus_2": "Льготы, гарантии и финансирование",
         "topic_business_focus_3": "Поддержка для МСБ, экспорта и роста",
-        "topic_ngo_best": "НКО, медиа и гражданским командам с социальным эффектом.",
-        "topic_ngo_focus_1": "Медиа, журналистика и общественно значимые проекты",
-        "topic_ngo_focus_2": "Гранты для гражданского сектора и партнерства",
+        "topic_ngo_best": "НКО, СМИ и гражданским командам с социальным эффектом.",
+        "topic_ngo_focus_1": "СМИ, журналистика и общественно значимые проекты",
+        "topic_ngo_focus_2": "Гранты для гражданского сектора и партнёрства",
         "topic_ngo_focus_3": "Сообщество и программы с социальным эффектом",
         "theme_ai_kicker": "Искусственный интеллект и цифровые решения",
         "theme_ai_title": "Искусственный интеллект, облачные кредиты и цифровые навыки",
@@ -194,7 +194,7 @@ COPY = {
         "theme_science_title": "Наука, образование и коммерциализация",
         "theme_science_note": (
             "Для университетов, лабораторий и образовательных команд, которым "
-            "нужны гранты и исследовательские треки."
+            "нужны гранты и исследовательские программы."
         ),
         "theme_public_kicker": "Госсектор и инфраструктура",
         "theme_public_title": "Инфраструктура, закупки и программы развития",
@@ -205,14 +205,20 @@ COPY = {
         "theme_business_kicker": "Бизнес и субсидии",
         "theme_business_title": "Субсидии, льготы и меры поддержки бизнеса",
         "theme_business_note": (
-            "Для МСБ и операционных компаний, где важны локальные условия и "
-            "механика подачи."
+            "Для МСБ и действующих компаний, где важны местные условия и "
+            "правила подачи."
         ),
-        "theme_ngo_kicker": "Медиа и НКО",
-        "theme_ngo_title": "Медиа, гражданский сектор и социальный эффект",
+        "theme_ngo_kicker": "СМИ и НКО",
+        "theme_ngo_title": "СМИ, гражданский сектор и социальный эффект",
         "theme_ngo_note": (
-            "Для НКО, медиа и общественных проектов, которым нужны гранты и "
-            "партнерские треки."
+            "Для НКО, СМИ и общественных проектов, которым нужны гранты и "
+            "партнёрские программы."
+        ),
+        "focus_aria": "Тематика каталога",
+        "focus_primary": "География: Казахстан и Центральная Азия",
+        "focus_secondary": (
+            "Темы: ИИ, образование, госсектор, сельское хозяйство, "
+            "ветеринария, экология, СМИ"
         ),
         "focus_aria": "Текущий продуктовый фокус",
         "focus_primary": "Приоритет: Казахстан и Центральная Азия",
@@ -236,15 +242,15 @@ COPY = {
         "methodology_link": "Как это работает",
         "status_link": "Статус данных",
         "language_switch": "Язык интерфейса",
-        "nav_aria": "Разделы радара",
-        "tab_opportunities": "Возможности",
+        "nav_aria": "Разделы каталога",
+        "tab_opportunities": "Программы",
         "tab_sources": "Источники",
         "tab_health": "Статус",
-        "metrics_aria": "Сводные метрики",
-        "metric_total": "В индексе",
-        "metric_relevant": "Актуально в индексе",
-        "metric_sources": "Источники",
-        "opportunities_title": "Возможности",
+        "metrics_aria": "Показатели каталога",
+        "metric_total": "Всего программ",
+        "metric_relevant": "В текущем каталоге",
+        "metric_sources": "Источников отслеживается",
+        "opportunities_title": "Каталог программ",
         "opportunities_description": (
             "Открытые и бессрочные программы с приоритетом для Казахстана и "
             "Центральной Азии."
@@ -276,14 +282,14 @@ COPY = {
         "topic_agro": "Агро / вет / эко",
         "topic_science": "Образование и наука",
         "topic_public": "Госсектор и инфраструктура",
-        "topic_ngo": "Медиа и НКО",
+        "topic_ngo": "СМИ и НКО",
         "topic_business": "Бизнес и субсидии",
         "scope_label": "Покрытие",
         "scope_aria": "Покрытие списка",
         "scope_open": "Открытые",
         "scope_all": "Весь индекс",
         "lifecycle_label": "Стадия",
-        "lifecycle_aria": "Жизненный цикл возможности",
+        "lifecycle_aria": "Состояние программы",
         "lifecycle_all": "Любая стадия",
         "lifecycle_open": "Открыто сейчас",
         "lifecycle_forecast": "Прогноз / в планировании",
@@ -304,12 +310,12 @@ COPY = {
         "deadline_filter_month": "В ближайший месяц",
         "deadline_filter_rolling": "Бессрочные",
         "sort_label": "Сортировка",
-        "sort_aria": "Порядок показа возможностей",
-        "sort_priority": "По приоритету действий",
-        "sort_deadline": "Ближайший дедлайн",
-        "sort_updated": "Недавно обновленные",
-        "min_score_label": "Релевантность каталога",
-        "min_score_aria": "Минимальная релевантность каталога",
+        "sort_aria": "Порядок показа программ",
+        "sort_priority": "По приоритету проверки",
+        "sort_deadline": "Ближайший срок",
+        "sort_updated": "Недавно обновлённые",
+        "min_score_label": "Соответствие запросу",
+        "min_score_aria": "Минимальное соответствие запросу",
         "source_label": "Источник",
         "source_aria": "Источник",
         "all_scores": "Все результаты",
@@ -354,18 +360,18 @@ COPY = {
             "Данные каталога доступны. Уточняем время последнего обновления."
         ),
         "health_note_ready": (
-            "Витрина проверена {checked_at}. Последнее обновление карточек: {updated_at}."
+            "Источники проверены {checked_at}. Последнее изменение карточек: {updated_at}."
         ),
         "health_note_ready_no_items": (
             "Витрина проверена {checked_at}. Новые карточки появятся после следующего "
             "обхода источников."
         ),
         "reload_live_data": "Обновить данные",
-        "api_status": "Поток данных",
+        "api_status": "Состояние каталога",
         "stored_items": "Записей в каталоге",
         "health_sources": "Активные источники",
         "health_stale_sources": "Устаревшие источники",
-        "api_online": "Данные актуальны",
+        "api_online": "Каталог доступен",
         "api_failed": "Нужна проверка данных",
         "api_error": "Ошибка загрузки данных",
         "source_catalog_unavailable": "Каталог источников временно недоступен.",
@@ -374,14 +380,14 @@ COPY = {
         "show_all_sources_with_total": "Показать все {total} источников",
         "coverage_unavailable": "Покрытие недоступно",
         "indexed_count": "В индексе: {count}",
-        "relevant_open_count": "Релевантных открытых: {count}",
-        "direct_badge": "Прямой",
+        "relevant_open_count": "Открытых по запросу: {count}",
+        "direct_badge": "Прямое подключение",
         "watchlist_badge": "Мониторинг",
         "source_direct_note": "Прямое подключение к официальному источнику",
         "source_watchlist_note": "Страница мониторинга с редакционной проверкой",
         "regional_badge_kazakhstan": "Казахстан",
         "regional_badge_central_asia": "Центральная Азия",
-        "summary_matches": "Совпадений: {count}",
+        "summary_matches": "Найдено: {count}",
         "summary_search": "Поиск: {value}",
         "summary_audience": "Для кого: {value}",
         "summary_format": "Формат: {value}",
@@ -390,7 +396,7 @@ COPY = {
         "summary_region": "Регион: {value}",
         "summary_deadline": "Срок: {value}",
         "summary_sort": "Сортировка: {value}",
-        "summary_score": "Релевантность: {value}",
+        "summary_score": "Соответствие: {value}",
         "summary_scope_all": "Включая архив",
         "methodology_title": "Как мы работаем",
         "methodology_description": (
@@ -425,7 +431,7 @@ COPY = {
         "role_guide_link_label": "Открыть операторский раздел",
         "role_analyst_title": "Аналитику",
         "role_analyst_text": (
-            "Зафиксируйте фильтры ссылкой, сравните поля и выгрузите выдачу в CSV."
+            "Зафиксируйте фильтры ссылкой, сравните поля и выгрузите результаты в CSV."
         ),
         "role_journalist_title": "Журналисту",
         "role_journalist_text": (
@@ -529,7 +535,7 @@ COPY = {
         "workspace_action_fit": "Подтвердите соответствие требованиям и срок.",
         "workspace_action_preparing": "Соберите пакет и зафиксируйте срок подачи.",
         "workspace_action_submitted": "Сохраните подтверждение и следите за условиями.",
-        "workspace_action_result": "Зафиксируйте результат по этой возможности.",
+        "workspace_action_result": "Зафиксируйте результат по этой программе.",
         "workspace_deadline_today": "Срок сегодня",
         "workspace_deadline_days": "Срок через {count} дн.",
         "workspace_deadline_date": "Срок: {date}",
@@ -539,7 +545,7 @@ COPY = {
         "workspace_export": "Резервная копия",
         "workspace_import": "Восстановить копию",
         "workspace_exported": "Резервная копия скачана.",
-        "workspace_imported": "Рабочее пространство восстановлено.",
+        "workspace_imported": "Сохранённые данные восстановлены.",
         "workspace_import_error": "Не удалось прочитать резервную копию.",
         "report_issue": "Уточнить данные",
         "open_source_short": "Перейти к источнику",
@@ -580,6 +586,8 @@ COPY = {
         "signal_ngo": (
             "Для НКО, медиа и проектов с гражданским или социальным эффектом."
         ),
+        "signal_farmer": ("Для хозяйств, ферм и аграрных компаний."),
+        "signal_ngo": ("Для НКО, СМИ и общественных организаций."),
         "signal_kazakhstan": (
             "В условиях прямо указан Казахстан или местный порядок подачи."
         ),
@@ -633,16 +641,16 @@ COPY = {
         "detail_empty": (
             "Расширенного описания нет. Показываем краткое описание и поля."
         ),
+        "detail_empty": "Доступны краткое описание и ключевые условия.",
         "detail_close": "Закрыть",
         "detail_open_page": "Открыть страницу",
-        "detail_all_opportunities": "Все возможности",
+        "detail_all_opportunities": "Все программы",
         "detail_open_source": "Открыть источник",
         "detail_open_application": "Открыть подачу",
-        "detail_meta_title": "Параметры",
-        "detail_readiness_title": "Полнота данных",
-        "detail_readiness_complete": "Подтверждены все {total} ключевых поля.",
-        "detail_readiness_partial": (
-            "Подтверждено {known} из {total}. На источнике проверьте: {missing}."
+        "detail_prepare_application": "Подготовить заявку",
+        "detail_closed_notice": (
+            "Приём завершён. Карточка сохранена для справки; новый набор "
+            "проверяйте у организатора."
         ),
         "detail_compute_readiness": (
             "Оценка полноты данных: {score} / 100, {tier}. Это вспомогательный "
@@ -677,17 +685,26 @@ COPY = {
             "Карточка помогает начать проверку, но не подтверждает право на участие "
             "и не заменяет официальные условия."
         ),
-        "verification_eligibility_title": "Право на участие",
-        "verification_eligibility_text": (
-            "Сверьте тип заявителя, юрисдикцию, ограничения и требуемый опыт."
+        "decision_check_known_title": "Что известно",
+        "decision_check_known_source": "источник: {source}",
+        "decision_check_known_format": "формат: {format}",
+        "decision_check_known_deadline": "срок: {deadline}",
+        "decision_check_known_amount": "объём поддержки: {amount}",
+        "decision_check_known_eligibility": "требования: {eligibility}",
+        "decision_check_known_empty": "Пока известны только источник и описание.",
+        "decision_check_missing_title": "Что уточнить",
+        "decision_check_missing_text": "На официальной странице проверьте: {items}.",
+        "decision_check_missing_none": (
+            "Основные поля заполнены. Проверьте актуальную редакцию условий."
         ),
-        "verification_terms_title": "Действующие условия",
-        "verification_terms_text": (
-            "Проверьте последнюю редакцию, срок, сумму и способ отправки заявки."
+        "decision_check_route_title": "Куда подавать",
+        "decision_check_route_application": (
+            "Используйте отдельную форму подачи и сверяйте требования "
+            "с первоисточником."
         ),
-        "verification_procurement_title": "Закупочная документация",
-        "verification_procurement_text": (
-            "Для тендеров отдельно проверьте лоты, квалификацию, приложения и изменения."
+        "decision_check_route_source": (
+            "Отдельная форма не указана. Подавайте заявку только через "
+            "страницу организатора."
         ),
         "verification_publication_title": "Источник и дата проверки",
         "verification_publication_text": (
@@ -707,8 +724,9 @@ COPY = {
         "detail_status_too_large": "Страница слишком большая для локального чтения",
         "detail_status_unsupported_media": "Источник отдал неподдерживаемый формат",
         "detail_status_parse_error": "Не удалось корректно разобрать страницу источника",
-        "detail_source_excerpt": "Выдержка с источника",
-        "detail_expand_source": "Показать выдержку",
+        "detail_source_excerpt": "Фрагмент первоисточника",
+        "detail_expand_source": "Развернуть текст",
+        "detail_collapse_source": "Свернуть текст",
         "prepare_section_eyebrow": "Перед подачей",
         "prepare_section_title": "Что подготовить",
         "prepare_section_description": (
@@ -730,17 +748,17 @@ COPY = {
         ),
         "prepare_grant_title": "Соберите проектную заявку",
         "prepare_grant_text": (
-            "Нужны проблема, решение, бюджет, команда, результаты и план внедрения."
+            "Опишите проблему, решение, бюджет, команду, ожидаемые результаты и план внедрения."
         ),
         "prepare_tender_title": "Проверьте пакет закупки",
         "prepare_tender_text": (
-            "Сверьте объем работ, квалификацию, форму подачи, гарантии и обязательные "
+            "Сверьте объём работ, квалификацию, форму подачи, гарантии и обязательные "
             "приложения."
         ),
         "prepare_startup_title": "Подготовьте презентацию проекта",
         "prepare_startup_text": (
-            "Соберите презентацию, описание продукта, показатели роста, команду "
-            "и сценарий пилота."
+            "Подготовьте презентацию продукта с показателями, составом команды "
+            "и планом опытного внедрения."
         ),
         "prepare_subsidy_title": "Подготовьте локальные документы",
         "prepare_subsidy_text": (
@@ -752,10 +770,10 @@ COPY = {
             "Нужны научная новизна, команда, календарный план, бюджет и путь "
             "коммерциализации."
         ),
-        "prepare_ngo_title": "Проверьте логику эффекта",
+        "prepare_ngo_title": "Опишите ожидаемый результат",
         "prepare_ngo_text": (
-            "Сформулируйте бенефициаров, социальный эффект, партнеров и план "
-            "отчетности."
+            "Укажите аудиторию проекта, ожидаемый общественный результат, партнёров "
+            "и порядок отчётности."
         ),
         "prepare_source_title": "Сверьте официальный источник",
         "prepare_source_text": (
@@ -807,8 +825,8 @@ COPY = {
             "deadline": "Срок подачи",
             "deadline_raw": "Срок с источника",
             "deadline_policy": "Правило срока",
-            "amount": "Объем поддержки",
-            "amount_raw": "Объем с источника",
+            "amount": "Объём поддержки",
+            "amount_raw": "Объём с источника",
             "project_id": "Номер проекта",
             "reference": "Номер объявления",
             "status": "Статус",
@@ -901,6 +919,7 @@ COPY = {
             "women_entrepreneurship": "Женское предпринимательство",
             "youth": "Молодёжь",
             "ai": "ИИ",
+            "artificial intelligence": "ИИ",
             "edtech": "Образовательные технологии",
             "govtech": "Гостех",
             "agrotech": "Агротехнологии",
@@ -920,6 +939,7 @@ COPY = {
             "central_asia_eligible": "Центральная Азия",
             "google_cloud_startup": "Google Cloud для стартапов",
             "google_org_ai_opportunity": "Google.org AI Opportunity Fund",
+            "global_training_opportunities": "Международные программы подготовки",
             "microsoft_founders_hub": "Microsoft Founders Hub",
             "world_bank_kazakhstan": "Всемирный банк Казахстан",
             "world_bank_procurement_ca": "Закупки Всемирного банка в Центральной Азии",
@@ -929,12 +949,37 @@ COPY = {
             "eeas_kazakhstan": "Представительство ЕС в Казахстане",
             "unicef_kazakhstan": "UNICEF Казахстан",
             "unesco_iite": "UNESCO IITE",
-            "isdb_project_procurement": "IsDB Procurement",
+            "isdb_project_procurement": "Закупки Исламского банка развития",
             "islamic_development_bank": "Исламский банк развития",
-            "ebrd_ecepp_procurement": "EBRD ECEPP Procurement",
-            "undp_procurement": "UNDP Procurement",
+            "ebrd_ecepp_procurement": "Закупки ЕБРР ECEPP",
+            "undp_procurement": "Закупки ПРООН",
+            "aws_activate": "AWS Activate",
+            "erasmus_kazakhstan": "Erasmus+ Казахстан",
+            "internews": "Internews",
+            "ungm_opportunities": "Глобальный рынок ООН",
+            "osce_procurement": "Закупки ОБСЕ",
+            "iom_kazakhstan_procurement": "Закупки МОМ в Казахстане",
+            "edb_procurement": "Закупки ЕАБР",
+            "daad_central_asia": "DAAD Центральная Азия",
+            "gef_sgp_kazakhstan": "Малые гранты ГЭФ в Казахстане",
+            "germany": "Германия",
+            "global_innovation_fund": "Глобальный инновационный фонд",
             "kazakhstan": "Казахстан",
             "central_asia": "Центральная Азия",
+            "central_asia_relevant": "Центральная Азия",
+            "official_source": "Официальный источник",
+            "source_watch": "Мониторинг источника",
+            "daad": "DAAD",
+            "edb": "ЕАБР",
+            "eoi": "Выражение заинтересованности",
+            "future_call": "Будущий конкурс",
+            "gef": "ГЭФ",
+            "gif": "Глобальный инновационный фонд",
+            "iom": "МОМ",
+            "migration": "Миграция",
+            "osce": "ОБСЕ",
+            "rfp": "Запрос предложений",
+            "scholarship": "Стипендия",
             "eligibility_check_required": "Требуется проверка условий",
             "canada": "Канада",
             "turkmenistan": "Туркменистан",
@@ -952,13 +997,16 @@ COPY = {
             "design": "Дизайн",
             "cloudflare": "Cloudflare",
             "consultancy": "Консультационные услуги",
-            "consulting": "Консалтинг",
+            "consulting": "Консультационные услуги",
             "creative_industries": "Креативные индустрии",
             "culture": "Культура",
             "database": "Базы данных",
             "developer_tools": "Инструменты разработчика",
+            "diaspora": "Диаспора",
             "digital": "Цифровые решения",
             "donor": "Донорские программы",
+            "doctoral": "Докторантура",
+            "drawing": "Рисунок",
             "ebrd": "ЕБРР",
             "ecepp": "ECEPP",
             "energy": "Энергетика",
@@ -971,38 +1019,59 @@ COPY = {
             "federal": "Федеральные программы",
             "finance": "Финансы",
             "firebase": "Firebase",
+            "fulbright": "Fulbright",
+            "founder_training": "Подготовка основателей",
             "governance": "Управление",
             "gpu": "GPU",
+            "alemplus": "AlemPlus",
             "health": "Здравоохранение",
             "higher_education": "Высшее образование",
             "human_rights": "Права человека",
             "infrastructure": "Инфраструктура",
+            "international": "Международная возможность",
+            "international_development": "Международное развитие",
             "isdb": "Исламский банк развития",
             "it": "ИТ",
+            "japan": "Япония",
             "jean_monnet": "Жан Моне",
             "joint_degrees": "Совместные программы",
             "kyrgyz": "Кыргызстан",
             "kyrgyzstan": "Кыргызстан",
+            "literature": "Литература",
+            "morocco": "Марокко",
             "mobility": "Академическая мобильность",
             "nonprofit_required": "Только для НКО",
             "partnership": "Партнёрство",
+            "peacebuilding": "Миростроительство",
             "policy": "Государственная политика",
+            "postdoc": "Постдок",
+            "pre_seed": "Предпосевное финансирование",
             "procurement": "Закупки",
+            "professional_development": "Профессиональное развитие",
             "public_diplomacy": "Публичная дипломатия",
+            "south_kazakhstan": "Юг Казахстана",
+            "cooperative_agreement": "Соглашение о сотрудничестве",
+            "youth": "Молодежь",
             "regional_development": "Региональное развитие",
             "research": "Исследования",
             "security": "Безопасность",
             "serverless": "Бессерверные технологии",
             "sez": "СЭЗ",
             "social_entrepreneurship": "Социальное предпринимательство",
+            "silicon_valley": "Кремниевая долина",
             "student_exchange": "Студенческий обмен",
             "tajikistan": "Таджикистан",
             "teacher_training": "Подготовка педагогов",
             "technology": "Технологии",
+            "translation": "Перевод",
             "transport": "Транспорт",
+            "un": "ООН",
+            "unitar": "UNITAR",
+            "visual_arts": "Изобразительное искусство",
             "undp": "ПРООН",
             "us": "США",
             "uzbekistan": "Узбекистан",
+            "vocational_training": "Профессиональное образование",
             "watchlist": "Мониторинг",
             "water": "Водные ресурсы",
             "digital_skills": "Цифровые навыки",
@@ -1016,13 +1085,16 @@ COPY = {
             "republic_of_kazakhstan": "Республика Казахстан",
             "google": "Google",
             "azure": "Azure",
-            "media": "Медиа",
+            "media": "СМИ",
             "journalism": "Журналистика",
             "open_data": "Открытые данные",
             "startup": "Стартап",
             "grant": "Грант",
             "accelerator": "Акселератор",
+            "b2b": "B2B",
+            "market_entry": "Выход на рынок",
             "cloud_credit": "Облачный кредит",
+            "comics": "Комиксы",
             "tender": "Тендер",
             "contest": "Конкурс",
             "fellowship": "Стажировка",
@@ -1047,15 +1119,26 @@ COPY = {
             "reimbursement": "Возмещение затрат",
             "leasing": "Лизинг",
             "employment": "Занятость",
+            "citizen_support": "Для граждан",
+            "one_village_one_product": "Одно село – один продукт",
+            "kezekte": "Kezekte",
+            "kyzylorda": "Кызылординская область",
+            "mangystau": "Мангистауская область",
+            "engineering": "Инженерия",
+            "chemistry": "Химия",
             "industry": "Промышленность",
             "export": "Экспорт",
             "trade": "Торговля",
             "investment": "Инвестиции",
             "science": "Наука",
             "civil_society": "Гражданский сектор",
+            "smart_city": "Умный город",
             "crop_production": "Растениеводство",
             "livestock": "Животноводство",
             "digitalization": "Цифровизация",
+            "ministry_science_higher_education": "Миннауки РК",
+            "intergovernmental_grant": "Межправительственный грант",
+            "bolashak": "Болашак",
             "qazinnovations": "QazInnovations",
             "egov": "eGov",
             "damu": "Даму",
@@ -1084,7 +1167,7 @@ COPY = {
             "opportunity_desk": "Opportunity Desk",
             "astana_hub": "Astana Hub",
             "kazakhstan_domestic_support": "Поддержка РК",
-            "kazakhstan_opportunity_watch": "Мониторинг возможностей Казахстана",
+            "kazakhstan_opportunity_watch": "Мониторинг программ Казахстана",
             "dod_amraa": "DOD-AMRAA",
             "hhs_nih11": "HHS-NIH",
             "national_institutes_of_health": "Национальные институты здравоохранения США (NIH)",
@@ -1318,8 +1401,8 @@ COPY = {
         "tab_health": "Status",
         "metrics_aria": "Summary metrics",
         "metric_total": "Indexed",
-        "metric_relevant": "Relevant in index",
-        "metric_sources": "Sources",
+        "metric_relevant": "Current catalogue",
+        "metric_sources": "Sources monitored",
         "opportunities_title": "Opportunities",
         "opportunities_description": (
             "Open and rolling programs prioritized for Kazakhstan and Central Asia."
@@ -1627,6 +1710,9 @@ COPY = {
         ),
         "footer_support": "Feedback",
         "footer_qdev": "qdev.run",
+        "footer_terms": "Terms",
+        "footer_data_policy": "Data policy",
+        "footer_attribution": "Data use",
         "view_funder": "Funder profile",
         "fit_label": "Match signals",
         "fit_unknown": "Check the criteria",
@@ -1715,20 +1801,21 @@ COPY = {
         "detail_all_opportunities": "All opportunities",
         "detail_open_source": "Open source",
         "detail_open_application": "Open application",
-        "detail_meta_title": "Key fields",
-        "detail_readiness_title": "Data completeness",
-        "detail_readiness_complete": "All {total} key fields are confirmed.",
-        "detail_readiness_partial": (
-            "{known} of {total} fields confirmed. Verify at source: {missing}."
+        "detail_prepare_application": "Prepare application",
+        "detail_closed_notice": (
+            "Applications are closed. This record remains available for reference; "
+            "check with the organizer for a new round."
         ),
         "detail_compute_readiness": (
             "Data completeness: {score} / 100, {tier}. This is a supporting "
             "indicator, not an eligibility decision."
         ),
-        "detail_compute_ready": "data is sufficient",
-        "detail_compute_watch": "review needed",
-        "detail_compute_blocked": "blockers present",
-        "detail_compute_unknown": "status unknown",
+        "detail_meta_title": "At a glance",
+        "detail_readiness_title": "What to check",
+        "detail_readiness_complete": (
+            "The main details are present. Check the current terms before applying."
+        ),
+        "detail_readiness_partial": ("Confirm on the organizer's page: {missing}."),
         "detail_copy_brief": "Copy working brief",
         "detail_copy_brief_done": "Working brief copied.",
         "detail_copy_brief_prompt": "Copy the working brief",
@@ -1754,17 +1841,25 @@ COPY = {
             "Use the card to start a check. It does not confirm eligibility or replace "
             "the official terms."
         ),
-        "verification_eligibility_title": "Eligibility",
-        "verification_eligibility_text": (
-            "Confirm applicant type, jurisdiction, restrictions, and required experience."
+        "decision_check_known_title": "What is known",
+        "decision_check_known_source": "source: {source}",
+        "decision_check_known_format": "format: {format}",
+        "decision_check_known_deadline": "deadline: {deadline}",
+        "decision_check_known_amount": "support amount: {amount}",
+        "decision_check_known_eligibility": "requirements: {eligibility}",
+        "decision_check_known_empty": "Only the source and summary are known so far.",
+        "decision_check_missing_title": "What to confirm",
+        "decision_check_missing_text": "Confirm on the official page: {items}.",
+        "decision_check_missing_none": (
+            "The main fields are present. Check the current terms before applying."
         ),
-        "verification_terms_title": "Current terms",
-        "verification_terms_text": (
-            "Check the latest version, deadline, amount, and submission route."
+        "decision_check_route_title": "Where to apply",
+        "decision_check_route_application": (
+            "Use the dedicated application form and compare its requirements "
+            "with the source."
         ),
-        "verification_procurement_title": "Procurement documents",
-        "verification_procurement_text": (
-            "For tenders, check lots, qualifications, attachments, and amendments separately."
+        "decision_check_route_source": (
+            "No separate form is listed. Apply only through the organizer's page."
         ),
         "verification_publication_title": "Source and verification date",
         "verification_publication_text": (
@@ -1786,6 +1881,7 @@ COPY = {
         "detail_status_parse_error": "The source page could not be parsed cleanly",
         "detail_source_excerpt": "Source excerpt",
         "detail_expand_source": "Show excerpt",
+        "detail_collapse_source": "Hide excerpt",
         "prepare_section_eyebrow": "Before applying",
         "prepare_section_title": "What to prepare",
         "prepare_section_description": (
@@ -1972,6 +2068,7 @@ COPY = {
             "women_entrepreneurship": "Women entrepreneurship",
             "youth": "Youth",
             "ai": "AI",
+            "artificial intelligence": "AI",
             "edtech": "EdTech",
             "govtech": "GovTech",
             "agrotech": "AgroTech",
@@ -2004,8 +2101,40 @@ COPY = {
             "islamic_development_bank": "Islamic Development Bank",
             "ebrd_ecepp_procurement": "EBRD ECEPP Procurement",
             "undp_procurement": "UNDP Procurement",
+            "aws_activate": "AWS Activate",
+            "cloudflare_startups": "Cloudflare Startups",
+            "daad_central_asia": "DAAD Central Asia",
+            "edb_procurement": "EDB Procurement",
+            "erasmus_kazakhstan": "Erasmus+ Kazakhstan",
+            "fundsforngos": "FundsforNGOs",
+            "gef_sgp_kazakhstan": "GEF Small Grants Kazakhstan",
+            "germany": "Germany",
+            "global_innovation_fund": "Global Innovation Fund",
+            "global_training_opportunities": "Global Training Opportunities",
+            "grants_gov": "Grants.gov",
+            "internews": "Internews",
+            "iom_kazakhstan_procurement": "IOM Kazakhstan Procurement",
+            "kazakhstan_watch": "Kazakhstan Opportunity Watch",
+            "mongodb_startups": "MongoDB Startups",
+            "nvidia_inception": "NVIDIA Inception",
+            "osce_procurement": "OSCE Procurement",
+            "ungm_opportunities": "UN Global Marketplace",
             "kazakhstan": "Kazakhstan",
             "central_asia": "Central Asia",
+            "central_asia_relevant": "Central Asia",
+            "official_source": "Official source",
+            "source_watch": "Source monitoring",
+            "daad": "DAAD",
+            "edb": "EDB",
+            "eoi": "Expression of interest",
+            "future_call": "Future call",
+            "gef": "GEF",
+            "gif": "Global Innovation Fund",
+            "iom": "IOM",
+            "migration": "Migration",
+            "osce": "OSCE",
+            "rfp": "Request for proposals",
+            "scholarship": "Scholarship",
             "eligibility_check_required": "Eligibility check required",
             "canada": "Canada",
             "turkmenistan": "Turkmenistan",
@@ -2034,6 +2163,8 @@ COPY = {
             "digital": "Digital solutions",
             "digital_skills": "Digital skills",
             "donor": "Donor programs",
+            "doctoral": "Doctoral studies",
+            "drawing": "Drawing",
             "ebrd": "EBRD",
             "ecepp": "ECEPP",
             "education": "Education",
@@ -2047,27 +2178,41 @@ COPY = {
             "federal": "Federal programs",
             "finance": "Finance",
             "firebase": "Firebase",
+            "fulbright": "Fulbright",
+            "founder_training": "Founder training",
             "google": "Google",
             "governance": "Governance",
             "gpu": "GPU",
+            "alemplus": "AlemPlus",
             "health": "Health",
             "higher_education": "Higher education",
             "human_rights": "Human rights",
             "infrastructure": "Infrastructure",
+            "international": "International opportunity",
+            "international_development": "International development",
             "isdb": "IsDB",
             "it": "IT",
+            "japan": "Japan",
             "jean_monnet": "Jean Monnet",
             "joint_degrees": "Joint degrees",
             "kyrgyz": "Kyrgyzstan",
             "kyrgyzstan": "Kyrgyzstan",
+            "literature": "Literature",
+            "morocco": "Morocco",
             "mobility": "Academic mobility",
             "nonprofit_required": "Nonprofits only",
             "opportunity_desk": "Opportunity Desk",
             "partnership": "Partnership",
+            "peacebuilding": "Peacebuilding",
             "policy": "Public policy",
+            "postdoc": "Postdoc",
             "procurement": "Procurement",
+            "professional_development": "Professional development",
             "project_pipeline": "Project pipeline",
             "public_diplomacy": "Public diplomacy",
+            "south_kazakhstan": "South Kazakhstan",
+            "cooperative_agreement": "Cooperative agreement",
+            "youth": "Youth",
             "public_sector": "Public sector",
             "regional_development": "Regional development",
             "research": "Research",
@@ -2075,15 +2220,21 @@ COPY = {
             "serverless": "Serverless",
             "sez": "Special economic zones",
             "social_entrepreneurship": "Social entrepreneurship",
+            "silicon_valley": "Silicon Valley",
             "startup_support": "Startup support",
             "student_exchange": "Student exchange",
             "tajikistan": "Tajikistan",
+            "translation": "Translation",
+            "visual_arts": "Visual arts",
             "teacher_training": "Teacher training",
             "technology": "Technology",
             "transport": "Transport",
+            "un": "UN",
+            "unitar": "UNITAR",
             "undp": "UNDP",
             "us": "US",
             "uzbekistan": "Uzbekistan",
+            "vocational_training": "Vocational training",
             "watchlist": "Watchlist",
             "water": "Water",
             "world_bank": "World Bank",
@@ -2093,7 +2244,11 @@ COPY = {
             "startup": "Startup",
             "grant": "Grant",
             "accelerator": "Accelerator",
+            "b2b": "B2B",
+            "market_entry": "Market entry",
+            "pre_seed": "Pre-seed funding",
             "cloud_credit": "Cloud credit",
+            "comics": "Comics",
             "tender": "Tender",
             "contest": "Contest",
             "fellowship": "Fellowship",
@@ -2118,15 +2273,26 @@ COPY = {
             "reimbursement": "Cost reimbursement",
             "leasing": "Leasing",
             "employment": "Employment",
+            "citizen_support": "Citizen support",
+            "one_village_one_product": "One Village One Product",
+            "kezekte": "Kezekte",
+            "kyzylorda": "Kyzylorda region",
+            "mangystau": "Mangystau region",
+            "engineering": "Engineering",
+            "chemistry": "Chemistry",
             "industry": "Industry",
             "export": "Export",
             "trade": "Trade",
             "investment": "Investment",
             "science": "Science",
             "civil_society": "Civil society",
+            "smart_city": "Smart city",
             "crop_production": "Crop production",
             "livestock": "Livestock",
             "digitalization": "Digitalization",
+            "ministry_science_higher_education": "Science ministry",
+            "intergovernmental_grant": "Intergovernmental grant",
+            "bolashak": "Bolashak",
             "qazinnovations": "QazInnovations",
             "egov": "eGov",
             "damu": "Damu",

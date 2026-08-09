@@ -23,14 +23,14 @@ COPY = {
         ),
         "back": "Вернуться в каталог",
         "sources": "Подключено",
-        "fresh": "Свежие",
+        "fresh": "Проверены недавно",
         "stale": "Требуют внимания",
         "unknown": "Без отметки",
         "source": "Источник",
         "coverage": "Записей / актуально",
         "updated": "Последняя проверка",
         "state": "Состояние",
-        "fresh_label": "Свежий",
+        "fresh_label": "Проверен недавно",
         "stale_label": "Требует внимания",
         "unknown_label": "Нет данных",
         "empty": "Подключённых источников пока нет.",
@@ -143,6 +143,24 @@ def render_status_page(
     docs_href = (
         f"{base}/docs?lang={active_lang}" if base else f"/docs?lang={active_lang}"
     )
+    insights_href = (
+        f"{base}/insights?lang={active_lang}"
+        if base
+        else f"/insights?lang={active_lang}"
+    )
+    terms_href = (
+        f"{base}/terms?lang={active_lang}" if base else f"/terms?lang={active_lang}"
+    )
+    data_policy_href = (
+        f"{base}/data-policy?lang={active_lang}"
+        if base
+        else f"/data-policy?lang={active_lang}"
+    )
+    attribution_href = (
+        f"{base}/attribution?lang={active_lang}"
+        if base
+        else f"/attribution?lang={active_lang}"
+    )
     product_copy = dashboard_copy(active_lang)
     ru_href = f"{base}/status?lang=ru" if base else "/status?lang=ru"
     kk_href = f"{base}/status?lang=kk" if base else "/status?lang=kk"
@@ -242,15 +260,21 @@ def render_status_page(
       --warn-soft: var(--color-warning-subtle);
     }}
     * {{ box-sizing:border-box; }}
-    body {{ margin:0; background:var(--wash); color:var(--ink);
-      font-family:var(--av-font-sans); font-size:var(--av-text-base); }}
+    body {{ margin:0;
+      background:radial-gradient(circle at 12% 0%,var(--brand-soft),transparent 28rem),
+        var(--wash);
+      color:var(--ink); font-family:var(--av-font-sans); font-size:var(--av-text-base); }}
     a {{ color:var(--brand); }}
-    main {{ width:min(var(--av-container-dashboard),calc(100% - 48px)); margin:0 auto;
-      padding:20px 0 40px; }}
+    main {{ width:min(var(--av-container-dashboard),calc(100% - 64px)); margin:0 auto;
+      padding:18px 0 44px; }}
     .back {{ display:inline-flex; min-height:32px; align-items:center; margin-bottom:10px;
       font-weight:700; text-decoration:none; }}
-    .status-topbar {{ display:flex; align-items:center; justify-content:space-between;
-      gap:12px; margin-bottom:10px; }}
+    .status-topbar {{ position:sticky; top:12px; z-index:20; display:flex;
+      align-items:center; justify-content:space-between; gap:12px; margin-bottom:18px;
+      padding:10px 14px; border:1px solid color-mix(in oklab,var(--line),transparent 18%);
+      border-radius:var(--av-radius-lg);
+      background:color-mix(in oklab,var(--panel),transparent 7%);
+      box-shadow:var(--av-shadow-sm); backdrop-filter:blur(16px); }}
     .status-topbar .back {{ margin-bottom:0; }}
     .lang-switch {{ display:inline-flex; align-items:center; gap:4px; }}
     .lang-switch a {{ min-width:34px; padding:6px 8px; border-bottom:2px solid transparent;
@@ -268,9 +292,10 @@ def render_status_page(
     h1 {{ margin:5px 0; font-size:36px; line-height:1.08; letter-spacing:0; }}
     .hero p {{ max-width:720px; margin:0; color:var(--muted); line-height:1.5; }}
     .metrics {{ display:grid; grid-template-columns:repeat(2,minmax(0,1fr));
-      align-content:stretch; margin:16px 0 16px 32px; border-left:1px solid var(--line); }}
-    .metric {{ display:grid; align-content:center; padding:10px 14px;
-      border-bottom:1px solid var(--line-subtle); background:transparent; }}
+      align-content:stretch; gap:10px; margin:0; }}
+    .metric {{ display:grid; align-content:center; padding:14px;
+      border:1px solid var(--line); border-radius:var(--av-radius-md); background:var(--panel);
+      box-shadow:var(--av-shadow-xs); }}
     .metric span {{ display:block; color:var(--muted); font-size:12px; }}
     .metric strong {{ display:block; margin-top:3px; font-size:22px; line-height:1; }}
     .table-wrap {{ overflow-x:auto; border:1px solid var(--line);
@@ -278,7 +303,7 @@ def render_status_page(
     table {{ width:100%; border-collapse:collapse; }}
     th,td {{ padding:10px 14px; border-bottom:1px solid var(--line-subtle); text-align:left;
       vertical-align:middle; }}
-    th {{ position:sticky; top:0; z-index:1; color:var(--muted); background:var(--wash);
+    th {{ position:sticky; top:0; z-index:1; color:var(--muted); background:var(--panel-subtle);
       font-size:12px; font-weight:700; }}
     td {{ font-size:14px; }}
     tbody tr:nth-child(even) {{ background:var(--panel-wash-soft); }}
@@ -292,9 +317,10 @@ def render_status_page(
       border-radius:999px; background:var(--panel-subtle); font-size:12px; font-weight:700; }}
     .state--fresh {{ background:var(--good-soft); color:var(--good); }}
     .state--stale {{ background:var(--warn-soft); color:var(--warn); }}
-    .note {{ margin:14px 2px 0; color:var(--muted); font-size:13px; line-height:1.5; }}
-    .site-footer {{ display:grid; gap:8px; margin-top:24px; padding-top:20px;
-      border-top:1px solid var(--line); color:var(--muted); font-size:14px; line-height:1.5; }}
+    .note {{ margin:14px 4px 0; color:var(--muted); font-size:13px; line-height:1.5; }}
+    .site-footer {{ display:grid; gap:8px; margin-top:18px; padding:22px 24px;
+      border:1px solid var(--line); border-radius:var(--av-radius-lg);
+      background:var(--panel); color:var(--muted); font-size:14px; line-height:1.5; }}
     .site-footer-nav {{ display:flex; flex-wrap:wrap; gap:6px 16px;
       align-items:center; font-weight:650; }}
     .site-footer a {{ color:var(--ink); font-weight:700; text-decoration:none; }}
@@ -314,7 +340,7 @@ def render_status_page(
     .empty {{ color:var(--muted); text-align:center; }}
     @media (max-width:860px) {{
       .overview {{ grid-template-columns:1fr; }}
-      .metrics {{ margin:0; padding:12px 0; border-top:1px solid var(--line); border-left:0; }}
+      .metrics {{ margin:0; padding:0; border:0; }}
     }}
     @media (max-width:720px) {{
       .lang-switch a {{
@@ -331,7 +357,7 @@ def render_status_page(
       thead {{ display:none; }}
       tbody, tr, td {{ display:block; }}
       tr {{ display:grid; grid-template-columns:minmax(0,1fr) auto; gap:7px 12px;
-        padding:14px 2px; border-bottom:1px solid var(--line-subtle); }}
+        padding:16px; border-bottom:1px solid var(--line-subtle); }}
       tr:last-child {{ border-bottom:0; }}
       td {{ padding:0; border:0; }}
       td:first-child {{ grid-column:1 / -1; }}
@@ -339,7 +365,8 @@ def render_status_page(
       .mobile-updated {{ display:block; }}
       td:nth-child(2) {{ align-self:center; font-variant-numeric:tabular-nums; }}
       td:nth-child(4) {{ justify-self:end; }}
-      h1 {{ font-size:28px; }}
+      h1 {{ font-size:32px; }}
+      .site-footer {{ padding:18px; border-radius:16px; }}
     }}
   </style>
 </head>
@@ -388,7 +415,16 @@ def render_status_page(
           >{escape(str(product_copy["tab_opportunities"]))}</a>
         <a href="{escape(sources_href, quote=True)}"
           >{escape(str(product_copy["tab_sources"]))}</a>
-        <a href="{escape(docs_href, quote=True)}">{escape(str(product_copy["api_docs"]))}</a>
+        <a href="{escape(insights_href, quote=True)}"
+          >{escape(str(product_copy["insights_link"]))}</a>
+        <a href="{escape(docs_href, quote=True)}"
+          >{escape(str(product_copy["api_docs"]))}</a>
+        <a href="{escape(terms_href, quote=True)}"
+          >{escape(str(product_copy["footer_terms"]))}</a>
+        <a href="{escape(data_policy_href, quote=True)}"
+          >{escape(str(product_copy["footer_data_policy"]))}</a>
+        <a href="{escape(attribution_href, quote=True)}"
+          >{escape(str(product_copy["footer_attribution"]))}</a>
       </nav>
     </footer>
   </main>

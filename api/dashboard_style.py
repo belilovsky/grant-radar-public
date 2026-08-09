@@ -48,6 +48,8 @@ DASHBOARD_CSS = r"""    :root {
       line-height: var(--av-leading-normal);
       background: var(--bg);
       color: var(--ink);
+      text-rendering: optimizeLegibility;
+      -webkit-font-smoothing: antialiased;
     }
     body.modal-open,
     body.filter-sheet-open {
@@ -63,9 +65,9 @@ DASHBOARD_CSS = r"""    :root {
       display: none;
     }
     .shell {
-      width: min(var(--container-max), calc(100% - 48px));
+      width: min(var(--container-max), calc(100% - 64px));
       margin: 0 auto;
-      padding: 22px 0 var(--av-spacing-8);
+      padding: 28px 0 40px;
     }
     .hero-band {
       position: relative;
@@ -86,7 +88,7 @@ DASHBOARD_CSS = r"""    :root {
     }
     .sticky-shell {
       position: sticky;
-      top: 0;
+      top: 10px;
       z-index: 24;
       padding: 0;
       margin-bottom: 8px;
@@ -110,7 +112,7 @@ DASHBOARD_CSS = r"""    :root {
     .topbar {
       display: grid;
       gap: var(--av-spacing-1);
-      margin-bottom: var(--av-spacing-2);
+      margin-bottom: 18px;
     }
     .language-fallback-note {
       margin: 0 0 var(--av-spacing-3);
@@ -127,12 +129,12 @@ DASHBOARD_CSS = r"""    :root {
       gap: var(--av-spacing-1);
     }
     .eyebrow {
-      color: var(--muted);
+      color: color-mix(in oklab, var(--brand), var(--ink) 16%);
       font-size: var(--av-text-xs);
       font-family: var(--font-sans);
-      font-weight: 650;
-      letter-spacing: 0;
-      text-transform: none;
+      font-weight: 750;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
     }
     .brand-row {
       display: flex;
@@ -142,9 +144,9 @@ DASHBOARD_CSS = r"""    :root {
     }
     .brand h1 {
       margin: 0;
-      font-size: 42px;
-      line-height: 1.05;
-      letter-spacing: 0;
+      font-size: clamp(44px, 4.4vw, 64px);
+      line-height: 0.98;
+      letter-spacing: -0.045em;
     }
     .brand p {
       display: none;
@@ -188,14 +190,15 @@ DASHBOARD_CSS = r"""    :root {
       gap: var(--av-spacing-2);
       align-content: start;
       min-width: 0;
-      padding: var(--av-spacing-2) 0 0;
+      padding: 4px 0 8px;
     }
     .hero-intro {
       margin: 0;
-      max-width: 64ch;
-      color: color-mix(in oklab, var(--ink), white 20%);
-      font-size: 15px;
-      line-height: 1.6;
+      max-width: 46ch;
+      color: color-mix(in oklab, var(--ink), white 14%);
+      font-size: clamp(18px, 1.55vw, 22px);
+      line-height: 1.45;
+      letter-spacing: -0.012em;
     }
     .hero-actions {
       display: flex;
@@ -207,7 +210,7 @@ DASHBOARD_CSS = r"""    :root {
       border-color: transparent;
       background: var(--brand);
       color: var(--color-accent-contrast);
-      box-shadow: 0 10px 20px rgb(37 99 235 / 0.18);
+      box-shadow: 0 12px 24px rgb(33 75 184 / 0.22);
     }
     .button.primary:hover {
       background: var(--brand-hover);
@@ -255,10 +258,10 @@ DASHBOARD_CSS = r"""    :root {
     .hero-stage-title {
       margin: 0;
       font-family: var(--font-sans);
-      font-size: 18px;
-      font-weight: 700;
+      font-size: 21px;
+      font-weight: 750;
       line-height: var(--av-leading-tight);
-      letter-spacing: 0;
+      letter-spacing: -0.018em;
     }
     .hero-points {
       display: none;
@@ -290,28 +293,29 @@ DASHBOARD_CSS = r"""    :root {
     }
     .hero-picks {
       display: grid;
-      gap: 6px;
+      gap: 8px;
       min-width: 0;
     }
     .hero-pick-row {
       display: grid;
-      grid-template-columns: repeat(3, minmax(0, 1fr));
-      gap: var(--av-spacing-1);
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 8px;
     }
     .hero-pick {
-      min-height: 28px;
-      padding-inline: 8px;
-      border-radius: var(--av-radius-md);
-      border: 1px solid var(--line-subtle);
-      background: transparent;
+      min-height: 42px;
+      padding: 8px 12px;
+      border-radius: 10px;
+      border: 1px solid var(--line);
+      background: var(--panel);
       color: var(--ink);
-      font-size: var(--av-text-xs);
+      font-size: var(--av-text-sm);
       font-weight: 700;
       text-align: left;
       justify-content: flex-start;
+      line-height: 1.25;
     }
     .hero-pick:last-child {
-      grid-column: auto;
+      grid-column: 1 / -1;
     }
     .hero-pick:hover,
     .hero-pick:focus-visible {
@@ -322,6 +326,7 @@ DASHBOARD_CSS = r"""    :root {
     .hero-band .grid {
       width: 100%;
       grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 12px;
       margin-bottom: 0;
       border: 0;
       border-top: 1px solid var(--line-subtle);
@@ -335,6 +340,7 @@ DASHBOARD_CSS = r"""    :root {
       padding: 10px 16px;
       border-top: 0;
     }
+    .hero-band .metric + .metric { border-left: 1px solid var(--line); }
     .hero-band .metric span {
       color: color-mix(in oklab, var(--muted), var(--ink) 22%);
     }
@@ -506,8 +512,8 @@ DASHBOARD_CSS = r"""    :root {
     }
     .discovery-library,
     .trust-library {
-      margin: var(--av-spacing-4) 0;
-      padding: 0 12px;
+      margin: 18px 0;
+      padding: 0 16px;
       border: 1px solid var(--line-subtle);
       border-radius: var(--av-radius-md);
       background: var(--panel-wash-strong);
@@ -518,7 +524,7 @@ DASHBOARD_CSS = r"""    :root {
       align-items: baseline;
       justify-content: space-between;
       gap: var(--av-spacing-3);
-      min-height: 52px;
+      min-height: 58px;
       cursor: pointer;
       color: var(--ink);
       font-size: var(--av-text-sm);
@@ -1045,7 +1051,7 @@ DASHBOARD_CSS = r"""    :root {
       min-height: var(--control-height-sm);
       padding: 0 var(--av-spacing-3);
       border: 1px solid var(--button-outline);
-      border-radius: var(--av-radius-md);
+      border-radius: 10px;
       background: var(--panel);
       color: var(--ink);
       font-size: var(--av-text-sm);
@@ -1074,8 +1080,8 @@ DASHBOARD_CSS = r"""    :root {
       color: var(--muted);
       white-space: nowrap;
       flex: 0 0 auto;
-      min-height: 32px;
-      border-radius: 0;
+      min-height: 40px;
+      border-radius: 10px;
     }
     .button.tab:hover {
       color: var(--brand);
@@ -1084,10 +1090,10 @@ DASHBOARD_CSS = r"""    :root {
     }
     .button[aria-pressed="true"] {
       border-color: transparent;
-      background: transparent;
-      color: var(--ink);
+      background: var(--brand-soft);
+      color: var(--brand);
       font-weight: 700;
-      box-shadow: inset 0 -2px 0 var(--brand);
+      box-shadow: none;
     }
     .button:disabled {
       opacity: 0.5;
@@ -1146,10 +1152,10 @@ DASHBOARD_CSS = r"""    :root {
     }
     .metric strong {
       font-family: var(--font-sans);
-      font-size: 20px;
-      font-weight: 700;
+      font-size: 26px;
+      font-weight: 760;
       line-height: 1;
-      letter-spacing: 0;
+      letter-spacing: -0.025em;
       font-feature-settings: "tnum" 1, "lnum" 1;
     }
     .panel {
@@ -1178,14 +1184,16 @@ DASHBOARD_CSS = r"""    :root {
     .panel-head h2 {
       margin: 0;
       font-family: var(--font-sans);
-      font-size: 22px;
-      font-weight: 700;
+      font-size: clamp(26px, 2.4vw, 34px);
+      font-weight: 760;
       line-height: var(--av-leading-tight);
+      letter-spacing: -0.025em;
     }
     .panel-head p {
-      margin: var(--av-spacing-1) 0 0;
+      margin: 7px 0 0;
       color: var(--muted);
-      font-size: var(--av-text-sm);
+      font-size: var(--av-text-base);
+      line-height: 1.5;
     }
     .panel-actions {
       display: flex;
@@ -1223,7 +1231,7 @@ DASHBOARD_CSS = r"""    :root {
       align-items: end;
     }
     .filters.primary-filters {
-      grid-template-columns: minmax(240px, 1fr) repeat(2, minmax(150px, 0.25fr));
+      grid-template-columns: minmax(300px, 1fr) repeat(2, minmax(180px, 0.3fr));
     }
     .advanced-filters {
       border-top: 1px solid var(--line-subtle);
@@ -1232,12 +1240,12 @@ DASHBOARD_CSS = r"""    :root {
     .advanced-filters > summary {
       display: inline-flex;
       width: fit-content;
-      min-height: 32px;
+      min-height: 38px;
       align-items: center;
       gap: 6px;
-      padding: 0 10px;
+      padding: 0 12px;
       border: 0;
-      border-radius: var(--av-radius-sm);
+      border-radius: 9px;
       background: transparent;
       color: var(--ink);
       cursor: pointer;
@@ -1299,7 +1307,7 @@ DASHBOARD_CSS = r"""    :root {
     .preset-row {
       display: flex;
       flex-wrap: wrap;
-      gap: 4px;
+      gap: 6px;
       min-width: 0;
     }
     .preset-button {
@@ -1327,7 +1335,7 @@ DASHBOARD_CSS = r"""    :root {
       border-color: color-mix(in oklab, var(--brand), black 4%);
       background: var(--brand);
       color: white;
-      box-shadow: 0 6px 14px rgb(33 75 184 / 0.16);
+      box-shadow: 0 8px 18px rgb(33 75 184 / 0.2);
     }
     .filter-block {
       display: grid;
@@ -1340,8 +1348,8 @@ DASHBOARD_CSS = r"""    :root {
       color: var(--muted);
       font-family: var(--font-sans);
       font-size: var(--av-text-xs);
-      font-weight: 600;
-      letter-spacing: 0;
+      font-weight: 720;
+      letter-spacing: 0.015em;
       text-transform: none;
     }
     .filter-label::before {
@@ -1610,10 +1618,10 @@ DASHBOARD_CSS = r"""    :root {
     .summary-pill {
       display: inline-flex;
       align-items: center;
-      min-height: 26px;
+      min-height: 30px;
       border: 0;
       border-radius: var(--av-radius-full);
-      padding: 0 9px;
+      padding: 0 11px;
       background: var(--panel-wash);
       color: var(--muted);
       font-size: var(--av-text-xs);
@@ -1642,10 +1650,10 @@ DASHBOARD_CSS = r"""    :root {
     }
     .field {
       width: 100%;
-      min-height: var(--control-height);
+      min-height: 44px;
       border: 1px solid var(--line);
-      border-radius: var(--av-radius-md);
-      background: rgb(255 255 255 / 0.82);
+      border-radius: 10px;
+      background: #ffffff;
       padding: 0 var(--av-spacing-3);
       color: var(--ink);
       outline: 0;
@@ -1735,14 +1743,20 @@ DASHBOARD_CSS = r"""    :root {
       padding: 16px 14px;
       box-shadow: none;
       position: relative;
-      overflow: visible;
+      overflow: hidden;
       transition:
         background var(--av-duration-base) var(--av-easing-emphasized),
-        color var(--av-duration-base) var(--av-easing-emphasized);
+        border-color var(--av-duration-base) var(--av-easing-emphasized),
+        box-shadow var(--av-duration-base) var(--av-easing-emphasized),
+        transform var(--av-duration-base) var(--av-easing-emphasized);
     }
     .opportunity:hover {
-      background: color-mix(in oklab, var(--panel), var(--brand-soft) 7%);
-      box-shadow: none;
+      border-color: color-mix(in oklab, var(--brand), white 70%);
+      background: var(--panel);
+      box-shadow:
+        0 18px 40px rgb(15 23 42 / 0.075),
+        0 2px 6px rgb(15 23 42 / 0.035);
+      transform: translateY(-2px);
     }
     .list > .opportunity:nth-child(even) {
       padding-inline: 14px;
@@ -1760,6 +1774,7 @@ DASHBOARD_CSS = r"""    :root {
       display: grid;
       gap: 10px;
       min-width: 0;
+      padding: 2px 0;
     }
     .opportunity-rail {
       display: grid;
@@ -1780,13 +1795,14 @@ DASHBOARD_CSS = r"""    :root {
     }
     .opportunity-heading {
       display: grid;
-      gap: 9px;
+      gap: 10px;
     }
     .opportunity h3 {
       margin: 0;
-      font-size: 19px;
-      font-weight: 700;
-      line-height: 1.3;
+      font-size: clamp(19px, 1.65vw, 23px);
+      font-weight: 750;
+      line-height: 1.24;
+      letter-spacing: -0.018em;
       display: -webkit-box;
       -webkit-line-clamp: 3;
       -webkit-box-orient: vertical;
@@ -1806,9 +1822,9 @@ DASHBOARD_CSS = r"""    :root {
     .opportunity-summary {
       margin: 0;
       color: var(--muted);
-      max-width: 78ch;
-      font-size: 14px;
-      line-height: 1.58;
+      max-width: 74ch;
+      font-size: 15px;
+      line-height: 1.62;
       display: -webkit-box;
       -webkit-line-clamp: 3;
       -webkit-box-orient: vertical;
@@ -1816,12 +1832,12 @@ DASHBOARD_CSS = r"""    :root {
     }
     .tags { display: flex; flex-wrap: wrap; gap: var(--av-spacing-1); }
     .tag {
-      border-radius: var(--av-radius-sm);
-      border: 0;
+      border-radius: 7px;
+      border: 1px solid var(--line-subtle);
       background: var(--panel-subtle);
       color: var(--muted);
-      padding: 3px 7px;
-      font-family: var(--font-mono);
+      padding: 4px 8px;
+      font-family: var(--font-sans);
       font-size: var(--av-text-xs);
       line-height: 1.4;
     }
@@ -1909,7 +1925,7 @@ DASHBOARD_CSS = r"""    :root {
       grid-area: meta;
       display: grid;
       grid-template-columns: repeat(2, minmax(0, 1fr));
-      gap: 10px 18px;
+      gap: 10px 14px;
     }
     .meta-row {
       display: grid;
@@ -1917,7 +1933,7 @@ DASHBOARD_CSS = r"""    :root {
       gap: 3px;
       align-items: start;
       min-width: 0;
-      padding-top: 8px;
+      padding-top: 9px;
       border-top: 1px solid var(--line-subtle);
       font-size: 12px;
       line-height: 1.4;
@@ -1956,13 +1972,13 @@ DASHBOARD_CSS = r"""    :root {
     .meta-row span {
       grid-column: 1;
       color: var(--muted);
-      font-weight: 600;
+      font-weight: 650;
     }
     .meta-row strong {
       grid-column: 1;
       min-width: 0;
       color: var(--ink);
-      font-weight: 650;
+      font-weight: 720;
       overflow-wrap: anywhere;
     }
     .operator-note {
@@ -2010,8 +2026,8 @@ DASHBOARD_CSS = r"""    :root {
       justify-content: center;
       gap: 5px;
       min-width: 72px;
-      min-height: 28px;
-      padding: 0 10px;
+      min-height: 30px;
+      padding: 0 11px;
       border-radius: var(--av-radius-full);
       background: var(--brand-soft);
       color: var(--brand);
@@ -2038,7 +2054,7 @@ DASHBOARD_CSS = r"""    :root {
       align-items: center;
       justify-content: center;
       gap: 5px;
-      min-height: 28px;
+      min-height: 30px;
       width: max-content;
       max-width: 100%;
       border: 1px solid transparent;
@@ -2282,14 +2298,15 @@ DASHBOARD_CSS = r"""    :root {
     .card-actions {
       display: flex;
       align-items: center;
-      gap: var(--av-spacing-2);
+      gap: 8px 14px;
       flex-wrap: wrap;
+      margin-top: 2px;
     }
     .card-actions-secondary {
       grid-area: actions;
       display: flex;
       align-items: center;
-      gap: var(--av-spacing-2);
+      gap: 8px 12px;
       flex-wrap: wrap;
     }
     .workflow-control {
@@ -2319,14 +2336,14 @@ DASHBOARD_CSS = r"""    :root {
       display: inline-flex;
       align-items: center;
       gap: 5px;
-      min-height: 28px;
-      border: 1px solid transparent;
-      border-radius: var(--av-radius-md);
-      background: transparent;
+      min-height: 34px;
+      border: 1px solid color-mix(in oklab, var(--brand), white 68%);
+      border-radius: 9px;
+      background: var(--brand-soft);
       color: var(--brand);
       font-size: var(--av-text-sm);
-      font-weight: 600;
-      padding: 0;
+      font-weight: 700;
+      padding: 0 11px;
       cursor: pointer;
     }
     .detail-link::before {
@@ -2335,10 +2352,9 @@ DASHBOARD_CSS = r"""    :root {
     .detail-link:hover,
     .detail-link:focus-visible {
       color: var(--brand-hover);
-      text-decoration: underline;
-      text-underline-offset: 2px;
-      background: transparent;
-      box-shadow: none;
+      text-decoration: none;
+      background: color-mix(in oklab, var(--brand-soft), var(--brand) 8%);
+      box-shadow: 0 4px 12px rgb(33 75 184 / 0.1);
     }
     .opportunity-click {
       position: absolute;
@@ -2399,9 +2415,9 @@ DASHBOARD_CSS = r"""    :root {
     .footer-sep { color: var(--line-strong); }
     .site-footer {
       display: grid;
-      gap: 10px;
+      gap: 12px;
       margin-top: var(--section-gap);
-      padding: 24px 0 0;
+      padding: 28px 4px 10px;
       border-top: 1px solid var(--line);
       color: var(--muted);
       font-size: var(--av-text-sm);
@@ -2436,7 +2452,7 @@ DASHBOARD_CSS = r"""    :root {
       gap: 5px;
       color: var(--brand);
       font-size: var(--av-text-sm);
-      font-weight: 600;
+      font-weight: 680;
       text-decoration: none;
     }
     .more-link::before {
@@ -2467,16 +2483,19 @@ DASHBOARD_CSS = r"""    :root {
     }
     .detail-drawer {
       position: fixed;
-      inset: 0 0 0 auto;
+      inset: 16px 16px auto auto;
       z-index: 80;
       width: min(640px, 100vw);
-      border-left: 1px solid var(--line);
+      max-height: calc(100dvh - 32px);
+      border: 1px solid var(--line);
+      border-radius: var(--av-radius-lg);
       background: color-mix(in oklab, var(--panel), white 6%);
       box-shadow: -24px 0 64px rgb(15 23 42 / 0.18);
       transform: translateX(100%);
       transition: transform var(--av-duration-base) var(--av-easing-emphasized);
       display: grid;
-      grid-template-rows: auto 1fr auto;
+      grid-template-rows: auto minmax(0, auto) auto;
+      overflow: hidden;
     }
     .detail-drawer.open {
       transform: translateX(0);
@@ -2871,7 +2890,7 @@ DASHBOARD_CSS = r"""    :root {
         display: -webkit-box;
         overflow: hidden;
         -webkit-box-orient: vertical;
-        -webkit-line-clamp: 2;
+        -webkit-line-clamp: 3;
       }
       .hero-actions .button {
         min-height: 38px;
@@ -3184,8 +3203,14 @@ DASHBOARD_CSS = r"""    :root {
         grid-template-columns: 1fr;
       }
       .detail-drawer {
+        inset: auto 0 0;
         width: 100vw;
-        border-left: 0;
+        height: auto;
+        max-height: 100dvh;
+        border: 1px solid var(--line);
+        border-bottom: 0;
+        border-radius: var(--av-radius-lg) var(--av-radius-lg) 0 0;
+        grid-template-rows: auto minmax(0, 1fr) auto;
       }
       .detail-header,
       .detail-body,
@@ -3337,6 +3362,23 @@ DASHBOARD_CSS = r"""    :root {
       }
       .funder-grid {
         grid-template-columns: 1fr;
+      }
+      .funder-library,
+      .funder-library-body,
+      .funder-section,
+      .funder-grid,
+      .funder-card {
+        width: 100%;
+        min-width: 0;
+        max-width: 100%;
+      }
+      .funder-card-head {
+        flex-wrap: wrap;
+      }
+      .funder-kpi {
+        max-width: 100%;
+        white-space: normal;
+        text-align: right;
       }
       .discovery-grid {
         padding-block: var(--av-spacing-3);

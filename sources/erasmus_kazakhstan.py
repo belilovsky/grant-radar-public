@@ -12,6 +12,7 @@ from urllib.parse import urljoin
 import structlog
 
 from core.models import Opportunity, OpportunityType
+from core.public_clock import public_today
 from core.source_text import clean_source_text as _clean_text
 from sources.base import BaseSource
 
@@ -156,7 +157,7 @@ def _parse_text_date(day: str, month: str, year: str) -> date | None:
 
 
 def _listing_urls(today: date | None = None) -> list[str]:
-    today = today or date.today()
+    today = today or public_today()
     previous_year = today.year - 1
     return [ERASMUS_NEWS_URL, ERASMUS_ARCHIVE_URL.format(year=previous_year)]
 
@@ -224,7 +225,7 @@ def _slugify(value: str) -> str:
 def _extract_actions(
     html: str, *, article_url: str, today: date | None = None
 ) -> list[ActionEntry]:
-    today = today or date.today()
+    today = today or public_today()
     actions: list[ActionEntry] = []
     seen: set[str] = set()
     article_block = _article_block(html)
@@ -329,7 +330,7 @@ class ErasmusKazakhstanSource(BaseSource):
     ]
 
     async def fetch(self) -> AsyncIterator[Opportunity]:
-        today = date.today()
+        today = public_today()
         listing_entries: list[ListingEntry] = []
         seen_urls: set[str] = set()
 

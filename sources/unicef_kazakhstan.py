@@ -12,6 +12,7 @@ from urllib.parse import urljoin
 import structlog
 
 from core.models import Opportunity, OpportunityType
+from core.public_clock import public_today
 from core.source_text import clean_source_text as _clean_text
 from sources.base import BaseSource
 
@@ -157,7 +158,7 @@ def _is_blocked_page(text: str, status_code: int) -> bool:
 
 
 def _is_recently_closed(deadline: date, today: date | None = None) -> bool:
-    today = today or date.today()
+    today = today or public_today()
     return (today - deadline).days <= 365
 
 
@@ -232,7 +233,7 @@ def _reference_fragment(html: str, start_index: int, end_index: int) -> str:
 
 
 def _extract_tenders(html: str, *, today: date | None = None) -> list[UnicefTender]:
-    today = today or date.today()
+    today = today or public_today()
     tenders: list[UnicefTender] = []
     closed_tenders: list[UnicefTender] = []
     seen: set[str] = set()
@@ -362,7 +363,7 @@ class UnicefKazakhstanSource(BaseSource):
             }
             deadline_policy = (
                 None
-                if tender.deadline is None or tender.deadline >= date.today()
+                if tender.deadline is None or tender.deadline >= public_today()
                 else _policy_for_closed_deadline(tender.deadline)
             )
             if deadline_policy:

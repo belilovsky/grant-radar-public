@@ -7,15 +7,28 @@ from typing import Any
 from qazstack import __version__ as qazstack_version
 from qazstack.contracts import validate_consumer_contract
 
-QAZSTACK_SOURCE_REVISION = "a0a4bfc6ea6b2fce205afe24fbf732fb3de3bc68"
+from core.public_contract import DATASET_SCHEMA_VERSION, SCHEMA_VERSION
+from core.qazcompute_bridge import (
+    DEADLINE_ANOMALY_MODEL,
+    DEADLINE_ANOMALY_SCHEMA_VERSION,
+    DUPLICATE_CLUSTER_MODEL,
+    DUPLICATE_CLUSTER_SCHEMA_VERSION,
+    EVIDENCE_READINESS_MODEL,
+    EVIDENCE_READINESS_SCHEMA_VERSION,
+    SOURCE_FRESHNESS_MODEL,
+    SOURCE_FRESHNESS_SCHEMA_VERSION,
+)
+
+QAZSTACK_SOURCE_REVISION = "986cfca3779f74c0f734ed174e7a28c944fd30f7"
 QAZSTACK_SCHEMA_DIGEST = (
     "sha256:6ca8e38c09315d02993e3600b7a05dc23d695cd152545f8a970566e303fc158c"
 )
 QAZSTACK_VERIFIED_AT = "2026-08-04T00:47:27Z"
 AVDS_PACKAGE = "@sgeo/ui-kit"
-AVDS_VERSION = "4.3.2"
+AVDS_VERSION = "4.6.0"
 AVDS_PATTERN_PACKAGE = "@av/patterns"
 AVDS_PATTERN_VERSION = "0.1.0"
+AVDS_PATTERN_SOURCE_REVISION = "3d482e1c7592e2f8ae359c3e3b2d10c5c1118c37"
 
 
 def _url(origin: str, path: str) -> str:
@@ -37,11 +50,26 @@ def qazstack_consumer_contract(origin: str) -> dict[str, Any]:
             "collectors-and-entity-pipeline",
             "content-api",
             "core-foundation",
+            "opportunity-public-contract",
+            "opportunity-ranking-evaluation",
             "reports-and-export",
+        ],
+        "owns": [
+            "grant-opportunity-ranking",
+            "kazakhstan-fit-policy",
+            "source-suitability-gate",
+        ],
+        "depends_on": ["qazstack", "postgres"],
+        "forbidden_capabilities": [
+            "fake-application-submission",
+            "unverified-source-promotion",
+            "secret-export",
         ],
         "evidence": {
             "source_files": [
                 "core/qazstack_bridge.py",
+                "core/public_contract.py",
+                "core/ranking_evaluation.py",
                 "core/source_text.py",
                 "requirements-prod.txt",
                 "tests/test_qazstack_adoption.py",
@@ -78,11 +106,41 @@ def avds_ui_contract() -> dict[str, Any]:
         "schema_version": "avds-ui-contract-v1",
         "contract_id": "avds-ui-contract",
         "avds_source": {
-            "site": "https://ui.qdev.run",
+            "site": "https://avds.digital",
             "package": AVDS_PACKAGE,
             "version": AVDS_VERSION,
         },
+        "verification": {
+            "checked_at": "2026-07-27T14:55:04Z",
+            "public_site_status": "live",
+            "reference_release": AVDS_VERSION,
+            "foundation_candidate": "4.0.0-rc.1",
+            "note": (
+                "The public AV DS showcase identifies release 4.6.0. "
+                "QAZ.FUND composes its server-rendered adapter from documented "
+                "tokens and component semantics; it does not import the React package."
+            ),
+        },
         "component_families": [
+            {
+                "id": "foundation",
+                "components": [
+                    "Alert",
+                    "Breadcrumbs",
+                    "Button",
+                    "Card",
+                    "Checkbox",
+                    "FormField",
+                    "Progress",
+                    "Table",
+                    "TextInput",
+                    "Textarea",
+                ],
+                "qazstack_relationship": (
+                    "Stable AV DS primitives provide interaction and accessibility "
+                    "semantics. QAZ.FUND renders equivalent server-side markup."
+                ),
+            },
             {
                 "id": "navigation-filtering",
                 "components": [
@@ -90,6 +148,7 @@ def avds_ui_contract() -> dict[str, Any]:
                     "FilterChipRow",
                     "SearchField",
                     "FilterStateSummary",
+                    "QuickLinksRail",
                 ],
                 "qazstack_relationship": (
                     "QAZ.FUND keeps filtering behavior local and follows AV DS 4 "
@@ -110,9 +169,11 @@ def avds_ui_contract() -> dict[str, Any]:
                 "id": "evidence",
                 "components": [
                     "EvidenceSummary",
+                    "EvidenceDisclosure",
                     "ProvenanceCard",
                     "ProvenanceTable",
                     "SourceCard",
+                    "TrustStrip",
                 ],
                 "qazstack_relationship": (
                     "Official source, freshness, coverage, and limitations remain "
@@ -130,10 +191,47 @@ def avds_ui_contract() -> dict[str, Any]:
                 ),
             },
             {
-                "id": "metrics",
-                "components": ["MiniMetric", "PublicSummaryStrip"],
+                "id": "guidance",
+                "components": [
+                    "ActionPath",
+                    "DocumentCard",
+                    "EditorialLeadRail",
+                    "LiteReadingSurface",
+                    "TrustFactsPanel",
+                ],
                 "qazstack_relationship": (
-                    "Catalog and operator summaries expose compact, comparable counts."
+                    "AV DS standardizes ordered guidance, related documents, and "
+                    "compact trust facts. QAZ.FUND owns the wording, applicability, "
+                    "routes, and submission state."
+                ),
+            },
+            {
+                "id": "metrics",
+                "components": [
+                    "DataQualityScorecard",
+                    "MiniMetric",
+                    "PublicSummaryStrip",
+                ],
+                "qazstack_relationship": (
+                    "Catalog, quality, and operator summaries expose compact, "
+                    "comparable counts with named measures."
+                ),
+            },
+            {
+                "id": "application-preparation",
+                "components": [
+                    "Alert",
+                    "Button",
+                    "Card",
+                    "Checkbox",
+                    "FormField",
+                    "Progress",
+                    "TextInput",
+                    "Textarea",
+                ],
+                "qazstack_relationship": (
+                    "The application workspace stores draft content only in the "
+                    "browser. It does not submit forms or infer eligibility."
                 ),
             },
             {
@@ -148,13 +246,67 @@ def avds_ui_contract() -> dict[str, Any]:
         "runtime_neutral_patterns": {
             "package": AVDS_PATTERN_PACKAGE,
             "version": AVDS_PATTERN_VERSION,
+            "source_revision": AVDS_PATTERN_SOURCE_REVISION,
+            "source": (
+                "https://github.com/belilovsky/av-platform-core/tree/"
+                f"{AVDS_PATTERN_SOURCE_REVISION}/packages/patterns"
+            ),
             "adopted": [
                 "evidence-summary",
                 "filter-state-summary",
                 "decision-summary",
+                "evidence-disclosure",
+                "action-path",
             ],
             "rendering": "server-rendered-local-adapter",
             "calculation_ownership": "qaz-fund",
+        },
+        "pattern_exchange": {
+            "direction": "two-way",
+            "published_at": "2026-07-26",
+            "adopted_existing": [
+                "PublicSummaryStrip",
+                "QuickLinksRail",
+                "TrustStrip",
+                "TrustFactsPanel",
+                "DocumentCard",
+                "EditorialLeadRail",
+                "LiteReadingSurface",
+            ],
+            "absorbed_from_qaz_fund": [
+                {
+                    "component": "EvidenceDisclosure",
+                    "pattern": "evidence-disclosure",
+                    "source_surface": "public opportunity source excerpts",
+                },
+                {
+                    "component": "ActionPath",
+                    "pattern": "action-path",
+                    "source_surface": "preparation and application guidance",
+                },
+            ],
+            "ownership_boundary": (
+                "QAZ.FUND owns source selection, eligibility, ranking, deadlines, "
+                "routes, localization, and submission state. AV DS owns reusable "
+                "presentation contracts and component semantics."
+            ),
+        },
+        "local_recipes": {
+            "lifecycle": "product-owned",
+            "package_claim": False,
+            "recipes": [
+                "application-workspace",
+                "catalogue-composition",
+                "change-ledger",
+                "deadline-distribution",
+                "machine-entrypoints",
+                "source-coverage",
+            ],
+            "boundary": (
+                "Charts, analytics composition, change semantics, and application "
+                "draft behavior remain QAZ.FUND recipes. AV DS supplies the tokens "
+                "and stable primitive contracts used to render them."
+            ),
         },
         "do_not_duplicate": [
             "alert",
@@ -168,9 +320,134 @@ def avds_ui_contract() -> dict[str, Any]:
         ],
         "qazstack_behavior_sources": [
             "collectors-and-entity-pipeline",
+            "opportunity-public-contract",
+            "opportunity-ranking-evaluation",
             "observability-and-ui",
             "pagination-and-listing",
         ],
+    }
+
+
+def qazpipe_source_contract(origin: str) -> dict[str, Any]:
+    """Describe the stable read-only handoff from QAZ.FUND to QazPipe."""
+
+    api_index = _url(origin, "/api/v1/opportunities")
+    bulk_export = _url(origin, "/api/v1/opportunities.ndjson")
+    return {
+        "schema_version": "qazpipe-pull-source-v1",
+        "source_id": "qazfund-opportunities",
+        "producer": {
+            "project_id": "qaz-fund",
+            "service": "QAZ.FUND",
+            "lifecycle": "production",
+        },
+        "mode": "pull",
+        "direction": "outbound-read-only",
+        "data_classification": "public",
+        "record_contract": {
+            "dataset": DATASET_SCHEMA_VERSION,
+            "opportunity": SCHEMA_VERSION,
+            "schema": _url(origin, "/api/v1/schema"),
+        },
+        "endpoints": {
+            "index": api_index,
+            "bulk_ndjson": bulk_export,
+            "detail_template": _url(origin, "/api/v1/opportunities/{id}"),
+            "coverage": _url(origin, "/coverage"),
+            "readiness": _url(origin, "/ready"),
+        },
+        "pull": {
+            "default_language": "ru",
+            "limit": {"default": 500, "maximum": 5000},
+            "offset_parameter": "offset",
+            "limit_parameter": "limit",
+            "conditional_requests": ["ETag", "Last-Modified"],
+            "recommended_interval_minutes": 60,
+        },
+        "checkpoint": {
+            "strategy": "dataset-revision-and-offset",
+            "dataset_revision_field": "dataset_revision",
+            "stable_record_id_field": "id",
+            "content_revision_field": "provenance.content_hash",
+        },
+        "idempotency": {
+            "entity_key": "id",
+            "content_key": "provenance.content_hash",
+            "source_key": "source.url",
+        },
+        "required_provenance": [
+            "source.id",
+            "source.url",
+            "timestamps.discovered_at",
+            "provenance.evidence_state",
+            "provenance.verification_method",
+            "provenance.content_hash",
+        ],
+        "qazlake_handoff": {
+            "status": "brokered-activation-gated",
+            "direct_write": False,
+            "allowed_records": "public opportunity contract only",
+            "forbidden_fields": [
+                "raw",
+                "private credentials",
+                "saved selections",
+                "operator notes",
+            ],
+            "activation_requires": [
+                "approved target table",
+                "retention policy",
+                "dry-run artifact",
+                "idempotency proof",
+                "rollback procedure",
+            ],
+        },
+    }
+
+
+def qazcompute_profile_contract(origin: str) -> dict[str, Any]:
+    """Publish the deterministic QazCompute-compatible runtime profiles."""
+
+    return {
+        "schema_version": "qazcompute-profile-contract-v1",
+        "project_id": "qaz-fund",
+        "execution": {
+            "mode": "local-deterministic-fallback",
+            "runtime_status": "proven",
+            "remote_execution_active": False,
+            "decision_ready": False,
+        },
+        "profiles": [
+            {
+                "schema_version": EVIDENCE_READINESS_SCHEMA_VERSION,
+                "model": EVIDENCE_READINESS_MODEL,
+                "projection": "opportunities[].raw.qazcompute_evidence_readiness",
+                "endpoint": _url(origin, "/opportunities?compact=false"),
+            },
+            {
+                "schema_version": DEADLINE_ANOMALY_SCHEMA_VERSION,
+                "model": DEADLINE_ANOMALY_MODEL,
+                "projection": "opportunities[].raw.qazcompute_deadline_anomaly",
+                "endpoint": _url(origin, "/opportunities?compact=false"),
+            },
+            {
+                "schema_version": SOURCE_FRESHNESS_SCHEMA_VERSION,
+                "model": SOURCE_FRESHNESS_MODEL,
+                "projection": "sources[].qazcompute_source_freshness",
+                "endpoint": _url(origin, "/coverage"),
+            },
+            {
+                "schema_version": DUPLICATE_CLUSTER_SCHEMA_VERSION,
+                "model": DUPLICATE_CLUSTER_MODEL,
+                "projection": "duplicate candidates",
+                "endpoint": _url(origin, "/opportunities/duplicate-candidates"),
+            },
+        ],
+        "safety": {
+            "public_safe_features_only": True,
+            "publication_authority": False,
+            "eligibility_authority": False,
+            "funding_decision_authority": False,
+        },
     }
 
 
@@ -224,6 +501,11 @@ def ecosystem_manifest(origin: str) -> dict[str, Any]:
                 "status": "runtime-proven",
                 "mode": "python-package",
                 "version": qazstack_version,
+                "source_revision": QAZSTACK_SOURCE_REVISION,
+                "adopted_primitives": [
+                    "opportunity-public-contract",
+                    "opportunity-ranking-evaluation",
+                ],
             },
             "avds4": {
                 "status": "adapter-aligned",
@@ -233,15 +515,18 @@ def ecosystem_manifest(origin: str) -> dict[str, Any]:
                 "direct_package_import": False,
             },
             "qazpipe": {
-                "status": "interface-ready",
+                "status": "producer-ready",
                 "mode": "pull",
-                "source": opportunities,
+                "source": _url(origin, "/api/v1/opportunities.ndjson"),
+                "contract": _url(origin, "/.well-known/qazpipe-source.json"),
                 "activation": "consumer-controlled",
             },
             "qazlake": {
                 "status": "brokered-via-qazpipe",
                 "direct_write": False,
                 "allowed_data": "public opportunity records and source provenance",
+                "handoff_contract": _url(origin, "/.well-known/qazpipe-source.json"),
+                "activation": "schema-retention-and-dry-run-gated",
             },
             "qazgeo": {
                 "status": "deferred-no-geometry",
@@ -251,7 +536,10 @@ def ecosystem_manifest(origin: str) -> dict[str, Any]:
                 ),
             },
             "qazcompute": {
-                "status": "profile-compatible-local-fallback",
+                "status": "local-runtime-proven",
+                "contract": _url(origin, "/.well-known/qazcompute-profiles.json"),
+                "execution_mode": "local-deterministic-fallback",
+                "remote_execution_active": False,
                 "enabled_profiles": [
                     "evidence_readiness.v1",
                     "deadline_anomaly.v1",

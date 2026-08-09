@@ -35,12 +35,13 @@ class GoogleOrgAiOpportunitySource(BaseSource):
     default_tags: ClassVar[list[str]] = [
         "global",
         "central_asia_eligible",
+        "official_source",
+        "source_watch",
         "ai",
         "education",
         "digital_skills",
         "nonprofit_required",
         "partnership",
-        "rolling",
     ]
 
     async def fetch(self) -> AsyncIterator[Opportunity]:
@@ -71,12 +72,40 @@ class GoogleOrgAiOpportunitySource(BaseSource):
             funder="Google.org",
             eligibility=["global", "nonprofit", "education_partner"],
             tags=self.default_tags,
+            opportunity_status="upcoming",
+            lifecycle="forecast",
             raw={
                 "external_id": self.slug,
                 "page_title": _html_title(response.text),
                 "status_code": response.status_code,
                 "program_url": GOOGLE_ORG_KNOWLEDGE_URL,
-                "deadline_policy": "rolling",
+                "source_watch": True,
+                "item_level_parser": False,
+                "i18n": {
+                    "ru": {
+                        "title": (
+                            "Программы Google.org в сфере ИИ " "и цифровых навыков"
+                        ),
+                        "summary": (
+                            "Официальный раздел Google.org о проектах в сфере "
+                            "искусственного интеллекта, образования и цифровых "
+                            "навыков. QAZ.FUND отслеживает появление новых "
+                            "грантовых и партнёрских конкурсов; открытый приём "
+                            "заявок сейчас не подтверждён."
+                        ),
+                    },
+                    "en": {
+                        "title": (
+                            "Google.org AI Opportunity Fund and AI literacy watch"
+                        ),
+                        "summary": (
+                            "Official Google.org page covering AI, education and "
+                            "digital-skills initiatives. QAZ.FUND monitors it for "
+                            "new grant and partner calls; no open application "
+                            "window is currently confirmed."
+                        ),
+                    },
+                },
             },
         )
 

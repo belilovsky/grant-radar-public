@@ -10,6 +10,7 @@ from html import escape
 from urllib.parse import urlparse
 
 from api.avds import AVDS_CSS, AVDS_FONT_HEAD
+from api.avds_visual import OPPORTUNITY_AVDS4_CSS
 from api.dashboard import dashboard_copy
 from api.public_meta import analytics_head_html, og_image_url
 from core.models import Opportunity, OpportunityDetail, OpportunityMetadataField
@@ -34,8 +35,9 @@ PUBLIC_METADATA_KEYS = frozenset(
     }
 )
 HERO_METADATA_KEYS = frozenset({"source", "funder", "deadline"})
-SOURCE_COLLAPSE_PARAGRAPH_THRESHOLD = 4
-SOURCE_COLLAPSE_CHAR_THRESHOLD = 1600
+SOURCE_SECTION_NOISE_HEADINGS = frozenset(
+    {"notification", "search", "поиск", "уведомление"}
+)
 
 
 def _absolute_href(origin: str, path: str) -> str:
@@ -317,11 +319,12 @@ def _sections_markup(
     *,
     title: str,
     expand_label: str = "",
+    collapse_label: str = "",
 ) -> str:
     sections = [section for section in detail.detail_sections if section.text.strip()]
     if not sections:
         return ""
-    blocks = []
+    entries = []
     seen_sections: list[tuple[str, str]] = []
     for section in sections:
         if detail.eligibility and len(section.text) < 96 and "_" in section.text:
@@ -329,7 +332,15 @@ def _sections_markup(
         normalized_heading = re.sub(
             r"\W+", " ", (section.heading or fallback_heading).casefold()
         ).strip()
+        if normalized_heading in SOURCE_SECTION_NOISE_HEADINGS:
+            continue
         normalized_text = re.sub(r"\W+", " ", section.text.casefold()).strip()
+        fallback_normalized = re.sub(r"\W+", " ", fallback_heading.casefold()).strip()
+        if (
+            normalized_heading == fallback_normalized
+            and len(_clean_summary_text(section.text, title=title)) < 80
+        ):
+            continue
         if any(
             normalized_heading == seen_heading
             and (
@@ -354,33 +365,10 @@ def _sections_markup(
             if chunk.strip()
         )
         heading = escape(section.heading or fallback_heading)
-        paragraph_count = paragraphs.count("<p>")
-        should_collapse = (
-            not section.heading.strip()
-            or len(section.text) >= SOURCE_COLLAPSE_CHAR_THRESHOLD
-            or paragraph_count >= SOURCE_COLLAPSE_PARAGRAPH_THRESHOLD
-        )
-        if should_collapse:
-            blocks.append(
-                """
-                <details class="section-card source-disclosure">
-                  <summary>
-                    <span class="source-disclosure-title">{heading}</span>
-                    <span class="source-disclosure-action">{action}</span>
-                  </summary>
-                  <div class="richtext">{paragraphs}</div>
-                </details>
-                """.format(
-                    heading=heading,
-                    action=escape(expand_label or fallback_heading),
-                    paragraphs=paragraphs,
-                )
-            )
-            continue
-        blocks.append(
+        entries.append(
             """
-            <section class="section-card">
-              <h2>{heading}</h2>
+            <section class="source-entry">
+              <h3>{heading}</h3>
               <div class="richtext">{paragraphs}</div>
             </section>
             """.format(
@@ -388,7 +376,29 @@ def _sections_markup(
                 paragraphs=paragraphs,
             )
         )
-    return "".join(blocks)
+    if not entries:
+        return ""
+    return """
+    <details
+      class="section-card source-disclosure"
+      data-avds-component="evidence-disclosure"
+      data-avds-pattern="evidence-disclosure"
+    >
+      <summary>
+        <span class="source-disclosure-title">{heading}</span>
+        <span class="source-disclosure-action">
+          <span class="source-action-open">{action}</span>
+          <span class="source-action-close">{collapse_action}</span>
+        </span>
+      </summary>
+      <div class="source-excerpts">{entries}</div>
+    </details>
+    """.format(
+        heading=escape(fallback_heading),
+        action=escape(expand_label or fallback_heading),
+        collapse_action=escape(collapse_label or expand_label or fallback_heading),
+        entries="".join(entries),
+    )
 
 
 def _paragraph_chunks(text: str, *, target_length: int = 520) -> list[str]:
@@ -520,7 +530,11 @@ def _prepare_markup(
             )
         )
     return """
-    <section class="prepare-section">
+    <section
+      class="prepare-section"
+      data-avds-component="action-path"
+      data-avds-pattern="action-path"
+    >
       <div class="prepare-head">
         <span class="eyebrow">{eyebrow}</span>
         <h2>{title}</h2>
@@ -533,6 +547,100 @@ def _prepare_markup(
         title=escape(str(copy["prepare_section_title"])),
         description=escape(str(copy["prepare_section_description"])),
         cards="".join(card_markup),
+    )
+
+
+def _decision_check_markup(
+    detail: OpportunityDetail,
+    *,
+    copy: dict[str, object],
+    lang: str,
+    source_label: str,
+    format_label: str,
+    deadline_label: str,
+) -> str:
+    amount = _detail_metadata_value(detail, "amount", "amount_raw")
+    known_items = [
+        str(copy["decision_check_known_source"]).format(source=source_label),
+        str(copy["decision_check_known_format"]).format(format=format_label),
+    ]
+    if detail.deadline is not None:
+        known_items.append(
+            str(copy["decision_check_known_deadline"]).format(deadline=deadline_label)
+        )
+    if amount:
+        known_items.append(
+            str(copy["decision_check_known_amount"]).format(amount=amount)
+        )
+    if detail.eligibility:
+        eligibility = "; ".join(detail.eligibility[:2])
+        known_items.append(
+            str(copy["decision_check_known_eligibility"]).format(
+                eligibility=eligibility
+            )
+        )
+
+    missing_labels = copy.get("detail_missing_labels")
+    labels = missing_labels if isinstance(missing_labels, dict) else {}
+    missing = []
+    if detail.deadline is None:
+        missing.append(str(labels.get("deadline", "deadline")))
+    if not amount:
+        missing.append(str(labels.get("amount", "amount")))
+    if not detail.eligibility:
+        missing.append(str(labels.get("eligibility", "eligibility")))
+    if not detail.application_url:
+        missing.append(str(labels.get("application", "application")))
+
+    if missing:
+        missing_text = str(copy["decision_check_missing_text"]).format(
+            items=", ".join(missing)
+        )
+    else:
+        missing_text = str(copy["decision_check_missing_none"])
+
+    route_text = (
+        str(copy["decision_check_route_application"])
+        if detail.application_url
+        else str(copy["decision_check_route_source"])
+    )
+
+    cards = (
+        (
+            "decision_check_known_title",
+            "; ".join(known_items) or str(copy["decision_check_known_empty"]),
+        ),
+        ("decision_check_missing_title", missing_text),
+        ("decision_check_route_title", route_text),
+        ("decision_check_boundary_title", str(copy["decision_check_boundary_text"])),
+    )
+    card_markup = "".join(
+        """
+        <article class="decision-check-card">
+          <span class="decision-check-label">{label}</span>
+          <p>{text}</p>
+        </article>
+        """.format(
+            label=escape(str(copy[title_key])),
+            text=escape(text),
+        )
+        for title_key, text in cards
+    )
+    return """
+    <section class="decision-check-section" lang="{lang}">
+      <div class="decision-check-head">
+        <span class="eyebrow">{eyebrow}</span>
+        <h2>{title}</h2>
+        <p>{description}</p>
+      </div>
+      <div class="decision-check-grid">{cards}</div>
+    </section>
+    """.format(
+        lang=escape(lang, quote=True),
+        eyebrow=escape(str(copy["decision_check_eyebrow"])),
+        title=escape(str(copy["decision_check_title"])),
+        description=escape(str(copy["decision_check_description"])),
+        cards=card_markup,
     )
 
 
@@ -570,7 +678,11 @@ def _apply_markup(
             )
         )
     return """
-    <section class="apply-section">
+    <section
+      class="apply-section"
+      data-avds-component="action-path"
+      data-avds-pattern="action-path"
+    >
       <div class="apply-head">
         <span class="eyebrow">{eyebrow}</span>
         <h2>{title}</h2>
@@ -583,42 +695,6 @@ def _apply_markup(
         title=escape(str(copy["apply_section_title"])),
         description=escape(str(copy["apply_section_description"])),
         steps="".join(step_markup),
-    )
-
-
-def _verification_markup(copy: dict[str, object]) -> str:
-    items = (
-        ("verification_eligibility_title", "verification_eligibility_text"),
-        ("verification_terms_title", "verification_terms_text"),
-        ("verification_procurement_title", "verification_procurement_text"),
-        ("verification_publication_title", "verification_publication_text"),
-    )
-    item_markup = "".join(
-        """
-        <li class="verification-item">
-          <strong>{title}</strong>
-          <span>{text}</span>
-        </li>
-        """.format(
-            title=escape(str(copy[title_key])),
-            text=escape(str(copy[text_key])),
-        )
-        for title_key, text_key in items
-    )
-    return """
-    <section class="verification-section">
-      <div class="verification-head">
-        <span class="eyebrow">{eyebrow}</span>
-        <h2>{title}</h2>
-        <p>{description}</p>
-      </div>
-      <ul class="verification-list">{items}</ul>
-    </section>
-    """.format(
-        eyebrow=escape(str(copy["verification_eyebrow"])),
-        title=escape(str(copy["verification_title"])),
-        description=escape(str(copy["verification_description"])),
-        items=item_markup,
     )
 
 
@@ -700,7 +776,7 @@ def _related_markup(
         )
         cards.append(
             """
-            <article class="related-card">
+            <article class="related-card" data-avds-component="document-card">
               <div class="related-top">
                 <span class="related-reason">{reason}</span>
                 <span class="related-deadline">{deadline}</span>
@@ -746,6 +822,7 @@ def render_opportunity_page(
     root_path: str,
     site_origin: str,
     related_items: list[tuple[Opportunity, str]] | None = None,
+    lifecycle: str = "open",
 ) -> str:
     copy = dashboard_copy(lang)
     active_lang = str(copy["lang"])
@@ -862,6 +939,7 @@ def render_opportunity_page(
         str(copy["detail_source_excerpt"]),
         title=title,
         expand_label=str(copy["detail_expand_source"]),
+        collapse_label=str(copy["detail_collapse_source"]),
     )
     prepare_markup = _prepare_markup(detail, copy=copy)
     apply_markup = _apply_markup(
@@ -887,6 +965,14 @@ def render_opportunity_page(
     deadline_label = escape(deadline_text)
     source_host = escape(_host_label(str(detail.source_url)))
     format_label = escape(format_text)
+    decision_check_markup = _decision_check_markup(
+        detail,
+        copy=copy,
+        lang=active_lang,
+        source_label=source_text,
+        format_label=format_text,
+        deadline_label=deadline_text,
+    )
     working_brief = _working_brief(
         detail,
         title=title,
@@ -941,6 +1027,19 @@ def render_opportunity_page(
     eligibility_markup = "".join(
         f'<span class="pill">{value}</span>' for value in eligibility[:6]
     )
+    applications_closed = lifecycle in {"closed", "awarded"}
+    prepare_button = (
+        """
+        <a class="button slim" href="{href}">
+          {label}
+        </a>
+        """.format(
+            href=prepare_href,
+            label=escape(str(copy["detail_prepare_application"])),
+        )
+        if not applications_closed
+        else ""
+    )
     application_button = (
         """
         <a class="button slim" href="{href}" target="_blank" rel="noopener">
@@ -950,7 +1049,18 @@ def render_opportunity_page(
             href=application_href,
             label=escape(str(copy["detail_open_application"])),
         )
-        if application_href
+        if application_href and not applications_closed
+        else ""
+    )
+    lifecycle_notice = ""
+    if applications_closed:
+        lifecycle_notice = str(copy["detail_closed_notice"])
+    elif lifecycle == "forecast":
+        lifecycle_notice = str(copy["detail_forecast_notice"])
+    lifecycle_notice_markup = (
+        '<p class="lifecycle-notice" data-avds-component="Alert">'
+        f"{escape(lifecycle_notice)}</p>"
+        if lifecycle_notice
         else ""
     )
     empty_markup = ""
@@ -1029,7 +1139,9 @@ def render_opportunity_page(
     * {{ box-sizing: border-box; }}
     body {{
       margin: 0;
-      background: var(--bg);
+      background:
+        radial-gradient(circle at 12% 0%, var(--brand-soft), transparent 28rem),
+        var(--bg);
       color: var(--text);
       font-family: var(--av-font-sans);
       font-size: var(--av-text-base);
@@ -1039,7 +1151,7 @@ def render_opportunity_page(
     .shell {{
       width: var(--container-max);
       margin: 0 auto;
-      padding: 16px 0 36px;
+      padding: 18px 0 44px;
     }}
     .topbar {{
       display: flex;
@@ -1047,7 +1159,16 @@ def render_opportunity_page(
       align-items: center;
       justify-content: space-between;
       gap: 12px;
-      margin-bottom: 16px;
+      position: sticky;
+      top: 12px;
+      z-index: 20;
+      margin-bottom: 18px;
+      padding: 10px 14px;
+      border: 1px solid color-mix(in oklab, var(--line), transparent 18%);
+      border-radius: var(--av-radius-lg);
+      background: color-mix(in oklab, var(--surface), transparent 7%);
+      box-shadow: var(--av-shadow-sm);
+      backdrop-filter: blur(16px);
     }}
     .breadcrumbs {{
       display: flex;
@@ -1091,49 +1212,60 @@ def render_opportunity_page(
       margin-bottom: 14px;
     }}
     .eyebrow {{
-      color: var(--muted);
+      color: var(--brand);
       font-size: var(--av-text-xs);
       font-family: var(--font-sans);
-      font-weight: 650;
-      text-transform: none;
-      letter-spacing: 0;
+      font-weight: 750;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
     }}
     .hero h1 {{
       margin: 0;
-      max-width: 30ch;
-      font-size: 36px;
-      line-height: 1.06;
+      max-width: 24ch;
+      font-size: clamp(34px, 4.2vw, 58px);
+      line-height: 1.02;
+      letter-spacing: -0.035em;
       text-wrap: balance;
     }}
     .summary {{
       margin: 0;
-      max-width: 64ch;
+      max-width: 60ch;
       color: color-mix(in oklab, var(--text), var(--muted) 35%);
-      font-size: 15px;
+      font-size: clamp(16px, 1.4vw, 19px);
       line-height: 1.55;
     }}
     .hero-grid {{
       display: grid;
-      grid-template-columns: minmax(0, 1.7fr) minmax(230px, 0.62fr);
-      gap: 36px;
+      grid-template-columns: minmax(0, 1.6fr) minmax(260px, 0.66fr);
+      gap: clamp(28px, 5vw, 72px);
       align-items: start;
     }}
     .hero-actions {{
       display: flex;
       flex-wrap: wrap;
-      gap: 8px;
+      gap: 10px;
+      margin-top: 20px;
     }}
     .button {{
       display: inline-flex;
       align-items: center;
       justify-content: center;
-      min-height: var(--av-control-height-md);
-      padding: 0 14px;
+      min-height: 46px;
+      padding: 0 18px;
       border-radius: var(--av-radius-md);
       border: 1px solid var(--line);
       background: var(--surface);
-      font-weight: 600;
+      font-weight: 700;
       cursor: pointer;
+      transition:
+        transform var(--av-motion-fast) ease,
+        border-color var(--av-motion-fast) ease,
+        box-shadow var(--av-motion-fast) ease;
+    }}
+    .button:hover {{
+      transform: translateY(-1px);
+      border-color: var(--line-strong);
+      box-shadow: var(--av-shadow-sm);
     }}
     .button.primary {{
       border-color: color-mix(in oklab, var(--brand), black 12%);
@@ -1150,21 +1282,30 @@ def render_opportunity_page(
       color: white;
     }}
     .button.slim {{
-      min-height: var(--av-control-height-sm);
+      min-height: 46px;
       background: color-mix(in oklab, var(--surface), white 14%);
     }}
     .hero-stats {{
       display: grid;
-      gap: 8px;
-      padding: 2px 0 2px 16px;
-      border: 0;
-      border-left: 1px solid var(--line);
-      border-radius: 0;
-      background: transparent;
+      gap: 0;
+      padding: 18px;
+      border: 1px solid color-mix(in oklab, var(--line), transparent 12%);
+      border-radius: var(--av-radius-lg);
+      background: color-mix(in oklab, var(--surface), transparent 12%);
+      box-shadow: var(--av-shadow-xs);
     }}
     .hero-stats > div {{
       display: grid;
-      gap: 2px;
+      gap: 4px;
+      padding: 12px 0;
+      border-bottom: 1px solid var(--line-subtle);
+    }}
+    .hero-stats > div:first-child {{
+      padding-top: 0;
+    }}
+    .hero-stats > div:last-child {{
+      padding-bottom: 0;
+      border-bottom: 0;
     }}
     .hero-stats strong {{
       font-size: var(--av-text-base);
@@ -1193,8 +1334,9 @@ def render_opportunity_page(
     .pills {{
       display: flex;
       flex-wrap: wrap;
-      gap: 6px;
-      margin-bottom: 12px;
+      gap: 8px;
+      margin-bottom: 18px;
+      padding: 0 4px;
     }}
     .pill {{
       display: inline-flex;
@@ -1236,37 +1378,39 @@ def render_opportunity_page(
     .readiness-signal.is-known .readiness-dot {{ background: var(--success); }}
     .content-grid {{
       display: grid;
-      grid-template-columns: minmax(0, 1.4fr) minmax(260px, 0.8fr);
-      gap: 18px;
+      grid-template-columns: minmax(0, 1.48fr) minmax(280px, 0.62fr);
+      gap: 20px;
       align-items: start;
-      padding-top: 14px;
-      border-top: 1px solid var(--line);
+      padding-top: 0;
+      border-top: 0;
     }}
     .content-grid--single {{
       grid-template-columns: minmax(0, 1fr);
     }}
     .content-grid--single .section-stack {{
       grid-template-columns: repeat(2, minmax(0, 1fr));
-      column-gap: 24px;
+      column-gap: 14px;
     }}
     .content-grid--single .source-disclosure {{ grid-column: 1 / -1; }}
     .section-stack {{
       display: grid;
-      gap: 0;
+      gap: 12px;
     }}
     .section-card {{
-      padding: 14px 0;
-      border: 0;
-      border-bottom: 1px solid var(--line);
-      border-radius: 0;
-      background: transparent;
-      box-shadow: none;
+      padding: 0;
+      border: 1px solid var(--line);
+      border-radius: var(--av-radius-lg);
+      background: var(--surface);
+      box-shadow: var(--av-shadow-xs);
+      overflow: clip;
     }}
     .source-disclosure summary {{
       display: flex;
       align-items: center;
       justify-content: space-between;
-      gap: 12px;
+      gap: 16px;
+      min-height: 62px;
+      padding: 17px 20px;
       cursor: pointer;
       list-style: none;
     }}
@@ -1274,7 +1418,7 @@ def render_opportunity_page(
       display: none;
     }}
     .source-disclosure-title {{
-      font-size: 20px;
+      font-size: clamp(17px, 1.8vw, 21px);
       font-weight: 750;
       line-height: 1.2;
     }}
@@ -1283,22 +1427,49 @@ def render_opportunity_page(
       padding: 5px 10px;
       border: 1px solid var(--line);
       border-radius: 999px;
-      background: var(--surface-wash);
-      color: var(--muted);
+      background: var(--brand-soft);
+      color: var(--brand);
       font-size: var(--av-text-xs);
       font-weight: 700;
     }}
     .source-disclosure[open] summary {{
-      margin-bottom: 12px;
-      padding-bottom: 12px;
+      margin-bottom: 0;
+      padding-bottom: 17px;
       border-bottom: 1px solid var(--line-subtle);
     }}
+    .source-disclosure[open] .source-disclosure-action {{
+      color: var(--text);
+      background: var(--surface-subtle);
+    }}
+    .source-action-close {{ display: none; }}
+    .source-disclosure[open] .source-action-open {{ display: none; }}
+    .source-disclosure[open] .source-action-close {{ display: inline; }}
+    .source-excerpts {{
+      display: grid;
+      gap: 18px;
+      padding: 18px 20px 20px;
+    }}
+    .source-entry {{
+      padding-top: 18px;
+      border-top: 1px solid var(--line-subtle);
+    }}
+    .source-entry:first-child {{
+      padding-top: 0;
+      border-top: 0;
+    }}
+    .source-entry h3 {{
+      margin: 0 0 8px;
+      font-size: var(--av-text-base);
+      line-height: 1.3;
+    }}
     .sidebar-card {{
-      padding: 12px;
-      border: 1px solid var(--line-subtle);
-      border-radius: var(--av-radius-md);
+      position: sticky;
+      top: 88px;
+      padding: 20px;
+      border: 1px solid var(--line);
+      border-radius: var(--av-radius-lg);
       background: var(--surface);
-      box-shadow: none;
+      box-shadow: var(--av-shadow-xs);
     }}
     .section-card h2,
     .sidebar-card h2 {{
@@ -1308,7 +1479,7 @@ def render_opportunity_page(
     }}
     .richtext {{
       display: grid;
-      gap: 8px;
+      gap: 12px;
     }}
     .richtext p {{
       margin: 0;
@@ -1321,7 +1492,7 @@ def render_opportunity_page(
       gap: 8px;
     }}
     .meta-item {{
-      padding: 8px 0;
+      padding: 11px 0;
       border: 0;
       border-bottom: 1px solid var(--line-subtle);
       border-radius: 0;
@@ -1361,6 +1532,17 @@ def render_opportunity_page(
       font-size: var(--av-text-xs);
       font-weight: 600;
     }}
+    .lifecycle-notice {{
+      max-width: 720px;
+      margin: 16px 0 0;
+      padding: 11px 13px;
+      border: 1px solid rgb(255 255 255 / .18);
+      border-radius: var(--av-radius-md);
+      background: rgb(255 255 255 / .08);
+      color: #dbe7f5;
+      font-size: 13px;
+      line-height: 1.5;
+    }}
     .verification-section {{
       display: grid;
       gap: 12px;
@@ -1390,7 +1572,7 @@ def render_opportunity_page(
     .verification-list {{
       display: grid;
       grid-template-columns: repeat(2, minmax(0, 1fr));
-      gap: 0 20px;
+      gap: 12px;
       margin: 0;
       padding: 0;
       list-style: none;
@@ -1398,8 +1580,11 @@ def render_opportunity_page(
     .verification-item {{
       display: grid;
       gap: 3px;
-      padding: 10px 0;
-      border-top: 1px solid var(--line-subtle);
+      min-height: 100%;
+      padding: 14px;
+      border: 1px solid var(--line-subtle);
+      border-radius: var(--av-radius-md);
+      background: var(--surface-subtle);
     }}
     .verification-item strong {{
       font-size: var(--av-text-sm);
@@ -1409,6 +1594,62 @@ def render_opportunity_page(
       color: var(--muted);
       font-size: var(--av-text-sm);
       line-height: 1.48;
+    }}
+    .decision-check-section {{
+      display: grid;
+      gap: 18px;
+      margin-top: 18px;
+      padding: 24px;
+      border: 1px solid var(--line);
+      border-radius: var(--av-radius-lg);
+      background: var(--surface);
+      box-shadow: var(--av-shadow-xs);
+    }}
+    .decision-check-head {{
+      display: grid;
+      gap: 6px;
+      max-width: 760px;
+    }}
+    .decision-check-head h2 {{
+      margin: 0;
+      font-family: var(--font-sans);
+      font-size: clamp(17px, 2vw, 21px);
+      font-weight: 700;
+      line-height: 1.16;
+    }}
+    .decision-check-head p {{
+      margin: 0;
+      color: color-mix(in oklab, var(--text), var(--muted) 28%);
+      font-size: var(--av-text-sm);
+      line-height: 1.46;
+    }}
+    .decision-check-grid {{
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 12px;
+    }}
+    .decision-check-card {{
+      display: grid;
+      gap: 8px;
+      min-height: 100%;
+      padding: 14px;
+      border: 1px solid var(--line-subtle);
+      border-radius: var(--av-radius-md);
+      background: var(--surface-subtle);
+    }}
+    .decision-check-label {{
+      color: var(--muted);
+      font-family: var(--font-mono);
+      font-size: var(--av-text-xs);
+      font-weight: 700;
+      letter-spacing: .08em;
+      text-transform: uppercase;
+    }}
+    .decision-check-card p {{
+      margin: 0;
+      color: color-mix(in oklab, var(--text), var(--muted) 18%);
+      font-size: var(--av-text-sm);
+      line-height: 1.5;
     }}
     .prepare-section {{
       display: grid;
@@ -1518,7 +1759,7 @@ def render_opportunity_page(
     .apply-step {{
       display: grid;
       grid-template-columns: 28px minmax(0, 1fr);
-      gap: 8px;
+      gap: 10px;
       align-items: start;
       padding: 12px;
       border: 1px solid var(--line-subtle);
@@ -1553,10 +1794,13 @@ def render_opportunity_page(
     }}
     .related-section {{
       display: grid;
-      gap: 12px;
-      margin-top: 14px;
-      padding-top: 12px;
-      border-top: 1px solid var(--line);
+      gap: 18px;
+      margin-top: 18px;
+      padding: 24px;
+      border: 1px solid var(--line);
+      border-radius: var(--av-radius-lg);
+      background: var(--surface);
+      box-shadow: var(--av-shadow-xs);
     }}
     .related-head {{
       display: grid;
@@ -1579,17 +1823,17 @@ def render_opportunity_page(
     .related-grid {{
       display: grid;
       grid-template-columns: repeat(3, minmax(0, 1fr));
-      gap: 12px;
+      gap: 14px;
     }}
     .related-card {{
       display: grid;
       gap: 10px;
-      min-height: 0;
-      padding: 10px;
+      min-height: 100%;
+      padding: 18px;
       border: 1px solid var(--line);
-      border-radius: var(--av-radius-md);
+      border-radius: var(--av-radius-lg);
       background: var(--surface);
-      box-shadow: none;
+      box-shadow: var(--av-shadow-xs);
     }}
     .related-top,
     .related-meta {{
@@ -1643,9 +1887,11 @@ def render_opportunity_page(
     .site-footer {{
       display: grid;
       gap: 8px;
-      margin-top: 28px;
-      padding-top: 22px;
-      border-top: 1px solid var(--line);
+      margin-top: 18px;
+      padding: 22px 24px;
+      border: 1px solid var(--line);
+      border-radius: var(--av-radius-lg);
+      background: var(--surface);
       color: var(--muted);
       font-size: var(--av-text-sm);
       line-height: 1.5;
@@ -1699,6 +1945,7 @@ def render_opportunity_page(
       .hero-grid,
       .content-grid,
       .prepare-grid,
+      .decision-check-grid,
       .apply-list,
       .related-grid,
       .verification-list {{
@@ -1707,9 +1954,9 @@ def render_opportunity_page(
       .content-grid--single .section-stack {{ grid-template-columns: 1fr; }}
       .hero-stats,
       .sidebar-card {{
-        padding: 12px 0 0;
-        border-left: 0;
-        border-top: 1px solid var(--line);
+        position: static;
+        padding: 18px;
+        border: 1px solid var(--line);
       }}
       .hero-stats {{
         grid-template-columns: repeat(3, minmax(0, 1fr));
@@ -1718,6 +1965,7 @@ def render_opportunity_page(
       .hero-stats > div:first-child {{ grid-column: 1 / -1; }}
       .prepare-card,
       .prepare-card:first-child,
+      .decision-check-card,
       .apply-step,
       .apply-step:first-child {{
         padding: 12px;
@@ -1741,23 +1989,29 @@ def render_opportunity_page(
         width: min(100%, calc(100% - 24px));
         padding: 14px 0 32px;
       }}
-      .hero,
-      .related-card {{
-        padding: 12px;
+      .topbar {{
+        top: 8px;
+        padding: 8px 10px;
+      }}
+      .breadcrumbs span:last-child {{
+        display: none;
+      }}
+      .hero {{
+        padding: 22px 18px;
+        border-radius: 20px;
       }}
       .hero {{ padding: 16px; }}
       .hero h1 {{
-        font-size: 24px;
+        font-size: 30px;
       }}
       .summary {{
         font-size: 14px;
       }}
       .hero-actions {{
         display: grid;
-        grid-template-columns: repeat(2, minmax(0, 1fr));
+        grid-template-columns: 1fr;
       }}
       .hero-actions .button {{ width: 100%; }}
-      .hero-actions .primary {{ grid-column: 1 / -1; }}
       .hero-stats {{
         grid-template-columns: repeat(2, minmax(0, 1fr));
       }}
@@ -1773,6 +2027,7 @@ def render_opportunity_page(
         font-size: 18px;
       }}
     }}
+{OPPORTUNITY_AVDS4_CSS}
   </style>
 </head>
 <body>
@@ -1799,10 +2054,13 @@ def render_opportunity_page(
           <div class="eyebrow">QAZ.FUND</div>
           <h1>{escape(title)}</h1>
           <p class="summary">{escape(summary)}</p>
+          <div class="pills">{eligibility_markup}</div>
+          {lifecycle_notice_markup}
           <div class="hero-actions">
             <a class="button primary" href="{source_href}" target="_blank" rel="noopener">
               {escape(str(copy["detail_open_source"]))}
             </a>
+            {prepare_button}
             <button class="button slim" type="button" id="copy-working-brief">
               {escape(str(copy["detail_copy_brief"]))}
             </button>
@@ -1813,7 +2071,7 @@ def render_opportunity_page(
           </div>
           <p class="hero-action-status" id="copy-working-brief-status" aria-live="polite"></p>
         </div>
-        <aside class="hero-stats">
+        <aside class="hero-stats" data-avds-component="trust-facts-panel">
           <div>
             <span class="eyebrow">{escape(str(copy["detail_meta_title"]))}</span>
           </div>
@@ -1857,6 +2115,9 @@ def render_opportunity_page(
         <a href="{attribution_href}">{escape(str(copy["attribution_link"]))}</a>
         <a href="{status_href}">{escape(str(copy["status_link"]))}</a>
         <a href="{docs_href}">{escape(str(copy["api_docs"]))}</a>
+        <a href="{terms_href}">{escape(str(copy["footer_terms"]))}</a>
+        <a href="{data_policy_href}">{escape(str(copy["footer_data_policy"]))}</a>
+        <a href="{attribution_href}">{escape(str(copy["footer_attribution"]))}</a>
       </nav>
       <p>
         {escape(str(copy["footer_owner"]))}

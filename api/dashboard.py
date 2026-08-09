@@ -7,9 +7,11 @@ from html import escape
 from typing import Any, Mapping
 
 from api.avds import AVDS_CSS, AVDS_FONT_HEAD
+from api.avds_visual import DASHBOARD_AVDS4_CSS
 from api.dashboard_copy import dashboard_copy
 from api.dashboard_style import DASHBOARD_CSS
 from api.public_meta import analytics_head_html, og_image_url
+from core.public_clock import public_time_zone_name
 
 GOOGLE_SITE_VERIFICATION_FILENAME = "google6ce0cb641d438c0c.html"
 GOOGLE_SITE_VERIFICATION_CONTENT = (
@@ -226,6 +228,7 @@ def render_dashboard(
         items=items,
     )
     copy_json = json.dumps(copy, ensure_ascii=False)
+    public_time_zone_json = json.dumps(public_time_zone_name())
     html_lang = escape(active_lang, quote=True)
     og_locale = escape(active_lang.replace("-", "_") + "_KZ", quote=True)
     social_image = escape(og_image_url(site_origin, base_raw), quote=True)
@@ -340,7 +343,8 @@ def render_dashboard(
 {AVDS_FONT_HEAD}
   <style>
 {AVDS_CSS}
-{DASHBOARD_CSS}  </style>
+{DASHBOARD_CSS}
+{DASHBOARD_AVDS4_CSS}  </style>
 </head>
 <body>
   <main
@@ -349,6 +353,7 @@ def render_dashboard(
     data-api-base="{base}"
     data-lang="{escape(active_lang, quote=True)}"
     data-avds-component="admin-shell"
+    data-avds-version="4.6.0"
   >
     <header class="mobile-app-bar" data-avds-component="mobile-app-bar">
       <a class="mobile-app-brand" href="{canonical_href}" aria-label="QAZ.FUND">
@@ -402,6 +407,19 @@ def render_dashboard(
       {fallback_note_markup}
       <div class="hero-grid">
         <div class="hero-copy">
+          <header class="topbar" data-avds-component="topbar">
+            <div class="brand">
+              <span class="eyebrow">{escape(str(copy["eyebrow"]))}</span>
+              <div class="brand-row">
+                <h1>{escape(str(copy["headline"]))}</h1>
+              </div>
+              <p>{escape(str(copy["subtitle"]))}</p>
+              <div class="focus-row" aria-label="{escape(str(copy["focus_aria"]), quote=True)}">
+                <span class="focus-chip">{escape(str(copy["focus_primary"]))}</span>
+                <span class="focus-chip">{escape(str(copy["focus_secondary"]))}</span>
+              </div>
+            </div>
+          </header>
           <p class="hero-intro">{escape(str(copy["hero_intro"]))}</p>
           <div class="hero-actions">
             <button
@@ -411,6 +429,11 @@ def render_dashboard(
               data-hero-view="opportunities"
               data-avds-component="button"
             >{escape(str(copy["hero_primary_cta"]))}</button>
+            <a
+              class="button"
+              href="{insights_href}"
+              data-avds-component="button"
+            >{escape(str(copy["insights_link"]))}</a>
           </div>
           <div class="hero-points" aria-label="{escape(str(copy["hero_stage_title"]), quote=True)}">
             <div class="hero-point">
@@ -430,6 +453,7 @@ def render_dashboard(
         <section
           class="hero-stage"
           aria-label="{escape(str(copy["hero_picks_label"]), quote=True)}"
+          data-avds-component="quick-links-rail"
         >
           <span class="hero-stage-eyebrow">{escape(str(copy["hero_stage_eyebrow"]))}</span>
           <h2 class="hero-stage-title">{escape(str(copy["hero_stage_title"]))}</h2>
@@ -483,7 +507,11 @@ def render_dashboard(
         </section>
       </div>
 
-      <section class="grid" aria-label="{escape(str(copy["metrics_aria"]), quote=True)}">
+      <section
+        class="grid"
+        aria-label="{escape(str(copy["metrics_aria"]), quote=True)}"
+        data-avds-component="public-summary-strip"
+      >
         <div class="metric avds-stat-kpi-card" data-avds-component="metric-card">
           <span>{escape(str(copy["metric_total"]))}</span>
           <strong id="metric-total">{items}</strong>
@@ -500,7 +528,7 @@ def render_dashboard(
     </section>
 
     <div class="sticky-shell" data-avds-component="sticky-shell">
-      <div class="sticky-bar">
+      <div class="sticky-bar" data-avds-component="trust-strip">
         <nav
           class="toolbar avds-tabs-list"
           aria-label="{escape(str(copy["views_aria"]), quote=True)}"
@@ -527,6 +555,9 @@ def render_dashboard(
           </div>
           <div class="topbar-actions">
             <div class="utility-links">
+              <a class="utility-link" href="{insights_href}"
+                >{escape(str(copy["insights_link"]))}</a
+              >
               <a class="utility-link" href="{docs_href}">{escape(str(copy["api_docs"]))}</a>
               <a class="utility-link" href="{media_href}">{escape(str(copy["media_link"]))}</a>
               <a class="utility-link" href="#methodology-panel"
@@ -1124,6 +1155,9 @@ def render_dashboard(
         <a href="{attribution_href}">{escape(str(copy["attribution_link"]))}</a>
         <a href="{status_href}">{escape(str(copy["status_link"]))}</a>
         <a href="{docs_href}">{escape(str(copy["api_docs"]))}</a>
+        <a href="{terms_href}">{escape(str(copy["footer_terms"]))}</a>
+        <a href="{data_policy_href}">{escape(str(copy["footer_data_policy"]))}</a>
+        <a href="{attribution_href}">{escape(str(copy["footer_attribution"]))}</a>
       </nav>
       <p>
         {escape(str(copy["footer_owner"]))}
@@ -1216,7 +1250,6 @@ def render_dashboard(
       <div class="detail-readiness hidden" id="detail-readiness">
         <h3>{escape(str(copy["detail_readiness_title"]))}</h3>
         <p id="detail-readiness-text"></p>
-        <p class="detail-subtle" id="detail-compute-readiness-text"></p>
       </div>
       <div class="detail-meta hidden" id="detail-meta">
         <h3>{escape(str(copy["detail_meta_title"]))}</h3>
@@ -1257,6 +1290,13 @@ def render_dashboard(
 
   <script>
     const copy = {copy_json};
+    const PUBLIC_TIME_ZONE = {public_time_zone_json};
+    const PUBLIC_DATE_FORMATTER = new Intl.DateTimeFormat("en-US", {{
+      timeZone: PUBLIC_TIME_ZONE,
+      year: "numeric",
+      month: "2-digit",
+      day: "2-digit"
+    }});
     const root = document.querySelector("[data-api-base]");
     const datasetApiBase = root.dataset.apiBase || "";
     const deriveApiBase = () => {{
@@ -1910,14 +1950,6 @@ def render_dashboard(
       return withLang(`${{apiBase}}/opportunity/${{encodeURIComponent(String(opportunityId))}}`);
     }}
 
-    function renderTextBlocks(value) {{
-      const paragraphs = String(value || "")
-        .split(/\\n+/)
-        .map((entry) => cleanSummaryText(entry) || entry.trim())
-        .filter(Boolean);
-      return paragraphs.map((entry) => `<p>${{escapeHtml(entry)}}</p>`).join("");
-    }}
-
     function renderDetailFit(item) {{
       const root = $("#detail-fit");
       const summary = $("#detail-fit-summary");
@@ -1936,12 +1968,10 @@ def render_dashboard(
     function renderDetailReadiness(item) {{
       const root = $("#detail-readiness");
       const target = $("#detail-readiness-text");
-      const computeTarget = $("#detail-compute-readiness-text");
       const readiness = item && item.raw && item.raw.decision_readiness;
       if (!readiness || !Number.isFinite(Number(readiness.total_fields))) {{
         root.classList.add("hidden");
         target.textContent = "";
-        computeTarget.textContent = "";
         return;
       }}
       const known = Number(readiness.known_fields || 0);
@@ -1958,22 +1988,7 @@ def render_dashboard(
             missing: missing.join(", ")
           }})
         : text("detail_readiness_complete", {{ total: formatNumber.format(total) }});
-      const compute = item && item.raw && item.raw.qazcompute_evidence_readiness;
-      const computeScore = compute ? Number(compute.score) : Number.NaN;
-      computeTarget.textContent = compute && Number.isFinite(computeScore)
-        ? text("detail_compute_readiness", {{
-            score: formatNumber.format(computeScore),
-            tier: computeReadinessLabel(compute.tier)
-          }})
-        : "";
       root.classList.remove("hidden");
-    }}
-
-    function computeReadinessLabel(tier) {{
-      if (tier === "ready") return copy.detail_compute_ready;
-      if (tier === "blocked") return copy.detail_compute_blocked;
-      if (tier === "watch") return copy.detail_compute_watch;
-      return copy.detail_compute_unknown;
     }}
 
     function openDetailShell() {{
@@ -2049,9 +2064,6 @@ def render_dashboard(
           ? detail.metadata.filter((entry) => entry && entry.key && entry.value)
           : []
       );
-      const sections = Array.isArray(detail.detail_sections) ? detail.detail_sections.filter(
-        (section) => section && section.text
-      ) : [];
       $("#detail-title").textContent = title;
       $("#detail-status").textContent = statusText;
       $("#detail-open-source").setAttribute(
@@ -2080,16 +2092,12 @@ def render_dashboard(
       $("#detail-meta").classList.toggle("hidden", !metadata.length);
 
       const sectionBody = $("#detail-sections-body");
-      sectionBody.innerHTML = sections.map((section) => `
-        <section class="detail-section-block">
-          <h3>${{escapeHtml(section.heading || copy.detail_source_excerpt)}}</h3>
-          ${{renderTextBlocks(section.text)}}
-        </section>
-      `).join("");
-      $("#detail-sections").classList.toggle("hidden", !sections.length);
+      const summary = String(detail.summary || "").trim();
+      sectionBody.innerHTML = summary ? `<p>${{escapeHtml(summary)}}</p>` : "";
+      $("#detail-sections").classList.toggle("hidden", !summary);
 
       const emptyMessage = $("#detail-empty");
-      if (sections.length || metadata.length) {{
+      if (summary || metadata.length) {{
         emptyMessage.classList.add("hidden");
       }} else {{
         emptyMessage.textContent = copy.detail_empty;
@@ -2158,7 +2166,7 @@ def render_dashboard(
     }}
 
     function sourceInitials(source) {{
-      const label = String(source.name || humanizeLabel(source.slug) || "GR");
+      const label = sourceDisplayName(source) || "GR";
       const words = label
         .replace(/[^0-9A-Za-zА-Яа-яӘәҒғҚқҢңӨөҰұҮүҺһІіЁё]+/g, " ")
         .trim()
@@ -2403,14 +2411,9 @@ def render_dashboard(
 
     function daysUntilDeadline(item) {{
       if (!item || !item.deadline) return null;
-      const parsed = Date.parse(`${{item.deadline}}T00:00:00`);
+      const parsed = Date.parse(`${{item.deadline}}T00:00:00Z`);
       if (Number.isNaN(parsed)) return null;
-      const today = new Date();
-      const todayStart = Date.UTC(
-        today.getUTCFullYear(),
-        today.getUTCMonth(),
-        today.getUTCDate()
-      );
+      const todayStart = Date.parse(`${{publicDateISO()}}T00:00:00Z`);
       return Math.ceil((parsed - todayStart) / (1000 * 60 * 60 * 24));
     }}
 
@@ -3965,13 +3968,17 @@ def render_dashboard(
       }}
     }}
 
-    function localDateISO(date = new Date()) {{
-      const timezoneOffsetMs = date.getTimezoneOffset() * 60 * 1000;
-      return new Date(date.getTime() - timezoneOffsetMs).toISOString().slice(0, 10);
+    function publicDateISO(date = new Date()) {{
+      const parts = Object.fromEntries(
+        PUBLIC_DATE_FORMATTER.formatToParts(date).map(
+          ({{ type, value }}) => [type, value]
+        )
+      );
+      return `${{parts.year}}-${{parts.month}}-${{parts.day}}`;
     }}
 
     function localRelevantBySource() {{
-      const today = localDateISO();
+      const today = publicDateISO();
       return state.items.reduce((counts, item) => {{
         if (item.score >= 0.3 && (!item.deadline || item.deadline >= today)) {{
           counts.set(item.source, (counts.get(item.source) || 0) + 1);
@@ -4204,7 +4211,7 @@ def render_dashboard(
     }}
 
     function visibleItems() {{
-      const today = localDateISO();
+      const today = publicDateISO();
       const historicalLifecycle = state.lifecycle === "closed" || state.lifecycle === "awarded";
       const audiencePreset = activeAudiencePreset();
       const formatPreset = activeFormatPreset();
@@ -4218,8 +4225,10 @@ def render_dashboard(
           return item.score >= state.minScore
             && (
               (state.includeArchived || historicalLifecycle)
-              || !item.deadline
-              || item.deadline >= today
+              || (
+                !["closed", "awarded"].includes(itemLifecycle(item))
+                && (!item.deadline || item.deadline >= today)
+              )
             )
             && (state.source === "all" || item.source === state.source)
             && audiencePreset.matches(item)
@@ -4864,7 +4873,7 @@ def render_dashboard(
 
     async function loadOpportunities() {{
       const message = $("#opportunities-message");
-      const today = localDateISO();
+      const today = publicDateISO();
       const params = state.includeArchived
         ? "limit=5000&min_score=0&include_irrelevant=true&compact=true"
         : `limit=5000&min_score=0&deadline_after=${{today}}&compact=true`;

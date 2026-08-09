@@ -32,6 +32,8 @@ from sources.erasmus_kazakhstan import ERASMUS_ARCHIVE_URL  # noqa: E402
 from sources.erasmus_kazakhstan import ERASMUS_NEWS_URL  # noqa: E402
 from sources.erasmus_kazakhstan import ErasmusKazakhstanSource  # noqa: E402
 from sources.erasmus_kazakhstan import _extract_actions  # noqa: E402
+from sources.global_training import PROGRAMS as GLOBAL_TRAINING_PROGRAMS  # noqa: E402
+from sources.global_training import GlobalTrainingOpportunitiesSource  # noqa: E402
 from sources.google_org import GOOGLE_ORG_KNOWLEDGE_URL  # noqa: E402
 from sources.google_org import GoogleOrgAiOpportunitySource  # noqa: E402
 from sources.grants_gov import SEARCH_URL as GG_SEARCH_URL  # noqa: E402
@@ -834,6 +836,78 @@ async def test_grants_gov_skips_us_tribal_only_opportunities():
 
 @pytest.mark.asyncio
 @respx.mock
+async def test_grants_gov_keeps_us_mission_to_kazakhstan_opportunities():
+    payload = {
+        "data": {
+            "oppHits": [
+                {
+                    "id": "363256",
+                    "number": "DOS-KAZ-ALM-PDS-26-001",
+                    "title": (
+                        "Access Alumni Outreach and Engagement and English "
+                        "Access Scholarship Program"
+                    ),
+                    "agencyCode": "DOS-KAZ",
+                    "agency": "U.S. Mission to Kazakhstan",
+                    "openDate": "07/21/2026",
+                    "closeDate": "08/21/2026",
+                    "oppStatus": "posted",
+                    "docType": "synopsis",
+                },
+                {
+                    "id": "362791",
+                    "number": "DOS-KAZ-AST-PDS-26-003",
+                    "title": (
+                        "Administrative and Programming Support Funding for "
+                        "American Corners"
+                    ),
+                    "agencyCode": "DOS-KAZ",
+                    "agency": "U.S. Mission to Kazakhstan",
+                    "openDate": "06/15/2026",
+                    "closeDate": "07/31/2026",
+                    "oppStatus": "posted",
+                    "docType": "synopsis",
+                },
+            ]
+        }
+    }
+    respx.post(GG_SEARCH_URL).mock(return_value=httpx.Response(200, json=payload))
+
+    items = await _collect(GrantsGovSource())
+
+    assert len(items) == 2
+    by_number = {item.raw["external_id"]: item for item in items}
+    item = by_number["DOS-KAZ-ALM-PDS-26-001"]
+    assert item.title == (
+        "Access Alumni Outreach and Engagement and English Access Scholarship Program"
+    )
+    assert item.deadline == date(2026, 8, 21)
+    assert item.funder == "U.S. Mission to Kazakhstan"
+    assert item.amount_min == 30000
+    assert item.amount_max == 50000
+    assert "kazakhstan" in item.tags
+    assert "south_kazakhstan" in item.tags
+    assert item.raw["external_id"] == "DOS-KAZ-ALM-PDS-26-001"
+    assert item.raw["application_url"] == (
+        "https://simpler.grants.gov/opportunity/da9ea956-a099-4ac0-ae24-3f9b001ee9a0"
+    )
+    assert "Shymkent" in item.summary
+    corners = by_number["DOS-KAZ-AST-PDS-26-003"]
+    assert corners.title == (
+        "Administrative and Programming Support Funding for American Corners"
+    )
+    assert corners.deadline == date(2026, 7, 31)
+    assert corners.amount_min == 120000
+    assert corners.amount_max == 150000
+    assert "american_spaces" in corners.tags
+    assert corners.raw["application_url"] == (
+        "https://simpler.grants.gov/opportunity/bea4fe72-2418-4ad1-83cd-cf6a9ee15a20"
+    )
+    assert "eight American Spaces" in corners.summary
+
+
+@pytest.mark.asyncio
+@respx.mock
 async def test_kazakhstan_watch_yields_curated_relevant_pages():
     for page in WATCH_PAGES:
         respx.get(page.url).mock(
@@ -846,8 +920,12 @@ async def test_kazakhstan_watch_yields_curated_relevant_pages():
     assert {item.source for item in items} == {"kazakhstan_watch"}
     assert all("kazakhstan" in item.tags for item in items)
     assert all(item.raw["page_title"] for item in items)
-    assert all("rolling" in item.tags for item in items)
-    assert all(item.raw["deadline_policy"] == "rolling" for item in items)
+    assert all("rolling" in item.tags for item in items if item.deadline is None)
+    assert all(
+        item.raw["deadline_policy"] == "rolling"
+        for item in items
+        if item.deadline is None
+    )
 
 
 @pytest.mark.asyncio
@@ -866,20 +944,47 @@ async def test_kazakhstan_domestic_support_yields_official_programs():
     assert all("domestic_support" in item.tags for item in items)
     assert all("state_program" in item.tags for item in items)
     assert all(item.raw["page_title"] for item in items)
-    assert all("rolling" in item.tags for item in items)
-    assert all(item.raw["deadline_policy"] == "rolling" for item in items)
+    assert all("rolling" in item.tags for item in items if item.deadline is None)
+    assert all(
+        item.raw["deadline_policy"] == "rolling"
+        for item in items
+        if item.deadline is None
+    )
     by_title = {item.title: item for item in items}
     assert "State grant for startup business development" in by_title
     assert "How to get a state grant to start a business" in by_title
     assert "Interest-rate subsidy service for entrepreneurs" in by_title
+    assert "Kazakhstan state educational grants competition" in by_title
+    assert "Kazakhstan master's degree state educational grants" in by_title
+    assert "State educational grants for the Taraz RCTU branch" in by_title
+    assert "State educational grants for Anhalt International University" in by_title
+    assert "Pavlodar region college state-funded places" in by_title
+    assert "Astana college state-funded places" in by_title
+    assert "Astana AI Film Festival international contest" in by_title
+    assert "Aiboz national literary prize" in by_title
+    assert "Kazakhstan Through My Eyes international drawing contest" in by_title
+    assert (
+        "Tajikistan intergovernmental education grants for Kazakhstan citizens"
+        in by_title
+    )
+    assert (
+        "Kyrgyzstan intergovernmental education grants for Kazakhstan citizens"
+        in by_title
+    )
+    assert (
+        "Morocco intergovernmental education grants for Kazakhstan citizens" in by_title
+    )
     assert "Road Map of Business support programme" in by_title
     assert "State grants for social entrepreneurship" in by_title
+    assert "Kyzylorda regional grants for social entrepreneurship" in by_title
+    assert "Mangystau regional grants for social entrepreneurship" in by_title
     assert "Subsidies for crop production" in by_title
     assert "Bgov.kz unified financial support platform" in by_title
     assert "KazAgroFinance Own Feed and Preferential Leasing" in by_title
     assert "Agrarian Credit Corporation Ken Dala financing" in by_title
     assert "Development Bank of Kazakhstan investment-project financing" in by_title
     assert "Astana Hub participant tax benefits" in by_title
+    assert "Astana Hub Seed Money Smart City" in by_title
     assert "Business Enbek entrepreneur-support portal" not in by_title
     assert "Gosagro subsidy portal" not in by_title
     assert "Science Fund commercialization support" not in by_title
@@ -905,8 +1010,238 @@ async def test_kazakhstan_domestic_support_yields_official_programs():
         "5000000"
     )
     assert (
+        by_title["Kyzylorda regional grants for social entrepreneurship"].raw[
+            "amount_raw"
+        ]
+        == "up to 5,000,000 KZT"
+    )
+    assert (
+        by_title["Kyzylorda regional grants for social entrepreneurship"].raw[
+            "application_url"
+        ]
+        == "https://kezekte.kz/"
+    )
+    assert (
+        "one_village_one_product"
+        in by_title["Kyzylorda regional grants for social entrepreneurship"].tags
+    )
+    assert (
+        by_title["Mangystau regional grants for social entrepreneurship"].raw[
+            "amount_raw"
+        ]
+        == "up to 5,000,000 KZT"
+    )
+    assert (
+        by_title["Mangystau regional grants for social entrepreneurship"].raw[
+            "application_url"
+        ]
+        == "https://kezekte.kz/"
+    )
+    assert (
+        "mangystau"
+        in by_title["Mangystau regional grants for social entrepreneurship"].tags
+    )
+    assert (
         by_title["State grant for startup business development"].raw["amount_raw"]
         == "up to 400 MRP"
+    )
+    assert by_title[
+        "State educational grants for the Taraz RCTU branch"
+    ].deadline == date(2026, 8, 9)
+    assert by_title[
+        "Kazakhstan master's degree state educational grants"
+    ].deadline == date(2026, 8, 18)
+    assert (
+        by_title["Kazakhstan master's degree state educational grants"].lifecycle
+        == "forecast"
+    )
+    assert (
+        by_title["Kazakhstan master's degree state educational grants"].raw[
+            "amount_raw"
+        ]
+        == "around 11,000 state educational grants for master's training in 2026"
+    )
+    assert (
+        by_title["Kazakhstan master's degree state educational grants"].raw["i18n"][
+            "ru"
+        ]["title"]
+        == "Государственные образовательные гранты в магистратуру"
+    )
+    assert (
+        by_title["State educational grants for the Taraz RCTU branch"].lifecycle
+        == "open"
+    )
+    assert (
+        by_title["State educational grants for the Taraz RCTU branch"].raw["amount_raw"]
+        == "100 state educational grants for 2026-2027"
+    )
+    assert (
+        by_title["State educational grants for the Taraz RCTU branch"].raw["i18n"][
+            "ru"
+        ]["title"]
+        == "100 образовательных грантов для Таразского филиала РХТУ"
+    )
+    assert by_title[
+        "State educational grants for Anhalt International University"
+    ].deadline == date(2026, 8, 10)
+    assert (
+        by_title["State educational grants for Anhalt International University"].raw[
+            "i18n"
+        ]["ru"]["title"]
+        == "Государственные образовательные гранты Anhalt International University"
+    )
+    assert by_title["Pavlodar region college state-funded places"].deadline == date(
+        2026, 9, 20
+    )
+    assert (
+        by_title["Pavlodar region college state-funded places"].raw["amount_raw"]
+        == "6,300 state-funded college places for 2026-2027"
+    )
+    assert (
+        by_title["Pavlodar region college state-funded places"].raw["application_url"]
+        == "https://egov.kz/cms/ru/online-services/for_citizen/pr_5"
+    )
+    assert (
+        by_title["Pavlodar region college state-funded places"].raw["i18n"]["ru"][
+            "title"
+        ]
+        == "6300 грантовых мест в колледжах Павлодарской области"
+    )
+    assert by_title["Astana college state-funded places"].deadline == date(2026, 9, 20)
+    assert (
+        by_title["Astana college state-funded places"].raw["amount_raw"]
+        == "10,300 state-funded college places for 2026-2027"
+    )
+    assert (
+        by_title["Astana college state-funded places"].raw["application_url"]
+        == "https://egov.kz/cms/ru/online-services/for_citizen/pr_5"
+    )
+    assert (
+        by_title["Astana college state-funded places"].raw["i18n"]["ru"]["title"]
+        == "10 300 грантовых мест в колледжах Астаны"
+    )
+    assert (
+        by_title["Astana AI Film Festival international contest"].type
+        == OpportunityType.CONTEST
+    )
+    assert by_title["Astana AI Film Festival international contest"].deadline == date(
+        2026, 8, 15
+    )
+    assert (
+        by_title["Astana AI Film Festival international contest"].raw["amount_raw"]
+        == "total prize fund of USD 1,000,000"
+    )
+    assert (
+        by_title["Astana AI Film Festival international contest"].raw["amount_max"]
+        == "1000000"
+    )
+    assert (
+        by_title["Astana AI Film Festival international contest"].raw["application_url"]
+        == "https://aaiff.ai/"
+    )
+    assert (
+        by_title["Astana AI Film Festival international contest"].raw["i18n"]["ru"][
+            "title"
+        ]
+        == "Международный конкурс Astana AI Film Festival"
+    )
+    assert by_title["Aiboz national literary prize"].type == OpportunityType.CONTEST
+    assert by_title["Aiboz national literary prize"].deadline == date(2026, 9, 1)
+    assert (
+        by_title["Aiboz national literary prize"].raw["amount_raw"]
+        == "total prize fund of 35,000,000 KZT; 5,000,000 KZT per nomination"
+    )
+    assert by_title["Aiboz national literary prize"].raw["amount_max"] == "35000000"
+    assert by_title["Aiboz national literary prize"].currency == "KZT"
+    assert (
+        by_title["Aiboz national literary prize"].raw["application_url"]
+        == "https://www.aiboz.kz/"
+    )
+    assert (
+        by_title["Aiboz national literary prize"].raw["i18n"]["ru"]["title"]
+        == "Национальная литературная премия «Айбоз»"
+    )
+    assert (
+        by_title["Kazakhstan Through My Eyes international drawing contest"].type
+        == OpportunityType.CONTEST
+    )
+    assert by_title[
+        "Kazakhstan Through My Eyes international drawing contest"
+    ].deadline == date(2026, 8, 28)
+    assert (
+        by_title["Kazakhstan Through My Eyes international drawing contest"].raw[
+            "amount_raw"
+        ]
+        == "prizes include a laptop, tablet, smart watch and incentive prizes"
+    )
+    assert (
+        by_title["Kazakhstan Through My Eyes international drawing contest"].raw[
+            "application_url"
+        ]
+        == "mailto:oqbaiqau@gmail.com"
+    )
+    assert (
+        by_title["Kazakhstan Through My Eyes international drawing contest"].raw[
+            "i18n"
+        ]["ru"]["title"]
+        == "Международный конкурс рисунков «Казахстан моими глазами»"
+    )
+    assert (
+        "diaspora"
+        in by_title["Kazakhstan Through My Eyes international drawing contest"].tags
+    )
+    assert (
+        "visual_arts"
+        in by_title["Kazakhstan Through My Eyes international drawing contest"].tags
+    )
+    assert by_title["Astana Hub Seed Money Smart City"].raw["deadline_policy"] == (
+        "rolling"
+    )
+    assert "smart_city" in by_title["Astana Hub Seed Money Smart City"].tags
+    assert by_title[
+        "Tajikistan intergovernmental education grants for Kazakhstan citizens"
+    ].deadline == date(2026, 7, 28)
+    assert (
+        by_title[
+            "Tajikistan intergovernmental education grants for Kazakhstan citizens"
+        ].raw["amount_raw"]
+        == "100 education grants for 2026-2027"
+    )
+    assert by_title[
+        "Kyrgyzstan intergovernmental education grants for Kazakhstan citizens"
+    ].deadline == date(2026, 7, 28)
+    assert (
+        by_title[
+            "Kyrgyzstan intergovernmental education grants for Kazakhstan citizens"
+        ].raw["amount_raw"]
+        == "10 education grants for 2026-2027"
+    )
+    assert (
+        by_title[
+            "Kyrgyzstan intergovernmental education grants for Kazakhstan citizens"
+        ].raw["i18n"]["ru"]["title"]
+        == "10 образовательных грантов в вузах Кыргызстана для казахстанцев"
+    )
+    assert by_title[
+        "Morocco intergovernmental education grants for Kazakhstan citizens"
+    ].deadline == date(2026, 7, 31)
+    assert (
+        by_title[
+            "Morocco intergovernmental education grants for Kazakhstan citizens"
+        ].raw["amount_raw"]
+        == "20 education grants with scholarship for the 2026-2027 academic year"
+    )
+    assert (
+        by_title[
+            "Morocco intergovernmental education grants for Kazakhstan citizens"
+        ].raw["application_url"]
+        == "mailto:studyinmorocco.kz@gmail.com"
+    )
+    assert (
+        by_title[
+            "Morocco intergovernmental education grants for Kazakhstan citizens"
+        ].raw["i18n"]["ru"]["title"]
+        == "20 образовательных грантов Марокко для казахстанцев"
     )
     assert by_title["State grant for startup business development"].amount_max is None
     assert (
@@ -1472,9 +1807,79 @@ async def test_google_org_fetch_yields_ai_opportunity_watch():
     assert "global" in item.eligibility
     assert "ai" in item.tags
     assert "central_asia_eligible" in item.tags
-    assert "rolling" in item.tags
+    assert "source_watch" in item.tags
+    assert "rolling" not in item.tags
+    assert item.opportunity_status == "upcoming"
+    assert item.lifecycle == "forecast"
     assert item.raw["external_id"] == "google_org_ai_opportunity"
-    assert item.raw["deadline_policy"] == "rolling"
+    assert item.raw["source_watch"] is True
+    assert item.raw["i18n"]["ru"]["title"].startswith("Программы Google.org")
+
+
+@pytest.mark.asyncio
+@respx.mock
+async def test_global_training_fetch_yields_official_mid_career_course():
+    for program in GLOBAL_TRAINING_PROGRAMS:
+        title = (
+            "Technical Difficulties"
+            if program.title.startswith("Fulbright")
+            else program.title
+        )
+        respx.get(program.url).mock(
+            return_value=httpx.Response(
+                200,
+                text=f"<html><head><title>{title}</title></head></html>",
+            )
+        )
+
+    items = await _collect(GlobalTrainingOpportunitiesSource())
+
+    assert len(items) == 3
+    by_title = {item.title: item for item in items}
+    item = by_title[
+        "FY2026 Mid-Career Course for peacebuilding and development professionals"
+    ]
+    assert item.source == "global_training_opportunities"
+    assert item.type == OpportunityType.FELLOWSHIP
+    assert item.deadline == date(2026, 8, 31)
+    assert item.opportunity_status == "open"
+    assert item.lifecycle == "open"
+    assert item.raw["detail_fetch_status"] == "ok"
+    assert (
+        item.raw["application_url"] == "mailto:gpad-midcareer@office.hiroshima-u.ac.jp"
+    )
+    assert "no participation fee" in item.raw["amount_raw"]
+    assert item.raw["i18n"]["ru"]["title"].startswith("FY2026 Mid-Career Course")
+    assert "unitar" in item.tags
+    assert "central_asia_eligible" in item.tags
+    assert "peacebuilding" in item.tags
+    assert "international_development" in item.tags
+
+    flta = by_title[
+        "Fulbright Foreign Language Teaching Assistant Program for Kazakhstan"
+    ]
+    assert flta.deadline == date(2026, 8, 15)
+    assert flta.raw["application_url"] == "https://apply.iie.org/flta2027"
+    assert flta.raw["detail_fetch_status"] == "source_unavailable"
+    assert flta.raw["page_title"] is None
+    assert "monthly stipend" in flta.raw["amount_raw"]
+    assert flta.raw["i18n"]["ru"]["title"].startswith("Fulbright Foreign Language")
+    assert "kazakhstan" in flta.tags
+    assert "fulbright" in flta.tags
+    assert "teacher_training" in flta.tags
+
+    daad = by_title["DAAD Research Grants in Germany"]
+    assert daad.type == OpportunityType.GRANT
+    assert daad.deadline == date(2026, 8, 17)
+    assert "EUR 1,400" in daad.raw["amount_raw"]
+    assert daad.raw["application_url"].startswith(
+        "https://www.daad-kyrgyzstan.org/en/find-funding/scholarship-database/"
+    )
+    assert daad.raw["i18n"]["ru"]["title"] == "Исследовательские гранты DAAD в Германии"
+    assert "kazakhstan" in daad.tags
+    assert "daad" in daad.tags
+    assert "doctoral" in daad.tags
+    assert "postdoc" in daad.tags
 
 
 @pytest.mark.asyncio
@@ -1911,6 +2316,24 @@ async def test_astana_hub_fetch_uses_curated_pages_on_404():
             "<title>Regional IT Hub</title>"
             "<p>Regional program for IT ecosystem development.</p>"
         ),
+        "https://astanahub.com/l/marketentry/centraleurasia2026": (
+            "<title>Central Eurasia Market Entry 2026</title>"
+            "<p>Application is open until August 16, 2026.</p>"
+        ),
+        "https://astanahub.com/en/l/aipreneurs-2026": (
+            "<title>AI'Preneurs 3.0</title>"
+            "<p>Application period: 21 Jul - 17 Aug 2026.</p>"
+            "<p>The program will be held in an offline format in Astana, Kazakhstan.</p>"
+        ),
+        "https://astanahub.com/en/l/backup": (
+            "<title>backup</title>"
+            "<p>August 6 Application Deadline.</p>"
+            "<p>August 14 Virtual pre-acceleration.</p>"
+            "<p>August 31 Selection of TOP-15 project to the Hero Training Program.</p>"
+            "<p>October 9 Hero Training in Silicon Valley.</p>"
+            "<p>For the citizens and startups from OTS Countries: Kazakhstan, "
+            "Azerbaijan, Kyrgyz Republic, Turkiye and Uzbekistan.</p>"
+        ),
     }
     for url in FALLBACK_PROGRAM_URLS:
         respx.get(url).mock(return_value=httpx.Response(200, text=fallback_html[url]))
@@ -1927,6 +2350,35 @@ async def test_astana_hub_fetch_uses_curated_pages_on_404():
     assert "central_asia_eligible" in by_title["Silkway Accelerator 2025"].tags
     assert "rolling" in by_title["Regional IT Hub"].tags
     assert by_title["Regional IT Hub"].raw["deadline_policy"] == "rolling"
+    assert by_title["Central Eurasia Market Entry 2026"].deadline == date(2026, 8, 16)
+    assert "market_entry" in by_title["Central Eurasia Market Entry 2026"].tags
+    assert "b2b" in by_title["Central Eurasia Market Entry 2026"].tags
+    assert (
+        "Kazakhstan customers" in by_title["Central Eurasia Market Entry 2026"].summary
+    )
+    assert by_title["AI'Preneurs 3.0"].deadline == date(2026, 8, 17)
+    assert "ai" in by_title["AI'Preneurs 3.0"].tags
+    assert "gpu" in by_title["AI'Preneurs 3.0"].tags
+    assert "pre-seed" in by_title["AI'Preneurs 3.0"].summary
+    assert by_title["Hero Training for OTS startup founders"].deadline == date(
+        2026, 8, 6
+    )
+    assert "founder_training" in by_title["Hero Training for OTS startup founders"].tags
+    assert "silicon_valley" in by_title["Hero Training for OTS startup founders"].tags
+    assert (
+        "Draper University"
+        in by_title["Hero Training for OTS startup founders"].summary
+    )
+    assert (
+        by_title["Hero Training for OTS startup founders"].raw["i18n"]["ru"]["title"]
+        == "Hero Training для основателей стартапов из стран ОТГ"
+    )
+    assert (
+        "Кремниевой долине"
+        in by_title["Hero Training for OTS startup founders"].raw["i18n"]["ru"][
+            "summary"
+        ]
+    )
     assert (
         by_title["Regional IT Hub"].raw["country_scope"] == "Kazakhstan / Central Asia"
     )

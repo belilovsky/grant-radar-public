@@ -55,6 +55,10 @@ The main public endpoints are:
 - `GET /data-policy?lang=kk|ru|en`
 - `GET /attribution?lang=kk|ru|en`
 - `GET /digest`
+- `GET /api/v1/insights`
+- `GET /api/v1/changes`
+- `GET /media/v1/digest/daily.json`
+- `GET /media/v1/digest/daily.txt`
 - `GET /docs`
 - `GET /openapi.json`
 - `GET /robots.txt`
@@ -73,6 +77,10 @@ explicit `not_available` status when no snapshot backend is configured.
 Use `/opportunities.ndjson?compact=true` for bulk discovery; keep the full
 `/opportunities.ndjson` export for consumers that explicitly need raw source
 payloads.
+
+`/insights` is the public data-centre view. It reports only values derived from
+the current catalogue and observation ledger. The application workspace stores
+draft content in the browser and never submits it to QAZ.FUND.
 
 ## Quick start
 
@@ -117,6 +125,7 @@ Useful commands:
 - `make format`
 - `make db-upgrade`
 - `make show-runs`
+- `python -m scripts.performance_smoke --base-url http://localhost:8000`
 
 The local workbench export creates a safe editorial handoff from public
 Opportunities NDJSON. It writes normalized `workbench.json`,
@@ -154,6 +163,13 @@ Current ingestion includes public programs and monitors such as:
 - `unicef_kazakhstan`
 - `google_org_ai_opportunity`
 - `unesco_iite`
+- `ungm_opportunities`
+- `osce_procurement`
+- `iom_kazakhstan_procurement`
+- `edb_procurement`
+- `daad_central_asia`
+- `gef_sgp_kazakhstan`
+- `global_innovation_fund`
 
 See [docs/SOURCE_REGISTRY.md](docs/SOURCE_REGISTRY.md)
 for source-specific notes and priorities.
@@ -188,6 +204,8 @@ make ci-fast
 `Dockerfile.prod` runs `scripts/entrypoint.sh`, which applies
 `alembic upgrade head` before starting uvicorn. Real `.env.dev`,
 `.env.staging`, and `.env.prod` files must stay local to the machine or server.
+Production defaults to two Uvicorn workers, bounded source-fetch concurrency,
+and a Compose worker heartbeat; see the runtime guide before changing them.
 
 Deployment guidance lives in [DEPLOYMENT.md](DEPLOYMENT.md) and
 [docs/PRODUCTION_CHECKLIST.md](docs/PRODUCTION_CHECKLIST.md).
@@ -200,6 +218,10 @@ Deployment guidance lives in [DEPLOYMENT.md](DEPLOYMENT.md) and
 - [SUPPORT.md](SUPPORT.md)
 - [docs/README.md](docs/README.md)
 - [docs/PERSISTENCE.md](docs/PERSISTENCE.md)
+- [docs/QAZFUND_DATA_CENTRE_2026-07-27.md](docs/QAZFUND_DATA_CENTRE_2026-07-27.md)
+- [docs/UX_CJM_2026-07-27.md](docs/UX_CJM_2026-07-27.md)
+- [docs/REPRODUCIBILITY_AND_RUNTIME.md](docs/REPRODUCIBILITY_AND_RUNTIME.md)
+- [docs/TELEGRAM_DIGEST.md](docs/TELEGRAM_DIGEST.md)
 
 ## License
 

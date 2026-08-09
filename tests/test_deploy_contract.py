@@ -64,6 +64,21 @@ def test_worker_does_not_run_migrations_concurrently_with_api() -> None:
     assert 'GRANT_RADAR_SKIP_MIGRATIONS: "1"' in base_compose
 
 
+def test_production_runtime_has_web_redundancy_and_worker_liveness() -> None:
+    base_compose = (ROOT / "docker-compose.yml").read_text()
+    production_compose = (ROOT / "docker-compose.prod.yml").read_text()
+
+    assert "WEB_CONCURRENCY: ${WEB_CONCURRENCY:-2}" in production_compose
+    assert "GRANT_RADAR_MAX_SOURCE_CONCURRENCY" in base_compose
+    assert (
+        "GRANT_RADAR_TIME_ZONE: ${GRANT_RADAR_TIME_ZONE:-Asia/Almaty}" in base_compose
+    )
+    assert "TZ: ${GRANT_RADAR_TIME_ZONE:-Asia/Almaty}" in base_compose
+    assert "GRANT_RADAR_WORKER_HEARTBEAT_PATH" in base_compose
+    assert "age < 120" in base_compose
+    assert "start_period: 90s" in base_compose
+
+
 def test_backup_script_creates_rotated_postgres_dumps() -> None:
     script = (ROOT / "scripts" / "backup_postgres.sh").read_text()
 

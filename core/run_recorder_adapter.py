@@ -17,6 +17,10 @@ from typing import Any, Optional
 
 logger = logging.getLogger(__name__)
 
+_UNCLEAN_SHUTDOWN_ERROR = (
+    "Superseded by a newer run after the previous process stopped uncleanly"
+)
+
 
 def _utcnow() -> _dt.datetime:
     return _dt.datetime.now(_dt.timezone.utc)
@@ -64,18 +68,38 @@ class RunRecorder:
         if self._engine is None or self._table is None:
             return None
         try:
-            from sqlalchemy import insert
+            from sqlalchemy import insert, update
 
+            started_at = _utcnow()
+            reconcile = (
+                update(self._table)
+                .where(
+                    self._table.c.source == self._source,
+                    self._table.c.status == "running",
+                )
+                .values(
+                    finished_at=started_at,
+                    status="error",
+                    error=_UNCLEAN_SHUTDOWN_ERROR,
+                )
+            )
             stmt = insert(self._table).values(
                 source=self._source,
-                started_at=_utcnow(),
+                started_at=started_at,
                 status="running",
                 items_seen=0,
                 items_new=0,
                 items_dup=0,
             )
             with self._engine.begin() as conn:
+                reconciled = conn.execute(reconcile).rowcount
                 result = conn.execute(stmt)
+                if reconciled:
+                    logger.warning(
+                        "run_recorder_reconciled source=%s count=%d",
+                        self._source,
+                        reconciled,
+                    )
                 pk = result.inserted_primary_key
                 return int(pk[0]) if pk else None
         except Exception:

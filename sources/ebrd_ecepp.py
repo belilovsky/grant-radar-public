@@ -12,6 +12,7 @@ from urllib.parse import urljoin
 import structlog
 
 from core.models import Opportunity, OpportunityType
+from core.public_clock import public_today
 from core.source_text import clean_source_text as _clean_text
 from sources.base import BaseSource
 
@@ -110,7 +111,7 @@ def _infer_tags(text: str) -> list[str]:
 
 
 def _extract_notices(html: str, *, today: date | None = None) -> list[EceppNotice]:
-    today = today or date.today()
+    today = today or public_today()
     notices: list[EceppNotice] = []
     seen: set[str] = set()
     for row_match in ROW_RE.finditer(html):

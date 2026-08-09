@@ -71,7 +71,7 @@ _ASTANA_HUB_SUMMARIES = {
         "проверить продукт, подготовиться к инвесторам и усилить выход на рынок."
     ),
     "regional it hub": (
-        "Regional IT Hub от Astana Hub поддерживает IT-команды и стартапы в "
+        "Regional IT Hub от Astana Hub поддерживает ИТ-команды и стартапы в "
         "регионах Казахстана через локальные сообщества, акселерационные "
         "маршруты, партнерские программы и практическую поддержку роста."
     ),
@@ -83,6 +83,16 @@ _KAZAKHSTAN_WATCH_SUMMARIES = {
         "программы, доступ к финансированию и помощь в развитии управленческих "
         "процессов, продаж и устойчивости бизнеса."
     ),
+}
+
+_SOURCE_RU_TITLES = {
+    "google_cloud_startup": "Google Cloud для стартапов",
+    "microsoft_founders_hub": "Microsoft Founders Hub для стартапов",
+    "aws_activate": "Облачные кредиты AWS Activate",
+    "nvidia_inception": "Программа NVIDIA Inception для стартапов",
+    "cloudflare_startups": "Cloudflare для стартапов",
+    "mongodb_startups": "MongoDB для стартапов",
+    "google_org_ai_opportunity": ("Программы Google.org в сфере ИИ и цифровых навыков"),
 }
 
 
@@ -127,6 +137,8 @@ def russian_opportunity_title_fallback(item: Opportunity, title: str) -> str:
         return cleaned
 
     source = item.source
+    if source in _SOURCE_RU_TITLES:
+        return _SOURCE_RU_TITLES[source]
     if source == "adb_kazakhstan":
         return "Проект Азиатского банка развития для Казахстана"
     if source == "world_bank_kazakhstan":
@@ -281,7 +293,7 @@ def _eeas_summary(item: Opportunity) -> str:
     return (
         "Конкурс предложений ЕС для Казахстана: поддержка гражданского "
         "общества, прав человека или смежных программных направлений. "
-        "Проверьте условия, бюджет и дедлайн на странице источника."
+        "Проверьте условия, бюджет и срок подачи на странице источника."
         f"{suffix}"
     )
 
@@ -346,8 +358,7 @@ def russian_summary_fallback(item: Opportunity, summary: str) -> str:
 
     if _needs_fallback(cleaned):
         return (
-            "Возможность поддержки для команд и организаций, связанных с "
-            "Казахстаном или Центральной Азией. Проверьте требования, сроки и "
-            "порядок подачи на странице источника."
+            "Программа для заявителей из Казахстана и Центральной Азии. "
+            "Условия, сроки и порядок подачи опубликованы у организатора."
         )
     return cleaned

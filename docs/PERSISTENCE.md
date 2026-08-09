@@ -169,3 +169,33 @@ The long-running worker keeps a `status=running` row open for the lifetime of
 the process and finalizes it on clean shutdown. As a result, an active worker
 row in `make show-runs` is expected; the CLI displays its duration so
 maintainers can distinguish a healthy daemon run from a stuck process.
+
+## Opportunity observation ledger (revision `0005`)
+
+Revision `0005_opportunity_observations` adds `first_seen_at`, `last_seen_at`
+and `content_hash` to the current `opportunities` row. It also creates
+`opportunity_observations`, an append-only table keyed by opportunity and
+semantic content hash.
+
+The semantic snapshot contains public fields that affect a visitor's decision:
+title, summary, organizer, type, amount, currency, deadline, requirements,
+regions, tags, source and application links. Reordering or formatting an
+equivalent decimal value does not produce a change.
+
+- a previously unseen opportunity records `created`;
+- an existing pre-ledger row first records `baseline`;
+- a changed snapshot records `changed` and its changed field names;
+- an unchanged source check updates `last_seen_at` but adds no observation.
+
+`discovered_at` remains a compatibility timestamp for existing consumers.
+New code should use `first_seen_at` for initial discovery, `last_seen_at` for
+the latest observation and the ledger for new or changed events.
+
+For rows created before revision `0005`, the migration seeds both new timestamps
+from the previous `discovered_at`. Because older versions refreshed that field
+on every source run, this value is the earliest recoverable point in the current
+database, not a claim about the original publication date.
+
+The public `/api/v1/changes` and daily digest report `collecting` until the
+ledger has a meaningful comparison base. They must not reinterpret the legacy
+catalogue as newly discovered data.

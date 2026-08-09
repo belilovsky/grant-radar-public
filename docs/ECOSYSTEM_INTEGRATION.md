@@ -16,18 +16,22 @@ prove.
 
 | System | Runtime status | Boundary |
 | --- | --- | --- |
-| QazStack 1.40.0 | `runtime-proven` | QAZ.FUND uses neutral contracts, source/content normalization, lifecycle normalization, evidence states, diversified listing and machine-export helpers. Product relevance policy stays local. |
-| AV DS 4.3.2 | `adapter-aligned` | FastAPI pages use a local SSR adapter mapped to AV DS component families. No React package import is claimed. |
-| QazPipe | `interface-ready` | QazPipe can pull the public `/opportunities` API with stable pagination and provenance. Activation remains consumer-controlled. |
-| QazLake | `brokered-via-qazpipe` | Public records may be archived through QazPipe. QAZ.FUND never writes directly into QazLake tables. |
+| QazStack 1.41.2 | `runtime-proven` | QAZ.FUND uses neutral contracts, source and text normalization, lifecycle rules, evidence states, diversified listing, machine exports, the public opportunity schema and expert-reviewed ranking metrics. Product relevance and publication policy stay local. |
+| AV DS 4.6.0 | `adapter-aligned` | FastAPI pages use a local server-side adapter aligned with AV DS component families. No direct React package import is claimed. |
+| QazPipe | `producer-ready` | QAZ.FUND publishes a versioned read-only pull contract over `/api/v1/opportunities.ndjson`, including pagination, checkpoints, idempotency and required provenance. Connector activation remains consumer-controlled. |
+| QazLake | `brokered-via-qazpipe` | Public records may be archived only through QazPipe after the target schema, retention, dry run, idempotency and rollback gates pass. QAZ.FUND never writes directly into QazLake tables. |
 | EdPol | `query-ready` | Education opportunities are available through the public tag-filtered API. EdPol decides whether and how to consume them. |
 | QazGeo | `deferred-no-geometry` | Region classes exist, but verified coordinates do not. No inferred or decorative map is published. |
-| QazCompute | `profile-compatible-local-fallback` | `evidence_readiness.v1`, `deadline_anomaly.v1`, `source_freshness.v1` and `duplicate_cluster.v1` are exposed as QazCompute-compatible public envelopes; remote task execution still needs parity and private server-side wiring. |
+| QazCompute | `local-runtime-proven` | Four deterministic profiles run locally and publish QazCompute-compatible envelopes. Remote task execution remains disabled until fixture parity and private server-side wiring are ready. |
 
 ## Machine entry points
 
 - `/.well-known/qazstack-consumer.json` – strict QazStack production contract.
 - `/.well-known/avds-ui-contract.json` – AV DS 4 component-family boundary.
+- `/.well-known/qazpipe-source.json` – versioned pull, checkpoint,
+  provenance and QazLake handoff contract.
+- `/.well-known/qazcompute-profiles.json` – executable local profiles and
+  safety boundary.
 - `/.well-known/qdev-ecosystem.json` – implemented and deferred integrations.
 - `/.well-known/source-onboarding.json` – active adapters and gated source
   candidates with admission checks.
@@ -37,6 +41,10 @@ prove.
 - `/opportunities` - read-only, paginated public JSON data plane.
 - `/opportunities.ndjson` - filtered, cache-aware full stream for data consumers.
 - `/opportunities.ndjson?compact=true` - lighter bulk stream for AI discovery.
+- `/api/v1/insights` – deterministic catalogue distributions and field coverage.
+- `/api/v1/changes` – semantic observation history.
+- `/media/v1/digest/daily.json` – daily new and changed records with an
+  explicit delivery boundary.
 
 ## Data ownership
 
@@ -51,6 +59,10 @@ Private operator credentials, saved user selections and internal refresh tokens
 must never enter the public feed. Public records sent downstream retain at least
 `source`, `source_url`, `discovered_at` and `raw.provenance`. The provenance
 contract is documented in [`DATA_PROVENANCE_CONTRACT.md`](DATA_PROVENANCE_CONTRACT.md).
+
+Application draft text stays in browser storage. It is not a QazLake record,
+QazPipe payload or QazCompute task. Telegram delivery is disabled by default
+and cannot create its own scheduler.
 
 ## Development pipeline
 
@@ -75,10 +87,13 @@ contract is documented in [`DATA_PROVENANCE_CONTRACT.md`](DATA_PROVENANCE_CONTRA
 
 ### QazPipe and QazLake
 
-Create a QazPipe pull connector against `/opportunities` with checkpointed
-`offset`, source URL idempotency and dry-run output. The first archive should
-contain only public records and provenance. Do not enable a production write
-until the target QazLake schema and retention policy have owner approval.
+The producer side is complete at `/.well-known/qazpipe-source.json`. A QazPipe
+consumer should pull `/api/v1/opportunities.ndjson`, checkpoint the dataset
+revision and offset, and deduplicate by record ID plus
+`provenance.content_hash`. The first archive must contain only public records
+and provenance. Do not enable a QazLake write until the target table, retention
+policy, dry-run artifact, idempotency proof and rollback procedure have owner
+approval.
 
 ### QazCompute
 

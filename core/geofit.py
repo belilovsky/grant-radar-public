@@ -299,8 +299,10 @@ def exclusion_reason(item: Any) -> str | None:
         if _matches_any(lending, STATE_LENDING_PATTERNS):
             return "state-lending instrument"
 
-    if source == "grants_gov" and _matches_any(
-        text, GRANTS_GOV_PRODUCT_FOCUS_EXCLUSIONS
+    if (
+        source == "grants_gov"
+        and _matches_any(text, GRANTS_GOV_PRODUCT_FOCUS_EXCLUSIONS)
+        and not _is_official_kazakhstan_mission_grant(item)
     ):
         return "outside Grants.gov product focus"
     if source == "grants_gov" and not has_central_asia_geo_signal(item):
@@ -341,6 +343,13 @@ def exclusion_reason(item: Any) -> str | None:
     raw_text = _raw_json(item)
     for value in HARD_EXCLUSION_RAW_VALUES:
         if value.lower() in raw_text.lower():
+            if (
+                source == "global_training_opportunities"
+                and str(_raw_text_value(item, "detail_fetch_status")).lower()
+                == "source_unavailable"
+                and has_central_asia_geo_signal(item)
+            ):
+                continue
             return value
     return None
 
@@ -360,4 +369,22 @@ def is_relevant_for_kazakhstan_focus(item: Any) -> bool:
     return not (
         is_excluded_for_kazakhstan_focus(item)
         or is_low_confidence_for_kazakhstan_focus(item)
+    )
+
+
+def _is_official_kazakhstan_mission_grant(item: Any) -> bool:
+    if not has_central_asia_geo_signal(item):
+        return False
+    raw = _get(item, "raw")
+    if not isinstance(raw, dict):
+        return False
+    agency_code = str(raw.get("agencyCode") or "").upper()
+    agency_name = str(raw.get("agency") or raw.get("agencyName") or "").lower()
+    opportunity_number = str(
+        raw.get("external_id") or raw.get("number") or raw.get("oppNumber") or ""
+    ).upper()
+    return (
+        agency_code == "DOS-KAZ"
+        or agency_name == "u.s. mission to kazakhstan"
+        or opportunity_number.startswith("DOS-KAZ-")
     )

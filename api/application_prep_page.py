@@ -1,0 +1,1153 @@
+"""Private-by-default application preparation workspace."""
+
+from __future__ import annotations
+
+import json
+from datetime import date
+from enum import Enum
+from html import escape
+from typing import Any
+
+from api.avds import AVDS_CSS, AVDS_FONT_HEAD
+from api.dashboard_copy import dashboard_copy
+from api.public_meta import analytics_head_html
+from core.models import OpportunityDetail
+
+
+def _type_value(value: object) -> str:
+    raw = value.value if isinstance(value, Enum) else value
+    return str(raw or "grant").strip().lower()
+
+
+def _public_label(value: object, lang: str) -> str:
+    raw_value = value.value if isinstance(value, Enum) else value
+    raw = str(raw_value or "").strip()
+    if not raw:
+        return ""
+    label_map_raw = dashboard_copy(lang).get("label_map")
+    label_map = label_map_raw if isinstance(label_map_raw, dict) else {}
+    normalized = raw.lower().replace("-", "_").replace(" ", "_")
+    mapped = label_map.get(normalized) or label_map.get(raw.lower())
+    if isinstance(mapped, str) and mapped.strip():
+        return mapped.strip()
+    return raw.replace("_", " ")
+
+
+def _deadline(value: date | None, lang: str) -> str:
+    if value is None:
+        return "Без фиксированного срока" if lang == "ru" else "No fixed deadline"
+    return value.strftime("%d.%m.%Y") if lang == "ru" else value.isoformat()
+
+
+def _amount(detail: OpportunityDetail, lang: str) -> str:
+    raw = detail.raw if isinstance(detail.raw, dict) else {}
+    amount_raw = str(raw.get("amount_raw") or "").strip()
+    if amount_raw:
+        return amount_raw
+    values = [detail.amount_min, detail.amount_max]
+    if all(value is None for value in values):
+        return "Не указана" if lang == "ru" else "Not stated"
+    formatted = [
+        f"{value:,.0f}".replace(",", " ") for value in values if value is not None
+    ]
+    return "–".join(formatted) + f" {detail.currency}"
+
+
+def _checklist(detail: OpportunityDetail, lang: str) -> list[str]:
+    type_value = _type_value(detail.type)
+    tags = {str(value).lower() for value in detail.tags}
+    if type_value == "tender" or {"procurement", "tender"}.intersection(tags):
+        key = "tender"
+    elif {"science", "research", "university"}.intersection(tags):
+        key = "science"
+    elif {"subsidy", "reimbursement", "tax_benefit"}.intersection(tags):
+        key = "subsidy"
+    elif type_value in {"accelerator", "cloud_credit"} or "startup" in tags:
+        key = "startup"
+    elif {"ngo", "civil_society", "nonprofit"}.intersection(tags):
+        key = "ngo"
+    else:
+        key = "grant"
+    ru = {
+        "grant": [
+            "Описание проекта и ожидаемого результата",
+            "Смета с обоснованием расходов",
+            "План работ и календарь",
+            "Документы заявителя",
+            "Письма партнёров, если они нужны",
+        ],
+        "tender": [
+            "Техническое предложение по требованиям закупки",
+            "Ценовое предложение и расчёт",
+            "Регистрационные и налоговые документы",
+            "Подтверждение опыта и квалификации",
+            "Требуемые гарантии и подписанные формы",
+        ],
+        "science": [
+            "Научная задача и состояние исследований",
+            "Методика, рабочий план и измеримые результаты",
+            "Состав исследовательской группы",
+            "Смета и обоснование оборудования",
+            "Письма организаций и сведения об этике",
+        ],
+        "subsidy": [
+            "Регистрационные и налоговые документы",
+            "Подтверждение затрат или план финансирования",
+            "Банковские реквизиты и финансовая отчётность",
+            "Разрешения, сертификаты и договоры",
+            "Электронная подпись для официальной подачи",
+        ],
+        "startup": [
+            "Краткая презентация проекта",
+            "Описание продукта, рынка и пользователей",
+            "Данные о команде и стадии проекта",
+            "Показатели роста или результаты испытаний",
+            "План использования поддержки",
+        ],
+        "ngo": [
+            "Описание общественной проблемы и целевой группы",
+            "Логика результата и показатели",
+            "План мероприятий и смета",
+            "Документы НКО и подтверждение опыта",
+            "Письма партнёров и план устойчивости",
+        ],
+    }
+    en = {
+        "grant": [
+            "Project description and expected outcome",
+            "Budget with cost rationale",
+            "Work plan and timetable",
+            "Applicant documents",
+            "Partner letters when required",
+        ],
+        "tender": [
+            "Technical proposal mapped to the procurement requirements",
+            "Financial offer and calculations",
+            "Registration and tax documents",
+            "Evidence of experience and qualifications",
+            "Required guarantees and signed forms",
+        ],
+        "science": [
+            "Research question and state of the field",
+            "Method, work plan and measurable outputs",
+            "Research team",
+            "Budget and equipment rationale",
+            "Institutional letters and ethics information",
+        ],
+        "subsidy": [
+            "Registration and tax documents",
+            "Cost evidence or financing plan",
+            "Bank details and financial statements",
+            "Permits, certificates and agreements",
+            "Digital signature for the official submission",
+        ],
+        "startup": [
+            "Concise project deck",
+            "Product, market and user description",
+            "Team and project-stage information",
+            "Growth metrics or pilot results",
+            "Support-use plan",
+        ],
+        "ngo": [
+            "Public problem and target group",
+            "Outcome logic and indicators",
+            "Activity plan and budget",
+            "NGO documents and track record",
+            "Partner letters and sustainability plan",
+        ],
+    }
+    return (ru if lang == "ru" else en)[key]
+
+
+def render_application_prep_page(
+    *,
+    detail: OpportunityDetail,
+    lang: str,
+    root_path: str,
+    site_origin: str,
+    lifecycle: str = "open",
+) -> str:
+    active_lang = "en" if lang == "en" else "ru"
+    copy: dict[str, Any] = {
+        "ru": {
+            "page_title": "Подготовка заявки",
+            "eyebrow": "Рабочая заявка",
+            "title": "Соберите черновик под требования программы",
+            "lead": (
+                "Заполните проектные сведения один раз. QAZ.FUND соберёт их в "
+                "структурированный черновик и покажет незаполненные разделы."
+            ),
+            "privacy": (
+                "Данные остаются в этом браузере. QAZ.FUND не получает и не "
+                "отправляет содержимое формы."
+            ),
+            "back": "Вернуться к карточке",
+            "source": "Открыть источник",
+            "known": "Известно о программе",
+            "program": "Программа",
+            "organizer": "Организатор",
+            "deadline": "Срок",
+            "amount": "Сумма",
+            "eligibility": "Требования",
+            "unknown": "Нужно проверить у организатора",
+            "readiness": "Готовность черновика",
+            "required_done": "{done} из {total} обязательных полей",
+            "applicant": "Заявитель",
+            "applicant_note": "Кто подаёт заявку и почему имеет право участвовать.",
+            "org_name": "Название организации или команды",
+            "legal_form": "Организационная форма",
+            "country": "Страна и город",
+            "contact": "Ответственный за заявку",
+            "fit": "Основание для участия",
+            "fit_placeholder": "Как заявитель соответствует критериям программы",
+            "project": "Проект",
+            "project_note": "Коротко и предметно: проблема, решение, результат.",
+            "project_name": "Название проекта",
+            "problem": "Проблема",
+            "solution": "Предлагаемое решение",
+            "beneficiaries": "Кто получит пользу",
+            "geography": "Где будет реализован проект",
+            "impact": "Результаты и доказательства",
+            "impact_note": "Что изменится и как это будет измерено.",
+            "outcomes": "Ожидаемые результаты",
+            "indicators": "Показатели и исходные значения",
+            "evidence": "Данные, исследования и подтверждения",
+            "delivery": "Реализация",
+            "delivery_note": "Команда, сроки, партнёры и основные риски.",
+            "team": "Команда и роли",
+            "timeline": "Этапы и сроки",
+            "partners": "Партнёры",
+            "risks": "Риски и способы управления",
+            "finance": "Финансирование",
+            "finance_note": "Запрашиваемая сумма и обоснование расходов.",
+            "request_amount": "Запрашиваемая сумма",
+            "cofinance": "Собственный вклад и софинансирование",
+            "budget": "Основные статьи бюджета",
+            "documents": "Пакет документов",
+            "documents_note": (
+                "Рабочая памятка по типу программы. Точный перечень берите из "
+                "официальной документации."
+            ),
+            "draft": "Черновик",
+            "draft_note": (
+                "Текст обновляется по мере заполнения. Перед подачей адаптируйте "
+                "его к форме и ограничениям организатора."
+            ),
+            "copy": "Скопировать",
+            "copied": "Черновик скопирован",
+            "download": "Скачать .md",
+            "clear": "Очистить",
+            "clear_confirm": "Удалить сохранённый в этом браузере черновик?",
+            "empty_value": "[не заполнено]",
+            "draft_heading": "Черновик заявки",
+            "generated_note": (
+                "Рабочий документ QAZ.FUND. Не является поданной заявкой и не "
+                "подтверждает соответствие условиям."
+            ),
+            "terms": "Условия",
+            "data_policy": "Политика данных",
+            "attribution": "Использование данных",
+            "closed_notice": (
+                "Приём по этой программе завершён. Черновик можно использовать "
+                "только как основу для следующего набора после проверки условий."
+            ),
+            "forecast_notice": (
+                "Приём ещё не открыт. Заполняйте черновик предварительно и "
+                "перепроверьте требования после публикации условий."
+            ),
+            "storage_error": (
+                "Браузер не разрешил локальное сохранение. Черновик открыт, но "
+                "перед уходом скачайте файл."
+            ),
+            "sections": {
+                "programme": "Программа",
+                "applicant": "Заявитель",
+                "project": "Проект",
+                "impact": "Результаты и доказательства",
+                "delivery": "Реализация",
+                "finance": "Финансирование",
+                "documents": "Проверка пакета",
+            },
+        },
+        "en": {
+            "page_title": "Application preparation",
+            "eyebrow": "Working application",
+            "title": "Build a draft around the programme requirements",
+            "lead": (
+                "Enter project facts once. QAZ.FUND will assemble a structured "
+                "draft and show which sections are still incomplete."
+            ),
+            "privacy": (
+                "The data stays in this browser. QAZ.FUND does not receive or "
+                "transmit the form content."
+            ),
+            "back": "Back to opportunity",
+            "source": "Open official source",
+            "known": "Known programme facts",
+            "program": "Programme",
+            "organizer": "Organizer",
+            "deadline": "Deadline",
+            "amount": "Amount",
+            "eligibility": "Eligibility",
+            "unknown": "Confirm with the organizer",
+            "readiness": "Draft readiness",
+            "required_done": "{done} of {total} required fields",
+            "applicant": "Applicant",
+            "applicant_note": "Who is applying and why the applicant is eligible.",
+            "org_name": "Organization or team name",
+            "legal_form": "Legal form",
+            "country": "Country and city",
+            "contact": "Application lead",
+            "fit": "Eligibility rationale",
+            "fit_placeholder": "How the applicant meets the programme criteria",
+            "project": "Project",
+            "project_note": "Keep it specific: problem, response and result.",
+            "project_name": "Project name",
+            "problem": "Problem",
+            "solution": "Proposed solution",
+            "beneficiaries": "Who benefits",
+            "geography": "Delivery location",
+            "impact": "Outcomes and evidence",
+            "impact_note": "What will change and how it will be measured.",
+            "outcomes": "Expected outcomes",
+            "indicators": "Indicators and baselines",
+            "evidence": "Data, research and supporting evidence",
+            "delivery": "Delivery",
+            "delivery_note": "Team, timing, partners and principal risks.",
+            "team": "Team and roles",
+            "timeline": "Milestones and timing",
+            "partners": "Partners",
+            "risks": "Risks and mitigation",
+            "finance": "Finance",
+            "finance_note": "Requested amount and spending rationale.",
+            "request_amount": "Requested amount",
+            "cofinance": "Own contribution and co-financing",
+            "budget": "Main budget lines",
+            "documents": "Document pack",
+            "documents_note": (
+                "A working checklist based on programme type. Use the official "
+                "documentation for the exact list."
+            ),
+            "draft": "Draft",
+            "draft_note": (
+                "The text updates as you type. Adapt it to the organizer's form "
+                "and limits before submission."
+            ),
+            "copy": "Copy",
+            "copied": "Draft copied",
+            "download": "Download .md",
+            "clear": "Clear",
+            "clear_confirm": "Delete the draft stored in this browser?",
+            "empty_value": "[not completed]",
+            "draft_heading": "Application draft",
+            "generated_note": (
+                "QAZ.FUND working document. It is not a submitted application and "
+                "does not confirm eligibility."
+            ),
+            "terms": "Terms",
+            "data_policy": "Data policy",
+            "attribution": "Data reuse",
+            "closed_notice": (
+                "Applications for this programme are closed. Use the draft only "
+                "as a starting point for a future round after checking its terms."
+            ),
+            "forecast_notice": (
+                "Applications are not open yet. Treat this as a preliminary draft "
+                "and recheck the requirements after launch."
+            ),
+            "storage_error": (
+                "This browser blocked local storage. The draft remains open, but "
+                "download it before leaving."
+            ),
+            "sections": {
+                "programme": "Programme",
+                "applicant": "Applicant",
+                "project": "Project",
+                "impact": "Outcomes and evidence",
+                "delivery": "Delivery",
+                "finance": "Finance",
+                "documents": "Document check",
+            },
+        },
+    }[active_lang]
+    base = root_path.rstrip("/")
+    detail_path = f"{base}/opportunity/{detail.id}?lang={active_lang}"
+    source_href = str(detail.source_url)
+    organizer = _public_label(detail.funder or detail.source, active_lang)
+    eligibility = (
+        "; ".join(
+            _public_label(value, active_lang)
+            for value in detail.eligibility
+            if str(value).strip()
+        )
+        or copy["unknown"]
+    )
+    deadline = _deadline(detail.deadline, active_lang)
+    amount = _amount(detail, active_lang)
+    checklist = _checklist(detail, active_lang)
+    checklist_markup = "".join(f"""
+        <label class="check-row" data-avds-component="FormField">
+          <input type="checkbox" name="document_{index}" data-avds-component="Checkbox">
+          <span>{escape(label)}</span>
+        </label>
+        """ for index, label in enumerate(checklist, 1))
+    facts = {
+        "program": detail.title,
+        "organizer": organizer,
+        "deadline": deadline,
+        "amount": amount,
+        "eligibility": eligibility,
+        "official_source": str(detail.source_url),
+        "application_url": str(detail.application_url or ""),
+        "checklist": checklist,
+    }
+    facts_json = json.dumps(facts, ensure_ascii=False).replace("<", "\\u003c")
+    copy_json = json.dumps(copy, ensure_ascii=False).replace("<", "\\u003c")
+    storage_key = f"qazfund-application-draft-v1:{detail.id}:{active_lang}"
+    canonical = (
+        f"{site_origin.rstrip('/')}{base}/opportunity/{detail.id}/prepare"
+        f"?lang={active_lang}"
+    )
+    terms_href = (
+        f"{base}/terms?lang={active_lang}" if base else f"/terms?lang={active_lang}"
+    )
+    data_policy_href = (
+        f"{base}/data-policy?lang={active_lang}"
+        if base
+        else f"/data-policy?lang={active_lang}"
+    )
+    attribution_href = (
+        f"{base}/attribution?lang={active_lang}"
+        if base
+        else f"/attribution?lang={active_lang}"
+    )
+    analytics_head = analytics_head_html()
+    state_notice = ""
+    if lifecycle in {"closed", "awarded"}:
+        state_notice = copy["closed_notice"]
+    elif lifecycle == "forecast":
+        state_notice = copy["forecast_notice"]
+    state_notice_markup = (
+        '<div class="state-notice" data-avds-component="Alert">'
+        f"{escape(state_notice)}</div>"
+        if state_notice
+        else ""
+    )
+
+    def field(
+        name: str,
+        label: str,
+        *,
+        textarea: bool = False,
+        required: bool = False,
+        placeholder: str = "",
+    ) -> str:
+        required_attr = " required" if required else ""
+        required_mark = '<span aria-hidden="true">*</span>' if required else ""
+        placeholder_attr = (
+            f' placeholder="{escape(placeholder, quote=True)}"' if placeholder else ""
+        )
+        control = (
+            f'<textarea id="{name}" name="{name}" rows="4" '
+            f'data-avds-component="Textarea"{required_attr}'
+            f"{placeholder_attr}></textarea>"
+            if textarea
+            else f'<input id="{name}" name="{name}" type="text" '
+            f'data-avds-component="TextInput"{required_attr}'
+            f"{placeholder_attr}>"
+        )
+        return (
+            f'<label class="field" for="{name}" data-avds-component="FormField">'
+            f"<span>{escape(label)}{required_mark}</span>{control}</label>"
+        )
+
+    fit_field = field(
+        "fit",
+        copy["fit"],
+        textarea=True,
+        required=True,
+        placeholder=copy["fit_placeholder"],
+    )
+
+    return f"""<!doctype html>
+<html lang="{active_lang}" data-avds="grant-radar" data-av-theme="light" data-theme="light">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{escape(copy["page_title"])} – {escape(detail.title)} – QAZ.FUND</title>
+  <meta name="description" content="{escape(copy["lead"], quote=True)}">
+  <link rel="canonical" href="{escape(canonical, quote=True)}">
+{analytics_head}
+{AVDS_FONT_HEAD}
+  <style>
+{AVDS_CSS}
+    :root {{
+      color-scheme: light;
+      --ink: var(--color-text);
+      --muted: var(--color-text-muted);
+      --line: var(--color-border);
+      --soft: var(--color-bg-subtle);
+      --panel: var(--color-surface);
+      --navy: #091a30;
+      --blue: var(--color-accent);
+      --green: var(--color-success);
+      --amber: var(--color-warning);
+    }}
+    * {{ box-sizing: border-box; }}
+    body {{
+      margin: 0;
+      background: var(--color-bg);
+      color: var(--ink);
+      font-family: var(--av-font-sans);
+      line-height: 1.45;
+    }}
+    button, input, textarea {{ font: inherit; }}
+    .shell {{
+      width: min(1320px, calc(100% - 28px));
+      margin: 14px auto 40px;
+    }}
+    .topbar {{
+      min-height: 48px;
+      padding: 0 14px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 14px;
+      border: 1px solid var(--line);
+      border-radius: var(--av-radius-lg);
+      background: var(--panel);
+    }}
+    .topbar a {{
+      color: inherit;
+      font-size: 12px;
+      font-weight: 750;
+      text-decoration: none;
+    }}
+    .topbar > a:first-child {{ font-size: 14px; font-weight: 850; }}
+    .hero {{
+      margin-top: 10px;
+      padding: 32px;
+      display: grid;
+      grid-template-columns: minmax(0, 1.25fr) minmax(300px, .75fr);
+      gap: 34px;
+      border-radius: var(--av-radius-lg);
+      background: var(--navy);
+      color: white;
+    }}
+    .eyebrow {{
+      color: #83b3ff;
+      font-size: 10px;
+      font-weight: 850;
+      letter-spacing: .12em;
+      text-transform: uppercase;
+    }}
+    h1 {{
+      max-width: 760px;
+      margin: 8px 0 12px;
+      font-size: clamp(31px, 4.5vw, 55px);
+      line-height: 1;
+      letter-spacing: -.05em;
+    }}
+    .hero-lead {{
+      max-width: 720px;
+      margin: 0;
+      color: #c8d6e7;
+      font-size: 15px;
+    }}
+    .privacy {{
+      margin-top: 20px;
+      padding: 11px 13px;
+      display: inline-flex;
+      gap: 9px;
+      align-items: center;
+      border: 1px solid rgb(255 255 255 / .14);
+      border-radius: 9px;
+      color: #b9cadd;
+      font-size: 11px;
+    }}
+    .privacy::before {{
+      content: "";
+      width: 8px;
+      height: 8px;
+      flex: 0 0 auto;
+      border-radius: 50%;
+      background: #56d49d;
+    }}
+    .state-notice {{
+      margin-top: 12px;
+      padding: 11px 13px;
+      border: 1px solid rgb(255 255 255 / .18);
+      border-radius: var(--av-radius-md);
+      background: rgb(255 255 255 / .08);
+      color: #dbe7f5;
+      font-size: 12px;
+      line-height: 1.5;
+    }}
+    .facts {{
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 1px;
+      align-self: stretch;
+      border: 1px solid rgb(255 255 255 / .14);
+      border-radius: var(--av-radius-lg);
+      background: rgb(255 255 255 / .14);
+      overflow: hidden;
+    }}
+    .fact {{
+      min-height: 90px;
+      padding: 15px;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      background: #112c4e;
+    }}
+    .fact span {{
+      color: #9fb3cb;
+      font-size: 9px;
+      text-transform: uppercase;
+      letter-spacing: .08em;
+    }}
+    .fact strong {{ font-size: 12px; line-height: 1.35; }}
+    .workspace {{
+      margin-top: 10px;
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) minmax(360px, .7fr);
+      gap: 10px;
+      align-items: start;
+    }}
+    .form-stack {{ display: grid; gap: 10px; }}
+    .panel {{
+      padding: 22px;
+      border: 1px solid var(--line);
+      border-radius: var(--av-radius-lg);
+      background: var(--panel);
+    }}
+    .panel-head {{
+      margin-bottom: 17px;
+      display: flex;
+      justify-content: space-between;
+      gap: 16px;
+      align-items: flex-start;
+    }}
+    .panel-head h2 {{ margin: 0 0 4px; font-size: 20px; letter-spacing: -.025em; }}
+    .panel-head p {{ max-width: 650px; margin: 0; color: var(--muted); font-size: 11px; }}
+    .field-grid {{
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 12px;
+    }}
+    .field-grid.single {{ grid-template-columns: 1fr; }}
+    .field {{
+      display: grid;
+      gap: 6px;
+      color: #3d4b60;
+      font-size: 11px;
+      font-weight: 750;
+    }}
+    .field > span span {{ color: #bd3a3a; }}
+    .field input, .field textarea {{
+      width: 100%;
+      min-height: var(--av-control-height-lg);
+      padding: 10px 11px;
+      border: 1px solid #cfd9e5;
+      border-radius: var(--av-radius-md);
+      background: var(--color-bg-subtle);
+      color: var(--ink);
+      resize: vertical;
+      outline: none;
+    }}
+    .field textarea {{ min-height: 105px; }}
+    .field input:focus, .field textarea:focus {{
+      border-color: var(--blue);
+      box-shadow: 0 0 0 3px rgb(41 89 202 / .12);
+    }}
+    .field input:user-invalid, .field textarea:user-invalid {{
+      border-color: #cf4f4f;
+    }}
+    .check-list {{ display: grid; gap: 7px; }}
+    .check-row {{
+      min-height: var(--av-control-height-lg);
+      padding: 9px 11px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      border: 1px solid var(--line);
+      border-radius: var(--av-radius-md);
+      background: var(--color-bg-subtle);
+      color: #344258;
+      font-size: 11px;
+      cursor: pointer;
+    }}
+    .check-row input {{ width: 17px; height: 17px; accent-color: var(--green); }}
+    .side {{
+      position: sticky;
+      top: 10px;
+      display: grid;
+      gap: 10px;
+    }}
+    .readiness {{
+      padding: 18px;
+      border-radius: var(--av-radius-lg);
+      background: var(--navy);
+      color: white;
+    }}
+    .readiness-top {{
+      display: flex;
+      justify-content: space-between;
+      align-items: baseline;
+      gap: 14px;
+    }}
+    .readiness-top span {{ color: #aec0d5; font-size: 11px; }}
+    .readiness-top strong {{ font-size: 28px; }}
+    .progress {{
+      height: 7px;
+      margin: 13px 0 8px;
+      border-radius: 99px;
+      background: rgb(255 255 255 / .12);
+      overflow: hidden;
+    }}
+    .progress span {{
+      height: 100%;
+      display: block;
+      width: 0;
+      background: #58d59e;
+      transition: width 160ms ease;
+    }}
+    .readiness small {{ color: #aec0d5; font-size: 10px; }}
+    .draft-panel {{ padding: 0; overflow: hidden; }}
+    .draft-head {{
+      padding: 17px 18px;
+      display: flex;
+      justify-content: space-between;
+      gap: 12px;
+      border-bottom: 1px solid var(--line);
+    }}
+    .draft-head h2 {{ margin: 0 0 3px; font-size: 17px; }}
+    .draft-head p {{ margin: 0; color: var(--muted); font-size: 10px; }}
+    .draft-actions {{ display: flex; flex-wrap: wrap; gap: 5px; justify-content: flex-end; }}
+    .action {{
+      min-height: var(--av-control-height-lg);
+      padding: 7px 9px;
+      border: 1px solid var(--line);
+      border-radius: var(--av-radius-md);
+      background: var(--panel);
+      color: var(--ink);
+      font-size: 10px;
+      font-weight: 800;
+      cursor: pointer;
+    }}
+    .action.primary {{ border-color: var(--blue); background: var(--blue); color: white; }}
+    .action.danger {{ color: #a23838; }}
+    #draft-output {{
+      width: 100%;
+      min-height: 560px;
+      max-height: 68vh;
+      margin: 0;
+      padding: 18px;
+      border: 0;
+      background: var(--color-bg-subtle);
+      color: #26344a;
+      font: 11px/1.55 var(--av-font-mono);
+      resize: vertical;
+      outline: none;
+    }}
+    .draft-status {{
+      min-height: 28px;
+      padding: 7px 18px;
+      border-top: 1px solid var(--line);
+      color: var(--green);
+      font-size: 10px;
+    }}
+    .footer {{
+      padding: 18px 4px 0;
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: space-between;
+      gap: 10px 24px;
+      color: var(--muted);
+      font-size: 10px;
+    }}
+    .footer p {{ max-width: 760px; margin: 0; }}
+    .footer nav {{ display: flex; gap: 12px; }}
+    .footer a {{ color: var(--ink); font-weight: 750; }}
+    @media (max-width: 980px) {{
+      .hero, .workspace {{ grid-template-columns: 1fr; }}
+      .side {{ position: static; }}
+      #draft-output {{ max-height: none; }}
+    }}
+    @media (max-width: 620px) {{
+      .shell {{ width: calc(100% - 14px); margin-top: 7px; }}
+      .topbar {{ min-height: 44px; padding: 0 10px; }}
+      .hero {{ padding: 24px 18px; border-radius: 13px; }}
+      h1 {{ font-size: 38px; }}
+      .facts, .field-grid {{ grid-template-columns: 1fr; }}
+      .fact {{ min-height: 72px; }}
+      .panel {{ padding: 18px 14px; }}
+      .panel-head, .draft-head {{ flex-direction: column; }}
+      .draft-actions {{ width: 100%; justify-content: flex-start; }}
+      .action {{ min-height: 42px; }}
+    }}
+    @media (prefers-reduced-motion: reduce) {{
+      .progress span {{ transition: none; }}
+    }}
+  </style>
+</head>
+<body>
+  <main class="shell" data-avds-component="application-workspace" data-avds-version="4.6.0">
+    <header class="topbar" data-avds-component="Breadcrumbs">
+      <a href="{escape(detail_path, quote=True)}">QAZ.FUND</a>
+      <a href="{escape(detail_path, quote=True)}">← {escape(copy["back"])}</a>
+    </header>
+    <section class="hero" data-avds-pattern="editorial-lead-rail">
+      <div>
+        <div class="eyebrow">{escape(copy["eyebrow"])}</div>
+        <h1>{escape(copy["title"])}</h1>
+        <p class="hero-lead">{escape(copy["lead"])}</p>
+        <div class="privacy" data-avds-component="Alert">{escape(copy["privacy"])}</div>
+        {state_notice_markup}
+      </div>
+      <aside
+        class="facts"
+        aria-label="{escape(copy["known"], quote=True)}"
+        data-avds-component="PublicSummaryStrip"
+      >
+        <div class="fact">
+          <span>{escape(copy["program"])}</span>
+          <strong>{escape(detail.title)}</strong>
+        </div>
+        <div class="fact">
+          <span>{escape(copy["organizer"])}</span>
+          <strong>{escape(organizer or copy["unknown"])}</strong>
+        </div>
+        <div class="fact">
+          <span>{escape(copy["deadline"])}</span>
+          <strong>{escape(deadline)}</strong>
+        </div>
+        <div class="fact">
+          <span>{escape(copy["amount"])}</span>
+          <strong>{escape(amount)}</strong>
+        </div>
+      </aside>
+    </section>
+
+    <form
+      class="workspace"
+      id="application-form"
+      novalidate
+      data-avds-pattern="application-workspace"
+    >
+      <div class="form-stack">
+        <section class="panel" data-avds-component="Card">
+          <div class="panel-head">
+            <div>
+              <h2>{escape(copy["applicant"])}</h2>
+              <p>{escape(copy["applicant_note"])}</p>
+            </div>
+          </div>
+          <div class="field-grid">
+            {field("org_name", copy["org_name"], required=True)}
+            {field("legal_form", copy["legal_form"])}
+            {field("country", copy["country"], required=True)}
+            {field("contact", copy["contact"])}
+          </div>
+          <div class="field-grid single" style="margin-top:12px">
+            {fit_field}
+          </div>
+        </section>
+
+        <section class="panel" data-avds-component="Card">
+          <div class="panel-head">
+            <div>
+              <h2>{escape(copy["project"])}</h2>
+              <p>{escape(copy["project_note"])}</p>
+            </div>
+          </div>
+          <div class="field-grid">
+            {field("project_name", copy["project_name"], required=True)}
+            {field("geography", copy["geography"])}
+            {field("problem", copy["problem"], textarea=True, required=True)}
+            {field("solution", copy["solution"], textarea=True, required=True)}
+            {field("beneficiaries", copy["beneficiaries"], textarea=True)}
+          </div>
+        </section>
+
+        <section class="panel" data-avds-component="Card">
+          <div class="panel-head">
+            <div>
+              <h2>{escape(copy["impact"])}</h2>
+              <p>{escape(copy["impact_note"])}</p>
+            </div>
+          </div>
+          <div class="field-grid">
+            {field("outcomes", copy["outcomes"], textarea=True, required=True)}
+            {field("indicators", copy["indicators"], textarea=True, required=True)}
+            {field("evidence", copy["evidence"], textarea=True)}
+          </div>
+        </section>
+
+        <section class="panel" data-avds-component="Card">
+          <div class="panel-head">
+            <div>
+              <h2>{escape(copy["delivery"])}</h2>
+              <p>{escape(copy["delivery_note"])}</p>
+            </div>
+          </div>
+          <div class="field-grid">
+            {field("team", copy["team"], textarea=True, required=True)}
+            {field("timeline", copy["timeline"], textarea=True, required=True)}
+            {field("partners", copy["partners"], textarea=True)}
+            {field("risks", copy["risks"], textarea=True)}
+          </div>
+        </section>
+
+        <section class="panel" data-avds-component="Card">
+          <div class="panel-head">
+            <div>
+              <h2>{escape(copy["finance"])}</h2>
+              <p>{escape(copy["finance_note"])}</p>
+            </div>
+          </div>
+          <div class="field-grid">
+            {field("request_amount", copy["request_amount"], required=True)}
+            {field("cofinance", copy["cofinance"])}
+            {field("budget", copy["budget"], textarea=True, required=True)}
+          </div>
+        </section>
+
+        <section class="panel" data-avds-component="Card">
+          <div class="panel-head">
+            <div>
+              <h2>{escape(copy["documents"])}</h2>
+              <p>{escape(copy["documents_note"])}</p>
+            </div>
+          </div>
+          <div class="check-list">{checklist_markup}</div>
+        </section>
+      </div>
+
+      <aside class="side">
+        <section class="readiness" data-avds-component="Progress">
+          <div class="readiness-top">
+            <span>{escape(copy["readiness"])}</span>
+            <strong id="readiness-percent">0%</strong>
+          </div>
+          <div
+            class="progress"
+            role="progressbar"
+            aria-valuemin="0"
+            aria-valuemax="100"
+            aria-valuenow="0"
+          ><span id="readiness-bar"></span></div>
+          <small id="readiness-label"></small>
+        </section>
+        <section
+          class="panel draft-panel"
+          data-avds-component="Card"
+          data-avds-pattern="document-card"
+        >
+          <div class="draft-head">
+            <div>
+              <h2>{escape(copy["draft"])}</h2>
+              <p>{escape(copy["draft_note"])}</p>
+            </div>
+            <div class="draft-actions">
+              <button
+                class="action primary"
+                id="copy-draft"
+                type="button"
+                data-avds-component="Button"
+              >{escape(copy["copy"])}</button>
+              <button
+                class="action"
+                id="download-draft"
+                type="button"
+                data-avds-component="Button"
+              >{escape(copy["download"])}</button>
+              <button
+                class="action danger"
+                id="clear-draft"
+                type="button"
+                data-avds-component="Button"
+              >{escape(copy["clear"])}</button>
+            </div>
+          </div>
+          <textarea
+            id="draft-output"
+            readonly
+            aria-label="{escape(copy["draft"], quote=True)}"
+            data-avds-component="Textarea"
+          ></textarea>
+          <div class="draft-status" id="draft-status" aria-live="polite"></div>
+        </section>
+      </aside>
+    </form>
+    <footer class="footer">
+      <p>
+        {escape(copy["generated_note"])}
+        <a
+          href="{escape(source_href, quote=True)}"
+          target="_blank"
+          rel="noopener"
+        >{escape(copy["source"])}</a>.
+      </p>
+      <nav>
+        <a href="{escape(terms_href, quote=True)}">{escape(copy["terms"])}</a>
+        <a href="{escape(data_policy_href, quote=True)}">{escape(copy["data_policy"])}</a>
+        <a href="{escape(attribution_href, quote=True)}">{escape(copy["attribution"])}</a>
+      </nav>
+    </footer>
+  </main>
+  <script>
+    (() => {{
+      const form = document.getElementById("application-form");
+      const output = document.getElementById("draft-output");
+      const status = document.getElementById("draft-status");
+      const readinessBar = document.getElementById("readiness-bar");
+      const readinessPercent = document.getElementById("readiness-percent");
+      const readinessLabel = document.getElementById("readiness-label");
+      const progress = document.querySelector(".progress");
+      const facts = {facts_json};
+      const copy = {copy_json};
+      const storageKey = {json.dumps(storage_key)};
+      const inputs = [...form.querySelectorAll("input, textarea")];
+      const required = [...form.querySelectorAll("[required]")];
+      const value = (name) => {{
+        const control = form.elements.namedItem(name);
+        return String(control?.value || "").trim() || copy.empty_value;
+      }};
+      const line = (label, name) => `**${{label}}:** ${{value(name)}}`;
+      const buildDraft = () => {{
+        const checked = facts.checklist.map((label, index) => {{
+          const control = form.elements.namedItem(`document_${{index + 1}}`);
+          return `- [${{control?.checked ? "x" : " "}}] ${{label}}`;
+        }}).join("\\n");
+        return [
+          `# ${{copy.draft_heading}}: ${{value("project_name")}}`,
+          "",
+          `> ${{copy.generated_note}}`,
+          "",
+          `## ${{copy.sections.programme}}`,
+          `**${{copy.program}}:** ${{facts.program}}`,
+          `**${{copy.organizer}}:** ${{facts.organizer || copy.unknown}}`,
+          `**${{copy.deadline}}:** ${{facts.deadline}}`,
+          `**${{copy.amount}}:** ${{facts.amount}}`,
+          `**${{copy.eligibility}}:** ${{facts.eligibility}}`,
+          `**URL:** ${{facts.application_url || facts.official_source}}`,
+          "",
+          `## ${{copy.sections.applicant}}`,
+          line(copy.org_name, "org_name"),
+          line(copy.legal_form, "legal_form"),
+          line(copy.country, "country"),
+          line(copy.contact, "contact"),
+          line(copy.fit, "fit"),
+          "",
+          `## ${{copy.sections.project}}`,
+          line(copy.project_name, "project_name"),
+          line(copy.problem, "problem"),
+          line(copy.solution, "solution"),
+          line(copy.beneficiaries, "beneficiaries"),
+          line(copy.geography, "geography"),
+          "",
+          `## ${{copy.sections.impact}}`,
+          line(copy.outcomes, "outcomes"),
+          line(copy.indicators, "indicators"),
+          line(copy.evidence, "evidence"),
+          "",
+          `## ${{copy.sections.delivery}}`,
+          line(copy.team, "team"),
+          line(copy.timeline, "timeline"),
+          line(copy.partners, "partners"),
+          line(copy.risks, "risks"),
+          "",
+          `## ${{copy.sections.finance}}`,
+          line(copy.request_amount, "request_amount"),
+          line(copy.cofinance, "cofinance"),
+          line(copy.budget, "budget"),
+          "",
+          `## ${{copy.sections.documents}}`,
+          checked,
+          "",
+          `Источник: ${{facts.official_source}}`,
+        ].join("\\n");
+      }};
+      const serialize = () => Object.fromEntries(inputs.map((control) => [
+        control.name,
+        control.type === "checkbox" ? control.checked : control.value
+      ]));
+      const restore = () => {{
+        try {{
+          const data = JSON.parse(localStorage.getItem(storageKey) || "{{}}");
+          inputs.forEach((control) => {{
+            if (!(control.name in data)) return;
+            if (control.type === "checkbox") control.checked = Boolean(data[control.name]);
+            else control.value = String(data[control.name] || "");
+          }});
+        }} catch {{
+          try {{ localStorage.removeItem(storageKey); }} catch {{}}
+          status.textContent = copy.storage_error;
+        }}
+      }};
+      const update = () => {{
+        const done = required.filter((control) => String(control.value || "").trim()).length;
+        const percent = required.length ? Math.round(done / required.length * 100) : 100;
+        readinessBar.style.width = `${{percent}}%`;
+        readinessPercent.textContent = `${{percent}}%`;
+        readinessLabel.textContent = copy.required_done
+          .replace("{{done}}", String(done))
+          .replace("{{total}}", String(required.length));
+        progress.setAttribute("aria-valuenow", String(percent));
+        output.value = buildDraft();
+        try {{
+          localStorage.setItem(storageKey, JSON.stringify(serialize()));
+        }} catch {{
+          status.textContent = copy.storage_error;
+        }}
+      }};
+      let timer;
+      inputs.forEach((control) => control.addEventListener("input", () => {{
+        clearTimeout(timer);
+        timer = setTimeout(update, 80);
+      }}));
+      inputs.forEach((control) => control.addEventListener("change", update));
+      document.getElementById("copy-draft").addEventListener("click", async () => {{
+        try {{
+          await navigator.clipboard.writeText(output.value);
+          status.textContent = copy.copied;
+        }} catch {{
+          output.select();
+          document.execCommand("copy");
+          status.textContent = copy.copied;
+        }}
+      }});
+      document.getElementById("download-draft").addEventListener("click", () => {{
+        const blob = new Blob([output.value], {{ type: "text/markdown;charset=utf-8" }});
+        const url = URL.createObjectURL(blob);
+        const anchor = document.createElement("a");
+        anchor.href = url;
+        anchor.download = `qazfund-${{String(facts.program || "application")
+          .toLowerCase().replace(/[^a-zа-яё0-9]+/gi, "-").replace(/^-|-$/g, "")
+          .slice(0, 60)}}.md`;
+        anchor.click();
+        URL.revokeObjectURL(url);
+      }});
+      document.getElementById("clear-draft").addEventListener("click", () => {{
+        if (!window.confirm(copy.clear_confirm)) return;
+        try {{
+          localStorage.removeItem(storageKey);
+        }} catch {{
+          status.textContent = copy.storage_error;
+        }}
+        form.reset();
+        if (status.textContent !== copy.storage_error) status.textContent = "";
+        update();
+      }});
+      restore();
+      update();
+    }})();
+  </script>
+</body>
+</html>
+"""
+
+
+__all__ = ["render_application_prep_page"]

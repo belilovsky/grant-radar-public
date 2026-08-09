@@ -14,10 +14,10 @@ AVDS_CSS = """
       --av-color-blue-600: #315fdc;
       --av-color-blue-700: #214bb8;
       --av-color-blue-800: #183b94;
-      --av-color-slate-25: #fbfbf8;
-      --av-color-slate-50: #f6f7f3;
-      --av-color-slate-75: #eef1ec;
-      --av-color-slate-100: #e9eee8;
+      --av-color-slate-25: #f5f7fb;
+      --av-color-slate-50: #f8fafc;
+      --av-color-slate-75: #f1f5f9;
+      --av-color-slate-100: #eef2f7;
       --av-color-slate-200: #e2e8f0;
       --av-color-slate-300: #cbd5e1;
       --av-color-slate-400: #94a3b8;
@@ -64,9 +64,9 @@ AVDS_CSS = """
       --av-card-padding-sm: 10px;
       --av-card-padding-md: 12px;
       --av-section-gap: 24px;
-      --av-font-sans: Arial, "Helvetica Neue", Helvetica, system-ui, sans-serif;
+      --av-font-sans: -apple-system, BlinkMacSystemFont, "Segoe UI", Arial, sans-serif;
       --av-font-serif: Georgia, ui-serif, serif;
-      --av-font-mono: "Arial", ui-monospace, SFMono-Regular, Menlo, monospace;
+      --av-font-mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
       --font-sans: var(--av-font-sans);
       --font-serif: var(--av-font-serif);
       --font-mono: var(--av-font-mono);

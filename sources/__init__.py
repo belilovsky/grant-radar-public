@@ -11,6 +11,7 @@ from .ebrd_ecepp import EbrdEceppProcurementParser
 from .eeas_kazakhstan import EeasKazakhstanParser
 from .erasmus_kazakhstan import ErasmusKazakhstanParser
 from .eu_funding_tenders import EuFundingTendersCentralAsiaParser
+from .global_training import GlobalTrainingOpportunitiesParser
 from .google_org import GoogleOrgAiOpportunityParser
 from .grants_gov import GrantsGovParser
 from .internews import InternewsParser
@@ -25,6 +26,15 @@ from .startup_programs import (
     MicrosoftFoundersHubParser,
     MongoDbStartupsParser,
     NvidiaInceptionParser,
+)
+from .strategic_watch import (
+    DaadCentralAsiaParser,
+    EdbProcurementParser,
+    GefSgpKazakhstanParser,
+    GlobalInnovationFundParser,
+    IomKazakhstanProcurementParser,
+    OsceProcurementParser,
+    UngmOpportunitiesParser,
 )
 from .undp_procurement import UndpProcurementParser
 from .unesco_iite import UnescoIiteParser
@@ -58,7 +68,15 @@ PARSERS = {
     MongoDbStartupsParser.slug: MongoDbStartupsParser,
     UnicefKazakhstanParser.slug: UnicefKazakhstanParser,
     GoogleOrgAiOpportunityParser.slug: GoogleOrgAiOpportunityParser,
+    GlobalTrainingOpportunitiesParser.slug: GlobalTrainingOpportunitiesParser,
     UnescoIiteParser.slug: UnescoIiteParser,
+    UngmOpportunitiesParser.slug: UngmOpportunitiesParser,
+    OsceProcurementParser.slug: OsceProcurementParser,
+    IomKazakhstanProcurementParser.slug: IomKazakhstanProcurementParser,
+    EdbProcurementParser.slug: EdbProcurementParser,
+    DaadCentralAsiaParser.slug: DaadCentralAsiaParser,
+    GefSgpKazakhstanParser.slug: GefSgpKazakhstanParser,
+    GlobalInnovationFundParser.slug: GlobalInnovationFundParser,
 }
 
 __all__ = [
@@ -88,7 +106,15 @@ __all__ = [
     "MongoDbStartupsParser",
     "UnicefKazakhstanParser",
     "GoogleOrgAiOpportunityParser",
+    "GlobalTrainingOpportunitiesParser",
     "UnescoIiteParser",
     "UndpProcurementParser",
+    "UngmOpportunitiesParser",
+    "OsceProcurementParser",
+    "IomKazakhstanProcurementParser",
+    "EdbProcurementParser",
+    "DaadCentralAsiaParser",
+    "GefSgpKazakhstanParser",
+    "GlobalInnovationFundParser",
     "PARSERS",
 ]

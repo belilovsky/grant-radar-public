@@ -1,4 +1,4 @@
-"""Branded browser error pages for public QAZ.FUND routes."""
+"""Branded recovery page for human-facing route errors."""
 
 from __future__ import annotations
 
@@ -52,13 +52,23 @@ def render_not_found_page(*, lang: str, root_path: str = "") -> str:
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="robots" content="noindex,follow">
-  <meta name="description" content="{escape(copy["text"], quote=True)}">
-  <title>{escape(copy["title"])}</title>
+  <meta name="robots" content="noindex,nofollow">
+  <meta name="description" content="{escape(page_message, quote=True)}">
+  <title>{escape(page_title)} – QAZ.FUND</title>
 {AVDS_FONT_HEAD}
   <style>
 {AVDS_CSS}
-    * {{ box-sizing: border-box; }}
+    :root {{
+      color-scheme:light;
+      --ink:var(--color-text);
+      --muted:var(--color-text-muted);
+      --line:var(--color-border);
+      --panel:var(--color-surface);
+      --wash:var(--color-bg);
+      --brand:var(--color-accent);
+      --brand-soft:var(--color-accent-subtle);
+    }}
+    * {{ box-sizing:border-box; }}
     body {{
       margin: 0;
       min-height: 0;
@@ -103,33 +113,53 @@ def render_not_found_page(*, lang: str, root_path: str = "") -> str:
       background: transparent;
       box-shadow: none;
     }}
+    .top {{
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:18px;
+    }}
+    .brand {{ color:var(--ink); font-size:14px; font-weight:850; text-decoration:none; }}
+    .code {{ color:var(--muted); font:700 12px/1 var(--av-font-mono); }}
     .eyebrow {{
-      color: var(--color-accent);
-      font-size: var(--av-text-sm);
-      font-weight: 700;
+      margin-top:54px;
+      color:var(--brand);
+      font-size:11px;
+      font-weight:850;
+      letter-spacing:.1em;
+      text-transform:uppercase;
     }}
     h1 {{
-      margin: 8px 0 12px;
-      font-size: 48px;
-      line-height: 1.05;
+      max-width:12ch;
+      margin:10px 0 14px;
+      font-size:clamp(40px,8vw,72px);
+      line-height:.98;
+      letter-spacing:-.055em;
     }}
-    p {{
-      max-width: 52ch;
-      margin: 0;
-      color: var(--color-text-muted);
-      line-height: 1.65;
+    .lead {{ max-width:58ch; margin:0; color:var(--muted); font-size:17px; line-height:1.6; }}
+    .actions {{ margin-top:28px; display:flex; flex-wrap:wrap; gap:8px; }}
+    .action {{
+      min-height:var(--av-control-height-lg);
+      padding:10px 14px;
+      display:inline-flex;
+      align-items:center;
+      justify-content:center;
+      border:1px solid var(--line);
+      border-radius:var(--av-radius-md);
+      color:var(--ink);
+      font-size:13px;
+      font-weight:800;
+      text-decoration:none;
     }}
-    .primary-action {{
-      display: inline-flex;
-      align-items: center;
-      min-height: var(--av-control-height-md);
-      margin-top: 24px;
-      padding: 0 16px;
-      border-radius: var(--av-radius-md);
-      background: var(--color-accent);
-      color: white;
-      font-weight: 700;
-      text-decoration: none;
+    .action.primary {{ border-color:var(--brand); background:var(--brand); color:white; }}
+    .hint {{
+      margin:32px 0 0;
+      padding:14px 16px;
+      border-left:3px solid var(--brand);
+      background:var(--brand-soft);
+      color:var(--muted);
+      font-size:12px;
+      line-height:1.55;
     }}
     .primary-action:focus-visible {{ outline: 0; box-shadow: var(--color-focus-ring); }}
     @media (min-width: 901px) {{
@@ -167,3 +197,6 @@ def render_not_found_page(*, lang: str, root_path: str = "") -> str:
   </main>
 </body>
 </html>"""
+
+
+__all__ = ["render_error_page"]

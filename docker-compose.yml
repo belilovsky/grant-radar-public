@@ -23,6 +23,8 @@ services:
     environment:
       DATABASE_URL: postgresql+psycopg://grantradar:${POSTGRES_PASSWORD:-changeme}@db:5432/grantradar
       GRANT_RADAR_DB_URL: postgresql+psycopg://grantradar:${POSTGRES_PASSWORD:-changeme}@db:5432/grantradar
+      GRANT_RADAR_TIME_ZONE: ${GRANT_RADAR_TIME_ZONE:-Asia/Almaty}
+      TZ: ${GRANT_RADAR_TIME_ZONE:-Asia/Almaty}
     healthcheck:
       test:
         [
@@ -43,9 +45,24 @@ services:
     environment:
       DATABASE_URL: postgresql+psycopg://grantradar:${POSTGRES_PASSWORD:-changeme}@db:5432/grantradar
       GRANT_RADAR_DB_URL: postgresql+psycopg://grantradar:${POSTGRES_PASSWORD:-changeme}@db:5432/grantradar
+      GRANT_RADAR_TIME_ZONE: ${GRANT_RADAR_TIME_ZONE:-Asia/Almaty}
+      TZ: ${GRANT_RADAR_TIME_ZONE:-Asia/Almaty}
       # Migrations are owned by the API entrypoint to avoid concurrent Alembic runs.
       GRANT_RADAR_SKIP_MIGRATIONS: "1"
+      GRANT_RADAR_MAX_SOURCE_CONCURRENCY: ${GRANT_RADAR_MAX_SOURCE_CONCURRENCY:-4}
+      GRANT_RADAR_WORKER_HEARTBEAT_PATH: /tmp/grant-radar-worker-heartbeat
+      GRANT_RADAR_WORKER_HEARTBEAT_INTERVAL_SECONDS: "15"
     command: ["python", "-m", "core.scheduler"]
+    healthcheck:
+      test:
+        [
+          "CMD-SHELL",
+          "python -c \"import os,time; path=os.environ.get('GRANT_RADAR_WORKER_HEARTBEAT_PATH','/tmp/grant-radar-worker-heartbeat'); age=time.time()-os.path.getmtime(path); raise SystemExit(0 if age < 120 else 1)\"",
+        ]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 90s
 
 volumes:
   pgdata: {}

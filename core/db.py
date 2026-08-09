@@ -7,6 +7,7 @@ Provides `SqlRepository` implementing the `Repository` Protocol from
 
 from __future__ import annotations
 
+import hashlib
 import json
 import threading
 from dataclasses import asdict, is_dataclass
@@ -24,6 +25,7 @@ from sqlalchemy import (
     Numeric,
     String,
     Text,
+    UniqueConstraint,
     create_engine,
     delete,
     func,
@@ -60,6 +62,9 @@ class OpportunityRow(Base):
     deadline = Column(Date, nullable=True)
     score = Column(Float, nullable=True)
     discovered_at = Column(DateTime, default=_utcnow, nullable=False)
+    first_seen_at = Column(DateTime, default=_utcnow, nullable=False)
+    last_seen_at = Column(DateTime, default=_utcnow, nullable=False, index=True)
+    content_hash = Column(String(71), nullable=True)
     raw = Column(JSON, nullable=True)
 
     @property
@@ -140,6 +145,8 @@ def _json_payload(record: Any) -> dict[str, Any]:
             "eligibility": _get(record, "eligibility") or [],
             "tags": _get(record, "tags") or [],
             "languages": _get(record, "languages") or [],
+            "opportunity_status": _get(record, "opportunity_status"),
+            "lifecycle": _get(record, "lifecycle"),
             "raw": record_raw,
         }
     try:
@@ -159,6 +166,81 @@ def _as_decimal(value: Any) -> Decimal | None:
 
 def _as_date(value: Any) -> date | None:
     return value if isinstance(value, date) else None
+
+
+def _semantic_snapshot(row: OpportunityRow) -> dict[str, Any]:
+    """Return the stable, public-interest fields used for change detection."""
+
+    stored_raw = cast(dict[str, Any] | None, row.raw) or {}
+    nested_raw = stored_raw.get("raw")
+    source_raw = nested_raw if isinstance(nested_raw, dict) else stored_raw
+
+    def raw_value(key: str) -> Any:
+        value = stored_raw.get(key)
+        if value not in (None, "", [], {}):
+            return value
+        return source_raw.get(key)
+
+    def decimal_value(value: Any) -> str | None:
+        if value is None:
+            return None
+        try:
+            normalized = Decimal(str(value)).normalize()
+        except Exception:
+            return str(value)
+        return format(normalized, "f")
+
+    return {
+        "source": str(row.source or ""),
+        "source_url": str(row.source_url or ""),
+        "title": str(row.title or ""),
+        "summary": str(row.summary or ""),
+        "funder": str(row.funder or ""),
+        "amount_min": decimal_value(row.amount_min),
+        "amount_max": decimal_value(row.amount_max),
+        "amount_raw": raw_value("amount_raw"),
+        "currency": str(row.currency or ""),
+        "deadline": row.deadline.isoformat() if row.deadline is not None else None,
+        "deadline_policy": raw_value("deadline_policy"),
+        "type": raw_value("type"),
+        "eligibility": raw_value("eligibility"),
+        "eligibility_summary": raw_value("eligibility_summary"),
+        "tags": raw_value("tags"),
+        "languages": raw_value("languages"),
+        "application_url": (
+            raw_value("application_url")
+            or raw_value("apply_url")
+            or raw_value("submission_url")
+        ),
+        "opportunity_status": (
+            raw_value("opportunity_status")
+            or raw_value("lifecycle")
+            or raw_value("status")
+        ),
+        "i18n": raw_value("i18n"),
+    }
+
+
+def _snapshot_hash(snapshot: dict[str, Any]) -> str:
+    payload = json.dumps(
+        snapshot,
+        ensure_ascii=False,
+        sort_keys=True,
+        separators=(",", ":"),
+        default=str,
+    ).encode("utf-8")
+    return "sha256:" + hashlib.sha256(payload).hexdigest()
+
+
+def _changed_fields(
+    previous: dict[str, Any],
+    current: dict[str, Any],
+) -> list[str]:
+    return sorted(
+        key
+        for key in set(previous).union(current)
+        if previous.get(key) != current.get(key)
+    )
 
 
 def get_engine(url: str, *, echo: bool = False):
@@ -182,7 +264,8 @@ class SqlRepository:
         fp = compute_fingerprint(record)
         source_url = str(_get(record, "source_url") or _get(record, "url") or fp)
         score_value = _get(record, "score")
-        return OpportunityRow(
+        observed_at = _utcnow()
+        row = OpportunityRow(
             id=fp[:255],
             dedup_key=fp[:255],
             source=str(_get(record, "source") or "unknown"),
@@ -196,7 +279,33 @@ class SqlRepository:
             currency=str(_get(record, "currency") or "USD")[:8],
             deadline=_as_date(_get(record, "deadline")),
             score=float(score_value) if score_value is not None else None,
+            discovered_at=observed_at,
+            first_seen_at=observed_at,
+            last_seen_at=observed_at,
             raw=_json_payload(record),
+        )
+        setattr(row, "content_hash", _snapshot_hash(_semantic_snapshot(row)))
+        return row
+
+    @staticmethod
+    def _observation(
+        row: OpportunityRow,
+        *,
+        change_type: str,
+        changed_fields: list[str],
+        observed_at: datetime,
+    ) -> OpportunityObservationRow:
+        snapshot = _semantic_snapshot(row)
+        content_hash = _snapshot_hash(snapshot)
+        return OpportunityObservationRow(
+            opportunity_id=str(row.id),
+            dedup_key=str(row.dedup_key),
+            source=str(row.source),
+            observed_at=observed_at,
+            change_type=change_type,
+            content_hash=content_hash,
+            changed_fields=changed_fields,
+            snapshot=snapshot,
         )
 
     def exists(self, fingerprint: str) -> bool:
@@ -228,8 +337,16 @@ class SqlRepository:
             existing.source_url = new_row.source_url or existing.source_url
             existing.summary = new_row.summary or existing.summary
             existing.funder = new_row.funder or existing.funder
-            existing.amount_min = new_row.amount_min or existing.amount_min
-            existing.amount_max = new_row.amount_max or existing.amount_max
+            existing.amount_min = (
+                new_row.amount_min
+                if new_row.amount_min is not None
+                else existing.amount_min
+            )
+            existing.amount_max = (
+                new_row.amount_max
+                if new_row.amount_max is not None
+                else existing.amount_max
+            )
             existing.currency = new_row.currency or existing.currency
             existing.deadline = new_row.deadline or existing.deadline
             existing.score = (
@@ -274,6 +391,27 @@ class SqlRepository:
     def size(self) -> int:
         with self._Session() as s:
             return int(s.scalar(select(func.count()).select_from(OpportunityRow)) or 0)
+
+    def observations_since(
+        self,
+        since: datetime,
+        *,
+        limit: int = 500,
+        include_baselines: bool = False,
+    ) -> list[OpportunityObservationRow]:
+        with self._Session() as s:
+            query = (
+                select(OpportunityObservationRow)
+                .where(OpportunityObservationRow.observed_at >= since)
+                .order_by(
+                    OpportunityObservationRow.observed_at.desc(),
+                    OpportunityObservationRow.id.desc(),
+                )
+                .limit(max(1, min(limit, 5000)))
+            )
+            if not include_baselines:
+                query = query.where(OpportunityObservationRow.change_type != "baseline")
+            return list(s.scalars(query).all())
 
     def clear(self) -> None:
         with self._Session() as s:

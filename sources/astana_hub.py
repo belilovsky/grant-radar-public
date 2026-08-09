@@ -9,7 +9,7 @@ from __future__ import annotations
 import re
 from collections.abc import AsyncIterator
 from datetime import date, datetime
-from typing import ClassVar
+from typing import Any, ClassVar
 
 import structlog
 
@@ -25,7 +25,25 @@ FALLBACK_PROGRAM_URLS = (
     "https://astanahub.com/ru/l/TechOrda2025",
     "https://astanahub.com/ru/l/silkwayaccelerator2025",
     "https://astanahub.com/en/l/regional/develop",
+    "https://astanahub.com/l/marketentry/centraleurasia2026",
+    "https://astanahub.com/en/l/aipreneurs-2026",
+    "https://astanahub.com/en/l/backup",
 )
+FALLBACK_PROGRAM_TITLES = {
+    "https://astanahub.com/en/l/backup": "Hero Training for OTS startup founders",
+}
+FALLBACK_PROGRAM_RU = {
+    "https://astanahub.com/en/l/backup": {
+        "title": "Hero Training для основателей стартапов из стран ОТГ",
+        "summary": (
+            "Программа Astana Hub и Draper University для основателей стартапов "
+            "из стран ОТГ, включая Казахстан. Участники проходят онлайн-подготовку, "
+            "после которой отбираются 15 проектов для Hero Training; команды, "
+            "успешно завершившие онлайн-этап и прошедшие отбор, получают доступ "
+            "к очной части в Кремниевой долине."
+        ),
+    },
+}
 FALLBACK_PROGRAM_SUMMARIES = {
     "https://astanahub.com/ru/l/TechOrda2025": (
         "Astana Hub education-support program for Kazakhstan IT talent. "
@@ -41,6 +59,27 @@ FALLBACK_PROGRAM_SUMMARIES = {
         "Astana Hub regional IT ecosystem program for Kazakhstan teams outside "
         "the capital. It is a practical entry point for startup support, local "
         "community development, acceleration and partner programs."
+    ),
+    "https://astanahub.com/l/marketentry/centraleurasia2026": (
+        "Astana Hub 12-week offline acceleration program in Almaty for "
+        "international B2B technology startups entering Kazakhstan and Central "
+        "Eurasia. The program supports market validation, local partnerships, "
+        "business setup and pilots with Kazakhstan customers."
+    ),
+    "https://astanahub.com/en/l/aipreneurs-2026": (
+        "Astana Hub 14-week offline program in Astana for professionals and "
+        "teams building AI startups. The route combines founder training, "
+        "accelerator work, product validation, AlemPlus cloud and GPU "
+        "infrastructure, Astana Hub partner resources, accommodation for "
+        "non-resident Core Accelerator participants and possible pre-seed "
+        "funding for the strongest teams."
+    ),
+    "https://astanahub.com/en/l/backup": (
+        "Astana Hub and Draper University Hero Training route for startup "
+        "founders from OTS countries, including Kazakhstan. The programme "
+        "starts with online pre-acceleration, selects top projects for the "
+        "Hero Training track and includes a Silicon Valley stage for teams "
+        "that complete the online part and pass selection."
     ),
 }
 FALLBACK_PROGRAM_EXTRA_TAGS = {
@@ -59,6 +98,36 @@ FALLBACK_PROGRAM_EXTRA_TAGS = {
         "regional_development",
         "kazakhstan",
     ],
+    "https://astanahub.com/l/marketentry/centraleurasia2026": [
+        "startup",
+        "accelerator",
+        "b2b",
+        "market_entry",
+        "central_asia_eligible",
+        "kazakhstan",
+    ],
+    "https://astanahub.com/en/l/aipreneurs-2026": [
+        "startup",
+        "accelerator",
+        "ai",
+        "gpu",
+        "pre_seed",
+        "alemplus",
+        "kazakhstan",
+    ],
+    "https://astanahub.com/en/l/backup": [
+        "startup",
+        "accelerator",
+        "founder_training",
+        "silicon_valley",
+        "central_asia_eligible",
+        "kazakhstan",
+    ],
+}
+FALLBACK_PROGRAM_DEADLINES = {
+    "https://astanahub.com/l/marketentry/centraleurasia2026": date(2026, 8, 16),
+    "https://astanahub.com/en/l/aipreneurs-2026": date(2026, 8, 17),
+    "https://astanahub.com/en/l/backup": date(2026, 8, 6),
 }
 
 # Very lightweight HTML extraction patterns; resilient to small layout changes.
@@ -130,6 +199,17 @@ TEXTUAL_DEADLINE_PATTERNS = (
     ),
     re.compile(
         r"deadline[^.\n]{0,120}?(?P<month>[A-Za-z]+)\s+(?P<day>\d{1,2}),\s*(?P<year>20\d{2})",
+        re.IGNORECASE,
+    ),
+    re.compile(
+        r"application\s+is\s+open\s+until[^.\n]{0,80}?"
+        r"(?P<month>[A-Za-z]+)\s+(?P<day>\d{1,2}),\s*(?P<year>20\d{2})",
+        re.IGNORECASE,
+    ),
+    re.compile(
+        r"application\s+period[^.\n]{0,120}?[–-]\s*"
+        r"(?P<day>\d{1,2})\s+(?P<month>[A-Za-z]+)[^.]{0,40}?"
+        r"(?P<year>20\d{2})",
         re.IGNORECASE,
     ),
     re.compile(
@@ -211,7 +291,9 @@ class AstanaHubSource(BaseSource):
                 continue
 
             title = (
-                self._title_from_html(resp.text) or url.rstrip("/").rsplit("/", 1)[-1]
+                FALLBACK_PROGRAM_TITLES.get(url)
+                or self._title_from_html(resp.text)
+                or url.rstrip("/").rsplit("/", 1)[-1]
             )
             count += 1
             yield self._to_opportunity(url=url, title=title, raw=resp.text[:2000])
@@ -238,6 +320,8 @@ class AstanaHubSource(BaseSource):
                 deadline = None
         if deadline is None:
             deadline = _parse_textual_deadline(raw)
+        if deadline is None:
+            deadline = FALLBACK_PROGRAM_DEADLINES.get(url)
 
         opp_id = re.sub(r"[^a-zA-Z0-9_-]+", "_", url.split("/")[-1] or url)[:64]
         tags = list(self.default_tags)
@@ -245,29 +329,37 @@ class AstanaHubSource(BaseSource):
         if deadline is None and url in FALLBACK_PROGRAM_URLS:
             tags.append("rolling")
         summary = FALLBACK_PROGRAM_SUMMARIES.get(url, "Astana Hub program")
+        raw_payload: dict[str, Any] = {
+            "external_id": opp_id,
+            "snippet": raw,
+            "description": summary,
+            "country_scope": "Kazakhstan / Central Asia",
+            "application_url": url,
+            "eligibility": (
+                "Check the current Astana Hub program page for applicant "
+                "requirements, dates and partner-school or startup criteria."
+            ),
+            "deadline_policy": (
+                "rolling" if deadline is None and url in FALLBACK_PROGRAM_URLS else None
+            ),
+        }
+        localized_ru = FALLBACK_PROGRAM_RU.get(url)
+        if localized_ru:
+            raw_payload["i18n"] = {"ru": localized_ru}
         return Opportunity(
             source=self.slug,
             source_url=url,  # type: ignore[arg-type]
             type=OpportunityType.ACCELERATOR,
             title=title,
             summary=summary,
+            funder="Astana Hub",
             deadline=deadline,
+            eligibility=[
+                "Kazakhstan and Central Asia startup teams or applicants under "
+                "the current Astana Hub program terms"
+            ],
             tags=tags,
-            raw={
-                "external_id": opp_id,
-                "snippet": raw,
-                "description": summary,
-                "country_scope": "Kazakhstan / Central Asia",
-                "eligibility": (
-                    "Check the current Astana Hub program page for applicant "
-                    "requirements, dates and partner-school or startup criteria."
-                ),
-                "deadline_policy": (
-                    "rolling"
-                    if deadline is None and url in FALLBACK_PROGRAM_URLS
-                    else None
-                ),
-            },
+            raw=raw_payload,
         )
 
     async def healthcheck(self) -> bool:
