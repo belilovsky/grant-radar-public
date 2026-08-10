@@ -21,6 +21,14 @@ def test_prod_image_uses_runtime_requirements():
     assert "build-essential" not in dockerfile
 
 
+def test_semantic_image_uses_the_cpu_only_torch_wheel():
+    dockerfile = (ROOT / "Dockerfile.semantic").read_text()
+
+    assert "https://download.pytorch.org/whl/cpu" in dockerfile
+    assert "torch==2.9.1" in dockerfile
+    assert "pip install -r requirements-semantic.txt" in dockerfile
+
+
 def test_prod_requirements_exclude_dev_and_browser_tooling():
     requirements = (ROOT / "requirements-prod.txt").read_text()
     excluded = (
