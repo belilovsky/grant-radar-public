@@ -256,9 +256,16 @@ async def _index_loop(state: ServiceState) -> None:
     interval = _positive_int(
         "GRANT_RADAR_SEMANTIC_REINDEX_INTERVAL_SECONDS", 21600, maximum=86400
     )
+    startup_retry_interval = _positive_int(
+        "GRANT_RADAR_SEMANTIC_STARTUP_RETRY_SECONDS", 15, maximum=300
+    )
     while True:
         await reindex(state)
-        await asyncio.sleep(interval)
+        # A transient API/Qdrant race during Compose startup must not leave the
+        # sidecar warming until the normal six-hour refresh.  Once a usable
+        # index exists, preserve it and return to the regular refresh cadence.
+        delay = interval if state.indexed_at is not None else startup_retry_interval
+        await asyncio.sleep(delay)
 
 
 def create_app() -> FastAPI:
