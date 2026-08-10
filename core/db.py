@@ -21,6 +21,7 @@ from sqlalchemy import (
     Date,
     DateTime,
     Float,
+    ForeignKey,
     Integer,
     Numeric,
     String,
@@ -97,6 +98,34 @@ class OpportunityVersionRow(Base):
     changed_fields = Column(JSON, nullable=False)
     fields = Column(JSON, nullable=False)
     created_at = Column(DateTime, default=_utcnow, nullable=False)
+
+
+class OpportunityObservationRow(Base):
+    """Immutable semantic snapshot captured when a record first appears or changes."""
+
+    __tablename__ = "opportunity_observations"
+    __table_args__ = (
+        UniqueConstraint(
+            "opportunity_id",
+            "content_hash",
+            name="uq_opportunity_observations_item_hash",
+        ),
+    )
+
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    opportunity_id = Column(
+        String(255),
+        ForeignKey("opportunities.id", ondelete="CASCADE"),
+        nullable=False,
+        index=True,
+    )
+    dedup_key = Column(String(255), nullable=False)
+    source = Column(String(64), nullable=False, index=True)
+    observed_at = Column(DateTime, default=_utcnow, nullable=False, index=True)
+    change_type = Column(String(24), nullable=False, index=True)
+    content_hash = Column(String(71), nullable=False)
+    changed_fields = Column(JSON, nullable=False, default=list)
+    snapshot = Column(JSON, nullable=False)
 
 
 def _get(record: Any, key: str) -> Optional[Any]:
@@ -328,9 +357,18 @@ class SqlRepository:
                     snapshot=public_snapshot(record),
                     changed=["initial"],
                 )
+                s.add(
+                    self._observation(
+                        new_row,
+                        change_type="created",
+                        changed_fields=sorted(_semantic_snapshot(new_row)),
+                        observed_at=observed_at,
+                    )
+                )
                 s.commit()
                 return True
             previous_snapshot = public_snapshot(existing)
+            previous_observation_snapshot = _semantic_snapshot(existing)
             next_snapshot = public_snapshot(record)
             now = _utcnow()
             existing.title = new_row.title or existing.title
@@ -353,6 +391,9 @@ class SqlRepository:
                 new_row.score if new_row.score is not None else existing.score
             )
             setattr(existing, "discovered_at", now)
+            setattr(existing, "last_seen_at", now)
+            if existing.first_seen_at is None:
+                setattr(existing, "first_seen_at", now)
             existing_raw = cast(dict[str, Any] | None, existing.raw)
             new_raw = cast(dict[str, Any] | None, new_row.raw)
             setattr(
@@ -360,6 +401,31 @@ class SqlRepository:
                 "raw",
                 preserve_localized_raw(existing_raw, new_raw),
             )
+            current_observation_snapshot = _semantic_snapshot(existing)
+            current_hash = _snapshot_hash(current_observation_snapshot)
+            observation_changed = _changed_fields(
+                previous_observation_snapshot, current_observation_snapshot
+            )
+            baseline_needed = not existing.content_hash
+            setattr(existing, "content_hash", current_hash)
+            if observation_changed or baseline_needed:
+                observation_exists = s.scalar(
+                    select(OpportunityObservationRow.id).where(
+                        OpportunityObservationRow.opportunity_id == existing.id,
+                        OpportunityObservationRow.content_hash == current_hash,
+                    )
+                )
+                if observation_exists is None:
+                    s.add(
+                        self._observation(
+                            existing,
+                            change_type=(
+                                "changed" if observation_changed else "baseline"
+                            ),
+                            changed_fields=observation_changed,
+                            observed_at=now,
+                        )
+                    )
             if snapshot_hash(previous_snapshot) != snapshot_hash(next_snapshot):
                 latest = s.scalar(
                     select(OpportunityVersionRow)
@@ -416,6 +482,7 @@ class SqlRepository:
     def clear(self) -> None:
         with self._Session() as s:
             s.execute(delete(OpportunityVersionRow))
+            s.query(OpportunityObservationRow).delete()
             s.query(OpportunityRow).delete()
             s.commit()
 

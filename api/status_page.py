@@ -122,6 +122,8 @@ def _source_display_name(row: dict[str, Any], lang: str) -> str:
         label = _source_label(slug, lang)
         normalized_slug = slug.lower().replace("-", "_").replace(" ", "_")
         if label and label != normalized_slug.replace("_", " "):
+            if name and name.lower().startswith(label.lower()) and name != label:
+                return name
             return label
     if name:
         return _source_label(name, lang)

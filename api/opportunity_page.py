@@ -698,6 +698,42 @@ def _apply_markup(
     )
 
 
+def _verification_markup(copy: dict[str, object]) -> str:
+    items = (
+        ("verification_eligibility_title", "verification_eligibility_text"),
+        ("verification_terms_title", "verification_terms_text"),
+        ("verification_procurement_title", "verification_procurement_text"),
+        ("verification_publication_title", "verification_publication_text"),
+    )
+    item_markup = "".join(
+        """
+        <li class="verification-item">
+          <strong>{title}</strong>
+          <span>{text}</span>
+        </li>
+        """.format(
+            title=escape(str(copy[title_key])),
+            text=escape(str(copy[text_key])),
+        )
+        for title_key, text_key in items
+    )
+    return """
+    <section class="verification-section">
+      <div class="verification-head">
+        <span class="eyebrow">{eyebrow}</span>
+        <h2>{title}</h2>
+        <p>{description}</p>
+      </div>
+      <ul class="verification-list">{items}</ul>
+    </section>
+    """.format(
+        eyebrow=escape(str(copy["verification_eyebrow"])),
+        title=escape(str(copy["verification_title"])),
+        description=escape(str(copy["verification_description"])),
+        items=item_markup,
+    )
+
+
 def _detail_metadata_value(detail: OpportunityDetail, *keys: str) -> str:
     wanted = set(keys)
     for entry in detail.metadata:
@@ -901,6 +937,14 @@ def render_opportunity_page(
             f"{detail_base}/attribution?lang={active_lang}"
             if detail_base
             else f"/attribution?lang={active_lang}"
+        ),
+        quote=True,
+    )
+    prepare_href = escape(
+        (
+            f"{detail_base}/opportunity/{detail.id}/prepare?lang={active_lang}"
+            if detail_base
+            else f"/opportunity/{detail.id}/prepare?lang={active_lang}"
         ),
         quote=True,
     )
@@ -2064,6 +2108,7 @@ def render_opportunity_page(
             <button class="button slim" type="button" id="copy-working-brief">
               {escape(str(copy["detail_copy_brief"]))}
             </button>
+            <span class="visually-hidden">{escape(str(copy["detail_brief_legacy_heading"]))}</span>
             <button class="button slim" type="button" id="share-opportunity">
               {escape(str(copy["detail_share"]))}
             </button>
@@ -2101,6 +2146,7 @@ def render_opportunity_page(
       </div>
       {sidebar_markup}
     </section>
+    {decision_check_markup}
     {verification_markup}
     {prepare_markup}
     {apply_markup}

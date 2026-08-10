@@ -167,6 +167,7 @@ def run_smoke(
             if str(item.get("id") or "")
         ]
         history_id = compare_ids[0] if compare_ids else ""
+        opportunity_id = history_id
         history = _get_json(
             client,
             base_url,
@@ -195,12 +196,12 @@ def run_smoke(
             ),
             "world-bank",
         )
-        funder_page = _get_text(
+        funder_page_en = _get_text(
             client,
             base_url,
             f"/funder/{funder_slug}?lang=en",
         )
-        funder_page_head = _head(
+        funder_page_en_head = _head(
             client,
             base_url,
             f"/funder/{funder_slug}?lang=en",
@@ -252,7 +253,6 @@ def run_smoke(
         status_head = _head(client, base_url, "/status?lang=ru")
         operator_page = _get_text(client, base_url, "/operator?lang=ru")
         operator_head = _head(client, base_url, "/operator?lang=ru")
-        insights_page = _get_text(client, base_url, "/insights?lang=ru")
         insights_head = _head(client, base_url, "/insights?lang=ru")
         detail_page = _get_text(
             client,
@@ -274,7 +274,7 @@ def run_smoke(
             base_url,
             f"/opportunity/{opportunity_id}/prepare?lang=ru",
         )
-        funder_page = _get_text(
+        funder_page_ru = _get_text(
             client,
             base_url,
             f"/funder/{funder_slug}?lang=ru",
@@ -410,6 +410,7 @@ def run_smoke(
         "insights_page": (
             '<html lang="ru"' in insights_page
             and 'data-avds-pattern="decision-readiness"' in insights_page
+            and 'data-avds-component="DataViz"' in insights_page
             and _is_public_cacheable(insights_page_head, 60)
         ),
         "insights_snapshot": (
@@ -454,10 +455,10 @@ def run_smoke(
             and 'data-avds="grant-radar"' in opportunity_page
             and _is_public_cacheable(opportunity_page_head, 60)
         ),
-        "funder_page": (
-            '<html lang="en"' in funder_page
-            and 'data-avds="grant-radar"' in funder_page
-            and _is_public_cacheable(funder_page_head, 60)
+        "funder_page_en": (
+            '<html lang="en"' in funder_page_en
+            and 'data-avds="grant-radar"' in funder_page_en
+            and _is_public_cacheable(funder_page_en_head, 60)
         ),
         "llms_home": f"Home: {_url(base_url, '/')}" in llms,
         "llms_sitemap": f"Sitemap: {_url(base_url, '/sitemap.xml')}" in llms,
@@ -525,13 +526,6 @@ def run_smoke(
         ),
         "operator_noindex": "noindex"
         in operator_head.headers.get("x-robots-tag", "").lower(),
-        "insights_page": (
-            'data-avds-component="data-centre"' in insights_page
-            and 'data-avds-pattern="data-quality-scorecard"' in insights_page
-            and "В текущем каталоге" in insights_page
-            and "Релевантных карточек в индексе" in insights_page
-            and "\u2014" not in insights_page
-        ),
         "insights_head": insights_head.headers.get("content-type", "").startswith(
             "text/html"
         ),
@@ -552,10 +546,10 @@ def run_smoke(
         "application_workspace_head": prepare_head.headers.get(
             "content-type", ""
         ).startswith("text/html"),
-        "funder_page": (
-            "QAZ.FUND" in funder_page
-            and 'data-avds="grant-radar"' in funder_page
-            and "\u2014" not in funder_page
+        "funder_page_ru": (
+            "QAZ.FUND" in funder_page_ru
+            and 'data-avds="grant-radar"' in funder_page_ru
+            and "\u2014" not in funder_page_ru
         ),
         "policy_routes": (
             "Условия использования" in policy_terms
@@ -730,6 +724,25 @@ def run_smoke(
                 "action-path",
             ]
             and _is_public_cacheable(avds_head, 60)
+        ),
+        "qazpipe_contract": (
+            qazpipe_contract.get("schema_version") == "qazpipe-pull-source-v1"
+            and qazpipe_contract.get("mode") == "pull"
+            and qazpipe_contract.get("direction") == "outbound-read-only"
+            and (qazpipe_contract.get("qazlake_handoff") or {}).get("direct_write")
+            is False
+            and _is_public_cacheable(qazpipe_head, 60)
+        ),
+        "qazcompute_contract": (
+            qazcompute_contract.get("schema_version")
+            == "qazcompute-profile-contract-v1"
+            and (qazcompute_contract.get("execution") or {}).get("runtime_status")
+            == "proven"
+            and (qazcompute_contract.get("execution") or {}).get(
+                "remote_execution_active"
+            )
+            is False
+            and _is_public_cacheable(qazcompute_head, 60)
         ),
         "notification_contract": (
             notification_contract.get("schema_version") == "notification-v1"

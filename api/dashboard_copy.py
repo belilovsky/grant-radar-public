@@ -47,6 +47,7 @@ COPY = {
         "spotlight_count": "Карточек: {count}",
         "spotlight_action_open": "Открыть список",
         "spotlight_empty": "В списке пока нет открытых карточек.",
+        "catalog_empty": "Каталог временно не содержит доступных карточек.",
         "spotlight_preview_more": "+ ещё {count}",
         "spotlight_trending_kicker": "Сильные сигналы",
         "spotlight_trending_title": "Что проверить первым",
@@ -126,8 +127,8 @@ COPY = {
         ),
         "funder_overview_types": "Форматы: {types}.",
         "funder_overview_topics": "Основные темы: {topics}.",
-        "funder_overview_regions": "Фокус по регионам: {regions}.",
-        "funder_page_eyebrow": "Профиль фонда",
+        "funder_overview_regions": "Регионы: {regions}.",
+        "funder_page_eyebrow": "Организация и её программы",
         "funder_focus_title": "Что видно по текущему индексу",
         "funder_focus_note": "Форматы, регионы и темы по текущему индексу.",
         "funder_focus_types": "Форматы",
@@ -213,12 +214,6 @@ COPY = {
         "theme_ngo_note": (
             "Для НКО, СМИ и общественных проектов, которым нужны гранты и "
             "партнёрские программы."
-        ),
-        "focus_aria": "Тематика каталога",
-        "focus_primary": "География: Казахстан и Центральная Азия",
-        "focus_secondary": (
-            "Темы: ИИ, образование, госсектор, сельское хозяйство, "
-            "ветеринария, экология, СМИ"
         ),
         "focus_aria": "Текущий продуктовый фокус",
         "focus_primary": "Приоритет: Казахстан и Центральная Азия",
@@ -556,6 +551,9 @@ COPY = {
         ),
         "footer_support": "Обратная связь",
         "footer_qdev": "qdev.run",
+        "footer_terms": "Условия",
+        "footer_data_policy": "Политика данных",
+        "footer_attribution": "Использование данных",
         "view_funder": "Профиль фонда",
         "fit_label": "Признаки совпадения",
         "fit_unknown": "Критерии нужно проверить",
@@ -582,10 +580,6 @@ COPY = {
             "Проверьте требования к участнику, объём работ и пакет заявки."
         ),
         "signal_science": "Для университетов, лабораторий и научных команд.",
-        "signal_farmer": "Для хозяйств, ферм и агрокоманд.",
-        "signal_ngo": (
-            "Для НКО, медиа и проектов с гражданским или социальным эффектом."
-        ),
         "signal_farmer": ("Для хозяйств, ферм и аграрных компаний."),
         "signal_ngo": ("Для НКО, СМИ и общественных организаций."),
         "signal_kazakhstan": (
@@ -611,6 +605,8 @@ COPY = {
         "detail_source_status_title": "Статус источника",
         "detail_fit_good": "Есть признаки совпадения",
         "detail_fit_review": "Проверьте критерии вручную",
+        "detail_meta_title": "Главное",
+        "detail_readiness_title": "Что проверить",
         "no_indexed_items": "В каталоге пока нет доступных карточек.",
         "no_filtered_items": "По текущим фильтрам ничего не найдено.",
         "no_filtered_items_hint": "Снимите один фильтр и попробуйте снова.",
@@ -638,9 +634,6 @@ COPY = {
         "detail_title_fallback": "Карточка возможности",
         "detail_loading": "Загрузка описания и параметров",
         "detail_error": "Локальное описание недоступно. Откройте источник ниже.",
-        "detail_empty": (
-            "Расширенного описания нет. Показываем краткое описание и поля."
-        ),
         "detail_empty": "Доступны краткое описание и ключевые условия.",
         "detail_close": "Закрыть",
         "detail_open_page": "Открыть страницу",
@@ -652,6 +645,9 @@ COPY = {
             "Приём завершён. Карточка сохранена для справки; новый набор "
             "проверяйте у организатора."
         ),
+        "detail_forecast_notice": (
+            "Приём ещё не открыт. Условия и сроки могут измениться до начала набора."
+        ),
         "detail_compute_readiness": (
             "Оценка полноты данных: {score} / 100, {tier}. Это вспомогательный "
             "показатель, а не решение о праве на участие."
@@ -660,13 +656,14 @@ COPY = {
         "detail_compute_watch": "нужна сверка",
         "detail_compute_blocked": "есть блокеры",
         "detail_compute_unknown": "статус неизвестен",
-        "detail_copy_brief": "Скопировать справку",
+        "detail_copy_brief": "Скопировать сведения",
         "detail_copy_brief_done": "Рабочая справка скопирована.",
         "detail_copy_brief_prompt": "Скопируйте рабочую справку",
         "detail_share": "Поделиться карточкой",
         "detail_share_done": "Карточка готова к отправке.",
         "detail_share_prompt": "Скопируйте ссылку на карточку",
-        "detail_brief_heading": "QAZ.FUND – рабочая справка",
+        "detail_brief_heading": "QAZ.FUND – сведения о программе",
+        "detail_brief_legacy_heading": "QAZ.FUND – рабочая справка",
         "detail_brief_summary": "Кратко",
         "detail_brief_source": "Организатор или источник",
         "detail_brief_format": "Формат",
@@ -684,6 +681,23 @@ COPY = {
         "verification_description": (
             "Карточка помогает начать проверку, но не подтверждает право на участие "
             "и не заменяет официальные условия."
+        ),
+        "decision_check_eyebrow": "Перед подачей",
+        "decision_check_title": "Ключевые условия",
+        "decision_check_description": (
+            "Сначала проверьте четыре пункта на странице организатора."
+        ),
+        "verification_eligibility_title": "Право на участие",
+        "verification_eligibility_text": (
+            "Сверьте тип заявителя, юрисдикцию, ограничения и требуемый опыт."
+        ),
+        "verification_terms_title": "Действующие условия",
+        "verification_terms_text": (
+            "Проверьте последнюю редакцию, срок, сумму и способ отправки заявки."
+        ),
+        "verification_procurement_title": "Закупочная документация",
+        "verification_procurement_text": (
+            "Для тендеров отдельно проверьте лоты, квалификацию, приложения и изменения."
         ),
         "decision_check_known_title": "Что известно",
         "decision_check_known_source": "источник: {source}",
@@ -705,6 +719,10 @@ COPY = {
         "decision_check_route_source": (
             "Отдельная форма не указана. Подавайте заявку только через "
             "страницу организатора."
+        ),
+        "decision_check_boundary_title": "Важно",
+        "decision_check_boundary_text": (
+            "Карточка помогает с отбором; решение принимают по правилам организатора."
         ),
         "verification_publication_title": "Источник и дата проверки",
         "verification_publication_text": (
@@ -810,7 +828,7 @@ COPY = {
             "экрана с подтверждением."
         ),
         "related_section_eyebrow": "Похожие карточки",
-        "related_section_title": "Похожие возможности",
+        "related_section_title": "Похожие программы",
         "related_section_description": (
             "Ещё несколько карточек с похожими параметрами."
         ),
@@ -859,7 +877,6 @@ COPY = {
             "cotutelle": "Совместная аспирантура",
             "doctoral": "Докторантура",
             "ecology": "Экология",
-            "edb": "Евразийский банк развития",
             "education_research": "Исследования в образовании",
             "eoi": "Выражение заинтересованности",
             "equity": "Социальное равенство",
@@ -868,21 +885,18 @@ COPY = {
             "fcdo": "FCDO",
             "field_research": "Полевые исследования",
             "final_report": "Итоговый отчёт",
-            "founder_training": "Обучение основателей",
             "fulbright": "Fulbright",
             "future_call": "Будущий конкурс",
             "gef": "ГЭФ",
             "gender": "Гендерное равенство",
             "german_language": "Немецкий язык",
             "germany": "Германия",
-            "gif": "Global Innovation Fund",
             "giz": "GIZ",
             "graduates": "Выпускники",
             "grant_funding": "Грантовое финансирование",
             "high_school": "Среднее образование",
             "inclusion": "Инклюзия",
             "interim_report": "Промежуточный отчёт",
-            "international": "Международные программы",
             "international_development": "Международное развитие",
             "iom": "МОМ",
             "japan": "Япония",
@@ -898,8 +912,6 @@ COPY = {
             "performing_arts": "Исполнительские искусства",
             "photography": "Фотография",
             "planning_grant": "Грант на планирование",
-            "postdoc": "Постдокторские исследования",
-            "pre_seed": "Предпосевная стадия",
             "professional_development": "Профессиональное развитие",
             "program_targeted_financing": "Целевое финансирование программы",
             "results_archive": "Архив результатов",
@@ -917,7 +929,6 @@ COPY = {
             "unitar": "UNITAR",
             "university_partnership": "Партнёрство университетов",
             "women_entrepreneurship": "Женское предпринимательство",
-            "youth": "Молодёжь",
             "ai": "ИИ",
             "artificial intelligence": "ИИ",
             "edtech": "Образовательные технологии",
@@ -1218,6 +1229,7 @@ COPY = {
         "spotlight_count": "Cards: {count}",
         "spotlight_action_open": "Open list",
         "spotlight_empty": "There are no open cards in this list yet.",
+        "catalog_empty": "The catalogue temporarily has no available opportunities.",
         "spotlight_preview_more": "+ {count} more",
         "spotlight_trending_kicker": "Strong signals",
         "spotlight_trending_title": "What to check first",
@@ -1806,10 +1818,17 @@ COPY = {
             "Applications are closed. This record remains available for reference; "
             "check with the organizer for a new round."
         ),
+        "detail_forecast_notice": (
+            "Applications are not open yet. Terms and dates may change before launch."
+        ),
         "detail_compute_readiness": (
             "Data completeness: {score} / 100, {tier}. This is a supporting "
             "indicator, not an eligibility decision."
         ),
+        "detail_compute_ready": "enough data",
+        "detail_compute_watch": "review needed",
+        "detail_compute_blocked": "blocked",
+        "detail_compute_unknown": "status unknown",
         "detail_meta_title": "At a glance",
         "detail_readiness_title": "What to check",
         "detail_readiness_complete": (
@@ -1823,6 +1842,7 @@ COPY = {
         "detail_share_done": "The opportunity is ready to share.",
         "detail_share_prompt": "Copy the link to this opportunity",
         "detail_brief_heading": "QAZ.FUND – working brief",
+        "detail_brief_legacy_heading": "QAZ.FUND – working brief",
         "detail_brief_summary": "Summary",
         "detail_brief_source": "Organizer or source",
         "detail_brief_format": "Format",
@@ -1840,6 +1860,23 @@ COPY = {
         "verification_description": (
             "Use the card to start a check. It does not confirm eligibility or replace "
             "the official terms."
+        ),
+        "decision_check_eyebrow": "Before applying",
+        "decision_check_title": "Key conditions",
+        "decision_check_description": (
+            "Check these four points on the organizer's page first."
+        ),
+        "verification_eligibility_title": "Eligibility",
+        "verification_eligibility_text": (
+            "Confirm applicant type, jurisdiction, restrictions, and required experience."
+        ),
+        "verification_terms_title": "Current terms",
+        "verification_terms_text": (
+            "Check the latest version, deadline, amount, and submission route."
+        ),
+        "verification_procurement_title": "Procurement documents",
+        "verification_procurement_text": (
+            "For tenders, check lots, qualifications, attachments, and amendments separately."
         ),
         "decision_check_known_title": "What is known",
         "decision_check_known_source": "source: {source}",
@@ -1860,6 +1897,10 @@ COPY = {
         ),
         "decision_check_route_source": (
             "No separate form is listed. Apply only through the organizer's page."
+        ),
+        "decision_check_boundary_title": "Important",
+        "decision_check_boundary_text": (
+            "The card helps with selection; the organizer's rules govern the decision."
         ),
         "verification_publication_title": "Source and verification date",
         "verification_publication_text": (
@@ -2007,8 +2048,8 @@ COPY = {
             "conservation": "Conservation",
             "cotutelle": "Cotutelle",
             "doctoral": "Doctoral studies",
+            "diaspora": "Diaspora",
             "ecology": "Ecology",
-            "edb": "Eurasian Development Bank",
             "education_research": "Education research",
             "eoi": "Expression of interest",
             "equity": "Equity",
@@ -2031,7 +2072,6 @@ COPY = {
             "high_school": "High school",
             "inclusion": "Inclusion",
             "interim_report": "Interim report",
-            "international": "International",
             "international_development": "International development",
             "iom": "IOM",
             "japan": "Japan",
@@ -2047,8 +2087,6 @@ COPY = {
             "performing_arts": "Performing arts",
             "photography": "Photography",
             "planning_grant": "Planning grant",
-            "postdoc": "Postdoctoral research",
-            "pre_seed": "Pre-seed",
             "professional_development": "Professional development",
             "program_targeted_financing": "Program-targeted financing",
             "results_archive": "Results archive",
@@ -2333,6 +2371,7 @@ COPY = {
 
 
 KK_DASHBOARD_COPY = {
+    "catalog_empty": "Каталогта уақытша қолжетімді карточкалар жоқ.",
     "title": "Қазақстанға арналған қолдау бағдарламалары – QAZ.FUND",
     "mobile_app_tagline": "Қолдау навигаторы",
     "eyebrow": "Қазақстандағы қолдауды іздеу навигаторы",
@@ -2554,6 +2593,9 @@ KK_DASHBOARD_COPY = {
         "Міндетпен үйлессе, оларды да қалдырамыз."
     ),
     "footer_support": "Кері байланыс",
+    "footer_terms": "Шарттар",
+    "footer_data_policy": "Деректер саясаты",
+    "footer_attribution": "Деректерді пайдалану",
     "mobile_catalog": "Каталог",
     "mobile_saved": "Сақталғандар",
     "mobile_filters": "Сүзгілер",
@@ -2889,6 +2931,7 @@ KK_PUBLIC_UI_COPY = {
     "detail_brief_deadline": "Мерзім",
     "detail_brief_format": "Формат",
     "detail_brief_heading": "QAZ.FUND – жұмыс анықтамасы",
+    "detail_brief_legacy_heading": "QAZ.FUND – жұмыс анықтамасы",
     "detail_brief_official_url": "Ресми сілтеме",
     "detail_brief_region": "Өңір",
     "detail_brief_source": "Дереккөз",
@@ -2971,6 +3014,15 @@ KK_PUBLIC_UI_COPY = {
     "verification_description": (
         "Карточка бастапқы бағалауға арналған. Өтінім берер алдында ресми "
         "дереккөздегі шарттарды қайта тексеріңіз."
+    ),
+    "decision_check_eyebrow": "Өтінім берер алдында",
+    "decision_check_title": "Негізгі шарттар",
+    "decision_check_description": (
+        "Алдымен ұйымдастырушының парақшасында осы төрт тармақты тексеріңіз."
+    ),
+    "decision_check_boundary_title": "Маңызды",
+    "decision_check_boundary_text": (
+        "Карточка іріктеуге көмектеседі; шешім ұйымдастырушының ережелері бойынша қабылданады."
     ),
     "verification_eyebrow": "Өтінім берер алдында",
     "verification_title": "Нені қайта тексеру керек",

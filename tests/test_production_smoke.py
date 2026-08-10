@@ -22,7 +22,6 @@ def _transport(
 ) -> httpx.MockTransport:
     def handler(request: httpx.Request) -> httpx.Response:
         path = request.url.path
-        sample_id = "00000000-0000-4000-8000-000000000001"
         root = str(request.url.copy_with(path="/", query=None)).rstrip("/")
         base_prefix = "/grant-radar" if path.startswith("/grant-radar") else ""
         public_root = f"{root}{base_prefix}"
@@ -122,12 +121,37 @@ def _transport(
                 },
                 headers={"cache-control": "public, max-age=60"},
             )
+        if endpoint_path == "/opportunity/not-a-valid-id":
+            return httpx.Response(
+                404,
+                text=(
+                    "<html lang='ru'><h1>Такой страницы нет</h1>"
+                    "<a href='/'>Вернуться в каталог</a></html>"
+                ),
+                headers={"content-type": "text/html; charset=utf-8"},
+            )
+        if endpoint_path.startswith("/opportunity/") and endpoint_path.endswith(
+            "/prepare"
+        ):
+            return httpx.Response(
+                200,
+                text=(
+                    '<html lang="ru" data-avds="grant-radar">'
+                    '<main data-avds-component="application-workspace">'
+                    "<p>Данные остаются в этом браузере</p>"
+                    "<script>localStorage.setItem('draft','value')</script>"
+                    "</main></html>"
+                ),
+                headers={"content-type": "text/html; charset=utf-8"},
+            )
         if endpoint_path.startswith("/opportunity/"):
             return httpx.Response(
                 200,
                 text=(
                     '<html lang="ru" data-avds="grant-radar">'
-                    "<body>Opportunity page</body></html>"
+                    '<main data-avds-component="lite-reading-surface">'
+                    "<h1>Kazakhstan AI grant</h1><h2>Ключевые условия</h2>"
+                    "</main></html>"
                 ),
                 headers={
                     "content-type": "text/html; charset=utf-8",
@@ -135,11 +159,13 @@ def _transport(
                 },
             )
         if endpoint_path.startswith("/funder/"):
+            lang = request.url.params.get("lang", "ru")
             return httpx.Response(
                 200,
                 text=(
-                    '<html lang="en" data-avds="grant-radar">'
-                    "<body>Funder page</body></html>"
+                    f'<html lang="{lang}" data-avds="grant-radar">'
+                    "<body><h1>Development Fund</h1><span>QAZ.FUND</span></body>"
+                    "</html>"
                 ),
                 headers={
                     "content-type": "text/html; charset=utf-8",
@@ -161,7 +187,9 @@ def _transport(
                 200,
                 text=(
                     '<html lang="ru" data-avds="grant-radar">'
+                    '<main data-avds-component="DataViz">'
                     '<svg data-avds-pattern="decision-readiness"></svg>'
+                    "</main>"
                     "</html>"
                 ),
                 headers={
@@ -355,52 +383,6 @@ def _transport(
                     "content-type": "text/html; charset=utf-8",
                     "x-robots-tag": "noindex, nofollow",
                 },
-            )
-        if endpoint_path == "/insights":
-            return httpx.Response(
-                200,
-                text=(
-                    '<html lang="ru" data-avds="grant-radar">'
-                    '<main data-avds-component="data-centre">'
-                    "<span>В текущем каталоге</span>"
-                    "<span>Релевантных карточек в индексе</span>"
-                    '<section data-avds-pattern="data-quality-scorecard"></section>'
-                    "</main></html>"
-                ),
-                headers={"content-type": "text/html; charset=utf-8"},
-            )
-        if endpoint_path == f"/opportunity/{sample_id}":
-            return httpx.Response(
-                200,
-                text=(
-                    '<html lang="ru" data-avds="grant-radar">'
-                    '<main data-avds-component="lite-reading-surface">'
-                    "<h1>Kazakhstan AI grant</h1><h2>Ключевые условия</h2>"
-                    "</main></html>"
-                ),
-                headers={"content-type": "text/html; charset=utf-8"},
-            )
-        if endpoint_path == f"/opportunity/{sample_id}/prepare":
-            return httpx.Response(
-                200,
-                text=(
-                    '<html lang="ru" data-avds="grant-radar">'
-                    '<main data-avds-component="application-workspace">'
-                    "<p>Данные остаются в этом браузере</p>"
-                    "<script>localStorage.setItem('draft','value')</script>"
-                    "</main></html>"
-                ),
-                headers={"content-type": "text/html; charset=utf-8"},
-            )
-        if endpoint_path == "/funder/development-fund":
-            return httpx.Response(
-                200,
-                text=(
-                    '<html lang="ru" data-avds="grant-radar">'
-                    "<main><h1>Development Fund</h1><span>QAZ.FUND</span></main>"
-                    "</html>"
-                ),
-                headers={"content-type": "text/html; charset=utf-8"},
             )
         if endpoint_path in {"/terms", "/data-policy", "/attribution"}:
             labels = {
@@ -688,6 +670,7 @@ def _transport(
                         "qazstack": {"status": "runtime-proven"},
                         "qazpipe": {"status": "producer-ready"},
                         "qazlake": {"direct_write": False},
+                        "qazcompute": {"status": "local-runtime-proven"},
                         "notifications": {"delivery_enabled": False},
                     },
                 },

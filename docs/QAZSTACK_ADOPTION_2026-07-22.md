@@ -3,10 +3,10 @@
 > Историческая запись. Начиная с 27 июля 2026 года ее заменяет
 > [обмен QAZ.FUND и QazStack 1.41.2](QAZSTACK_EXCHANGE_2026-07-27.md).
 
-## Change
+## Historical change
 
-QAZ.FUND now consumes the checksum-pinned `qazstack-1.40.0-py3-none-any.whl`
-built from the published `v1.40.0` tag at
+At the date of this receipt, QAZ.FUND consumed the checksum-pinned
+`qazstack-1.40.0-py3-none-any.whl` built from the published `v1.40.0` tag at
 `a0a4bfc6ea6b2fce205afe24fbf732fb3de3bc68`.
 
 The product removes its duplicate `core/opportunity_intelligence.py` module
@@ -27,5 +27,6 @@ localization and publication decisions remain product-owned.
 
 The QazStack `v1.40.0` source suite completed with `1600 passed, 19 skipped`.
 QAZ.FUND verifies the wheel checksum, imports the package from `site-packages`
-and asserts that no local lifecycle copy remains. Public smoke continues to
-require the runtime consumer contract to expose `qazstack_version: 1.40.0`.
+and asserts that no local lifecycle copy remains. At that date, public smoke
+required the runtime consumer contract to expose `qazstack_version: 1.40.0`;
+the current contract is recorded in the linked QazStack 1.41.2 exchange note.

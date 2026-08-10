@@ -30,7 +30,7 @@ from pydantic import TypeAdapter
 from qazstack.content import diversify_ranked_items
 from qazstack.evidence import count_evidence_states, resolve_public_evidence_state
 from qazstack.export import cached_body_response
-from qazstack.opportunities import normalized_opportunity_status, public_lifecycle
+from qazstack.opportunities import public_lifecycle
 from starlette.exceptions import HTTPException as StarletteHTTPException
 from starlette.middleware.gzip import GZipMiddleware
 from starlette.middleware.trustedhost import TrustedHostMiddleware
@@ -43,6 +43,7 @@ from api.comparison import (
     parse_comparison_ids,
 )
 from api.comparison_page import render_comparison_page
+from api.daily_digest import daily_digest_payload, daily_digest_text
 from api.dashboard import (
     GOOGLE_SITE_VERIFICATION_CONTENT,
     GOOGLE_SITE_VERIFICATION_FILENAME,
@@ -60,7 +61,22 @@ from api.embed_page import render_coverage_embed, render_opportunities_embed
 from api.error_page import render_not_found_page
 from api.funder_page import render_funder_page
 from api.history import build_history_snapshot
+from api.insights import build_insights_payload
 from api.insights_page import build_insights_snapshot, render_insights_page
+from api.media import (
+    CARD_FORMATS,
+    CHART_TYPES,
+    chart_csv,
+    chart_rows,
+    chart_title,
+    citation_text,
+    content_payload,
+    json_dumps,
+    json_feed,
+    render_chart_svg,
+    render_opportunity_card_svg,
+    rss_feed,
+)
 from api.media_page import (
     build_media_feed,
     build_media_rss,
@@ -90,6 +106,14 @@ from core.nlp import clean_source_summary
 from core.persistence import Repository
 from core.pipeline import run_all
 from core.provenance import provenance_profile
+from core.public_clock import public_today
+from core.public_contract import (
+    DATASET_SCHEMA_VERSION,
+    SCHEMA_VERSION,
+    OpportunityV1,
+    dataset_revision,
+    to_opportunity_v1,
+)
 from core.qazcompute_bridge import (
     duplicate_cluster_envelope,
     opportunity_deadline_anomaly,
@@ -209,8 +233,7 @@ async def public_http_exception_page(
         return await http_exception_handler(request, exc)
     active_lang = _public_lang(str(request.query_params.get("lang") or ""))
     response = HTMLResponse(
-        render_error_page(
-            status_code=exc.status_code,
+        render_not_found_page(
             lang=active_lang,
             root_path=_root_path(request),
         ),
@@ -234,8 +257,7 @@ async def public_validation_error_page(
         return await request_validation_exception_handler(request, exc)
     active_lang = _public_lang(str(request.query_params.get("lang") or ""))
     response = HTMLResponse(
-        render_error_page(
-            status_code=status.HTTP_404_NOT_FOUND,
+        render_not_found_page(
             lang=active_lang,
             root_path=_root_path(request),
         ),
@@ -256,11 +278,26 @@ _PUBLIC_ITEMS_CACHE_TTL = timedelta(
 _PUBLIC_QUERY_CACHE_TTL = timedelta(
     seconds=max(10, int(os.environ.get("PUBLIC_QUERY_CACHE_TTL_SECONDS", "45")))
 )
+_INSIGHTS_CACHE_TTL = timedelta(
+    seconds=max(15, int(os.environ.get("INSIGHTS_CACHE_TTL_SECONDS", "60")))
+)
+_NDJSON_CACHE_MAX_ENTRIES = 8
 _public_items_cache_lock = threading.Lock()
 _public_items_cache: dict[str, tuple[datetime, list[Opportunity]]] = {}
 _public_scope_cache: dict[tuple[str, bool], tuple[datetime, list[Opportunity]]] = {}
 _public_query_cache: dict[
     tuple[object, ...], tuple[datetime, tuple[tuple[Opportunity, ...], int]]
+] = {}
+_public_prepared_cache: dict[tuple[str, bool], tuple[datetime, list[Opportunity]]] = {}
+_public_current_catalog_cache: dict[str, tuple[datetime, list[Opportunity]]] = {}
+_public_v1_cache: dict[
+    tuple[str, bool, str], tuple[datetime, dict[UUID, OpportunityV1]]
+] = {}
+_funder_index_cache: dict[str, tuple[datetime, dict[str, dict[str, Any]]]] = {}
+_insights_cache: dict[tuple[str, str], tuple[datetime, dict[str, Any]]] = {}
+_ndjson_body_cache: dict[
+    tuple[str, str, tuple[tuple[str, str], ...]],
+    tuple[datetime, str, datetime | date | None],
 ] = {}
 _coverage_cache: tuple[datetime, dict[str, Any]] | None = None
 LEGACY_FUNDER_REDIRECTS: dict[str, str] = {
@@ -580,12 +617,11 @@ def _stored_opportunity(row: Any, *, content_lang: str = "en") -> Opportunity:
                     for key, value in domestic_raw.items()
                     if value not in (None, "")
                 }
-    normalized_status = normalized_opportunity_status(opportunity)
     opportunity.funder_slug = opportunity.funder_slug or _slugify_funder(
         _funder_name(opportunity)
     )
-    opportunity.opportunity_status = opportunity.opportunity_status or normalized_status
-    opportunity.lifecycle = opportunity.lifecycle or public_lifecycle(opportunity)
+    # Lifecycle is date-sensitive. Keep source-provided state and derive the
+    # public lifecycle at query time using the Kazakhstan business date.
     # Recompute with the current deterministic model so persisted scores from an
     # older release cannot silently survive a methodology change.
     opportunity.score = score_opportunity(opportunity)
@@ -721,6 +757,12 @@ def _clear_public_items_cache() -> None:
         _public_items_cache.clear()
         _public_scope_cache.clear()
         _public_query_cache.clear()
+        _public_prepared_cache.clear()
+        _public_current_catalog_cache.clear()
+        _public_v1_cache.clear()
+        _funder_index_cache.clear()
+        _insights_cache.clear()
+        _ndjson_body_cache.clear()
         _coverage_cache = None
 
 
@@ -854,8 +896,10 @@ def _with_decision_readiness(
         "total_fields": len(present),
         "missing_fields": missing_fields,
     }
+    lifecycle = _effective_public_lifecycle(item, today=public_today())
     return item.model_copy(
         update={
+            "lifecycle": lifecycle,
             "raw": {
                 **raw,
                 "provenance": provenance_profile(item),
@@ -863,7 +907,7 @@ def _with_decision_readiness(
                 "qazcompute_evidence_readiness": opportunity_evidence_readiness(item),
                 "qazcompute_deadline_anomaly": opportunity_deadline_anomaly(item),
                 "ranking": ranking_payload(ranking_subject or item),
-            }
+            },
         }
     )
 
@@ -956,10 +1000,36 @@ def _is_active_item(item: Opportunity) -> bool:
 
 
 def _is_open(item: Opportunity, today: date) -> bool:
-    lifecycle = public_lifecycle(item, today=today)
-    return lifecycle not in {"closed", "awarded"} and (
-        item.deadline is None or item.deadline >= today
+    return _effective_public_lifecycle(item, today=today) not in {
+        "closed",
+        "awarded",
+    }
+
+
+def _effective_public_lifecycle(item: Opportunity, *, today: date) -> str:
+    """Resolve date-sensitive lifecycle without treating 'closing' as 'closed'."""
+
+    raw = item.raw if isinstance(item.raw, dict) else {}
+    explicit_state = " ".join(
+        str(value or "").strip().lower()
+        for value in (
+            item.opportunity_status,
+            item.lifecycle,
+            raw.get("status"),
+            raw.get("opportunity_status"),
+            raw.get("lifecycle"),
+        )
+        if str(value or "").strip()
     )
+    if any(token in explicit_state for token in ("closed", "awarded", "archived")):
+        return "awarded" if "awarded" in explicit_state else "closed"
+    if item.deadline is not None:
+        if item.deadline < today:
+            return "closed"
+        if (item.deadline - today).days <= 14:
+            return "closing_soon"
+        return "open"
+    return public_lifecycle(item, today=today)
 
 
 def _normalized_token(value: Any) -> str:
@@ -2376,6 +2446,8 @@ async def opportunity_page(
             lifecycle=public_lifecycle(item),
         )
     )
+    response.headers["Cache-Control"] = "public, max-age=60, stale-while-revalidate=300"
+    return response
 
 
 @app.api_route(
@@ -2401,7 +2473,7 @@ async def opportunity_prepare_page(
         lang=content_lang,
         allow_remote_fetch=False,
     )
-    return HTMLResponse(
+    response = HTMLResponse(
         render_application_prep_page(
             detail=detail,
             lang=content_lang,
@@ -2451,6 +2523,12 @@ async def llms_txt(request: Request) -> Response:
     avds_contract = _public_url(
         request, root_path, "/.well-known/avds-ui-contract.json"
     )
+    qazpipe_contract_url = _public_url(
+        request, root_path, "/.well-known/qazpipe-source.json"
+    )
+    qazcompute_contract_url = _public_url(
+        request, root_path, "/.well-known/qazcompute-profiles.json"
+    )
     notification_contract_url = _public_url(
         request, root_path, "/.well-known/notification-contract.json"
     )
@@ -2498,6 +2576,8 @@ async def llms_txt(request: Request) -> Response:
                 f"- Release metadata JSON: {release}",
                 f"- QazStack consumer contract: {qazstack_contract}",
                 f"- AV DS 4 UI contract: {avds_contract}",
+                f"- QazPipe source contract: {qazpipe_contract_url}",
+                f"- QazCompute profile contract: {qazcompute_contract_url}",
                 f"- Notification contract: {notification_contract_url}",
                 f"- Source onboarding contract: {source_onboarding_url}",
                 f"- Source status page: {status_page}",
@@ -2602,13 +2682,22 @@ async def site_discovery(request: Request) -> Response:
     docs = _public_url(request, root_path, "/docs")
     openapi_url = _public_url(request, root_path, "/openapi.json")
     llms = _public_url(request, root_path, "/llms.txt")
+    api_v1 = _public_url(request, root_path, "/api/v1")
+    api_v1_schema = _public_url(request, root_path, "/api/v1/schema")
     status_page = _public_url(request, root_path, "/status")
     coverage = _public_url(request, root_path, "/coverage")
     insights_json = _public_url(request, root_path, "/insights.json")
+    insights_page = _public_url(request, root_path, "/insights")
     media = _public_url(request, root_path, "/media")
     media_json = _public_url(request, root_path, "/media.json")
     media_feed = _public_url(request, root_path, "/media/feed.json")
     media_rss = _public_url(request, root_path, "/media/rss.xml")
+    media_feed_json = _public_url(request, root_path, "/media/v1/feed.json")
+    media_feed_rss = _public_url(request, root_path, "/media/v1/feed.rss")
+    daily_digest_json = _public_url(request, root_path, "/media/v1/digest/daily.json")
+    daily_digest_text_url = _public_url(
+        request, root_path, "/media/v1/digest/daily.txt"
+    )
     compare_json = _public_url(request, root_path, "/compare.json")
     opportunities = _public_url(request, root_path, "/opportunities")
     opportunities_ndjson = _public_url(request, root_path, "/opportunities.ndjson")
@@ -2626,6 +2715,12 @@ async def site_discovery(request: Request) -> Response:
     )
     avds_contract = _public_url(
         request, root_path, "/.well-known/avds-ui-contract.json"
+    )
+    qazpipe_contract = _public_url(
+        request, root_path, "/.well-known/qazpipe-source.json"
+    )
+    qazcompute_contract = _public_url(
+        request, root_path, "/.well-known/qazcompute-profiles.json"
     )
     notification_contract_url = _public_url(
         request, root_path, "/.well-known/notification-contract.json"
@@ -2657,6 +2752,8 @@ async def site_discovery(request: Request) -> Response:
         "contracts": {
             "qazstack": qazstack_contract,
             "avds4": avds_contract,
+            "qazpipe": qazpipe_contract,
+            "qazcompute": qazcompute_contract,
             "notifications": notification_contract_url,
             "source_onboarding": source_onboarding_url,
         },
@@ -2717,6 +2814,16 @@ async def site_discovery(request: Request) -> Response:
             "opportunities": opportunities,
             "opportunities_ndjson": opportunities_ndjson,
             "opportunities_ndjson_compact": opportunities_ndjson_compact,
+            "api_v1": api_v1,
+            "api_v1_schema": api_v1_schema,
+            "api_v1_opportunities": _public_url(
+                request, root_path, "/api/v1/opportunities"
+            ),
+            "api_v1_opportunities_ndjson": _public_url(
+                request, root_path, "/api/v1/opportunities.ndjson"
+            ),
+            "api_v1_insights": _public_url(request, root_path, "/api/v1/insights"),
+            "api_v1_changes": _public_url(request, root_path, "/api/v1/changes"),
             "opportunity_history": history_template,
             "digest": digest,
             "insights": insights,
@@ -2747,8 +2854,12 @@ async def site_discovery(request: Request) -> Response:
             "chart_csv_template": "/media/v1/charts/{chart_type}.csv?lang=ru|en",
         },
         "ai_consumption": {
-            "preferred_bulk_export": opportunities_ndjson_compact,
+            "preferred_bulk_export": _public_url(
+                request, root_path, "/api/v1/opportunities.ndjson"
+            ),
+            "preferred_legacy_bulk_export": opportunities_ndjson_compact,
             "preferred_detail_template": "/opportunities/{id}?lang=kk|ru|en",
+            "preferred_v1_detail_template": "/api/v1/opportunities/{id}?lang=kk|ru|en",
             "preferred_human_template": "/opportunity/{id}?lang=kk|ru|en",
             "history_template": history_template + "?lang={lang}&limit={n}",
             "recommended_language_order": ["kk", "ru", "en"],
@@ -2830,6 +2941,8 @@ async def site_discovery(request: Request) -> Response:
             "official source links",
             "read-only public catalog",
             "qdev ecosystem contract",
+            "qazpipe pull-source contract",
+            "qazcompute profile contract",
             "source onboarding contract",
         ],
     }
@@ -2854,6 +2967,28 @@ async def public_qazstack_consumer_contract(request: Request) -> Response:
 )
 async def public_avds_ui_contract() -> Response:
     return JSONResponse(avds_ui_contract())
+
+
+@app.api_route(
+    "/.well-known/qazpipe-source.json",
+    methods=["GET", "HEAD"],
+    include_in_schema=False,
+)
+async def public_qazpipe_source_contract(request: Request) -> Response:
+    root_path = _root_path(request)
+    origin = _public_root_base(request, root_path)
+    return JSONResponse(qazpipe_source_contract(origin))
+
+
+@app.api_route(
+    "/.well-known/qazcompute-profiles.json",
+    methods=["GET", "HEAD"],
+    include_in_schema=False,
+)
+async def public_qazcompute_profile_contract(request: Request) -> Response:
+    root_path = _root_path(request)
+    origin = _public_root_base(request, root_path)
+    return JSONResponse(qazcompute_profile_contract(origin))
 
 
 @app.api_route(
@@ -3017,45 +3152,6 @@ async def public_status_page(request: Request) -> HTMLResponse:
     )
     response.headers["Cache-Control"] = "public, max-age=60, stale-while-revalidate=300"
     return response
-
-
-def _render_public_policy_response(request: Request, page: str) -> HTMLResponse:
-    if request.method == "HEAD":
-        return HTMLResponse(
-            "",
-            headers={
-                "Cache-Control": "public, max-age=300, stale-while-revalidate=1800"
-            },
-        )
-    root_path = _root_path(request)
-    active_lang = _public_lang(str(request.query_params.get("lang") or "").strip())
-    response = HTMLResponse(
-        render_policy_page(
-            page,
-            lang=active_lang,
-            root_path=root_path,
-            site_origin=_site_origin(request, root_path),
-        )
-    )
-    response.headers["Cache-Control"] = (
-        "public, max-age=300, stale-while-revalidate=1800"
-    )
-    return response
-
-
-@app.api_route("/terms", methods=["GET", "HEAD"], include_in_schema=False)
-async def public_terms_page(request: Request) -> HTMLResponse:
-    return _render_public_policy_response(request, "terms")
-
-
-@app.api_route("/data-policy", methods=["GET", "HEAD"], include_in_schema=False)
-async def public_data_policy_page(request: Request) -> HTMLResponse:
-    return _render_public_policy_response(request, "data-policy")
-
-
-@app.api_route("/attribution", methods=["GET", "HEAD"], include_in_schema=False)
-async def public_attribution_page(request: Request) -> HTMLResponse:
-    return _render_public_policy_response(request, "attribution")
 
 
 @app.api_route("/operator", methods=["GET", "HEAD"], include_in_schema=False)
@@ -3251,7 +3347,7 @@ def _query_opportunities(
         if cached_query is not None and now - cached_query[0] < _PUBLIC_QUERY_CACHE_TTL:
             cached_items, cached_total = cached_query[1]
             return list(cached_items), cached_total
-    items = _cached_public_scope_items(
+    items = _cached_prepared_scope_items(
         content_lang=content_lang, include_irrelevant=include_irrelevant
     )
     if tag:
@@ -3275,15 +3371,6 @@ def _query_opportunities(
     if deadline_after:
         items = [o for o in items if o.deadline is None or o.deadline >= deadline_after]
     total_count = len(items)
-    today = public_today()
-    items.sort(
-        key=lambda item: (
-            priority_score(item, today=today),
-            item.score,
-            item.discovered_at,
-        ),
-        reverse=True,
-    )
     results = items[offset : offset + limit]
     if compact:
         results = [_compact_dashboard_item(item) for item in results]

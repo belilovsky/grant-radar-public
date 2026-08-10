@@ -14,6 +14,8 @@ COPY = {
         "heading": "Такой страницы нет",
         "text": ("Ссылка устарела или адрес введён с ошибкой. Вернитесь в каталог."),
         "action": "Вернуться в каталог",
+        "insights": "Открыть аналитику",
+        "status": "Проверить статус данных",
     },
     "en": {
         "title": "Page not found – QAZ.FUND",
@@ -23,6 +25,8 @@ COPY = {
             "The link is outdated or the address is incorrect. Return to the catalog."
         ),
         "action": "Back to catalog",
+        "insights": "Open insights",
+        "status": "Check data status",
     },
     "kk": {
         "title": "Бет табылмады – QAZ.FUND",
@@ -30,6 +34,8 @@ COPY = {
         "heading": "Мұндай бет жоқ",
         "text": "Сілтеме ескірген немесе мекенжай қате енгізілген. Каталогқа оралыңыз.",
         "action": "Каталогқа оралу",
+        "insights": "Талдауды ашу",
+        "status": "Деректер мәртебесін тексеру",
     },
 }
 
@@ -41,12 +47,22 @@ def render_not_found_page(*, lang: str, root_path: str = "") -> str:
     copy = COPY[active_lang]
     base = root_path.rstrip("/")
     catalog_href = f"{base}/?lang={active_lang}" if base else f"/?lang={active_lang}"
+    insights_href = (
+        f"{base}/insights?lang={active_lang}"
+        if base
+        else f"/insights?lang={active_lang}"
+    )
+    status_href = (
+        f"{base}/status?lang={active_lang}" if base else f"/status?lang={active_lang}"
+    )
     ru_href = f"{base}/does-not-exist?lang=ru" if base else "/does-not-exist?lang=ru"
     kk_href = f"{base}/does-not-exist?lang=kk" if base else "/does-not-exist?lang=kk"
     en_href = f"{base}/does-not-exist?lang=en" if base else "/does-not-exist?lang=en"
     ru_current = ' aria-current="page"' if active_lang == "ru" else ""
     kk_current = ' aria-current="page"' if active_lang == "kk" else ""
     en_current = ' aria-current="page"' if active_lang == "en" else ""
+    page_title = str(copy["title"])
+    page_message = str(copy["text"])
     return f"""<!doctype html>
 <html lang="{active_lang}" data-avds="grant-radar" data-av-theme="light" data-theme="light">
 <head>
@@ -54,7 +70,7 @@ def render_not_found_page(*, lang: str, root_path: str = "") -> str:
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="robots" content="noindex,nofollow">
   <meta name="description" content="{escape(page_message, quote=True)}">
-  <title>{escape(page_title)} – QAZ.FUND</title>
+  <title>{escape(page_title)}</title>
 {AVDS_FONT_HEAD}
   <style>
 {AVDS_CSS}
@@ -152,6 +168,21 @@ def render_not_found_page(*, lang: str, root_path: str = "") -> str:
       text-decoration:none;
     }}
     .action.primary {{ border-color:var(--brand); background:var(--brand); color:white; }}
+    .primary-action {{
+      display:inline-flex;
+      align-items:center;
+      justify-content:center;
+      min-height:var(--av-control-height-lg);
+      margin-top:28px;
+      padding:10px 14px;
+      border:1px solid var(--brand);
+      border-radius:var(--av-radius-md);
+      background:var(--brand);
+      color:white;
+      font-size:13px;
+      font-weight:800;
+      text-decoration:none;
+    }}
     .hint {{
       margin:32px 0 0;
       padding:14px 16px;
@@ -193,10 +224,16 @@ def render_not_found_page(*, lang: str, root_path: str = "") -> str:
     <span class="eyebrow">{escape(copy["eyebrow"])}</span>
     <h1>{escape(copy["heading"])}</h1>
     <p>{escape(copy["text"])}</p>
-    <a class="primary-action" href="{escape(catalog_href, quote=True)}">{escape(copy["action"])}</a>
+    <div class="actions">
+      <a class="primary-action" href="{escape(catalog_href, quote=True)}">
+        {escape(copy["action"])}
+      </a>
+      <a class="action" href="{escape(insights_href, quote=True)}">{escape(copy["insights"])}</a>
+      <a class="action" href="{escape(status_href, quote=True)}">{escape(copy["status"])}</a>
+    </div>
   </main>
 </body>
 </html>"""
 
 
-__all__ = ["render_error_page"]
+__all__ = ["render_not_found_page"]

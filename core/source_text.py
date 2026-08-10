@@ -8,7 +8,7 @@ from qazstack.content import normalize_text, strip_html
 
 
 def _normalize_editorial_dashes(value: str) -> str:
-    return value.replace("—", "–").replace("―", "–")
+    return value.replace("\u2014", "\u2013").replace("\u2015", "\u2013")
 
 
 def clean_source_text(value: object | None) -> str:

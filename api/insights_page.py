@@ -65,7 +65,7 @@ COPY: dict[str, dict[str, str]] = {
         "method_text": "Это не рейтинг доноров и не прогноз финансирования. Графики показывают распределение карточек по рабочим сигналам QAZ.FUND; условия проверяйте у организатора.",
         "source_link": "Проверить источники",
         "catalog_link": "Найти поддержку",
-        "no_data": "Данных для этого среза пока недостаточно.",
+        "no_data": "Данных пока недостаточно для этого среза.",
         "footer": "QAZ.FUND не выдаёт средства и не принимает заявки. Перед действием проверьте условия на странице организатора.",
     },
     "en": {
@@ -447,6 +447,31 @@ def render_insights_page(
     insights_json_href = (
         f"{base}/insights.json?lang={lang}" if base else f"/insights.json?lang={lang}"
     )
+    changes_href = (
+        f"{base}/api/v1/changes?hours=24&lang={lang}"
+        if base
+        else f"/api/v1/changes?hours=24&lang={lang}"
+    )
+    centre_copy = {
+        "ru": (
+            "Данные о финансировании Казахстана",
+            "Что известно до перехода к источнику",
+            "Изменения за 24 часа",
+            "Машиночитаемые точки входа",
+        ),
+        "en": (
+            "Funding data for Kazakhstan",
+            "What is known before opening the source",
+            "Changes in the last 24 hours",
+            "Machine-readable entry points",
+        ),
+        "kk": (
+            "Қазақстандағы қаржыландыру деректері",
+            "Дереккөзге өтпей тұрып не белгілі",
+            "Соңғы 24 сағаттағы өзгерістер",
+            "Машинамен оқылатын кіру нүктелері",
+        ),
+    }[lang if lang in {"ru", "en", "kk"} else "ru"]
     snapshot = build_insights_snapshot(items=items, coverage=coverage)
     open_count = int(snapshot["catalog"]["open_items"])
     soon = int(snapshot["deadlines"]["buckets"]["within_30"])
@@ -551,6 +576,8 @@ def render_insights_page(
     .data-chart{{display:block;width:100%;height:auto;min-height:130px;overflow:visible}} .chart-label{{font:600 12px var(--av-font-sans);fill:var(--color-text)}} .chart-value{{font:800 13px var(--av-font-sans);fill:var(--color-text)}} .chart-track{{fill:var(--color-bg-subtle)}}
     .method{{display:grid;grid-template-columns:auto 1fr;gap:14px;align-items:start;margin-top:22px;padding:16px 18px;border-left:4px solid var(--color-accent);border-radius:var(--av-radius-md);background:var(--color-surface)}} .method strong{{font-size:15px}} .method p{{margin:3px 0 0;color:var(--color-text-muted);font-size:14px}}
     .footer{{display:flex;justify-content:space-between;gap:16px;flex-wrap:wrap;margin-top:28px;padding-top:18px;border-top:1px solid var(--color-border);color:var(--color-text-muted);font-size:13px}} .footer a{{font-weight:700}}
+    :root {{ --ink: var(--color-text); }}
+    .footer nav {{ display: flex; flex-wrap: wrap; gap: 10px; }}
     @media(min-width:1440px){{
       .hero{{grid-template-columns:minmax(0,1.55fr) minmax(420px,.8fr);gap:48px;padding:36px}}
       .section-head{{margin-top:40px}}
@@ -568,16 +595,19 @@ def render_insights_page(
       .hero p{{max-width:72ch}}
     }}
     @media(max-width:760px){{.shell{{width:min(100% - 24px,680px);padding-top:12px}} .hero{{grid-template-columns:1fr;padding:20px}} .metric-grid{{grid-template-columns:repeat(4,minmax(0,1fr))}} .insight-metric{{padding:10px}} .insight-metric strong{{font-size:22px}} .viz-grid{{grid-template-columns:1fr}} .insight-lower{{grid-template-columns:1fr}} .upcoming-item{{grid-template-columns:66px minmax(0,1fr);gap:8px}} .upcoming-days{{grid-column:2}} .method{{grid-template-columns:1fr;gap:5px}}}}
+    @media(max-width:760px) {{ .hero {{ grid-template-columns: minmax(0, 1fr); }} }}
     @media(max-width:480px){{.metric-grid{{grid-template-columns:repeat(2,minmax(0,1fr))}} h1{{font-size:34px}}}}
   </style>
 </head>
-<body><main class="shell">
+<body><main class="shell" data-avds-component="data-centre" data-avds-version="4.6.0">
   <div class="topbar"><a class="back" href="{escape(home, quote=True)}">← {escape(copy["back"])}</a><nav class="langs" aria-label="Language"><a class="{'active' if lang == 'kk' else ''}" href="{escape(kk_href, quote=True)}" lang="kk"{kk_current}>KAZ</a><a class="{'active' if lang == 'ru' else ''}" href="{escape(ru_href, quote=True)}" lang="ru"{ru_current}>RU</a><a class="{'active' if lang == 'en' else ''}" href="{escape(en_href, quote=True)}" lang="en"{en_current}>EN</a></nav></div>
   {fallback_note_markup}
   <section class="hero" data-avds-component="hero-band"><div><span class="eyebrow">{escape(copy["eyebrow"])}</span><h1>{escape(copy["heading"])}</h1><p>{escape(copy["intro"])}</p><div class="hero-actions"><a class="button primary" href="{escape(home, quote=True)}">{escape(copy["catalog_link"])}</a><a class="button" href="{escape(status, quote=True)}">{escape(copy["source_link"])}</a></div></div><div class="metric-grid" aria-label="Key catalog metrics">{_metric(copy["total"],open_count,"good")}{_metric(copy["sources"],int(coverage.get("enabled_sources") or 0))}{_metric(copy["soon"],soon,"warn")}{_metric(copy["rolling"],rolling)}</div></section>
+  <section class="viz-card" data-avds-component="DataQualityScorecard" data-avds-pattern="data-quality-scorecard"><h2>{escape(centre_copy[0])}</h2><p>{escape(centre_copy[1])}</p></section>
   <div class="section-head"><h2>{escape(copy["formats"])}</h2><p>{escape(copy["formats_note"])}</p></div>
   <div class="viz-grid"><article class="viz-card"><h3>{escape(copy["formats"])}</h3><p>{escape(copy["formats_note"])}</p>{_bar_chart(type_rows,chart_id="format-distribution",color="#315fdc",empty_label=copy["no_data"],aria_label=copy["formats"])}</article><article class="viz-card"><h3>{escape(copy["sources_title"])}</h3><p>{escape(copy["sources_note"])}</p>{_bar_chart(source_rows,chart_id="source-distribution",color="#15724e",empty_label=copy["no_data"],aria_label=copy["sources_title"])}</article><article class="viz-card"><h3>{escape(copy["deadlines"])}</h3><p>{escape(copy["deadlines_note"])}</p>{_bar_chart(deadline_rows,chart_id="deadline-distribution",color="#9a6414",empty_label=copy["no_data"],aria_label=copy["deadlines"])}</article><article class="viz-card"><h3>{escape(copy["freshness"])}</h3><p>{escape(copy["freshness_note"])}</p>{_bar_chart(freshness_rows,chart_id="source-freshness",color="#7c3aed",empty_label=copy["no_data"],aria_label=copy["freshness"])}</article></div>
   <div class="insight-lower"><div class="insight-stack"><section class="viz-card"><h3>{escape(copy["quality"])}</h3><p>{escape(copy["quality_note"])}</p>{_bar_chart(score_rows,chart_id="match-quality",color="#315fdc",empty_label=copy["no_data"],aria_label=copy["quality"])}</section><section class="viz-card"><h3>{escape(copy["readiness"])}</h3><p>{escape(copy["readiness_note"])}</p>{_bar_chart(readiness_rows,chart_id="decision-readiness",color="#0f766e",empty_label=copy["no_data"],aria_label=copy["readiness"])}</section></div><section class="viz-card" data-avds-component="DataViz"><h3>{escape(copy["upcoming"])}</h3><p>{escape(copy["upcoming_note"])}</p>{upcoming_markup}</section></div>
+  <div class="viz-grid"><section class="viz-card" data-avds-pattern="change-ledger"><h3>{escape(centre_copy[2])}</h3><p><a href="{escape(changes_href, quote=True)}">{escape(changes_href)}</a></p></section><section class="viz-card" data-avds-pattern="machine-entrypoints"><h3>{escape(centre_copy[3])}</h3><p><a href="{escape(insights_json_href, quote=True)}">{escape(insights_json_href)}</a></p></section></div>
   <aside class="method" data-avds-component="method-card"><strong>{escape(copy["method"])}</strong><p>{escape(copy["method_text"])}</p></aside>
   <footer class="footer"><span>{escape(copy["footer"])}</span><span><a href="{escape(home, quote=True)}">{escape(copy["catalog_link"])}</a> · <a href="{escape(sources, quote=True)}">{escape(copy["source_link"])}</a></span></footer>
 </main></body></html>"""

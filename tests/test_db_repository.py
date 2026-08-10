@@ -344,7 +344,7 @@ def test_sql_repository_works_after_alembic_head(tmp_path, monkeypatch):
 def test_opportunity_versions_migration_backfills_initial_snapshot(tmp_path):
     pytest.importorskip("alembic")
 
-    from sqlalchemy import create_engine, insert
+    from sqlalchemy import MetaData, Table, create_engine, insert
 
     from alembic import command
     from alembic.config import Config
@@ -358,11 +358,11 @@ def test_opportunity_versions_migration_backfills_initial_snapshot(tmp_path):
     command.upgrade(cfg, "0004_runs_table")
 
     engine = create_engine(url, future=True)
-    from core.db import OpportunityRow
+    opportunities_table = Table("opportunities", MetaData(), autoload_with=engine)
 
     with engine.begin() as connection:
         connection.execute(
-            insert(OpportunityRow.__table__).values(
+            insert(opportunities_table).values(
                 id="grants_gov:BACKFILL-1",
                 dedup_key="grants_gov:BACKFILL-1",
                 source="grants_gov",

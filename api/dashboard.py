@@ -254,6 +254,13 @@ def render_dashboard(
         if fallback_note
         else ""
     )
+    initial_empty_message = escape(str(copy["catalog_empty"]))
+    initial_empty_markup = (
+        '<p class="message empty" data-catalog-empty="true">'
+        f"{initial_empty_message}</p>"
+        if relevant_items == 0
+        else ""
+    )
 
     def initial_preset_buttons(
         kind: str,
@@ -925,6 +932,7 @@ def render_dashboard(
         data-avds-component="message"
         aria-label="{escape(str(copy["loading_opportunities"]), quote=True)}"
       ><span class="visually-hidden">{escape(str(copy["loading_opportunities"]))}</span></div>
+      {initial_empty_markup}
       <div id="opportunities-list" class="list" aria-live="polite"></div>
       <div id="load-more-wrap" class="list-actions hidden">
         <button
@@ -1250,6 +1258,7 @@ def render_dashboard(
       <div class="detail-readiness hidden" id="detail-readiness">
         <h3>{escape(str(copy["detail_readiness_title"]))}</h3>
         <p id="detail-readiness-text"></p>
+        <p class="detail-subtle" id="detail-compute-readiness-text"></p>
       </div>
       <div class="detail-meta hidden" id="detail-meta">
         <h3>{escape(str(copy["detail_meta_title"]))}</h3>
@@ -1968,10 +1977,12 @@ def render_dashboard(
     function renderDetailReadiness(item) {{
       const root = $("#detail-readiness");
       const target = $("#detail-readiness-text");
+      const computeTarget = $("#detail-compute-readiness-text");
       const readiness = item && item.raw && item.raw.decision_readiness;
       if (!readiness || !Number.isFinite(Number(readiness.total_fields))) {{
         root.classList.add("hidden");
         target.textContent = "";
+        computeTarget.textContent = "";
         return;
       }}
       const known = Number(readiness.known_fields || 0);
@@ -1986,9 +1997,24 @@ def render_dashboard(
             known: formatNumber.format(known),
             total: formatNumber.format(total),
             missing: missing.join(", ")
-          }})
+        }})
         : text("detail_readiness_complete", {{ total: formatNumber.format(total) }});
+      const compute = item && item.raw && item.raw.qazcompute_evidence_readiness;
+      const computeScore = compute ? Number(compute.score) : Number.NaN;
+      computeTarget.textContent = compute && Number.isFinite(computeScore)
+        ? text("detail_compute_readiness", {{
+            score: formatNumber.format(computeScore),
+            tier: computeReadinessLabel(compute.tier)
+          }})
+        : "";
       root.classList.remove("hidden");
+    }}
+
+    function computeReadinessLabel(tier) {{
+      if (tier === "ready") return copy.detail_compute_ready;
+      if (tier === "blocked") return copy.detail_compute_blocked;
+      if (tier === "watch") return copy.detail_compute_watch;
+      return copy.detail_compute_unknown;
     }}
 
     function openDetailShell() {{

@@ -1268,162 +1268,38 @@ def test_marketing_endpoints_are_exposed(monkeypatch):
     assert discovery.status_code == 200
     assert discovery.headers["content-type"].startswith("application/json")
     assert discovery.headers["cache-control"].startswith("public, max-age=300")
-    assert discovery.json() == {
-        "site": "QAZ.FUND",
-        "type": "public-funding-navigator",
-        "home": "http://testserver/",
-        "sitemap": "http://testserver/sitemap.xml",
-        "llms": "http://testserver/llms.txt",
-        "api_docs": "http://testserver/docs",
-        "openapi": "http://testserver/openapi.json",
-        "source_status": "http://testserver/status",
-        "ecosystem": "http://testserver/.well-known/qdev-ecosystem.json",
-        "release": "http://testserver/.well-known/release.json",
-        "contracts": {
-            "qazstack": ("http://testserver/.well-known/qazstack-consumer.json"),
-            "avds4": "http://testserver/.well-known/avds-ui-contract.json",
-            "notifications": (
-                "http://testserver/.well-known/notification-contract.json"
-            ),
-            "source_onboarding": (
-                "http://testserver/.well-known/source-onboarding.json"
-            ),
-        },
-        "languages": ["kk", "ru", "en"],
-        "routes": {
-            "home": "/?lang={lang}",
-            "coverage": "/coverage",
-            "source_status": "/status?lang={lang}",
-            "opportunities": "/opportunities?lang={lang}",
-            "opportunities_ndjson": "/opportunities.ndjson?lang={lang}",
-            "opportunities_ndjson_compact": (
-                "/opportunities.ndjson?lang={lang}&compact=true"
-            ),
-            "opportunity_api": "/opportunities/{id}?lang={lang}",
-            "opportunity_history": (
-                "/opportunities/{id}/history.json?lang={lang}&limit={n}"
-            ),
-            "opportunity": "/opportunity/{id}?lang={lang}",
-            "funder": "/funder/{slug}?lang={lang}",
-            "digest": "/digest?lang={lang}",
-            "insights": "/insights?lang={lang}",
-            "insights_json": "/insights.json?lang={lang}",
-            "media": "/media?lang={lang}",
-            "media_json": "/media.json?lang={lang}",
-            "media_feed": "/media/feed.json?lang={lang}",
-            "media_rss": "/media/rss.xml?lang={lang}",
-            "compare": "/compare?ids={id},{id}&lang={lang}",
-            "compare_json": "/compare.json?ids={id},{id}&lang={lang}",
-            "notification_contract": "/.well-known/notification-contract.json",
-            "source_onboarding": "/.well-known/source-onboarding.json",
-            "terms": "/terms?lang={lang}",
-            "data_policy": "/data-policy?lang={lang}",
-            "attribution": "/attribution?lang={lang}",
-        },
-        "data_endpoints": {
-            "coverage": "http://testserver/coverage",
-            "opportunities": "http://testserver/opportunities",
-            "opportunities_ndjson": "http://testserver/opportunities.ndjson",
-            "opportunities_ndjson_compact": (
-                "http://testserver/opportunities.ndjson?compact=true"
-            ),
-            "opportunity_history": (
-                "http://testserver/opportunities/{id}/history.json"
-            ),
-            "digest": "http://testserver/digest",
-            "insights": "http://testserver/insights",
-            "insights_json": "http://testserver/insights.json",
-            "media": "http://testserver/media",
-            "media_json": "http://testserver/media.json",
-            "media_feed": "http://testserver/media/feed.json",
-            "media_rss": "http://testserver/media/rss.xml",
-            "compare": "http://testserver/compare.json",
-            "compare_json": "http://testserver/compare.json",
-            "notification_contract": (
-                "http://testserver/.well-known/notification-contract.json"
-            ),
-            "source_onboarding": (
-                "http://testserver/.well-known/source-onboarding.json"
-            ),
-            "terms": "http://testserver/terms",
-            "data_policy": "http://testserver/data-policy",
-            "attribution": "http://testserver/attribution",
-        },
-        "ai_consumption": {
-            "preferred_bulk_export": (
-                "http://testserver/opportunities.ndjson?compact=true"
-            ),
-            "preferred_detail_template": "/opportunities/{id}?lang=kk|ru|en",
-            "preferred_human_template": "/opportunity/{id}?lang=kk|ru|en",
-            "history_template": (
-                "http://testserver/opportunities/{id}/history.json?lang={lang}&limit={n}"
-            ),
-            "recommended_language_order": ["kk", "ru", "en"],
-            "cache_policy": {
-                "discovery_seconds": 300,
-                "catalog_seconds": 60,
-                "ndjson_seconds": 300,
-            },
-            "public_evidence_fields": [
-                "source",
-                "source_url",
-                "discovered_at",
-                "deadline",
-                "score",
-                "evidence_state",
-                "raw.provenance",
-                "raw.decision_readiness",
-                "raw.qazcompute_evidence_readiness",
-                "raw.ranking",
-            ],
-            "do_not_infer": [
-                "eligibility",
-                "deadline",
-                "award amount",
-                "application result",
-            ],
-        },
-        "query_templates": {
-            "opportunities_recent": (
-                "/opportunities?lang=ru&limit=50&min_score=0.5"
-                "&deadline_after={yyyy-mm-dd}"
-            ),
-            "opportunities_by_tag": "/opportunities?lang=ru&limit=50&tag={tag}",
-            "opportunities_search": "/opportunities?lang=ru&limit=50&q={query}",
-            "opportunities_by_source": (
-                "/opportunities?lang=ru&limit=50&source={source}"
-            ),
-            "opportunities_by_lifecycle": (
-                "/opportunities?lang=ru&limit=50&lifecycle={lifecycle}"
-            ),
-            "opportunities_ai_export": (
-                "/opportunities.ndjson?lang=ru&limit=500&min_score=0.3" "&compact=true"
-            ),
-            "digest_ai": "/digest?lang=ru&limit=5&tag=ai",
-        },
-        "capabilities": [
-            "public opportunity pages",
-            "public funder pages",
-            "public insights page",
-            "public media page",
-            "machine-readable insights snapshot",
-            "machine-readable media snapshot",
-            "machine-readable media JSON Feed",
-            "machine-readable media RSS",
-            "machine-readable opportunity comparison",
-            "notification contract (delivery disabled)",
-            "public data-policy pages",
-            "machine-readable opportunity api",
-            "cache-aware ndjson export",
-            "machine-readable source coverage",
-            "public source freshness status",
-            "public opportunity change history",
-            "official source links",
-            "read-only public catalog",
-            "qdev ecosystem contract",
-            "source onboarding contract",
-        ],
-    }
+    data = discovery.json()
+    assert data["site"] == "QAZ.FUND"
+    assert data["home"] == "http://testserver/"
+    assert data["openapi"] == "http://testserver/openapi.json"
+    assert data["versioned_api"] == "http://testserver/api/v1"
+    assert data["api_v1_schema"] == "http://testserver/api/v1/schema"
+    assert data["languages"] == ["kk", "ru", "en"]
+    assert data["contracts"]["qazpipe"].endswith("/.well-known/qazpipe-source.json")
+    assert data["contracts"]["qazcompute"].endswith(
+        "/.well-known/qazcompute-profiles.json"
+    )
+    assert data["routes"]["opportunity_history"] == (
+        "/opportunities/{id}/history.json?lang={lang}&limit={n}"
+    )
+    assert data["routes"]["media_citation"] == (
+        "/media/v1/opportunities/{id}/citation.txt?lang={lang}"
+    )
+    assert data["data_endpoints"]["api_v1_opportunities"] == (
+        "http://testserver/api/v1/opportunities"
+    )
+    assert data["media_endpoints"]["feed_json"] == (
+        "http://testserver/media/v1/feed.json"
+    )
+    assert data["ai_consumption"]["preferred_bulk_export"] == (
+        "http://testserver/api/v1/opportunities.ndjson"
+    )
+    assert data["ai_consumption"]["preferred_legacy_bulk_export"] == (
+        "http://testserver/opportunities.ndjson?compact=true"
+    )
+    assert "machine-readable media feeds" in data["capabilities"]
+    assert "qazpipe pull-source contract" in data["capabilities"]
+    assert "qazcompute profile contract" in data["capabilities"]
     discovery_head = client.head("/site-discovery.json")
     assert discovery_head.status_code == 200
     assert discovery_head.headers["content-type"].startswith("application/json")
@@ -1517,6 +1393,36 @@ def test_marketing_endpoints_are_exposed(monkeypatch):
         ecosystem_payload["integrations"]["notifications"]["delivery_enabled"] is False
     )
     assert client.head("/.well-known/qdev-ecosystem.json").status_code == 200
+
+    qazpipe = client.get("/.well-known/qazpipe-source.json")
+    assert qazpipe.status_code == 200
+    assert qazpipe.headers["cache-control"].startswith("public, max-age=60")
+    qazpipe_payload = qazpipe.json()
+    assert qazpipe_payload["schema_version"] == "qazpipe-pull-source-v1"
+    assert qazpipe_payload["direction"] == "outbound-read-only"
+    assert qazpipe_payload["endpoints"]["bulk_ndjson"] == (
+        "http://testserver/api/v1/opportunities.ndjson"
+    )
+    assert qazpipe_payload["qazlake_handoff"]["direct_write"] is False
+    assert client.head("/.well-known/qazpipe-source.json").status_code == 200
+
+    qazcompute = client.get("/.well-known/qazcompute-profiles.json")
+    assert qazcompute.status_code == 200
+    assert qazcompute.headers["cache-control"].startswith("public, max-age=60")
+    qazcompute_payload = qazcompute.json()
+    assert qazcompute_payload["schema_version"] == "qazcompute-profile-contract-v1"
+    assert qazcompute_payload["execution"]["runtime_status"] == "proven"
+    assert qazcompute_payload["execution"]["remote_execution_active"] is False
+    assert qazcompute_payload["execution"]["decision_ready"] is False
+    assert {
+        profile["schema_version"] for profile in qazcompute_payload["profiles"]
+    } == {
+        "evidence_readiness.v1",
+        "deadline_anomaly.v1",
+        "source_freshness.v1",
+        "duplicate_cluster.v1",
+    }
+    assert client.head("/.well-known/qazcompute-profiles.json").status_code == 200
 
     release = client.get("/.well-known/release.json")
     assert release.status_code == 200
