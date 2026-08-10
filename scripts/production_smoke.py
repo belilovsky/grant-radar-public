@@ -530,7 +530,7 @@ def run_smoke(
             "text/html"
         ),
         "detail_page": (
-            'data-avds-component="lite-reading-surface"' in detail_page
+            'data-avds-component="opportunity-page"' in detail_page
             and "Ключевые условия" in detail_page
             and "\u2014" not in detail_page
         ),
@@ -554,7 +554,7 @@ def run_smoke(
         "policy_routes": (
             "Условия использования" in policy_terms
             and "Политика данных" in policy_data
-            and "Цитирование и повторное использование" in policy_attribution
+            and "Использование данных" in policy_attribution
         ),
         "browser_404": (
             missing_page.status_code == 404

@@ -2427,7 +2427,7 @@ async def opportunity_page(
     if item is None:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND)
     if request.method == "HEAD":
-        return HTMLResponse("")
+        return HTMLResponse("", headers={"Cache-Control": _PUBLIC_FAST_CACHE})
     root_path = _root_path(request)
     site_origin = _site_origin(request, root_path)
     related_items = _related_opportunities(item, lang=content_lang)
@@ -2467,7 +2467,7 @@ async def opportunity_prepare_page(
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND)
     root_path = _root_path(request)
     if request.method == "HEAD":
-        return HTMLResponse("")
+        return HTMLResponse("", headers={"Cache-Control": _PUBLIC_FAST_CACHE})
     detail = await build_opportunity_detail(
         localize_opportunity(item, content_lang),
         lang=content_lang,
@@ -3256,7 +3256,7 @@ async def funder_page(
             )
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND)
     if request.method == "HEAD":
-        return HTMLResponse("")
+        return HTMLResponse("", headers={"Cache-Control": _PUBLIC_FAST_CACHE})
     root_path = _root_path(request)
     site_origin = _site_origin(request, root_path)
     items = cast(list[Opportunity], group["items"])

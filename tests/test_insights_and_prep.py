@@ -108,6 +108,7 @@ def test_insights_head_skips_analytics_projection(monkeypatch):
 
     assert response.status_code == 200
     assert response.content == b""
+    assert "public, max-age=60" in response.headers["cache-control"]
 
 
 def test_insights_separates_current_catalog_from_full_index():

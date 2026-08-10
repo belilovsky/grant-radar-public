@@ -149,7 +149,7 @@ def _transport(
                 200,
                 text=(
                     '<html lang="ru" data-avds="grant-radar">'
-                    '<main data-avds-component="lite-reading-surface">'
+                    '<main data-avds-component="opportunity-page">'
                     "<h1>Kazakhstan AI grant</h1><h2>Ключевые условия</h2>"
                     "</main></html>"
                 ),
@@ -388,7 +388,7 @@ def _transport(
             labels = {
                 "/terms": "Условия использования",
                 "/data-policy": "Политика данных",
-                "/attribution": "Цитирование и повторное использование",
+                "/attribution": "Использование данных",
             }
             return httpx.Response(
                 200,

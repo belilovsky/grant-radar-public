@@ -3427,6 +3427,7 @@ def test_opportunity_page_renders_public_permalink(monkeypatch):
 
     head_response = client.head(f"/opportunity/{item.id}", params={"lang": "ru"})
     assert head_response.status_code == 200
+    assert "public, max-age=60" in head_response.headers["cache-control"]
 
     kk_response = client.get(f"/opportunity/{item.id}", params={"lang": "kk"})
     assert kk_response.status_code == 200
@@ -3524,6 +3525,7 @@ def test_funder_page_defaults_to_russian_without_lang(monkeypatch):
 
     head_response = client.head("/funder/science-fund")
     assert head_response.status_code == 200
+    assert "public, max-age=60" in head_response.headers["cache-control"]
 
 
 def test_public_funder_index_excludes_usamraa_domestic_grants(monkeypatch):
