@@ -27,6 +27,8 @@ def _reset_api_state(monkeypatch) -> None:
     monkeypatch.delenv("GRANT_RADAR_ADMIN_TOKEN", raising=False)
     monkeypatch.delenv("PUBLIC_BASE_URL", raising=False)
     monkeypatch.delenv("GRANT_RADAR_ALLOWED_HOSTS", raising=False)
+    monkeypatch.delenv("GRANT_RADAR_SEMANTIC_SEARCH_ENABLED", raising=False)
+    monkeypatch.delenv("GRANT_RADAR_SEMANTIC_SEARCH_URL", raising=False)
     api_main._repository_for_url.cache_clear()
     api_main._cache.clear()
     api_main._clear_sitemap_cache()
@@ -2210,6 +2212,94 @@ def test_opportunities_support_server_search_filters_and_count_headers(monkeypat
     assert (
         client.get("/opportunities", params={"lifecycle": "invalid"}).status_code == 422
     )
+
+
+def test_opportunities_use_internal_semantic_order_without_bypassing_filters(
+    monkeypatch,
+):
+    _reset_api_state(monkeypatch)
+    first = Opportunity(
+        source="astana_hub",
+        source_url="https://example.org/first",
+        type=OpportunityType.GRANT,
+        title="Cloud credits for early-stage teams",
+        tags=["kazakhstan", "cloud"],
+        deadline=date.today() + timedelta(days=30),
+        score=0.8,
+    )
+    second = Opportunity(
+        source="astana_hub",
+        source_url="https://example.org/second",
+        type=OpportunityType.GRANT,
+        title="Startup support track",
+        tags=["kazakhstan", "startup"],
+        deadline=date.today() + timedelta(days=30),
+        score=0.8,
+    )
+    excluded = Opportunity(
+        source="internews",
+        source_url="https://example.org/excluded",
+        type=OpportunityType.GRANT,
+        title="Media support track",
+        tags=["central_asia", "media"],
+        deadline=date.today() + timedelta(days=30),
+        score=0.8,
+    )
+    api_main._cache.extend([first, second, excluded])
+    monkeypatch.setattr(
+        api_main,
+        "_search_semantic_opportunities",
+        lambda query, items, limit: [
+            type("Hit", (), {"opportunity_id": second.id, "score": 0.99})(),
+            type("Hit", (), {"opportunity_id": excluded.id, "score": 0.98})(),
+            type("Hit", (), {"opportunity_id": first.id, "score": 0.97})(),
+        ],
+    )
+    monkeypatch.setenv("GRANT_RADAR_SEMANTIC_SEARCH_ENABLED", "1")
+    monkeypatch.setenv("GRANT_RADAR_SEMANTIC_SEARCH_URL", "http://semantic:8010")
+    client = TestClient(api_main.app)
+
+    response = client.get(
+        "/opportunities",
+        params={"q": "financial support", "source": "astana_hub"},
+    )
+
+    assert response.status_code == 200
+    assert [row["id"] for row in response.json()] == [str(second.id), str(first.id)]
+    assert response.headers["x-total-count"] == "2"
+
+
+def test_hybrid_search_fuses_lexical_and_semantic_ranks_without_extra_records():
+    lexical = Opportunity(
+        source="astana_hub",
+        source_url="https://example.org/lexical",
+        type=OpportunityType.GRANT,
+        title="AI accelerator",
+    )
+    semantic = Opportunity(
+        source="astana_hub",
+        source_url="https://example.org/semantic",
+        type=OpportunityType.GRANT,
+        title="Startup programme",
+    )
+    unrelated = Opportunity(
+        source="astana_hub",
+        source_url="https://example.org/unrelated",
+        type=OpportunityType.GRANT,
+        title="Unrelated call",
+    )
+    hits = [
+        type("Hit", (), {"opportunity_id": semantic.id, "score": 0.99})(),
+        type("Hit", (), {"opportunity_id": lexical.id, "score": 0.98})(),
+    ]
+
+    rows = api_main._fuse_hybrid_query_results(
+        [lexical, semantic, unrelated],
+        [lexical],
+        hits,
+    )
+
+    assert [row.id for row in rows] == [lexical.id, semantic.id]
 
 
 def test_opportunities_priority_prefers_actionable_runway_at_equal_relevance(

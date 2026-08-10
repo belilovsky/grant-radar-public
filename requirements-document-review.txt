@@ -1,0 +1,2 @@
+# Kept out of the public API and semantic-service images; run locally only.
+docling==2.119.0

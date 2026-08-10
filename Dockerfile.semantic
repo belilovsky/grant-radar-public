@@ -1,0 +1,17 @@
+FROM python:3.12-slim
+
+ENV PYTHONUNBUFFERED=1 \
+    PYTHONDONTWRITEBYTECODE=1 \
+    PIP_NO_CACHE_DIR=1 \
+    HF_HOME=/models/huggingface \
+    TRANSFORMERS_CACHE=/models/huggingface
+
+WORKDIR /app
+
+COPY requirements-semantic.txt ./
+RUN pip install --upgrade pip && pip install -r requirements-semantic.txt
+
+COPY semantic_service ./semantic_service
+
+EXPOSE 8010
+CMD ["uvicorn", "semantic_service.app:app", "--host", "0.0.0.0", "--port", "8010"]

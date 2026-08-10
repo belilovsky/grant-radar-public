@@ -144,6 +144,8 @@ from core.qazcompute_bridge import (
 from core.repository_factory import make_repository
 from core.scoring import PUBLIC_RELEVANCE_THRESHOLD, priority_score, ranking_payload
 from core.scoring import score as score_opportunity
+from core.semantic_search import clear_semantic_search_client_cache
+from core.semantic_search import search_opportunities as _search_semantic_opportunities
 from sources import PARSERS
 from sources.kazakhstan_domestic import (
     ACTIVE_DOMESTIC_URLS,
@@ -592,6 +594,7 @@ def _clear_public_items_cache() -> None:
         _insights_cache.clear()
         _ndjson_body_cache.clear()
         _coverage_cache = None
+    clear_semantic_search_client_cache()
 
 
 def _ndjson_cache_key(
@@ -2928,8 +2931,6 @@ def _query_opportunities(
     )
     if tag:
         items = [o for o in items if tag.lower() in (t.lower() for t in o.tags)]
-    if q:
-        items = [item for item in items if _matches_opportunity_query(item, q)]
     if source:
         normalized_source = _normalized_token(source)
         items = [
@@ -2946,6 +2947,17 @@ def _query_opportunities(
         items = [o for o in items if o.deadline and o.deadline <= deadline_before]
     if deadline_after:
         items = [o for o in items if _is_open(o, deadline_after)]
+    if q:
+        lexical_items = [item for item in items if _matches_opportunity_query(item, q)]
+        semantic_hits = _search_semantic_opportunities(
+            q,
+            items,
+            limit=min(len(items), max(100, offset + limit)),
+        )
+        if semantic_hits:
+            items = _fuse_hybrid_query_results(items, lexical_items, semantic_hits)
+        else:
+            items = lexical_items
     total_count = len(items)
     results = items[offset : offset + limit]
     if compact:
@@ -2955,6 +2967,39 @@ def _query_opportunities(
             _public_query_cache.pop(next(iter(_public_query_cache)))
         _public_query_cache[query_key] = (now, (tuple(results), total_count))
     return results, total_count
+
+
+def _fuse_hybrid_query_results(
+    items: list[Opportunity],
+    lexical_items: list[Opportunity],
+    semantic_hits: list[Any],
+) -> list[Opportunity]:
+    """Fuse lexical and semantic rankings without letting either bypass filters."""
+
+    by_id = {item.id: item for item in items}
+    semantic_rank = {
+        hit.opportunity_id: rank
+        for rank, hit in enumerate(semantic_hits, start=1)
+        if hit.opportunity_id in by_id
+    }
+    lexical_rank = {item.id: rank for rank, item in enumerate(lexical_items, start=1)}
+    candidate_ids = set(semantic_rank) | set(lexical_rank)
+    if not candidate_ids:
+        return lexical_items
+    original_rank = {item.id: rank for rank, item in enumerate(items, start=1)}
+
+    def rrf_score(item_id: UUID) -> float:
+        value = 0.0
+        if item_id in semantic_rank:
+            value += 1.0 / (60 + semantic_rank[item_id])
+        if item_id in lexical_rank:
+            value += 1.0 / (60 + lexical_rank[item_id])
+        return value
+
+    return sorted(
+        (by_id[item_id] for item_id in candidate_ids),
+        key=lambda item: (-rrf_score(item.id), original_rank[item.id]),
+    )
 
 
 def _opportunities_json_response(

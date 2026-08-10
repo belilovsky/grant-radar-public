@@ -10,6 +10,8 @@ RSYNC_DELETE="${RSYNC_DELETE:-0}"
 READY_URL="${READY_URL:-http://127.0.0.1:8000/ready}"
 READY_ATTEMPTS="${READY_ATTEMPTS:-30}"
 READY_DELAY="${READY_DELAY:-2}"
+SEMANTIC_READY_ATTEMPTS="${SEMANTIC_READY_ATTEMPTS:-450}"
+SEMANTIC_READY_DELAY="${SEMANTIC_READY_DELAY:-2}"
 PUBLIC_URL="${PUBLIC_URL:-}"
 REQUIRE_PUBLIC_VERIFY="${REQUIRE_PUBLIC_VERIFY:-1}"
 
@@ -70,6 +72,29 @@ ssh "$DEPLOY_HOST" "
     docker compose --env-file '$ENV_FILE' $COMPOSE_FILES logs --tail=80 api >&2 || true
     exit 1
   fi
+  semantic_enabled=\"\$(sed -n 's/^GRANT_RADAR_SEMANTIC_SEARCH_ENABLED=//p' '$ENV_FILE' | tail -n 1)\"
+  case \"\${semantic_enabled:-1}\" in
+    0|false|False|no|NO|off|OFF)
+      echo 'Semantic search disabled by runtime configuration.'
+      ;;
+    *)
+      semantic_ok=0
+      for attempt in \$(seq 1 '$SEMANTIC_READY_ATTEMPTS'); do
+        if docker compose --env-file '$ENV_FILE' $COMPOSE_FILES exec -T semantic \\
+          python -c \"from urllib.request import urlopen; urlopen('http://127.0.0.1:8010/health', timeout=3).read()\" >/dev/null 2>&1; then
+          semantic_ok=1
+          break
+        fi
+        sleep '$SEMANTIC_READY_DELAY'
+      done
+      if [[ \"\$semantic_ok\" != \"1\" ]]; then
+        echo 'Semantic search did not become ready after deploy.' >&2
+        docker compose --env-file '$ENV_FILE' $COMPOSE_FILES logs --tail=80 semantic >&2 || true
+        exit 1
+      fi
+      echo 'Semantic search readiness verified.'
+      ;;
+  esac
   printf '%s\n' '$REVISION' > .deployed-revision
   printf '%s\n' '$DEPLOYED_AT' > .deployed-at
   docker compose --env-file '$ENV_FILE' $COMPOSE_FILES ps

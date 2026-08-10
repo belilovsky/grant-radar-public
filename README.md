@@ -221,6 +221,7 @@ Deployment guidance lives in [DEPLOYMENT.md](DEPLOYMENT.md) and
 - [docs/QAZFUND_DATA_CENTRE_2026-07-27.md](docs/QAZFUND_DATA_CENTRE_2026-07-27.md)
 - [docs/UX_CJM_2026-07-27.md](docs/UX_CJM_2026-07-27.md)
 - [docs/REPRODUCIBILITY_AND_RUNTIME.md](docs/REPRODUCIBILITY_AND_RUNTIME.md)
+- [docs/SEMANTIC_SEARCH.md](docs/SEMANTIC_SEARCH.md)
 - [docs/TELEGRAM_DIGEST.md](docs/TELEGRAM_DIGEST.md)
 
 ## License
