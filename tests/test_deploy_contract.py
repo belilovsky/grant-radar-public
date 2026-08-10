@@ -58,6 +58,13 @@ def test_production_compose_requires_password_and_checks_api_readiness() -> None
     assert "  db:\n    env_file:" not in production_compose
 
 
+def test_semantic_catalog_uses_the_public_host_on_the_internal_network() -> None:
+    production_compose = (ROOT / "docker-compose.prod.yml").read_text()
+
+    assert "GRANT_RADAR_SEMANTIC_CATALOG_HOST" in production_compose
+    assert "${GRANT_RADAR_SEMANTIC_CATALOG_HOST:-qaz.fund}" in production_compose
+
+
 def test_worker_does_not_run_migrations_concurrently_with_api() -> None:
     base_compose = (ROOT / "docker-compose.yml").read_text()
 

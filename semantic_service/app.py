@@ -48,6 +48,10 @@ def _catalog_url() -> str:
     ).strip()
 
 
+def _catalog_host() -> str:
+    return os.environ.get("GRANT_RADAR_SEMANTIC_CATALOG_HOST", "qaz.fund").strip()
+
+
 def _qdrant_url() -> str:
     return os.environ.get("QDRANT_URL", "http://qdrant:6333").strip()
 
@@ -214,8 +218,9 @@ async def _load_catalog() -> list[dict[str, str]]:
     url = _catalog_url()
     if not url:
         raise RuntimeError("GRANT_RADAR_SEMANTIC_CATALOG_URL is empty")
+    headers = {"Host": _catalog_host()} if _catalog_host() else {}
     async with httpx.AsyncClient(timeout=30) as client:
-        response = await client.get(url)
+        response = await client.get(url, headers=headers)
         response.raise_for_status()
     rows: list[dict[str, Any]] = []
     for line in response.text.splitlines():

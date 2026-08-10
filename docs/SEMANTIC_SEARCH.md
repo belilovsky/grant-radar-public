@@ -37,8 +37,12 @@ there is no public error or broadened result set.
 
 The semantic service reindexes from the public catalog on startup and every
 `GRANT_RADAR_SEMANTIC_REINDEX_INTERVAL_SECONDS` (default: six hours). It does
-not trigger source crawls. The deploy helper waits for `/health` after the API
-is ready, unless semantic search is explicitly disabled in `.env.prod`.
+not trigger source crawls. Internal catalog requests retain the canonical
+public Host header (`GRANT_RADAR_SEMANTIC_CATALOG_HOST`, default: `qaz.fund`),
+so the API's trusted-host boundary stays enabled. A failed initial index is
+retried every `GRANT_RADAR_SEMANTIC_STARTUP_RETRY_SECONDS` (default: 15 seconds).
+The deploy helper waits for `/health` after the API is ready, unless semantic
+search is explicitly disabled in `.env.prod`.
 
 ## Capacity and evaluation gate
 

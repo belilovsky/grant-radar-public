@@ -1,5 +1,8 @@
 import asyncio
+import json
 from datetime import UTC, datetime
+
+import httpx
 
 import semantic_service.app as semantic_app
 
@@ -32,3 +35,32 @@ def test_index_loop_retries_quickly_until_first_success(monkeypatch):
 
     assert attempts == 2
     assert delays == [3, 600]
+
+
+def test_catalog_request_uses_public_host_for_internal_api(monkeypatch):
+    captured_headers: dict[str, str] = {}
+
+    class Client:
+        async def __aenter__(self):
+            return self
+
+        async def __aexit__(self, *_):
+            return None
+
+        async def get(self, url, *, headers):
+            captured_headers.update(headers)
+            request = httpx.Request("GET", url, headers=headers)
+            row = {
+                "id": "opportunity-1",
+                "title": "AI support",
+                "summary": "For Kazakhstan teams",
+            }
+            return httpx.Response(200, text=json.dumps(row), request=request)
+
+    monkeypatch.setenv("GRANT_RADAR_SEMANTIC_CATALOG_HOST", "qaz.fund")
+    monkeypatch.setattr(semantic_app.httpx, "AsyncClient", lambda **_: Client())
+
+    documents = asyncio.run(semantic_app._load_catalog())
+
+    assert captured_headers == {"Host": "qaz.fund"}
+    assert documents[0]["id"] == "opportunity-1"
