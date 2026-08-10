@@ -1813,6 +1813,7 @@ async def test_google_org_fetch_yields_ai_opportunity_watch():
     assert item.lifecycle == "forecast"
     assert item.raw["external_id"] == "google_org_ai_opportunity"
     assert item.raw["source_watch"] is True
+    assert "No open application window is confirmed" in item.raw["status_note"]
     assert item.raw["i18n"]["ru"]["title"].startswith("Программы Google.org")
 
 

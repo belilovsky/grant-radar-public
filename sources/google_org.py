@@ -81,6 +81,10 @@ class GoogleOrgAiOpportunitySource(BaseSource):
                 "program_url": GOOGLE_ORG_KNOWLEDGE_URL,
                 "source_watch": True,
                 "item_level_parser": False,
+                "status_note": (
+                    "No open application window is confirmed; this record monitors "
+                    "the official page for future calls."
+                ),
                 "i18n": {
                     "ru": {
                         "title": (
