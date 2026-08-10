@@ -20,6 +20,9 @@ import structlog
 from core.models import Opportunity, OpportunityType
 from core.source_text import clean_source_text as _clean_text
 from sources.base import BaseSource
+from sources.parsing import contains_term as _contains_term
+from sources.parsing import infer_tags as _shared_infer_tags
+from sources.parsing import unique_normalized as _unique
 
 log = structlog.get_logger()
 
@@ -134,32 +137,8 @@ def _entry_categories(entry: Any) -> list[str]:
     return out
 
 
-def _unique(values: Iterable[str]) -> list[str]:
-    seen: set[str] = set()
-    out: list[str] = []
-    for value in values:
-        normalized = value.strip().lower()
-        if not normalized or normalized in seen:
-            continue
-        seen.add(normalized)
-        out.append(normalized)
-    return out
-
-
 def _infer_tags(text: str) -> list[str]:
-    lowered = text.lower()
-    tags: list[str] = []
-    for tag, keywords in THEME_KEYWORDS.items():
-        if any(_contains_term(lowered, keyword) for keyword in keywords):
-            tags.append(tag)
-    return tags
-
-
-def _contains_term(text: str, keyword: str) -> bool:
-    text = text.lower()
-    normalized_keyword = re.escape(keyword.lower()).replace(r"\ ", r"[\s_-]+")
-    pattern = rf"(?<![a-z0-9]){normalized_keyword}(?![a-z0-9])"
-    return re.search(pattern, text) is not None
+    return _shared_infer_tags(text, THEME_KEYWORDS)
 
 
 def _infer_type(text: str, fallback: OpportunityType) -> OpportunityType:

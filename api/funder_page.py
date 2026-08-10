@@ -14,6 +14,9 @@ from qazstack.opportunities import public_lifecycle
 
 from api.avds import AVDS_CSS, AVDS_FONT_HEAD
 from api.dashboard import dashboard_copy
+from api.page_primitives import absolute_href as _absolute_href
+from api.page_primitives import catalog_path as _catalog_path
+from api.page_primitives import format_deadline as _format_deadline
 from api.public_meta import analytics_head_html, og_image_url
 from core.models import Opportunity
 from core.nlp import clean_source_summary
@@ -37,22 +40,6 @@ _ACRONYM_MAP = {
     "unicef": "UNICEF",
     "us": "US",
 }
-
-
-def _absolute_href(origin: str, path: str) -> str:
-    clean_origin = origin.rstrip("/")
-    if path.startswith(("http://", "https://")):
-        return path
-    if not clean_origin:
-        return path or "/"
-    return f"{clean_origin}{path}"
-
-
-def _catalog_path(root_path: str, lang: str) -> str:
-    base = root_path.rstrip("/")
-    if base:
-        return f"{base}/?lang={lang}#opportunities"
-    return f"/?lang={lang}#opportunities"
 
 
 def _funder_path(root_path: str, slug: str, lang: str) -> str:
@@ -158,14 +145,6 @@ def _overview_sentence(funder: dict[str, object], copy: dict[str, object]) -> st
     if regions:
         bits.append(str(copy["funder_overview_regions"]).format(regions=regions))
     return " ".join(bits).strip()
-
-
-def _format_deadline(value: date | None, lang: str, rolling_label: str) -> str:
-    if value is None:
-        return rolling_label
-    if lang == "en":
-        return value.strftime("%b %d, %Y")
-    return value.strftime("%d.%m.%Y")
 
 
 def _tag_is_supported(item: Opportunity, raw_tag: object) -> bool:

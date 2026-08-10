@@ -123,16 +123,6 @@ class BaseSource(BaseSourceParser):
     base_url: str
     default_tags: ClassVar[list[str]] = []
 
-    def __init__(self, client: httpx.AsyncClient | None = None) -> None:
-        self.client = client or httpx.AsyncClient(
-            timeout=30.0,
-            headers={
-                "User-Agent": "grant-radar/0.1 (+https://github.com/belilovsky/grant-radar)"
-            },
-            follow_redirects=True,
-        )
-        self.last_fetch_error: str | None = None
-
     @abc.abstractmethod
     def fetch(self) -> AsyncIterator[Opportunity]:
         """Выдаёт новые Opportunity из источника."""

@@ -6,14 +6,12 @@ import json
 import os
 import re
 import threading
-import unicodedata
-from collections import Counter
 from collections.abc import Awaitable, Callable, Iterable, Mapping
 from contextlib import asynccontextmanager, suppress
 from datetime import date, datetime, timedelta, timezone
 from functools import lru_cache
 from hmac import compare_digest
-from html import escape, unescape
+from html import escape
 from typing import Any, cast
 from uuid import NAMESPACE_URL, UUID, uuid5
 
@@ -37,6 +35,16 @@ from starlette.middleware.trustedhost import TrustedHostMiddleware
 
 from api.application_prep_page import render_application_prep_page
 from api.avds import AVDS_CSS
+from api.catalog import build_funder_index as _build_funder_index
+from api.catalog import funder_name as _funder_name
+from api.catalog import funder_payload as _funder_payload
+from api.catalog import funder_region_tokens as _funder_region_tokens
+from api.catalog import matches_opportunity_query as _matches_opportunity_query
+from api.catalog import normalized_token as _normalized_token
+from api.catalog import related_reason_key as _related_reason_key
+from api.catalog import related_relevance as _related_relevance
+from api.catalog import slugify_funder as _slugify_funder
+from api.catalog import source_name as _source_name
 from api.comparison import (
     MAX_COMPARISON_ITEMS,
     build_comparison_snapshot,
@@ -61,6 +69,9 @@ from api.embed_page import render_coverage_embed, render_opportunities_embed
 from api.error_page import render_not_found_page
 from api.funder_page import render_funder_page
 from api.history import build_history_snapshot
+from api.http_policy import PUBLIC_DISCOVERY_CACHE as _PUBLIC_DISCOVERY_CACHE
+from api.http_policy import PUBLIC_FAST_CACHE as _PUBLIC_FAST_CACHE
+from api.http_policy import apply_public_headers, is_machine_route
 from api.insights import build_insights_payload
 from api.insights_page import build_insights_snapshot, render_insights_page
 from api.media import (
@@ -87,9 +98,20 @@ from api.media_page import (
 from api.notification_contract import notification_contract
 from api.operator_page import render_operator_page
 from api.opportunity_detail import build_opportunity_detail
+from api.opportunity_mapping import display_summary as _display_summary
+from api.opportunity_mapping import display_text as _display_text
+from api.opportunity_mapping import fallback_summary as _fallback_summary
+from api.opportunity_mapping import list_value as _list_value
+from api.opportunity_mapping import opportunity_type as _opportunity_type
+from api.opportunity_mapping import public_raw as _public_raw
 from api.opportunity_page import render_opportunity_page
 from api.public_info_page import render_public_info_page
 from api.public_meta import OG_IMAGE_PNG, OG_IMAGE_SVG
+from api.runtime_config import admin_token as _admin_token
+from api.runtime_config import allowed_hosts as _allowed_hosts
+from api.runtime_config import bearer_token as _bearer_token
+from api.runtime_config import database_url as _database_url
+from api.runtime_config import public_base_url as _public_base_url
 from api.source_onboarding import source_onboarding_contract
 from api.status_page import render_status_page
 from core.geofit import (
@@ -101,8 +123,7 @@ from core.localization import (
     localize_opportunity,
     normalize_content_lang,
 )
-from core.models import Digest, Opportunity, OpportunityDetail, OpportunityType
-from core.nlp import clean_source_summary
+from core.models import Digest, Opportunity, OpportunityDetail
 from core.persistence import Repository
 from core.pipeline import run_all
 from core.provenance import provenance_profile
@@ -161,58 +182,6 @@ app = FastAPI(
     docs_url=None,
     redoc_url=None,
 )
-app.add_middleware(GZipMiddleware, minimum_size=1024, compresslevel=6)
-
-_MACHINE_ROUTE_PREFIXES = (
-    "/.well-known",
-    "/compare.json",
-    "/coverage",
-    "/digest",
-    "/funders",
-    "/health",
-    "/insights.json",
-    "/openapi.json",
-    "/opportunities",
-    "/operator/health",
-    "/ready",
-    "/refresh",
-    "/site-discovery.json",
-    "/sources",
-    "/media/v1",
-)
-_PUBLIC_FAST_CACHE = "public, max-age=60, stale-while-revalidate=300"
-_PUBLIC_DISCOVERY_CACHE = "public, max-age=300, stale-while-revalidate=1800"
-_PUBLIC_LONG_CACHE = "public, max-age=3600, stale-while-revalidate=86400"
-_PUBLIC_FAST_CACHE_PATHS = {
-    "/",
-    "/.well-known/avds-ui-contract.json",
-    "/.well-known/qazcompute-profiles.json",
-    "/.well-known/qazpipe-source.json",
-    "/.well-known/qazstack-consumer.json",
-    "/.well-known/qdev-ecosystem.json",
-    "/.well-known/notification-contract.json",
-    "/.well-known/source-onboarding.json",
-    "/compare",
-    "/compare.json",
-    "/coverage",
-    "/funders",
-    "/insights.json",
-    "/opportunities",
-    "/opportunities.ndjson",
-}
-_PUBLIC_DISCOVERY_CACHE_PATHS = {
-    "/llms.txt",
-    "/robots.txt",
-    "/site-discovery.json",
-    "/sitemap.xml",
-    "/sources",
-}
-_PUBLIC_LONG_CACHE_PATHS = {
-    "/favicon.ico",
-    "/og-image.png",
-    "/og-image.svg",
-    f"/{GOOGLE_SITE_VERIFICATION_FILENAME}",
-}
 _OPPORTUNITY_LIST_ADAPTER = TypeAdapter(list[Opportunity])
 
 
@@ -224,11 +193,11 @@ async def public_http_exception_page(
     """Keep API errors structured while giving browser 404s a useful exit."""
 
     accepts_html = "text/html" in request.headers.get("accept", "").lower()
-    is_machine_route = request.url.path.startswith(_MACHINE_ROUTE_PREFIXES)
+    machine_route = is_machine_route(request.url.path)
     if (
         exc.status_code != status.HTTP_404_NOT_FOUND
         or not accepts_html
-        or is_machine_route
+        or machine_route
     ):
         return await http_exception_handler(request, exc)
     active_lang = _public_lang(str(request.query_params.get("lang") or ""))
@@ -342,82 +311,11 @@ async def add_security_headers(
     call_next: Callable[[Request], Awaitable[Response]],
 ) -> Response:
     response = await call_next(request)
-    response.headers.setdefault("X-Content-Type-Options", "nosniff")
-    if request.url.path.startswith("/embed/"):
-        if "X-Frame-Options" in response.headers:
-            del response.headers["X-Frame-Options"]
-        response.headers["Content-Security-Policy"] = (
-            "default-src 'none'; script-src 'none'; style-src 'unsafe-inline'; "
-            "img-src 'none'; font-src 'none'; connect-src 'none'; object-src 'none'; "
-            "base-uri 'none'; form-action 'none'; "
-            "frame-ancestors https://qaz.support https://www.qaz.support"
-        )
-        response.headers["X-Robots-Tag"] = "noindex, nofollow"
-    else:
-        response.headers.setdefault("X-Frame-Options", "SAMEORIGIN")
-    response.headers.setdefault("Referrer-Policy", "strict-origin-when-cross-origin")
-    response.headers.setdefault(
-        "Permissions-Policy",
-        "camera=(), microphone=(), geolocation=(), payment=()",
-    )
-    if request.method in {"GET", "HEAD"}:
-        if request.url.path in _PUBLIC_FAST_CACHE_PATHS:
-            response.headers.setdefault("Cache-Control", _PUBLIC_FAST_CACHE)
-        elif request.url.path in _PUBLIC_DISCOVERY_CACHE_PATHS:
-            response.headers.setdefault("Cache-Control", _PUBLIC_DISCOVERY_CACHE)
-        elif request.url.path in _PUBLIC_LONG_CACHE_PATHS:
-            response.headers.setdefault("Cache-Control", _PUBLIC_LONG_CACHE)
-    return response
-
-
-def _database_url() -> str:
-    return (
-        os.environ.get("GRANT_RADAR_DB_URL") or os.environ.get("DATABASE_URL") or ""
-    ).strip()
-
-
-def _public_base_url() -> str:
-    return os.environ.get("PUBLIC_BASE_URL", "").strip().rstrip("/")
-
-
-def _allowed_hosts() -> list[str]:
-    from urllib.parse import urlparse
-
-    hosts = {
-        "localhost",
-        "127.0.0.1",
-        "::1",
-        "testserver",
-        "qaz.fund",
-    }
-    configured = os.environ.get("GRANT_RADAR_ALLOWED_HOSTS", "")
-    for raw in configured.split(","):
-        host = raw.strip().lower()
-        if host:
-            hosts.add(host)
-    public_base = _public_base_url()
-    if public_base:
-        host = (urlparse(public_base).hostname or "").strip().lower()
-        if host:
-            hosts.add(host)
-    return sorted(hosts)
+    return apply_public_headers(request, response)
 
 
 app.add_middleware(TrustedHostMiddleware, allowed_hosts=_allowed_hosts())
 app.add_middleware(GZipMiddleware, minimum_size=1_000, compresslevel=5)
-
-
-def _admin_token() -> str:
-    return os.environ.get("GRANT_RADAR_ADMIN_TOKEN", "").strip()
-
-
-def _bearer_token(authorization: str | None) -> str:
-    if not authorization:
-        return ""
-    scheme, _, token = authorization.partition(" ")
-    if scheme.lower() != "bearer":
-        return ""
-    return token.strip()
 
 
 async def require_admin_token(
@@ -443,76 +341,6 @@ def _configured_repository() -> Repository | None:
     if url in ("", "memory", ":memory:"):
         return None
     return _repository_for_url(url)
-
-
-def _list_value(value: Any) -> list[str]:
-    if value is None:
-        return []
-    if isinstance(value, str):
-        return [value]
-    if isinstance(value, Iterable):
-        return [str(item) for item in value]
-    return [str(value)]
-
-
-def _display_text(value: Any) -> str:
-    return re.sub(r"\s+", " ", unescape(str(value or ""))).strip()
-
-
-def _display_summary(value: Any) -> str:
-    return clean_source_summary(_display_text(value))
-
-
-def _opportunity_type(raw: dict[str, Any]) -> OpportunityType:
-    try:
-        return OpportunityType(str(raw.get("type") or OpportunityType.GRANT))
-    except ValueError:
-        return OpportunityType.GRANT
-
-
-def _fallback_summary(raw: dict[str, Any], content_lang: str = "en") -> str:
-    raw_payload = raw.get("raw")
-    source_raw = raw_payload if isinstance(raw_payload, dict) else raw
-    agency = (
-        source_raw.get("agencyName")
-        or source_raw.get("agency")
-        or source_raw.get("agencyCode")
-    )
-    close_date = source_raw.get("closeDate") or source_raw.get("deadline")
-    language_candidates = _list_value(
-        source_raw.get("language") or source_raw.get("languages")
-    )
-    normalized_lang = (
-        normalize_content_lang(language_candidates[0])
-        if language_candidates
-        else normalize_content_lang(content_lang)
-    )
-    if agency or close_date:
-        if normalized_lang == "en":
-            parts = ["Opportunity notice"]
-            if agency:
-                parts.append(f"from {agency}")
-            if close_date:
-                parts.append(f"closing {close_date}")
-        else:
-            parts = ["Уведомление о возможности"]
-            if agency:
-                parts.append(f"от {agency}")
-            if close_date:
-                parts.append(f"сроком до {close_date}")
-        return " ".join(parts) + "."
-    return ""
-
-
-def _public_raw(raw: dict[str, Any]) -> dict[str, Any]:
-    nested_raw = raw.get("raw")
-    if isinstance(nested_raw, dict) and "source_url" in raw and "discovered_at" in raw:
-        return nested_raw
-    if isinstance(nested_raw, dict) and {"type", "tags", "languages"}.issubset(
-        raw.keys()
-    ):
-        return nested_raw
-    return raw
 
 
 def _stored_opportunity(row: Any, *, content_lang: str = "en") -> Opportunity:
@@ -1032,190 +860,6 @@ def _effective_public_lifecycle(item: Opportunity, *, today: date) -> str:
     return public_lifecycle(item, today=today)
 
 
-def _normalized_token(value: Any) -> str:
-    return re.sub(r"\s+", " ", str(value or "").strip().lower())
-
-
-def _source_name(source_slug: str) -> str:
-    source_cls = PARSERS.get(source_slug)
-    if source_cls is not None:
-        return str(source_cls.name)
-    return source_slug.replace("_", " ").strip() or "Unknown source"
-
-
-def _funder_name(item: Opportunity) -> str:
-    name = str(item.funder or "").strip()
-    return name or _source_name(item.source)
-
-
-def _slugify_funder(value: str) -> str:
-    normalized = _normalized_token(value)
-    ascii_value = (
-        unicodedata.normalize("NFKD", normalized).encode("ascii", "ignore").decode()
-    )
-    slug = re.sub(r"[^a-z0-9]+", "-", ascii_value).strip("-")
-    if slug:
-        return slug
-    return f"funder-{uuid5(NAMESPACE_URL, normalized or value).hex[:10]}"
-
-
-def _funder_region_tokens(item: Opportunity) -> set[str]:
-    tags = {_normalized_token(tag) for tag in item.tags if _normalized_token(tag)}
-    raw = item.raw if isinstance(item.raw, dict) else {}
-    blob = " ".join(
-        [
-            str(raw.get("country") or ""),
-            str(raw.get("region") or ""),
-            str(raw.get("borrower") or ""),
-            str(item.summary or ""),
-            str(item.title or ""),
-        ]
-    ).lower()
-    regions: set[str] = set()
-    if (
-        "kazakhstan" in tags
-        or "kazakhstan" in blob
-        or "казахстан" in blob
-        or "қазақстан" in blob
-    ):
-        regions.add("kazakhstan")
-    if (
-        "central_asia" in tags
-        or "central_asia_eligible" in tags
-        or "central asia" in blob
-        or "центральн" in blob
-    ):
-        regions.add("central_asia")
-    if "global" in tags and not regions:
-        regions.add("global")
-    if not regions:
-        regions.add("global")
-    return regions
-
-
-def _opportunity_search_blob(item: Opportunity) -> str:
-    """Build a deterministic text index from public opportunity fields."""
-    raw = item.raw if isinstance(item.raw, dict) else {}
-    values: list[Any] = [
-        item.title,
-        item.summary,
-        item.funder,
-        item.source,
-        *item.tags,
-        *item.eligibility,
-        *(
-            raw.get(key)
-            for key in ("page_title", "listing_title", "reference", "agency", "country")
-        ),
-    ]
-    return _normalized_token(" ".join(str(value or "") for value in values))
-
-
-def _matches_opportunity_query(item: Opportunity, query: str) -> bool:
-    tokens = [token for token in _normalized_token(query).split(" ") if token]
-    if not tokens:
-        return True
-    blob = _opportunity_search_blob(item)
-    return all(token in blob for token in tokens)
-
-
-def _funder_tag_tokens(item: Opportunity) -> list[str]:
-    ignored = {
-        "rolling",
-        "closed",
-        "watchlist",
-        "global",
-        "kazakhstan",
-        "central_asia",
-        "central_asia_eligible",
-    }
-    return [
-        _normalized_token(tag)
-        for tag in item.tags
-        if _normalized_token(tag) and _normalized_token(tag) not in ignored
-    ]
-
-
-def _build_funder_index(items: Iterable[Opportunity]) -> dict[str, dict[str, Any]]:
-    today = public_today()
-    groups: dict[str, dict[str, Any]] = {}
-    for item in items:
-        name = _funder_name(item)
-        slug = _slugify_funder(name)
-        group = groups.setdefault(
-            slug,
-            {
-                "slug": slug,
-                "name": name,
-                "items": [],
-                "types": Counter(),
-                "tags": Counter(),
-                "regions": Counter(),
-                "sources": {},
-                "open_items": 0,
-                "closing_soon_items": 0,
-                "rolling_items": 0,
-                "forecast_items": 0,
-                "closed_items": 0,
-                "awarded_items": 0,
-                "current_items": 0,
-                "score_sum": 0.0,
-                "next_deadline": None,
-            },
-        )
-        group["items"].append(item)
-        group["score_sum"] += float(item.score or 0.0)
-        group["types"].update([item.type.value])
-        group["tags"].update(_funder_tag_tokens(item))
-        group["regions"].update(_funder_region_tokens(item))
-        source_slug = str(item.source)
-        if source_slug not in group["sources"]:
-            group["sources"][source_slug] = {
-                "slug": source_slug,
-                "name": _source_name(source_slug),
-                "base_url": getattr(PARSERS.get(source_slug), "base_url", ""),
-            }
-        lifecycle = public_lifecycle(item, today=today)
-        count_key = f"{lifecycle}_items"
-        group[count_key] = int(group.get(count_key, 0)) + 1
-        if lifecycle in {"open", "closing_soon", "rolling"}:
-            group["current_items"] += 1
-        if item.deadline and item.deadline >= today:
-            current_next_deadline = group["next_deadline"]
-            if current_next_deadline is None or item.deadline < current_next_deadline:
-                group["next_deadline"] = item.deadline
-
-    for group in groups.values():
-        items = cast(list[Opportunity], group["items"])
-        items.sort(
-            key=lambda row: (
-                priority_score(row, today=today),
-                row.score,
-                row.discovered_at,
-            ),
-            reverse=True,
-        )
-        total_items = len(items)
-        group["total_items"] = total_items
-        group["avg_score"] = (
-            round(group["score_sum"] / total_items, 3) if total_items else 0
-        )
-        group["top_tags"] = [
-            tag for tag, _ in cast(Counter[str], group["tags"]).most_common(4)
-        ]
-        group["top_regions"] = [
-            region for region, _ in cast(Counter[str], group["regions"]).most_common(3)
-        ]
-        group["top_types"] = [
-            kind for kind, _ in cast(Counter[str], group["types"]).most_common(3)
-        ]
-        group["sources"] = sorted(
-            cast(dict[str, dict[str, str]], group["sources"]).values(),
-            key=lambda row: (row["name"], row["slug"]),
-        )
-    return groups
-
-
 def _funder_index(content_lang: str = "en") -> dict[str, dict[str, Any]]:
     normalized_lang = _public_lang(content_lang)
     now = datetime.now(UTC)
@@ -1233,74 +877,6 @@ def _funder_index(content_lang: str = "en") -> dict[str, dict[str, Any]]:
     with _public_items_cache_lock:
         _funder_index_cache[normalized_lang] = (now, groups)
     return groups
-
-
-def _funder_payload(group: dict[str, Any]) -> dict[str, Any]:
-    return {
-        "slug": group["slug"],
-        "name": group["name"],
-        "total_items": group["total_items"],
-        "current_items": group["current_items"],
-        "open_items": group["open_items"],
-        "closing_soon_items": group["closing_soon_items"],
-        "rolling_items": group["rolling_items"],
-        "forecast_items": group["forecast_items"],
-        "closed_items": group["closed_items"],
-        "awarded_items": group["awarded_items"],
-        "avg_score": group["avg_score"],
-        "next_deadline": group["next_deadline"],
-        "top_tags": group["top_tags"],
-        "top_regions": group["top_regions"],
-        "top_types": group["top_types"],
-        "sources": group["sources"],
-    }
-
-
-def _similarity_tokens(item: Opportunity) -> set[str]:
-    raw = item.raw if isinstance(item.raw, dict) else {}
-    tokens = {
-        f"tag:{_normalized_token(tag)}" for tag in item.tags if _normalized_token(tag)
-    }
-    for key in ("country", "region", "borrower", "notice_type", "deadline_policy"):
-        normalized = _normalized_token(raw.get(key))
-        if normalized:
-            tokens.add(f"{key}:{normalized}")
-    return tokens
-
-
-def _related_reason_key(target: Opportunity, candidate: Opportunity) -> str:
-    if candidate.source == target.source:
-        return "related_reason_source"
-    if _normalized_token(candidate.funder) and _normalized_token(
-        candidate.funder
-    ) == _normalized_token(target.funder):
-        return "related_reason_funder"
-    if _similarity_tokens(target) & _similarity_tokens(candidate):
-        return "related_reason_theme"
-    return "related_reason_format"
-
-
-def _related_relevance(target: Opportunity, candidate: Opportunity) -> float:
-    """Return normalized item similarity without pretending personalization."""
-
-    target_tokens = _similarity_tokens(target)
-    candidate_tokens = _similarity_tokens(candidate)
-    union = target_tokens | candidate_tokens
-    jaccard = len(target_tokens & candidate_tokens) / len(union) if union else 0.0
-    same_funder = bool(
-        _normalized_token(target.funder)
-        and _normalized_token(target.funder) == _normalized_token(candidate.funder)
-    )
-    same_type = target.type == candidate.type
-    same_source = target.source == candidate.source
-    value = (
-        jaccard * 0.40
-        + float(same_funder) * 0.30
-        + float(same_type) * 0.15
-        + float(same_source) * 0.10
-        + float(candidate.score or 0.0) * 0.05
-    )
-    return round(min(1.0, value), 4)
 
 
 def _related_opportunities(

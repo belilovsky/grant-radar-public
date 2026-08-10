@@ -236,12 +236,5 @@ class InternewsSource(BaseSource):
             },
         )
 
-    async def healthcheck(self) -> bool:
-        try:
-            resp = await self.client.get(self.base_url)
-            return resp.status_code < 500
-        except Exception:  # noqa: BLE001
-            return False
-
 
 InternewsParser = InternewsSource

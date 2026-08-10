@@ -27,6 +27,10 @@ from bs4 import BeautifulSoup
 from core.models import Opportunity, OpportunityType
 from core.source_text import clean_plain_source_text as _clean_text
 from sources.base import BaseSource
+from sources.parsing import html_title as _shared_html_title
+from sources.parsing import is_blocked_fetch as _is_blocked_fetch
+from sources.parsing import is_unavailable_page as _shared_is_unavailable_page
+from sources.parsing import unique_normalized as _unique
 
 log = structlog.get_logger()
 
@@ -1455,29 +1459,11 @@ def _detail_snapshot(html: str) -> dict[str, Any] | None:
 
 
 def _html_title(html: str) -> str | None:
-    match = re.search(
-        r"<title[^>]*>(?P<title>.*?)</title>", html, re.IGNORECASE | re.DOTALL
-    )
-    if match is None:
-        return None
-    return _clean_text(re.sub(r"<[^>]+>", " ", match.group("title")))
+    return _shared_html_title(html, _clean_text, strip_tags=True)
 
 
 def _is_unavailable_page(html: str) -> bool:
-    title = (_html_title(html) or "").lower()
-    text = _clean_text(re.sub(r"<[^>]+>", " ", html)).lower()
-    return "technical difficulties" in title or (
-        "experiencing technical difficulties" in text and "please try again" in text
-    )
-
-
-def _is_blocked_fetch(status_code: int, page_title: str | None) -> bool:
-    title = (page_title or "").strip().lower()
-    return status_code in {401, 403, 429} or title in {
-        "access denied",
-        "403 forbidden",
-        "too many requests",
-    }
+    return _shared_is_unavailable_page(html, _clean_text)
 
 
 def _needs_qazindustry_ca_fallback(url: str, exc: Exception) -> bool:
@@ -1531,18 +1517,6 @@ def _looks_like_unhydrated_govkz_shell(url: str, html: str) -> bool:
     if not title.startswith("gov.kz - "):
         return False
     return not re.search(r"<(?:h1|h2|h3|p|li|tr)\b", html, re.IGNORECASE)
-
-
-def _unique(values: Iterable[str]) -> list[str]:
-    seen: set[str] = set()
-    out: list[str] = []
-    for value in values:
-        normalized = value.strip().lower()
-        if not normalized or normalized in seen:
-            continue
-        seen.add(normalized)
-        out.append(normalized)
-    return out
 
 
 def _program_tags(program: DomesticProgram, default_tags: Iterable[str]) -> list[str]:

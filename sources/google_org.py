@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-import re
 from collections.abc import AsyncIterator
 from typing import ClassVar
 
@@ -11,6 +10,7 @@ import structlog
 from core.models import Opportunity, OpportunityType
 from core.source_text import clean_source_text as _clean_text
 from sources.base import BaseSource
+from sources.parsing import html_title as _shared_html_title
 
 log = structlog.get_logger()
 
@@ -20,12 +20,7 @@ GOOGLE_ORG_KNOWLEDGE_URL = (
 
 
 def _html_title(html: str) -> str | None:
-    match = re.search(
-        r"<title[^>]*>(?P<title>.*?)</title>", html, re.IGNORECASE | re.DOTALL
-    )
-    if match is None:
-        return None
-    return _clean_text(match.group("title")) or None
+    return _shared_html_title(html, _clean_text)
 
 
 class GoogleOrgAiOpportunitySource(BaseSource):

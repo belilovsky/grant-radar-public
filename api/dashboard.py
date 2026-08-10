@@ -10,6 +10,7 @@ from api.avds import AVDS_CSS, AVDS_FONT_HEAD
 from api.avds_visual import DASHBOARD_AVDS4_CSS
 from api.dashboard_copy import dashboard_copy
 from api.dashboard_style import DASHBOARD_CSS
+from api.page_primitives import absolute_href as _absolute_href
 from api.public_meta import analytics_head_html, og_image_url
 from core.public_clock import public_time_zone_name
 
@@ -24,15 +25,6 @@ def _root_href(base: str, lang: str) -> str:
     if base:
         return f"{base}/?lang={lang}"
     return f"/?lang={lang}"
-
-
-def _absolute_href(origin: str, path: str) -> str:
-    clean_origin = origin.rstrip("/")
-    if not path:
-        return clean_origin or "/"
-    if path.startswith(("http://", "https://")):
-        return path
-    return f"{clean_origin}{path}" if clean_origin else path
 
 
 def _json_ld(payload: Mapping[str, Any]) -> str:

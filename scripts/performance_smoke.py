@@ -11,6 +11,8 @@ from typing import Any
 
 import httpx
 
+from scripts.http_utils import join_url as _url
+
 DEFAULT_PATHS = (
     "/?lang=ru",
     "/insights?lang=ru",
@@ -18,10 +20,6 @@ DEFAULT_PATHS = (
     "/coverage",
     "/opportunities.ndjson?lang=ru&limit=500&min_score=0.3&compact=true",
 )
-
-
-def _url(base_url: str, path: str) -> str:
-    return f"{base_url.rstrip('/')}/{path.lstrip('/')}"
 
 
 def _request_with_reconnect(

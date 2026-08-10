@@ -7,11 +7,11 @@ import json
 import re
 from dataclasses import asdict, dataclass
 from typing import Any
-from urllib.parse import urljoin
 
 import httpx
 
 from core.public_clock import public_today
+from scripts.http_utils import join_url as _url
 
 DASHBOARD_MARKERS = (
     '<html lang="ru"',
@@ -66,10 +66,6 @@ class SmokeResult:
     dashboard_markers: dict[str, bool]
     english_dashboard: bool
     discovery_surfaces: dict[str, bool]
-
-
-def _url(base_url: str, path: str) -> str:
-    return urljoin(f"{base_url.rstrip('/')}/", path.lstrip("/"))
 
 
 def _get_json(client: httpx.Client, base_url: str, path: str) -> Any:

@@ -27,16 +27,11 @@ from api import main as api_main
 from api.opportunity_detail import build_opportunity_detail
 from core.db import OpportunityRow, SqlRepository
 from core.localization import raw_localization_target
+from core.localization import string_value as _string
 
 _CYRILLIC_RE = re.compile(r"[А-Яа-яӘәҒғҚқҢңӨөҰұҮүҺһІіЁё]")
 _DEFAULT_TIMEOUT = 20.0
 _TRANSLATE_ENDPOINT = "https://translate.googleapis.com/translate_a/single"
-
-
-def _string(value: Any) -> str:
-    if value is None:
-        return ""
-    return str(value).strip()
 
 
 def _string_list(values: Iterable[Any]) -> list[str]:

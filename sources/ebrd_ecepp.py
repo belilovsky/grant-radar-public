@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 import re
-from collections.abc import AsyncIterator, Iterable
+from collections.abc import AsyncIterator
 from dataclasses import dataclass
 from datetime import date, datetime
 from typing import ClassVar
@@ -15,6 +15,8 @@ from core.models import Opportunity, OpportunityType
 from core.public_clock import public_today
 from core.source_text import clean_source_text as _clean_text
 from sources.base import BaseSource
+from sources.parsing import infer_substring_tags as _shared_infer_tags
+from sources.parsing import unique_normalized as _unique
 
 log = structlog.get_logger()
 
@@ -67,18 +69,6 @@ class EceppNotice:
     metadata: str
 
 
-def _unique(values: Iterable[str]) -> list[str]:
-    seen: set[str] = set()
-    out: list[str] = []
-    for value in values:
-        normalized = value.strip().lower()
-        if not normalized or normalized in seen:
-            continue
-        seen.add(normalized)
-        out.append(normalized)
-    return out
-
-
 def _parse_date(value: str) -> date | None:
     match = DATE_RE.search(value)
     if match is None:
@@ -102,12 +92,7 @@ def _country_from_text(value: str) -> tuple[str, str] | None:
 
 
 def _infer_tags(text: str) -> list[str]:
-    lowered = text.lower()
-    tags: list[str] = []
-    for tag, keywords in THEME_KEYWORDS.items():
-        if any(keyword in lowered for keyword in keywords):
-            tags.append(tag)
-    return tags
+    return _shared_infer_tags(text, THEME_KEYWORDS)
 
 
 def _extract_notices(html: str, *, today: date | None = None) -> list[EceppNotice]:

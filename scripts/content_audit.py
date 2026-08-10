@@ -8,12 +8,13 @@ import re
 from dataclasses import asdict, dataclass, field
 from datetime import datetime, timedelta, timezone
 from typing import Any
-from urllib.parse import urljoin, urlparse
+from urllib.parse import urlparse
 
 import httpx
 
 from api.dashboard import dashboard_copy
 from core.public_clock import public_today
+from scripts.http_utils import join_url as _url
 
 try:
     from datetime import UTC
@@ -50,10 +51,6 @@ class ContentAuditResult:
     unlocalized_sources: dict[str, list[str]] = field(default_factory=dict)
     forbidden_hits: dict[str, list[str]] = field(default_factory=dict)
     issues: list[str] = field(default_factory=list)
-
-
-def _url(base_url: str, path: str) -> str:
-    return urljoin(f"{base_url.rstrip('/')}/", path.lstrip("/"))
 
 
 def _parse_datetime(value: Any) -> datetime | None:

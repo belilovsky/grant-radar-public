@@ -55,10 +55,13 @@ def raw_localization_target(raw: dict[str, Any]) -> dict[str, Any]:
     return raw
 
 
-def _string_value(value: Any) -> str:
+def string_value(value: Any) -> str:
     if value is None:
         return ""
     return str(value).strip()
+
+
+_string_value = string_value
 
 
 def _remove_repeated_title_prefix(summary: str, title: str) -> str:

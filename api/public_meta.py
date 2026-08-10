@@ -7,6 +7,8 @@ import os
 import struct
 import zlib
 
+from api.page_primitives import absolute_href as _absolute_href
+
 DEFAULT_GA4_ID = "G-9EF720PSER"
 DEFAULT_YANDEX_METRICA_ID = "109803011"
 DEFAULT_CLARITY_PROJECT_ID = "x5ualin2jv"
@@ -195,15 +197,6 @@ OG_IMAGE_PNG = _build_og_image_png()
 
 def _env_value(name: str, default: str) -> str:
     return os.environ.get(name, "").strip() or default
-
-
-def _absolute_href(origin: str, path: str) -> str:
-    clean_origin = origin.rstrip("/")
-    if path.startswith(("http://", "https://")):
-        return path
-    if not clean_origin:
-        return path or "/"
-    return f"{clean_origin}{path}"
 
 
 def og_image_url(site_origin: str, root_path: str = "") -> str:

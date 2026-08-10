@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 import re
-from collections.abc import AsyncIterator, Iterable
+from collections.abc import AsyncIterator
 from datetime import date
 from html import unescape
 from typing import ClassVar
@@ -15,6 +15,9 @@ from core.models import Opportunity, OpportunityType
 from core.public_clock import public_today
 from core.source_text import clean_source_text as _clean_text
 from sources.base import BaseSource
+from sources.parsing import html_title as _shared_html_title
+from sources.parsing import parse_text_date as _shared_parse_text_date
+from sources.parsing import unique_normalized as _unique
 
 log = structlog.get_logger()
 
@@ -75,13 +78,7 @@ def _plain_text(html: str) -> str:
 
 
 def _html_title(html: str) -> str | None:
-    match = re.search(
-        r"<title[^>]*>(?P<title>.*?)</title>", html, re.IGNORECASE | re.DOTALL
-    )
-    if match is None:
-        return None
-    title = _clean_text(match.group("title"))
-    return title or None
+    return _shared_html_title(html, _clean_text)
 
 
 def _meta_description(html: str) -> str | None:
@@ -135,13 +132,7 @@ def _extract_links(html: str) -> list[tuple[str, str]]:
 
 
 def _parse_text_date(day: str, month: str, year: str) -> date | None:
-    month_number = MONTHS.get(month.strip().lower())
-    if month_number is None:
-        return None
-    try:
-        return date(int(year), month_number, int(day))
-    except ValueError:
-        return None
+    return _shared_parse_text_date(day, month, year, MONTHS)
 
 
 def _deadline(text: str) -> tuple[date | None, str | None]:
@@ -193,18 +184,6 @@ def _tags(title: str, text: str) -> list[str]:
     if "proposal" in title_lowered or "consultant" in title_lowered:
         tags.append("procurement")
     return _unique(tags)
-
-
-def _unique(values: Iterable[str]) -> list[str]:
-    seen: set[str] = set()
-    out: list[str] = []
-    for value in values:
-        normalized = value.strip().lower()
-        if not normalized or normalized in seen:
-            continue
-        seen.add(normalized)
-        out.append(normalized)
-    return out
 
 
 def _is_candidate(title: str, detail_text: str = "") -> bool:
