@@ -3369,7 +3369,7 @@ def _query_opportunities(
     if deadline_before:
         items = [o for o in items if o.deadline and o.deadline <= deadline_before]
     if deadline_after:
-        items = [o for o in items if o.deadline is None or o.deadline >= deadline_after]
+        items = [o for o in items if _is_open(o, deadline_after)]
     total_count = len(items)
     results = items[offset : offset + limit]
     if compact:

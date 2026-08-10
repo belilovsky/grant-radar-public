@@ -2737,6 +2737,51 @@ def test_public_query_cache_reuses_sorted_dashboard_result(monkeypatch):
     assert calls == {"scope": 1, "priority": 1}
 
 
+def test_deadline_after_excludes_explicitly_closed_items(monkeypatch):
+    _reset_api_state(monkeypatch)
+    open_item = Opportunity(
+        source="astana_hub",
+        source_url="https://example.org/open-current",
+        type=OpportunityType.GRANT,
+        title="Open Kazakhstan grant",
+        summary="Current support for Kazakhstan teams.",
+        deadline=date(2026, 9, 1),
+        tags=["kazakhstan"],
+        score=0.8,
+    )
+    closed_item = open_item.model_copy(
+        update={
+            "source_url": "https://example.org/closed-current",
+            "title": "Closed Kazakhstan grant",
+            "lifecycle": "closed",
+        }
+    )
+    monkeypatch.setattr(
+        api_main,
+        "_cached_prepared_scope_items",
+        lambda content_lang="en", include_irrelevant=False: [open_item, closed_item],
+    )
+
+    items, total = api_main._query_opportunities(
+        tag=None,
+        q=None,
+        source=None,
+        lifecycle=None,
+        region=None,
+        min_score=0.3,
+        deadline_before=None,
+        deadline_after=date(2026, 8, 10),
+        include_irrelevant=False,
+        limit=5000,
+        offset=0,
+        lang="ru",
+        compact=False,
+    )
+
+    assert total == 1
+    assert [item.title for item in items] == ["Open Kazakhstan grant"]
+
+
 def test_find_opportunity_falls_back_across_language_dedupe_models(monkeypatch):
     _reset_api_state(monkeypatch)
     english = Opportunity(
