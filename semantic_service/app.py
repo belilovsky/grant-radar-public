@@ -178,6 +178,13 @@ class BgeM3QdrantBackend:
         if rerank_limit:
             scores = self._reranker.compute_score(
                 [[query, text] for _, _, text in filtered[:rerank_limit]],
+                batch_size=rerank_limit,
+                query_max_length=_positive_int(
+                    "GRANT_RADAR_SEMANTIC_RERANK_QUERY_MAX_LENGTH", 64, maximum=256
+                ),
+                max_length=_positive_int(
+                    "GRANT_RADAR_SEMANTIC_RERANK_MAX_LENGTH", 256, maximum=512
+                ),
                 normalize=True,
             )
             if isinstance(scores, float):
