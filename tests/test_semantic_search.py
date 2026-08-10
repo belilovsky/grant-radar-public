@@ -4,6 +4,7 @@ from datetime import date
 
 import httpx
 
+from core import semantic_search
 from core.models import Opportunity, OpportunityType
 from core.semantic_search import search_opportunities
 
@@ -64,3 +65,9 @@ def test_semantic_search_fails_closed_to_lexical_fallback(monkeypatch):
     monkeypatch.setattr("core.semantic_search._client", lambda *_: Client())
 
     assert search_opportunities("AI", [item], limit=20) == []
+
+
+def test_semantic_timeout_is_bounded_for_the_public_api(monkeypatch):
+    monkeypatch.setenv("GRANT_RADAR_SEMANTIC_TIMEOUT_SECONDS", "120")
+
+    assert semantic_search._timeout_seconds() == 15.0

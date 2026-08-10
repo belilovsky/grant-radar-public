@@ -63,7 +63,7 @@ def test_semantic_catalog_uses_the_public_host_on_the_internal_network() -> None
 
     assert "GRANT_RADAR_SEMANTIC_CATALOG_HOST" in production_compose
     assert "${GRANT_RADAR_SEMANTIC_CATALOG_HOST:-qaz.fund}" in production_compose
-    assert "${GRANT_RADAR_SEMANTIC_TIMEOUT_SECONDS:-10}" in production_compose
+    assert "${GRANT_RADAR_SEMANTIC_TIMEOUT_SECONDS:-15}" in production_compose
     assert "${GRANT_RADAR_SEMANTIC_RERANK_LIMIT:-5}" in production_compose
     assert "${GRANT_RADAR_SEMANTIC_RERANK_MAX_LENGTH:-256}" in production_compose
 

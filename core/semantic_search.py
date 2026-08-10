@@ -37,7 +37,7 @@ def _service_url() -> str:
 def _timeout_seconds() -> float:
     try:
         return min(
-            10.0,
+            15.0,
             max(
                 0.2, float(os.environ.get("GRANT_RADAR_SEMANTIC_TIMEOUT_SECONDS", "2"))
             ),
