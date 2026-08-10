@@ -29,6 +29,7 @@ def test_semantic_image_uses_the_cpu_only_torch_wheel():
     assert "torch==2.9.1" in dockerfile
     assert "pip install -r requirements-semantic.txt" in dockerfile
     assert "transformers>=4.44.2,<5" in requirements
+    assert "FlagEmbedding==1.4.0" in requirements
 
 
 def test_prod_requirements_exclude_dev_and_browser_tooling():
