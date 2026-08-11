@@ -44,6 +44,7 @@ RSYNC_ARGS=(
   --exclude "__pycache__"
   --exclude ".pytest_cache"
   --exclude ".mypy_cache"
+  --exclude "work"
 )
 
 if [[ "$RSYNC_DELETE" == "1" ]]; then

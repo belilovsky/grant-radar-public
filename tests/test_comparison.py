@@ -97,6 +97,16 @@ def test_public_compare_json_is_source_grounded(monkeypatch) -> None:
     assert "JSON" in page.text
     assert "another_source" not in page.text
     assert "Дереккөзді ашу" in page.text
+    assert "Кестені көлденең жылжытып, барлық карточканы көріңіз." in page.text
+    assert 'class="table-wrap" role="region" tabindex="0"' in page.text
+    assert 'aria-label="Кестені көлденең жылжытып, барлық карточканы көріңіз."' in (
+        page.text
+    )
+    assert ".table-scroll-hint" in page.text
+    assert "@media(max-width:820px)" in page.text
+    assert ".compare-table a,.footer a" in page.text
+    assert ".langs a,.json-link" in page.text
+    assert "min-width:var(--av-control-height-lg)" in page.text
 
     empty_page = client.get("/compare", params={"lang": "en"})
     assert empty_page.status_code == 200

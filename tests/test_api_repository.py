@@ -344,6 +344,15 @@ def test_root_renders_service_landing(monkeypatch):
     assert 'id="mobile-filter-trigger"' in response.text
     assert 'id="mobile-filter-backdrop"' in response.text
     assert 'id="mobile-filter-done"' in response.text
+    assert 'event.key === "Escape"' in response.text
+    assert (
+        'if (!document.body.classList.contains("filter-sheet-open")) return;'
+        in response.text
+    )
+    assert "event.preventDefault();" in response.text
+    assert "event.stopPropagation();" in response.text
+    assert "if (restoreFocus)" in response.text
+    assert "mobileFilterTrigger.focus();" in response.text
     assert "function openMobileFilterSheet" in response.text
     assert "function closeMobileFilterSheet" in response.text
     assert "env(safe-area-inset-bottom)" in response.text
@@ -726,6 +735,12 @@ def test_docs_exposes_swagger_with_return_link(monkeypatch):
     assert ".swagger-ui .opblock.opblock-get .opblock-summary-method" in response.text
     assert ".swagger-ui .info .url" in response.text
     assert ".swagger-ui .json-schema-2020-12-expand-deep-button" in response.text
+    assert "box-sizing: border-box;" in response.text
+    assert "grid-template-columns: minmax(0, 1fr) auto;" in response.text
+    assert "grid-column: 2;" in response.text
+    assert "grid-column: 1 / -1;" in response.text
+    assert "min-width: var(--av-control-height-lg);" in response.text
+    assert "display: inline-flex;" in response.text
     assert '"deepLinking": false' in response.text
     assert 'href="/docs?lang=kk" lang="kk">KAZ</a>' in response.text
     assert 'href="/docs?lang=ru" lang="ru" aria-current="page">RU</a>' in response.text

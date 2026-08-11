@@ -53,6 +53,7 @@ _COPY: dict[str, dict[str, str]] = {
         "status": "Статус",
         "footer": "QAZ.FUND не выдаёт средства и не принимает заявки.",
         "source_link": "Открыть источник",
+        "scroll_hint": "Прокрутите таблицу по горизонтали, чтобы увидеть все карточки.",
     },
     "kk": {
         "title": "Бағдарламаларды салыстыру – QAZ.FUND",
@@ -71,6 +72,7 @@ _COPY: dict[str, dict[str, str]] = {
         "status": "Мәртебе",
         "footer": "QAZ.FUND қаражат бөлмейді және өтінім қабылдамайды.",
         "source_link": "Дереккөзді ашу",
+        "scroll_hint": "Кестені көлденең жылжытып, барлық карточканы көріңіз.",
     },
     "en": {
         "title": "Compare programs – QAZ.FUND",
@@ -86,6 +88,7 @@ _COPY: dict[str, dict[str, str]] = {
         "status": "Status",
         "footer": "QAZ.FUND does not award funds or process applications.",
         "source_link": "Open source",
+        "scroll_hint": "Scroll the table horizontally to view every card.",
     },
 }
 

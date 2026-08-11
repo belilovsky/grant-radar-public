@@ -11,6 +11,9 @@ def test_dashboard_reexports_canonical_copy_helper() -> None:
     assert dashboard.dashboard_copy("unsupported")["lang"] == "ru"
     assert dashboard.dashboard_copy("kk")["lang"] == "kk"
     assert dashboard.dashboard_copy("kk")["headline"] == "QAZ.FUND"
+    assert dashboard.dashboard_copy("ru")["detail_readiness_title"] == (
+        "Полнота данных"
+    )
 
 
 def test_dashboard_uses_extracted_static_styles() -> None:
@@ -35,6 +38,8 @@ def test_dashboard_uses_extracted_static_styles() -> None:
     assert 'data-avds-pattern="decision-summary"' in html
     assert 'data-avds-component="trust-strip"' in html
     assert 'data-avds-version="4.6.0"' in html
+    assert html.count("<h1>") == 1
+    assert html.count('class="topbar"') == 1
     assert "const PUBLIC_TIME_ZONE" in html
     assert "function publicDateISO" in html
     assert "getTimezoneOffset" not in html
@@ -49,3 +54,22 @@ def test_dashboard_uses_extracted_static_styles() -> None:
     assert "--panel-wash-card: color-mix" in DASHBOARD_CSS
     assert "background: var(--panel-wash-list);" in DASHBOARD_CSS
     assert "border-radius: var(--av-radius-md);" in DASHBOARD_CSS
+    assert ".hero-copy > .topbar {" in DASHBOARD_CSS
+    assert "      .hero-band .topbar,\n      .hero-stage" not in DASHBOARD_CSS
+
+    mobile_touch_block = DASHBOARD_AVDS4_CSS.split("@media (max-width: 820px) {", 1)[
+        1
+    ].split("@media (max-width: 560px)", 1)[0]
+    for selector in (
+        ".mobile-app-brand",
+        ".mobile-lang-switch a",
+        ".mobile-icon-button",
+        ".hero-actions .button",
+        ".hero-pick",
+        ".preset-button",
+        ".detail-link",
+        ".advanced-filters > summary",
+    ):
+        assert selector in mobile_touch_block
+    assert "min-height: var(--av-control-height-lg);" in mobile_touch_block
+    assert "min-width: var(--av-control-height-lg);" in mobile_touch_block

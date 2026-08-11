@@ -207,6 +207,35 @@ def test_application_workspace_localizes_internal_source_slug(monkeypatch):
     assert "Стартап; Глобально" in page.text
 
 
+def test_application_workspace_supports_kazakh(monkeypatch):
+    _reset_api_state(monkeypatch)
+    item = _item()
+    api_main._cache.append(item)
+
+    page = TestClient(api_main.app).get(
+        f"/opportunity/{item.id}/prepare",
+        params={"lang": "kk"},
+    )
+
+    assert page.status_code == 200
+    assert '<html lang="kk"' in page.text
+    assert "Өтінімді дайындау" in page.text
+    assert "Деректер осы браузерде қалады" in page.text
+    assert "Бағдарлама талаптарына сай өтінім жобасын құрастырыңыз" in page.text
+    assert "Жобаның сипаттамасы және күтілетін нәтиже" in page.text
+    assert f'href="/opportunity/{item.id}?lang=kk"' in page.text
+    assert 'href="/terms?lang=kk"' in page.text
+    assert 'href="/data-policy?lang=kk"' in page.text
+    assert 'href="/attribution?lang=kk"' in page.text
+    assert f"qazfund-application-draft-v1:{item.id}:kk" in page.text
+    assert '"source_label": "Дереккөз"' in page.text
+    assert "`${copy.source_label}: ${facts.official_source}`" in page.text
+    assert "[^a-zа-яёәғқңөұүһі0-9]" in page.text
+    assert "Источник:" not in page.text
+    assert "Подготовка заявки" not in page.text
+    assert "Данные остаются в этом браузере" not in page.text
+
+
 def test_application_workspace_head_skips_detail_projection(monkeypatch):
     _reset_api_state(monkeypatch)
     item = _item()

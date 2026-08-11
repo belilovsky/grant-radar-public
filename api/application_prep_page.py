@@ -35,8 +35,12 @@ def _public_label(value: object, lang: str) -> str:
 
 def _deadline(value: date | None, lang: str) -> str:
     if value is None:
-        return "Без фиксированного срока" if lang == "ru" else "No fixed deadline"
-    return value.strftime("%d.%m.%Y") if lang == "ru" else value.isoformat()
+        return {
+            "ru": "Без фиксированного срока",
+            "kk": "Белгіленген мерзім жоқ",
+            "en": "No fixed deadline",
+        }.get(lang, "No fixed deadline")
+    return value.strftime("%d.%m.%Y") if lang in {"ru", "kk"} else value.isoformat()
 
 
 def _amount(detail: OpportunityDetail, lang: str) -> str:
@@ -46,7 +50,11 @@ def _amount(detail: OpportunityDetail, lang: str) -> str:
         return amount_raw
     values = [detail.amount_min, detail.amount_max]
     if all(value is None for value in values):
-        return "Не указана" if lang == "ru" else "Not stated"
+        return {
+            "ru": "Не указана",
+            "kk": "Көрсетілмеген",
+            "en": "Not stated",
+        }.get(lang, "Not stated")
     formatted = [
         f"{value:,.0f}".replace(",", " ") for value in values if value is not None
     ]
@@ -156,7 +164,51 @@ def _checklist(detail: OpportunityDetail, lang: str) -> list[str]:
             "Partner letters and sustainability plan",
         ],
     }
-    return (ru if lang == "ru" else en)[key]
+    kk = {
+        "grant": [
+            "Жобаның сипаттамасы және күтілетін нәтиже",
+            "Шығындар негіздемесі бар бюджет",
+            "Жұмыс жоспары және күнтізбе",
+            "Өтініш берушінің құжаттары",
+            "Қажет болса, серіктестердің хаттары",
+        ],
+        "tender": [
+            "Сатып алу талаптарына сай техникалық ұсыныс",
+            "Баға ұсынысы және есеп",
+            "Тіркеу және салық құжаттары",
+            "Тәжірибе мен біліктілікті растау",
+            "Қажетті кепілдіктер және қол қойылған формалар",
+        ],
+        "science": [
+            "Ғылыми міндет және зерттеулердің қазіргі күйі",
+            "Әдістеме, жұмыс жоспары және өлшенетін нәтижелер",
+            "Зерттеу тобының құрамы",
+            "Бюджет және жабдық негіздемесі",
+            "Ұйымдардың хаттары және этика туралы мәліметтер",
+        ],
+        "subsidy": [
+            "Тіркеу және салық құжаттары",
+            "Шығындарды растау немесе қаржыландыру жоспары",
+            "Банктік деректемелер және қаржылық есептілік",
+            "Рұқсаттар, сертификаттар және шарттар",
+            "Ресми өтінімге арналған электрондық қолтаңба",
+        ],
+        "startup": [
+            "Жобаның қысқаша таныстырылымы",
+            "Өнім, нарық және пайдаланушылар сипаттамасы",
+            "Команда және жоба кезеңі туралы мәліметтер",
+            "Өсу көрсеткіштері немесе сынақ нәтижелері",
+            "Қолдауды пайдалану жоспары",
+        ],
+        "ngo": [
+            "Қоғамдық мәселе және нысаналы топ сипаттамасы",
+            "Нәтиже логикасы және көрсеткіштер",
+            "Іс-шаралар жоспары және бюджет",
+            "ҮЕҰ құжаттары және тәжірибені растау",
+            "Серіктестердің хаттары және тұрақтылық жоспары",
+        ],
+    }
+    return {"ru": ru, "kk": kk, "en": en}.get(lang, en)[key]
 
 
 def render_application_prep_page(
@@ -167,7 +219,7 @@ def render_application_prep_page(
     site_origin: str,
     lifecycle: str = "open",
 ) -> str:
-    active_lang = "en" if lang == "en" else "ru"
+    active_lang = lang if lang in {"kk", "ru", "en"} else "ru"
     copy: dict[str, Any] = {
         "ru": {
             "page_title": "Подготовка заявки",
@@ -183,6 +235,7 @@ def render_application_prep_page(
             ),
             "back": "Вернуться к карточке",
             "source": "Открыть источник",
+            "source_label": "Источник",
             "known": "Известно о программе",
             "program": "Программа",
             "organizer": "Организатор",
@@ -269,6 +322,114 @@ def render_application_prep_page(
                 "documents": "Проверка пакета",
             },
         },
+        "kk": {
+            "page_title": "Өтінімді дайындау",
+            "eyebrow": "Жұмыс өтінімі",
+            "title": "Бағдарлама талаптарына сай өтінім жобасын құрастырыңыз",
+            "lead": (
+                "Жоба туралы мәліметтерді бір рет енгізіңіз. QAZ.FUND оларды "
+                "құрылымдалған жобаға жинап, толтырылмаған бөлімдерді көрсетеді."
+            ),
+            "privacy": (
+                "Деректер осы браузерде қалады. QAZ.FUND форма мазмұнын алмайды "
+                "және жібермейді."
+            ),
+            "back": "Карточкаға оралу",
+            "source": "Ресми дереккөзді ашу",
+            "source_label": "Дереккөз",
+            "known": "Бағдарлама туралы белгілі деректер",
+            "program": "Бағдарлама",
+            "organizer": "Ұйымдастырушы",
+            "deadline": "Мерзім",
+            "amount": "Сома",
+            "eligibility": "Талаптар",
+            "unknown": "Ұйымдастырушыдан нақтылау қажет",
+            "readiness": "Жоба дайындығы",
+            "required_done": "{done}/{total} міндетті өріс",
+            "applicant": "Өтініш беруші",
+            "applicant_note": (
+                "Өтінімді кім береді және қатысуға неге құқылы екенін көрсетіңіз."
+            ),
+            "org_name": "Ұйымның немесе команданың атауы",
+            "legal_form": "Ұйымдық-құқықтық нысан",
+            "country": "Ел және қала",
+            "contact": "Өтінімге жауапты тұлға",
+            "fit": "Қатысу негіздемесі",
+            "fit_placeholder": (
+                "Өтініш берушінің бағдарлама талаптарына сәйкестігін сипаттаңыз"
+            ),
+            "project": "Жоба",
+            "project_note": "Қысқа әрі нақты: мәселе, шешім және нәтиже.",
+            "project_name": "Жоба атауы",
+            "problem": "Мәселе",
+            "solution": "Ұсынылатын шешім",
+            "beneficiaries": "Пайда алушылар",
+            "geography": "Жобаны іске асыру орны",
+            "impact": "Нәтижелер мен дәлелдер",
+            "impact_note": "Не өзгереді және ол қалай өлшенеді.",
+            "outcomes": "Күтілетін нәтижелер",
+            "indicators": "Көрсеткіштер және бастапқы мәндер",
+            "evidence": "Деректер, зерттеулер және растаушы материалдар",
+            "delivery": "Іске асыру",
+            "delivery_note": (
+                "Команда, мерзімдер, серіктестер және негізгі тәуекелдер."
+            ),
+            "team": "Команда және рөлдер",
+            "timeline": "Кезеңдер мен мерзімдер",
+            "partners": "Серіктестер",
+            "risks": "Тәуекелдер және оларды басқару",
+            "finance": "Қаржыландыру",
+            "finance_note": "Сұралатын сома және шығындардың негіздемесі.",
+            "request_amount": "Сұралатын сома",
+            "cofinance": "Өз үлесі және бірлесіп қаржыландыру",
+            "budget": "Бюджеттің негізгі баптары",
+            "documents": "Құжаттар пакеті",
+            "documents_note": (
+                "Бағдарлама түріне негізделген жұмыс тізімі. Нақты тізімді "
+                "ресми құжаттамадан алыңыз."
+            ),
+            "draft": "Жоба нұсқасы",
+            "draft_note": (
+                "Мәтін толтыру барысында жаңартылады. Жіберер алдында оны "
+                "ұйымдастырушының формасы мен шектеулеріне бейімдеңіз."
+            ),
+            "copy": "Көшіру",
+            "copied": "Жоба мәтіні көшірілді",
+            "download": ".md жүктеп алу",
+            "clear": "Тазарту",
+            "clear_confirm": ("Осы браузерде сақталған жоба мәтінін жою керек пе?"),
+            "empty_value": "[толтырылмаған]",
+            "draft_heading": "Өтінім жобасы",
+            "generated_note": (
+                "QAZ.FUND жұмыс құжаты. Бұл жіберілген өтінім емес және "
+                "талаптарға сәйкестікті растамайды."
+            ),
+            "terms": "Пайдалану шарттары",
+            "data_policy": "Деректер саясаты",
+            "attribution": "Деректерді пайдалану",
+            "closed_notice": (
+                "Бұл бағдарлама бойынша қабылдау аяқталды. Шарттарды тексергеннен "
+                "кейін жоба мәтінін келесі қабылдауға негіз ретінде ғана "
+                "пайдаланыңыз."
+            ),
+            "forecast_notice": (
+                "Қабылдау әлі ашылған жоқ. Жоба мәтінін алдын ала толтырып, "
+                "шарттар жарияланғаннан кейін талаптарды қайта тексеріңіз."
+            ),
+            "storage_error": (
+                "Браузер жергілікті сақтауға рұқсат бермеді. Жоба мәтіні ашық, "
+                "бірақ парақтан шығар алдында файлды жүктеп алыңыз."
+            ),
+            "sections": {
+                "programme": "Бағдарлама",
+                "applicant": "Өтініш беруші",
+                "project": "Жоба",
+                "impact": "Нәтижелер мен дәлелдер",
+                "delivery": "Іске асыру",
+                "finance": "Қаржыландыру",
+                "documents": "Құжаттарды тексеру",
+            },
+        },
         "en": {
             "page_title": "Application preparation",
             "eyebrow": "Working application",
@@ -283,6 +444,7 @@ def render_application_prep_page(
             ),
             "back": "Back to opportunity",
             "source": "Open official source",
+            "source_label": "Source",
             "known": "Known programme facts",
             "program": "Programme",
             "organizer": "Organizer",
@@ -1067,7 +1229,7 @@ def render_application_prep_page(
           `## ${{copy.sections.documents}}`,
           checked,
           "",
-          `Источник: ${{facts.official_source}}`,
+          `${{copy.source_label}}: ${{facts.official_source}}`,
         ].join("\\n");
       }};
       const serialize = () => Object.fromEntries(inputs.map((control) => [
@@ -1125,7 +1287,7 @@ def render_application_prep_page(
         const anchor = document.createElement("a");
         anchor.href = url;
         anchor.download = `qazfund-${{String(facts.program || "application")
-          .toLowerCase().replace(/[^a-zа-яё0-9]+/gi, "-").replace(/^-|-$/g, "")
+          .toLowerCase().replace(/[^a-zа-яёәғқңөұүһі0-9]+/gi, "-").replace(/^-|-$/g, "")
           .slice(0, 60)}}.md`;
         anchor.click();
         URL.revokeObjectURL(url);

@@ -606,7 +606,7 @@ COPY = {
         "detail_fit_good": "Есть признаки совпадения",
         "detail_fit_review": "Проверьте критерии вручную",
         "detail_meta_title": "Главное",
-        "detail_readiness_title": "Что проверить",
+        "detail_readiness_title": "Полнота данных",
         "no_indexed_items": "В каталоге пока нет доступных карточек.",
         "no_filtered_items": "По текущим фильтрам ничего не найдено.",
         "no_filtered_items_hint": "Снимите один фильтр и попробуйте снова.",

@@ -2873,7 +2873,6 @@ DASHBOARD_CSS = r"""    :root {
       .hero-band {
         padding: 14px 16px 0;
       }
-      .hero-band .topbar,
       .hero-stage {
         display: none;
       }
@@ -2884,6 +2883,24 @@ DASHBOARD_CSS = r"""    :root {
       .hero-copy {
         gap: 10px;
         padding: 0;
+      }
+      .hero-copy > .topbar {
+        display: block;
+        margin: 0;
+        padding: 0;
+        border: 0;
+        background: transparent;
+        box-shadow: none;
+        backdrop-filter: none;
+      }
+      .hero-copy > .topbar .eyebrow,
+      .hero-copy > .topbar .brand > p,
+      .hero-copy > .topbar .focus-row {
+        display: none;
+      }
+      .hero-copy > .topbar .brand h1 {
+        font-size: clamp(28px, 8vw, 34px);
+        line-height: 1;
       }
       .hero-intro {
         max-width: 72ch;

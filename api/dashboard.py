@@ -390,19 +390,6 @@ def render_dashboard(
       hidden
     ></button>
     <section class="hero-band" data-avds-component="hero-band">
-      <header class="topbar" data-avds-component="topbar">
-        <div class="brand">
-          <span class="eyebrow">{escape(str(copy["eyebrow"]))}</span>
-          <div class="brand-row">
-            <h1>{escape(str(copy["headline"]))}</h1>
-          </div>
-          <p>{escape(str(copy["subtitle"]))}</p>
-          <div class="focus-row" aria-label="{escape(str(copy["focus_aria"]), quote=True)}">
-            <span class="focus-chip">{escape(str(copy["focus_primary"]))}</span>
-            <span class="focus-chip">{escape(str(copy["focus_secondary"]))}</span>
-          </div>
-        </div>
-      </header>
       {fallback_note_markup}
       <div class="hero-grid">
         <div class="hero-copy">
@@ -5046,6 +5033,7 @@ def render_dashboard(
       document.body.classList.add("filter-sheet-open");
       mobileFilterBackdrop.hidden = false;
       window.requestAnimationFrame(() => {{
+        if (!document.body.classList.contains("filter-sheet-open")) return;
         mobileFilterBackdrop.classList.add("is-open");
         disclosure.querySelector("summary")?.focus();
       }});
@@ -5061,7 +5049,13 @@ def render_dashboard(
       if (appShellMedia.matches && disclosure) disclosure.open = false;
       mobileFilterTrigger.setAttribute("aria-expanded", "false");
       syncMobileNavigation();
-      if (restoreFocus) mobileFilterTrigger.focus();
+      if (restoreFocus) {{
+        window.requestAnimationFrame(() => {{
+          if (!document.body.classList.contains("filter-sheet-open")) {{
+            mobileFilterTrigger.focus();
+          }}
+        }});
+      }}
     }}
 
     function syncFilterDisclosureForViewport() {{
@@ -5147,6 +5141,8 @@ def render_dashboard(
     window.addEventListener("keydown", (event) => {{
       if (document.body.classList.contains("filter-sheet-open")) {{
         if (event.key === "Escape") {{
+          event.preventDefault();
+          event.stopPropagation();
           closeMobileFilterSheet();
           return;
         }}

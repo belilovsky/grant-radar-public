@@ -16,6 +16,7 @@ def test_deploy_script_requires_explicit_delete_opt_in() -> None:
     assert (
         'rsync "${RSYNC_ARGS[@]}" "$ROOT_DIR/" "$DEPLOY_HOST:$DEPLOY_PATH/"' in script
     )
+    assert '--exclude "work"' in script
 
 
 def test_deploy_script_no_longer_uses_unconditional_delete() -> None:

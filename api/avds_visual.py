@@ -420,6 +420,35 @@ DASHBOARD_AVDS4_CSS = r"""
           calc(82px + env(safe-area-inset-bottom));
       }
 
+      .mobile-app-brand,
+      .mobile-lang-switch a,
+      .hero-actions .button,
+      .hero-pick,
+      .preset-button,
+      .detail-link,
+      .advanced-filters > summary {
+        min-height: var(--av-control-height-lg);
+      }
+
+      .mobile-app-brand {
+        align-content: center;
+      }
+
+      .mobile-lang-switch a {
+        min-width: var(--av-control-height-lg);
+      }
+
+      .mobile-icon-button {
+        width: var(--av-control-height-lg);
+        min-width: var(--av-control-height-lg);
+        height: var(--av-control-height-lg);
+        min-height: var(--av-control-height-lg);
+      }
+
+      .hero-copy > .topbar .brand h1 {
+        font-size: 32px;
+      }
+
       .hero-band {
         padding: 24px 20px 18px;
         border-left-width: 3px;
@@ -466,8 +495,8 @@ DASHBOARD_AVDS4_CSS = r"""
         padding-inline: 16px;
       }
 
-      .hero-band .brand h1 {
-        font-size: 37px;
+      .hero-copy > .topbar .brand h1 {
+        font-size: 30px;
       }
 
       .hero-intro {

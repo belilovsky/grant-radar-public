@@ -1845,6 +1845,7 @@ async def swagger_docs(request: Request) -> HTMLResponse:
       font-family: var(--av-font-sans);
     }}
     .qazfund-docs-header {{
+      box-sizing: border-box;
       position: sticky;
       top: 12px;
       z-index: 20;
@@ -1957,14 +1958,41 @@ async def swagger_docs(request: Request) -> HTMLResponse:
       .swagger-ui .opblock-control-arrow,
       .swagger-ui .expand-operation {{ min-width: var(--av-control-height-lg); }}
       .qazfund-docs-header {{
+        display: grid;
+        grid-template-columns: minmax(0, 1fr) auto;
+        gap: 6px 12px;
         top: 8px;
-        width: calc(100% - 24px);
+        width: min(calc(100% - 24px), var(--av-container-dashboard));
         margin: 14px auto;
-        align-items: flex-start;
-        padding-inline: 12px;
+        align-items: center;
+        padding: 8px 10px;
+      }}
+      .qazfund-docs-header > a {{
+        min-width: 0;
+        display: inline-flex;
+        align-items: center;
+        white-space: nowrap;
+      }}
+      .qazfund-docs-langs {{
+        grid-column: 2;
+        grid-row: 1;
+        gap: 2px;
+        margin-left: 0;
+      }}
+      .qazfund-docs-langs a {{
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        min-width: var(--av-control-height-lg);
+        padding-inline: 0;
       }}
       .swagger-ui {{ padding-inline: 12px; }}
-      .qazfund-docs-title {{ max-width: 15ch; text-align: right; }}
+      .qazfund-docs-title {{
+        grid-column: 1 / -1;
+        grid-row: 2;
+        max-width: none;
+        text-align: left;
+      }}
     }}
   </style>
 """
