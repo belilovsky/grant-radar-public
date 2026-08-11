@@ -1321,6 +1321,7 @@ def render_dashboard(
       detailItem: null,
       detailTrigger: null
     }};
+    let overlayFocusVersion = 0;
     const DEFAULT_SORT = "priority";
     const DEFAULT_SCORE = 0.3;
     const ALL_INDEX_SCORE = 0;
@@ -2000,6 +2001,7 @@ def render_dashboard(
       state.detailTrigger = document.activeElement instanceof HTMLElement
         ? document.activeElement
         : null;
+      overlayFocusVersion += 1;
       document.body.classList.add("modal-open");
       $("#main-content").inert = true;
       $("#detail-backdrop").hidden = false;
@@ -2014,6 +2016,7 @@ def render_dashboard(
 
     function closeDetailShell() {{
       const trigger = state.detailTrigger;
+      const focusVersion = overlayFocusVersion;
       state.detailId = "";
       state.detailFallbackUrl = "";
       state.detailItem = null;
@@ -2027,7 +2030,11 @@ def render_dashboard(
         if ($("#detail-drawer").classList.contains("open")) return;
         $("#detail-backdrop").hidden = true;
         $("#detail-drawer").hidden = true;
-        if (trigger && document.contains(trigger)) trigger.focus();
+        if (
+          focusVersion === overlayFocusVersion
+          && trigger
+          && document.contains(trigger)
+        ) trigger.focus();
       }}, 180);
     }}
 
@@ -5023,6 +5030,7 @@ def render_dashboard(
     function openMobileFilterSheet() {{
       const disclosure = $("#filter-disclosure");
       if (!disclosure) return;
+      overlayFocusVersion += 1;
       if (!appShellMedia.matches) {{
         disclosure.open = true;
         disclosure.scrollIntoView({{ behavior: "auto", block: "start" }});

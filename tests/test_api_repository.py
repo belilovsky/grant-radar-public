@@ -355,6 +355,21 @@ def test_root_renders_service_landing(monkeypatch):
     assert "mobileFilterTrigger.focus();" in response.text
     assert "function openMobileFilterSheet" in response.text
     assert "function closeMobileFilterSheet" in response.text
+    assert "let overlayFocusVersion = 0;" in response.text
+    detail_open_script = response.text.split("function openDetailShell()", 1)[1].split(
+        "function closeDetailShell()", 1
+    )[0]
+    detail_close_script = response.text.split("function closeDetailShell()", 1)[
+        1
+    ].split("function renderDetailLoading()", 1)[0]
+    filter_open_script = response.text.split("function openMobileFilterSheet()", 1)[
+        1
+    ].split("function closeMobileFilterSheet", 1)[0]
+    assert "overlayFocusVersion += 1;" in detail_open_script
+    assert "overlayFocusVersion += 1;" in filter_open_script
+    assert response.text.count("overlayFocusVersion += 1;") == 2
+    assert "const focusVersion = overlayFocusVersion;" in detail_close_script
+    assert "focusVersion === overlayFocusVersion" in detail_close_script
     assert "env(safe-area-inset-bottom)" in response.text
     assert "body.filter-sheet-open" in response.text
     audience_presets = response.text.split('id="audience-presets"', 1)[1].split(
