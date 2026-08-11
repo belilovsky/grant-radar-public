@@ -39,6 +39,7 @@ _COPY: dict[str, dict[str, str]] = {
     "ru": {
         "title": "Сравнение программ – QAZ.FUND",
         "heading": "Сравнить программы",
+        "table_heading": "Сводная таблица",
         "intro": (
             "Сопоставьте условия по опубликованным данным и проверьте каждую "
             "карточку у организатора."
@@ -58,6 +59,7 @@ _COPY: dict[str, dict[str, str]] = {
     "kk": {
         "title": "Бағдарламаларды салыстыру – QAZ.FUND",
         "heading": "Бағдарламаларды салыстыру",
+        "table_heading": "Салыстыру кестесі",
         "intro": (
             "Жарияланған деректер бойынша шарттарды салыстырып, әр карточканы "
             "ұйымдастырушыдан тексеріңіз."
@@ -77,6 +79,7 @@ _COPY: dict[str, dict[str, str]] = {
     "en": {
         "title": "Compare programs – QAZ.FUND",
         "heading": "Compare programs",
+        "table_heading": "Comparison table",
         "intro": "Compare published fields and verify every card with the organizer.",
         "unknown": "Not published",
         "not_enough": "Choose at least two cards to compare.",

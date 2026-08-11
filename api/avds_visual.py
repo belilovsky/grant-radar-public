@@ -618,7 +618,7 @@ OPPORTUNITY_AVDS4_CSS = r"""
     }
 
     .hero .button {
-      min-height: 42px;
+      min-height: 44px;
       border-color: var(--qaz-detail-line);
       border-radius: 6px;
       box-shadow: none;

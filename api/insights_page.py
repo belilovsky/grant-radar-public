@@ -33,6 +33,8 @@ COPY: dict[str, dict[str, str]] = {
         "rolling": "Программ без фиксированного срока",
         "formats": "Форматы поддержки",
         "formats_note": "Какие форматы чаще всего встречаются в каталоге.",
+        "overview": "Каталог в разрезе",
+        "overview_note": "Форматы, источники, сроки и свежесть данных.",
         "sources_title": "Кто публикует программы",
         "sources_note": "Источники с наибольшим числом открытых карточек.",
         "deadlines": "Распределение по срокам",
@@ -81,6 +83,8 @@ COPY: dict[str, dict[str, str]] = {
         "rolling": "Programs without a fixed deadline",
         "formats": "Support formats",
         "formats_note": "The formats most common in the catalog.",
+        "overview": "Catalog breakdown",
+        "overview_note": "Formats, sources, deadlines, and data freshness.",
         "sources_title": "Who publishes the programs",
         "sources_note": "Sources with the largest number of open cards.",
         "deadlines": "Deadline distribution",
@@ -129,6 +133,8 @@ COPY: dict[str, dict[str, str]] = {
         "rolling": "Нақты мерзімі жоқ бағдарламалар",
         "formats": "Қолдау форматтары",
         "formats_note": "Каталогта жиі кездесетін форматтар.",
+        "overview": "Каталог құрылымы",
+        "overview_note": "Форматтар, дереккөздер, мерзімдер және деректердің жаңалығы.",
         "sources_title": "Бағдарламаларды кім жариялайды",
         "sources_note": "Ашық карточкалары ең көп дереккөздер.",
         "deadlines": "Мерзімдер бөлінісі",
@@ -258,9 +264,11 @@ def _bar_chart(
         ratio = value / max_value if max_value else 0
         bar_width = max(0, round(390 * ratio))
         chart_label = label if len(label) <= 24 else f"{label[:23].rstrip()}…"
+        mobile_chart_label = label if len(label) <= 15 else f"{label[:14].rstrip()}…"
         chunks.append(
             f'<g class="chart-row"><title>{escape(label)}: {value}</title>'
-            f'<text x="0" y="{y + 16}" class="chart-label">{escape(chart_label)}</text>'
+            f'<text x="0" y="{y + 16}" class="chart-label chart-label-desktop">{escape(chart_label)}</text>'
+            f'<text x="0" y="{y + 16}" class="chart-label chart-label-mobile">{escape(mobile_chart_label)}</text>'
             f'<rect x="188" y="{y}" width="390" height="{bar_height}" rx="8" class="chart-track" />'
             f'<rect x="188" y="{y}" width="{bar_width}" height="{bar_height}" rx="8" fill="{color}" />'
             f'<text x="596" y="{y + 16}" text-anchor="end" class="chart-value">{value}</text></g>'
@@ -573,7 +581,7 @@ def render_insights_page(
     .section-head{{display:grid;gap:5px;margin:30px 0 12px}} .section-head h2{{margin:0;font-size:24px;line-height:1.15}} .section-head p{{margin:0;color:var(--color-text-muted);font-size:14px}}
     .viz-grid{{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px}} .viz-card{{padding:18px;border:1px solid var(--color-border);border-radius:var(--av-radius-lg);background:var(--color-surface);box-shadow:var(--shadow-xs)}} .viz-card h3{{margin:0;font-size:17px}} .viz-card p{{margin:4px 0 14px;color:var(--color-text-muted);font-size:13px}}
     .insight-lower{{display:grid;grid-template-columns:minmax(0,.8fr) minmax(0,1.2fr);align-items:start;gap:14px;margin-top:14px}} .insight-stack{{display:grid;gap:14px;align-content:start}} .upcoming-list{{display:grid;gap:0;margin:0;padding:0;list-style:none}} .upcoming-item{{display:grid;grid-template-columns:74px minmax(0,1fr) auto;align-items:center;gap:10px;padding:10px 0;border-top:1px solid var(--color-border)}} .upcoming-item:first-child{{border-top:0;padding-top:0}} .upcoming-date{{color:var(--color-accent);font-size:12px;font-weight:800;white-space:nowrap}} .upcoming-title{{display:block;overflow:hidden;color:var(--color-text);font-size:13px;font-weight:750;text-overflow:ellipsis;white-space:nowrap;text-decoration:none}} .upcoming-source{{display:block;overflow:hidden;color:var(--color-text-muted);font-size:11px;text-overflow:ellipsis;white-space:nowrap}} .upcoming-days{{color:var(--color-text-muted);font-size:11px;font-weight:700;white-space:nowrap}}
-    .data-chart{{display:block;width:100%;height:auto;min-height:130px;overflow:visible}} .chart-label{{font:600 12px var(--av-font-sans);fill:var(--color-text)}} .chart-value{{font:800 13px var(--av-font-sans);fill:var(--color-text)}} .chart-track{{fill:var(--color-bg-subtle)}}
+    .data-chart{{display:block;width:100%;height:auto;min-height:130px;overflow:visible}} .chart-label{{font:600 12px var(--av-font-sans);fill:var(--color-text)}} .chart-label-mobile{{display:none}} .chart-value{{font:800 13px var(--av-font-sans);fill:var(--color-text)}} .chart-track{{fill:var(--color-bg-subtle)}}
     .method{{display:grid;grid-template-columns:auto 1fr;gap:14px;align-items:start;margin-top:22px;padding:16px 18px;border-left:4px solid var(--color-accent);border-radius:var(--av-radius-md);background:var(--color-surface)}} .method strong{{font-size:15px}} .method p{{margin:3px 0 0;color:var(--color-text-muted);font-size:14px}}
     .footer{{display:flex;justify-content:space-between;gap:16px;flex-wrap:wrap;margin-top:28px;padding-top:18px;border-top:1px solid var(--color-border);color:var(--color-text-muted);font-size:13px}} .footer a{{font-weight:700}}
     :root {{ --ink: var(--color-text); }}
@@ -594,8 +602,8 @@ def render_insights_page(
       h1{{max-width:24ch}}
       .hero p{{max-width:72ch}}
     }}
-    @media(max-width:760px){{.shell{{width:min(100% - 24px,680px);padding-top:12px}} .hero{{grid-template-columns:1fr;padding:20px}} .metric-grid{{grid-template-columns:repeat(4,minmax(0,1fr))}} .insight-metric{{padding:10px}} .insight-metric strong{{font-size:22px}} .viz-grid{{grid-template-columns:1fr}} .insight-lower{{grid-template-columns:1fr}} .upcoming-item{{grid-template-columns:66px minmax(0,1fr);gap:8px}} .upcoming-days{{grid-column:2}} .method{{grid-template-columns:1fr;gap:5px}}}}
-    @media(max-width:760px) {{ .hero {{ grid-template-columns: minmax(0, 1fr); }} }}
+    @media(max-width:820px){{.back,.langs a,.button{{display:inline-flex;align-items:center;min-height:44px}} .langs a{{justify-content:center;min-width:44px}}}}
+    @media(max-width:760px){{.shell{{width:min(100% - 24px,680px);padding-top:12px}} .hero{{grid-template-columns:minmax(0,1fr);padding:20px}} .metric-grid{{grid-template-columns:repeat(4,minmax(0,1fr))}} .insight-metric{{padding:10px}} .insight-metric strong{{font-size:22px}} .viz-grid{{grid-template-columns:1fr}} .insight-lower{{grid-template-columns:1fr}} .chart-label-desktop{{display:none}} .chart-label-mobile{{display:inline;font-size:22px;letter-spacing:-.02em}} .chart-value{{font-size:20px}} .upcoming-item{{grid-template-columns:66px minmax(0,1fr);gap:8px}} .upcoming-title{{min-height:44px;white-space:normal;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical}} .upcoming-days{{grid-column:2}} .method{{grid-template-columns:1fr;gap:5px}}}}
     @media(max-width:480px){{.metric-grid{{grid-template-columns:repeat(2,minmax(0,1fr))}} h1{{font-size:34px}}}}
   </style>
 </head>
@@ -604,7 +612,7 @@ def render_insights_page(
   {fallback_note_markup}
   <section class="hero" data-avds-component="hero-band"><div><span class="eyebrow">{escape(copy["eyebrow"])}</span><h1>{escape(copy["heading"])}</h1><p>{escape(copy["intro"])}</p><div class="hero-actions"><a class="button primary" href="{escape(home, quote=True)}">{escape(copy["catalog_link"])}</a><a class="button" href="{escape(status, quote=True)}">{escape(copy["source_link"])}</a></div></div><div class="metric-grid" aria-label="Key catalog metrics">{_metric(copy["total"],open_count,"good")}{_metric(copy["sources"],int(coverage.get("enabled_sources") or 0))}{_metric(copy["soon"],soon,"warn")}{_metric(copy["rolling"],rolling)}</div></section>
   <section class="viz-card" data-avds-component="DataQualityScorecard" data-avds-pattern="data-quality-scorecard"><h2>{escape(centre_copy[0])}</h2><p>{escape(centre_copy[1])}</p></section>
-  <div class="section-head"><h2>{escape(copy["formats"])}</h2><p>{escape(copy["formats_note"])}</p></div>
+  <div class="section-head"><h2>{escape(copy["overview"])}</h2><p>{escape(copy["overview_note"])}</p></div>
   <div class="viz-grid"><article class="viz-card"><h3>{escape(copy["formats"])}</h3><p>{escape(copy["formats_note"])}</p>{_bar_chart(type_rows,chart_id="format-distribution",color="#315fdc",empty_label=copy["no_data"],aria_label=copy["formats"])}</article><article class="viz-card"><h3>{escape(copy["sources_title"])}</h3><p>{escape(copy["sources_note"])}</p>{_bar_chart(source_rows,chart_id="source-distribution",color="#15724e",empty_label=copy["no_data"],aria_label=copy["sources_title"])}</article><article class="viz-card"><h3>{escape(copy["deadlines"])}</h3><p>{escape(copy["deadlines_note"])}</p>{_bar_chart(deadline_rows,chart_id="deadline-distribution",color="#9a6414",empty_label=copy["no_data"],aria_label=copy["deadlines"])}</article><article class="viz-card"><h3>{escape(copy["freshness"])}</h3><p>{escape(copy["freshness_note"])}</p>{_bar_chart(freshness_rows,chart_id="source-freshness",color="#7c3aed",empty_label=copy["no_data"],aria_label=copy["freshness"])}</article></div>
   <div class="insight-lower"><div class="insight-stack"><section class="viz-card"><h3>{escape(copy["quality"])}</h3><p>{escape(copy["quality_note"])}</p>{_bar_chart(score_rows,chart_id="match-quality",color="#315fdc",empty_label=copy["no_data"],aria_label=copy["quality"])}</section><section class="viz-card"><h3>{escape(copy["readiness"])}</h3><p>{escape(copy["readiness_note"])}</p>{_bar_chart(readiness_rows,chart_id="decision-readiness",color="#0f766e",empty_label=copy["no_data"],aria_label=copy["readiness"])}</section></div><section class="viz-card" data-avds-component="DataViz"><h3>{escape(copy["upcoming"])}</h3><p>{escape(copy["upcoming_note"])}</p>{upcoming_markup}</section></div>
   <div class="viz-grid"><section class="viz-card" data-avds-pattern="change-ledger"><h3>{escape(centre_copy[2])}</h3><p><a href="{escape(changes_href, quote=True)}">{escape(changes_href)}</a></p></section><section class="viz-card" data-avds-pattern="machine-entrypoints"><h3>{escape(centre_copy[3])}</h3><p><a href="{escape(insights_json_href, quote=True)}">{escape(insights_json_href)}</a></p></section></div>

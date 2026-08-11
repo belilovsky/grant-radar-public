@@ -680,6 +680,9 @@ def render_application_prep_page(
       background: var(--panel);
     }}
     .topbar a {{
+      display: inline-flex;
+      align-items: center;
+      min-height: 44px;
       color: inherit;
       font-size: 12px;
       font-weight: 750;
@@ -888,7 +891,7 @@ def render_application_prep_page(
     .draft-head p {{ margin: 0; color: var(--muted); font-size: 10px; }}
     .draft-actions {{ display: flex; flex-wrap: wrap; gap: 5px; justify-content: flex-end; }}
     .action {{
-      min-height: var(--av-control-height-lg);
+      min-height: 44px;
       padding: 7px 9px;
       border: 1px solid var(--line);
       border-radius: var(--av-radius-md);
@@ -947,7 +950,6 @@ def render_application_prep_page(
       .panel {{ padding: 18px 14px; }}
       .panel-head, .draft-head {{ flex-direction: column; }}
       .draft-actions {{ width: 100%; justify-content: flex-start; }}
-      .action {{ min-height: 42px; }}
     }}
     @media (prefers-reduced-motion: reduce) {{
       .progress span {{ transition: none; }}

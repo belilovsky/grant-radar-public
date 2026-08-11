@@ -1050,6 +1050,9 @@ def render_opportunity_page(
     eligibility_markup = "".join(
         f'<span class="pill">{value}</span>' for value in eligibility[:6]
     )
+    eligibility_group_markup = (
+        f'<div class="pills">{eligibility_markup}</div>' if eligibility_markup else ""
+    )
     applications_closed = lifecycle in {"closed", "awarded"}
     prepare_button = (
         """
@@ -2004,6 +2007,10 @@ def render_opportunity_page(
       }}
       .apply-step:first-child {{ border-left-color: var(--success); }}
     }}
+    @media (max-width: 820px) {{
+      .lang-switch a {{ min-width: 44px; min-height: 44px; }}
+      .related-link {{ display: inline-flex; align-items: center; min-height: 44px; }}
+    }}
     @media (max-width: 640px) {{
       .hero-actions .button,
       .lang-switch a {{ min-height: var(--av-control-height-lg); }}
@@ -2077,7 +2084,7 @@ def render_opportunity_page(
           <div class="eyebrow">QAZ.FUND</div>
           <h1>{escape(title)}</h1>
           <p class="summary">{escape(summary)}</p>
-          <div class="pills">{eligibility_markup}</div>
+          {eligibility_group_markup}
           {lifecycle_notice_markup}
           <div class="hero-actions">
             <a class="button primary" href="{source_href}" target="_blank" rel="noopener">
@@ -2115,7 +2122,6 @@ def render_opportunity_page(
       </div>
     </section>
 
-    <div class="pills">{eligibility_markup}</div>
     {readiness_markup}
 
     <section class="{content_grid_class}">

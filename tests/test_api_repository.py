@@ -3458,6 +3458,7 @@ def test_opportunity_page_renders_public_permalink(monkeypatch):
     assert "Поддержка цифровой инфраструктуры и инклюзивного доступа." in response.text
     assert "Что финансируется" in response.text
     assert "Зарегистрированные НПО" in response.text
+    assert response.text.count('class="pills"') == 1
     assert "Что подготовить" in response.text
     assert response.text.count('data-avds-component="action-path"') == 2
     assert response.text.count('data-avds-pattern="action-path"') == 2
@@ -3511,6 +3512,10 @@ def test_opportunity_page_renders_public_permalink(monkeypatch):
     assert 'class="hero-fact hero-fact--source"' in response.text
     assert ".hero-actions .button" in response.text
     assert "min-height: var(--av-control-height-lg);" in response.text
+    assert (
+        ".related-link { display: inline-flex; align-items: center; min-height: 44px; }"
+        in response.text
+    )
     hero_actions = response.text.split('<div class="hero-actions">', 1)[1].split(
         "</div>", 1
     )[0]
@@ -3808,10 +3813,15 @@ def test_public_insights_page_renders_avds_charts(monkeypatch):
     assert response.headers["cache-control"].startswith("public, max-age=60")
     assert '<html lang="ru"' in response.text
     assert "Где искать поддержку" in response.text
+    assert "<h2>Каталог в разрезе</h2>" in response.text
+    assert "<h2>Форматы поддержки</h2>" not in response.text
     assert 'data-avds-component="DataViz"' in response.text
     assert 'data-avds-pattern="format-distribution"' in response.text
     assert 'data-avds-pattern="deadline-distribution"' in response.text
     assert 'data-avds-pattern="decision-readiness"' in response.text
+    assert 'class="chart-label chart-label-mobile"' in response.text
+    assert ".chart-label-desktop{display:none}" in response.text
+    assert ".upcoming-title{min-height:44px" in response.text
     assert "Гранты" in response.text
     assert "До 30 дней" in response.text
     assert 'property="og:type" content="website"' in response.text
@@ -3906,6 +3916,8 @@ def test_insights_chart_keeps_full_label_in_svg_title():
     )
     assert "Очень длинное название официального источника: 4" in chart
     assert "Очень длинное название…" in chart
+    assert "Очень длинное…" in chart
+    assert 'class="chart-label chart-label-mobile"' in chart
 
 
 def test_public_info_pages_are_linkable(monkeypatch):
@@ -3928,6 +3940,10 @@ def test_public_info_pages_are_linkable(monkeypatch):
         assert marker in response.text
         assert 'data-avds="grant-radar"' in response.text
         assert ".info-layout { align-items: start; min-height: 0; }" in response.text
+        assert (
+            ".back,.langs a{display:inline-flex;align-items:center;min-height:44px}"
+            in response.text
+        )
         assert (
             ".cards { height: auto; grid-template-rows: none; gap: 12px; }"
             in response.text

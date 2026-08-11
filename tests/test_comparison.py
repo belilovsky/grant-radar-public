@@ -94,6 +94,9 @@ def test_public_compare_json_is_source_grounded(monkeypatch) -> None:
     assert 'lang="kk" aria-current="page">KAZ</a>' in page.text
     assert 'data-avds-component="comparison-table"' in page.text
     assert "Бағдарламаларды салыстыру" in page.text
+    assert "<h1>Бағдарламаларды салыстыру</h1>" in page.text
+    assert "<h2>Салыстыру кестесі</h2>" in page.text
+    assert "<h2>Бағдарламаларды салыстыру</h2>" not in page.text
     assert "JSON" in page.text
     assert "another_source" not in page.text
     assert "Дереккөзді ашу" in page.text

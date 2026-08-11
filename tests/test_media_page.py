@@ -65,6 +65,13 @@ def test_media_pages_have_three_locales_and_machine_contract(monkeypatch) -> Non
         assert 'type="application/feed+json"' in response.text
         assert 'type="application/rss+xml"' in response.text
         assert 'datetime="' in response.text
+        assert ".back,.langs a,.section-head a,.media-card-link,.media-card-source" in (
+            response.text
+        )
+        assert (
+            ".source-shelf-arrow{display:inline-grid;place-items:center;width:44px;height:44px}"
+            in response.text
+        )
         assert "topic=ai" in response.text
         assert "source=official_source" in response.text
         assert "\u2014" not in response.text
