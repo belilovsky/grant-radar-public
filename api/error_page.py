@@ -209,6 +209,15 @@ def render_not_found_page(*, lang: str, root_path: str = "") -> str:
       main {{ padding: 40px 0 48px; }}
       h1 {{ font-size: 36px; }}
     }}
+    @media (max-width: 820px) {{
+      .brand,
+      .lang-switch a {{
+        display: inline-flex;
+        align-items: center;
+        min-height: var(--av-control-height-lg);
+      }}
+      .lang-switch a {{ min-width: var(--av-control-height-lg); justify-content: center; }}
+    }}
   </style>
 </head>
 <body>

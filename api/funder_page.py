@@ -910,6 +910,19 @@ def render_funder_page(
       }}
     }}
     @media (max-width: 900px) {{
+      .button,
+      .lang-switch a,
+      .back-link,
+      .opportunity-card h3 a,
+      .site-footer-nav a,
+      .site-footer > p a {{
+        display: inline-flex;
+        align-items: center;
+        min-height: var(--av-control-height-lg);
+      }}
+      .lang-switch a,
+      .site-footer-nav a {{ min-width: var(--av-control-height-lg); }}
+      .site-footer-nav a {{ justify-content: center; }}
       .hero {{ grid-template-columns: 1fr; }}
       .stat-grid {{
         grid-column: auto;

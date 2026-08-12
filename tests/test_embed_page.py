@@ -74,6 +74,9 @@ def test_coverage_embed_renders_only_explicit_coverage_fields() -> None:
     assert "3 relevant / 8" in html
     assert "must never appear" not in html
     assert 'data-avds-pattern="StatGroup"' in html
+    assert "@media (max-width: 820px)" in html
+    assert ".embed-footer a" in html
+    assert "min-height: 44px" in html
 
 
 def test_embed_routes_allow_qaz_support_frames_and_keep_regular_pages_same_origin(

@@ -344,6 +344,17 @@ def render_status_page(
       .overview {{ grid-template-columns:1fr; }}
       .metrics {{ margin:0; padding:0; border:0; }}
     }}
+    @media (max-width:860px) {{
+      .lang-switch a,
+      .status-topbar .back,
+      .site-footer-nav a {{
+        display:inline-flex;
+        align-items:center;
+        min-height:var(--av-control-height-lg);
+      }}
+      .lang-switch a,
+      .site-footer-nav a {{ min-width:var(--av-control-height-lg); justify-content:center; }}
+    }}
     @media (max-width:720px) {{
       .lang-switch a {{
         display:inline-flex;

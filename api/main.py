@@ -1944,7 +1944,7 @@ async def swagger_docs(request: Request) -> HTMLResponse:
       background: var(--av-color-emerald-700);
       color: var(--av-color-white);
     }}
-    @media (max-width: 520px) {{
+    @media (max-width: 820px) {{
       .qazfund-docs-header a,
       .swagger-ui .opblock .opblock-summary,
       .swagger-ui .opblock-summary-control,
@@ -1957,6 +1957,14 @@ async def swagger_docs(request: Request) -> HTMLResponse:
       }}
       .swagger-ui .opblock-control-arrow,
       .swagger-ui .expand-operation {{ min-width: var(--av-control-height-lg); }}
+      .qazfund-docs-langs a {{
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        min-width: var(--av-control-height-lg);
+      }}
+    }}
+    @media (max-width: 520px) {{
       .qazfund-docs-header {{
         display: grid;
         grid-template-columns: minmax(0, 1fr) auto;

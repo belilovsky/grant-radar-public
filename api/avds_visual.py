@@ -435,6 +435,9 @@ DASHBOARD_AVDS4_CSS = r"""
       }
 
       .mobile-lang-switch a {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
         min-width: var(--av-control-height-lg);
       }
 

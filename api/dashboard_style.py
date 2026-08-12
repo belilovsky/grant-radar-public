@@ -2997,6 +2997,19 @@ DASHBOARD_CSS = r"""    :root {
         min-width: var(--av-control-height-lg);
         min-height: var(--av-control-height-lg);
       }
+      .more-link,
+      .footer-funder-link,
+      .opportunity h3 a,
+      .site-footer-nav a,
+      .site-footer > p a {
+        display: inline-flex;
+        align-items: center;
+        min-height: var(--av-control-height-lg);
+      }
+      .site-footer-nav a {
+        justify-content: center;
+        min-width: var(--av-control-height-lg);
+      }
       .shell {
         width: 100%;
         padding: calc(66px + env(safe-area-inset-top)) 12px

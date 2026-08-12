@@ -602,7 +602,7 @@ def render_insights_page(
       h1{{max-width:24ch}}
       .hero p{{max-width:72ch}}
     }}
-    @media(max-width:820px){{.back,.langs a,.button{{display:inline-flex;align-items:center;min-height:44px}} .langs a{{justify-content:center;min-width:44px}}}}
+    @media(max-width:820px){{.back,.langs a,.button,.upcoming-title,.viz-card[data-avds-pattern] p > a,.footer a{{display:inline-flex;align-items:center;min-height:44px}} .langs a{{justify-content:center;min-width:44px}}}}
     @media(max-width:760px){{.shell{{width:min(100% - 24px,680px);padding-top:12px}} .hero{{grid-template-columns:minmax(0,1fr);padding:20px}} .metric-grid{{grid-template-columns:repeat(4,minmax(0,1fr))}} .insight-metric{{padding:10px}} .insight-metric strong{{font-size:22px}} .viz-grid{{grid-template-columns:1fr}} .insight-lower{{grid-template-columns:1fr}} .chart-label-desktop{{display:none}} .chart-label-mobile{{display:inline;font-size:22px;letter-spacing:-.02em}} .chart-value{{font-size:20px}} .upcoming-item{{grid-template-columns:66px minmax(0,1fr);gap:8px}} .upcoming-title{{min-height:44px;white-space:normal;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical}} .upcoming-days{{grid-column:2}} .method{{grid-template-columns:1fr;gap:5px}}}}
     @media(max-width:480px){{.metric-grid{{grid-template-columns:repeat(2,minmax(0,1fr))}} h1{{font-size:34px}}}}
   </style>

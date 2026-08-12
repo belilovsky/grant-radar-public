@@ -73,3 +73,17 @@ def test_dashboard_uses_extracted_static_styles() -> None:
         assert selector in mobile_touch_block
     assert "min-height: var(--av-control-height-lg);" in mobile_touch_block
     assert "min-width: var(--av-control-height-lg);" in mobile_touch_block
+
+
+def test_dashboard_secondary_mobile_links_keep_avds_touch_targets() -> None:
+    mobile_block = DASHBOARD_CSS.split("@media (max-width: 820px) {", 1)[1]
+
+    for selector in (
+        ".more-link",
+        ".footer-funder-link",
+        ".opportunity h3 a",
+        ".site-footer-nav a",
+        ".site-footer > p a",
+    ):
+        assert selector in mobile_block
+    assert "min-height: var(--av-control-height-lg);" in mobile_block

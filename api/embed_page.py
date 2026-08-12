@@ -264,6 +264,11 @@ EMBED_CSS = AVDS_CSS + """
       outline: 2px solid var(--embed-brand);
       outline-offset: 3px;
     }
+    @media (max-width: 820px) {
+      .embed-row h2 a,
+      .coverage-name a,
+      .embed-footer a { display: inline-flex; align-items: center; min-height: 44px; }
+    }
     @media (max-width: 600px) {
       .embed-shell { padding: 14px 12px 16px; }
       .embed-row { align-items: start; grid-template-columns: 1fr; gap: 9px; padding: 13px 12px; }

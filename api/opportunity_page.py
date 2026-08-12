@@ -2009,7 +2009,12 @@ def render_opportunity_page(
     }}
     @media (max-width: 820px) {{
       .lang-switch a {{ min-width: 44px; min-height: 44px; }}
-      .related-link {{ display: inline-flex; align-items: center; min-height: 44px; }}
+      .breadcrumbs a,
+      .related-card h3 a,
+      .related-link,
+      .site-footer-nav a,
+      .site-footer > p a {{ display: inline-flex; align-items: center; min-height: 44px; }}
+      .site-footer-nav a {{ justify-content: center; min-width: 44px; }}
     }}
     @media (max-width: 640px) {{
       .hero-actions .button,

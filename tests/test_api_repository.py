@@ -755,6 +755,7 @@ def test_docs_exposes_swagger_with_return_link(monkeypatch):
     assert "grid-column: 2;" in response.text
     assert "grid-column: 1 / -1;" in response.text
     assert "min-width: var(--av-control-height-lg);" in response.text
+    assert ".qazfund-docs-langs a" in response.text
     assert "display: inline-flex;" in response.text
     assert '"deepLinking": false' in response.text
     assert 'href="/docs?lang=kk" lang="kk">KAZ</a>' in response.text
@@ -1913,6 +1914,10 @@ def test_public_status_page_renders_coverage_without_operator_details(monkeypatc
     assert 'href="/docs?lang=ru"' in response.text
     assert "min-height:var(--av-control-height-lg);" in response.text
     assert ".status-topbar .back" in response.text
+    assert (
+        ".site-footer-nav a { min-width:var(--av-control-height-lg); "
+        "justify-content:center; }" in response.text
+    )
     assert (
         "--av-container-dashboard: clamp(1280px, calc(100vw - 96px), 2240px);"
         in response.text
@@ -3527,8 +3532,10 @@ def test_opportunity_page_renders_public_permalink(monkeypatch):
     assert 'class="hero-fact hero-fact--source"' in response.text
     assert ".hero-actions .button" in response.text
     assert "min-height: var(--av-control-height-lg);" in response.text
+    assert ".related-card h3 a," in response.text
+    assert ".site-footer-nav a," in response.text
     assert (
-        ".related-link { display: inline-flex; align-items: center; min-height: 44px; }"
+        ".site-footer > p a { display: inline-flex; align-items: center; min-height: 44px; }"
         in response.text
     )
     hero_actions = response.text.split('<div class="hero-actions">', 1)[1].split(
@@ -3956,7 +3963,7 @@ def test_public_info_pages_are_linkable(monkeypatch):
         assert 'data-avds="grant-radar"' in response.text
         assert ".info-layout { align-items: start; min-height: 0; }" in response.text
         assert (
-            ".back,.langs a{display:inline-flex;align-items:center;min-height:44px}"
+            ".back,.langs a,.footer a{display:inline-flex;align-items:center;min-height:44px}"
             in response.text
         )
         assert (
@@ -4074,6 +4081,7 @@ def test_funder_page_renders_public_profile(monkeypatch):
     assert "--av-color-primary-700" not in response.text
     assert "Открытые возможности" in response.text
     assert "min-height: var(--av-control-height-lg);" in response.text
+    assert ".opportunity-card h3 a," in response.text
     assert "Архив" in response.text
     assert (
         "Сведения собраны по опубликованным программам и объявлениям." in response.text
