@@ -1952,6 +1952,10 @@ def test_operator_page_is_noindex_and_never_embeds_admin_token(monkeypatch):
     assert 'autocomplete="current-password"' in response.text
     assert ".auth-controls > :is(input, button)" in response.text
     assert ".catalog-link" in response.text
+    assert (
+        ".operator-brand { min-height: var(--av-control-height-lg); align-items: center; }"
+        in response.text
+    )
     assert "min-height: var(--av-control-height-lg);" in response.text
     assert "server-only-secret" not in response.text
     head_response = client.head("/operator?lang=en")

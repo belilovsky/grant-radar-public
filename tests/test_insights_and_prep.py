@@ -74,6 +74,10 @@ def test_insights_api_and_page_are_data_backed(monkeypatch):
     assert ".footer nav { display: flex; flex-wrap: wrap;" in page.text
     assert ".hero{grid-template-columns:minmax(0,1fr);padding:20px}" in page.text
     assert ".upcoming-title,.viz-card[data-avds-pattern] p > a,.footer a" in page.text
+    assert (
+        ".upcoming-title{display:block;min-width:0;max-width:100%;overflow:hidden"
+        in page.text
+    )
     assert "min-height:44px" in page.text
     assert "/api/v1/changes?hours=24" in page.text
     assert "\u2014" not in page.text

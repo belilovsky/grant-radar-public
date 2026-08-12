@@ -231,6 +231,7 @@ def render_operator_page(*, lang: str, root_path: str = "") -> str:
       .lang-switch a,
       .catalog-link {{ min-height: var(--av-control-height-lg); }}
       .lang-switch a {{ min-width: var(--av-control-height-lg); }}
+      .operator-brand {{ min-height: var(--av-control-height-lg); align-items: center; }}
       main {{ width:min(100% - 20px,var(--av-container-dashboard)); padding-top:10px; }}
       .operator-topbar {{ top:8px; padding:8px 10px; }}
       .operator-topbar {{ align-items:flex-start; }}
