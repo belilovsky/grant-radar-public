@@ -109,6 +109,7 @@ from api.opportunity_mapping import public_raw as _public_raw
 from api.opportunity_page import render_opportunity_page
 from api.public_info_page import render_public_info_page
 from api.public_meta import OG_IMAGE_PNG, OG_IMAGE_SVG
+from api.qpost_feed import QPOST_TEMPLATES, build_qpost_draft_feed
 from api.runtime_config import admin_token as _admin_token
 from api.runtime_config import allowed_hosts as _allowed_hosts
 from api.runtime_config import bearer_token as _bearer_token
@@ -2366,6 +2367,7 @@ async def site_discovery(request: Request) -> Response:
     daily_digest_text_url = _public_url(
         request, root_path, "/media/v1/digest/daily.txt"
     )
+    qpost_drafts = _public_url(request, root_path, "/media/v1/qpost/drafts.json")
     compare_json = _public_url(request, root_path, "/compare.json")
     opportunities = _public_url(request, root_path, "/opportunities")
     opportunities_ndjson = _public_url(request, root_path, "/opportunities.ndjson")
@@ -2458,6 +2460,9 @@ async def site_discovery(request: Request) -> Response:
             "media_feed_rss": "/media/v1/feed.rss?lang={lang}",
             "media_daily_digest_json": "/media/v1/digest/daily.json?lang={lang}",
             "media_daily_digest_text": "/media/v1/digest/daily.txt?lang={lang}",
+            "media_qpost_drafts": (
+                "/media/v1/qpost/drafts.json?lang={lang}&template={template}"
+            ),
             "terms": "/terms?lang={lang}",
             "data_policy": "/data-policy?lang={lang}",
             "attribution": "/attribution?lang={lang}",
@@ -2492,6 +2497,7 @@ async def site_discovery(request: Request) -> Response:
             ),
             "api_v1_insights": _public_url(request, root_path, "/api/v1/insights"),
             "api_v1_changes": _public_url(request, root_path, "/api/v1/changes"),
+            "qpost_drafts": qpost_drafts,
             "opportunity_history": history_template,
             "digest": digest,
             "insights": insights,
@@ -2513,6 +2519,7 @@ async def site_discovery(request: Request) -> Response:
             "feed_rss": media_feed_rss,
             "daily_digest_json": daily_digest_json,
             "daily_digest_text": daily_digest_text_url,
+            "qpost_drafts": qpost_drafts,
             "content_template": "/media/v1/opportunities/{id}/content.json?lang=ru|en",
             "citation_template": (
                 "/media/v1/opportunities/{id}/citation.txt?lang=ru|en"
@@ -3429,6 +3436,7 @@ async def api_v1_index(request: Request) -> JSONResponse:
             "media_feed_rss": f"{base}/media/v1/feed.rss",
             "daily_digest_json": f"{base}/media/v1/digest/daily.json",
             "daily_digest_text": f"{base}/media/v1/digest/daily.txt",
+            "qpost_drafts": f"{base}/media/v1/qpost/drafts.json",
         },
     }
     return _versioned_json_response(payload)
@@ -3784,6 +3792,38 @@ async def media_daily_digest_text(
         daily_digest_text(payload) + "\n",
         media_type="text/plain; charset=utf-8",
     )
+
+
+@app.get("/media/v1/qpost/drafts.json")
+async def media_qpost_drafts(
+    request: Request,
+    lang: str | None = Query(None),
+    template: str = Query("grant_day", pattern=f"^({'|'.join(QPOST_TEMPLATES)})$"),
+    limit: int = Query(5, ge=1, le=12),
+) -> JSONResponse:
+    """Return source-grounded candidates that require manual review in QPost."""
+    active_lang = _public_lang(lang)
+    today = public_today()
+    opportunities, _ = _query_opportunities(
+        min_score=0.3,
+        deadline_after=today,
+        include_irrelevant=False,
+        limit=200,
+        offset=0,
+        lang=active_lang,
+        compact=False,
+    )
+    payload = build_qpost_draft_feed(
+        opportunities,
+        base_url=_public_root_base(request, _root_path(request)),
+        lang=active_lang,
+        template=template,
+        today=today,
+        limit=limit,
+    )
+    response = _versioned_json_response(payload)
+    response.headers["Cache-Control"] = "public, max-age=60, stale-while-revalidate=300"
+    return response
 
 
 @app.get("/opportunities", response_model=list[Opportunity])
