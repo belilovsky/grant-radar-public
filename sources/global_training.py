@@ -104,12 +104,10 @@ PROGRAMS = (
             "Fulbright Foreign Language Teaching Assistant Program для Казахстана"
         ),
         summary_ru=(
-            "Официальная страница Посольства США в Казахстане о программе "
-            "Fulbright Foreign Language Teaching Assistant для преподавания "
-            "русского языка. Девятимесячная неакадемическая программа размещает "
-            "казахстанских преподавателей или будущих преподавателей английского "
-            "языка в принимающих университетах США; заявки принимаются до "
-            "15 августа 2026 года, 12:00 по времени Астаны."
+            "Fulbright FLTA приглашает преподавателей и будущих преподавателей "
+            "английского языка из Казахстана провести девять месяцев в "
+            "университете США. Участники помогают преподавать русский язык, "
+            "проходят обязательные курсы и знакомят кампус с культурой Казахстана."
         ),
         funder="U.S. Embassy in Kazakhstan / Fulbright Program",
         opportunity_type=OpportunityType.FELLOWSHIP,
@@ -192,6 +190,35 @@ PROGRAMS = (
 )
 
 
+PROGRAM_EDITORIAL_RU = {
+    "https://apply.iie.org/flta2027": {
+        "social_title": "Fulbright FLTA: 9 месяцев в университете США",
+        "eligibility": [
+            "Граждане Казахстана, живущие в стране, которые преподают "
+            "английский язык или учатся на преподавателя английского и "
+            "соответствуют правилам Fulbright FLTA"
+        ],
+        "highlights": [
+            "ежемесячная стипендия",
+            "поддержка поездки и страхование от несчастных случаев и заболеваний",
+            "освобождение от оплаты обязательных курсов принимающего университета",
+            "очная девятимесячная программа без получения степени",
+        ],
+        "amount": (
+            "Ежемесячная стипендия, поддержка поездки, страхование и "
+            "освобождение от оплаты обязательных курсов"
+        ),
+        "amount_label": "Что покрывает программа",
+        "steps_title": "Как подать заявку",
+        "application_steps": [
+            "Проверить критерии FLTA и подготовить требуемые документы",
+            "Заполнить анкету на официальном портале IIE",
+            "Отправить заявку до 15 августа, 12:00 по времени Астаны, и сохранить подтверждение",
+        ],
+    }
+}
+
+
 def _html_title(html: str) -> str | None:
     match = re.search(
         r"<title[^>]*>(?P<title>.*?)</title>", html, re.IGNORECASE | re.DOTALL
@@ -239,6 +266,12 @@ class GlobalTrainingOpportunitiesSource(BaseSource):
                 continue
 
             count += 1
+            editorial_ru = PROGRAM_EDITORIAL_RU.get(program.application_url, {})
+            ru_content = {
+                "title": program.title_ru,
+                "summary": program.summary_ru,
+                **editorial_ru,
+            }
             yield Opportunity(
                 source=self.slug,
                 source_url=program.url,  # type: ignore[arg-type]
@@ -263,10 +296,7 @@ class GlobalTrainingOpportunitiesSource(BaseSource):
                     "opportunity_status": "open",
                     "lifecycle": "open",
                     "i18n": {
-                        "ru": {
-                            "title": program.title_ru,
-                            "summary": program.summary_ru,
-                        },
+                        "ru": ru_content,
                         "en": {
                             "title": program.title,
                             "summary": program.summary,

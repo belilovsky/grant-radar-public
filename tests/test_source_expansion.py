@@ -71,6 +71,44 @@ def test_world_bank_procurement_keeps_only_current_actionable_notices():
     assert str(items[0].source_url).endswith("/WB-KG-001")
 
 
+def test_world_bank_procurement_adds_editorial_contract_for_selected_notice():
+    future = (date.today() + timedelta(days=20)).isoformat()
+    payload = {
+        "procnotices": [
+            {
+                "id": "OP00460945",
+                "bid_description": "Consulting Services for Construction Supervision",
+                "project_name": "Agriculture Modernization Project",
+                "project_ctry_name": "Uzbekistan",
+                "notice_type": "Request for Expression of Interest",
+                "submission_deadline_date": future,
+                "submission_deadline_time": "15:00 Tashkent time",
+                "noticedate": "06-Aug-2026",
+                "project_id": "P158372",
+                "bid_reference_no": "AMP/C4/QCBS/06",
+                "bid_estimate_amount": 800000,
+                "bid_estimate_currency": "USD",
+                "contact_email": "amp@iscad.uz",
+            }
+        ]
+    }
+    transport = httpx.MockTransport(
+        lambda request: httpx.Response(200, json=payload, request=request)
+    )
+    parser = WorldBankCentralAsiaProcurementParser(
+        client=httpx.AsyncClient(transport=transport)
+    )
+
+    items = _collect(parser)
+
+    assert len(items) == 1
+    item = items[0]
+    assert item.raw["estimated_amount"] == 800000
+    assert item.raw["i18n"]["ru"]["social_title"].startswith("Узбекистан")
+    assert len(item.raw["i18n"]["ru"]["application_steps"]) == 3
+    assert item.raw["i18n"]["ru"]["amount"].endswith("800 000 USD")
+
+
 def test_eu_funding_tenders_deduplicates_search_terms_and_warns_on_eligibility():
     future = (date.today() + timedelta(days=30)).isoformat()
     payload = {

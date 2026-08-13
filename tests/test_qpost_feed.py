@@ -86,10 +86,13 @@ def test_grant_day_uses_source_grounded_editorial_fields() -> None:
     opportunity.raw["amount_raw"] = "Бесплатно · офлайн в Астане · 14 недель"
     opportunity.raw["i18n"] = {
         "ru": {
+            "title": "Технологические гранты для Казахстана",
+            "summary": "Финансирование для команд с действующим продуктом.",
             "eligibility": ["Специалисты и предприниматели от 18 лет"],
             "application_steps": ["Заполнить заявку", "Пройти интервью"],
             "highlights": ["Founder Lab", "Доступ к GPU"],
             "social_title": "AI'Preneurs — программа для AI-основателей",
+            "amount": "Грант до 5 000 000 KZT",
             "amount_label": "Участие",
             "steps_title": "Как пройти отбор",
         }
@@ -106,11 +109,15 @@ def test_grant_day_uses_source_grounded_editorial_fields() -> None:
     item = payload["items"][0]
     assert item["title"] == "AI'Preneurs — программа для AI-основателей"
     assert item["title"] not in item["body_text"]
+    assert item["body_text"].startswith(
+        "Финансирование для команд с действующим продуктом."
+    )
+    assert item["source_items"][0]["title"] == ("Технологические гранты для Казахстана")
     assert (
         "Кому подходит:\nСпециалисты и предприниматели от 18 лет" in item["body_text"]
     )
     assert "Что внутри:\n• Founder Lab\n• Доступ к GPU" in item["body_text"]
-    assert "Участие: Бесплатно · офлайн в Астане · 14 недель" in item["body_text"]
+    assert "Участие: Грант до 5 000 000 KZT" in item["body_text"]
     assert (
         "Как пройти отбор:\n1. Заполнить заявку\n2. Пройти интервью"
         in item["body_text"]

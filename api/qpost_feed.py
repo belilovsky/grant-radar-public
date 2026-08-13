@@ -14,6 +14,9 @@ QPOST_TEMPLATES = ("grant_day", "deadline_7d", "deadline_2d", "weekly")
 
 
 def _amount(item: Opportunity, lang: str) -> str:
+    localized_amount = _localized_text(item, lang, "amount")
+    if localized_amount:
+        return localized_amount
     raw = item.raw if isinstance(item.raw, dict) else {}
     raw_amount = str(raw.get("amount_raw") or "").strip()
     if raw_amount:
@@ -144,8 +147,8 @@ def _source_item(
     item_id = str(item.id)
     return {
         "id": item_id,
-        "title": item.title.strip(),
-        "summary": item.summary.strip(),
+        "title": _localized_text(item, lang, "title") or item.title.strip(),
+        "summary": _localized_text(item, lang, "summary") or item.summary.strip(),
         "audience": _audience(item, lang),
         "amount": _amount(item, lang),
         "deadline": item.deadline.isoformat() if item.deadline else None,

@@ -43,6 +43,40 @@ COUNTRY_TAGS = {
     "Central Asia": "central_asia",
 }
 
+NOTICE_EDITORIAL_RU = {
+    "OP00460945": {
+        "title": (
+            "Строительный надзор за созданием Центра передового опыта "
+            "в аграрных исследованиях"
+        ),
+        "summary": (
+            "В рамках проекта модернизации сельского хозяйства Узбекистана "
+            "выбирают консалтинговую компанию для строительного надзора за "
+            "EPC-контрактом по созданию Центра передового опыта в области "
+            "аграрных исследований."
+        ),
+        "social_title": "Узбекистан ищет консультанта по строительному надзору",
+        "eligibility": [
+            "Инженерно-консалтинговые компании с опытом строительного надзора, "
+            "проектов международных финансовых организаций и EPC/FIDIC-контрактов"
+        ],
+        "highlights": [
+            "не менее 10 лет опыта строительного надзора и инженерного консалтинга",
+            "не менее двух похожих высокотехнологичных объектов за последние 10 лет",
+            "опыт проектов Всемирного банка или других международных финансовых организаций",
+            "опыт в Центральной Азии или развивающихся странах будет преимуществом",
+        ],
+        "amount": "800 000 USD",
+        "amount_label": "Оценочная стоимость",
+        "steps_title": "Как откликнуться",
+        "application_steps": [
+            "Запросить техническое задание у заказчика по адресу amp@iscad.uz",
+            "Подготовить подтверждение опыта компании и квалификации по критериям конкурса",
+            "Отправить выражение заинтересованности письменно или по электронной почте до дедлайна",
+        ],
+    }
+}
+
 
 def _iso_date(value: Any) -> date | None:
     text = str(value or "").strip()
@@ -137,6 +171,7 @@ class WorldBankCentralAsiaProcurementSource(BaseSource):
             country = str(notice.get("project_ctry_name") or "").strip()
             notice_type = str(notice.get("notice_type") or "").strip()
             deadline = _iso_date(notice.get("submission_deadline_date"))
+            editorial_ru = NOTICE_EDITORIAL_RU.get(notice_id)
             text = " ".join(
                 [title, _summary(notice), str(notice.get("project_name") or "")]
             )
@@ -149,6 +184,26 @@ class WorldBankCentralAsiaProcurementSource(BaseSource):
                 ]
             )
             count += 1
+            raw: dict[str, Any] = {
+                "external_id": notice_id,
+                "notice_type": notice_type,
+                "published": notice.get("noticedate"),
+                "project_id": notice.get("project_id"),
+                "project_name": notice.get("project_name"),
+                "country": country,
+                "reference": notice.get("bid_reference_no"),
+                "procurement_group": notice.get("procurement_group"),
+                "procurement_method": notice.get("procurement_method_name"),
+                "estimated_amount": notice.get("bid_estimate_amount"),
+                "estimated_currency": notice.get("bid_estimate_currency"),
+                "submission_deadline_time": notice.get("submission_deadline_time"),
+                "agency_name": notice.get("agency_name"),
+                "contact_email": notice.get("contact_email"),
+                "api_url": str(response.request.url),
+            }
+            if editorial_ru:
+                raw["i18n"] = {"ru": editorial_ru}
+
             yield Opportunity(
                 source=self.slug,
                 source_url=PROCUREMENT_DETAIL_URL.format(  # type: ignore[arg-type]
@@ -162,18 +217,7 @@ class WorldBankCentralAsiaProcurementSource(BaseSource):
                 tags=tags,
                 opportunity_status="open",
                 lifecycle="forecast" if deadline is None else "open",
-                raw={
-                    "external_id": notice_id,
-                    "notice_type": notice_type,
-                    "published": notice.get("noticedate"),
-                    "project_id": notice.get("project_id"),
-                    "project_name": notice.get("project_name"),
-                    "country": country,
-                    "reference": notice.get("bid_reference_no"),
-                    "procurement_group": notice.get("procurement_group"),
-                    "procurement_method": notice.get("procurement_method_name"),
-                    "api_url": str(response.request.url),
-                },
+                raw=raw,
             )
 
         log.info("world_bank_procurement.batch", count=count)

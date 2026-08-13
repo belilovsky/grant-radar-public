@@ -1865,6 +1865,9 @@ async def test_global_training_fetch_yields_official_mid_career_course():
     assert flta.raw["page_title"] is None
     assert "monthly stipend" in flta.raw["amount_raw"]
     assert flta.raw["i18n"]["ru"]["title"].startswith("Fulbright Foreign Language")
+    assert flta.raw["i18n"]["ru"]["social_title"].startswith("Fulbright FLTA")
+    assert len(flta.raw["i18n"]["ru"]["application_steps"]) == 3
+    assert "ежемесячная стипендия" in flta.raw["i18n"]["ru"]["highlights"]
     assert "kazakhstan" in flta.tags
     assert "fulbright" in flta.tags
     assert "teacher_training" in flta.tags
@@ -1946,6 +1949,21 @@ async def test_undp_procurement_fetch_yields_central_asia_active_notices():
         == "UNDP procurement opportunity in UNDP-KAZ / Kazakhstan Office, Astana. "
         "Reference number: UNDP-KAZ-2099-TECH-001."
     )
+
+
+@pytest.mark.asyncio
+@respx.mock
+async def test_undp_procurement_corrects_known_kazakhstan_notice():
+    html = UNDP_LISTING_HTML.replace("UNDP-KAZ-2099-TECH-001", "UNDP-KAZ-00748")
+    respx.get(UNDP_LISTING_URL).mock(return_value=httpx.Response(200, text=html))
+
+    items = await _collect(UndpProcurementSource())
+
+    assert len(items) == 1
+    item = items[0]
+    assert item.title == "Purchase and delivery of pickup trucks with canopy (2 units)"
+    assert "two high-clearance pickup trucks" in item.summary
+    assert item.raw["i18n"]["ru"]["title"] == "Закупка и поставка двух пикапов с кунгом"
 
 
 @pytest.mark.asyncio

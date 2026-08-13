@@ -97,6 +97,27 @@ OPERATIONAL_SERVICE_TERMS = (
     "venue",
 )
 
+NOTICE_OVERRIDES = {
+    "UNDP-KAZ-00748": {
+        "title": "Purchase and delivery of pickup trucks with canopy (2 units)",
+        "summary": (
+            "UNDP Kazakhstan request for quotations for the purchase and delivery "
+            "of two high-clearance pickup trucks with canopies for the Kazakh "
+            "Scientific Research Institute of Water Management."
+        ),
+        "i18n": {
+            "ru": {
+                "title": "Закупка и поставка двух пикапов с кунгом",
+                "summary": (
+                    "ПРООН в Казахстане принимает ценовые предложения на закупку "
+                    "и поставку двух пикапов повышенной проходимости с кунгом для "
+                    "Казахского научно-исследовательского института водного хозяйства."
+                ),
+            }
+        },
+    }
+}
+
 
 @dataclass(frozen=True)
 class UndpNotice:
@@ -233,18 +254,24 @@ class UndpProcurementSource(BaseSource):
 
         count = 0
         for notice in _extract_notices(response.text):
-            text = f"{notice.title} {notice.office} {notice.process} {notice.reference}"
+            override = NOTICE_OVERRIDES.get(notice.reference, {})
+            title = str(override.get("title") or notice.title)
+            summary = str(
+                override.get("summary")
+                or (
+                    f"UNDP procurement opportunity in {notice.office}. "
+                    f"Reference number: {notice.reference}."
+                )
+            )
+            text = f"{title} {notice.office} {notice.process} {notice.reference}"
             tags = _unique([*self.default_tags, *_infer_tags(text)])
             count += 1
             yield Opportunity(
                 source=self.slug,
                 source_url=notice.url,  # type: ignore[arg-type]
                 type=OpportunityType.TENDER,
-                title=notice.title,
-                summary=(
-                    f"UNDP procurement opportunity in {notice.office}. "
-                    f"Reference number: {notice.reference}."
-                ),
+                title=title,
+                summary=summary,
                 funder="United Nations Development Programme",
                 deadline=notice.deadline,
                 tags=tags,
@@ -254,6 +281,7 @@ class UndpProcurementSource(BaseSource):
                     "office": notice.office,
                     "process": notice.process,
                     "listing_url": LISTING_URL,
+                    **({"i18n": override["i18n"]} if override.get("i18n") else {}),
                 },
             )
 
