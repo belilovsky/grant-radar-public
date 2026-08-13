@@ -45,12 +45,34 @@ def test_grant_day_contract_is_draft_only_and_complete() -> None:
     assert payload["human_review_required"] is True
     item = payload["items"][0]
     assert item["idempotency_key"].startswith("qazfund:grant_day:ru:2026-08-13:")
+    assert item["title"].startswith("Возможность дня:")
     assert "utm_source=telegram" in item["canonical_url"]
     source = item["source_items"][0]
     assert source["id"] == "11111111-1111-1111-1111-111111111111"
     assert len(source["application_steps"]) == 3
     assert source["safety"]["status"] == "source_grounded_review_required"
     assert source["safety"]["human_review_required"] is True
+
+
+def test_russian_feed_does_not_leak_english_only_audience_text() -> None:
+    opportunity = _opportunity(
+        item_id="66666666-6666-6666-6666-666666666666",
+        deadline=date(2026, 8, 17),
+    )
+    opportunity.eligibility = ["Startup teams from Kazakhstan and Central Asia"]
+
+    payload = build_qpost_draft_feed(
+        [opportunity],
+        base_url="https://qaz.fund",
+        lang="ru",
+        template="grant_day",
+        today=date(2026, 8, 13),
+    )
+
+    audience = payload["items"][0]["source_items"][0]["audience"]
+    assert (
+        audience == "Критерии участия нужно сверить на официальной странице программы"
+    )
 
 
 def test_deadline_templates_only_select_exact_runway() -> None:

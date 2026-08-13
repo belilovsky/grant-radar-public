@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import re
 from datetime import date, datetime, timezone
 from decimal import Decimal
 from typing import Any
@@ -48,7 +49,9 @@ def _deadline(item: Opportunity, lang: str) -> str:
 def _audience(item: Opportunity, lang: str) -> str:
     values = [str(value).strip() for value in item.eligibility if str(value).strip()]
     if values:
-        return "; ".join(values[:3])
+        audience = "; ".join(values[:3])
+        if lang == "en" or re.search(r"[А-Яа-яЁёӘәҒғҚқҢңӨөҰұҮүҺһІі]", audience):
+            return audience
     return {
         "ru": "Критерии участия нужно сверить на официальной странице программы",
         "kk": "Қатысу талаптарын бағдарламаның ресми парағынан тексеру керек",
@@ -138,8 +141,8 @@ def _single_body(
 ) -> tuple[str, str]:
     prefix = {
         "grant_day": {
-            "ru": "Грант дня",
-            "kk": "Күн гранты",
+            "ru": "Возможность дня",
+            "kk": "Күн мүмкіндігі",
             "en": "Opportunity of the day",
         },
         "deadline_7d": {
