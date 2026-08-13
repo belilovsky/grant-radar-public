@@ -1125,7 +1125,7 @@ async def test_kazakhstan_domestic_support_yields_official_programs():
         == OpportunityType.CONTEST
     )
     assert by_title["Astana AI Film Festival international contest"].deadline == date(
-        2026, 8, 15
+        2026, 8, 31
     )
     assert (
         by_title["Astana AI Film Festival international contest"].raw["amount_raw"]

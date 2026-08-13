@@ -384,7 +384,7 @@ DOMESTIC_PROGRAMS = (
         summary=(
             "Official Kazakhstan MFA notice on the Astana AI Film Festival "
             "international contest for AI-created short films. Applications are "
-            "open to individual authors and teams worldwide until 15 August 2026; "
+            "open to individual authors and teams worldwide until 31 August 2026; "
             "the festival will select 25 finalists and has a total prize fund "
             "of USD 1 million."
         ),
@@ -393,7 +393,7 @@ DOMESTIC_PROGRAMS = (
             "Официальное сообщение МИД Казахстана о международном конкурсе "
             "короткометражных фильмов, созданных с использованием искусственного "
             "интеллекта. Заявки принимаются от индивидуальных авторов и команд "
-            "со всего мира до 15 августа 2026 года; фестиваль отберёт 25 "
+            "со всего мира до 31 августа 2026 года; фестиваль отберёт 25 "
             "финалистов, общий призовой фонд составляет 1 млн долларов США."
         ),
         tags=(
@@ -407,7 +407,7 @@ DOMESTIC_PROGRAMS = (
         ),
         type=OpportunityType.CONTEST,
         rolling=False,
-        deadline=date(2026, 8, 15),
+        deadline=date(2026, 8, 31),
         opportunity_status="open",
         lifecycle="open",
         eligibility=(
