@@ -3805,7 +3805,13 @@ async def media_qpost_drafts(
     active_lang = _public_lang(lang)
     today = public_today()
     opportunities, _ = _query_opportunities(
+        tag=None,
+        q=None,
+        source=None,
+        lifecycle=None,
+        region=None,
         min_score=0.3,
+        deadline_before=None,
         deadline_after=today,
         include_irrelevant=False,
         limit=200,

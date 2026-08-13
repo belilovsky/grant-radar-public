@@ -127,3 +127,29 @@ def test_public_qpost_route_exposes_review_only_contract(monkeypatch) -> None:
     assert payload["schema_version"] == "qazfund-qpost-drafts.v1"
     assert payload["publication_mode"] == "draft_only"
     assert payload["items"][0]["template"] == "grant_day"
+
+
+def test_public_qpost_route_calls_real_catalog_query_without_fastapi_defaults(
+    monkeypatch,
+) -> None:
+    monkeypatch.setattr(
+        api_main,
+        "_cached_prepared_scope_items",
+        lambda **_: [
+            _opportunity(
+                item_id="77777777-7777-7777-7777-777777777777",
+                deadline=None,
+            )
+        ],
+    )
+    api_main._clear_public_items_cache()
+
+    with TestClient(api_main.app) as client:
+        response = client.get(
+            "/media/v1/qpost/drafts.json?lang=ru&template=grant_day&limit=1"
+        )
+
+    assert response.status_code == 200, response.text
+    assert response.json()["items"][0]["source_items"][0]["id"] == (
+        "77777777-7777-7777-7777-777777777777"
+    )
