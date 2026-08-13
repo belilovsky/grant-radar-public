@@ -2361,6 +2361,15 @@ async def test_astana_hub_fetch_uses_curated_pages_on_404():
     assert "ai" in by_title["AI'Preneurs 3.0"].tags
     assert "gpu" in by_title["AI'Preneurs 3.0"].tags
     assert "pre-seed" in by_title["AI'Preneurs 3.0"].summary
+    ai_ru = by_title["AI'Preneurs 3.0"].raw["i18n"]["ru"]
+    assert "бесплатную 14-недельную" in ai_ru["summary"]
+    assert ai_ru["eligibility"] == [
+        "Специалисты и предприниматели от 18 лет с сильной экспертизой и "
+        "готовностью активно работать над AI-продуктом"
+    ]
+    assert ai_ru["application_steps"][0] == "Заполнить заявку до 17 августа"
+    assert "Доступ к AlemPlus" in ai_ru["highlights"][2]
+    assert by_title["AI'Preneurs 3.0"].raw["amount_raw"].startswith("Бесплатно")
     assert by_title["Hero Training for OTS startup founders"].deadline == date(
         2026, 8, 6
     )

@@ -33,6 +33,36 @@ FALLBACK_PROGRAM_TITLES = {
     "https://astanahub.com/en/l/backup": "Hero Training for OTS startup founders",
 }
 FALLBACK_PROGRAM_RU = {
+    "https://astanahub.com/en/l/aipreneurs-2026": {
+        "title": "AI'Preneurs 3.0",
+        "summary": (
+            "Astana Hub открыл набор в бесплатную 14-недельную офлайн-программу "
+            "для специалистов и предпринимателей, которые хотят создать и вывести "
+            "на рынок AI-продукт. Подаваться можно одному — команда и готовая идея "
+            "не обязательны."
+        ),
+        "eligibility": [
+            "Специалисты и предприниматели от 18 лет с сильной экспертизой и "
+            "готовностью активно работать над AI-продуктом"
+        ],
+        "application_steps": [
+            "Заполнить заявку до 17 августа",
+            "Пройти скрининг с 18 по 31 августа",
+            "Пройти диагностическое интервью; результаты отбора объявят 1 сентября",
+        ],
+        "highlights": [
+            "4 недели Founder Lab и 10 недель Core Accelerator",
+            "Персональный ментор, воркшопы и консультации",
+            "Доступ к AlemPlus, облачным ресурсам и GPU",
+            "Проживание для иногородних на этапе Core Accelerator",
+            "Лучшие команды могут получить инвестиции от Astana Hub Ventures",
+        ],
+        "social_title": (
+            "AI'Preneurs 3.0 — бесплатная программа для будущих AI-основателей"
+        ),
+        "amount_label": "Участие",
+        "steps_title": "Как пройти отбор",
+    },
     "https://astanahub.com/en/l/backup": {
         "title": "Hero Training для основателей стартапов из стран ОТГ",
         "summary": (
@@ -43,6 +73,11 @@ FALLBACK_PROGRAM_RU = {
             "к очной части в Кремниевой долине."
         ),
     },
+}
+FALLBACK_PROGRAM_AMOUNT_RAW = {
+    "https://astanahub.com/en/l/aipreneurs-2026": (
+        "Бесплатно · офлайн в Астане · 14 недель"
+    ),
 }
 FALLBACK_PROGRAM_SUMMARIES = {
     "https://astanahub.com/ru/l/TechOrda2025": (
@@ -343,6 +378,9 @@ class AstanaHubSource(BaseSource):
                 "rolling" if deadline is None and url in FALLBACK_PROGRAM_URLS else None
             ),
         }
+        amount_raw = FALLBACK_PROGRAM_AMOUNT_RAW.get(url)
+        if amount_raw:
+            raw_payload["amount_raw"] = amount_raw
         localized_ru = FALLBACK_PROGRAM_RU.get(url)
         if localized_ru:
             raw_payload["i18n"] = {"ru": localized_ru}

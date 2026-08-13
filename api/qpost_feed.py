@@ -47,7 +47,9 @@ def _deadline(item: Opportunity, lang: str) -> str:
 
 
 def _audience(item: Opportunity, lang: str) -> str:
-    values = [str(value).strip() for value in item.eligibility if str(value).strip()]
+    values = _localized_list(item, lang, "eligibility") or [
+        str(value).strip() for value in item.eligibility if str(value).strip()
+    ]
     if values:
         audience = "; ".join(values[:3])
         if lang == "en" or re.search(r"[А-Яа-яЁёӘәҒғҚқҢңӨөҰұҮүҺһІі]", audience):
@@ -77,6 +79,26 @@ def _application_steps(lang: str) -> list[str]:
             "Collect the documents and apply through the official channel",
         ],
     }[lang]
+
+
+def _localized_value(item: Opportunity, lang: str, key: str) -> Any:
+    raw = item.raw if isinstance(item.raw, dict) else {}
+    i18n = raw.get("i18n") if isinstance(raw.get("i18n"), dict) else {}
+    localized = i18n.get(lang) if isinstance(i18n.get(lang), dict) else {}
+    return localized.get(key)
+
+
+def _localized_text(item: Opportunity, lang: str, key: str) -> str | None:
+    value = _localized_value(item, lang, key)
+    text = str(value or "").strip()
+    return text or None
+
+
+def _localized_list(item: Opportunity, lang: str, key: str) -> list[str]:
+    value = _localized_value(item, lang, key)
+    if not isinstance(value, list):
+        return []
+    return [str(entry).strip() for entry in value if str(entry).strip()]
 
 
 def _campaign_url(base_url: str, item_id: str, *, lang: str, template: str) -> str:
@@ -128,7 +150,13 @@ def _source_item(
         "amount": _amount(item, lang),
         "deadline": item.deadline.isoformat() if item.deadline else None,
         "deadline_display": _deadline(item, lang),
-        "application_steps": _application_steps(lang),
+        "application_steps": (
+            _localized_list(item, lang, "application_steps") or _application_steps(lang)
+        ),
+        "highlights": _localized_list(item, lang, "highlights"),
+        "social_title": _localized_text(item, lang, "social_title"),
+        "amount_label": _localized_text(item, lang, "amount_label"),
+        "steps_title": _localized_text(item, lang, "steps_title"),
         "canonical_url": _campaign_url(base_url, item_id, lang=lang, template=template),
         "source_url": str(item.source_url),
         "language": lang,
@@ -159,47 +187,45 @@ def _single_body(
     labels = {
         "ru": (
             "Кому подходит",
-            "Сумма",
+            "Условия",
             "Дедлайн",
             "Как подготовиться",
-            "Подробнее",
-            "Проверка",
+            "Что внутри",
         ),
         "kk": (
             "Кімге арналған",
-            "Сома",
+            "Шарттары",
             "Мерзім",
             "Қалай дайындалу керек",
-            "Толығырақ",
-            "Тексеру",
+            "Бағдарламада",
         ),
         "en": (
             "Who it is for",
-            "Amount",
+            "Terms",
             "Deadline",
             "How to prepare",
-            "Details",
-            "Review",
+            "What is included",
         ),
     }[lang]
-    title = f"{prefix}: {source['title']}"
+    title = source.get("social_title") or f"{prefix}: {source['title']}"
     steps = "\n".join(
         f"{index}. {step}" for index, step in enumerate(source["application_steps"], 1)
     )
-    safety_label = {
-        "ru": "Источник указан; перед подачей условия нужно проверить вручную.",
-        "kk": "Дереккөз көрсетілген; өтінім берер алдында шарттарды қолмен тексеру керек.",
-        "en": "A source is provided; verify the terms manually before applying.",
-    }[lang]
-    body = (
-        f"🎯 {title}\n\n{source['summary']}\n\n"
-        f"{labels[0]}: {source['audience']}\n"
-        f"{labels[1]}: {source['amount']}\n"
-        f"{labels[2]}: {source['deadline_display']}\n\n"
-        f"{labels[3]}:\n{steps}\n\n"
-        f"{labels[4]}: {source['canonical_url']}\n\n"
-        f"{labels[5]}: {safety_label}"
+    highlights = "\n".join(f"• {entry}" for entry in source.get("highlights", []))
+    sections = [
+        source["summary"],
+        f"{labels[0]}:\n{source['audience']}",
+    ]
+    if highlights:
+        sections.append(f"{labels[4]}:\n{highlights}")
+    amount_label = source.get("amount_label") or labels[1]
+    sections.append(
+        f"{amount_label}: {source['amount']}\n"
+        f"{labels[2]}: {source['deadline_display']}"
     )
+    steps_title = source.get("steps_title") or labels[3]
+    sections.append(f"{steps_title}:\n{steps}")
+    body = "\n\n".join(sections)
     return title, body[:4096]
 
 

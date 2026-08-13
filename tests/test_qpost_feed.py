@@ -46,6 +46,9 @@ def test_grant_day_contract_is_draft_only_and_complete() -> None:
     item = payload["items"][0]
     assert item["idempotency_key"].startswith("qazfund:grant_day:ru:2026-08-13:")
     assert item["title"].startswith("Возможность дня:")
+    assert item["title"] not in item["body_text"]
+    assert "https://qaz.fund/" not in item["body_text"]
+    assert "Проверка:" not in item["body_text"]
     assert "utm_source=telegram" in item["canonical_url"]
     source = item["source_items"][0]
     assert source["id"] == "11111111-1111-1111-1111-111111111111"
@@ -73,6 +76,46 @@ def test_russian_feed_does_not_leak_english_only_audience_text() -> None:
     assert (
         audience == "Критерии участия нужно сверить на официальной странице программы"
     )
+
+
+def test_grant_day_uses_source_grounded_editorial_fields() -> None:
+    opportunity = _opportunity(
+        item_id="77777777-7777-7777-7777-777777777777",
+        deadline=date(2026, 8, 17),
+    )
+    opportunity.raw["amount_raw"] = "Бесплатно · офлайн в Астане · 14 недель"
+    opportunity.raw["i18n"] = {
+        "ru": {
+            "eligibility": ["Специалисты и предприниматели от 18 лет"],
+            "application_steps": ["Заполнить заявку", "Пройти интервью"],
+            "highlights": ["Founder Lab", "Доступ к GPU"],
+            "social_title": "AI'Preneurs — программа для AI-основателей",
+            "amount_label": "Участие",
+            "steps_title": "Как пройти отбор",
+        }
+    }
+
+    payload = build_qpost_draft_feed(
+        [opportunity],
+        base_url="https://qaz.fund",
+        lang="ru",
+        template="grant_day",
+        today=date(2026, 8, 13),
+    )
+
+    item = payload["items"][0]
+    assert item["title"] == "AI'Preneurs — программа для AI-основателей"
+    assert item["title"] not in item["body_text"]
+    assert (
+        "Кому подходит:\nСпециалисты и предприниматели от 18 лет" in item["body_text"]
+    )
+    assert "Что внутри:\n• Founder Lab\n• Доступ к GPU" in item["body_text"]
+    assert "Участие: Бесплатно · офлайн в Астане · 14 недель" in item["body_text"]
+    assert (
+        "Как пройти отбор:\n1. Заполнить заявку\n2. Пройти интервью"
+        in item["body_text"]
+    )
+    assert "https://qaz.fund/" not in item["body_text"]
 
 
 def test_deadline_templates_only_select_exact_runway() -> None:
