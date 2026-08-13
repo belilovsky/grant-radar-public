@@ -90,6 +90,36 @@ def _localized_item_value(
     return fallback.strip()
 
 
+def _localized_item_list(item: Opportunity, field: str, lang: str) -> list[str]:
+    raw = item.raw if isinstance(item.raw, dict) else {}
+    i18n = raw.get("i18n")
+    localized = i18n.get(lang) if isinstance(i18n, dict) else None
+    value = localized.get(field) if isinstance(localized, dict) else None
+    if not isinstance(value, list):
+        return []
+    return [str(entry).strip() for entry in value if str(entry).strip()]
+
+
+def _localized_card_items(
+    item: Opportunity, field: str, lang: str
+) -> list[tuple[str, str]]:
+    raw = item.raw if isinstance(item.raw, dict) else {}
+    i18n = raw.get("i18n")
+    localized = i18n.get(lang) if isinstance(i18n, dict) else None
+    value = localized.get(field) if isinstance(localized, dict) else None
+    if not isinstance(value, list):
+        return []
+    cards: list[tuple[str, str]] = []
+    for entry in value:
+        if not isinstance(entry, dict):
+            continue
+        title = str(entry.get("title") or "").strip()
+        text = str(entry.get("text") or "").strip()
+        if title and text:
+            cards.append((title, text))
+    return cards
+
+
 def _has_cyrillic(value: str) -> bool:
     return bool(re.search(r"[А-Яа-яЁё]", value))
 
@@ -472,6 +502,7 @@ def _prepare_markup(
     detail: OpportunityDetail,
     *,
     copy: dict[str, object],
+    lang: str,
 ) -> str:
     focus_key = _prepare_focus_key(detail)
     focus_map = {
@@ -487,14 +518,15 @@ def _prepare_markup(
         if detail.deadline is not None
         else ("prepare_rolling_title", "prepare_rolling_text")
     )
-    cards = [
-        ("prepare_eligibility_title", "prepare_eligibility_text"),
-        deadline_pair,
-        focus_map[focus_key],
-        ("prepare_source_title", "prepare_source_text"),
+    custom_cards = _localized_card_items(detail, "prepare_items", lang)
+    cards = custom_cards or [
+        (str(copy["prepare_eligibility_title"]), str(copy["prepare_eligibility_text"])),
+        (str(copy[deadline_pair[0]]), str(copy[deadline_pair[1]])),
+        (str(copy[focus_map[focus_key][0]]), str(copy[focus_map[focus_key][1]])),
+        (str(copy["prepare_source_title"]), str(copy["prepare_source_text"])),
     ]
     card_markup = []
-    for index, (title_key, text_key) in enumerate(cards, start=1):
+    for index, (title, text) in enumerate(cards, start=1):
         card_markup.append(
             """
             <article class="prepare-card">
@@ -504,8 +536,8 @@ def _prepare_markup(
             </article>
             """.format(
                 index=index,
-                title=escape(str(copy[title_key])),
-                text=escape(str(copy[text_key])),
+                title=escape(title),
+                text=escape(text),
             )
         )
     return """
@@ -625,22 +657,30 @@ def _decision_check_markup(
 
 def _apply_markup(
     *,
+    detail: OpportunityDetail,
     has_application_url: bool,
     copy: dict[str, object],
+    lang: str,
 ) -> str:
     first_step = (
         ("apply_step_open_apply_title", "apply_step_open_apply_text")
         if has_application_url
         else ("apply_step_open_source_title", "apply_step_open_source_text")
     )
-    steps = [
-        first_step,
-        ("apply_step_check_title", "apply_step_check_text"),
-        ("apply_step_pack_title", "apply_step_pack_text"),
-        ("apply_step_submit_title", "apply_step_submit_text"),
-    ]
+    custom_titles = _localized_item_list(detail, "application_step_titles", lang)
+    custom_steps = _localized_item_list(detail, "application_steps", lang)
+    steps = (
+        list(zip(custom_titles, custom_steps, strict=True))
+        if custom_titles and len(custom_titles) == len(custom_steps)
+        else [
+            (str(copy[first_step[0]]), str(copy[first_step[1]])),
+            (str(copy["apply_step_check_title"]), str(copy["apply_step_check_text"])),
+            (str(copy["apply_step_pack_title"]), str(copy["apply_step_pack_text"])),
+            (str(copy["apply_step_submit_title"]), str(copy["apply_step_submit_text"])),
+        ]
+    )
     step_markup = []
-    for index, (title_key, text_key) in enumerate(steps, start=1):
+    for index, (title, text) in enumerate(steps, start=1):
         step_markup.append(
             """
             <li class="apply-step">
@@ -652,8 +692,8 @@ def _apply_markup(
             </li>
             """.format(
                 index=index,
-                title=escape(str(copy[title_key])),
-                text=escape(str(copy[text_key])),
+                title=escape(title),
+                text=escape(text),
             )
         )
     return """
@@ -964,10 +1004,12 @@ def render_opportunity_page(
         expand_label=str(copy["detail_expand_source"]),
         collapse_label=str(copy["detail_collapse_source"]),
     )
-    prepare_markup = _prepare_markup(detail, copy=copy)
+    prepare_markup = _prepare_markup(detail, copy=copy, lang=active_lang)
     apply_markup = _apply_markup(
+        detail=detail,
         has_application_url=bool(application_href),
         copy=copy,
+        lang=active_lang,
     )
     verification_markup = _verification_markup(copy)
     readiness_markup = _readiness_markup(detail, copy)

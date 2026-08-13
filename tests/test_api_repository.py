@@ -1017,6 +1017,45 @@ def test_working_brief_uses_only_available_fields_and_keeps_source_boundary():
     assert "Проверьте на официальном источнике условия" in brief
 
 
+def test_opportunity_action_path_uses_source_specific_editorial_steps():
+    detail = OpportunityDetail(
+        source="global_training_opportunities",
+        source_url="https://example.org/flta",
+        type=OpportunityType.FELLOWSHIP,
+        title="Fulbright FLTA",
+        summary="Программа для преподавателей английского языка.",
+        deadline=date(2026, 8, 15),
+        raw={
+            "i18n": {
+                "ru": {
+                    "prepare_items": [
+                        {
+                            "title": "Сверьте список документов",
+                            "text": "Используйте перечень на портале IIE.",
+                        }
+                    ],
+                    "application_step_titles": ["Заполните анкету IIE"],
+                    "application_steps": ["Откройте официальную форму FLTA."],
+                }
+            }
+        },
+    )
+    copy = dashboard_copy("ru")
+
+    prepare = opportunity_page_module._prepare_markup(detail, copy=copy, lang="ru")
+    apply = opportunity_page_module._apply_markup(
+        detail=detail,
+        has_application_url=True,
+        copy=copy,
+        lang="ru",
+    )
+
+    assert "Сверьте список документов" in prepare
+    assert "Соберите исследовательский пакет" not in prepare
+    assert "Заполните анкету IIE" in apply
+    assert "Подготовьте описание проекта" not in apply
+
+
 def test_root_prefers_public_base_url_for_canonical_links(monkeypatch):
     _reset_api_state(monkeypatch)
     monkeypatch.setenv("PUBLIC_BASE_URL", "https://qaz.fund")
