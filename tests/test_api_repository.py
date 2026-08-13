@@ -66,6 +66,36 @@ def test_current_catalog_uses_kazakhstan_business_date(monkeypatch):
     assert [item.title for item in current] == ["Kazakhstan AI programme closing today"]
 
 
+def test_known_unsafe_publication_is_absent_from_all_public_surfaces(monkeypatch):
+    _reset_api_state(monkeypatch)
+    blocked = Opportunity(
+        source="opportunity_desk",
+        source_url=(
+            "https://opportunitydesk.org/2026/06/30/"
+            "ifc-women-led-business-grant-2026/"
+        ),
+        type=OpportunityType.GRANT,
+        title="International Finance Corporation Women-Led Business Grant 2026",
+        summary="Secondary publication for a confirmed unsafe programme.",
+        tags=["kazakhstan", "grant"],
+        score=0.9,
+        deadline=date(2099, 8, 20),
+    )
+    api_main._cache.append(blocked)
+    client = TestClient(api_main.app)
+
+    catalog = client.get(
+        "/opportunities?limit=5000&min_score=0&include_irrelevant=true"
+    )
+    detail = client.get(f"/opportunity/{blocked.id}?lang=ru")
+    sitemap = client.get("/sitemap.xml")
+
+    assert catalog.status_code == 200
+    assert catalog.json() == []
+    assert detail.status_code == 404
+    assert str(blocked.id) not in sitemap.text
+
+
 def test_root_renders_service_landing(monkeypatch):
     _reset_api_state(monkeypatch)
     client = TestClient(api_main.app)
@@ -2816,6 +2846,30 @@ def test_public_items_cache_reuses_loaded_items_until_invalidated(monkeypatch):
     api_main._clear_public_items_cache()
     assert api_main._cached_public_items("en")[0].title == "Cacheable grant"
     assert calls["count"] == 2
+
+
+def test_public_items_cache_serves_complete_stale_snapshot_until_refresh(monkeypatch):
+    _reset_api_state(monkeypatch)
+    item = Opportunity(
+        source="grants_gov",
+        source_url="https://example.org/stale-cache",
+        type=OpportunityType.GRANT,
+        title="Complete cached grant",
+        summary="Complete cached Central Asia opportunity",
+        tags=["central_asia"],
+        score=0.8,
+    )
+    api_main._public_items_cache["en"] = (
+        datetime.now(timezone.utc) - api_main._PUBLIC_ITEMS_CACHE_TTL * 2,
+        [item],
+    )
+
+    def unexpected_reload(content_lang: str = "en"):
+        raise AssertionError("request handler attempted a synchronous full reload")
+
+    monkeypatch.setattr(api_main, "_stored_items", unexpected_reload)
+
+    assert api_main._cached_public_items("en") == [item]
 
 
 def test_public_query_cache_reuses_sorted_dashboard_result(monkeypatch):

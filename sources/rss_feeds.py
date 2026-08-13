@@ -17,6 +17,7 @@ from typing import Any, ClassVar
 import feedparser
 import structlog
 
+from core.content_safety import blocked_publication_reason
 from core.models import Opportunity, OpportunityType
 from core.source_text import clean_source_text as _clean_text
 from sources.base import BaseSource
@@ -237,6 +238,24 @@ class RssFeedSource(BaseSource):
                     summary=summary,
                     categories=categories,
                 ):
+                    continue
+                blocked_reason = blocked_publication_reason(
+                    {
+                        "title": title,
+                        "summary": summary,
+                        "source_url": link,
+                        "raw": {
+                            "external_id": str(entry.get("id") or link),
+                        },
+                    }
+                )
+                if blocked_reason:
+                    log.warning(
+                        "rss_feed.publication_blocked",
+                        source=self.slug,
+                        reason=blocked_reason,
+                        source_url=link,
+                    )
                     continue
                 tags = _unique(
                     [

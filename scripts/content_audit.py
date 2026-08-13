@@ -13,6 +13,7 @@ from urllib.parse import urlparse
 import httpx
 
 from api.dashboard import dashboard_copy
+from core.content_safety import blocked_publication_reason
 from core.public_clock import public_today
 from scripts.http_utils import join_url as _url
 
@@ -50,6 +51,7 @@ class ContentAuditResult:
     unlocalized_tags: dict[str, list[str]] = field(default_factory=dict)
     unlocalized_sources: dict[str, list[str]] = field(default_factory=dict)
     forbidden_hits: dict[str, list[str]] = field(default_factory=dict)
+    blocked_publication_titles: list[str] = field(default_factory=list)
     issues: list[str] = field(default_factory=list)
 
 
@@ -183,6 +185,7 @@ def analyze_content(
     min_opportunities: int,
     stale_after_days: int,
     label_maps: dict[str, dict[str, object]] | None = None,
+    safety_opportunities: list[dict[str, Any]] | None = None,
     now: datetime | None = None,
 ) -> ContentAuditResult:
     now = now or datetime.now(UTC)
@@ -334,6 +337,17 @@ def analyze_content(
     if forbidden_hits:
         issues.append("forbidden content terms found")
 
+    safety_items = (
+        safety_opportunities if safety_opportunities is not None else opportunities
+    )
+    blocked_publication_titles = [
+        str(item.get("title") or item.get("source_url") or "unknown")
+        for item in safety_items
+        if blocked_publication_reason(item)
+    ][:20]
+    if blocked_publication_titles:
+        issues.append("known unsafe publications are publicly accessible")
+
     status = "ok" if not issues else "needs_attention"
     return ContentAuditResult(
         status=status,
@@ -351,6 +365,7 @@ def analyze_content(
         unlocalized_tags=unlocalized_tags,
         unlocalized_sources=unlocalized_sources,
         forbidden_hits=forbidden_hits,
+        blocked_publication_titles=blocked_publication_titles,
         issues=issues,
     )
 
@@ -378,9 +393,17 @@ def run_audit(
             )
         )
         opportunities.raise_for_status()
+        safety_opportunities = client.get(
+            _url(
+                base_url,
+                "/opportunities?limit=5000&min_score=0&include_irrelevant=true",
+            )
+        )
+        safety_opportunities.raise_for_status()
     return analyze_content(
         coverage=coverage.json(),
         opportunities=opportunities.json(),
+        safety_opportunities=safety_opportunities.json(),
         forbidden_terms=forbidden_terms,
         min_sources=min_sources,
         min_opportunities=min_opportunities,

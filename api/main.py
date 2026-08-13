@@ -2,7 +2,9 @@
 
 from __future__ import annotations
 
+import asyncio
 import json
+import logging
 import os
 import re
 import threading
@@ -114,6 +116,7 @@ from api.runtime_config import database_url as _database_url
 from api.runtime_config import public_base_url as _public_base_url
 from api.source_onboarding import source_onboarding_contract
 from api.status_page import render_status_page
+from core.content_safety import is_publication_blocked
 from core.geofit import (
     is_excluded_for_kazakhstan_focus,
     is_relevant_for_kazakhstan_focus,
@@ -164,12 +167,20 @@ try:
 except ImportError:  # pragma: no cover - Python < 3.11 compatibility
     UTC = timezone.utc
 
+log = logging.getLogger(__name__)
+
 
 @asynccontextmanager
 async def _lifespan(app: FastAPI):
     _warm_public_sitemap_cache()
     _warm_public_items_cache()
-    yield
+    refresh_task = asyncio.create_task(_periodic_public_cache_refresh())
+    try:
+        yield
+    finally:
+        refresh_task.cancel()
+        with suppress(asyncio.CancelledError):
+            await refresh_task
 
 
 app = FastAPI(
@@ -528,7 +539,7 @@ def _stored_items(content_lang: str = "en") -> list[Opportunity]:
                     _stored_opportunity(row, content_lang=content_lang)
                     for row in _cache
                 )
-                if _is_active_item(item)
+                if _is_active_item(item) and not is_publication_blocked(item)
             ],
             content_lang=content_lang,
         )
@@ -539,25 +550,67 @@ def _stored_items(content_lang: str = "en") -> list[Opportunity]:
                 _stored_opportunity(row, content_lang=content_lang)
                 for row in repository.all()
             )
-            if _is_active_item(item)
+            if _is_active_item(item) and not is_publication_blocked(item)
         ],
         content_lang=content_lang,
     )
 
 
 def _cached_public_items(content_lang: str = "en") -> list[Opportunity]:
-    """Return a bounded-lifetime public read model for repeated web requests."""
+    """Return the last complete public read model without request-time expiry.
+
+    A periodic refresh swaps this snapshot atomically. Serving the last complete
+    snapshot prevents both Uvicorn workers from rebuilding the full database
+    projection on a visitor request when the former TTL expires.
+    """
     normalized_lang = _public_lang(content_lang)
-    now = datetime.now(UTC)
     with _public_items_cache_lock:
         cached = _public_items_cache.get(normalized_lang)
-        if cached is not None and now - cached[0] < _PUBLIC_ITEMS_CACHE_TTL:
+        if cached is not None:
             return list(cached[1])
 
     items = _stored_items(content_lang=normalized_lang)
     with _public_items_cache_lock:
-        _public_items_cache[normalized_lang] = (now, items)
+        _public_items_cache[normalized_lang] = (datetime.now(UTC), items)
     return list(items)
+
+
+def _refresh_public_items_cache() -> None:
+    """Build fresh language snapshots off-lock, then replace them atomically."""
+
+    global _coverage_cache
+    snapshots = {lang: _stored_items(content_lang=lang) for lang in ("en", "ru", "kk")}
+    refreshed_at = datetime.now(UTC)
+    with _public_items_cache_lock:
+        _public_items_cache.clear()
+        _public_items_cache.update(
+            {lang: (refreshed_at, items) for lang, items in snapshots.items()}
+        )
+        _public_scope_cache.clear()
+        _public_query_cache.clear()
+        _public_prepared_cache.clear()
+        _public_current_catalog_cache.clear()
+        _public_v1_cache.clear()
+        _funder_index_cache.clear()
+        _insights_cache.clear()
+        _ndjson_body_cache.clear()
+        _coverage_cache = None
+    clear_semantic_search_client_cache()
+    _clear_sitemap_cache()
+    _warm_public_items_cache()
+    _warm_public_sitemap_cache()
+
+
+async def _periodic_public_cache_refresh() -> None:
+    """Refresh public snapshots away from latency-sensitive request handlers."""
+
+    interval = _PUBLIC_ITEMS_CACHE_TTL.total_seconds()
+    while True:
+        await asyncio.sleep(interval)
+        try:
+            await asyncio.to_thread(_refresh_public_items_cache)
+        except Exception:  # noqa: BLE001
+            log.exception("public cache background refresh failed")
 
 
 def _cached_public_scope_items(
@@ -678,7 +731,7 @@ def _store_ndjson_export(
 def _warm_public_items_cache() -> None:
     """Warm expensive public projections before the first visitor arrives."""
     public_base_url = _public_base_url()
-    for content_lang in ("en", "ru"):
+    for content_lang in ("en", "ru", "kk"):
         with suppress(Exception):
             _cached_public_items(content_lang)
             _cached_public_scope_items(content_lang)
@@ -2915,6 +2968,8 @@ async def refresh(_: None = Depends(require_admin_token)) -> dict:
     _persist_items(_cache)
     _clear_sitemap_cache()
     _clear_public_items_cache()
+    _warm_public_items_cache()
+    _warm_public_sitemap_cache()
     return {"refreshed": len(_cache)}
 
 

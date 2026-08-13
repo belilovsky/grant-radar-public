@@ -941,6 +941,7 @@ def render_application_prep_page(
       #draft-output {{ max-height: none; }}
       .footer nav a,
       .footer p a {{ display:inline-flex; align-items:center; min-height:44px; }}
+      .footer nav a {{ min-width:44px; justify-content:center; }}
     }}
     @media (max-width: 620px) {{
       .shell {{ width: calc(100% - 14px); margin-top: 7px; }}

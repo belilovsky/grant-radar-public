@@ -2528,6 +2528,30 @@ async def test_opportunity_desk_rss_fetch_yields_opportunities():
 
 @pytest.mark.asyncio
 @respx.mock
+async def test_opportunity_desk_rss_blocks_confirmed_unsafe_publication():
+    feed = """<?xml version="1.0" encoding="UTF-8"?>
+    <rss version="2.0">
+      <channel>
+        <item>
+          <title>International Finance Corporation Women-Led Business Grant 2026</title>
+          <link>https://opportunitydesk.org/2026/06/30/ifc-women-led-business-grant-2026/</link>
+          <guid>ifc-women-led-business-grant-2026</guid>
+          <description>Deadline: 20 Aug 2026. Global business grant.</description>
+          <category>Grants</category>
+        </item>
+      </channel>
+    </rss>
+    """
+    for url in OPPORTUNITY_DESK_FEED_URLS:
+        respx.get(url).mock(return_value=httpx.Response(200, text=feed))
+
+    items = await _collect(OpportunityDeskSource())
+
+    assert items == []
+
+
+@pytest.mark.asyncio
+@respx.mock
 async def test_opportunity_desk_rss_skips_roundup_posts():
     feed = """<?xml version="1.0" encoding="UTF-8"?>
     <rss version="2.0">

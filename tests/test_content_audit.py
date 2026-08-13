@@ -99,6 +99,42 @@ def test_content_audit_flags_current_catalog_count_drift():
     )
 
 
+def test_content_audit_scans_full_catalog_for_blocked_publications():
+    clean_item = {
+        "title": "Current support program",
+        "summary": (
+            "Current support opportunity with enough public context and a direct "
+            "source for applicants in Kazakhstan."
+        ),
+        "tags": ["rolling"],
+        "source_url": "https://example.org/program/current",
+    }
+    blocked_item = {
+        "title": "International Finance Corporation Women-Led Business Grant 2026",
+        "summary": "Secondary publication for a confirmed unsafe programme.",
+        "tags": ["grant"],
+        "source_url": (
+            "https://opportunitydesk.org/2026/06/30/"
+            "ifc-women-led-business-grant-2026/"
+        ),
+    }
+
+    result = analyze_content(
+        coverage={"enabled_sources": 1, "relevant_open_items": 1, "sources": []},
+        opportunities=[clean_item],
+        safety_opportunities=[clean_item, blocked_item],
+        forbidden_terms=[],
+        min_sources=1,
+        min_opportunities=1,
+        stale_after_days=7,
+        now=datetime(2026, 8, 13, tzinfo=UTC),
+    )
+
+    assert result.status == "needs_attention"
+    assert result.blocked_publication_titles == [blocked_item["title"]]
+    assert "known unsafe publications are publicly accessible" in result.issues
+
+
 def test_content_audit_accepts_clean_rolling_items():
     result = analyze_content(
         coverage={

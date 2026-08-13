@@ -187,6 +187,7 @@ def test_application_workspace_is_local_and_exportable(monkeypatch):
     assert "navigator.clipboard.writeText" in page.text
     assert ".topbar a {" in page.text
     assert "min-height: 44px;" in page.text
+    assert ".footer nav a { min-width:44px; justify-content:center; }" in page.text
     assert "fetch(" not in page.text
     assert 'method="post"' not in page.text.lower()
     assert "\u2014" not in page.text
