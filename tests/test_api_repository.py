@@ -103,7 +103,7 @@ def test_root_renders_service_landing(monkeypatch):
     response = client.get("/")
 
     assert response.status_code == 200
-    assert response.headers["cache-control"].startswith("public, max-age=60")
+    assert response.headers["cache-control"] == "no-store"
     assert '<html lang="ru"' in response.text
     assert (
         "<title>QAZ.FUND – открытые программы поддержки для Казахстана</title>"

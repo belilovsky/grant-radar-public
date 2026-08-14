@@ -8,6 +8,7 @@ from starlette.responses import Response
 PUBLIC_FAST_CACHE = "public, max-age=60, stale-while-revalidate=300"
 PUBLIC_DISCOVERY_CACHE = "public, max-age=300, stale-while-revalidate=1800"
 PUBLIC_LONG_CACHE = "public, max-age=3600, stale-while-revalidate=86400"
+PUBLIC_NO_STORE = "no-store"
 
 _MACHINE_ROUTE_PREFIXES = (
     "/.well-known",
@@ -27,7 +28,6 @@ _MACHINE_ROUTE_PREFIXES = (
     "/media/v1",
 )
 _FAST_CACHE_PATHS = {
-    "/",
     "/.well-known/avds-ui-contract.json",
     "/.well-known/qazcompute-profiles.json",
     "/.well-known/qazpipe-source.json",
@@ -37,11 +37,15 @@ _FAST_CACHE_PATHS = {
     "/.well-known/source-onboarding.json",
     "/compare",
     "/compare.json",
+    "/insights.json",
+    "/opportunities.ndjson",
+}
+_LIVE_DASHBOARD_PATHS = {
+    "/",
     "/coverage",
     "/funders",
-    "/insights.json",
+    "/health",
     "/opportunities",
-    "/opportunities.ndjson",
 }
 _DISCOVERY_CACHE_PATHS = {
     "/llms.txt",
@@ -57,6 +61,11 @@ def is_machine_route(path: str) -> bool:
 
 
 def cache_control_for(path: str) -> str | None:
+    # The landing screen hydrates from these endpoints. Serving them from a
+    # browser's stale-while-revalidate cache mixes old totals with a fresh
+    # catalogue and creates visibly contradictory metrics after an update.
+    if path in _LIVE_DASHBOARD_PATHS:
+        return PUBLIC_NO_STORE
     if path.startswith("/assets/branding/"):
         return PUBLIC_LONG_CACHE
     if path in _FAST_CACHE_PATHS:

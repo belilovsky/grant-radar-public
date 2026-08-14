@@ -8,6 +8,7 @@ from api.http_policy import (
     PUBLIC_DISCOVERY_CACHE,
     PUBLIC_FAST_CACHE,
     PUBLIC_LONG_CACHE,
+    PUBLIC_NO_STORE,
     cache_control_for,
     is_machine_route,
 )
@@ -60,7 +61,12 @@ def test_page_primitives_preserve_root_path_and_locale_contracts():
 def test_http_policy_keeps_machine_and_cache_surfaces_explicit():
     assert is_machine_route("/api/v1/opportunities") is False
     assert is_machine_route("/opportunities.ndjson") is True
-    assert cache_control_for("/opportunities") == PUBLIC_FAST_CACHE
+    assert cache_control_for("/") == PUBLIC_NO_STORE
+    assert cache_control_for("/coverage") == PUBLIC_NO_STORE
+    assert cache_control_for("/funders") == PUBLIC_NO_STORE
+    assert cache_control_for("/health") == PUBLIC_NO_STORE
+    assert cache_control_for("/opportunities") == PUBLIC_NO_STORE
+    assert cache_control_for("/opportunities.ndjson") == PUBLIC_FAST_CACHE
     assert cache_control_for("/site-discovery.json") == PUBLIC_DISCOVERY_CACHE
     assert cache_control_for("/og-image.png") == PUBLIC_LONG_CACHE
     assert cache_control_for("/google-unrelated") is None
