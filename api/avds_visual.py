@@ -159,7 +159,7 @@ DASHBOARD_AVDS4_CSS = r"""
     }
 
     .hero-band .metric strong {
-      color: white;
+      color: var(--qaz-brand-ink);
       font-size: 28px;
     }
 
