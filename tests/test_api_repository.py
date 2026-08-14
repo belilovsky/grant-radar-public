@@ -243,7 +243,10 @@ def test_root_renders_service_landing(monkeypatch):
         '<strong id="metric-strong" data-catalog-count="0">0</strong>' in response.text
     )
     source_count = api_main._cached_coverage_payload()["enabled_sources"]
-    assert f'<strong id="metric-sources">{source_count}</strong>' in response.text
+    assert (
+        f'<strong id="metric-sources" data-source-count="{source_count}">'
+        f"{source_count}</strong>" in response.text
+    )
     assert '<strong id="health-status">Каталог доступен</strong>' in response.text
     assert '<strong id="health-items">0</strong>' in response.text
     assert f'<strong id="health-sources">{source_count}</strong>' in response.text
@@ -4352,7 +4355,10 @@ def test_root_renders_initial_metrics_from_cached_items(monkeypatch):
         f'<strong id="metric-strong" data-catalog-count="{len(expected_current)}">'
         f"{len(expected_current)}</strong>" in response.text
     )
-    assert f'<strong id="metric-sources">{expected_sources}</strong>' in response.text
+    assert (
+        f'<strong id="metric-sources" data-source-count="{expected_sources}">'
+        f"{expected_sources}</strong>" in response.text
+    )
     assert '<strong id="health-items">3</strong>' in response.text
     assert f'<strong id="health-sources">{expected_sources}</strong>' in response.text
 
@@ -4368,7 +4374,8 @@ def test_root_does_not_build_public_projections_on_cold_start(monkeypatch):
         '<strong id="metric-strong" data-catalog-count="0">0</strong>' in response.text
     )
     assert (
-        f'<strong id="metric-sources">{len(api_main.PARSERS)}</strong>' in response.text
+        f'<strong id="metric-sources" data-source-count="{len(api_main.PARSERS)}">'
+        f"{len(api_main.PARSERS)}</strong>" in response.text
     )
 
 

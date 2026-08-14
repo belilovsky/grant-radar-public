@@ -48,7 +48,7 @@ def _transport(
                 '<div data-avds-component="quick-links-rail"></div>'
                 '<div data-avds-component="public-summary-strip">'
                 '<strong id="metric-strong" data-catalog-count="44">44</strong>'
-                '<strong id="metric-sources">23</strong>'
+                '<strong id="metric-sources" data-source-count="23">23</strong>'
                 "</div>"
                 '<div data-avds-component="source-card"></div>'
                 '<span data-avds-component="source-icon"></span>'
