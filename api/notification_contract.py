@@ -27,6 +27,15 @@ def notification_contract(origin: str) -> dict[str, Any]:
                 "telegram": {"enabled": False, "provider": None},
             },
         },
+        "calendar_export": {
+            "enabled": True,
+            "delivery": "user_initiated_ics_download",
+            "server_side_schedule": False,
+            "description": (
+                "A dated application workspace can export local calendar reminders; "
+                "this is not a subscription or background notification."
+            ),
+        },
         "identity": {
             "anonymous_read_access": True,
             "authenticated_owner": False,
@@ -50,6 +59,7 @@ def notification_contract(origin: str) -> dict[str, Any]:
             "subscription_ui": False,
             "background_delivery": False,
             "browser_local_saves_are_subscriptions": False,
+            "calendar_export_is_subscription": False,
             "account_ui": False,
             "sync_ui": False,
         },

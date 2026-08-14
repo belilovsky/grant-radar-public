@@ -184,6 +184,12 @@ def test_application_workspace_is_local_and_exportable(monkeypatch):
     assert "localStorage.setItem" in page.text
     assert "qazfund-application-draft-v1" in page.text
     assert "Скачать .md" in page.text
+    assert "Напоминания о сроке" in page.text
+    assert "Добавить в календарь" in page.text
+    assert 'id="download-deadline-reminder"' in page.text
+    assert "TRIGGER:-P14D" in page.text
+    assert "TRIGGER:-P3D" in page.text
+    assert "DTEND;VALUE=DATE:${endDate}" in page.text
     assert "navigator.clipboard.writeText" in page.text
     assert ".topbar a {" in page.text
     assert "min-height: 44px;" in page.text
@@ -235,6 +241,7 @@ def test_application_workspace_supports_kazakh(monkeypatch):
     assert f'href="/opportunity/{item.id}?lang=kk"' in page.text
     assert 'href="/terms?lang=kk"' in page.text
     assert 'href="/data-policy?lang=kk"' in page.text
+    assert 'href="/data-routes?lang=kk"' in page.text
     assert 'href="/attribution?lang=kk"' in page.text
     assert f"qazfund-application-draft-v1:{item.id}:kk" in page.text
     assert '"source_label": "Дереккөз"' in page.text

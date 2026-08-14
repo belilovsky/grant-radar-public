@@ -157,6 +157,7 @@ def test_human_route_graph_is_connected_in_both_languages(monkeypatch):
         "/status",
         "/terms",
         "/data-policy",
+        "/data-routes",
         "/attribution",
         "/operator",
     )
@@ -166,6 +167,7 @@ def test_human_route_graph_is_connected_in_both_languages(monkeypatch):
         "/status",
         "/terms",
         "/data-policy",
+        "/data-routes",
         "/attribution",
         *dynamic_paths,
     )

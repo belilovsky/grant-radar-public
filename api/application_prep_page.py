@@ -11,6 +11,7 @@ from typing import Any
 from api.avds import AVDS_CSS, AVDS_FONT_HEAD
 from api.dashboard_copy import dashboard_copy
 from api.public_meta import analytics_head_html
+from core.decision_support import program_truth
 from core.models import OpportunityDetail
 
 
@@ -532,6 +533,45 @@ def render_application_prep_page(
             },
         },
     }[active_lang]
+    reminder_copy = {
+        "ru": {
+            "title": "Напоминания о сроке",
+            "note": (
+                "Скачайте событие с напоминаниями за 14 и 3 дня. Оно будет "
+                "работать в выбранном календаре, а не только в этом браузере."
+            ),
+            "download": "Добавить в календарь",
+            "unavailable": (
+                "У программы нет подтверждённого фиксированного срока. "
+                "Следите за страницей источника."
+            ),
+            "event_title": "QAZ.FUND: срок подачи",
+        },
+        "kk": {
+            "title": "Мерзім еске салғыштары",
+            "note": (
+                "14 және 3 күн бұрынғы еске салғыштары бар оқиғаны жүктеп "
+                "алыңыз. Ол тек осы браузерде емес, таңдалған күнтізбеде "
+                "жұмыс істейді."
+            ),
+            "download": "Күнтізбеге қосу",
+            "unavailable": "Бағдарламада расталған нақты мерзім жоқ. Дереккөз бетін бақылаңыз.",
+            "event_title": "QAZ.FUND: өтінім мерзімі",
+        },
+        "en": {
+            "title": "Deadline reminders",
+            "note": (
+                "Download a calendar event with 14- and 3-day reminders. "
+                "It works in your chosen calendar, not only in this browser."
+            ),
+            "download": "Add to calendar",
+            "unavailable": (
+                "This programme has no confirmed fixed deadline. "
+                "Monitor the source page."
+            ),
+            "event_title": "QAZ.FUND: application deadline",
+        },
+    }[active_lang]
     base = root_path.rstrip("/")
     detail_path = f"{base}/opportunity/{detail.id}?lang={active_lang}"
     source_href = str(detail.source_url)
@@ -547,6 +587,7 @@ def render_application_prep_page(
     deadline = _deadline(detail.deadline, active_lang)
     amount = _amount(detail, active_lang)
     checklist = _checklist(detail, active_lang)
+    truth = program_truth(detail, lifecycle=lifecycle)
     checklist_markup = "".join(f"""
         <label class="check-row" data-avds-component="FormField">
           <input type="checkbox" name="document_{index}" data-avds-component="Checkbox">
@@ -554,17 +595,23 @@ def render_application_prep_page(
         </label>
         """ for index, label in enumerate(checklist, 1))
     facts = {
+        "opportunity_id": str(detail.id),
         "program": detail.title,
         "organizer": organizer,
         "deadline": deadline,
+        "deadline_iso": detail.deadline.isoformat() if detail.deadline else "",
         "amount": amount,
         "eligibility": eligibility,
         "official_source": str(detail.source_url),
         "application_url": str(detail.application_url or ""),
         "checklist": checklist,
+        "actionability": truth["actionability"],
     }
     facts_json = json.dumps(facts, ensure_ascii=False).replace("<", "\\u003c")
     copy_json = json.dumps(copy, ensure_ascii=False).replace("<", "\\u003c")
+    reminder_copy_json = json.dumps(reminder_copy, ensure_ascii=False).replace(
+        "<", "\\u003c"
+    )
     storage_key = f"qazfund-application-draft-v1:{detail.id}:{active_lang}"
     canonical = (
         f"{site_origin.rstrip('/')}{base}/opportunity/{detail.id}/prepare"
@@ -578,6 +625,16 @@ def render_application_prep_page(
         if base
         else f"/data-policy?lang={active_lang}"
     )
+    data_routes_href = (
+        f"{base}/data-routes?lang={active_lang}"
+        if base
+        else f"/data-routes?lang={active_lang}"
+    )
+    data_routes_label = {
+        "ru": "Официальные данные РК",
+        "kk": "Қазақстанның ресми деректері",
+        "en": "Official Kazakhstan data",
+    }[active_lang]
     attribution_href = (
         f"{base}/attribution?lang={active_lang}"
         if base
@@ -594,6 +651,10 @@ def render_application_prep_page(
         f"{escape(state_notice)}</div>"
         if state_notice
         else ""
+    )
+    reminder_button_attr = "" if detail.deadline else "disabled"
+    reminder_note = escape(
+        reminder_copy["note"] if detail.deadline else reminder_copy["unavailable"]
     )
 
     def field(
@@ -1107,6 +1168,20 @@ def render_application_prep_page(
           ><span id="readiness-bar"></span></div>
           <small id="readiness-label"></small>
         </section>
+        <section class="panel reminder-panel" data-avds-component="Card">
+          <div class="panel-head">
+            <div>
+              <h2>{escape(reminder_copy["title"])}</h2>
+              <p>{reminder_note}</p>
+            </div>
+          </div>
+          <button
+            class="button secondary"
+            id="download-deadline-reminder"
+            type="button"
+            {reminder_button_attr}
+          >{escape(reminder_copy["download"])}</button>
+        </section>
         <section
           class="panel draft-panel"
           data-avds-component="Card"
@@ -1160,6 +1235,7 @@ def render_application_prep_page(
       <nav>
         <a href="{escape(terms_href, quote=True)}">{escape(copy["terms"])}</a>
         <a href="{escape(data_policy_href, quote=True)}">{escape(copy["data_policy"])}</a>
+        <a href="{escape(data_routes_href, quote=True)}">{escape(data_routes_label)}</a>
         <a href="{escape(attribution_href, quote=True)}">{escape(copy["attribution"])}</a>
       </nav>
     </footer>
@@ -1175,6 +1251,7 @@ def render_application_prep_page(
       const progress = document.querySelector(".progress");
       const facts = {facts_json};
       const copy = {copy_json};
+      const reminderCopy = {reminder_copy_json};
       const storageKey = {json.dumps(storage_key)};
       const inputs = [...form.querySelectorAll("input, textarea")];
       const required = [...form.querySelectorAll("[required]")];
@@ -1294,6 +1371,59 @@ def render_application_prep_page(
         anchor.download = `qazfund-${{String(facts.program || "application")
           .toLowerCase().replace(/[^a-zа-яёәғқңөұүһі0-9]+/gi, "-").replace(/^-|-$/g, "")
           .slice(0, 60)}}.md`;
+        anchor.click();
+        URL.revokeObjectURL(url);
+      }});
+      document.getElementById("download-deadline-reminder")?.addEventListener("click", () => {{
+        const deadline = String(facts.deadline_iso || "").replace(/-/g, "");
+        if (!/^\\d{{8}}$/.test(deadline)) return;
+        const dueDateText = [
+          `${{deadline.slice(0, 4)}}-${{deadline.slice(4, 6)}}-`,
+          `${{deadline.slice(6, 8)}}T00:00:00Z`
+        ].join("");
+        const dueDate = new Date(dueDateText);
+        dueDate.setUTCDate(dueDate.getUTCDate() + 1);
+        const endDate = dueDate.toISOString().slice(0, 10).replace(/-/g, "");
+        const stamp = new Date().toISOString().replace(/[-:]/g, "").replace(/\\.\\d{{3}}Z$/, "Z");
+        const title = `${{reminderCopy.event_title}}: ${{facts.program}}`;
+        const description = [
+          facts.application_url || facts.official_source,
+          facts.organizer ? `${{copy.organizer}}: ${{facts.organizer}}` : "",
+          `${{copy.deadline}}: ${{facts.deadline}}`
+        ].filter(Boolean).join("\\n");
+        const escapeIcs = (value) => String(value || "")
+          .replace(/\\\\/g, "\\\\\\\\").replace(/;/g, "\\\\;").replace(/,/g, "\\\\,")
+          .replace(/\\r?\\n/g, "\\\\n");
+        const body = [
+          "BEGIN:VCALENDAR",
+          "VERSION:2.0",
+          "PRODID:-//QAZ.FUND//Deadline reminder//RU",
+          "BEGIN:VEVENT",
+          `UID:qazfund-${{facts.opportunity_id}}-${{deadline}}@qaz.fund`,
+          `DTSTAMP:${{stamp}}`,
+          `DTSTART;VALUE=DATE:${{deadline}}`,
+          `DTEND;VALUE=DATE:${{endDate}}`,
+          `SUMMARY:${{escapeIcs(title)}}`,
+          `DESCRIPTION:${{escapeIcs(description)}}`,
+          `URL:${{facts.application_url || facts.official_source}}`,
+          "BEGIN:VALARM",
+          "TRIGGER:-P14D",
+          "ACTION:DISPLAY",
+          `DESCRIPTION:${{escapeIcs(title)}}`,
+          "END:VALARM",
+          "BEGIN:VALARM",
+          "TRIGGER:-P3D",
+          "ACTION:DISPLAY",
+          `DESCRIPTION:${{escapeIcs(title)}}`,
+          "END:VALARM",
+          "END:VEVENT",
+          "END:VCALENDAR"
+        ].join("\\r\\n");
+        const blob = new Blob([body], {{ type: "text/calendar;charset=utf-8" }});
+        const url = URL.createObjectURL(blob);
+        const anchor = document.createElement("a");
+        anchor.href = url;
+        anchor.download = "qazfund-deadline.ics";
         anchor.click();
         URL.revokeObjectURL(url);
       }});

@@ -1330,11 +1330,16 @@ def test_marketing_endpoints_are_exposed(monkeypatch):
         "Source onboarding contract: "
         "http://testserver/.well-known/source-onboarding.json"
     ) in llms.text
+    assert (
+        "Kazakhstan data-route contract: "
+        "http://testserver/.well-known/kazakhstan-data-routes.json"
+    ) in llms.text
     assert "Source status page: http://testserver/status" in llms.text
     assert "Catalog insights: http://testserver/insights" in llms.text
     assert "Media page: http://testserver/media" in llms.text
     assert "Terms of use: http://testserver/terms" in llms.text
     assert "Data policy: http://testserver/data-policy" in llms.text
+    assert "Official Kazakhstan data routes: http://testserver/data-routes" in llms.text
     assert "Data attribution: http://testserver/attribution" in llms.text
     assert "Coverage JSON: http://testserver/coverage" in llms.text
     assert "Opportunities JSON: http://testserver/opportunities" in llms.text
@@ -1384,6 +1389,10 @@ def test_marketing_endpoints_are_exposed(monkeypatch):
     assert data["contracts"]["qazcompute"].endswith(
         "/.well-known/qazcompute-profiles.json"
     )
+    assert data["contracts"]["kazakhstan_data_routes"].endswith(
+        "/.well-known/kazakhstan-data-routes.json"
+    )
+    assert data["routes"]["data_routes"] == "/data-routes?lang={lang}"
     assert data["routes"]["opportunity_history"] == (
         "/opportunities/{id}/history.json?lang={lang}&limit={n}"
     )
@@ -1393,6 +1402,7 @@ def test_marketing_endpoints_are_exposed(monkeypatch):
     assert data["data_endpoints"]["api_v1_opportunities"] == (
         "http://testserver/api/v1/opportunities"
     )
+    assert data["data_endpoints"]["data_routes"] == "http://testserver/data-routes"
     assert data["media_endpoints"]["feed_json"] == (
         "http://testserver/media/v1/feed.json"
     )
@@ -1461,6 +1471,15 @@ def test_marketing_endpoints_are_exposed(monkeypatch):
     assert notifications.json()["schema_version"] == "notification-v1"
     assert notifications.json()["status"] == "not_enabled"
     assert notifications.json()["delivery"]["worker_running"] is False
+    assert notifications.json()["calendar_export"] == {
+        "enabled": True,
+        "delivery": "user_initiated_ics_download",
+        "server_side_schedule": False,
+        "description": (
+            "A dated application workspace can export local calendar reminders; "
+            "this is not a subscription or background notification."
+        ),
+    }
     assert notifications.json()["identity"] == {
         "anonymous_read_access": True,
         "authenticated_owner": False,
@@ -1479,6 +1498,10 @@ def test_marketing_endpoints_are_exposed(monkeypatch):
     assert notifications.json()["public_behavior"]["subscription_ui"] is False
     assert notifications.json()["public_behavior"]["account_ui"] is False
     assert notifications.json()["public_behavior"]["sync_ui"] is False
+    assert (
+        notifications.json()["public_behavior"]["calendar_export_is_subscription"]
+        is False
+    )
     assert client.head("/.well-known/notification-contract.json").status_code == 200
 
     ecosystem = client.get("/.well-known/qdev-ecosystem.json")
@@ -2705,15 +2728,16 @@ def test_api_returns_clean_source_raw_for_persisted_opportunity(tmp_path, monkey
             "qazcompute_evidence_readiness",
             "qazcompute_deadline_anomaly",
             "provenance",
+            "program_truth",
         }
     } == {
         "external_id": "RAW-1",
         "agency": "Example Agency",
         "decision_readiness": {
             "status": "partial",
-            "known_fields": 1,
+            "known_fields": 0,
             "total_fields": 4,
-            "missing_fields": ["deadline", "amount", "eligibility"],
+            "missing_fields": ["deadline", "amount", "eligibility", "application"],
         },
     }
     assert raw["ranking"]["model_version"] == "qazfund-relevance-v2"
@@ -2810,6 +2834,7 @@ def test_compact_opportunities_keep_dashboard_fields_without_ingestion_payload(
             "qazcompute_evidence_readiness",
             "qazcompute_deadline_anomaly",
             "provenance",
+            "program_truth",
         }
     } == {
         "agency": "Example Agency",
@@ -2861,6 +2886,7 @@ def test_decision_readiness_marks_complete_source_facts(tmp_path, monkeypatch):
             eligibility=["Registered organizations"],
             tags=["kazakhstan"],
             score=0.9,
+            raw={"application_url": "https://example.org/complete-application/apply"},
         )
     )
 
@@ -3622,6 +3648,12 @@ def test_opportunity_page_renders_public_permalink(monkeypatch):
     assert "не подтверждает право на участие" in response.text
     assert 'data-avds-pattern="opportunity-readiness-meter"' in response.text
     assert "Что уже видно из карточки" in response.text
+    assert "Проверка перед действием" in response.text
+    assert "Проверить свой профиль" in response.text
+    assert f"/opportunities/{item.id}/fit.json?lang=ru" in response.text
+    assert "qazfund-applicant-profile-v1" in response.text
+    assert "Официальные данные РК" in response.text
+    assert 'href="/data-routes?lang=ru"' in response.text
     assert "QAZ.FUND – рабочая справка" in response.text
     assert "Проверьте на официальном источнике условия" in response.text
     assert "Откройте страницу подачи" in response.text
@@ -4071,6 +4103,7 @@ def test_public_info_pages_are_linkable(monkeypatch):
     assert "/insights?lang=ru" in root.text
     assert "/terms?lang=ru" in root.text
     assert "/data-policy?lang=ru" in root.text
+    assert "/data-routes?lang=ru" in root.text
     assert "/attribution?lang=ru" in root.text
 
     for path, marker in (
@@ -4107,6 +4140,7 @@ def test_sitemap_includes_public_story_pages(monkeypatch):
     assert response.status_code == 200
     assert "/insights?lang=ru" in response.text
     assert "/data-policy?lang=ru" in response.text
+    assert "/data-routes?lang=ru" in response.text
 
 
 def test_related_opportunities_diversify_sources(monkeypatch):

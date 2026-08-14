@@ -181,6 +181,19 @@ def render_dashboard(
         ),
         quote=True,
     )
+    data_routes_href = escape(
+        (
+            f"{base_raw}/data-routes?lang={active_lang}"
+            if base_raw
+            else f"/data-routes?lang={active_lang}"
+        ),
+        quote=True,
+    )
+    data_routes_label = {
+        "ru": "Официальные данные РК",
+        "kk": "Қазақстанның ресми деректері",
+        "en": "Official Kazakhstan data",
+    }[active_lang]
     attribution_href = escape(
         (
             f"{base_raw}/attribution?lang={active_lang}"
@@ -1146,6 +1159,7 @@ def render_dashboard(
         <a href="{media_href}">{escape(str(copy["media_link"]))}</a>
         <a href="{terms_href}">{escape(str(copy["terms_link"]))}</a>
         <a href="{data_policy_href}">{escape(str(copy["data_policy_link"]))}</a>
+        <a href="{data_routes_href}">{escape(data_routes_label)}</a>
         <a href="{attribution_href}">{escape(str(copy["attribution_link"]))}</a>
         <a href="{status_href}">{escape(str(copy["status_link"]))}</a>
         <a href="{docs_href}">{escape(str(copy["api_docs"]))}</a>

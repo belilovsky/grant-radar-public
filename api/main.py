@@ -69,6 +69,7 @@ from api.dashboard import (
     render_dashboard,
 )
 from api.dashboard_copy import dashboard_copy as localized_dashboard_copy
+from api.data_routes_page import render_data_routes_page
 from api.ecosystem import (
     avds_ui_contract,
     ecosystem_manifest,
@@ -127,10 +128,12 @@ from api.runtime_config import public_base_url as _public_base_url
 from api.source_onboarding import source_onboarding_contract
 from api.status_page import render_status_page
 from core.content_safety import is_publication_blocked
+from core.decision_support import assess_profile, program_truth
 from core.geofit import (
     is_excluded_for_kazakhstan_focus,
     is_relevant_for_kazakhstan_focus,
 )
+from core.kazakhstan_data_routes import data_routes_contract
 from core.localization import (
     _localized_value,
     localize_opportunity,
@@ -320,12 +323,18 @@ _DASHBOARD_RAW_FIELDS = frozenset(
         "projectstatusdisplay",
         "qazcompute_evidence_readiness",
         "qazcompute_deadline_anomaly",
+        "program_truth",
         "ranking",
         "region",
         "status",
         "status_raw",
     }
 )
+_FIT_LEGAL_BOUNDARY = {
+    "ru": "Это предчек по опубликованным данным, а не подтверждение права на участие.",
+    "kk": "Бұл жарияланған дерекке негізделген алдын ала тексеру, қатысу құқығын растау емес.",
+    "en": "This is a pre-check based on published facts, not a confirmation of eligibility.",
+}
 
 
 @app.middleware("http")
@@ -781,16 +790,16 @@ def _with_decision_readiness(
             or raw.get("amount_raw")
         ),
         "eligibility": bool(item.eligibility or raw.get("eligibility")),
-        "application": bool(item.source_url or raw.get("application_url")),
+        "application": bool(raw.get("application_url")),
     }
     missing_fields = [name for name, available in present.items() if not available]
+    lifecycle = _effective_public_lifecycle(item, today=public_today())
     readiness = {
         "status": "complete" if not missing_fields else "partial",
         "known_fields": sum(present.values()),
         "total_fields": len(present),
         "missing_fields": missing_fields,
     }
-    lifecycle = _effective_public_lifecycle(item, today=public_today())
     return item.model_copy(
         update={
             "lifecycle": lifecycle,
@@ -798,6 +807,7 @@ def _with_decision_readiness(
                 **raw,
                 "provenance": provenance_profile(item),
                 "decision_readiness": readiness,
+                "program_truth": program_truth(item, lifecycle=lifecycle),
                 "qazcompute_evidence_readiness": opportunity_evidence_readiness(item),
                 "qazcompute_deadline_anomaly": opportunity_deadline_anomaly(item),
                 "ranking": ranking_payload(ranking_subject or item),
@@ -1350,6 +1360,7 @@ def _render_sitemap_xml(base_url: str) -> str:
         ("/insights?lang=ru", "0.8"),
         ("/terms?lang=ru", "0.4"),
         ("/data-policy?lang=ru", "0.4"),
+        ("/data-routes?lang=ru", "0.55"),
         ("/attribution?lang=ru", "0.4"),
     ):
         ru_url = _public_url_from_base(base_url, path)
@@ -1852,6 +1863,30 @@ async def public_info_page(request: Request) -> HTMLResponse:
     return response
 
 
+@app.api_route(
+    "/data-routes",
+    methods=["GET", "HEAD"],
+    response_class=HTMLResponse,
+    include_in_schema=False,
+)
+async def public_data_routes_page(request: Request) -> HTMLResponse:
+    """Render official verification routes without presenting them as grants."""
+
+    root_path = _root_path(request)
+    active_lang = _public_lang(str(request.query_params.get("lang") or "").strip())
+    response = HTMLResponse(
+        render_data_routes_page(
+            lang=active_lang,
+            root_path=root_path,
+            site_origin=_site_origin(request, root_path),
+        )
+    )
+    response.headers["Cache-Control"] = (
+        "public, max-age=300, stale-while-revalidate=900"
+    )
+    return response
+
+
 @app.api_route("/docs", methods=["GET", "HEAD"], include_in_schema=False)
 async def swagger_docs(request: Request) -> HTMLResponse:
     root_path = _root_path(request).rstrip("/")
@@ -2233,10 +2268,14 @@ async def llms_txt(request: Request) -> Response:
     source_onboarding_url = _public_url(
         request, root_path, "/.well-known/source-onboarding.json"
     )
+    data_routes_contract_url = _public_url(
+        request, root_path, "/.well-known/kazakhstan-data-routes.json"
+    )
     insights = _public_url(request, root_path, "/insights")
     media = _public_url(request, root_path, "/media")
     terms = _public_url(request, root_path, "/terms")
     data_policy = _public_url(request, root_path, "/data-policy")
+    data_routes = _public_url(request, root_path, "/data-routes")
     attribution = _public_url(request, root_path, "/attribution")
     status_page = _public_url(request, root_path, "/status")
     coverage = _public_url(request, root_path, "/coverage")
@@ -2278,6 +2317,7 @@ async def llms_txt(request: Request) -> Response:
                 f"- QazCompute profile contract: {qazcompute_contract_url}",
                 f"- Notification contract: {notification_contract_url}",
                 f"- Source onboarding contract: {source_onboarding_url}",
+                f"- Kazakhstan data-route contract: {data_routes_contract_url}",
                 f"- Source status page: {status_page}",
                 f"- Catalog insights: {insights}",
                 f"- Media page: {media}",
@@ -2288,6 +2328,7 @@ async def llms_txt(request: Request) -> Response:
                 f"- Comparison JSON: {compare_json}?ids={{id}},{{id}}&lang=ru|kk|en",
                 f"- Terms of use: {terms}",
                 f"- Data policy: {data_policy}",
+                f"- Official Kazakhstan data routes: {data_routes}",
                 f"- Data attribution: {attribution}",
                 "",
                 "## Public data endpoints",
@@ -2302,6 +2343,7 @@ async def llms_txt(request: Request) -> Response:
                 f"- Comparison JSON: {compare_json}?ids={{id}},{{id}}&lang=ru|kk|en",
                 f"- Notification contract JSON: {notification_contract_url}",
                 f"- Source onboarding contract JSON: {source_onboarding_url}",
+                f"- Kazakhstan data-route contract JSON: {data_routes_contract_url}",
                 "",
                 "## AI consumption guidance",
                 (
@@ -2331,8 +2373,10 @@ async def llms_txt(request: Request) -> Response:
                 "- Comparison JSON: /compare.json?ids={id},{id}&lang=kk|ru|en",
                 "- Notification contract: /.well-known/notification-contract.json",
                 "- Source onboarding contract: /.well-known/source-onboarding.json",
+                "- Kazakhstan data-route contract: /.well-known/kazakhstan-data-routes.json",
                 "- Terms page: /terms?lang=kk|ru|en",
                 "- Data policy page: /data-policy?lang=kk|ru|en",
+                "- Official Kazakhstan data routes: /data-routes?lang=kk|ru|en",
                 "- Attribution page: /attribution?lang=kk|ru|en",
                 "",
                 "## Query hints",
@@ -2427,9 +2471,13 @@ async def site_discovery(request: Request) -> Response:
     source_onboarding_url = _public_url(
         request, root_path, "/.well-known/source-onboarding.json"
     )
+    data_routes_contract_url = _public_url(
+        request, root_path, "/.well-known/kazakhstan-data-routes.json"
+    )
     insights = _public_url(request, root_path, "/insights")
     terms = _public_url(request, root_path, "/terms")
     data_policy = _public_url(request, root_path, "/data-policy")
+    data_routes = _public_url(request, root_path, "/data-routes")
     attribution = _public_url(request, root_path, "/attribution")
     payload = {
         "site": "QAZ.FUND",
@@ -2445,6 +2493,7 @@ async def site_discovery(request: Request) -> Response:
         "source_status": status_page,
         "terms": terms,
         "data_policy": data_policy,
+        "data_routes": data_routes,
         "attribution": attribution,
         "ecosystem": ecosystem,
         "release": release,
@@ -2455,6 +2504,7 @@ async def site_discovery(request: Request) -> Response:
             "qazcompute": qazcompute_contract,
             "notifications": notification_contract_url,
             "source_onboarding": source_onboarding_url,
+            "kazakhstan_data_routes": data_routes_contract_url,
         },
         "languages": ["kk", "ru", "en"],
         "routes": {
@@ -2494,6 +2544,7 @@ async def site_discovery(request: Request) -> Response:
             ),
             "terms": "/terms?lang={lang}",
             "data_policy": "/data-policy?lang={lang}",
+            "data_routes": "/data-routes?lang={lang}",
             "attribution": "/attribution?lang={lang}",
             "funder": "/funder/{slug}?lang={lang}",
             "digest": "/digest?lang={lang}",
@@ -2507,8 +2558,10 @@ async def site_discovery(request: Request) -> Response:
             "compare_json": "/compare.json?ids={id},{id}&lang={lang}",
             "notification_contract": "/.well-known/notification-contract.json",
             "source_onboarding": "/.well-known/source-onboarding.json",
+            "kazakhstan_data_routes": "/.well-known/kazakhstan-data-routes.json",
             "terms": "/terms?lang={lang}",
             "data_policy": "/data-policy?lang={lang}",
+            "data_routes": "/data-routes?lang={lang}",
             "attribution": "/attribution?lang={lang}",
         },
         "data_endpoints": {
@@ -2539,8 +2592,10 @@ async def site_discovery(request: Request) -> Response:
             "compare_json": compare_json,
             "notification_contract": notification_contract_url,
             "source_onboarding": source_onboarding_url,
+            "kazakhstan_data_routes": data_routes_contract_url,
             "terms": terms,
             "data_policy": data_policy,
+            "data_routes": data_routes,
             "attribution": attribution,
         },
         "media_endpoints": {
@@ -2703,6 +2758,16 @@ async def public_qazcompute_profile_contract(request: Request) -> Response:
 async def public_notification_contract(request: Request) -> Response:
     root_path = _root_path(request)
     return JSONResponse(notification_contract(_public_root_base(request, root_path)))
+
+
+@app.api_route(
+    "/.well-known/kazakhstan-data-routes.json",
+    methods=["GET", "HEAD"],
+    include_in_schema=False,
+)
+async def public_kazakhstan_data_routes_contract(request: Request) -> Response:
+    root_path = _root_path(request)
+    return JSONResponse(data_routes_contract(_public_root_base(request, root_path)))
 
 
 @app.api_route(
@@ -4068,6 +4133,42 @@ async def get_opportunity_detail(
         lang=content_lang,
         allow_remote_fetch=False,
     )
+
+
+@app.get("/opportunities/{opportunity_id}/fit.json", include_in_schema=False)
+async def get_opportunity_fit(
+    opportunity_id: UUID,
+    applicant: str | None = Query(None, max_length=32),
+    legal_form: str | None = Query(None, max_length=32),
+    region: str | None = Query(None, max_length=48),
+    sector: str | None = Query(None, max_length=32),
+    support_need: str | None = Query(None, max_length=32),
+    has_eds: str | None = Query(None, max_length=8),
+    lang: str | None = Query(None),
+) -> JSONResponse:
+    """Return a no-storage, source-bound profile pre-check for one card."""
+
+    content_lang = _public_lang(lang)
+    item = _find_opportunity(opportunity_id, content_lang=content_lang)
+    if item is None:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND)
+    localized = localize_opportunity(item, content_lang)
+    payload = assess_profile(
+        localized,
+        {
+            "applicant": applicant,
+            "legal_form": legal_form,
+            "region": region,
+            "sector": sector,
+            "support_need": support_need,
+            "has_eds": has_eds,
+        },
+        lifecycle=public_lifecycle(item),
+    )
+    payload["legal_boundary"] = _FIT_LEGAL_BOUNDARY[content_lang]
+    response = JSONResponse(payload)
+    response.headers["Cache-Control"] = "private, no-store"
+    return response
 
 
 @app.api_route(

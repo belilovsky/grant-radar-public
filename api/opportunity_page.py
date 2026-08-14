@@ -7,6 +7,7 @@ import re
 from datetime import date
 from enum import Enum
 from html import escape
+from typing import cast
 from urllib.parse import urlparse
 
 from api.avds import AVDS_CSS, AVDS_FONT_HEAD
@@ -17,6 +18,7 @@ from api.page_primitives import absolute_href as _absolute_href
 from api.page_primitives import catalog_path as _catalog_path
 from api.page_primitives import format_deadline as _format_deadline
 from api.public_meta import analytics_head_html, og_image_url
+from core.decision_support import program_truth
 from core.models import Opportunity, OpportunityDetail, OpportunityMetadataField
 from core.nlp import clean_source_summary
 
@@ -42,6 +44,415 @@ HERO_METADATA_KEYS = frozenset({"source", "funder", "deadline"})
 SOURCE_SECTION_NOISE_HEADINGS = frozenset(
     {"notification", "search", "поиск", "уведомление"}
 )
+
+
+_DECISION_SUPPORT_COPY: dict[str, dict[str, object]] = {
+    "ru": {
+        "title": "Проверка перед действием",
+        "note": "Сначала отделим реальный набор от справки или постоянной услуги. Затем сверим программу с вашим профилем без передачи данных на сервер.",
+        "kind_label": "Тип записи",
+        "action_label": "Что можно сделать сейчас",
+        "known_label": "Что подтверждено в карточке",
+        "fit_title": "Проверить свой профиль",
+        "fit_note": "Выберите только рабочие признаки. Профиль остаётся в этом браузере и не подтверждает право на участие.",
+        "applicant": "Кто подаёт",
+        "legal_form": "Форма заявителя",
+        "region": "Где проект",
+        "sector": "Направление",
+        "support_need": "Что нужно",
+        "has_eds": "Есть ЭЦП",
+        "all": "Не указывать",
+        "applicant_options": {
+            "startup": "Стартап",
+            "business": "Бизнес",
+            "farmer": "Фермер / АПК",
+            "ngo": "НКО",
+            "researcher": "Исследователь / вуз",
+            "student": "Студент",
+            "individual": "Физлицо",
+            "supplier": "Поставщик / подрядчик",
+        },
+        "legal_form_options": {
+            "ip": "ИП",
+            "too": "ТОО",
+            "kfh": "КХ / ФХ",
+            "ngo": "НКО",
+            "university": "Вуз / НИИ",
+            "individual": "Физлицо",
+            "government": "Госорган / акимат",
+        },
+        "region_options": {
+            "almaty_city": "Алматы",
+            "astana": "Астана",
+            "shymkent": "Шымкент",
+            "almaty_region": "Алматинская область",
+            "abay": "область Абай",
+            "akmola": "Акмолинская область",
+            "aktobe": "Актюбинская область",
+            "atyrau": "Атырауская область",
+            "east_kazakhstan": "Восточно-Казахстанская область",
+            "zhambyl": "Жамбылская область",
+            "zhetysu": "область Жетісу",
+            "west_kazakhstan": "Западно-Казахстанская область",
+            "karaganda": "Карагандинская область",
+            "kostanay": "Костанайская область",
+            "kyzylorda": "Кызылординская область",
+            "mangystau": "Мангистауская область",
+            "pavlodar": "Павлодарская область",
+            "north_kazakhstan": "Северо-Казахстанская область",
+            "turkistan": "Туркестанская область",
+            "ulytau": "область Ұлытау",
+        },
+        "sector_options": {
+            "agro": "Растениеводство / АПК",
+            "livestock": "Животноводство / вет",
+            "ecology": "Экология / отходы",
+            "climate": "Климат / зелёные решения",
+            "it": "IT / цифровые продукты",
+            "science": "Наука / R&D",
+            "social": "Социальный проект",
+            "manufacturing": "Производство",
+            "export": "Экспорт",
+        },
+        "support_options": {
+            "grant": "Грант / конкурс",
+            "subsidy": "Субсидия / возмещение",
+            "loan": "Кредит / гарантия / лизинг",
+            "accelerator": "Акселератор",
+            "procurement": "Тендер / закупка",
+            "tax": "Налоговая льгота",
+        },
+        "eds_options": {"yes": "Да", "no": "Нет / не знаю"},
+        "fit_action": "Проверить признаки",
+        "fit_loading": "Сверяем только опубликованные признаки…",
+        "fit_local_error": "Браузер не разрешил сохранить профиль. Проверка всё равно работает на этой странице.",
+        "status": {
+            "potential_fit": "Есть признаки совпадения",
+            "verification_needed": "Нужна проверка условий",
+            "profile_needed": "Заполните хотя бы один признак",
+            "not_an_application": "Это не открытая заявка",
+        },
+        "kind": {
+            "application_call": "Набор заявок",
+            "standing_service": "Постоянная мера / услуга",
+            "regulatory_guidance": "Правила и справка",
+            "procurement_notice": "Закупка / тендер",
+            "procurement_plan": "План закупок",
+            "award_result": "Результаты / архив",
+            "information": "Информационная запись",
+        },
+        "action": {
+            "apply": "Есть отдельный путь подачи",
+            "verify": "Проверьте путь подачи у организатора",
+            "reference": "Используйте как правила перед подачей",
+            "plan": "Следите за публикацией объявления",
+            "results": "Сверьте результаты и следующий набор",
+            "monitor": "Следите за обновлением источника",
+            "closed": "Приём завершён или результаты опубликованы",
+        },
+        "fact": {
+            "source": "Источник",
+            "deadline": "Срок",
+            "amount": "Сумма",
+            "eligibility": "Критерии",
+            "application_route": "Путь подачи",
+            "region": "Регион",
+        },
+        "signals": {
+            "applicant_signal": "тип заявителя совпадает по тексту",
+            "legal_form_signal": "форма заявителя упомянута",
+            "sector_signal": "направление совпадает",
+            "support_need_signal": "формат поддержки совпадает",
+            "region_signal": "регион указан напрямую",
+            "kazakhstan_scope": "Казахстан указан в охвате",
+            "eds_ready": "ЭЦП отмечена как готовая",
+            "applicant_verify": "подтвердите тип заявителя",
+            "legal_form_verify": "подтвердите допустимую форму заявителя",
+            "sector_verify": "подтвердите отраслевое ограничение",
+            "support_need_verify": "подтвердите формат поддержки",
+            "region_verify": "подтвердите региональную доступность",
+            "eds_verify": "уточните требование к ЭЦП",
+            "eligibility_missing": "в карточке нет полного критерия участия",
+            "programme_facts_missing": "в карточке не хватает части ключевых фактов",
+            "application_route_verify": "уточните отдельную форму подачи",
+            "record_reference": "это справочная запись, а не набор",
+            "record_results": "это результаты или архив",
+            "record_plan": "это план, а не объявление",
+            "record_monitor": "источник нужно мониторить",
+            "record_closed": "приём завершён",
+        },
+    },
+    "kk": {
+        "title": "Әрекет алдындағы тексеру",
+        "note": "Нақты қабылдауды анықтамалықтан ажыратып, бағдарламаны жеке профиліңізбен серверге дерек жібермей салыстырыңыз.",
+        "kind_label": "Жазба түрі",
+        "action_label": "Қазір не істеуге болады",
+        "known_label": "Карточкада расталғаны",
+        "fit_title": "Профильді тексеру",
+        "fit_note": "Тек жұмыс белгілерін таңдаңыз. Профиль осы браузерде қалады және қатысу құқығын растамайды.",
+        "applicant": "Өтініш беруші",
+        "legal_form": "Ұйым нысаны",
+        "region": "Жоба өңірі",
+        "sector": "Бағыт",
+        "support_need": "Қажет қолдау",
+        "has_eds": "ЭЦҚ бар",
+        "all": "Көрсетпеу",
+        "applicant_options": {
+            "startup": "Стартап",
+            "business": "Бизнес",
+            "farmer": "Фермер / АӨК",
+            "ngo": "ҮЕҰ",
+            "researcher": "Зерттеуші / ЖОО",
+            "student": "Студент",
+            "individual": "Жеке тұлға",
+            "supplier": "Жеткізуші / мердігер",
+        },
+        "legal_form_options": {
+            "ip": "ЖК",
+            "too": "ЖШС",
+            "kfh": "ШҚ / ФҚ",
+            "ngo": "ҮЕҰ",
+            "university": "ЖОО / ҒЗИ",
+            "individual": "Жеке тұлға",
+            "government": "Меморган / әкімдік",
+        },
+        "region_options": {
+            "almaty_city": "Алматы",
+            "astana": "Астана",
+            "shymkent": "Шымкент",
+            "almaty_region": "Алматы облысы",
+            "abay": "Абай облысы",
+            "akmola": "Ақмола облысы",
+            "aktobe": "Ақтөбе облысы",
+            "atyrau": "Атырау облысы",
+            "east_kazakhstan": "Шығыс Қазақстан облысы",
+            "zhambyl": "Жамбыл облысы",
+            "zhetysu": "Жетісу облысы",
+            "west_kazakhstan": "Батыс Қазақстан облысы",
+            "karaganda": "Қарағанды облысы",
+            "kostanay": "Қостанай облысы",
+            "kyzylorda": "Қызылорда облысы",
+            "mangystau": "Маңғыстау облысы",
+            "pavlodar": "Павлодар облысы",
+            "north_kazakhstan": "Солтүстік Қазақстан облысы",
+            "turkistan": "Түркістан облысы",
+            "ulytau": "Ұлытау облысы",
+        },
+        "sector_options": {
+            "agro": "Өсімдік шаруашылығы / АӨК",
+            "livestock": "Мал шаруашылығы / ветеринария",
+            "ecology": "Экология / қалдық",
+            "climate": "Климат / жасыл шешім",
+            "it": "IT / цифрлық өнім",
+            "science": "Ғылым / R&D",
+            "social": "Әлеуметтік жоба",
+            "manufacturing": "Өндіріс",
+            "export": "Экспорт",
+        },
+        "support_options": {
+            "grant": "Грант / конкурс",
+            "subsidy": "Субсидия / өтеу",
+            "loan": "Несие / кепілдік / лизинг",
+            "accelerator": "Акселератор",
+            "procurement": "Тендер / сатып алу",
+            "tax": "Салықтық жеңілдік",
+        },
+        "eds_options": {"yes": "Иә", "no": "Жоқ / білмеймін"},
+        "fit_action": "Белгілерді тексеру",
+        "fit_loading": "Тек жарияланған белгілер салыстырылуда…",
+        "fit_local_error": "Браузер профильді сақтауға рұқсат бермеді. Тексеру осы бетте жұмыс істейді.",
+        "status": {
+            "potential_fit": "Сәйкестік белгілері бар",
+            "verification_needed": "Шарттарды тексеру қажет",
+            "profile_needed": "Кемінде бір белгіні толтырыңыз",
+            "not_an_application": "Бұл ашық өтінім емес",
+        },
+        "kind": {
+            "application_call": "Өтінім қабылдау",
+            "standing_service": "Тұрақты шара / қызмет",
+            "regulatory_guidance": "Ереже және анықтама",
+            "procurement_notice": "Сатып алу / тендер",
+            "procurement_plan": "Сатып алу жоспары",
+            "award_result": "Нәтижелер / мұрағат",
+            "information": "Ақпараттық жазба",
+        },
+        "action": {
+            "apply": "Бөлек өтінім жолы бар",
+            "verify": "Өтінім жолын ұйымдастырушыдан тексеріңіз",
+            "reference": "Өтінім алдында ереже ретінде қолданыңыз",
+            "plan": "Хабарландыруды күтіңіз",
+            "results": "Нәтиже мен келесі қабылдауды тексеріңіз",
+            "monitor": "Дереккөз жаңартуын бақылаңыз",
+            "closed": "Қабылдау аяқталды немесе нәтиже шықты",
+        },
+        "fact": {
+            "source": "Дереккөз",
+            "deadline": "Мерзім",
+            "amount": "Сома",
+            "eligibility": "Талаптар",
+            "application_route": "Өтінім жолы",
+            "region": "Өңір",
+        },
+        "signals": {
+            "applicant_signal": "өтінім беруші түрі мәтінде сәйкес",
+            "legal_form_signal": "ұйым нысаны аталған",
+            "sector_signal": "бағыт сәйкес",
+            "support_need_signal": "қолдау форматы сәйкес",
+            "region_signal": "өңір тікелей көрсетілген",
+            "kazakhstan_scope": "Қазақстан қамтуда көрсетілген",
+            "eds_ready": "ЭЦҚ дайын деп белгіленді",
+            "applicant_verify": "өтінім беруші түрін растаңыз",
+            "legal_form_verify": "ұйым нысанын растаңыз",
+            "sector_verify": "салалық шектеуді растаңыз",
+            "support_need_verify": "қолдау форматын растаңыз",
+            "region_verify": "өңірлік қолжетімділікті растаңыз",
+            "eds_verify": "ЭЦҚ талабын нақтылаңыз",
+            "eligibility_missing": "карточкада толық талап жоқ",
+            "programme_facts_missing": "карточкада кей маңызды дерек жетіспейді",
+            "application_route_verify": "жеке өтінім формасын нақтылаңыз",
+            "record_reference": "бұл анықтама, қабылдау емес",
+            "record_results": "бұл нәтиже немесе мұрағат",
+            "record_plan": "бұл жоспар, хабарландыру емес",
+            "record_monitor": "дереккөзді бақылау керек",
+            "record_closed": "қабылдау аяқталды",
+        },
+    },
+    "en": {
+        "title": "Check before acting",
+        "note": "First separate a live call from a guide or standing service. Then compare published signals with your profile without sending it to the server.",
+        "kind_label": "Record type",
+        "action_label": "What you can do now",
+        "known_label": "Confirmed in this card",
+        "fit_title": "Check your profile",
+        "fit_note": "Choose only working facts. The profile stays in this browser and does not confirm eligibility.",
+        "applicant": "Applicant",
+        "legal_form": "Legal form",
+        "region": "Project region",
+        "sector": "Sector",
+        "support_need": "Need",
+        "has_eds": "Digital signature",
+        "all": "Do not specify",
+        "applicant_options": {
+            "startup": "Startup",
+            "business": "Business",
+            "farmer": "Farmer / agriculture",
+            "ngo": "NGO",
+            "researcher": "Researcher / university",
+            "student": "Student",
+            "individual": "Individual",
+            "supplier": "Supplier / contractor",
+        },
+        "legal_form_options": {
+            "ip": "Sole proprietor",
+            "too": "LLP",
+            "kfh": "Farm enterprise",
+            "ngo": "NGO",
+            "university": "University / research institute",
+            "individual": "Individual",
+            "government": "Public body",
+        },
+        "region_options": {
+            "almaty_city": "Almaty",
+            "astana": "Astana",
+            "shymkent": "Shymkent",
+            "almaty_region": "Almaty region",
+            "abay": "Abai region",
+            "akmola": "Akmola region",
+            "aktobe": "Aktobe region",
+            "atyrau": "Atyrau region",
+            "east_kazakhstan": "East Kazakhstan region",
+            "zhambyl": "Zhambyl region",
+            "zhetysu": "Zhetysu region",
+            "west_kazakhstan": "West Kazakhstan region",
+            "karaganda": "Karaganda region",
+            "kostanay": "Kostanay region",
+            "kyzylorda": "Kyzylorda region",
+            "mangystau": "Mangystau region",
+            "pavlodar": "Pavlodar region",
+            "north_kazakhstan": "North Kazakhstan region",
+            "turkistan": "Turkistan region",
+            "ulytau": "Ulytau region",
+        },
+        "sector_options": {
+            "agro": "Crop production / agriculture",
+            "livestock": "Livestock / veterinary",
+            "ecology": "Environment / waste",
+            "climate": "Climate / green solutions",
+            "it": "IT / digital product",
+            "science": "Science / R&D",
+            "social": "Social project",
+            "manufacturing": "Manufacturing",
+            "export": "Export",
+        },
+        "support_options": {
+            "grant": "Grant / contest",
+            "subsidy": "Subsidy / reimbursement",
+            "loan": "Loan / guarantee / leasing",
+            "accelerator": "Accelerator",
+            "procurement": "Tender / procurement",
+            "tax": "Tax incentive",
+        },
+        "eds_options": {"yes": "Yes", "no": "No / unsure"},
+        "fit_action": "Check signals",
+        "fit_loading": "Checking published signals…",
+        "fit_local_error": "The browser did not allow profile storage. The check still works on this page.",
+        "status": {
+            "potential_fit": "There are matching signals",
+            "verification_needed": "Terms need checking",
+            "profile_needed": "Choose at least one signal",
+            "not_an_application": "This is not an open application",
+        },
+        "kind": {
+            "application_call": "Application call",
+            "standing_service": "Standing service",
+            "regulatory_guidance": "Rules and guidance",
+            "procurement_notice": "Tender / procurement",
+            "procurement_plan": "Procurement plan",
+            "award_result": "Results / archive",
+            "information": "Information record",
+        },
+        "action": {
+            "apply": "A dedicated application route is known",
+            "verify": "Verify the application route with the organiser",
+            "reference": "Use as rules before applying",
+            "plan": "Watch for the published notice",
+            "results": "Check results and the next call",
+            "monitor": "Monitor the source for changes",
+            "closed": "The call is closed or results are published",
+        },
+        "fact": {
+            "source": "Source",
+            "deadline": "Deadline",
+            "amount": "Amount",
+            "eligibility": "Eligibility",
+            "application_route": "Application route",
+            "region": "Region",
+        },
+        "signals": {
+            "applicant_signal": "applicant type is mentioned",
+            "legal_form_signal": "legal form is mentioned",
+            "sector_signal": "sector matches",
+            "support_need_signal": "support format matches",
+            "region_signal": "region is stated directly",
+            "kazakhstan_scope": "Kazakhstan is in scope",
+            "eds_ready": "digital signature marked ready",
+            "applicant_verify": "verify applicant type",
+            "legal_form_verify": "verify legal form",
+            "sector_verify": "verify sector restriction",
+            "support_need_verify": "verify support format",
+            "region_verify": "verify regional availability",
+            "eds_verify": "verify digital-signature requirement",
+            "eligibility_missing": "full eligibility is missing from the card",
+            "programme_facts_missing": "some key facts are missing from the card",
+            "application_route_verify": "verify a dedicated application form",
+            "record_reference": "this is a reference record, not a call",
+            "record_results": "this is a result or archive",
+            "record_plan": "this is a plan, not a notice",
+            "record_monitor": "monitor the source",
+            "record_closed": "the call is closed",
+        },
+    },
+}
 
 
 def _page_path(root_path: str, opportunity_id: str, lang: str) -> str:
@@ -253,6 +664,242 @@ def _readiness_markup(detail: OpportunityDetail, copy: dict[str, object]) -> str
       <div class="readiness-track" role="img" aria-label="{known} of 4 signals available"><span style="width:{known * 25}%"></span></div>
       <div class="readiness-grid">{rows}</div>
     </section>"""
+
+
+def _decision_copy(lang: str) -> dict[str, object]:
+    return _DECISION_SUPPORT_COPY.get(lang, _DECISION_SUPPORT_COPY["en"])
+
+
+def _profile_select_markup(
+    *,
+    name: str,
+    label: str,
+    options: object,
+    empty_label: str,
+) -> str:
+    items = options if isinstance(options, dict) else {}
+    rows = [f'<option value="">{escape(empty_label)}</option>']
+    for value, option_label in items.items():
+        rows.append(
+            f'<option value="{escape(str(value), quote=True)}">'
+            f"{escape(str(option_label))}</option>"
+        )
+    return f"""
+      <label class="profile-fit-field" for="profile-fit-{escape(name, quote=True)}">
+        <span>{escape(label)}</span>
+        <select id="profile-fit-{escape(name, quote=True)}" name="{escape(name, quote=True)}">
+          {''.join(rows)}
+        </select>
+      </label>"""
+
+
+def _decision_support_markup(
+    detail: OpportunityDetail,
+    *,
+    lang: str,
+    lifecycle: str,
+    fit_url: str,
+) -> str:
+    """Render an anonymous, source-bound pre-check on a detail page."""
+
+    copy = _decision_copy(lang)
+    truth = program_truth(detail, lifecycle=lifecycle)
+    known = truth["known_fields"]
+    fact_labels = (
+        cast(dict[str, object], copy.get("fact"))
+        if isinstance(copy.get("fact"), dict)
+        else {}
+    )
+    known_rows = "".join(
+        '<li class="{state}"><span aria-hidden="true"></span>{label}</li>'.format(
+            state="is-known" if available else "is-missing",
+            label=escape(str(fact_labels.get(field, field))),
+        )
+        for field, available in known.items()
+    )
+    kind_labels = (
+        cast(dict[str, object], copy.get("kind"))
+        if isinstance(copy.get("kind"), dict)
+        else {}
+    )
+    action_labels = (
+        cast(dict[str, object], copy.get("action"))
+        if isinstance(copy.get("action"), dict)
+        else {}
+    )
+    applicant_options = copy.get("applicant_options")
+    legal_form_options = copy.get("legal_form_options")
+    region_options = copy.get("region_options")
+    sector_options = copy.get("sector_options")
+    support_options = copy.get("support_options")
+    eds_options = copy.get("eds_options")
+    fields = "".join(
+        (
+            _profile_select_markup(
+                name="applicant",
+                label=str(copy["applicant"]),
+                options=applicant_options,
+                empty_label=str(copy["all"]),
+            ),
+            _profile_select_markup(
+                name="legal_form",
+                label=str(copy["legal_form"]),
+                options=legal_form_options,
+                empty_label=str(copy["all"]),
+            ),
+            _profile_select_markup(
+                name="region",
+                label=str(copy["region"]),
+                options=region_options,
+                empty_label=str(copy["all"]),
+            ),
+            _profile_select_markup(
+                name="sector",
+                label=str(copy["sector"]),
+                options=sector_options,
+                empty_label=str(copy["all"]),
+            ),
+            _profile_select_markup(
+                name="support_need",
+                label=str(copy["support_need"]),
+                options=support_options,
+                empty_label=str(copy["all"]),
+            ),
+            _profile_select_markup(
+                name="has_eds",
+                label=str(copy["has_eds"]),
+                options=eds_options,
+                empty_label=str(copy["all"]),
+            ),
+        )
+    )
+    copy_json = json.dumps(copy, ensure_ascii=False).replace("<", "\\u003c")
+    truth_json = json.dumps(truth, ensure_ascii=False).replace("<", "\\u003c")
+    return """
+    <section class="decision-support" aria-labelledby="decision-support-title" data-avds-component="decision-support">
+      <div class="decision-support-head">
+        <div>
+          <span class="eyebrow">QAZ.FUND</span>
+          <h2 id="decision-support-title">{title}</h2>
+          <p>{note}</p>
+        </div>
+        <div class="decision-truth" aria-label="{kind_label}">
+          <span>{kind_label}</span>
+          <strong>{kind}</strong>
+          <small>{action}</small>
+        </div>
+      </div>
+      <div class="decision-facts">
+        <span>{known_label}</span>
+        <ul>{known_rows}</ul>
+      </div>
+      <details class="profile-fit" id="profile-fit">
+        <summary>
+          <span>{fit_title}</span>
+          <span>{fit_note}</span>
+        </summary>
+        <form id="profile-fit-form" novalidate>
+          <div class="profile-fit-grid">{fields}</div>
+          <div class="profile-fit-actions">
+            <button class="button primary" type="submit">{fit_action}</button>
+            <p id="profile-fit-storage" aria-live="polite"></p>
+          </div>
+          <div class="profile-fit-result" id="profile-fit-result" hidden aria-live="polite"></div>
+        </form>
+      </details>
+    </section>
+    <script>
+      (() => {{
+        const form = document.getElementById("profile-fit-form");
+        if (!form) return;
+        const result = document.getElementById("profile-fit-result");
+        const storageStatus = document.getElementById("profile-fit-storage");
+        const storageKey = "qazfund-applicant-profile-v1";
+        const fitUrl = {fit_url};
+        const copy = {copy_json};
+        const truth = {truth_json};
+        const fieldNames = ["applicant", "legal_form", "region", "sector", "support_need", "has_eds"];
+        const escapeHtml = (value) => String(value || "")
+          .replace(/&/g, "&amp;").replace(/</g, "&lt;")
+          .replace(/>/g, "&gt;").replace(/\"/g, "&quot;");
+        const labels = copy.signals || {{}};
+        const statusLabels = copy.status || {{}};
+        const restore = () => {{
+          try {{
+            const saved = JSON.parse(localStorage.getItem(storageKey) || "{{}}");
+            fieldNames.forEach((name) => {{
+              const control = form.elements.namedItem(name);
+              if (control && typeof saved[name] === "string") control.value = saved[name];
+            }});
+          }} catch {{
+            try {{ localStorage.removeItem(storageKey); }} catch {{}}
+          }}
+        }};
+        const save = () => {{
+          const values = Object.fromEntries(fieldNames.map((name) => [
+            name, String(form.elements.namedItem(name)?.value || "")
+          ]));
+          try {{
+            localStorage.setItem(storageKey, JSON.stringify(values));
+          }} catch {{
+            if (storageStatus) storageStatus.textContent = copy.fit_local_error;
+          }}
+          return values;
+        }};
+        const renderResult = (payload) => {{
+          const status = statusLabels[payload.status] || payload.status;
+          const signals = Array.isArray(payload.positive_signals) ? payload.positive_signals : [];
+          const checks = Array.isArray(payload.checks) ? payload.checks : [];
+          const list = [...signals, ...checks].map((code) => `
+            <li class="${{signals.includes(code) ? "is-positive" : "is-check"}}">
+              ${{escapeHtml(labels[code] || code.replaceAll("_", " "))}}
+            </li>`).join("");
+          result.hidden = false;
+          result.innerHTML = `
+            <strong>${{escapeHtml(status)}}</strong>
+            <p>${{escapeHtml(payload.legal_boundary || "")}}</p>
+            ${{list ? `<ul>${{list}}</ul>` : ""}}`;
+          result.dataset.actionability = String(payload.truth?.actionability || truth.actionability || "");
+        }};
+        restore();
+        form.addEventListener("submit", async (event) => {{
+          event.preventDefault();
+          const values = save();
+          const params = new URLSearchParams();
+          Object.entries(values).forEach(([key, value]) => {{ if (value) params.set(key, value); }});
+          result.hidden = false;
+          result.textContent = copy.fit_loading;
+          try {{
+            const response = await fetch(`${{fitUrl}}&${{params.toString()}}`, {{
+              headers: {{ Accept: "application/json" }},
+              cache: "no-store"
+            }});
+            if (!response.ok) throw new Error("fit");
+            renderResult(await response.json());
+          }} catch {{
+            result.textContent = copy.fit_local_error;
+          }}
+        }});
+      }})();
+    </script>
+    """.format(
+        title=escape(str(copy["title"])),
+        note=escape(str(copy["note"])),
+        kind_label=escape(str(copy["kind_label"])),
+        kind=escape(str(kind_labels.get(truth["kind"], truth["kind"]))),
+        action=escape(
+            str(action_labels.get(truth["actionability"], truth["actionability"]))
+        ),
+        known_label=escape(str(copy["known_label"])),
+        known_rows=known_rows,
+        fit_title=escape(str(copy["fit_title"])),
+        fit_note=escape(str(copy["fit_note"])),
+        fields=fields,
+        fit_action=escape(str(copy["fit_action"])),
+        fit_url=json.dumps(fit_url, ensure_ascii=False).replace("<", "\\u003c"),
+        copy_json=copy_json,
+        truth_json=truth_json,
+    )
 
 
 def _json_ld(payload: dict[str, object]) -> str:
@@ -954,6 +1601,19 @@ def render_opportunity_page(
         ),
         quote=True,
     )
+    data_routes_href = escape(
+        (
+            f"{detail_base}/data-routes?lang={active_lang}"
+            if detail_base
+            else f"/data-routes?lang={active_lang}"
+        ),
+        quote=True,
+    )
+    data_routes_label = {
+        "ru": "Официальные данные РК",
+        "kk": "Қазақстанның ресми деректері",
+        "en": "Official Kazakhstan data",
+    }[active_lang]
     attribution_href = escape(
         (
             f"{detail_base}/attribution?lang={active_lang}"
@@ -969,6 +1629,11 @@ def render_opportunity_page(
             else f"/opportunity/{detail.id}/prepare?lang={active_lang}"
         ),
         quote=True,
+    )
+    fit_url = (
+        f"{detail_base}/opportunities/{detail.id}/fit.json?lang={active_lang}"
+        if detail_base
+        else f"/opportunities/{detail.id}/fit.json?lang={active_lang}"
     )
     source_href = escape(str(detail.source_url), quote=True)
     application_href = (
@@ -1016,6 +1681,12 @@ def render_opportunity_page(
     )
     verification_markup = _verification_markup(copy)
     readiness_markup = _readiness_markup(detail, copy)
+    decision_support_markup = _decision_support_markup(
+        detail,
+        lang=active_lang,
+        lifecycle=lifecycle,
+        fit_url=fit_url,
+    )
     related_markup = _related_markup(
         related_items or [],
         lang=active_lang,
@@ -1453,6 +2124,61 @@ def render_opportunity_page(
     .readiness-dot {{ width: 8px; height: 8px; flex: 0 0 auto; border-radius: 50%; background: var(--line-strong); }}
     .readiness-signal.is-known {{ color: var(--success); }}
     .readiness-signal.is-known .readiness-dot {{ background: var(--success); }}
+    .decision-support {{
+      display: grid;
+      gap: 14px;
+      margin: 0 0 14px;
+      padding: clamp(16px, 2.4vw, 26px);
+      border: 1px solid color-mix(in oklab, var(--brand), white 72%);
+      border-radius: var(--av-radius-lg);
+      background: linear-gradient(128deg, var(--surface-wash-soft), var(--surface));
+      box-shadow: var(--av-shadow-xs);
+    }}
+    .decision-support-head {{
+      display: flex;
+      align-items: start;
+      justify-content: space-between;
+      gap: 20px;
+    }}
+    .decision-support-head h2 {{ margin: 3px 0 6px; font-size: clamp(18px, 2vw, 24px); line-height: 1.16; }}
+    .decision-support-head p {{ max-width: 760px; margin: 0; color: var(--muted); font-size: var(--av-text-sm); line-height: 1.48; }}
+    .decision-truth {{
+      display: grid;
+      min-width: min(250px, 36vw);
+      gap: 4px;
+      padding: 11px 13px;
+      border: 1px solid var(--line);
+      border-radius: var(--av-radius-md);
+      background: var(--surface);
+    }}
+    .decision-truth > span {{ color: var(--muted); font-size: var(--av-text-xs); font-weight: 700; letter-spacing: .04em; text-transform: uppercase; }}
+    .decision-truth strong {{ color: var(--brand); font-size: var(--av-text-sm); line-height: 1.25; }}
+    .decision-truth small {{ color: var(--muted); font-size: var(--av-text-xs); line-height: 1.35; }}
+    .decision-facts {{ display: grid; gap: 8px; }}
+    .decision-facts > span {{ font-size: var(--av-text-sm); font-weight: 700; }}
+    .decision-facts ul {{ display: flex; flex-wrap: wrap; gap: 7px 12px; margin: 0; padding: 0; list-style: none; }}
+    .decision-facts li {{ display: inline-flex; align-items: center; gap: 6px; color: var(--muted); font-size: var(--av-text-xs); font-weight: 700; }}
+    .decision-facts li > span {{ width: 7px; height: 7px; border-radius: 999px; background: var(--line-strong); }}
+    .decision-facts li.is-known {{ color: var(--success); }}
+    .decision-facts li.is-known > span {{ background: var(--success); }}
+    .profile-fit {{ border-top: 1px solid var(--line); padding-top: 12px; }}
+    .profile-fit summary {{ display: grid; gap: 3px; cursor: pointer; list-style: none; }}
+    .profile-fit summary::-webkit-details-marker {{ display: none; }}
+    .profile-fit summary > span:first-child {{ color: var(--brand); font-size: var(--av-text-base); font-weight: 750; }}
+    .profile-fit summary > span:last-child {{ color: var(--muted); font-size: var(--av-text-sm); line-height: 1.42; }}
+    .profile-fit form {{ display: grid; gap: 12px; margin-top: 14px; }}
+    .profile-fit-grid {{ display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; }}
+    .profile-fit-field {{ display: grid; gap: 5px; color: var(--muted); font-size: var(--av-text-xs); font-weight: 700; }}
+    .profile-fit-field select {{ min-width: 0; min-height: 40px; padding: 8px 30px 8px 10px; border: 1px solid var(--line-strong); border-radius: var(--av-radius-sm); color: var(--text); background: var(--surface); font: inherit; }}
+    .profile-fit-actions {{ display: flex; align-items: center; gap: 12px; }}
+    .profile-fit-actions p {{ margin: 0; color: var(--muted); font-size: var(--av-text-xs); line-height: 1.35; }}
+    .profile-fit-result {{ display: grid; gap: 7px; padding: 12px 13px; border-radius: var(--av-radius-md); background: var(--surface); box-shadow: var(--av-shadow-2xs); }}
+    .profile-fit-result > strong {{ color: var(--brand); font-size: var(--av-text-sm); }}
+    .profile-fit-result > p {{ margin: 0; color: var(--muted); font-size: var(--av-text-xs); line-height: 1.42; }}
+    .profile-fit-result ul {{ display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 6px 12px; margin: 0; padding-left: 16px; }}
+    .profile-fit-result li {{ color: var(--muted); font-size: var(--av-text-xs); line-height: 1.36; }}
+    .profile-fit-result li.is-positive {{ color: var(--success); }}
+    .profile-fit-result li.is-check {{ color: color-mix(in oklab, var(--text), var(--muted) 28%); }}
     .content-grid {{
       display: grid;
       grid-template-columns: minmax(0, 1.48fr) minmax(280px, 0.62fr);
@@ -2029,6 +2755,9 @@ def render_opportunity_page(
         grid-template-columns: 1fr;
       }}
       .content-grid--single .section-stack {{ grid-template-columns: 1fr; }}
+      .decision-support-head {{ display: grid; }}
+      .decision-truth {{ min-width: 0; }}
+      .profile-fit-grid {{ grid-template-columns: repeat(2, minmax(0, 1fr)); }}
       .hero-stats,
       .sidebar-card {{
         position: static;
@@ -2107,6 +2836,9 @@ def render_opportunity_page(
         font-size: 14px;
       }}
       .readiness-grid {{ grid-template-columns: repeat(2, minmax(0, 1fr)); }}
+      .profile-fit-grid,
+      .profile-fit-result ul {{ grid-template-columns: 1fr; }}
+      .profile-fit-actions {{ align-items: flex-start; flex-direction: column; }}
       .prepare-head h2,
       .apply-head h2,
       .related-head h2 {{
@@ -2182,6 +2914,7 @@ def render_opportunity_page(
     </section>
 
     {readiness_markup}
+    {decision_support_markup}
 
     <section class="{content_grid_class}">
       <div class="section-stack">
@@ -2202,6 +2935,7 @@ def render_opportunity_page(
         <a href="{insights_href}">{escape(str(copy["insights_link"]))}</a>
         <a href="{terms_href}">{escape(str(copy["terms_link"]))}</a>
         <a href="{data_policy_href}">{escape(str(copy["data_policy_link"]))}</a>
+        <a href="{data_routes_href}">{escape(data_routes_label)}</a>
         <a href="{attribution_href}">{escape(str(copy["attribution_link"]))}</a>
         <a href="{status_href}">{escape(str(copy["status_link"]))}</a>
         <a href="{docs_href}">{escape(str(copy["api_docs"]))}</a>
