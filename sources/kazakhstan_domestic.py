@@ -379,22 +379,21 @@ DOMESTIC_PROGRAMS = (
         application_url="https://egov.kz/cms/ru/online-services/for_citizen/pr_5",
     ),
     DomesticProgram(
-        url="https://www.gov.kz/memleket/entities/mfa-delhi/press/news/details/1228534?lang=ru",
+        url="https://aaiff.ai/",
         title="Astana AI Film Festival international contest",
         summary=(
-            "Official Kazakhstan MFA notice on the Astana AI Film Festival "
-            "international contest for AI-created short films. Applications are "
-            "open to individual authors and teams worldwide until 31 August 2026; "
-            "the festival will select 25 finalists and has a total prize fund "
-            "of USD 1 million."
+            "Official Astana AI Film Festival open call for AI-created short "
+            "films. Applications are free and open to individual authors, teams "
+            "and studios worldwide until 31 August 2026; the total prize fund is "
+            "USD 1 million."
         ),
         title_ru="Международный конкурс Astana AI Film Festival",
         summary_ru=(
-            "Официальное сообщение МИД Казахстана о международном конкурсе "
-            "короткометражных фильмов, созданных с использованием искусственного "
-            "интеллекта. Заявки принимаются от индивидуальных авторов и команд "
-            "со всего мира до 31 августа 2026 года; фестиваль отберёт 25 "
-            "финалистов, общий призовой фонд составляет 1 млн долларов США."
+            "Официальный open call Astana AI Film Festival для короткометражных "
+            "фильмов, созданных с использованием генеративного AI. Бесплатные "
+            "заявки принимаются от индивидуальных авторов, команд и студий со "
+            "всего мира до 31 августа 2026 года; общий призовой фонд составляет "
+            "1 млн долларов США."
         ),
         tags=(
             "contest",
@@ -1225,6 +1224,67 @@ DOMESTIC_PROGRAMS = (
     ),
 )
 
+DOMESTIC_EDITORIAL_RU: dict[str, dict[str, Any]] = {
+    "https://aaiff.ai/": {
+        "social_title": "Astana AI Film Festival: конкурс с фондом 1 млн USD",
+        "summary": (
+            "Международный конкурс короткометражных фильмов, в которых "
+            "генеративный AI является частью процесса создания."
+        ),
+        "audience_label": "Кому подходит",
+        "eligibility": [
+            "Индивидуальные авторы, команды и студии из любой страны; "
+            "участие бесплатное"
+        ],
+        "highlights_label": "Требования к фильму",
+        "highlights": [
+            "продолжительность — от 3 минут",
+            "генеративный AI должен участвовать в создании, а не только в постобработке",
+            "в видео нужны встроенные английские субтитры",
+            "для YouTube обязателен хэштег #SpecialForAAIFF в описании",
+        ],
+        "amount": "общий фонд — 1 000 000 USD; главный приз — 450 000 USD",
+        "amount_label": "Призы",
+        "deadline_display": "31 августа 2026",
+        "deadline_label": "Дедлайн",
+        "steps_title": "Как подать",
+        "application_step_titles": [
+            "Загрузите фильм",
+            "Выберите секцию",
+            "Заполните форму",
+        ],
+        "application_steps": [
+            "Загрузить фильм в 1080p на YouTube или Google Drive и открыть доступ",
+            "Выбрать тематическую или открытую конкурсную секцию",
+            "Заполнить форму на aaiff.ai, указать AI-инструменты и всех участников",
+        ],
+        "prepare_items": [
+            {
+                "title": "Проверьте хронометраж",
+                "text": "Фестиваль принимает фильмы продолжительностью от трёх минут.",
+            },
+            {
+                "title": "Добавьте английские субтитры",
+                "text": "Субтитры должны быть встроены непосредственно в видео.",
+            },
+            {
+                "title": "Опишите AI-процесс",
+                "text": (
+                    "В заявке нужно раскрыть использованные модели, инструменты "
+                    "и вклад участников."
+                ),
+            },
+            {
+                "title": "Подготовьте ссылку",
+                "text": (
+                    "Можно использовать публичное или unlisted-видео на YouTube "
+                    "либо Google Drive с доступом по ссылке."
+                ),
+            },
+        ],
+    }
+}
+
 ACTIVE_DOMESTIC_URLS = frozenset(program.url for program in DOMESTIC_PROGRAMS)
 
 
@@ -1429,13 +1489,15 @@ def _amount_raw_payload(program: DomesticProgram) -> dict[str, Any]:
 
 
 def _i18n_payload(program: DomesticProgram) -> dict[str, Any]:
-    if not program.title_ru and not program.summary_ru:
+    editorial = DOMESTIC_EDITORIAL_RU.get(program.url, {})
+    if not program.title_ru and not program.summary_ru and not editorial:
         return {}
-    ru: dict[str, str] = {}
+    ru: dict[str, Any] = {}
     if program.title_ru:
         ru["title"] = program.title_ru
     if program.summary_ru:
         ru["summary"] = program.summary_ru
+    ru.update(editorial)
     return {"i18n": {"ru": ru}}
 
 

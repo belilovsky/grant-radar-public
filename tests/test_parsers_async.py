@@ -1145,6 +1145,12 @@ async def test_kazakhstan_domestic_support_yields_official_programs():
         ]
         == "Международный конкурс Astana AI Film Festival"
     )
+    festival_ru = by_title["Astana AI Film Festival international contest"].raw["i18n"][
+        "ru"
+    ]
+    assert festival_ru["social_title"].startswith("Astana AI Film Festival")
+    assert festival_ru["amount"].startswith("общий фонд — 1 000 000 USD")
+    assert len(festival_ru["application_steps"]) == 3
     assert by_title["Aiboz national literary prize"].type == OpportunityType.CONTEST
     assert by_title["Aiboz national literary prize"].deadline == date(2026, 9, 1)
     assert (
@@ -1865,9 +1871,9 @@ async def test_global_training_fetch_yields_official_mid_career_course():
     assert flta.raw["page_title"] is None
     assert "monthly stipend" in flta.raw["amount_raw"]
     assert flta.raw["i18n"]["ru"]["title"].startswith("Fulbright Foreign Language")
-    assert flta.raw["i18n"]["ru"]["social_title"].startswith("🇺🇸 Fulbright FLTA")
+    assert flta.raw["i18n"]["ru"]["social_title"].startswith("Fulbright FLTA")
     assert len(flta.raw["i18n"]["ru"]["application_steps"]) == 3
-    assert "💵 ежемесячную стипендию" in flta.raw["i18n"]["ru"]["highlights"]
+    assert "ежемесячную стипендию" in flta.raw["i18n"]["ru"]["highlights"]
     assert "kazakhstan" in flta.tags
     assert "fulbright" in flta.tags
     assert "teacher_training" in flta.tags
@@ -1880,6 +1886,9 @@ async def test_global_training_fetch_yields_official_mid_career_course():
         "https://www.daad-kyrgyzstan.org/en/find-funding/scholarship-database/"
     )
     assert daad.raw["i18n"]["ru"]["title"] == "Исследовательские гранты DAAD в Германии"
+    assert daad.raw["i18n"]["ru"]["social_title"].startswith("DAAD:")
+    assert daad.raw["i18n"]["ru"]["deadline_display"] == "17 августа 2026"
+    assert len(daad.raw["i18n"]["ru"]["application_steps"]) == 3
     assert "kazakhstan" in daad.tags
     assert "daad" in daad.tags
     assert "doctoral" in daad.tags

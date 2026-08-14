@@ -104,7 +104,7 @@ def test_world_bank_procurement_adds_editorial_contract_for_selected_notice():
     assert len(items) == 1
     item = items[0]
     assert item.raw["estimated_amount"] == 800000
-    assert item.raw["i18n"]["ru"]["social_title"].startswith("🏗 Узбекистан")
+    assert item.raw["i18n"]["ru"]["social_title"].startswith("Узбекистан")
     assert len(item.raw["i18n"]["ru"]["application_steps"]) == 3
     assert item.raw["i18n"]["ru"]["amount"].endswith("800 000 USD")
 
