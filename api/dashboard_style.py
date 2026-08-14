@@ -3256,7 +3256,7 @@ DASHBOARD_CSS = r"""    :root {
         inset: auto 0 0;
         z-index: 48;
         display: grid;
-        grid-template-columns: repeat(4, minmax(0, 1fr));
+        grid-template-columns: repeat(2, minmax(0, 1fr));
         min-height: calc(62px + env(safe-area-inset-bottom));
         padding: 5px 8px calc(5px + env(safe-area-inset-bottom));
         border-top: 1px solid var(--line-subtle);

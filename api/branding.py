@@ -8,8 +8,9 @@ BRANDING_ASSET_DIR = Path(__file__).with_name("static") / "branding"
 BRANDING_ASSET_PREFIX = "/assets/branding"
 BRAND_FAVICON_PATH = BRANDING_ASSET_DIR / "favicon.ico"
 
-# These files are the original approved QAZ.FUND package: a clean sign without
-# wordmark, its ivory counterpart, and the supplied ornamental backgrounds.
+# The public interface uses the supplied sign and its ivory counterpart. The
+# ornamental artwork remains an asset, but is deliberately not used as a page
+# background: it competes with the interface and reduces text contrast.
 BRAND_MARK_IVORY_HTML = (
     f'<img src="{BRANDING_ASSET_PREFIX}/qaz-fund-symbol-ivory.svg" '
     'alt="" decoding="async">'
@@ -30,11 +31,9 @@ BRAND_CSS = r"""
       --qaz-brand-teal-light: #08747B;
       --qaz-brand-cream: #F3EFE9;
       --qaz-brand-paper: #FFFDFC;
-      --qaz-brand-gold: #F0C64D;
-      --qaz-brand-gold-soft: #FFF2A8;
-      --qaz-brand-gold-deep: #D59A17;
-      --qaz-brand-hero-art: url("/assets/branding/qaz-fund-ornamental-background-1920x1080.webp");
-      --qaz-brand-pattern: url("/assets/branding/qaz-fund-pattern-tile.svg");
+      --qaz-brand-gold: #B9DDD8;
+      --qaz-brand-gold-soft: #E6F2F0;
+      --qaz-brand-gold-deep: #4A7975;
     }
 
     .brand-mark {
@@ -79,11 +78,9 @@ BRAND_CSS = r"""
       position: absolute;
       inset: 0;
       z-index: 0;
-      background-color: var(--qaz-brand-hero-start);
-      background-image: var(--qaz-brand-hero-art);
-      background-position: center;
-      background-repeat: no-repeat;
-      background-size: cover;
+      background:
+        radial-gradient(circle at 92% 6%, rgb(137 206 196 / 0.18), transparent 32%),
+        linear-gradient(135deg, var(--qaz-brand-hero-start), var(--qaz-brand-hero-end));
       pointer-events: none;
     }
 
@@ -100,11 +97,6 @@ BRAND_CSS = r"""
       }
 
       .hero-band::before,
-      .hero::before {
-        background-image: var(--qaz-brand-hero-art);
-        background-position: center;
-        background-size: cover;
-        opacity: 1;
-      }
+      .hero::before { opacity: 1; }
     }
 """

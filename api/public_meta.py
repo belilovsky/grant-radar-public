@@ -23,8 +23,8 @@ OG_IMAGE_SVG = "\n".join(
         '      <stop offset="100%" stop-color="#00464D"/>',
         "    </linearGradient>",
         '    <radialGradient id="glow" cx="25%" cy="25%" r="70%">',
-        '      <stop offset="0%" stop-color="#F0C64D" stop-opacity="0.32"/>',
-        '      <stop offset="100%" stop-color="#F0C64D" stop-opacity="0"/>',
+        '      <stop offset="0%" stop-color="#8FC8C1" stop-opacity="0.28"/>',
+        '      <stop offset="100%" stop-color="#8FC8C1" stop-opacity="0"/>',
         "    </radialGradient>",
         "  </defs>",
         '  <rect width="1200" height="630" fill="url(#bg)"/>',
@@ -63,7 +63,7 @@ OG_IMAGE_SVG = "\n".join(
         ),
         (
             '    <rect x="30" y="36" width="170" height="24" rx="12" '
-            'fill="#F0C64D" fill-opacity="0.48"/>'
+            'fill="#8FC8C1" fill-opacity="0.48"/>'
         ),
         (
             '    <rect x="30" y="94" width="170" height="74" rx="18" '
@@ -79,7 +79,7 @@ OG_IMAGE_SVG = "\n".join(
         ),
         (
             '    <rect x="30" y="282" width="170" height="54" rx="18" '
-            'fill="#F0C64D" fill-opacity="0.56"/>'
+            'fill="#8FC8C1" fill-opacity="0.56"/>'
         ),
         "  </g>",
         "</svg>",
@@ -140,7 +140,7 @@ def _build_og_image_png() -> bytes:
                 ),
             )
 
-    rect(72, 72, 188, 10, (240, 198, 77))
+    rect(72, 72, 188, 10, (143, 200, 193))
     rect(72, 102, 320, 16, (217, 232, 229))
 
     def word(text: str, x: int, y: int, scale: int) -> None:
@@ -166,17 +166,17 @@ def _build_og_image_png() -> bytes:
     word("QAZ.FUND", 72, 164, 16)
     rect(72, 340, 566, 14, (217, 232, 229))
     rect(72, 374, 462, 14, (138, 190, 186))
-    rect(72, 422, 150, 44, (240, 198, 77))
+    rect(72, 422, 150, 44, (143, 200, 193))
     rect(238, 422, 196, 44, (0, 84, 91))
     rect(810, 72, 318, 486, (0, 45, 52))
-    rect(844, 112, 172, 22, (240, 198, 77))
+    rect(844, 112, 172, 22, (143, 200, 193))
     rect(844, 170, 242, 108, (255, 253, 252))
     rect(870, 204, 190, 16, (0, 52, 59))
     rect(870, 236, 126, 14, (98, 132, 128))
     rect(844, 314, 242, 14, (138, 190, 186))
     rect(844, 348, 170, 14, (98, 132, 128))
     rect(844, 418, 242, 84, (0, 84, 91))
-    rect(870, 448, 190, 14, (255, 242, 168))
+    rect(870, 448, 190, 14, (230, 242, 240))
     rect(870, 478, 134, 12, (138, 190, 186))
 
     raw = b"".join(
