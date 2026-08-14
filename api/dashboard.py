@@ -1151,7 +1151,7 @@ def render_dashboard(
         </details>
       </div>
     </details>
-    <footer class="site-footer" data-avds-component="site-footer">
+    <footer class="site-footer" data-avds-component="site-footer"><a class="footer-contact" href="mailto:contact@qaz.fund">contact@qaz.fund</a>
       <nav class="site-footer-nav" aria-label="{escape(str(copy["views_aria"]), quote=True)}">
         <a href="#opportunities">{escape(str(copy["tab_opportunities"]))}</a>
         <a href="#sources">{escape(str(copy["tab_sources"]))}</a>

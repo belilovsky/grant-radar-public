@@ -29,7 +29,7 @@ def test_status_page_keeps_last_check_visible_in_mobile_rows() -> None:
     assert 'class="mobile-updated"' in html
     assert "Последняя проверка: 17.07.2026 08:30 UTC" in html
     assert ".mobile-updated { display:block; }" in html
-    assert "contact@qaz.fund" not in html
+    assert 'href="mailto:contact@qaz.fund"' in html
     assert "Поддержка РК" in html
     assert "tbody tr:nth-child(even)" in html
 

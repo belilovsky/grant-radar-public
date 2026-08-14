@@ -421,7 +421,7 @@ def render_status_page(
       </table>
     </div>
     <p class="note">{escape(str(copy["disclaimer"]))}</p>
-    <footer class="site-footer">
+    <footer class="site-footer"><a class="footer-contact" href="mailto:contact@qaz.fund">contact@qaz.fund</a>
       <nav class="site-footer-nav"
         aria-label="{escape(str(product_copy["views_aria"]), quote=True)}">
         <a href="{escape(catalog_href, quote=True)}"

@@ -344,7 +344,7 @@ def _base_document(
   <body>
     <main class="embed-shell" data-avds-component="embed-widget">
       {body}
-      <footer class="embed-footer">
+      <footer class="embed-footer"><a class="footer-contact" href="mailto:contact@qaz.fund">contact@qaz.fund</a>
         <p>{escape(_copy(lang)['disclaimer'])}</p>
         <a href="{escape(catalog_url, quote=True)}" target="_blank"
            rel="noopener noreferrer">{escape(_copy(lang)['catalog'])} ↗</a>

@@ -349,7 +349,7 @@ def render_data_routes_page(
     <section class="route-grid" aria-label="{escape(str(copy.get("eyebrow") or ""), quote=True)}">
       {cards}
     </section>
-    <footer class="footer">
+    <footer class="footer"><a class="footer-contact" href="mailto:contact@qaz.fund">contact@qaz.fund</a>
       <p>{escape(str(copy.get("footer") or ""))}</p>
       <nav>
         <a href="{escape(status, quote=True)}">{escape(str(copy.get("status") or ""))}</a>

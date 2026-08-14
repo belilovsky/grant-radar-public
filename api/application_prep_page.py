@@ -1223,7 +1223,7 @@ def render_application_prep_page(
         </section>
       </aside>
     </form>
-    <footer class="footer">
+    <footer class="footer"><a class="footer-contact" href="mailto:contact@qaz.fund">contact@qaz.fund</a>
       <p>
         {escape(copy["generated_note"])}
         <a
