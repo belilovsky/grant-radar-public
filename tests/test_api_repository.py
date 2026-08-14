@@ -1552,6 +1552,12 @@ def test_marketing_endpoints_are_exposed(monkeypatch):
     assert 'aria-label="QAZ.FUND ornamental symbol"' in brand_symbol.text
     assert client.head("/assets/branding/qaz-fund-symbol.svg").status_code == 200
 
+    brand_background = client.head(
+        "/assets/branding/qaz-fund-ornamental-background-1920x1080.webp"
+    )
+    assert brand_background.status_code == 200
+    assert brand_background.headers["content-type"].startswith("image/webp")
+
     sitemap = client.get("/sitemap.xml")
     assert sitemap.status_code == 200
     assert sitemap.headers["content-type"].startswith("application/xml")

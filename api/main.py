@@ -5,6 +5,7 @@ from __future__ import annotations
 import asyncio
 import json
 import logging
+import mimetypes
 import os
 import re
 import threading
@@ -204,6 +205,11 @@ app = FastAPI(
     docs_url=None,
     redoc_url=None,
 )
+# The slim production image does not ship a system mime.types entry for WebP.
+# Register the supplied QAZ.FUND ornamental artwork explicitly so browser and
+# machine clients receive its native media type.
+mimetypes.add_type("image/webp", ".webp")
+
 app.mount(
     "/assets/branding",
     StaticFiles(directory=BRANDING_ASSET_DIR),
