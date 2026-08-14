@@ -29,9 +29,9 @@ AVDS_CSS = """
       --av-color-emerald-50: #eaf5ef;
       --av-color-emerald-100: #d7ecdf;
       --av-color-emerald-700: #18714e;
-      --av-color-amber-50: #fbf4df;
-      --av-color-amber-100: #FFF2A8;
-      --av-color-amber-700: #9a6c1d;
+      --av-color-amber-50: #f2f0ed;
+      --av-color-amber-100: #e6e1db;
+      --av-color-amber-700: #6d6258;
       --av-color-red-50: #fef2f2;
       --av-color-red-100: #fee2e2;
       --av-color-red-600: #dc2626;

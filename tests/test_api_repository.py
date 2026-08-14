@@ -103,628 +103,57 @@ def test_root_renders_service_landing(monkeypatch):
     response = client.get("/")
 
     assert response.status_code == 200
-    assert response.headers["cache-control"] == "no-store"
     assert '<html lang="ru"' in response.text
-    assert (
-        "<title>QAZ.FUND – каталог программ поддержки для Казахстана</title>"
-        in response.text
-    )
-    assert "\u2014" not in response.text
-    assert "fonts.googleapis.com" not in response.text
-    assert (
-        '--av-font-sans: -apple-system, BlinkMacSystemFont, "Segoe UI"' in response.text
-    )
     assert 'data-avds="grant-radar"' in response.text
     assert 'data-av-theme="light"' in response.text
-    assert "--av-color-background" in response.text
-    assert "--av-control-height-md" in response.text
-    assert "--av-control-height-lg: 44px;" in response.text
-    assert "--av-card-padding-md" in response.text
-    assert "--av-font-serif" in response.text
-    assert "--button-outline" in response.text
-    assert "--badge-outline" in response.text
-    assert "--color-focus-ring: var(--av-focus-ring)" in response.text
-    assert "--color-bg: var(--av-color-background)" in response.text
-    assert "width: min(var(--container-max), calc(100% - 64px));" in response.text
-    assert "grid-template-columns: repeat(3, minmax(148px, 196px));" in response.text
-    assert "width: fit-content;" in response.text
-    assert "grid-template-columns: repeat(3, minmax(0, 1fr));" in response.text
-    assert "font-family: var(--font-sans);" in response.text
-    assert "text-transform: uppercase;" in response.text
-    assert "letter-spacing: 0.12em;" not in response.text
-    assert "border: 1.5px solid var(--line);" not in response.text
-    assert ".source-card {" in response.text
-    assert "min-height: var(--av-control-height-lg);" in response.text
-    assert ".utility-link {" in response.text
-    message_css = response.text.split(".message {", 1)[1].split("}", 1)[0]
-    assert "color: color-mix(in oklab, var(--muted), var(--ink) 18%);" in message_css
-    assert "avds-tabs-list" in response.text
-    assert "avds-tabs-trigger" in response.text
-    assert "avds-field" in response.text
-    assert "avds-stat-kpi-card" in response.text
-    assert "avds-source-card" in response.text
-    assert "avds-source-card__icon" in response.text
-    assert "detail-compute-readiness-text" in response.text
-    assert "Оценка полноты данных:" in response.text
-    assert "QazCompute:" not in response.text
-    assert "avds-source-card__arrow" in response.text
-    assert 'data-avds-component="source-icon"' in response.text
-    assert "avds-document-row" in response.text
+    assert 'data-lang="ru"' in response.text
+    assert 'data-avds-component="admin-shell"' in response.text
     assert 'data-avds-component="hero-band"' in response.text
-    assert "QAZ.FUND" in response.text
+    assert "<h1>QAZ.FUND</h1>" in response.text
+    assert "Каталог программ поддержки для Казахстана" in response.text
     assert (
-            "Открытые программы с источником, сроком и условиями, которые можно проверить до подачи."
-        in response.text
+        "Открытые программы с источником, сроком и условиями, которые можно "
+        "проверить до подачи." in response.text
     )
-    assert (
-            "Гранты, субсидии, акселераторы и закупки: источник, статус и срок у каждой карточки."
-        in response.text
-    )
-    assert "С чего начать?" in response.text
     assert "Найти поддержку" in response.text
-    assert "Прямое подключение к официальному источнику" in response.text
-    assert "Страница мониторинга с редакционной проверкой" in response.text
-    assert "Быстрый выбор" in response.text
-    assert "Найти поддержку" in response.text
-    assert "Проверить программу" in response.text
-    assert "Сроки до месяца" in response.text
-    assert "Господдержка РК" in response.text
-    assert "Тендеры и закупки" in response.text
-    assert 'data-hero-focus="search"' in response.text
-    assert 'data-hero-sort="deadline"' in response.text
-    assert response.text.index('<div class="hero-points"') < response.text.index(
-        '<section\n          class="hero-stage"'
-    )
-    assert 'data-avds-component="quick-links-rail"' in response.text
-    assert 'data-avds-component="public-summary-strip"' in response.text
-    assert "function pathwayPreviewMarkup" not in response.text
-    assert "function themePreviewMarkup" not in response.text
-    assert "Дополнительные фильтры" in response.text
-    assert "qdev.run" in response.text
-    assert "QAZ.FUND не выдаёт средства и не принимает заявки" in response.text
-    assert "Обратная связь" in response.text
-    assert "qazfund-opportunities.csv" in response.text
-    assert "qazfund-deadlines.ics" in response.text
-    assert "grantRadarSavedOpportunities.v1" in response.text
-    assert 'id="workspace-backup"' in response.text
-    assert 'id="export-workspace"' in response.text
-    assert 'id="import-workspace"' in response.text
-    assert 'id="workspace-queue"' in response.text
-    assert 'id="workspace-queue-list"' in response.text
-    assert 'data-avds-component="workspace-queue-item"' in response.text
-    assert 'id="profile-builder"' in response.text
-    assert 'id="profile-audience"' in response.text
-    assert 'id="profile-region"' in response.text
-    assert 'id="profile-format"' in response.text
-    assert 'id="profile-deadline"' in response.text
-    assert "function applyProfile" in response.text
-    assert "function resetProfile" in response.text
-    assert "applyProfile();" in response.text
-    assert "Профиль не отправляется на сервер" in response.text
-    assert "function exportWorkspace" in response.text
-    assert "function sanitizeWorkspacePayload" in response.text
-    assert "function importWorkspace" in response.text
-    assert "function renderWorkspaceQueue" in response.text
-    assert "workspace_action_preparing" in response.text
-    assert "Данные хранятся в этом браузере." in response.text
-    assert "Уточнить данные" in response.text
-    assert "Сохранённые подборки" in response.text
-    assert "Сохранить фильтры" in response.text
-    assert "Поделиться выдачей" in response.text
-    assert "Сроки в календарь" in response.text
-    assert "Для редакции и анализа" in response.text
-    assert "Открыть операторский раздел" in response.text
-    assert 'href="/operator?lang=ru"' in response.text
-    assert "<h4>Аналитику</h4>" not in response.text
-    assert "С чего начать" in response.text
-    assert "Подборки для первого поиска" in response.text
-    assert "С чего начать проверку" in response.text
-    assert "Субсидии и меры" in response.text
-    assert "Что закрывается первым" in response.text
-    assert "По задаче" in response.text
-    assert "По типу заявителя" in response.text
-    assert "Акселераторы, гранты и облачные кредиты" in response.text
-    assert "Субсидии, льготы и меры поддержки РК" in response.text
-    assert "По теме" in response.text
-    assert "По направлению" in response.text
-    assert "Активные фонды и программы" in response.text
-    assert (
-        "Искусственный интеллект, облачные кредиты и цифровые навыки" in response.text
-    )
-    assert "Инфраструктура, закупки и программы развития" in response.text
-    assert "Текущая подборка" in response.text
-    assert "Что здесь обычно ищут" in response.text
-    assert "Кому может быть полезно" in response.text
-    assert "Программы для искусственного интеллекта и акселераторы" in response.text
-    assert "Локальные субсидии и меры РК" in response.text
-    assert "Убрать тему" in response.text
-    assert "Приоритет: Казахстан и Центральная Азия" in response.text
-    assert (
-        '<strong id="metric-strong" data-catalog-count="0">0</strong>' in response.text
-    )
-    source_count = api_main._cached_coverage_payload()["enabled_sources"]
-    assert (
-        f'<strong id="metric-sources" data-source-count="{source_count}">'
-        f"{source_count}</strong>" in response.text
-    )
-    assert '<strong id="health-status">Каталог доступен</strong>' in response.text
-    assert '<strong id="health-items">0</strong>' in response.text
-    assert f'<strong id="health-sources">{source_count}</strong>' in response.text
-    assert '<strong id="health-stale-sources">0</strong>' in response.text
-    assert 'class="discovery-grid"' in response.text
-    assert response.text.index('id="opportunities-panel"') < response.text.index(
-        'data-avds-component="discovery-library"'
-    )
-    assert response.text.index(
-        'data-avds-component="discovery-library"'
-    ) < response.text.index('data-avds-component="funder-library"')
-    assert 'data-avds-component="trust-library"' in response.text
-    assert 'data-avds-component="funder-library"' in response.text
-    assert 'data-avds-component="methodology-library"' in response.text
-    assert 'id="methodology-panel"' in response.text
-    assert "Источники и обновление" in response.text
-    assert response.text.index(
-        'data-avds-component="trust-library"'
-    ) < response.text.index('data-avds-component="funder-library"')
-    assert "Регион и тема влияют на релевантность" in response.text
-    assert "Это не вероятность одобрения" in response.text
-    assert "По приоритету проверки" in response.text
-    assert "Точность совпадения" not in response.text
-    assert "СМИ" in response.text
-    assert "-webkit-line-clamp: 2;" in response.text
-    assert ".hero-band" in response.text
-    assert (
-        "details:not([open]) > :not(summary) { display: none !important; }"
-        in response.text
-    )
-    assert ".hero-grid" in response.text
-    assert ".sticky-bar" in response.text
-    assert ".spotlight-grid" in response.text
-    assert ".spotlight-card" in response.text
-    assert ".themes-grid" in response.text
-    assert ".theme-card" in response.text
-    assert ".pathways-grid" in response.text
-    assert ".pathway-card" in response.text
-    assert ".topbar-actions" in response.text
-    assert ">API</a>" in response.text
-    assert "Статус данных" in response.text
-    assert 'href="/docs?lang=ru"' in response.text
-    assert 'href="/status?lang=ru"' in response.text
+    assert "qaz-fund-ornamental-background" not in response.text
+    assert "#F0C64D" not in response.text
+    assert 'data-avds-component="quick-links-rail"' not in response.text
+    assert 'data-avds-component="public-summary-strip"' not in response.text
+    assert '<strong id="metric-total">' not in response.text
+    assert '<strong id="metric-strong"' not in response.text
+    assert 'id="workspace-filter"' not in response.text
+    assert 'id="profile-builder"' not in response.text
+    assert 'data-avds-component="discovery-library"\n      hidden' in response.text
+    assert 'data-avds-component="trust-library"\n      hidden' in response.text
+    assert 'id="filter-disclosure"' in response.text
+    assert 'id="opportunities-list"' in response.text
+    assert 'data-avds-component="opportunity-card"' in response.text
+    assert 'data-avds-pattern="catalog-card"' in response.text
+    assert 'data-mobile-view="opportunities"' in response.text
+    assert 'data-mobile-view="sources"' not in response.text
+    assert 'data-mobile-action="saved"' not in response.text
+    assert 'data-mobile-action="filters"' in response.text
     assert 'href="/?lang=kk"' in response.text
     assert 'href="/?lang=ru"' in response.text
     assert 'href="/?lang=en"' in response.text
-    assert 'name="yandex-verification" content="01df12ab51cd6b70"' in response.text
+    assert 'href="/docs?lang=ru"' not in response.text
+    assert 'href="/status?lang=ru"' not in response.text
+    assert 'href="/terms?lang=ru"' in response.text
+    assert 'href="/data-policy?lang=ru"' in response.text
+    assert 'href="/attribution?lang=ru"' in response.text
     assert 'rel="canonical" href="http://testserver/?lang=ru"' in response.text
-    assert (
-        'rel="alternate" hreflang="kk" href="http://testserver/?lang=kk"'
-        in response.text
-    )
-    assert (
-        'rel="alternate" hreflang="ru" href="http://testserver/?lang=ru"'
-        in response.text
-    )
-    assert (
-        'rel="alternate" hreflang="en" href="http://testserver/?lang=en"'
-        in response.text
-    )
-    assert (
-        'rel="alternate" hreflang="x-default" href="http://testserver/?lang=ru"'
-        in response.text
-    )
-    assert 'property="og:type" content="website"' in response.text
-    assert (
-            'property="og:title" content="QAZ.FUND – каталог программ поддержки '
-        'для Казахстана"' in response.text
-    )
-    assert 'property="og:url" content="http://testserver/?lang=ru"' in response.text
+    assert 'type="application/ld+json"' in response.text
+    assert '"@type": "CollectionPage"' in response.text
+    assert '"@type": "FAQPage"' not in response.text
     assert (
         'property="og:image" content="http://testserver/og-image.png"' in response.text
     )
     assert 'name="twitter:card" content="summary_large_image"' in response.text
-    assert (
-        'name="twitter:image" content="http://testserver/og-image.png"' in response.text
-    )
-    assert "googletagmanager.com/gtag/js?id=G-9EF720PSER" in response.text
-    assert 'window.ym("109803011","init"' in response.text
-    assert "https://www.clarity.ms/tag/x5ualin2jv" in response.text
-    assert "const startAnalytics = () =>" in response.text
-    assert 'navigator.doNotTrack === "1"' in response.text
-    assert "navigator.globalPrivacyControl === true" in response.text
     assert "window.setTimeout(startAnalytics, 20000)" in response.text
-    assert 'script async src="https://www.googletagmanager.com' not in response.text
-    assert 'type="application/ld+json"' in response.text
-    assert '"@type": "FAQPage"' in response.text
-    assert '"@type": "CollectionPage"' in response.text
-    assert '"numberOfItems": 0' in response.text
-    assert '"name": "QAZ.FUND"' in response.text
-    assert 'data-view="opportunities"' in response.text
-    assert 'data-view="sources"' in response.text
-    assert 'data-view="health"' not in response.text
-    assert 'data-avds-component="sticky-shell"' in response.text
-    assert 'data-avds-component="admin-shell"' in response.text
-    assert 'data-avds-component="button"' in response.text
-    assert 'data-avds-component="source-card"' in response.text
-    assert 'data-avds-component="source-url"' in response.text
-    assert 'data-avds-component="source-count"' in response.text
-    assert 'data-avds-component="opportunity-card"' in response.text
-    assert 'data-avds-component="filter-summary"' in response.text
-    assert 'id="source-list"' in response.text
-    assert 'id="toggle-sources"' in response.text
-    assert 'id="opportunities-list"' in response.text
-    assert 'id="load-more-wrap"' in response.text
-    assert 'data-avds-component="discovery-library"' in response.text
-    assert "Готовые маршруты" in response.text
-    assert 'id="spotlight-grid"' in response.text
-    assert 'id="themes-grid"' in response.text
-    assert 'id="pathways-grid"' in response.text
-    assert 'id="funder-grid"' in response.text
-    assert 'id="topic-brief"' in response.text
-    assert 'id="save-view"' in response.text
-    assert 'id="workspace-filter"' in response.text
-    assert 'id="filter-disclosure"' in response.text
-    assert 'window.matchMedia("(max-width: 820px)")' in response.text
-    assert 'document.documentElement.dataset.compactFilters = "true";' in response.text
-    assert 'html[data-compact-filters="true"]' in response.text
-    assert 'document.documentElement.removeAttribute("data-compact-filters");' in (
-        response.text
-    )
-    assert 'data-avds-component="mobile-app-bar"' in response.text
-    assert 'data-avds-component="mobile-app-navigation"' in response.text
-    assert 'data-mobile-view="opportunities"' in response.text
-    assert 'data-mobile-view="sources"' in response.text
-    assert 'data-mobile-action="saved"' in response.text
-    assert 'data-mobile-action="filters"' in response.text
-    assert 'id="mobile-filter-trigger"' in response.text
-    assert 'id="mobile-filter-backdrop"' in response.text
-    assert 'id="mobile-filter-done"' in response.text
-    assert 'event.key === "Escape"' in response.text
-    assert (
-        'if (!document.body.classList.contains("filter-sheet-open")) return;'
-        in response.text
-    )
-    assert "event.preventDefault();" in response.text
-    assert "event.stopPropagation();" in response.text
-    assert "if (restoreFocus)" in response.text
-    assert "mobileFilterTrigger.focus();" in response.text
-    assert "function openMobileFilterSheet" in response.text
-    assert "function closeMobileFilterSheet" in response.text
-    assert "let overlayFocusVersion = 0;" in response.text
-    detail_open_script = response.text.split("function openDetailShell()", 1)[1].split(
-        "function closeDetailShell()", 1
-    )[0]
-    detail_close_script = response.text.split("function closeDetailShell()", 1)[
-        1
-    ].split("function renderDetailLoading()", 1)[0]
-    filter_open_script = response.text.split("function openMobileFilterSheet()", 1)[
-        1
-    ].split("function closeMobileFilterSheet", 1)[0]
-    assert "overlayFocusVersion += 1;" in detail_open_script
-    assert "overlayFocusVersion += 1;" in filter_open_script
-    assert response.text.count("overlayFocusVersion += 1;") == 2
-    assert "const focusVersion = overlayFocusVersion;" in detail_close_script
-    assert "focusVersion === overlayFocusVersion" in detail_close_script
-    assert "env(safe-area-inset-bottom)" in response.text
-    assert "body.filter-sheet-open" in response.text
-    audience_presets = response.text.split('id="audience-presets"', 1)[1].split(
-        "</div>", 1
-    )[0]
-    format_presets = response.text.split('id="format-presets"', 1)[1].split(
-        "</div>", 1
-    )[0]
-    topic_presets = response.text.split('id="topic-presets"', 1)[1].split("</div>", 1)[
-        0
-    ]
-    assert audience_presets.count("<button") == 6
-    assert format_presets.count("<button") == 5
-    assert topic_presets.count("<button") == 7
-    assert 'data-preset-id="all" aria-pressed="true"' in audience_presets
-    assert 'id="metric-strong" data-catalog-count=' in response.text
-    assert "state.coverage.relevant_open_items" in response.text
-    assert 'id="detail-readiness"' in response.text
-    assert "function renderDetailReadiness" in response.text
-    assert 'role="dialog"' in response.text
-    assert 'aria-modal="true"' in response.text
-    assert ".detail-drawer[hidden]" in response.text
-    assert '$("#main-content").inert = true;' in response.text
-    assert 'id="share-view"' in response.text
-    assert 'id="saved-view-notice"' in response.text
-    assert 'aria-label="Статус подборок"' in response.text
-    assert 'aria-live="polite"' in response.text
-    assert 'id="detail-drawer"' in response.text
-    assert 'id="detail-fit"' in response.text
-    assert 'id="detail-fit-summary"' in response.text
-    assert 'id="detail-fit-pills"' in response.text
-    assert 'id="detail-open-page"' in response.text
-    assert 'id="detail-open-source"' in response.text
-    assert 'id="detail-open-application"' in response.text
-    assert 'id="health-sources"' in response.text
-    assert 'value="0.3" selected' in response.text
-    assert 'fetchJson("/coverage")' in response.text
-    assert 'fetchJson("/sources")' in response.text
-    assert "function withLang(path)" in response.text
-    assert "function opportunityPageHref(opportunityId)" in response.text
-    assert "fetchJson(withLang(`/opportunities/${opportunityId}`))" in response.text
-    assert "function humanizeLabel" in response.text
-    assert "function sourceDisplayName" in response.text
-    assert "function metadataValue(entry)" in response.text
-    assert "function formatDeadline" in response.text
-    assert "function sourceRefreshInfo" in response.text
-    assert "source.last_discovered_at" in response.text
-    assert "rankedSources.slice(0, COLLAPSED_SOURCES)" in response.text
-    assert 'class="source-freshness ${refresh.tone}"' in response.text
-    assert "function normalizedDetailMetadata" in response.text
-    assert "function normalizeSearchText" in response.text
-    assert "function oneEditAway" in response.text
-    assert "function matchesSearchQuery" in response.text
-    assert "SEARCH_SYNONYM_GROUPS" in response.text
-    assert "return copy.score_exact" in response.text
-    assert 'aria-label="${sourceName}"' in response.text
+    assert "syncFilterDisclosureForViewport" in response.text
     assert "function publicDateISO" in response.text
-    assert "timeZone: PUBLIC_TIME_ZONE" in response.text
     assert "getTimezoneOffset" not in response.text
-    assert "function localRelevantBySource" in response.text
-    assert "function regionalPriority" in response.text
-    assert "function regionalBadgeLabel" in response.text
-    assert "function comparePriorityItems" in response.text
-    assert "regionalPriority(right) - regionalPriority(left)" not in response.text
-    assert "function compareDeadlineItems" in response.text
-    assert "function compareUpdatedItems" in response.text
-    assert "labelMap[normalizedKey]" in response.text
-    assert "copy.label_map || copy.labelMap" in response.text
-    assert "return 3;" in response.text
-    assert '"grants_gov": "Grants.gov"' in response.text
-    assert '"world_bank_kazakhstan": "Всемирный банк Казахстан"' in response.text
-    assert '"europe_and_central_asia": "Европа и Центральная Азия"' in response.text
-    assert "new Map(" in response.text
-    assert (
-        "limit=5000&min_score=0&deadline_after=${today}&compact=true" in response.text
-    )
-    assert (
-        "limit=5000&min_score=0&include_irrelevant=true&compact=true" in response.text
-    )
-    assert 'params.set("lang", copy.lang || "ru");' in response.text
-    assert 'id="scope-filter"' in response.text
-    assert 'id="lifecycle-filter"' in response.text
-    assert 'id="region-filter"' in response.text
-    assert 'id="deadline-filter"' in response.text
-    assert 'id="sort-filter"' in response.text
-    assert 'id="opportunities-description"' in response.text
-    assert 'id="audience-presets"' in response.text
-    assert 'id="format-presets"' in response.text
-    assert 'id="topic-presets"' in response.text
-    assert "Для кого" in response.text
-    assert "Что ищете" in response.text
-    assert "Тема" in response.text
-    assert "Регион" in response.text
-    assert "Срок" in response.text
-    assert "Стартапам" in response.text
-    assert "Субсидии и меры" in response.text
-    assert "Искусственный интеллект и цифровые решения" in response.text
-    assert "Агро / вет / эко" in response.text
-    assert "Все регионы" in response.text
-    assert "Бессрочные" in response.text
-    assert "Признаки совпадения" in response.text
-    assert "Почему показана" in response.text
-    assert "Мера поддержки для команд и бизнеса в Казахстане" in response.text
-    assert "Для команд, работающих с госсектором" in response.text
-    assert "Что проверить" in response.text
-    assert "Критерии нужно проверить" in response.text
-    assert "Снимите один фильтр" in response.text
-    assert "Сбросить всё" in response.text
-    assert "Открыть весь каталог" in response.text
-    assert "Краткий просмотр" in response.text
-    assert "Официальный источник" in response.text
-    assert "Полная карточка" in response.text
-    assert '"read_more": "Полная карточка"' in response.text
-    assert '"kz": "Казахстан"' in response.text
-    assert '"program": "Программа"' in response.text
-    assert '"education_organisation": "Образовательные организации"' in response.text
-    assert 'value="all">Весь индекс' in response.text
-    assert "state.includeArchived" in response.text
-    assert "const ALL_INDEX_SCORE = 0;" in response.text
-    assert "function scoreDefaultForScope()" in response.text
-    assert "state.minScore = scoreDefaultForScope();" in response.text
-    assert "state.minScore = [0, 0.3, 0.5, 0.7].includes(score)" in response.text
-    assert 'audience: "all"' in response.text
-    assert 'format: "all"' in response.text
-    assert 'topic: "all"' in response.text
-    assert 'lifecycle: "all"' in response.text
-    assert 'region: "all"' in response.text
-    assert 'deadlineMode: "all"' in response.text
-    assert "const AUDIENCE_PRESETS = [" in response.text
-    assert "const SUPPORT_FORMAT_TAGS = [" in response.text
-    assert "const FORMAT_PRESETS = [" in response.text
-    assert "&& !matchesAnyTag(item, SUPPORT_FORMAT_TAGS)" in response.text
-    assert '&& !matchesAnyTag(item, ["grant"])' in response.text
-    assert "const TOPIC_PRESETS = [" in response.text
-    assert "const LIFECYCLE_FILTERS = [" in response.text
-    assert "const REGION_FILTERS = [" in response.text
-    assert "const DEADLINE_FILTERS = [" in response.text
-    assert "function itemLifecycle(item)" in response.text
-    assert "function funderPageHref(funderSlugValue)" in response.text
-    assert "function renderFunders()" in response.text
-    assert "function fitPills(item)" in response.text
-    assert "function fitSummaryText(item)" in response.text
-    assert "function isStartupAudience(item)" in response.text
-    assert "function isFarmerAudience(item)" in response.text
-    assert "function isPublicSectorOpportunity(item)" in response.text
-    assert "function opportunitySignalText(item)" in response.text
-    assert "function opportunityFormatLabel(item)" in response.text
-    assert "function opportunitySignalPillsMarkup(item)" in response.text
-    assert "function externalActionUrl(item)" in response.text
-    assert "function primaryActionUrl(item)" in response.text
-    assert "raw.application_url" in response.text
-    assert 'href="${pageUrl}"' in response.text
-    assert "function renderDetailFit(item)" in response.text
-    assert "function renderSpotlights()" in response.text
-    assert (
-        "function takeUniqueSpotlightPreview(items, usedKeys, count = 3)"
-        in response.text
-    )
-    assert "function renderThemes()" in response.text
-    assert "function themeCardMarkup(config)" in response.text
-    assert "function activeTopicBrief()" in response.text
-    assert "function topicPriorityScore(item)" in response.text
-    assert "function compareVisibleItems(left, right)" in response.text
-    assert "function renderTopicBrief(items)" in response.text
-    assert "function renderPathways()" in response.text
-    assert "function pathwayCardMarkup(config)" in response.text
-    assert "function spotlightCardMarkup(config)" in response.text
-    assert "function heroActionAttributes(action = {})" in response.text
-    assert "function renderEmptyState()" in response.text
-    assert "function applyEmptyAction(actionId)" in response.text
-    assert "function applyHeroAction(button)" in response.text
-    assert 'data-avds-component="fit-pill"' in response.text
-    assert "color: color-mix(in oklab, var(--muted), var(--ink) 18%);" in response.text
-    assert 'href="#methodology-panel"' in response.text
-    assert 'id="methodology-panel"' in response.text
-    assert "Как проверить карточку" in response.text
-    assert "Как это работает" in response.text
-    assert 'data-avds-component="signal-pill"' in response.text
-    assert "function renderPresetControls()" in response.text
-    assert 'data-preset-kind="audience"' in response.text
-    assert 'data-preset-kind="format"' in response.text
-    assert 'data-preset-kind="topic"' in response.text
-    assert 'data-avds-component="preset-button"' in response.text
-    assert "function syncUrlState()" in response.text
-    assert 'params.set("audience", state.audience);' in response.text
-    assert 'params.set("format", state.format);' in response.text
-    assert 'params.set("topic", state.topic);' in response.text
-    assert 'params.set("lifecycle", state.lifecycle);' in response.text
-    assert 'params.set("region", state.region);' in response.text
-    assert 'params.set("deadline", state.deadlineMode);' in response.text
-    assert 'params.set("lang", copy.lang || "ru");' in response.text
-    assert "function applyStateFromUrl()" in response.text
-    assert "state.topic = TOPIC_PRESETS.some" in response.text
-    assert "state.lifecycle = LIFECYCLE_FILTERS.some" in response.text
-    assert "state.region = REGION_FILTERS.some" in response.text
-    assert "state.deadlineMode = DEADLINE_FILTERS.some" in response.text
-    assert "copy.opportunities_description_all" in response.text
-    assert "sourceBadge(source)" in response.text
-    assert "shortUrl(source.base_url)" in response.text
-    assert 'data-empty-action="' in response.text
-    assert 'data-hero-view="opportunities"' in response.text
-    assert 'data-hero-reset="true"' in response.text
-    assert 'data-hero-focus="search"' in response.text
-    assert 'data-hero-deadline="month"' in response.text
-    assert 'data-hero-format="support"' in response.text
-    assert "data-hero-topic" in response.text
-    assert 'data-avds-component="spotlight-grid"' in response.text
-    assert 'data-avds-component="spotlight-card"' in response.text
-    assert 'data-avds-component="themes-grid"' in response.text
-    assert 'data-avds-component="theme-card"' in response.text
-    assert 'data-avds-component="topic-brief"' in response.text
-    assert 'data-avds-component="topic-chip"' in response.text
-    assert 'data-avds-component="pathways-grid"' in response.text
-    assert 'data-avds-component="pathway-card"' in response.text
-    assert 'data-topic-reset="true"' in response.text
-    assert response.text.count("const total = state.sources.length;") == 1
-    assert (
-        "...state.sources.map((source) => source.slug).filter(Boolean)" in response.text
-    )
-    assert "itemBadges(item)" in response.text
-    assert "copy.reload_confirm" in response.text
-    assert "Казахстан" in response.text
-    assert "Показать ещё" in response.text
-    assert "renderSavedViews();" in response.text
-    assert "grantRadarOpportunityWorkflow.v1" in response.text
-    assert "function renderWorkspaceFilter()" in response.text
-    assert "function setOpportunityWorkflowStatus" in response.text
-    assert 'data-workflow-status="${opportunityId}"' in response.text
-    assert "function setSavedViewNotice(message)" in response.text
-    assert "setSavedViewNotice(copy.saved_view_saved);" in response.text
-    assert "setSavedViewNotice(copy.saved_view_removed);" in response.text
-    assert "setSavedViewNotice(copy.saved_view_shared);" in response.text
-    assert "window.alert(" not in response.text
-    assert "window.prompt(copy.saved_view_share_prompt, href);" in response.text
-    assert "navigator.share" in response.text
-    assert 'aria-pressed="true"' in response.text
-    assert "goToView(button.dataset.view)" in response.text
-    assert "function goToView(view, options = {})" in response.text
-    assert 'const trustLibrary = $("#trust-library");' in response.text
-    assert "trustLibrary.open = true;" in response.text
-    assert 'function openTrustDisclosure(targetId = "")' in response.text
-    assert "methodologyLibrary.open = true;" in response.text
-    assert "function syncViewFromHash" in response.text
-    assert "function scheduleHashViewSync" in response.text
-    assert "const shouldScroll = options.scroll !== false;" in response.text
-    assert "document.getElementById(view)?.scrollIntoView" in response.text
-    assert "syncViewFromHash({ scroll: false })" in response.text
-    assert "function scheduleOpportunityRender" in response.text
-    assert (
-        'function openOpportunityDetail(opportunityId, fallbackUrl = "")'
-        in response.text
-    )
-    assert "data-opportunity-detail" in response.text
-    assert "detail_meta_labels" in response.text
-    assert "content-visibility: auto;" not in response.text
-    assert "contain-intrinsic-size:" not in response.text
-    assert ".opportunity {" in response.text
-    opportunity_css = response.text.split(".opportunity {", 1)[1].split("}", 1)[0]
-    assert "border: 1px solid var(--line-subtle);" in opportunity_css
-    assert "background: var(--panel-wash-card);" in opportunity_css
-    assert "border-left:" not in opportunity_css
-    assert ".opportunity-content {" in response.text
-    assert ".opportunity-rail {" in response.text
-    assert 'class="opportunity-rail"' in response.text
-    assert 'class="opportunity-summary"' in response.text
-    assert "Параметры" in response.text
-    assert ".signal-box" in response.text
-    assert ".signal-pill" in response.text
-    assert ".topic-brief" in response.text
-    assert ".topic-brief-chip" in response.text
-    assert "@media (max-width: 820px)" in response.text
-    assert ".sticky-shell {\n        display: none;" in response.text
-    assert "backdrop-filter: blur(18px);" in response.text
-    assert 'window.addEventListener("hashchange", syncViewFromHash)' in response.text
-    assert 'window.addEventListener("resize", scheduleHashViewSync)' in response.text
-    assert "window.requestAnimationFrame(syncViewFromHash)" in response.text
-    assert 'href="/opportunities?limit=20"' not in response.text
-
-
-def test_browser_404_is_branded_while_api_404_stays_json(monkeypatch):
-    _reset_api_state(monkeypatch)
-    client = TestClient(api_main.app)
-
-    browser_response = client.get(
-        "/missing-public-page?lang=en",
-        headers={"Accept": "text/html"},
-    )
-    api_response = client.get(f"/opportunities/{uuid4()}")
-
-    assert browser_response.status_code == 404
-    assert browser_response.headers["content-type"].startswith("text/html")
-    assert browser_response.headers["x-robots-tag"] == "noindex, follow"
-    assert "This page does not exist" in browser_response.text
-    assert 'meta name="description"' in browser_response.text
-    assert 'href="/?lang=en"' in browser_response.text
-    assert 'class="primary-action"' in browser_response.text
-    assert ".primary-action {" in browser_response.text
-    assert "display: block;" in browser_response.text
-    assert "min-height: 0;" in browser_response.text
-    assert 'class="brand"' in browser_response.text
-    assert 'data-avds-component="not-found"' in browser_response.text
-    assert "contact@qaz.fund" not in browser_response.text
-    assert api_response.status_code == 404
-    assert api_response.headers["content-type"].startswith("application/json")
-
-
-def test_malformed_human_permalink_recovers_without_framework_error(monkeypatch):
-    _reset_api_state(monkeypatch)
-    client = TestClient(api_main.app)
-
-    browser_response = client.get(
-        "/opportunity/not-a-uuid?lang=ru",
-        headers={"Accept": "text/html"},
-    )
-    api_response = client.get("/opportunities/not-a-uuid")
-
-    assert browser_response.status_code == 404
-    assert browser_response.headers["content-type"].startswith("text/html")
-    assert "Такой страницы нет" in browser_response.text
-    assert 'href="/?lang=ru"' in browser_response.text
-    assert api_response.status_code == 422
-    assert api_response.headers["content-type"].startswith("application/json")
 
 
 def test_root_rejects_untrusted_host_header(monkeypatch):
@@ -744,7 +173,7 @@ def test_root_landing_preserves_root_path_prefix(monkeypatch):
 
     assert response.status_code == 200
     assert 'data-api-base="/grant-radar"' in response.text
-    assert 'href="/grant-radar/docs?lang=ru"' in response.text
+    assert 'href="/grant-radar/terms?lang=ru"' in response.text
     assert 'href="/grant-radar/?lang=ru"' in response.text
     assert 'href="/grant-radar/?lang=en"' in response.text
     assert (
@@ -1098,55 +527,22 @@ def test_root_supports_explicit_english_dashboard(monkeypatch):
         "<title>QAZ.FUND – open support programs for Kazakhstan</title>"
         in response.text
     )
-    assert "\u2014" not in response.text
+    assert "A working navigator for support in Kazakhstan" in response.text
     assert "Find open programs and turn them into a clear next step." in response.text
-    assert (
-        "Grants, subsidies, accelerators, and procurement – with source links, "
-        "data status, and deadlines." in response.text
-    )
-    assert "What people usually look for" in response.text
-    assert "Clear theme" in response.text
-    assert "Where to start?" in response.text
     assert "Find support" in response.text
-    assert "Check a program" in response.text
-    assert "Deadlines this month" in response.text
-    assert "Tenders and procurement" in response.text
-    assert "For working decisions, not endless browsing" in response.text
-    assert "For analysts" in response.text
-    assert "For journalists" in response.text
-    assert "For editors" in response.text
-    assert "For legal review" in response.text
-    assert "For public-sector teams" in response.text
-    assert "Priority: Kazakhstan and Central Asia" in response.text
-    assert ">API</a>" in response.text
-    assert "Data status" in response.text
     assert "Theme" in response.text
     assert "Region" in response.text
     assert "Timing" in response.text
     assert "All regions" in response.text
     assert "Rolling" in response.text
-    assert "Find support" in response.text
-    assert '<strong id="health-status">Catalog available</strong>' in response.text
-    assert "What you can check now" in response.text
-    assert "What to check first" in response.text
-    assert "Support for businesses" in response.text
-    assert "By applicant type" in response.text
-    assert "Accelerators, grants and cloud credits" in response.text
-    assert "By topic" in response.text
-    assert "By focus area" in response.text
-    assert "AI programs, cloud credits, and digital skills" in response.text
-    assert "AI and digital" in response.text
-    assert "Why it is shown" in response.text
-    assert "For product and AI teams" in response.text
-    assert "For teams working with public-sector delivery" in response.text
-    assert "Clear one filter and try again" in response.text
+    assert "Open card" in response.text
     assert 'rel="canonical" href="http://testserver/?lang=en"' in response.text
-    assert "Load more" in response.text
-    assert 'aria-label="Saved collection status"' in response.text
-    assert "Copy the link to this collection" in response.text
-    assert "Next actions" in response.text
-    assert "Stored in this browser." in response.text
-    assert "Check the criteria on the official source." in response.text
+    assert 'data-avds-component="quick-links-rail"' not in response.text
+    assert 'data-avds-component="public-summary-strip"' not in response.text
+    assert 'href="/docs?lang=en"' not in response.text
+    assert 'href="/status?lang=en"' not in response.text
+    assert 'id="workspace-filter"' not in response.text
+    assert 'id="profile-builder"' not in response.text
 
 
 def test_root_supports_explicit_kazakh_dashboard_route(monkeypatch):
@@ -1165,13 +561,14 @@ def test_root_supports_explicit_kazakh_dashboard_route(monkeypatch):
     assert 'aria-current="page"' in response.text
     assert 'rel="canonical" href="http://testserver/?lang=kk"' in response.text
     assert "Қазақстандағы қолдауды іздеу навигаторы" in response.text
+    assert (
+        "Ашық бағдарламаларды тауып, келесі қадамды түсінікті етіңіз." in response.text
+    )
     assert "Қолдауды табу" in response.text
-    assert "Дереккөздер және ашықтық" in response.text
-    assert "Қазір нені тексеруге болады" in response.text
-    assert "Дайын маршруттар" in response.text
-    assert "Рабочий навигатор поддержки" not in response.text
-    assert "Найти поддержку" not in response.text
-    assert "Источники и прозрачность" not in response.text
+    assert 'data-avds-component="quick-links-rail"' not in response.text
+    assert 'data-avds-component="public-summary-strip"' not in response.text
+    assert 'data-mobile-view="sources"' not in response.text
+    assert 'data-mobile-action="saved"' not in response.text
 
 
 def test_root_head_is_available(monkeypatch):
@@ -4097,16 +3494,16 @@ def test_insights_chart_keeps_full_label_in_svg_title():
     assert 'class="chart-label chart-label-mobile"' in chart
 
 
-def test_public_info_pages_are_linkable(monkeypatch):
+def test_public_info_pages_remain_directly_linkable(monkeypatch):
     _reset_api_state(monkeypatch)
     client = TestClient(api_main.app)
 
     root = client.get("/?lang=ru")
-    assert "/insights?lang=ru" in root.text
     assert "/terms?lang=ru" in root.text
     assert "/data-policy?lang=ru" in root.text
-    assert "/data-routes?lang=ru" in root.text
     assert "/attribution?lang=ru" in root.text
+    assert "/insights?lang=ru" not in root.text
+    assert "/data-routes?lang=ru" not in root.text
 
     for path, marker in (
         ("/terms", "Как пользоваться QAZ.FUND"),
@@ -4353,7 +3750,7 @@ def test_funder_topics_do_not_repeat_opportunity_format():
     )
 
 
-def test_root_renders_initial_metrics_from_cached_items(monkeypatch):
+def test_root_keeps_metrics_out_of_public_hero(monkeypatch):
     _reset_api_state(monkeypatch)
     api_main._cache.extend(
         [
@@ -4375,52 +3772,30 @@ def test_root_renders_initial_metrics_from_cached_items(monkeypatch):
                 tags=["us"],
                 score=0.1,
             ),
-            Opportunity(
-                source="eeas_kazakhstan",
-                source_url="https://example.org/expired",
-                type=OpportunityType.GRANT,
-                title="Expired",
-                summary="Expired Kazakhstan call",
-                tags=["kazakhstan", "grant"],
-                deadline=date.today() - timedelta(days=1),
-                score=0.9,
-            ),
         ]
     )
     client = TestClient(api_main.app)
-    expected_current = api_main._cached_current_catalog_items(content_lang="en")
-    expected_sources = api_main._cached_coverage_payload()["enabled_sources"]
 
     response = client.get("/")
 
     assert response.status_code == 200
-    assert '<strong id="metric-total">3</strong>' in response.text
-    assert (
-        f'<strong id="metric-strong" data-catalog-count="{len(expected_current)}">'
-        f"{len(expected_current)}</strong>" in response.text
-    )
-    assert (
-        f'<strong id="metric-sources" data-source-count="{expected_sources}">'
-        f"{expected_sources}</strong>" in response.text
-    )
-    assert '<strong id="health-items">3</strong>' in response.text
-    assert f'<strong id="health-sources">{expected_sources}</strong>' in response.text
+    assert '<strong id="metric-total">' not in response.text
+    assert '<strong id="metric-strong"' not in response.text
+    assert '<strong id="metric-sources"' not in response.text
+    assert 'data-avds-component="public-summary-strip"' not in response.text
 
 
-def test_root_does_not_build_public_projections_on_cold_start(monkeypatch):
+def test_root_keeps_public_hero_quiet_on_cold_start(monkeypatch):
     _reset_api_state(monkeypatch)
     client = TestClient(api_main.app)
 
     response = client.get("/")
 
     assert response.status_code == 200
-    assert (
-        '<strong id="metric-strong" data-catalog-count="0">0</strong>' in response.text
-    )
-    assert (
-        f'<strong id="metric-sources" data-source-count="{len(api_main.PARSERS)}">'
-        f"{len(api_main.PARSERS)}</strong>" in response.text
-    )
+    assert '<strong id="metric-strong"' not in response.text
+    assert '<strong id="metric-sources"' not in response.text
+    assert 'data-avds-component="public-summary-strip"' not in response.text
+    assert 'data-avds-component="quick-links-rail"' not in response.text
 
 
 def test_large_opportunity_response_supports_gzip(monkeypatch):

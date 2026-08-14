@@ -45,7 +45,6 @@ def _dashboard_schema(
     website_id = f"{canonical_href}#website"
     page_id = f"{canonical_href}#page"
     catalog_id = f"{canonical_href}#catalog"
-    faq_id = f"{canonical_href}#faq"
     payload = {
         "@context": "https://schema.org",
         "@graph": [
@@ -83,46 +82,6 @@ def _dashboard_schema(
                 "url": canonical_href,
                 "numberOfItems": items,
             },
-            {
-                "@type": "FAQPage",
-                "@id": faq_id,
-                "url": f"{canonical_href}#methodology-panel",
-                "inLanguage": str(copy["lang"]),
-                "mainEntity": [
-                    {
-                        "@type": "Question",
-                        "name": str(copy["faq_q1"]),
-                        "acceptedAnswer": {
-                            "@type": "Answer",
-                            "text": str(copy["faq_a1"]),
-                        },
-                    },
-                    {
-                        "@type": "Question",
-                        "name": str(copy["faq_q2"]),
-                        "acceptedAnswer": {
-                            "@type": "Answer",
-                            "text": str(copy["faq_a2"]),
-                        },
-                    },
-                    {
-                        "@type": "Question",
-                        "name": str(copy["faq_q3"]),
-                        "acceptedAnswer": {
-                            "@type": "Answer",
-                            "text": str(copy["faq_a3"]),
-                        },
-                    },
-                    {
-                        "@type": "Question",
-                        "name": str(copy["faq_q4"]),
-                        "acceptedAnswer": {
-                            "@type": "Answer",
-                            "text": str(copy["faq_a4"]),
-                        },
-                    },
-                ],
-            },
         ],
     }
     # Keep explicit alternate URLs in the graph for crawlers that cross-check.
@@ -147,24 +106,6 @@ def render_dashboard(
     base_raw = root_path.rstrip("/")
     base = escape(base_raw, quote=True)
     active_lang = str(copy["lang"])
-    docs_path = (
-        f"{base_raw}/docs?lang={active_lang}"
-        if base_raw
-        else f"/docs?lang={active_lang}"
-    )
-    docs_href = escape(docs_path, quote=True)
-    insights_path = (
-        f"{base_raw}/insights?lang={active_lang}"
-        if base_raw
-        else f"/insights?lang={active_lang}"
-    )
-    insights_href = escape(insights_path, quote=True)
-    media_path = (
-        f"{base_raw}/media?lang={active_lang}"
-        if base_raw
-        else f"/media?lang={active_lang}"
-    )
-    media_href = escape(media_path, quote=True)
     terms_href = escape(
         (
             f"{base_raw}/terms?lang={active_lang}"
@@ -181,19 +122,6 @@ def render_dashboard(
         ),
         quote=True,
     )
-    data_routes_href = escape(
-        (
-            f"{base_raw}/data-routes?lang={active_lang}"
-            if base_raw
-            else f"/data-routes?lang={active_lang}"
-        ),
-        quote=True,
-    )
-    data_routes_label = {
-        "ru": "Официальные данные РК",
-        "kk": "Қазақстанның ресми деректері",
-        "en": "Official Kazakhstan data",
-    }[active_lang]
     attribution_href = escape(
         (
             f"{base_raw}/attribution?lang={active_lang}"
@@ -202,12 +130,6 @@ def render_dashboard(
         ),
         quote=True,
     )
-    status_path = (
-        f"{base_raw}/status?lang={active_lang}"
-        if base_raw
-        else f"/status?lang={active_lang}"
-    )
-    status_href = escape(status_path, quote=True)
     kk_href = escape(_root_href(base_raw, "kk"), quote=True)
     ru_href = escape(_root_href(base_raw, "ru"), quote=True)
     en_href = escape(_root_href(base_raw, "en"), quote=True)
@@ -258,13 +180,6 @@ def render_dashboard(
         f'<p class="language-fallback-note" lang="kk" data-language-fallback="source">'
         f"{escape(fallback_note)}</p>"
         if fallback_note
-        else ""
-    )
-    initial_empty_message = escape(str(copy["catalog_empty"]))
-    initial_empty_markup = (
-        '<p class="message empty" data-catalog-empty="true">'
-        f"{initial_empty_message}</p>"
-        if relevant_items == 0
         else ""
     )
 
@@ -420,13 +335,8 @@ def render_dashboard(
                 <h1>{escape(str(copy["headline"]))}</h1>
               </div>
               <p>{escape(str(copy["subtitle"]))}</p>
-              <div class="focus-row" aria-label="{escape(str(copy["focus_aria"]), quote=True)}">
-                <span class="focus-chip">{escape(str(copy["focus_primary"]))}</span>
-                <span class="focus-chip">{escape(str(copy["focus_secondary"]))}</span>
-              </div>
             </div>
           </header>
-          <p class="hero-intro">{escape(str(copy["hero_intro"]))}</p>
           <div class="hero-actions">
             <button
               class="button primary"
@@ -435,102 +345,9 @@ def render_dashboard(
               data-hero-view="opportunities"
               data-avds-component="button"
             >{escape(str(copy["hero_primary_cta"]))}</button>
-            <a
-              class="button"
-              href="{insights_href}"
-              data-avds-component="button"
-            >{escape(str(copy["insights_link"]))}</a>
-          </div>
-          <div class="hero-points" aria-label="{escape(str(copy["hero_stage_title"]), quote=True)}">
-            <div class="hero-point">
-              <span class="hero-point-index">01</span>
-              <span>{escape(str(copy["hero_stage_point_one"]))}</span>
-            </div>
-            <div class="hero-point">
-              <span class="hero-point-index">02</span>
-              <span>{escape(str(copy["hero_stage_point_two"]))}</span>
-            </div>
-            <div class="hero-point">
-              <span class="hero-point-index">03</span>
-              <span>{escape(str(copy["hero_stage_point_three"]))}</span>
-            </div>
           </div>
         </div>
-        <section
-          class="hero-stage"
-          aria-label="{escape(str(copy["hero_picks_label"]), quote=True)}"
-          data-avds-component="quick-links-rail"
-        >
-          <span class="hero-stage-eyebrow">{escape(str(copy["hero_stage_eyebrow"]))}</span>
-          <h2 class="hero-stage-title">{escape(str(copy["hero_stage_title"]))}</h2>
-          <div class="hero-picks">
-            <div class="hero-pick-row">
-              <button
-                class="button hero-pick"
-                type="button"
-                data-hero-reset="true"
-                data-hero-view="opportunities"
-                data-avds-component="button"
-              >{escape(str(copy["hero_pick_startup"]))}</button>
-              <button
-                class="button hero-pick"
-                type="button"
-                data-hero-reset="true"
-                data-hero-view="opportunities"
-                data-hero-focus="search"
-                data-avds-component="button"
-              >{escape(str(copy["hero_pick_business"]))}</button>
-              <button
-                class="button hero-pick"
-                type="button"
-                data-hero-reset="true"
-                data-hero-view="opportunities"
-                data-hero-deadline="month"
-                data-hero-sort="deadline"
-                data-avds-component="button"
-              >{escape(str(copy["hero_pick_farmer"]))}</button>
-              <button
-                class="button hero-pick"
-                type="button"
-                data-hero-reset="true"
-                data-hero-view="opportunities"
-                data-hero-format="support"
-                data-hero-region="kazakhstan"
-                data-avds-component="button"
-              >{escape(str(copy["hero_pick_science"]))}</button>
-              <button
-                class="button hero-pick"
-                type="button"
-                data-hero-reset="true"
-                data-hero-view="opportunities"
-                data-hero-format="tenders"
-                data-hero-topic="public"
-                data-hero-region="kazakhstan"
-                data-avds-component="button"
-              >{escape(str(copy["hero_pick_tenders"]))}</button>
-            </div>
-          </div>
-        </section>
       </div>
-
-      <section
-        class="grid"
-        aria-label="{escape(str(copy["metrics_aria"]), quote=True)}"
-        data-avds-component="public-summary-strip"
-      >
-        <div class="metric avds-stat-kpi-card" data-avds-component="metric-card">
-          <span>{escape(str(copy["metric_total"]))}</span>
-          <strong id="metric-total">{items}</strong>
-        </div>
-        <div class="metric strong avds-stat-kpi-card" data-avds-component="metric-card">
-          <span>{escape(str(copy["metric_relevant"]))}</span>
-          <strong id="metric-strong" data-catalog-count="{relevant_items}">{relevant_items}</strong>
-        </div>
-        <div class="metric sources avds-stat-kpi-card" data-avds-component="metric-card">
-          <span>{escape(str(copy["metric_sources"]))}</span>
-          <strong id="metric-sources" data-source-count="{source_count}">{source_count}</strong>
-        </div>
-      </section>
     </section>
 
     <div class="sticky-shell" data-avds-component="sticky-shell">
@@ -547,30 +364,9 @@ def render_dashboard(
             data-avds-component="button"
             aria-pressed="true"
           >{escape(str(copy["tab_opportunities"]))}</button>
-          <button
-            class="button tab avds-tabs-trigger"
-            type="button"
-            data-view="sources"
-            data-avds-component="button"
-          >{escape(str(copy["tab_sources"]))}</button>
         </nav>
         <div class="sticky-actions">
-          <div class="status-pill" id="status-pill" data-avds-component="status-pill">
-            <span class="status-dot"></span>
-            <span>{escape(str(copy["status_checking"]))}</span>
-          </div>
           <div class="topbar-actions">
-            <div class="utility-links">
-              <a class="utility-link" href="{insights_href}"
-                >{escape(str(copy["insights_link"]))}</a
-              >
-              <a class="utility-link" href="{docs_href}">{escape(str(copy["api_docs"]))}</a>
-              <a class="utility-link" href="{media_href}">{escape(str(copy["media_link"]))}</a>
-              <a class="utility-link" href="#methodology-panel"
-                >{escape(str(copy["methodology_link"]))}</a
-              >
-              <a class="utility-link" href="{status_href}">{escape(str(copy["status_link"]))}</a>
-            </div>
             <div class="lang-switch" role="group" aria-label="{language_switch_label}">
               <a
                 class="{lang_kk_class}"
@@ -775,163 +571,11 @@ def render_dashboard(
         >{escape(str(copy["clear_filters"]))}</button>
       </div>
       <div
-        class="saved-views"
-        aria-label="{escape(str(copy["collections_aria"]), quote=True)}"
-        data-avds-component="saved-views"
-      >
-        <div class="saved-views-head">
-          <span class="filter-label">{escape(str(copy["collections_label"]))}</span>
-          <div class="saved-actions">
-            <button
-              class="text-button workspace-filter"
-              type="button"
-              id="workspace-filter"
-              aria-pressed="false"
-              data-avds-component="button"
-            >{escape(str(copy["workspace_filter"]))}</button>
-            <details class="workspace-backup" id="workspace-backup">
-              <summary
-                class="text-button"
-                aria-label="{escape(str(copy["workspace_backup_aria"]), quote=True)}"
-              >{escape(str(copy["workspace_backup"]))}</summary>
-              <div
-                class="workspace-backup-menu"
-                role="group"
-                aria-label="{escape(str(copy["workspace_backup_aria"]), quote=True)}"
-              >
-                <button class="text-button" type="button" id="export-csv">
-                  {escape(str(copy["export_csv"]))}
-                </button>
-                <button class="text-button" type="button" id="export-deadlines">
-                  {escape(str(copy["export_deadlines"]))}
-                </button>
-                <button class="text-button" type="button" id="export-workspace">
-                  {escape(str(copy["workspace_export"]))}
-                </button>
-                <label class="text-button" for="import-workspace">
-                  {escape(str(copy["workspace_import"]))}
-                </label>
-                <input
-                  class="visually-hidden"
-                  type="file"
-                  id="import-workspace"
-                  accept="application/json,.json"
-                >
-              </div>
-            </details>
-            <button
-              class="text-button"
-              type="button"
-              id="save-view"
-              data-avds-component="button"
-            >{escape(str(copy["save_view"]))}</button>
-            <button
-              class="text-button"
-              type="button"
-              id="share-view"
-              data-avds-component="button"
-            >{escape(str(copy["share_view"]))}</button>
-          </div>
-        </div>
-        <div id="saved-views" class="saved-view-row">
-          <span class="saved-empty">{escape(str(copy["collections_empty"]))}</span>
-        </div>
-        <div
-          id="saved-view-notice"
-          class="saved-view-notice hidden"
-          aria-live="polite"
-          aria-label="{escape(str(copy["saved_view_status_label"]), quote=True)}"
-        ></div>
-      </div>
-      <section
-        class="workspace-queue"
-        id="workspace-queue"
-        aria-label="{escape(str(copy["workspace_queue_aria"]), quote=True)}"
-        hidden
-      >
-        <div class="workspace-queue-head">
-          <h2 class="workspace-queue-title">{escape(str(copy["workspace_queue_title"]))}</h2>
-          <span class="workspace-queue-local">{escape(str(copy["workspace_queue_local"]))}</span>
-        </div>
-        <div class="workspace-queue-list" id="workspace-queue-list"></div>
-        <span class="workspace-queue-more" id="workspace-queue-more"></span>
-      </section>
-      <details
-        class="profile-builder"
-        id="profile-builder"
-        data-avds-component="profile-builder"
-      >
-        <summary>
-          <span class="profile-builder-title">{escape(str(copy["profile_title"]))}</span>
-          <span class="profile-builder-intro">{escape(str(copy["profile_intro"]))}</span>
-        </summary>
-        <div class="profile-builder-body">
-          <div class="profile-grid">
-            <label class="filter-block" for="profile-audience">
-              <span class="filter-label">{escape(str(copy["profile_audience"]))}</span>
-              <select class="field avds-field" id="profile-audience" data-avds-component="field">
-                <option value="all">{escape(str(copy["audience_all"]))}</option>
-                <option value="startup">{escape(str(copy["audience_startup"]))}</option>
-                <option value="business">{escape(str(copy["audience_business"]))}</option>
-                <option value="farmer">{escape(str(copy["audience_farmer"]))}</option>
-                <option value="ngo">{escape(str(copy["audience_ngo"]))}</option>
-                <option value="science">{escape(str(copy["audience_science"]))}</option>
-              </select>
-            </label>
-            <label class="filter-block" for="profile-region">
-              <span class="filter-label">{escape(str(copy["profile_region"]))}</span>
-              <select class="field avds-field" id="profile-region" data-avds-component="field">
-                <option value="all">{escape(str(copy["region_all"]))}</option>
-                <option value="kazakhstan">{escape(str(copy["region_kazakhstan"]))}</option>
-                <option value="central_asia">{escape(str(copy["region_central_asia"]))}</option>
-                <option value="global">{escape(str(copy["region_global"]))}</option>
-              </select>
-            </label>
-            <label class="filter-block" for="profile-format">
-              <span class="filter-label">{escape(str(copy["profile_format"]))}</span>
-              <select class="field avds-field" id="profile-format" data-avds-component="field">
-                <option value="all">{escape(str(copy["format_all"]))}</option>
-                <option value="grants">{escape(str(copy["format_grants"]))}</option>
-                <option value="support">{escape(str(copy["format_support"]))}</option>
-                <option value="accelerators">{escape(str(copy["format_accelerators"]))}</option>
-                <option value="tenders">{escape(str(copy["format_tenders"]))}</option>
-              </select>
-            </label>
-            <label class="filter-block" for="profile-deadline">
-              <span class="filter-label">{escape(str(copy["profile_deadline"]))}</span>
-              <select class="field avds-field" id="profile-deadline" data-avds-component="field">
-                <option value="all">{escape(str(copy["deadline_filter_all"]))}</option>
-                <option value="soon">{escape(str(copy["deadline_filter_soon"]))}</option>
-                <option value="month">{escape(str(copy["deadline_filter_month"]))}</option>
-                <option value="rolling">{escape(str(copy["deadline_filter_rolling"]))}</option>
-              </select>
-            </label>
-          </div>
-          <div class="profile-builder-actions">
-            <button class="button primary" type="button" id="profile-apply"
-              data-avds-component="button">
-              {escape(str(copy["profile_apply"]))}
-            </button>
-            <button class="text-button" type="button" id="profile-reset"
-              data-avds-component="button">
-              {escape(str(copy["profile_reset"]))}
-            </button>
-          </div>
-          <p class="profile-builder-note">{escape(str(copy["profile_local_note"]))}</p>
-        </div>
-      </details>
-      <div
-        id="topic-brief"
-        class="topic-brief hidden"
-        data-avds-component="topic-brief"
-      ></div>
-      <div
         id="opportunities-message"
         class="message loading-state"
         data-avds-component="message"
         aria-label="{escape(str(copy["loading_opportunities"]), quote=True)}"
       ><span class="visually-hidden">{escape(str(copy["loading_opportunities"]))}</span></div>
-      {initial_empty_markup}
       <div id="opportunities-list" class="list" aria-live="polite"></div>
       <div id="load-more-wrap" class="list-actions hidden">
         <button
@@ -943,7 +587,12 @@ def render_dashboard(
       </div>
     </section>
 
-    <details class="discovery-library" data-avds-component="discovery-library">
+    <details
+      class="discovery-library"
+      data-avds-component="discovery-library"
+      hidden
+      aria-hidden="true"
+    >
       <summary>
         <span>{escape(str(copy["discovery_library_summary"]))}</span>
         <span class="discovery-library-description">
@@ -1001,6 +650,8 @@ def render_dashboard(
       class="trust-library"
       id="trust-library"
       data-avds-component="trust-library"
+      hidden
+      aria-hidden="true"
     >
       <summary>
         <span>{escape(str(copy["trust_library_summary"]))}</span>
@@ -1153,26 +804,10 @@ def render_dashboard(
     </details>
     <footer class="site-footer" data-avds-component="site-footer">
       <nav class="site-footer-nav" aria-label="{escape(str(copy["views_aria"]), quote=True)}">
-        <a href="#opportunities">{escape(str(copy["tab_opportunities"]))}</a>
-        <a href="#sources">{escape(str(copy["tab_sources"]))}</a>
-        <a href="{insights_href}">{escape(str(copy["insights_link"]))}</a>
-        <a href="{media_href}">{escape(str(copy["media_link"]))}</a>
         <a href="{terms_href}">{escape(str(copy["terms_link"]))}</a>
         <a href="{data_policy_href}">{escape(str(copy["data_policy_link"]))}</a>
-        <a href="{data_routes_href}">{escape(data_routes_label)}</a>
         <a href="{attribution_href}">{escape(str(copy["attribution_link"]))}</a>
-        <a href="{status_href}">{escape(str(copy["status_link"]))}</a>
-        <a href="{docs_href}">{escape(str(copy["api_docs"]))}</a>
-        <a href="{terms_href}">{escape(str(copy["footer_terms"]))}</a>
-        <a href="{data_policy_href}">{escape(str(copy["footer_data_policy"]))}</a>
-        <a href="{attribution_href}">{escape(str(copy["footer_attribution"]))}</a>
       </nav>
-      <p>
-        {escape(str(copy["footer_owner"]))}
-        <a href="https://qdev.run" target="_blank" rel="noopener">
-          {escape(str(copy["footer_qdev"]))}
-        </a>
-      </p>
       <p>{escape(str(copy["footer_disclaimer"]))}</p>
       <p>
         <a
@@ -1196,19 +831,6 @@ def render_dashboard(
           <path d="M8 7V5a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2M3 12h18M10 12v2h4v-2" />
         </svg>
         <span>{escape(str(copy["mobile_catalog"]))}</span>
-      </button>
-      <button class="mobile-nav-item" type="button" data-mobile-view="sources" aria-pressed="false">
-        <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
-          <ellipse cx="12" cy="5" rx="8" ry="3" />
-          <path d="M4 5v6c0 1.7 3.6 3 8 3s8-1.3 8-3V5M4 11v6c0 1.7 3.6 3 8 3s8-1.3 8-3v-6" />
-        </svg>
-        <span>{escape(str(copy["mobile_sources"]))}</span>
-      </button>
-      <button class="mobile-nav-item" type="button" data-mobile-action="saved" aria-pressed="false">
-        <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
-          <path d="M6 3h12a1 1 0 0 1 1 1v17l-7-4-7 4V4a1 1 0 0 1 1-1Z" />
-        </svg>
-        <span>{escape(str(copy["mobile_saved"]))}</span>
       </button>
       <button class="mobile-nav-item" type="button" data-mobile-action="filters"
         aria-pressed="false">
@@ -4337,8 +3959,11 @@ def render_dashboard(
     }}
 
     function renderMetrics() {{
-      const baselineRelevant = Number($("#metric-strong").dataset.catalogCount || 0);
+      const totalMetric = $("#metric-total");
+      const relevantMetric = $("#metric-strong");
       const sourceMetric = $("#metric-sources");
+      if (!totalMetric || !relevantMetric || !sourceMetric) return;
+      const baselineRelevant = Number(relevantMetric.dataset.catalogCount || 0);
       const baselineSourceCount = Number(
         sourceMetric.dataset.sourceCount || sourceMetric.textContent || 0
       );
@@ -4347,10 +3972,10 @@ def render_dashboard(
         ? state.coverage.relevant_open_items
         : baselineRelevant;
       const sourceCount = new Set(state.items.map((item) => item.source)).size;
-      $("#metric-total").textContent = formatNumber.format(
+      totalMetric.textContent = formatNumber.format(
         state.health ? state.health.items : state.items.length
       );
-      $("#metric-strong").textContent = formatNumber.format(highPriority);
+      relevantMetric.textContent = formatNumber.format(highPriority);
       sourceMetric.textContent = formatNumber.format(
         state.coverage && Number.isFinite(state.coverage.enabled_sources)
           ? state.coverage.enabled_sources
@@ -4529,9 +4154,12 @@ def render_dashboard(
         : text("health_note_ready_no_items", {{
             checked_at: checkedAt
           }});
-      $("#status-pill span:last-child").textContent = status === "ok"
-        ? copy.api_online
-        : copy.api_failed;
+      const statusLabel = $("#status-pill span:last-child");
+      if (statusLabel) {{
+        statusLabel.textContent = status === "ok"
+          ? copy.api_online
+          : copy.api_failed;
+      }}
     }}
 
     function renderFilterSummary(resultCount) {{
@@ -4679,46 +4307,22 @@ def render_dashboard(
               tag
             ])
           ).values()
-        ).slice(0, 4);
-        const scoreTone = scoreClass(item.score);
-        const deadline = formatDeadline(item.deadline);
+        ).slice(0, 3);
         const sourceName = humanizeLabel(item.source);
-        const funderLabel = item.funder
-          ? escapeHtml(humanizeLabel(item.funder))
-          : escapeHtml(sourceName);
-        const funderHref = escapeHtml(funderPageHref(funderSlug(item)));
-        const funderProfileLink = (
-          `<a class="footer-funder-link" href="${{funderHref}}">`
-          + `${{escapeHtml(copy.view_funder)}}</a>`
-        );
-        const footerSource = item.funder
-          && String(item.funder).toLowerCase() !== sourceName.toLowerCase()
-          ? `${{funderLabel}}<span class="footer-sep">|</span>${{escapeHtml(sourceName)}}`
-          : funderLabel;
-        const badges = itemBadges(item);
         const cardTitleText = String(item.title || "");
         const cardTitle = escapeHtml(cardTitleText);
         const opportunityId = escapeHtml(item.id);
         const cardUrl = escapeHtml(externalActionUrl(item));
         const pageUrl = escapeHtml(opportunityPageHref(item.id));
-        const saved = isOpportunitySaved(item.id);
-        const saveLabel = saved ? copy.unsave_opportunity : copy.save_opportunity;
-        const workflowMarkup = saved
-          ? `<label class="workflow-control">
-              <span>${{escapeHtml(copy.workflow_label)}}</span>
-              <select data-workflow-status="${{opportunityId}}">
-                ${{workflowOptionsMarkup(item.id)}}
-              </select>
-            </label>`
-          : "";
-        const clickLabel = escapeHtml(cardTitleText);
-        const formatLabel = opportunityFormatLabel(item);
-        const regionLabel = opportunityRegionLabel(item);
         const deadlineLabel = opportunityDeadlineLabel(item);
+        const deadlineFactLabel = escapeHtml(copy.meta_deadline_label);
+        const organizerLabel = item.funder
+          ? humanizeLabel(item.funder)
+          : sourceName;
         return `<article
-          class="opportunity avds-document-row ${{scoreTone}}"
+          class="opportunity avds-document-row"
           data-avds-component="opportunity-card"
-          data-avds-pattern="decision-summary"
+          data-avds-pattern="catalog-card"
         >
           <div class="opportunity-main">
             <div class="opportunity-content">
@@ -4736,6 +4340,16 @@ def render_dashboard(
                 </div>
               </div>
               <p class="opportunity-summary">${{escapeHtml(summarize(item))}}</p>
+              <div class="opportunity-facts" aria-label="${{escapeHtml(copy.card_meta_label)}}">
+                <span>
+                  <span class="opportunity-fact-label">${{deadlineFactLabel}}</span>
+                  <strong>${{escapeHtml(deadlineLabel)}}</strong>
+                </span>
+                <span>
+                  <span class="opportunity-fact-label">${{escapeHtml(copy.source_label)}}</span>
+                  <strong>${{escapeHtml(organizerLabel)}}</strong>
+                </span>
+              </div>
               <div class="card-actions">
                 <button
                   class="detail-link"
@@ -4749,64 +4363,8 @@ def render_dashboard(
                   target="_blank"
                   rel="noopener"
                 >${{escapeHtml(copy.open_source_short)}}</a>
-                <a
-                  class="more-link"
-                  href="${{pageUrl}}"
-                  target="_blank"
-                  rel="noopener"
-                >${{escapeHtml(copy.read_more)}}</a>
               </div>
             </div>
-            <aside class="opportunity-rail" aria-label="${{escapeHtml(copy.card_meta_label)}}">
-              <div class="side">
-                <span
-                  class="score ${{scoreTone}}"
-                  data-avds-component="score"
-                  title="${{escapeHtml(copy.score_title)}}"
-                >${{formatScore(item.score)}}</span>
-                ${{badges}}
-              </div>
-              <div class="meta-rows" data-avds-component="opportunity-meta">
-                <div class="meta-row">
-                  <span>${{escapeHtml(copy.meta_format_label)}}</span>
-                  <strong>${{escapeHtml(formatLabel)}}</strong>
-                </div>
-                <div class="meta-row">
-                  <span>${{escapeHtml(copy.meta_region_label)}}</span>
-                  <strong>${{escapeHtml(regionLabel)}}</strong>
-                </div>
-                <div class="meta-row">
-                  <span>${{escapeHtml(copy.meta_deadline_label)}}</span>
-                  <strong>${{escapeHtml(deadlineLabel)}}</strong>
-                </div>
-                <div class="meta-row">
-                  <span>${{escapeHtml(copy.source_label)}}</span>
-                  <strong>${{escapeHtml(sourceName)}}</strong>
-                </div>
-              </div>
-              <div class="fit-block">
-                <span class="fit-label">${{escapeHtml(copy.fit_label)}}</span>
-                <div class="fit-pills">
-                  ${{fitPillsMarkup(item)}}
-                </div>
-              </div>
-              ${{workflowMarkup}}
-              <div class="card-actions-secondary">
-                <button
-                  class="detail-link"
-                  type="button"
-                  data-save-opportunity="${{opportunityId}}"
-                >${{escapeHtml(saveLabel)}}</button>
-                ${{funderProfileLink}}
-              </div>
-            </aside>
-            <button
-              class="opportunity-click"
-              type="button"
-              data-opportunity-id="${{opportunityId}}"
-              data-opportunity-url="${{cardUrl}}"
-              aria-label="${{escapeHtml(copy.open_details)}}: ${{clickLabel}}"
-            ></button>
           </div>
         </article>`;
       }}).join("");
@@ -4933,7 +4491,8 @@ def render_dashboard(
       }} catch (error) {{
         $("#opportunities-message").className = "message error";
         $("#opportunities-message").textContent = error.message;
-        $("#status-pill span:last-child").textContent = copy.api_error;
+        const statusLabel = $("#status-pill span:last-child");
+        if (statusLabel) statusLabel.textContent = copy.api_error;
       }} finally {{
         syncViewFromHash();
       }}
@@ -4966,10 +4525,6 @@ def render_dashboard(
           String(!state.savedOnly && button.dataset.mobileView === resolvedView)
         );
       }});
-      const savedButton = document.querySelector('[data-mobile-action="saved"]');
-      if (savedButton) {{
-        savedButton.setAttribute("aria-pressed", String(state.savedOnly));
-      }}
       const filtersButton = document.querySelector('[data-mobile-action="filters"]');
       if (filtersButton) {{
         filtersButton.setAttribute(
@@ -5105,19 +4660,6 @@ def render_dashboard(
       disclosure.open = true;
     }}
 
-    function openMobileSavedItems() {{
-      goToView("opportunities", {{ scroll: false }});
-      const workspaceButton = $("#workspace-filter");
-      if (readSavedOpportunities().length) {{
-        if (!state.savedOnly) workspaceButton.click();
-        $("#opportunities-panel").scrollIntoView({{ behavior: "auto", block: "start" }});
-      }} else {{
-        setSavedViewNotice(copy.workspace_filter_empty);
-        $("#saved-views").scrollIntoView({{ behavior: "auto", block: "center" }});
-      }}
-      syncMobileNavigation("opportunities");
-    }}
-
     document.querySelectorAll("[data-mobile-view]").forEach((button) => {{
       button.addEventListener("click", () => {{
         state.savedOnly = false;
@@ -5126,10 +4668,6 @@ def render_dashboard(
         goToView(button.dataset.mobileView);
       }});
     }});
-    document.querySelector('[data-mobile-action="saved"]')?.addEventListener(
-      "click",
-      openMobileSavedItems
-    );
     document.querySelector('[data-mobile-action="filters"]')?.addEventListener(
       "click",
       openMobileFilterSheet
@@ -5328,7 +4866,7 @@ def render_dashboard(
       if (!hasActiveFilters()) return;
       clearAllFilters();
     }});
-    $("#workspace-filter").addEventListener("click", () => {{
+    $("#workspace-filter")?.addEventListener("click", () => {{
       if (!readSavedOpportunities().length) {{
         setSavedViewNotice(copy.workspace_filter_empty);
         return;
@@ -5337,16 +4875,16 @@ def render_dashboard(
       resetVisibleLimit();
       renderOpportunities();
     }});
-    $("#export-workspace").addEventListener("click", exportWorkspace);
-    $("#import-workspace").addEventListener("change", (event) => {{
+    $("#export-workspace")?.addEventListener("click", exportWorkspace);
+    $("#import-workspace")?.addEventListener("change", (event) => {{
       importWorkspace(event.target.files && event.target.files[0]);
     }});
-    $("#save-view").addEventListener("click", saveCurrentView);
-    $("#share-view").addEventListener("click", () => {{
+    $("#save-view")?.addEventListener("click", saveCurrentView);
+    $("#share-view")?.addEventListener("click", () => {{
       shareCurrentView();
     }});
-    $("#export-csv").addEventListener("click", exportVisibleCsv);
-    $("#export-deadlines").addEventListener("click", exportVisibleDeadlines);
+    $("#export-csv")?.addEventListener("click", exportVisibleCsv);
+    $("#export-deadlines")?.addEventListener("click", exportVisibleDeadlines);
     $("#profile-apply")?.addEventListener("click", applyProfile);
     $("#profile-reset")?.addEventListener("click", resetProfile);
     $("#profile-builder")?.addEventListener("toggle", () => {{

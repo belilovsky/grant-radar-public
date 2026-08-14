@@ -4,8 +4,8 @@ from __future__ import annotations
 
 DASHBOARD_AVDS4_CSS = r"""
     /*
-     * AV DS 4.6 public-workbench pass.
-     * One strong surface, quiet separators, compact controls and semantic color.
+     * AV DS 4.6 public-catalog pass.
+     * One clear starting point, quiet separators and compact controls.
      */
     :root {
       --qaz-hero: var(--qaz-brand-hero-start);
@@ -32,10 +32,9 @@ DASHBOARD_AVDS4_CSS = r"""
     }
 
     .hero-band {
-      padding: 28px 30px 22px;
-      margin-bottom: 12px;
-      border: 0;
-      border-left: 4px solid var(--qaz-brand-gold);
+      padding: clamp(30px, 4vw, 52px) clamp(24px, 5vw, 72px);
+      margin-bottom: 14px;
+      border: 1px solid rgb(230 242 240 / 0.2);
       border-radius: var(--qaz-card-radius);
       background: var(--qaz-hero);
       color: white;
@@ -47,24 +46,34 @@ DASHBOARD_AVDS4_CSS = r"""
     }
 
     .hero-band .eyebrow {
-      color: var(--qaz-brand-gold);
+      color: #b9ddd8;
       letter-spacing: 0.08em;
     }
 
     .hero-band .brand h1 {
       color: white;
-      font-size: clamp(40px, 4vw, 58px);
+      font-size: clamp(40px, 4.2vw, 60px);
+    }
+
+    .hero-band .hero-copy > .topbar .brand > p {
+      display: block;
+      max-width: 620px;
+      margin: 0;
+      color: #e9f1ef;
+      font-size: clamp(17px, 1.45vw, 21px);
+      line-height: 1.45;
     }
 
     .hero-grid {
-      grid-template-columns: minmax(0, 1.12fr) minmax(360px, 0.88fr);
-      gap: clamp(28px, 4vw, 52px);
-      margin-bottom: 20px;
+      grid-template-columns: minmax(0, 1fr);
+      max-width: 820px;
+      gap: 0;
+      margin-bottom: 0;
     }
 
     .hero-copy {
-      gap: 16px;
-      padding: 6px 0;
+      gap: 18px;
+      padding: 0;
     }
 
     .hero-intro {
@@ -85,10 +94,10 @@ DASHBOARD_AVDS4_CSS = r"""
     }
 
     .hero-band .button.primary {
-      border-color: var(--qaz-brand-gold);
-      background: var(--qaz-brand-gold);
+      border-color: #fffdfc;
+      background: #fffdfc;
       color: var(--qaz-brand-ink);
-      box-shadow: 0 8px 20px rgb(0 0 0 / 0.14);
+      box-shadow: none;
     }
 
     .hero-band .button.primary:hover {
@@ -298,6 +307,32 @@ DASHBOARD_AVDS4_CSS = r"""
       -webkit-line-clamp: 2;
     }
 
+    .opportunity-facts {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px 18px;
+      color: var(--muted);
+      font-size: 12px;
+      line-height: 1.4;
+    }
+
+    .opportunity-facts > span {
+      display: inline-flex;
+      align-items: baseline;
+      gap: 5px;
+      min-width: 0;
+    }
+
+    .opportunity-fact-label {
+      color: var(--muted);
+    }
+
+    .opportunity-facts strong {
+      color: var(--ink);
+      font-weight: 700;
+      overflow-wrap: anywhere;
+    }
+
     .tag {
       padding: 3px 7px;
       border-radius: 5px;
@@ -466,7 +501,6 @@ DASHBOARD_AVDS4_CSS = r"""
 
       .hero-band {
         padding: 24px 20px 18px;
-        border-left-width: 3px;
       }
 
       .hero-grid {
@@ -596,8 +630,7 @@ OPPORTUNITY_AVDS4_CSS = r"""
     .hero {
       margin-bottom: 0;
       padding: clamp(28px, 4vw, 46px);
-      border: 0;
-      border-left: 4px solid var(--qaz-brand-gold);
+      border: 1px solid rgb(230 242 240 / 0.2);
       border-radius: var(--qaz-detail-radius);
       background: var(--qaz-detail-hero);
       color: white;
@@ -611,7 +644,7 @@ OPPORTUNITY_AVDS4_CSS = r"""
     }
 
     .hero .eyebrow {
-      color: var(--qaz-brand-gold);
+      color: #b9ddd8;
     }
 
     .hero h1 {
@@ -645,8 +678,8 @@ OPPORTUNITY_AVDS4_CSS = r"""
     }
 
     .hero .button.primary {
-      border-color: var(--qaz-brand-gold);
-      background: var(--qaz-brand-gold);
+      border-color: #fffdfc;
+      background: #fffdfc;
       color: var(--qaz-brand-ink);
     }
 

@@ -30,14 +30,18 @@ def test_dashboard_uses_extracted_static_styles() -> None:
     assert DASHBOARD_AVDS4_CSS in html
     assert "--container-max: var(--av-container-dashboard)" in DASHBOARD_CSS
     assert 'class="site-footer-nav"' in html
-    assert 'href="#opportunities"' in html
-    assert 'href="#sources"' in html
+    assert 'data-view="opportunities"' in html
+    assert 'data-view="sources"' not in html
     assert "syncFilterDisclosureForViewport" in html
     assert 'data-avds-pattern="filter-state-summary"' in html
     assert 'data-avds-pattern="evidence-summary"' in html
-    assert 'data-avds-pattern="decision-summary"' in html
+    assert 'data-avds-pattern="catalog-card"' in html
     assert 'data-avds-component="trust-strip"' in html
     assert 'data-avds-version="4.6.0"' in html
+    assert 'data-avds-component="quick-links-rail"' not in html
+    assert 'data-avds-component="public-summary-strip"' not in html
+    assert "qaz-fund-ornamental-background" not in html
+    assert "#F0C64D" not in html
     assert html.count("<h1>") == 1
     assert html.count('class="topbar"') == 1
     assert "const PUBLIC_TIME_ZONE" in html
@@ -47,15 +51,15 @@ def test_dashboard_uses_extracted_static_styles() -> None:
     assert "Закупки ОБСЕ" in html
     assert "const label = sourceDisplayName(source)" in html
     assert "grid-template-columns: repeat(2, minmax(0, 1fr));" in DASHBOARD_CSS
-    assert ".hero-pick:last-child { grid-column: 1 / -1; }" in DASHBOARD_CSS
     assert "@media (min-width: 1440px)" in DASHBOARD_CSS
-    assert ".hero-points {" in DASHBOARD_CSS
+    assert "grid-template-columns: minmax(0, 1fr);" in DASHBOARD_AVDS4_CSS
+    assert ".opportunity-facts {" in DASHBOARD_AVDS4_CSS
     assert "grid-template-columns: repeat(3, minmax(0, 1fr));" in DASHBOARD_CSS
     assert "--panel-wash-card: color-mix" in DASHBOARD_CSS
     assert "background: var(--panel-wash-list);" in DASHBOARD_CSS
     assert "border-radius: var(--av-radius-md);" in DASHBOARD_CSS
     assert ".hero-copy > .topbar {" in DASHBOARD_CSS
-    assert "      .hero-band .topbar,\n      .hero-stage" not in DASHBOARD_CSS
+    assert '<section\n          class="hero-stage"' not in html
 
     mobile_touch_block = DASHBOARD_AVDS4_CSS.split("@media (max-width: 820px) {", 1)[
         1
@@ -65,7 +69,6 @@ def test_dashboard_uses_extracted_static_styles() -> None:
         ".mobile-lang-switch a",
         ".mobile-icon-button",
         ".hero-actions .button",
-        ".hero-pick",
         ".preset-button",
         ".detail-link",
         ".advanced-filters > summary",
@@ -80,7 +83,6 @@ def test_dashboard_secondary_mobile_links_keep_avds_touch_targets() -> None:
 
     for selector in (
         ".more-link",
-        ".footer-funder-link",
         ".opportunity h3 a",
         ".site-footer-nav a",
         ".site-footer > p a",
