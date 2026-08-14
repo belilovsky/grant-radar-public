@@ -5,7 +5,12 @@ from datetime import date, datetime, timedelta, timezone
 from fastapi.testclient import TestClient
 
 from api import main as api_main
-from core.decision_support import assess_profile, program_truth, record_kind
+from core.decision_support import (
+    assess_profile,
+    browser_precheck_contract,
+    program_truth,
+    record_kind,
+)
 from core.kazakhstan_data_routes import data_routes, data_routes_contract
 from core.models import Opportunity, OpportunityType
 
@@ -109,6 +114,27 @@ def test_profile_precheck_does_not_confuse_almaty_city_with_almaty_region():
 
     assert "region_signal" not in result["positive_signals"]
     assert "region_verify" in result["checks"]
+
+
+def test_browser_precheck_contract_uses_only_public_record_matches():
+    item = _item(
+        deadline=date.today() + timedelta(days=10),
+        raw={
+            "application_url": "https://example.org/apply",
+            "region": "город Алматы, Казахстан",
+        },
+    )
+
+    contract = browser_precheck_contract(item)
+
+    assert contract["truth"]["actionability"] == "apply"
+    assert "business" in contract["matches"]["applicant"]
+    assert "too" in contract["matches"]["legal_form"]
+    assert "it" in contract["matches"]["sector"]
+    assert "grant" in contract["matches"]["support_need"]
+    assert contract["matches"]["region"] == ["almaty_city"]
+    assert contract["kazakhstan_scope"] is True
+    assert "profile" not in contract
 
 
 def test_fit_endpoint_is_private_and_localizes_its_safety_boundary(monkeypatch):

@@ -422,3 +422,41 @@ def assess_profile(
         "checks": list(dict.fromkeys(checks)),
         "legal_boundary": "This is a source-based pre-check, not a confirmation of eligibility.",
     }
+
+
+def browser_precheck_contract(
+    item: Opportunity,
+    *,
+    lifecycle: str | None = None,
+) -> dict[str, Any]:
+    """Return public facts needed for an entirely browser-local pre-check.
+
+    The page receives only precomputed matches from the already-public record.
+    A visitor's profile never needs to be included in a request to calculate a
+    result.  Keep this compact and declarative so the browser implementation
+    can use the same conservative evidence boundary as :func:`assess_profile`.
+    """
+
+    blob = _blob(item)
+    source_region = _normalized(_raw(item).get("region") or _raw(item).get("country"))
+    mappings: tuple[tuple[str, Mapping[str, tuple[str, ...]]], ...] = (
+        ("applicant", _AUDIENCE_TERMS),
+        ("legal_form", _LEGAL_FORM_TERMS),
+        ("sector", _SECTOR_TERMS),
+        ("support_need", _SUPPORT_TERMS),
+    )
+    matches = {
+        field: [
+            value for value in mapping if _matches_profile_value(blob, value, mapping)
+        ]
+        for field, mapping in mappings
+    }
+    matches["region"] = [
+        value for value in _REGION_TERMS if _matches_region(source_region, value)
+    ]
+    return {
+        "truth": program_truth(item, lifecycle=lifecycle),
+        "matches": matches,
+        "kazakhstan_scope": "kazakhstan" in source_region
+        or "казахстан" in source_region,
+    }

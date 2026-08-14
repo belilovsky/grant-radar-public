@@ -18,7 +18,7 @@ from api.page_primitives import absolute_href as _absolute_href
 from api.page_primitives import catalog_path as _catalog_path
 from api.page_primitives import format_deadline as _format_deadline
 from api.public_meta import analytics_head_html, og_image_url
-from core.decision_support import program_truth
+from core.decision_support import browser_precheck_contract, program_truth
 from core.models import Opportunity, OpportunityDetail, OpportunityMetadataField
 from core.nlp import clean_source_summary
 
@@ -55,6 +55,7 @@ _DECISION_SUPPORT_COPY: dict[str, dict[str, object]] = {
         "known_label": "Что подтверждено в карточке",
         "fit_title": "Проверить свой профиль",
         "fit_note": "Выберите только рабочие признаки. Профиль остаётся в этом браузере и не подтверждает право на участие.",
+        "fit_boundary": "Это предчек по опубликованным данным, а не подтверждение права на участие.",
         "applicant": "Кто подаёт",
         "legal_form": "Форма заявителя",
         "region": "Где проект",
@@ -190,6 +191,7 @@ _DECISION_SUPPORT_COPY: dict[str, dict[str, object]] = {
         "known_label": "Карточкада расталғаны",
         "fit_title": "Профильді тексеру",
         "fit_note": "Тек жұмыс белгілерін таңдаңыз. Профиль осы браузерде қалады және қатысу құқығын растамайды.",
+        "fit_boundary": "Бұл жарияланған дерекке негізделген алдын ала тексеру, қатысу құқығын растау емес.",
         "applicant": "Өтініш беруші",
         "legal_form": "Ұйым нысаны",
         "region": "Жоба өңірі",
@@ -325,6 +327,7 @@ _DECISION_SUPPORT_COPY: dict[str, dict[str, object]] = {
         "known_label": "Confirmed in this card",
         "fit_title": "Check your profile",
         "fit_note": "Choose only working facts. The profile stays in this browser and does not confirm eligibility.",
+        "fit_boundary": "This is a pre-check based on published facts, not a confirmation of eligibility.",
         "applicant": "Applicant",
         "legal_form": "Legal form",
         "region": "Project region",
@@ -698,7 +701,6 @@ def _decision_support_markup(
     *,
     lang: str,
     lifecycle: str,
-    fit_url: str,
 ) -> str:
     """Render an anonymous, source-bound pre-check on a detail page."""
 
@@ -775,6 +777,9 @@ def _decision_support_markup(
     )
     copy_json = json.dumps(copy, ensure_ascii=False).replace("<", "\\u003c")
     truth_json = json.dumps(truth, ensure_ascii=False).replace("<", "\\u003c")
+    precheck_json = json.dumps(
+        browser_precheck_contract(detail, lifecycle=lifecycle), ensure_ascii=False
+    ).replace("<", "\\u003c")
     return """
     <section class="decision-support" aria-labelledby="decision-support-title" data-avds-component="decision-support">
       <div class="decision-support-head">
@@ -815,9 +820,9 @@ def _decision_support_markup(
         const result = document.getElementById("profile-fit-result");
         const storageStatus = document.getElementById("profile-fit-storage");
         const storageKey = "qazfund-applicant-profile-v1";
-        const fitUrl = {fit_url};
         const copy = {copy_json};
         const truth = {truth_json};
+        const precheck = {precheck_json};
         const fieldNames = ["applicant", "legal_form", "region", "sector", "support_need", "has_eds"];
         const escapeHtml = (value) => String(value || "")
           .replace(/&/g, "&amp;").replace(/</g, "&lt;")
@@ -861,24 +866,66 @@ def _decision_support_markup(
             ${{list ? `<ul>${{list}}</ul>` : ""}}`;
           result.dataset.actionability = String(payload.truth?.actionability || truth.actionability || "");
         }};
+        const evaluateProfile = (values) => {{
+          const localTruth = precheck.truth || truth || {{}};
+          const matches = precheck.matches || {{}};
+          const actionability = String(localTruth.actionability || "");
+          const kind = String(localTruth.kind || "");
+          const positiveSignals = [];
+          const checks = [];
+          const recordStates = ["reference", "results", "plan", "monitor", "closed"];
+          if (recordStates.includes(actionability)) checks.push(`record_${{actionability}}`);
+          ["applicant", "legal_form", "sector", "support_need"].forEach((field) => {{
+            const value = values[field];
+            if (!value) return;
+            if (Array.isArray(matches[field]) && matches[field].includes(value)) {{
+              positiveSignals.push(`${{field}}_signal`);
+            }} else {{
+              checks.push(`${{field}}_verify`);
+            }}
+          }});
+          if (values.region) {{
+            if (Array.isArray(matches.region) && matches.region.includes(values.region)) {{
+              positiveSignals.push("region_signal");
+            }} else if (precheck.kazakhstan_scope) {{
+              positiveSignals.push("kazakhstan_scope");
+            }} else {{
+              checks.push("region_verify");
+            }}
+          }}
+          if (values.has_eds === "yes" && ["standing_service", "application_call", "procurement_notice"].includes(kind)) {{
+            positiveSignals.push("eds_ready");
+          }} else if (["standing_service", "procurement_notice"].includes(kind)) {{
+            checks.push("eds_verify");
+          }}
+          const known = localTruth.known_fields || {{}};
+          if (!known.eligibility) checks.push("eligibility_missing");
+          if (!known.application_route && actionability === "apply") {{
+            checks.push("application_route_verify");
+          }}
+          if (Array.isArray(localTruth.missing_fields) && localTruth.missing_fields.length) {{
+            checks.push("programme_facts_missing");
+          }}
+          const hasProfile = Object.values(values).some(Boolean);
+          let status = "verification_needed";
+          if (recordStates.includes(actionability)) status = "not_an_application";
+          else if (!hasProfile) status = "profile_needed";
+          else if (positiveSignals.length >= 2 && !checks.includes("eligibility_missing")) {{
+            status = "potential_fit";
+          }}
+          return {{
+            status,
+            truth: localTruth,
+            positive_signals: positiveSignals,
+            checks: [...new Set(checks)],
+            legal_boundary: copy.fit_boundary || "",
+          }};
+        }};
         restore();
-        form.addEventListener("submit", async (event) => {{
+        form.addEventListener("submit", (event) => {{
           event.preventDefault();
           const values = save();
-          const params = new URLSearchParams();
-          Object.entries(values).forEach(([key, value]) => {{ if (value) params.set(key, value); }});
-          result.hidden = false;
-          result.textContent = copy.fit_loading;
-          try {{
-            const response = await fetch(`${{fitUrl}}&${{params.toString()}}`, {{
-              headers: {{ Accept: "application/json" }},
-              cache: "no-store"
-            }});
-            if (!response.ok) throw new Error("fit");
-            renderResult(await response.json());
-          }} catch {{
-            result.textContent = copy.fit_local_error;
-          }}
+          renderResult(evaluateProfile(values));
         }});
       }})();
     </script>
@@ -896,9 +943,9 @@ def _decision_support_markup(
         fit_note=escape(str(copy["fit_note"])),
         fields=fields,
         fit_action=escape(str(copy["fit_action"])),
-        fit_url=json.dumps(fit_url, ensure_ascii=False).replace("<", "\\u003c"),
         copy_json=copy_json,
         truth_json=truth_json,
+        precheck_json=precheck_json,
     )
 
 
@@ -1630,11 +1677,6 @@ def render_opportunity_page(
         ),
         quote=True,
     )
-    fit_url = (
-        f"{detail_base}/opportunities/{detail.id}/fit.json?lang={active_lang}"
-        if detail_base
-        else f"/opportunities/{detail.id}/fit.json?lang={active_lang}"
-    )
     source_href = escape(str(detail.source_url), quote=True)
     application_href = (
         escape(detail.application_url, quote=True) if detail.application_url else ""
@@ -1685,7 +1727,6 @@ def render_opportunity_page(
         detail,
         lang=active_lang,
         lifecycle=lifecycle,
-        fit_url=fit_url,
     )
     related_markup = _related_markup(
         related_items or [],

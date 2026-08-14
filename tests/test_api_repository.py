@@ -3650,8 +3650,10 @@ def test_opportunity_page_renders_public_permalink(monkeypatch):
     assert "Что уже видно из карточки" in response.text
     assert "Проверка перед действием" in response.text
     assert "Проверить свой профиль" in response.text
-    assert f"/opportunities/{item.id}/fit.json?lang=ru" in response.text
+    assert f"/opportunities/{item.id}/fit.json" not in response.text
     assert "qazfund-applicant-profile-v1" in response.text
+    assert "const precheck =" in response.text
+    assert "const evaluateProfile =" in response.text
     assert "Официальные данные РК" in response.text
     assert 'href="/data-routes?lang=ru"' in response.text
     assert "QAZ.FUND – рабочая справка" in response.text
