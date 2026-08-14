@@ -180,24 +180,15 @@ except ImportError:  # pragma: no cover - Python < 3.11 compatibility
 log = logging.getLogger(__name__)
 
 
-def _warm_public_startup_caches() -> None:
-    """Warm public projections without holding the application readiness gate."""
-    _warm_public_sitemap_cache()
-    _warm_public_items_cache()
-
-
 @asynccontextmanager
 async def _lifespan(app: FastAPI):
-    warm_task = asyncio.create_task(asyncio.to_thread(_warm_public_startup_caches))
     refresh_task = asyncio.create_task(_periodic_public_cache_refresh())
     try:
         yield
     finally:
-        for task in (warm_task, refresh_task):
-            task.cancel()
-        for task in (warm_task, refresh_task):
-            with suppress(asyncio.CancelledError):
-                await task
+        refresh_task.cancel()
+        with suppress(asyncio.CancelledError):
+            await refresh_task
 
 
 app = FastAPI(
@@ -1480,6 +1471,27 @@ def _warm_public_sitemap_cache() -> None:
         _cached_sitemap_xml(public_base)
 
 
+def _dashboard_initial_metrics() -> tuple[int, int]:
+    """Read already-prepared dashboard counts without starting a cold rebuild."""
+    now = datetime.now(UTC)
+    with _public_items_cache_lock:
+        current_catalog = _public_current_catalog_cache.get("en")
+        coverage = _coverage_cache
+
+    relevant_items = (
+        len(current_catalog[1])
+        if current_catalog is not None
+        and now - current_catalog[0] < _PUBLIC_ITEMS_CACHE_TTL
+        else 0
+    )
+    source_count = (
+        int(coverage[1].get("enabled_sources") or 0)
+        if coverage is not None and now - coverage[0] < _PUBLIC_ITEMS_CACHE_TTL
+        else len(PARSERS)
+    )
+    return relevant_items, source_count
+
+
 @app.head("/", include_in_schema=False)
 async def root_head() -> Response:
     return Response(status_code=200)
@@ -1491,11 +1503,7 @@ async def root(request: Request) -> HTMLResponse:
     site_origin = _site_origin(request, root_path)
     repository = _configured_repository()
     items = repository.size() if repository is not None else len(_cache)
-    relevant_items = len(_cached_current_catalog_items(content_lang="en"))
-    # The dashboard is server-rendered before its client data refresh.  Use the
-    # same public coverage aggregate as the refresh so the first paint never
-    # briefly reports zero configured sources.
-    source_count = int(_cached_coverage_payload().get("enabled_sources") or 0)
+    relevant_items, source_count = _dashboard_initial_metrics()
     lang = str(request.query_params.get("lang") or "").strip().lower()
     dashboard_lang = _public_lang(lang)
     return HTMLResponse(

@@ -4341,18 +4341,35 @@ def test_root_renders_initial_metrics_from_cached_items(monkeypatch):
         ]
     )
     client = TestClient(api_main.app)
+    expected_current = api_main._cached_current_catalog_items(content_lang="en")
+    expected_sources = api_main._cached_coverage_payload()["enabled_sources"]
 
     response = client.get("/")
 
     assert response.status_code == 200
     assert '<strong id="metric-total">3</strong>' in response.text
     assert (
-        '<strong id="metric-strong" data-catalog-count="1">1</strong>' in response.text
+        f'<strong id="metric-strong" data-catalog-count="{len(expected_current)}">'
+        f"{len(expected_current)}</strong>" in response.text
     )
-    source_count = api_main._cached_coverage_payload()["enabled_sources"]
-    assert f'<strong id="metric-sources">{source_count}</strong>' in response.text
+    assert f'<strong id="metric-sources">{expected_sources}</strong>' in response.text
     assert '<strong id="health-items">3</strong>' in response.text
-    assert f'<strong id="health-sources">{source_count}</strong>' in response.text
+    assert f'<strong id="health-sources">{expected_sources}</strong>' in response.text
+
+
+def test_root_does_not_build_public_projections_on_cold_start(monkeypatch):
+    _reset_api_state(monkeypatch)
+    client = TestClient(api_main.app)
+
+    response = client.get("/")
+
+    assert response.status_code == 200
+    assert (
+        '<strong id="metric-strong" data-catalog-count="0">0</strong>' in response.text
+    )
+    assert (
+        f'<strong id="metric-sources">{len(api_main.PARSERS)}</strong>' in response.text
+    )
 
 
 def test_large_opportunity_response_supports_gzip(monkeypatch):
