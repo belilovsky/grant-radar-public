@@ -5,7 +5,7 @@ from __future__ import annotations
 import re
 from datetime import date, datetime, timezone
 from decimal import Decimal
-from typing import Any
+from typing import Any, cast
 from urllib.parse import urlencode
 
 from core.models import Opportunity
@@ -88,9 +88,19 @@ def _application_steps(lang: str) -> list[str]:
 
 
 def _localized_value(item: Opportunity, lang: str, key: str) -> Any:
-    raw = item.raw if isinstance(item.raw, dict) else {}
-    i18n = raw.get("i18n") if isinstance(raw.get("i18n"), dict) else {}
-    localized = i18n.get(lang) if isinstance(i18n.get(lang), dict) else {}
+    raw: dict[str, Any] = (
+        cast(dict[str, Any], item.raw) if isinstance(item.raw, dict) else {}
+    )
+    i18n_value = raw.get("i18n")
+    i18n: dict[str, Any] = (
+        cast(dict[str, Any], i18n_value) if isinstance(i18n_value, dict) else {}
+    )
+    localized_value = i18n.get(lang)
+    localized: dict[str, Any] = (
+        cast(dict[str, Any], localized_value)
+        if isinstance(localized_value, dict)
+        else {}
+    )
     return localized.get(key)
 
 
@@ -121,13 +131,19 @@ def _campaign_url(base_url: str, item_id: str, *, lang: str, template: str) -> s
 
 
 def _safety(item: Opportunity) -> dict[str, Any]:
-    raw = item.raw if isinstance(item.raw, dict) else {}
-    provenance = (
-        raw.get("provenance") if isinstance(raw.get("provenance"), dict) else {}
+    raw: dict[str, Any] = (
+        cast(dict[str, Any], item.raw) if isinstance(item.raw, dict) else {}
     )
-    readiness = (
-        raw.get("decision_readiness")
-        if isinstance(raw.get("decision_readiness"), dict)
+    provenance_value = raw.get("provenance")
+    provenance: dict[str, Any] = (
+        cast(dict[str, Any], provenance_value)
+        if isinstance(provenance_value, dict)
+        else {}
+    )
+    readiness_value = raw.get("decision_readiness")
+    readiness: dict[str, Any] = (
+        cast(dict[str, Any], readiness_value)
+        if isinstance(readiness_value, dict)
         else {}
     )
     evidence_state = str(provenance.get("evidence_state") or "unknown")

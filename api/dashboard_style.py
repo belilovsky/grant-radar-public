@@ -81,7 +81,7 @@ DASHBOARD_CSS = r"""    :root {
       isolation: isolate;
     }
     .hero-band::before {
-      content: none;
+      content: "";
     }
     .hero-band::after {
       content: none;

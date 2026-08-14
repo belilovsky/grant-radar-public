@@ -19,12 +19,12 @@ OG_IMAGE_SVG = "\n".join(
         'viewBox="0 0 1200 630">',
         "  <defs>",
         '    <linearGradient id="bg" x1="0%" y1="0%" x2="100%" y2="100%">',
-        '      <stop offset="0%" stop-color="#0f172a"/>',
-        '      <stop offset="100%" stop-color="#1d4ed8"/>',
+        '      <stop offset="0%" stop-color="#063f43"/>',
+        '      <stop offset="100%" stop-color="#0b716c"/>',
         "    </linearGradient>",
         '    <radialGradient id="glow" cx="25%" cy="25%" r="70%">',
-        '      <stop offset="0%" stop-color="#22c55e" stop-opacity="0.32"/>',
-        '      <stop offset="100%" stop-color="#22c55e" stop-opacity="0"/>',
+        '      <stop offset="0%" stop-color="#e2b34e" stop-opacity="0.32"/>',
+        '      <stop offset="100%" stop-color="#e2b34e" stop-opacity="0"/>',
         "    </radialGradient>",
         "  </defs>",
         '  <rect width="1200" height="630" fill="url(#bg)"/>',
@@ -63,7 +63,7 @@ OG_IMAGE_SVG = "\n".join(
         ),
         (
             '    <rect x="30" y="36" width="170" height="24" rx="12" '
-            'fill="#22c55e" fill-opacity="0.28"/>'
+            'fill="#e2b34e" fill-opacity="0.48"/>'
         ),
         (
             '    <rect x="30" y="94" width="170" height="74" rx="18" '
@@ -79,7 +79,7 @@ OG_IMAGE_SVG = "\n".join(
         ),
         (
             '    <rect x="30" y="282" width="170" height="54" rx="18" '
-            'fill="#1d4ed8" fill-opacity="0.56"/>'
+            'fill="#e2b34e" fill-opacity="0.56"/>'
         ),
         "  </g>",
         "</svg>",
@@ -135,14 +135,14 @@ def _build_og_image_png() -> bytes:
                 x,
                 y,
                 (
-                    int(13 + 16 * progress + 10 * glow),
-                    int(27 + 37 * progress + 72 * glow),
-                    int(56 + 105 * progress + 32 * glow),
+                    int(5 + 6 * progress + 15 * glow),
+                    int(52 + 35 * progress + 37 * glow),
+                    int(55 + 28 * progress + 24 * glow),
                 ),
             )
 
-    rect(72, 72, 188, 10, (104, 126, 255))
-    rect(72, 102, 320, 16, (175, 193, 255))
+    rect(72, 72, 188, 10, (226, 179, 78))
+    rect(72, 102, 320, 16, (199, 222, 216))
 
     def word(text: str, x: int, y: int, scale: int) -> None:
         cursor = x
@@ -165,20 +165,20 @@ def _build_og_image_png() -> bytes:
             cursor += scale * 6
 
     word("QAZ.FUND", 72, 164, 16)
-    rect(72, 340, 566, 14, (197, 211, 255))
-    rect(72, 374, 462, 14, (145, 168, 247))
-    rect(72, 422, 150, 44, (67, 103, 221))
-    rect(238, 422, 196, 44, (46, 78, 178))
-    rect(810, 72, 318, 486, (30, 48, 90))
-    rect(844, 112, 172, 22, (84, 222, 158))
-    rect(844, 170, 242, 108, (244, 247, 255))
-    rect(870, 204, 190, 16, (27, 50, 95))
-    rect(870, 236, 126, 14, (82, 111, 184))
-    rect(844, 314, 242, 14, (130, 152, 211))
-    rect(844, 348, 170, 14, (92, 118, 183))
-    rect(844, 418, 242, 84, (48, 83, 194))
-    rect(870, 448, 190, 14, (207, 220, 255))
-    rect(870, 478, 134, 12, (143, 168, 245))
+    rect(72, 340, 566, 14, (199, 222, 216))
+    rect(72, 374, 462, 14, (145, 188, 179))
+    rect(72, 422, 150, 44, (226, 179, 78))
+    rect(238, 422, 196, 44, (11, 113, 108))
+    rect(810, 72, 318, 486, (5, 48, 52))
+    rect(844, 112, 172, 22, (226, 179, 78))
+    rect(844, 170, 242, 108, (250, 248, 241))
+    rect(870, 204, 190, 16, (18, 56, 58))
+    rect(870, 236, 126, 14, (102, 135, 130))
+    rect(844, 314, 242, 14, (145, 188, 179))
+    rect(844, 348, 170, 14, (102, 135, 130))
+    rect(844, 418, 242, 84, (11, 113, 108))
+    rect(870, 448, 190, 14, (245, 226, 184))
+    rect(870, 478, 134, 12, (145, 188, 179))
 
     raw = b"".join(
         b"\x00" + bytes(pixels[row * width * 3 : (row + 1) * width * 3])

@@ -11,6 +11,7 @@ from urllib.parse import urlparse
 
 from api.avds import AVDS_CSS, AVDS_FONT_HEAD
 from api.avds_visual import OPPORTUNITY_AVDS4_CSS
+from api.branding import BRAND_MARK_SVG
 from api.dashboard import dashboard_copy
 from api.page_primitives import absolute_href as _absolute_href
 from api.page_primitives import catalog_path as _catalog_path
@@ -2111,7 +2112,10 @@ def render_opportunity_page(
   <main class="shell" data-avds-component="opportunity-page">
     <div class="topbar">
       <nav class="breadcrumbs" aria-label="{escape(str(copy["breadcrumbs_aria"]), quote=True)}">
-        <a href="{catalog_href}">QAZ.FUND</a>
+        <a class="site-brand" href="{catalog_href}">
+          <span class="brand-mark brand-mark--compact">{BRAND_MARK_SVG}</span>
+          <strong>QAZ.FUND</strong>
+        </a>
         <span>/</span>
         <a href="{catalog_href}">{escape(str(copy["opportunities_title"]))}</a>
         <span>/</span>

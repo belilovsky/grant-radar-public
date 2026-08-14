@@ -8,11 +8,11 @@ DASHBOARD_AVDS4_CSS = r"""
      * One strong surface, quiet separators, compact controls and semantic color.
      */
     :root {
-      --qaz-hero: #0b1734;
-      --qaz-hero-muted: #bac8e8;
+      --qaz-hero: var(--qaz-brand-deep);
+      --qaz-hero-muted: #c7ded8;
       --qaz-hero-line: rgb(255 255 255 / 0.16);
-      --qaz-hero-panel: rgb(255 255 255 / 0.07);
-      --qaz-page: #f2f5fa;
+      --qaz-hero-panel: rgb(255 251 240 / 0.08);
+      --qaz-page: var(--qaz-brand-cream);
       --qaz-card-radius: 10px;
       --qaz-section-radius: 8px;
     }
@@ -35,7 +35,7 @@ DASHBOARD_AVDS4_CSS = r"""
       padding: 28px 30px 22px;
       margin-bottom: 12px;
       border: 0;
-      border-left: 4px solid #5f83ff;
+      border-left: 4px solid var(--qaz-brand-gold);
       border-radius: var(--qaz-card-radius);
       background: var(--qaz-hero);
       color: white;
@@ -47,7 +47,7 @@ DASHBOARD_AVDS4_CSS = r"""
     }
 
     .hero-band .eyebrow {
-      color: #9bb5ff;
+      color: var(--qaz-brand-gold);
       letter-spacing: 0.08em;
     }
 
@@ -74,15 +74,27 @@ DASHBOARD_AVDS4_CSS = r"""
       line-height: 1.42;
     }
 
+    .hero-band .hero-point {
+      color: #c7ded8;
+    }
+
+    .hero-band .hero-point-index {
+      background: rgb(255 251 240 / 0.92);
+      color: var(--qaz-brand-teal);
+      box-shadow: inset 0 0 0 1px var(--qaz-brand-gold);
+    }
+
     .hero-band .button.primary {
-      border-color: #6487ff;
-      background: #5a7df0;
-      box-shadow: none;
+      border-color: var(--qaz-brand-gold);
+      background: var(--qaz-brand-gold);
+      color: var(--qaz-brand-ink);
+      box-shadow: 0 8px 20px rgb(0 0 0 / 0.14);
     }
 
     .hero-band .button.primary:hover {
-      border-color: #86a0ff;
-      background: #6a8bf4;
+      border-color: #f1c86c;
+      background: #f1c86c;
+      color: var(--qaz-brand-ink);
     }
 
     .hero-stage {
@@ -152,11 +164,11 @@ DASHBOARD_AVDS4_CSS = r"""
     }
 
     .hero-band .metric.strong strong {
-      color: #64d2a3;
+      color: #86d5b1;
     }
 
     .hero-band .metric.sources strong {
-      color: #f2c978;
+      color: #f0c86d;
     }
 
     .sticky-shell {
@@ -539,10 +551,10 @@ DASHBOARD_AVDS4_CSS = r"""
 
 OPPORTUNITY_AVDS4_CSS = r"""
     :root {
-      --qaz-detail-hero: #0b1734;
-      --qaz-detail-muted: #becaea;
+      --qaz-detail-hero: var(--qaz-brand-deep);
+      --qaz-detail-muted: #c7ded8;
       --qaz-detail-line: rgb(255 255 255 / 0.16);
-      --qaz-detail-page: #f2f5fa;
+      --qaz-detail-page: var(--qaz-brand-cream);
       --qaz-detail-radius: 10px;
     }
 
@@ -585,7 +597,7 @@ OPPORTUNITY_AVDS4_CSS = r"""
       margin-bottom: 0;
       padding: clamp(28px, 4vw, 46px);
       border: 0;
-      border-left: 4px solid #5f83ff;
+      border-left: 4px solid var(--qaz-brand-gold);
       border-radius: var(--qaz-detail-radius);
       background: var(--qaz-detail-hero);
       color: white;
@@ -599,7 +611,7 @@ OPPORTUNITY_AVDS4_CSS = r"""
     }
 
     .hero .eyebrow {
-      color: #9bb5ff;
+      color: var(--qaz-brand-gold);
     }
 
     .hero h1 {
@@ -633,8 +645,9 @@ OPPORTUNITY_AVDS4_CSS = r"""
     }
 
     .hero .button.primary {
-      border-color: #6487ff;
-      background: #5a7df0;
+      border-color: var(--qaz-brand-gold);
+      background: var(--qaz-brand-gold);
+      color: var(--qaz-brand-ink);
     }
 
     .hero .button.slim {
@@ -643,7 +656,7 @@ OPPORTUNITY_AVDS4_CSS = r"""
     }
 
     .hero-action-status {
-      color: #77dfb3;
+      color: #86d5b1;
     }
 
     .hero-stats {

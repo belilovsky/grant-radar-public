@@ -2,34 +2,36 @@
 
 from __future__ import annotations
 
+from api.branding import BRAND_CSS
+
 AVDS_FONT_HEAD = ""
 
 AVDS_CSS = """
     :root {
-      --button-outline: rgb(30 64 175 / 0.16);
-      --badge-outline: rgb(30 64 175 / 0.12);
+      --button-outline: rgb(7 89 86 / 0.18);
+      --badge-outline: rgb(7 89 86 / 0.14);
       --radius: 8px;
-      --av-color-blue-50: #eff6ff;
-      --av-color-blue-100: #dbeafe;
-      --av-color-blue-600: #315fdc;
-      --av-color-blue-700: #214bb8;
-      --av-color-blue-800: #183b94;
-      --av-color-slate-25: #f5f7fb;
-      --av-color-slate-50: #f8fafc;
-      --av-color-slate-75: #f1f5f9;
-      --av-color-slate-100: #eef2f7;
-      --av-color-slate-200: #e2e8f0;
-      --av-color-slate-300: #cbd5e1;
-      --av-color-slate-400: #94a3b8;
-      --av-color-slate-500: #64748b;
-      --av-color-slate-700: #334155;
-      --av-color-slate-900: #0f172a;
-      --av-color-emerald-50: #edf8f2;
-      --av-color-emerald-100: #d8efe3;
-      --av-color-emerald-700: #15724e;
-      --av-color-amber-50: #fbf5e8;
-      --av-color-amber-100: #f2e5c8;
-      --av-color-amber-700: #9a6414;
+      --av-color-blue-50: #edf6f3;
+      --av-color-blue-100: #d8ebe5;
+      --av-color-blue-600: #0b716c;
+      --av-color-blue-700: #075956;
+      --av-color-blue-800: #064447;
+      --av-color-slate-25: #f4f0e8;
+      --av-color-slate-50: #fffdf9;
+      --av-color-slate-75: #f0eee8;
+      --av-color-slate-100: #e8e6df;
+      --av-color-slate-200: #dddcd5;
+      --av-color-slate-300: #c7c8c0;
+      --av-color-slate-400: #98a09a;
+      --av-color-slate-500: #667773;
+      --av-color-slate-700: #335054;
+      --av-color-slate-900: #12383a;
+      --av-color-emerald-50: #eaf5ef;
+      --av-color-emerald-100: #d7ecdf;
+      --av-color-emerald-700: #18714e;
+      --av-color-amber-50: #fbf4df;
+      --av-color-amber-100: #f4e5b8;
+      --av-color-amber-700: #9a6c1d;
       --av-color-red-50: #fef2f2;
       --av-color-red-100: #fee2e2;
       --av-color-red-600: #dc2626;
@@ -51,8 +53,8 @@ AVDS_CSS = """
       --av-shadow-2xs: 0 1px 1px rgb(15 23 42 / 0.03);
       --av-shadow-xs: 0 1px 2px rgb(15 23 42 / 0.04);
       --av-shadow-sm: 0 1px 2px rgb(30 41 59 / 0.08);
-      --av-shadow-md: 0 10px 24px rgb(30 41 59 / 0.07), 0 2px 6px rgb(30 41 59 / 0.04);
-      --av-shadow-lg: 0 18px 40px rgb(30 41 59 / 0.10), 0 6px 14px rgb(30 41 59 / 0.05);
+      --av-shadow-md: 0 10px 24px rgb(18 56 58 / 0.07), 0 2px 6px rgb(18 56 58 / 0.04);
+      --av-shadow-lg: 0 18px 40px rgb(18 56 58 / 0.10), 0 6px 14px rgb(18 56 58 / 0.05);
       --av-duration-base: 180ms;
       --av-easing-emphasized: cubic-bezier(0.2, 0, 0.1, 1);
       --motion-duration-base: var(--av-duration-base);
@@ -173,4 +175,4 @@ AVDS_CSS = """
     body {
       -webkit-font-smoothing: antialiased;
     }
-"""
+""" + BRAND_CSS

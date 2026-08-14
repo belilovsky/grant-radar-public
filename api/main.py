@@ -37,6 +37,7 @@ from starlette.middleware.trustedhost import TrustedHostMiddleware
 
 from api.application_prep_page import render_application_prep_page
 from api.avds import AVDS_CSS
+from api.branding import BRAND_FAVICON_SVG
 from api.catalog import build_funder_index as _build_funder_index
 from api.catalog import funder_name as _funder_name
 from api.catalog import funder_payload as _funder_payload
@@ -310,13 +311,7 @@ _DASHBOARD_RAW_FIELDS = frozenset(
     }
 )
 
-_FAVICON_SVG = """\
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64">
-  <rect width="64" height="64" rx="14" fill="#0f172a"/>
-  <path d="M18 38 29 17h7L25 38h13l-3 6H15l3-6Z" fill="#f8fafc"/>
-  <path d="M39 17h7L36 47h-7l10-30Z" fill="#22c55e"/>
-</svg>
-"""
+_FAVICON_SVG = BRAND_FAVICON_SVG
 
 
 @app.middleware("http")

@@ -8,6 +8,7 @@ from typing import Any, Mapping
 
 from api.avds import AVDS_CSS, AVDS_FONT_HEAD
 from api.avds_visual import DASHBOARD_AVDS4_CSS
+from api.branding import BRAND_MARK_SVG
 from api.dashboard_copy import dashboard_copy
 from api.dashboard_style import DASHBOARD_CSS
 from api.page_primitives import absolute_href as _absolute_href
@@ -308,7 +309,8 @@ def render_dashboard(
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-  <meta name="theme-color" content="#f8fafc">
+  <meta name="theme-color" content="#063f43">
+  <link rel="icon" href="{base}/favicon.ico">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="default">
   <meta name="apple-mobile-web-app-title" content="QAZ.FUND">
@@ -397,6 +399,7 @@ def render_dashboard(
             <div class="brand">
               <span class="eyebrow">{escape(str(copy["eyebrow"]))}</span>
               <div class="brand-row">
+                <span class="brand-mark" aria-hidden="true">{BRAND_MARK_SVG}</span>
                 <h1>{escape(str(copy["headline"]))}</h1>
               </div>
               <p>{escape(str(copy["subtitle"]))}</p>
