@@ -8,6 +8,11 @@ from decimal import Decimal
 from typing import Any, cast
 from urllib.parse import urlencode
 
+from api.edpol_language import (
+    EDPOL_LANGUAGE_POLICY_URL,
+    EDPOL_LANGUAGE_POLICY_VERSION,
+    evaluate_social_copy,
+)
 from core.models import Opportunity
 
 QPOST_TEMPLATES = ("grant_day", "deadline_7d", "deadline_2d", "weekly")
@@ -189,26 +194,24 @@ def _source_item(
     }
 
 
+def _editorial_ready(item: Opportunity, lang: str) -> bool:
+    """Only source-grounded, fully written records may enter the social feed."""
+
+    steps = _localized_list(item, lang, "application_steps")
+    audience = _localized_list(item, lang, "eligibility")
+    return bool(
+        _localized_text(item, lang, "social_title")
+        and _localized_text(item, lang, "summary")
+        and audience
+        and len(steps) == 3
+        and str(item.source_url).startswith("https://")
+        and _safety(item)["evidence_state"] == "sourced"
+    )
+
+
 def _single_body(
     source: dict[str, Any], *, template: str, lang: str
 ) -> tuple[str, str]:
-    prefix = {
-        "grant_day": {
-            "ru": "Возможность дня",
-            "kk": "Күн мүмкіндігі",
-            "en": "Opportunity of the day",
-        },
-        "deadline_7d": {
-            "ru": "Дедлайн через 7 дней",
-            "kk": "Мерзімге 7 күн",
-            "en": "Deadline in 7 days",
-        },
-        "deadline_2d": {
-            "ru": "Дедлайн через 2 дня",
-            "kk": "Мерзімге 2 күн",
-            "en": "Deadline in 2 days",
-        },
-    }[template][lang]
     labels = {
         "ru": (
             "Кому подходит",
@@ -232,7 +235,7 @@ def _single_body(
             "What is included",
         ),
     }[lang]
-    title = source.get("social_title") or f"{prefix}: {source['title']}"
+    title = source["social_title"]
     steps = "\n".join(
         f"{index}. {step}" for index, step in enumerate(source["application_steps"], 1)
     )
@@ -258,16 +261,16 @@ def _weekly_body(
     sources: list[dict[str, Any]], *, period_key: str, lang: str
 ) -> tuple[str, str]:
     title = {
-        "ru": f"Возможности недели · {period_key}",
-        "kk": f"Апта мүмкіндіктері · {period_key}",
-        "en": f"Opportunities of the week · {period_key}",
+        "ru": f"Что можно подать на этой неделе · {period_key}",
+        "kk": f"Осы аптада неге өтінім беруге болады · {period_key}",
+        "en": f"Applications to consider this week · {period_key}",
     }[lang]
     intro = {
-        "ru": "Подборка QAZ.FUND для ручной редакторской проверки:",
-        "kk": "Редактор қолмен тексеретін QAZ.FUND топтамасы:",
-        "en": "A QAZ.FUND selection for manual editorial review:",
+        "ru": "Сроки, финансирование и первый шаг по каждой программе.",
+        "kk": "Әр бағдарлама бойынша мерзім, қаржыландыру және алғашқы қадам.",
+        "en": "Deadlines, funding and the first step for each programme.",
     }[lang]
-    lines = [f"📌 {title}", "", intro, ""]
+    lines = [intro, ""]
     for index, source in enumerate(sources, 1):
         lines.extend(
             [
@@ -277,13 +280,6 @@ def _weekly_body(
                 "",
             ]
         )
-    lines.append(
-        {
-            "ru": "Перед публикацией редактор сверяет условия и актуальность каждой карточки.",
-            "kk": "Жариялар алдында редактор әр карточканың шарттары мен өзектілігін тексереді.",
-            "en": "Before publication, an editor verifies every record and its current terms.",
-        }[lang]
-    )
     return title, "\n".join(lines).strip()[:4096]
 
 
@@ -301,7 +297,7 @@ def build_qpost_draft_feed(
     if template not in QPOST_TEMPLATES:
         raise ValueError(f"Unsupported QPost template: {template}")
     ranked = sorted(
-        opportunities,
+        (item for item in opportunities if _editorial_ready(item, active_lang)),
         key=lambda item: (-item.score, item.deadline or date.max, str(item.id)),
     )
     if template.startswith("deadline_"):
@@ -312,6 +308,7 @@ def build_qpost_draft_feed(
         selected = ranked[: max(1, limit)]
 
     candidates: list[dict[str, Any]] = []
+    rejected_count = len(opportunities) - len(ranked)
     if template == "weekly" and selected:
         period = today.isocalendar()
         period_key = f"{period.year}-W{period.week:02d}"
@@ -320,21 +317,27 @@ def build_qpost_draft_feed(
             for item in selected
         ]
         title, body = _weekly_body(sources, period_key=period_key, lang=active_lang)
-        candidates.append(
-            {
-                "idempotency_key": f"qazfund:weekly:{active_lang}:{period_key}",
-                "template": template,
-                "title": title,
-                "body_text": body,
-                "language": active_lang,
-                "canonical_url": (
-                    f"{base_url.rstrip('/')}?utm_source=telegram"
-                    "&utm_medium=social&utm_campaign=qazfund_weekly"
-                ),
-                "human_review_required": True,
-                "source_items": sources,
-            }
-        )
+        edpol = evaluate_social_copy(title=title, body_text=body)
+        if edpol["decision"] != "pass":
+            rejected_count += 1
+            sources = []
+        if sources:
+            candidates.append(
+                {
+                    "idempotency_key": f"qazfund:weekly:{active_lang}:{period_key}",
+                    "template": template,
+                    "title": title,
+                    "body_text": body,
+                    "language": active_lang,
+                    "canonical_url": (
+                        f"{base_url.rstrip('/')}?utm_source=telegram"
+                        "&utm_medium=social&utm_campaign=qazfund_weekly"
+                    ),
+                    "human_review_required": True,
+                    "source_items": sources,
+                    "edpol": edpol,
+                }
+            )
     elif template != "weekly":
         if template == "grant_day":
             selected = selected[:1]
@@ -343,6 +346,10 @@ def build_qpost_draft_feed(
                 item, base_url=base_url, lang=active_lang, template=template
             )
             title, body = _single_body(source, template=template, lang=active_lang)
+            edpol = evaluate_social_copy(title=title, body_text=body)
+            if edpol["decision"] != "pass":
+                rejected_count += 1
+                continue
             period_key = (
                 item.deadline.isoformat() if item.deadline else today.isoformat()
             )
@@ -356,6 +363,7 @@ def build_qpost_draft_feed(
                     "canonical_url": source["canonical_url"],
                     "human_review_required": True,
                     "source_items": [source],
+                    "edpol": edpol,
                 }
             )
 
@@ -365,6 +373,11 @@ def build_qpost_draft_feed(
         "human_review_required": True,
         "generated_at": datetime.now(timezone.utc).isoformat(),
         "template": template,
+        "edpol_policy": {
+            "url": EDPOL_LANGUAGE_POLICY_URL,
+            "version": EDPOL_LANGUAGE_POLICY_VERSION,
+        },
+        "rejected_count": rejected_count,
         "state": "ready" if candidates else "no_candidates",
         "items": candidates,
     }

@@ -6,6 +6,7 @@ from uuid import UUID
 from fastapi.testclient import TestClient
 
 from api import main as api_main
+from api.edpol_language import evaluate_social_copy
 from api.qpost_feed import build_qpost_draft_feed
 from core.models import Opportunity, OpportunityType
 
@@ -28,6 +29,28 @@ def _opportunity(
         raw={
             "provenance": {"evidence_state": "sourced"},
             "decision_readiness": {"status": "partial"},
+            "i18n": {
+                "ru": {
+                    "title": "Поддержка технологических проектов",
+                    "summary": (
+                        "Финансирование для команд, которые развивают "
+                        "технологические продукты."
+                    ),
+                    "eligibility": ["Команды и организации из Казахстана"],
+                    "application_steps": [
+                        "Проверить отраслевые критерии конкурса",
+                        "Подготовить описание продукта и бюджет",
+                        "Подать заявку через портал организатора",
+                    ],
+                    "social_title": "Технологические проекты: грант до 5 млн KZT",
+                    "amount": "До 5 000 000 KZT",
+                    "deadline_display": (
+                        deadline.strftime("%d.%m.%Y")
+                        if deadline is not None
+                        else "Постоянный приём"
+                    ),
+                }
+            },
         },
     )
 
@@ -45,7 +68,7 @@ def test_grant_day_contract_is_draft_only_and_complete() -> None:
     assert payload["human_review_required"] is True
     item = payload["items"][0]
     assert item["idempotency_key"].startswith("qazfund:grant_day:ru:2026-08-13:")
-    assert item["title"].startswith("Возможность дня:")
+    assert item["title"] == "Технологические проекты: грант до 5 млн KZT"
     assert item["title"] not in item["body_text"]
     assert "https://qaz.fund/" not in item["body_text"]
     assert "Проверка:" not in item["body_text"]
@@ -55,6 +78,40 @@ def test_grant_day_contract_is_draft_only_and_complete() -> None:
     assert len(source["application_steps"]) == 3
     assert source["safety"]["status"] == "source_grounded_review_required"
     assert source["safety"]["human_review_required"] is True
+    assert item["edpol"]["decision"] == "pass"
+    assert payload["edpol_policy"]["version"] == "1.1.0"
+
+
+def test_non_editorial_record_is_not_exported_to_qpost() -> None:
+    opportunity = _opportunity(
+        item_id="88888888-8888-8888-8888-888888888888", deadline=None
+    )
+    opportunity.raw.pop("i18n")
+
+    payload = build_qpost_draft_feed(
+        [opportunity],
+        base_url="https://qaz.fund",
+        lang="ru",
+        template="grant_day",
+        today=date(2026, 8, 13),
+    )
+
+    assert payload["state"] == "no_candidates"
+    assert payload["items"] == []
+    assert payload["rejected_count"] == 1
+
+
+def test_edpol_blocks_paraphrased_slop_in_all_supported_languages() -> None:
+    cases = [
+        ("Данная программа", "Она открывает новые горизонты."),
+        ("Бұл бағдарлама", "Жоба жаңа мүмкіндіктер ашады."),
+        ("This programme", "It opens new horizons."),
+    ]
+
+    for title, body in cases:
+        report = evaluate_social_copy(title=title, body_text=body)
+        assert report["decision"] == "blocked"
+        assert "generic-opportunity-framing" in report["finding_ids"]
 
 
 def test_russian_feed_does_not_leak_english_only_audience_text() -> None:
@@ -63,6 +120,9 @@ def test_russian_feed_does_not_leak_english_only_audience_text() -> None:
         deadline=date(2026, 8, 17),
     )
     opportunity.eligibility = ["Startup teams from Kazakhstan and Central Asia"]
+    opportunity.raw["i18n"]["ru"]["eligibility"] = [
+        "Команды из Казахстана и Центральной Азии"
+    ]
 
     payload = build_qpost_draft_feed(
         [opportunity],
@@ -73,9 +133,7 @@ def test_russian_feed_does_not_leak_english_only_audience_text() -> None:
     )
 
     audience = payload["items"][0]["source_items"][0]["audience"]
-    assert (
-        audience == "Критерии участия нужно сверить на официальной странице программы"
-    )
+    assert audience == "Команды из Казахстана и Центральной Азии"
 
 
 def test_grant_day_uses_source_grounded_editorial_fields() -> None:
@@ -89,9 +147,13 @@ def test_grant_day_uses_source_grounded_editorial_fields() -> None:
             "title": "Технологические гранты для Казахстана",
             "summary": "Финансирование для команд с действующим продуктом.",
             "eligibility": ["Специалисты и предприниматели от 18 лет"],
-            "application_steps": ["Заполнить заявку", "Пройти интервью"],
+            "application_steps": [
+                "Заполнить заявку",
+                "Пройти интервью",
+                "Подтвердить участие",
+            ],
             "highlights": ["Founder Lab", "Доступ к GPU"],
-            "social_title": "AI'Preneurs — программа для AI-основателей",
+            "social_title": "AI'Preneurs – программа для AI-основателей",
             "audience_label": "Для кого",
             "highlights_label": "Что получите",
             "amount": "Грант до 5 000 000 KZT",
@@ -111,7 +173,7 @@ def test_grant_day_uses_source_grounded_editorial_fields() -> None:
     )
 
     item = payload["items"][0]
-    assert item["title"] == "AI'Preneurs — программа для AI-основателей"
+    assert item["title"] == "AI'Preneurs – программа для AI-основателей"
     assert item["title"] not in item["body_text"]
     assert item["body_text"].startswith(
         "Финансирование для команд с действующим продуктом."
@@ -122,7 +184,7 @@ def test_grant_day_uses_source_grounded_editorial_fields() -> None:
     assert "Участие: Грант до 5 000 000 KZT" in item["body_text"]
     assert "Последний день: 17 августа · 18:00" in item["body_text"]
     assert (
-        "Как пройти отбор:\n1. Заполнить заявку\n2. Пройти интервью"
+        "Как пройти отбор:\n1. Заполнить заявку\n2. Пройти интервью\n3. Подтвердить участие"
         in item["body_text"]
     )
     assert "https://qaz.fund/" not in item["body_text"]
