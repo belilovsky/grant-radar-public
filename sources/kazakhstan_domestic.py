@@ -133,6 +133,10 @@ class DomesticProgram:
     amount_max: Decimal | None = None
     currency: str = "USD"
     application_url: str | None = None
+    taxonomy_instrument: str = ""
+    taxonomy_application_mode: str = ""
+    taxonomy_deadline_model: str = ""
+    application_windows: tuple[tuple[str, str], ...] = ()
 
 
 DOMESTIC_PROGRAMS = (
@@ -307,7 +311,7 @@ DOMESTIC_PROGRAMS = (
             "22 August for middle-specialist and applied-bachelor programmes, "
             "27 August for working qualifications and 20 September for part-time study."
         ),
-        title_ru="6300 грантовых мест в колледжах Павлодарской области",
+        title_ru="6300 мест по госзаказу в колледжах Павлодарской области",
         summary_ru=(
             "Официальное сообщение Управления образования Павлодарской области "
             "о приёме в колледжи на 2026-2027 учебный год. Регион выделил "
@@ -320,8 +324,8 @@ DOMESTIC_PROGRAMS = (
             "для заочной формы."
         ),
         tags=(
-            "grant",
-            "scholarship",
+            "education_admission",
+            "state_funded_seat",
             "education",
             "citizen_support",
             "regional_development",
@@ -337,6 +341,17 @@ DOMESTIC_PROGRAMS = (
         ),
         amount_raw="6,300 state-funded college places for 2026-2027",
         application_url="https://egov.kz/cms/ru/online-services/for_citizen/pr_5",
+        taxonomy_instrument="education_admission",
+        taxonomy_application_mode="admission",
+        taxonomy_deadline_model="multiple",
+        application_windows=(
+            ("creative_programmes", "2026-07-20"),
+            ("pedagogy_and_some_medical_programmes", "2026-08-10"),
+            ("medical_after_grade_11_or_tvet", "2026-08-15"),
+            ("state_order_middle_specialist_and_applied_bachelor", "2026-08-22"),
+            ("working_qualifications", "2026-08-27"),
+            ("part_time_study", "2026-09-20"),
+        ),
     ),
     DomesticProgram(
         url="https://www.gov.kz/memleket/entities/astana/press/news/details/1247988?lang=ru",
@@ -349,7 +364,7 @@ DOMESTIC_PROGRAMS = (
             "education places. Applications are accepted online through eGov.kz; "
             "published deadlines run by track from 20 July to 20 September 2026."
         ),
-        title_ru="10 300 грантовых мест в колледжах Астаны",
+        title_ru="10 300 мест по госзаказу в колледжах Астаны",
         summary_ru=(
             "Официальное сообщение акимата Астаны о приёме в колледжи на "
             "2026-2027 учебный год. В городе выделено 10 300 грантовых мест, "
@@ -360,8 +375,8 @@ DOMESTIC_PROGRAMS = (
             "20 июля до 20 сентября 2026 года."
         ),
         tags=(
-            "grant",
-            "scholarship",
+            "education_admission",
+            "state_funded_seat",
             "education",
             "citizen_support",
             "regional_development",
@@ -377,6 +392,17 @@ DOMESTIC_PROGRAMS = (
         ),
         amount_raw="10,300 state-funded college places for 2026-2027",
         application_url="https://egov.kz/cms/ru/online-services/for_citizen/pr_5",
+        taxonomy_instrument="education_admission",
+        taxonomy_application_mode="admission",
+        taxonomy_deadline_model="multiple",
+        application_windows=(
+            ("creative_programmes", "2026-07-20"),
+            ("pedagogy_and_some_medical_programmes", "2026-08-10"),
+            ("medical_after_grade_11_or_tvet", "2026-08-15"),
+            ("state_order_middle_specialist_and_applied_bachelor", "2026-08-22"),
+            ("working_qualifications", "2026-08-27"),
+            ("part_time_study", "2026-09-20"),
+        ),
     ),
     DomesticProgram(
         url="https://aaiff.ai/",
@@ -1488,6 +1514,27 @@ def _amount_raw_payload(program: DomesticProgram) -> dict[str, Any]:
     return payload
 
 
+def _taxonomy_payload(program: DomesticProgram) -> dict[str, Any]:
+    taxonomy = {
+        key: value
+        for key, value in {
+            "instrument": program.taxonomy_instrument,
+            "application_mode": program.taxonomy_application_mode,
+            "deadline_model": program.taxonomy_deadline_model,
+        }.items()
+        if value
+    }
+    payload: dict[str, Any] = {}
+    if taxonomy:
+        payload["opportunity_taxonomy"] = taxonomy
+    if program.application_windows:
+        payload["application_windows"] = [
+            {"route": route, "deadline": deadline}
+            for route, deadline in program.application_windows
+        ]
+    return payload
+
+
 def _i18n_payload(program: DomesticProgram) -> dict[str, Any]:
     editorial = DOMESTIC_EDITORIAL_RU.get(program.url, {})
     if not program.title_ru and not program.summary_ru and not editorial:
@@ -1681,6 +1728,7 @@ class KazakhstanDomesticSupportSource(BaseSource):
                             "lifecycle": program.lifecycle,
                             **_i18n_payload(program),
                             **_amount_raw_payload(program),
+                            **_taxonomy_payload(program),
                             "application_url": program.application_url,
                             "eligibility_raw": list(program.eligibility),
                             **_curated_detail_payload(program, "parse_error"),
@@ -1718,6 +1766,7 @@ class KazakhstanDomesticSupportSource(BaseSource):
                 "lifecycle": program.lifecycle,
                 **_i18n_payload(program),
                 **_amount_raw_payload(program),
+                **_taxonomy_payload(program),
                 "application_url": program.application_url,
                 "eligibility_raw": list(program.eligibility),
             }

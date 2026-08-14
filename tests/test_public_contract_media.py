@@ -6,6 +6,7 @@ from fastapi.testclient import TestClient
 
 from api import main as api_main
 from core.models import Opportunity, OpportunityType
+from core.public_contract import to_opportunity_v1
 
 
 def _reset_api_state(monkeypatch) -> None:
@@ -78,6 +79,22 @@ def test_api_v1_exposes_versioned_public_contract(monkeypatch):
     assert ndjson.status_code == 200
     assert ndjson.text.count("\n") == 1
     assert '"schema_version":"opportunity.v1"' in ndjson.text
+
+
+def test_public_contract_does_not_call_admission_a_grant() -> None:
+    item = _sample_opportunity()
+    item.title = "Приём в колледжи по государственному заказу"
+    item.tags = ["kazakhstan", "education", "education_admission"]
+    item.raw["opportunity_taxonomy"] = {
+        "instrument": "education_admission",
+        "application_mode": "admission",
+        "deadline_model": "multiple",
+    }
+
+    public = to_opportunity_v1(item)
+
+    assert public.formats == ["education_admission"]
+    assert "grant" not in public.formats
 
 
 def test_media_v1_outputs_citation_cards_charts_and_feeds(monkeypatch):

@@ -1105,7 +1105,7 @@ async def test_kazakhstan_domestic_support_yields_official_programs():
         by_title["Pavlodar region college state-funded places"].raw["i18n"]["ru"][
             "title"
         ]
-        == "6300 грантовых мест в колледжах Павлодарской области"
+        == "6300 мест по госзаказу в колледжах Павлодарской области"
     )
     assert by_title["Astana college state-funded places"].deadline == date(2026, 9, 20)
     assert (
@@ -1118,8 +1118,21 @@ async def test_kazakhstan_domestic_support_yields_official_programs():
     )
     assert (
         by_title["Astana college state-funded places"].raw["i18n"]["ru"]["title"]
-        == "10 300 грантовых мест в колледжах Астаны"
+        == "10 300 мест по госзаказу в колледжах Астаны"
     )
+    for title in (
+        "Pavlodar region college state-funded places",
+        "Astana college state-funded places",
+    ):
+        college = by_title[title]
+        assert "grant" not in college.tags
+        assert "scholarship" not in college.tags
+        assert college.raw["opportunity_taxonomy"] == {
+            "instrument": "education_admission",
+            "application_mode": "admission",
+            "deadline_model": "multiple",
+        }
+        assert len(college.raw["application_windows"]) == 6
     assert (
         by_title["Astana AI Film Festival international contest"].type
         == OpportunityType.CONTEST

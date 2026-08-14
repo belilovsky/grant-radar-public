@@ -15,8 +15,22 @@ from api.edpol_language import (
     evaluate_social_copy,
 )
 from core.models import Opportunity
+from core.opportunity_taxonomy import (
+    TAXONOMY_VERSION,
+    TEMPLATE_TRACKS,
+    classify_opportunity,
+    template_accepts_taxonomy,
+)
 
-QPOST_TEMPLATES = ("grant_day", "deadline_7d", "deadline_2d", "weekly")
+QPOST_TEMPLATES = tuple(TEMPLATE_TRACKS)
+_SINGLE_TEMPLATES = {
+    "grant_day",
+    "subsidy_day",
+    "procurement_day",
+    "finance_day",
+    "education_day",
+    "opportunity_day",
+}
 
 _CURRENCY_SYMBOLS = {
     "KZT": "₸",
@@ -245,6 +259,7 @@ def _source_item(
     item: Opportunity, *, base_url: str, lang: str, template: str
 ) -> dict[str, Any]:
     item_id = str(item.id)
+    taxonomy = classify_opportunity(item)
     return {
         "id": item_id,
         "title": _localized_text(item, lang, "title")
@@ -270,6 +285,7 @@ def _source_item(
         "language": lang,
         "audience_focus": "kazakhstan",
         "focus_rank": _kazakhstan_focus_rank(item),
+        "taxonomy": taxonomy,
         "safety": _safety(item),
     }
 
@@ -379,7 +395,12 @@ def build_qpost_draft_feed(
     editorial = [
         item
         for item in opportunities
-        if _editorial_ready(item, active_lang) and _kazakhstan_focus_rank(item) < 3
+        if (
+            _editorial_ready(item, active_lang)
+            and _kazakhstan_focus_rank(item) < 3
+            and classify_opportunity(item)["decision"] == "pass"
+            and template_accepts_taxonomy(template, classify_opportunity(item))
+        )
     ]
     ranked = sorted(
         editorial,
@@ -429,7 +450,7 @@ def build_qpost_draft_feed(
                 }
             )
     elif template != "weekly":
-        if template == "grant_day":
+        if template in _SINGLE_TEMPLATES:
             selected = selected[:1]
         for item in selected:
             source = _source_item(
@@ -458,11 +479,12 @@ def build_qpost_draft_feed(
             )
 
     return {
-        "schema_version": "qazfund-qpost-drafts.v2",
+        "schema_version": "qazfund-qpost-drafts.v3",
         "publication_mode": "draft_only",
         "human_review_required": True,
         "audience_focus": "kazakhstan",
         "currency_display": "symbols",
+        "taxonomy_version": TAXONOMY_VERSION,
         "generated_at": datetime.now(timezone.utc).isoformat(),
         "template": template,
         "edpol_policy": {

@@ -24,9 +24,11 @@ def _opportunity(
         amount_max=5_000_000,
         currency="KZT",
         deadline=deadline,
+        lifecycle="rolling" if deadline is None else "open",
         eligibility=["Команды и организации из Казахстана"],
         score=score,
         raw={
+            "deadline_policy": "rolling" if deadline is None else None,
             "provenance": {"evidence_state": "sourced"},
             "decision_readiness": {"status": "partial"},
             "i18n": {
@@ -317,6 +319,58 @@ def test_kazakhstan_cards_rank_before_global_and_unscoped_cards_are_excluded() -
     assert payload["rejected_count"] == 1
 
 
+def test_education_admission_cannot_enter_grant_or_main_opportunity_stream() -> None:
+    admission = _opportunity(
+        item_id="dddddddd-dddd-dddd-dddd-dddddddddddd",
+        deadline=date(2026, 9, 20),
+    )
+    admission.tags = ["education_admission", "state_funded_seat", "education"]
+    admission.raw["opportunity_taxonomy"] = {
+        "instrument": "education_admission",
+        "application_mode": "admission",
+        "deadline_model": "multiple",
+    }
+    admission.raw["application_windows"] = [
+        {"route": "working_qualifications", "deadline": "2026-08-27"}
+    ]
+
+    grant_payload = build_qpost_draft_feed(
+        [admission],
+        base_url="https://qaz.fund",
+        lang="ru",
+        template="grant_day",
+        today=date(2026, 8, 15),
+    )
+    main_payload = build_qpost_draft_feed(
+        [admission],
+        base_url="https://qaz.fund",
+        lang="ru",
+        template="opportunity_day",
+        today=date(2026, 8, 15),
+    )
+    education_payload = build_qpost_draft_feed(
+        [admission],
+        base_url="https://qaz.fund",
+        lang="ru",
+        template="education_day",
+        today=date(2026, 8, 15),
+    )
+
+    assert grant_payload["state"] == "no_candidates"
+    assert main_payload["state"] == "no_candidates"
+    assert education_payload["items"][0]["source_items"][0]["taxonomy"] == {
+        "version": "1.0.0",
+        "instrument": "education_admission",
+        "benefit_type": "tuition_coverage",
+        "application_mode": "admission",
+        "deadline_model": "multiple",
+        "content_track": "education",
+        "publication_scope": "dedicated",
+        "decision": "pass",
+        "finding_ids": [],
+    }
+
+
 def test_public_qpost_route_exposes_review_only_contract(monkeypatch) -> None:
     opportunity = _opportunity(
         item_id="66666666-6666-6666-6666-666666666666",
@@ -336,7 +390,7 @@ def test_public_qpost_route_exposes_review_only_contract(monkeypatch) -> None:
     assert response.status_code == 200
     assert response.headers["cache-control"].startswith("public, max-age=60")
     payload = response.json()
-    assert payload["schema_version"] == "qazfund-qpost-drafts.v2"
+    assert payload["schema_version"] == "qazfund-qpost-drafts.v3"
     assert payload["publication_mode"] == "draft_only"
     assert payload["items"][0]["template"] == "grant_day"
 
