@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import json
 import re
 from datetime import date, datetime, timezone
 from decimal import Decimal
@@ -17,15 +18,87 @@ from core.models import Opportunity
 
 QPOST_TEMPLATES = ("grant_day", "deadline_7d", "deadline_2d", "weekly")
 
+_CURRENCY_SYMBOLS = {
+    "KZT": "₸",
+    "USD": "$",
+    "EUR": "€",
+    "GBP": "£",
+    "RUB": "₽",
+    "CNY": "¥",
+    "JPY": "¥",
+}
+_AMOUNT_SCALE = (
+    r"(?:тыс(?:\.|яч[аи]?)?|млн|миллион(?:а|ов)?|млрд|миллиард(?:а|ов)?|"
+    r"thousand|million|billion)"
+)
+_KAZAKHSTAN_TERMS = (
+    r"\bkazakhstan\b",
+    r"\bказахстан\w*\b",
+    r"\bқазақстан\w*\b",
+)
+_GLOBAL_TERMS = (
+    r"\bglobal\b",
+    r"\bworldwide\b",
+    r"\bany country\b",
+    r"\ball countries\b",
+    r"\bиз любой страны\b",
+    r"\bвсе страны\b",
+)
+_CENTRAL_ASIA_TERMS = (
+    r"\bcentral asia\b",
+    r"\bцентральн\w+ ази\w*\b",
+    r"\bорталық азия\b",
+)
+
+
+def _currency_symbols(value: str) -> str:
+    """Render common monetary codes as compact symbols in social copy."""
+
+    text = str(value or "")
+    for code, symbol in _CURRENCY_SYMBOLS.items():
+        text = re.sub(
+            rf"\b{code}\s*(?=\d)",
+            lambda _: symbol,
+            text,
+            flags=re.IGNORECASE,
+        )
+        text = re.sub(
+            rf"(?P<amount>\d(?:[\d\s\u00a0.,]*\d)?(?:\s+{_AMOUNT_SCALE})?)\s*{code}\b",
+            lambda match: f"{symbol}{match.group('amount').strip()}",
+            text,
+            flags=re.IGNORECASE,
+        )
+    return text
+
+
+def _focus_text(item: Opportunity) -> str:
+    raw = item.raw if isinstance(item.raw, dict) else {}
+    values = [item.title, item.summary, *item.eligibility, *item.tags]
+    values.append(json.dumps(raw, ensure_ascii=False, default=str))
+    return " ".join(str(value) for value in values if value).casefold()
+
+
+def _kazakhstan_focus_rank(item: Opportunity) -> int:
+    """Prefer Kazakhstan, then worldwide access, then Central Asia."""
+
+    text = _focus_text(item)
+    if any(re.search(pattern, text) for pattern in _KAZAKHSTAN_TERMS):
+        return 0
+    if any(re.search(pattern, text) for pattern in _GLOBAL_TERMS):
+        return 1
+    if any(re.search(pattern, text) for pattern in _CENTRAL_ASIA_TERMS):
+        return 2
+    return 3
+
 
 def _amount(item: Opportunity, lang: str) -> str:
     localized_amount = _localized_text(item, lang, "amount")
     if localized_amount:
-        return localized_amount
+        return _currency_symbols(localized_amount)
     raw = item.raw if isinstance(item.raw, dict) else {}
     raw_amount = str(raw.get("amount_raw") or "").strip()
     if raw_amount:
-        return raw_amount
+        return _currency_symbols(raw_amount)
     values = [
         value for value in (item.amount_min, item.amount_max) if value is not None
     ]
@@ -36,7 +109,8 @@ def _amount(item: Opportunity, lang: str) -> str:
         return f"{value:,.0f}".replace(",", " ")
 
     amount = "–".join(display(value) for value in values)
-    return f"{amount} {item.currency}".strip()
+    symbol = _CURRENCY_SYMBOLS.get(str(item.currency).upper())
+    return f"{symbol}{amount}" if symbol else f"{amount} {item.currency}".strip()
 
 
 def _deadline(item: Opportunity, lang: str) -> str:
@@ -112,14 +186,16 @@ def _localized_value(item: Opportunity, lang: str, key: str) -> Any:
 def _localized_text(item: Opportunity, lang: str, key: str) -> str | None:
     value = _localized_value(item, lang, key)
     text = str(value or "").strip()
-    return text or None
+    return _currency_symbols(text) or None
 
 
 def _localized_list(item: Opportunity, lang: str, key: str) -> list[str]:
     value = _localized_value(item, lang, key)
     if not isinstance(value, list):
         return []
-    return [str(entry).strip() for entry in value if str(entry).strip()]
+    return [
+        _currency_symbols(str(entry).strip()) for entry in value if str(entry).strip()
+    ]
 
 
 def _campaign_url(base_url: str, item_id: str, *, lang: str, template: str) -> str:
@@ -171,8 +247,10 @@ def _source_item(
     item_id = str(item.id)
     return {
         "id": item_id,
-        "title": _localized_text(item, lang, "title") or item.title.strip(),
-        "summary": _localized_text(item, lang, "summary") or item.summary.strip(),
+        "title": _localized_text(item, lang, "title")
+        or _currency_symbols(item.title.strip()),
+        "summary": _localized_text(item, lang, "summary")
+        or _currency_symbols(item.summary.strip()),
         "audience": _audience(item, lang),
         "amount": _amount(item, lang),
         "deadline": item.deadline.isoformat() if item.deadline else None,
@@ -190,6 +268,8 @@ def _source_item(
         "canonical_url": _campaign_url(base_url, item_id, lang=lang, template=template),
         "source_url": str(item.source_url),
         "language": lang,
+        "audience_focus": "kazakhstan",
+        "focus_rank": _kazakhstan_focus_rank(item),
         "safety": _safety(item),
     }
 
@@ -266,9 +346,9 @@ def _weekly_body(
         "en": f"Applications to consider this week · {period_key}",
     }[lang]
     intro = {
-        "ru": "Сроки, финансирование и первый шаг по каждой программе.",
-        "kk": "Әр бағдарлама бойынша мерзім, қаржыландыру және алғашқы қадам.",
-        "en": "Deadlines, funding and the first step for each programme.",
+        "ru": "Для заявителей из Казахстана: сроки, финансирование и первый шаг.",
+        "kk": "Қазақстаннан өтінім берушілер үшін: мерзім, қаржыландыру және алғашқы қадам.",
+        "en": "For applicants from Kazakhstan: deadlines, funding and the first step.",
     }[lang]
     lines = [intro, ""]
     for index, source in enumerate(sources, 1):
@@ -296,9 +376,19 @@ def build_qpost_draft_feed(
     active_lang = lang if lang in {"ru", "kk", "en"} else "ru"
     if template not in QPOST_TEMPLATES:
         raise ValueError(f"Unsupported QPost template: {template}")
+    editorial = [
+        item
+        for item in opportunities
+        if _editorial_ready(item, active_lang) and _kazakhstan_focus_rank(item) < 3
+    ]
     ranked = sorted(
-        (item for item in opportunities if _editorial_ready(item, active_lang)),
-        key=lambda item: (-item.score, item.deadline or date.max, str(item.id)),
+        editorial,
+        key=lambda item: (
+            _kazakhstan_focus_rank(item),
+            -item.score,
+            item.deadline or date.max,
+            str(item.id),
+        ),
     )
     if template.startswith("deadline_"):
         offset = 7 if template == "deadline_7d" else 2
@@ -368,9 +458,11 @@ def build_qpost_draft_feed(
             )
 
     return {
-        "schema_version": "qazfund-qpost-drafts.v1",
+        "schema_version": "qazfund-qpost-drafts.v2",
         "publication_mode": "draft_only",
         "human_review_required": True,
+        "audience_focus": "kazakhstan",
+        "currency_display": "symbols",
         "generated_at": datetime.now(timezone.utc).isoformat(),
         "template": template,
         "edpol_policy": {

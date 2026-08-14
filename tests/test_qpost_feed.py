@@ -68,7 +68,7 @@ def test_grant_day_contract_is_draft_only_and_complete() -> None:
     assert payload["human_review_required"] is True
     item = payload["items"][0]
     assert item["idempotency_key"].startswith("qazfund:grant_day:ru:2026-08-13:")
-    assert item["title"] == "Технологические проекты: грант до 5 млн KZT"
+    assert item["title"] == "Технологические проекты: грант до ₸5 млн"
     assert item["title"] not in item["body_text"]
     assert "https://qaz.fund/" not in item["body_text"]
     assert "Проверка:" not in item["body_text"]
@@ -80,6 +80,8 @@ def test_grant_day_contract_is_draft_only_and_complete() -> None:
     assert source["safety"]["human_review_required"] is True
     assert item["edpol"]["decision"] == "pass"
     assert payload["edpol_policy"]["version"] == "1.1.0"
+    assert payload["audience_focus"] == "kazakhstan"
+    assert payload["currency_display"] == "symbols"
 
 
 def test_non_editorial_record_is_not_exported_to_qpost() -> None:
@@ -181,7 +183,7 @@ def test_grant_day_uses_source_grounded_editorial_fields() -> None:
     assert item["source_items"][0]["title"] == ("Технологические гранты для Казахстана")
     assert "Для кого:\nСпециалисты и предприниматели от 18 лет" in item["body_text"]
     assert "Что получите:\n• Founder Lab\n• Доступ к GPU" in item["body_text"]
-    assert "Участие: Грант до 5 000 000 KZT" in item["body_text"]
+    assert "Участие: Грант до ₸5 000 000" in item["body_text"]
     assert "Последний день: 17 августа · 18:00" in item["body_text"]
     assert (
         "Как пройти отбор:\n1. Заполнить заявку\n2. Пройти интервью\n3. Подтвердить участие"
@@ -240,6 +242,79 @@ def test_weekly_digest_has_one_stable_candidate_with_multiple_sources() -> None:
     assert payload["items"][0]["idempotency_key"] == "qazfund:weekly:ru:2026-W33"
     assert len(payload["items"][0]["source_items"]) == 2
     assert payload["items"][0]["human_review_required"] is True
+    assert payload["items"][0]["body_text"].startswith(
+        "Для заявителей из Казахстана:"
+    )
+
+
+def test_currency_codes_are_compacted_to_symbols_across_visible_copy() -> None:
+    opportunity = _opportunity(
+        item_id="99999999-9999-9999-9999-999999999999",
+        deadline=date(2026, 9, 1),
+    )
+    opportunity.raw["i18n"]["ru"].update(
+        {
+            "social_title": "Премия: 5 млн KZT победителю",
+            "summary": "Фонд 35 000 000 KZT, дополнительная выплата EUR 460.",
+            "amount": "USD 2,000 или 5 млн KZT",
+        }
+    )
+
+    payload = build_qpost_draft_feed(
+        [opportunity],
+        base_url="https://qaz.fund",
+        lang="ru",
+        template="grant_day",
+        today=date(2026, 8, 15),
+    )
+
+    item = payload["items"][0]
+    visible = f"{item['title']}\n{item['body_text']}"
+    assert "KZT" not in visible
+    assert "USD" not in visible
+    assert "EUR" not in visible
+    assert "₸5 млн" in visible
+    assert "₸35 000 000" in visible
+    assert "$2,000" in visible
+    assert "€460" in visible
+
+
+def test_kazakhstan_cards_rank_before_global_and_unscoped_cards_are_excluded() -> None:
+    local = _opportunity(
+        item_id="aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa",
+        deadline=date(2026, 9, 1),
+        score=0.5,
+    )
+    global_item = _opportunity(
+        item_id="bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb",
+        deadline=date(2026, 8, 20),
+        score=0.9,
+    )
+    global_item.eligibility = ["Applicants worldwide"]
+    global_item.raw["i18n"]["ru"]["eligibility"] = ["Заявители из любой страны"]
+    global_item.raw["i18n"]["ru"]["summary"] = "Приём заявок из любой страны."
+    unscoped = _opportunity(
+        item_id="cccccccc-cccc-cccc-cccc-cccccccccccc",
+        deadline=date(2026, 8, 18),
+        score=1.0,
+    )
+    unscoped.eligibility = ["Selected organisations"]
+    unscoped.raw["i18n"]["ru"]["eligibility"] = ["Отдельные организации"]
+    unscoped.raw["i18n"]["ru"]["summary"] = "Конкурс для отдельных организаций."
+
+    payload = build_qpost_draft_feed(
+        [global_item, unscoped, local],
+        base_url="https://qaz.fund",
+        lang="ru",
+        template="weekly",
+        today=date(2026, 8, 15),
+        limit=5,
+    )
+
+    sources = payload["items"][0]["source_items"]
+    assert [source["id"] for source in sources] == [str(local.id), str(global_item.id)]
+    assert [source["focus_rank"] for source in sources] == [0, 1]
+    assert payload["rejected_count"] == 1
 
 
 def test_public_qpost_route_exposes_review_only_contract(monkeypatch) -> None:
@@ -261,7 +336,7 @@ def test_public_qpost_route_exposes_review_only_contract(monkeypatch) -> None:
     assert response.status_code == 200
     assert response.headers["cache-control"].startswith("public, max-age=60")
     payload = response.json()
-    assert payload["schema_version"] == "qazfund-qpost-drafts.v1"
+    assert payload["schema_version"] == "qazfund-qpost-drafts.v2"
     assert payload["publication_mode"] == "draft_only"
     assert payload["items"][0]["template"] == "grant_day"
 
