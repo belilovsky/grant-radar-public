@@ -1865,9 +1865,9 @@ async def test_global_training_fetch_yields_official_mid_career_course():
     assert flta.raw["page_title"] is None
     assert "monthly stipend" in flta.raw["amount_raw"]
     assert flta.raw["i18n"]["ru"]["title"].startswith("Fulbright Foreign Language")
-    assert flta.raw["i18n"]["ru"]["social_title"].startswith("Fulbright FLTA")
+    assert flta.raw["i18n"]["ru"]["social_title"].startswith("🇺🇸 Fulbright FLTA")
     assert len(flta.raw["i18n"]["ru"]["application_steps"]) == 3
-    assert "ежемесячная стипендия" in flta.raw["i18n"]["ru"]["highlights"]
+    assert "💵 ежемесячную стипендию" in flta.raw["i18n"]["ru"]["highlights"]
     assert "kazakhstan" in flta.tags
     assert "fulbright" in flta.tags
     assert "teacher_training" in flta.tags

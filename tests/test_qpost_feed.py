@@ -92,8 +92,12 @@ def test_grant_day_uses_source_grounded_editorial_fields() -> None:
             "application_steps": ["Заполнить заявку", "Пройти интервью"],
             "highlights": ["Founder Lab", "Доступ к GPU"],
             "social_title": "AI'Preneurs — программа для AI-основателей",
+            "audience_label": "👤 Для кого",
+            "highlights_label": "✨ Что получите",
             "amount": "Грант до 5 000 000 KZT",
             "amount_label": "Участие",
+            "deadline_display": "17 августа · 18:00",
+            "deadline_label": "⏰ Последний день",
             "steps_title": "Как пройти отбор",
         }
     }
@@ -113,11 +117,10 @@ def test_grant_day_uses_source_grounded_editorial_fields() -> None:
         "Финансирование для команд с действующим продуктом."
     )
     assert item["source_items"][0]["title"] == ("Технологические гранты для Казахстана")
-    assert (
-        "Кому подходит:\nСпециалисты и предприниматели от 18 лет" in item["body_text"]
-    )
-    assert "Что внутри:\n• Founder Lab\n• Доступ к GPU" in item["body_text"]
+    assert "👤 Для кого:\nСпециалисты и предприниматели от 18 лет" in item["body_text"]
+    assert "✨ Что получите:\n• Founder Lab\n• Доступ к GPU" in item["body_text"]
     assert "Участие: Грант до 5 000 000 KZT" in item["body_text"]
+    assert "⏰ Последний день: 17 августа · 18:00" in item["body_text"]
     assert (
         "Как пройти отбор:\n1. Заполнить заявку\n2. Пройти интервью"
         in item["body_text"]

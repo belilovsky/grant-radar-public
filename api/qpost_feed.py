@@ -35,6 +35,9 @@ def _amount(item: Opportunity, lang: str) -> str:
 
 
 def _deadline(item: Opportunity, lang: str) -> str:
+    localized_deadline = _localized_text(item, lang, "deadline_display")
+    if localized_deadline:
+        return localized_deadline
     if item.deadline is not None:
         return (
             item.deadline.strftime("%d.%m.%Y")
@@ -158,7 +161,10 @@ def _source_item(
         ),
         "highlights": _localized_list(item, lang, "highlights"),
         "social_title": _localized_text(item, lang, "social_title"),
+        "audience_label": _localized_text(item, lang, "audience_label"),
+        "highlights_label": _localized_text(item, lang, "highlights_label"),
         "amount_label": _localized_text(item, lang, "amount_label"),
+        "deadline_label": _localized_text(item, lang, "deadline_label"),
         "steps_title": _localized_text(item, lang, "steps_title"),
         "canonical_url": _campaign_url(base_url, item_id, lang=lang, template=template),
         "source_url": str(item.source_url),
@@ -215,16 +221,16 @@ def _single_body(
         f"{index}. {step}" for index, step in enumerate(source["application_steps"], 1)
     )
     highlights = "\n".join(f"• {entry}" for entry in source.get("highlights", []))
-    sections = [
-        source["summary"],
-        f"{labels[0]}:\n{source['audience']}",
-    ]
+    audience_label = source.get("audience_label") or labels[0]
+    sections = [source["summary"], f"{audience_label}:\n{source['audience']}"]
     if highlights:
-        sections.append(f"{labels[4]}:\n{highlights}")
+        highlights_label = source.get("highlights_label") or labels[4]
+        sections.append(f"{highlights_label}:\n{highlights}")
     amount_label = source.get("amount_label") or labels[1]
+    deadline_label = source.get("deadline_label") or labels[2]
     sections.append(
         f"{amount_label}: {source['amount']}\n"
-        f"{labels[2]}: {source['deadline_display']}"
+        f"{deadline_label}: {source['deadline_display']}"
     )
     steps_title = source.get("steps_title") or labels[3]
     sections.append(f"{steps_title}:\n{steps}")
