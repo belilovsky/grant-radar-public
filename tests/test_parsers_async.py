@@ -1149,7 +1149,7 @@ async def test_kazakhstan_domestic_support_yields_official_programs():
         "ru"
     ]
     assert festival_ru["social_title"].startswith("Astana AI Film Festival")
-    assert festival_ru["amount"].startswith("общий фонд — 1 000 000 USD")
+    assert festival_ru["amount"].startswith("общий фонд – 1 000 000 USD")
     assert len(festival_ru["application_steps"]) == 3
     assert by_title["Aiboz national literary prize"].type == OpportunityType.CONTEST
     assert by_title["Aiboz national literary prize"].deadline == date(2026, 9, 1)

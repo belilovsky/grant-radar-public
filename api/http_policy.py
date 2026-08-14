@@ -57,6 +57,8 @@ def is_machine_route(path: str) -> bool:
 
 
 def cache_control_for(path: str) -> str | None:
+    if path.startswith("/assets/branding/"):
+        return PUBLIC_LONG_CACHE
     if path in _FAST_CACHE_PATHS:
         return PUBLIC_FAST_CACHE
     if path in _DISCOVERY_CACHE_PATHS:

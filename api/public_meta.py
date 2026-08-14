@@ -19,17 +19,17 @@ OG_IMAGE_SVG = "\n".join(
         'viewBox="0 0 1200 630">',
         "  <defs>",
         '    <linearGradient id="bg" x1="0%" y1="0%" x2="100%" y2="100%">',
-        '      <stop offset="0%" stop-color="#063f43"/>',
-        '      <stop offset="100%" stop-color="#0b716c"/>',
+        '      <stop offset="0%" stop-color="#00343B"/>',
+        '      <stop offset="100%" stop-color="#00464D"/>',
         "    </linearGradient>",
         '    <radialGradient id="glow" cx="25%" cy="25%" r="70%">',
-        '      <stop offset="0%" stop-color="#e2b34e" stop-opacity="0.32"/>',
-        '      <stop offset="100%" stop-color="#e2b34e" stop-opacity="0"/>',
+        '      <stop offset="0%" stop-color="#F0C64D" stop-opacity="0.32"/>',
+        '      <stop offset="100%" stop-color="#F0C64D" stop-opacity="0"/>',
         "    </radialGradient>",
         "  </defs>",
         '  <rect width="1200" height="630" fill="url(#bg)"/>',
         '  <rect width="1200" height="630" fill="url(#glow)"/>',
-        '  <g fill="#f8fafc">',
+        '  <g fill="#FFFDFC">',
         (
             f'    <text x="88" y="156" font-family="{OG_FONT_FAMILY}" '
             'font-size="42" font-weight="600" opacity="0.92">'
@@ -63,23 +63,23 @@ OG_IMAGE_SVG = "\n".join(
         ),
         (
             '    <rect x="30" y="36" width="170" height="24" rx="12" '
-            'fill="#e2b34e" fill-opacity="0.48"/>'
+            'fill="#F0C64D" fill-opacity="0.48"/>'
         ),
         (
             '    <rect x="30" y="94" width="170" height="74" rx="18" '
-            'fill="#f8fafc" fill-opacity="0.94"/>'
+            'fill="#FFFDFC" fill-opacity="0.94"/>'
         ),
         (
             '    <rect x="30" y="190" width="170" height="18" rx="9" '
-            'fill="#f8fafc" fill-opacity="0.76"/>'
+            'fill="#FFFDFC" fill-opacity="0.76"/>'
         ),
         (
             '    <rect x="30" y="224" width="118" height="18" rx="9" '
-            'fill="#f8fafc" fill-opacity="0.56"/>'
+            'fill="#FFFDFC" fill-opacity="0.56"/>'
         ),
         (
             '    <rect x="30" y="282" width="170" height="54" rx="18" '
-            'fill="#e2b34e" fill-opacity="0.56"/>'
+            'fill="#F0C64D" fill-opacity="0.56"/>'
         ),
         "  </g>",
         "</svg>",
@@ -130,25 +130,24 @@ def _build_og_image_png() -> bytes:
     for y in range(height):
         for x in range(width):
             progress = (x + y * 0.42) / (width + height * 0.42)
-            glow = max(0.0, 1.0 - (((x - 180) / 520) ** 2 + ((y - 90) / 360) ** 2))
             put(
                 x,
                 y,
                 (
-                    int(5 + 6 * progress + 15 * glow),
-                    int(52 + 35 * progress + 37 * glow),
-                    int(55 + 28 * progress + 24 * glow),
+                    0,
+                    int(52 + 18 * progress),
+                    int(59 + 18 * progress),
                 ),
             )
 
-    rect(72, 72, 188, 10, (226, 179, 78))
-    rect(72, 102, 320, 16, (199, 222, 216))
+    rect(72, 72, 188, 10, (240, 198, 77))
+    rect(72, 102, 320, 16, (217, 232, 229))
 
     def word(text: str, x: int, y: int, scale: int) -> None:
         cursor = x
         for character in text:
             if character == ".":
-                rect(cursor + scale * 2, y + scale * 6, scale, scale, (248, 250, 252))
+                rect(cursor + scale * 2, y + scale * 6, scale, scale, (255, 253, 252))
                 cursor += scale * 3
                 continue
             glyph = _OG_GLYPHS[character]
@@ -160,25 +159,25 @@ def _build_og_image_png() -> bytes:
                             y + row * scale,
                             scale,
                             scale,
-                            (248, 250, 252),
+                            (255, 253, 252),
                         )
             cursor += scale * 6
 
     word("QAZ.FUND", 72, 164, 16)
-    rect(72, 340, 566, 14, (199, 222, 216))
-    rect(72, 374, 462, 14, (145, 188, 179))
-    rect(72, 422, 150, 44, (226, 179, 78))
-    rect(238, 422, 196, 44, (11, 113, 108))
-    rect(810, 72, 318, 486, (5, 48, 52))
-    rect(844, 112, 172, 22, (226, 179, 78))
-    rect(844, 170, 242, 108, (250, 248, 241))
-    rect(870, 204, 190, 16, (18, 56, 58))
-    rect(870, 236, 126, 14, (102, 135, 130))
-    rect(844, 314, 242, 14, (145, 188, 179))
-    rect(844, 348, 170, 14, (102, 135, 130))
-    rect(844, 418, 242, 84, (11, 113, 108))
-    rect(870, 448, 190, 14, (245, 226, 184))
-    rect(870, 478, 134, 12, (145, 188, 179))
+    rect(72, 340, 566, 14, (217, 232, 229))
+    rect(72, 374, 462, 14, (138, 190, 186))
+    rect(72, 422, 150, 44, (240, 198, 77))
+    rect(238, 422, 196, 44, (0, 84, 91))
+    rect(810, 72, 318, 486, (0, 45, 52))
+    rect(844, 112, 172, 22, (240, 198, 77))
+    rect(844, 170, 242, 108, (255, 253, 252))
+    rect(870, 204, 190, 16, (0, 52, 59))
+    rect(870, 236, 126, 14, (98, 132, 128))
+    rect(844, 314, 242, 14, (138, 190, 186))
+    rect(844, 348, 170, 14, (98, 132, 128))
+    rect(844, 418, 242, 84, (0, 84, 91))
+    rect(870, 448, 190, 14, (255, 242, 168))
+    rect(870, 478, 134, 12, (138, 190, 186))
 
     raw = b"".join(
         b"\x00" + bytes(pixels[row * width * 3 : (row + 1) * width * 3])

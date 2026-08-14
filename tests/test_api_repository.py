@@ -1537,13 +1537,20 @@ def test_marketing_endpoints_are_exposed(monkeypatch):
     assert client.head("/.well-known/release.json").status_code == 200
     favicon = client.get("/favicon.ico")
     assert favicon.status_code == 200
-    assert favicon.headers["content-type"].startswith("image/svg+xml")
+    assert favicon.headers["content-type"].startswith("image/x-icon")
     assert favicon.headers["cache-control"].startswith("public, max-age=3600")
-    assert "<svg" in favicon.text
+    assert favicon.content.startswith(b"\x00\x00\x01\x00")
     favicon_head = client.head("/favicon.ico")
     assert favicon_head.status_code == 200
-    assert favicon_head.headers["content-type"].startswith("image/svg+xml")
+    assert favicon_head.headers["content-type"].startswith("image/x-icon")
     assert favicon_head.headers["cache-control"].startswith("public, max-age=3600")
+
+    brand_symbol = client.get("/assets/branding/qaz-fund-symbol.svg")
+    assert brand_symbol.status_code == 200
+    assert brand_symbol.headers["content-type"].startswith("image/svg+xml")
+    assert brand_symbol.headers["cache-control"].startswith("public, max-age=3600")
+    assert 'aria-label="QAZ.FUND ornamental symbol"' in brand_symbol.text
+    assert client.head("/assets/branding/qaz-fund-symbol.svg").status_code == 200
 
     sitemap = client.get("/sitemap.xml")
     assert sitemap.status_code == 200

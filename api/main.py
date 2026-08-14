@@ -25,7 +25,14 @@ from fastapi.exception_handlers import (
 )
 from fastapi.exceptions import RequestValidationError
 from fastapi.openapi.docs import get_swagger_ui_html
-from fastapi.responses import HTMLResponse, JSONResponse, RedirectResponse, Response
+from fastapi.responses import (
+    FileResponse,
+    HTMLResponse,
+    JSONResponse,
+    RedirectResponse,
+    Response,
+)
+from fastapi.staticfiles import StaticFiles
 from pydantic import TypeAdapter
 from qazstack.content import diversify_ranked_items
 from qazstack.evidence import count_evidence_states, resolve_public_evidence_state
@@ -37,7 +44,7 @@ from starlette.middleware.trustedhost import TrustedHostMiddleware
 
 from api.application_prep_page import render_application_prep_page
 from api.avds import AVDS_CSS
-from api.branding import BRAND_FAVICON_SVG
+from api.branding import BRAND_FAVICON_PATH, BRANDING_ASSET_DIR
 from api.catalog import build_funder_index as _build_funder_index
 from api.catalog import funder_name as _funder_name
 from api.catalog import funder_payload as _funder_payload
@@ -197,6 +204,11 @@ app = FastAPI(
     docs_url=None,
     redoc_url=None,
 )
+app.mount(
+    "/assets/branding",
+    StaticFiles(directory=BRANDING_ASSET_DIR),
+    name="branding-assets",
+)
 _OPPORTUNITY_LIST_ADAPTER = TypeAdapter(list[Opportunity])
 
 
@@ -310,8 +322,6 @@ _DASHBOARD_RAW_FIELDS = frozenset(
         "status_raw",
     }
 )
-
-_FAVICON_SVG = BRAND_FAVICON_SVG
 
 
 @app.middleware("http")
@@ -2717,7 +2727,7 @@ async def public_release_metadata() -> Response:
 
 @app.api_route("/favicon.ico", methods=["GET", "HEAD"], include_in_schema=False)
 async def favicon() -> Response:
-    return Response(_FAVICON_SVG, media_type="image/svg+xml")
+    return FileResponse(BRAND_FAVICON_PATH, media_type="image/x-icon")
 
 
 @app.api_route("/og-image.svg", methods=["GET", "HEAD"], include_in_schema=False)

@@ -11,7 +11,7 @@ from urllib.parse import urlparse
 
 from api.avds import AVDS_CSS, AVDS_FONT_HEAD
 from api.avds_visual import OPPORTUNITY_AVDS4_CSS
-from api.branding import BRAND_MARK_SVG
+from api.branding import BRAND_MARK_TEAL_HTML
 from api.dashboard import dashboard_copy
 from api.page_primitives import absolute_href as _absolute_href
 from api.page_primitives import catalog_path as _catalog_path
@@ -904,6 +904,8 @@ def render_opportunity_page(
     )
     catalog_href = escape(_catalog_path(root_path, active_lang), quote=True)
     detail_base = root_path.rstrip("/")
+    asset_base = f"{detail_base}/assets/branding" if detail_base else "/assets/branding"
+    favicon_href = f"{detail_base}/favicon.ico" if detail_base else "/favicon.ico"
     sources_href = escape(
         (
             f"{detail_base}/?lang={active_lang}#sources"
@@ -1159,6 +1161,12 @@ def render_opportunity_page(
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#00545D">
+  <link rel="icon" href="{favicon_href}" sizes="any">
+  <link rel="icon" type="image/svg+xml" href="{asset_base}/favicon.svg">
+  <link rel="icon" type="image/png" sizes="32x32" href="{asset_base}/favicon-32x32.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="{asset_base}/favicon-16x16.png">
+  <link rel="apple-touch-icon" sizes="180x180" href="{asset_base}/apple-touch-icon.png">
   <title>{escape(page_title)}</title>
   <meta name="description" content="{escape(seo_summary, quote=True)}">
   <link rel="canonical" href="{canonical_href}">
@@ -2113,7 +2121,7 @@ def render_opportunity_page(
     <div class="topbar">
       <nav class="breadcrumbs" aria-label="{escape(str(copy["breadcrumbs_aria"]), quote=True)}">
         <a class="site-brand" href="{catalog_href}">
-          <span class="brand-mark brand-mark--compact">{BRAND_MARK_SVG}</span>
+          <span class="brand-mark brand-mark--compact">{BRAND_MARK_TEAL_HTML}</span>
           <strong>QAZ.FUND</strong>
         </a>
         <span>/</span>
