@@ -106,7 +106,7 @@ def test_root_renders_service_landing(monkeypatch):
     assert response.headers["cache-control"] == "no-store"
     assert '<html lang="ru"' in response.text
     assert (
-        "<title>QAZ.FUND – открытые программы поддержки для Казахстана</title>"
+        "<title>QAZ.FUND – каталог программ поддержки для Казахстана</title>"
         in response.text
     )
     assert "\u2014" not in response.text
@@ -153,11 +153,11 @@ def test_root_renders_service_landing(monkeypatch):
     assert 'data-avds-component="hero-band"' in response.text
     assert "QAZ.FUND" in response.text
     assert (
-        "Находим открытые программы и помогаем превратить их в понятный следующий шаг."
+            "Открытые программы с источником, сроком и условиями, которые можно проверить до подачи."
         in response.text
     )
     assert (
-        "Гранты, субсидии, акселераторы и закупки – с источником, статусом данных и сроками."
+            "Гранты, субсидии, акселераторы и закупки: источник, статус и срок у каждой карточки."
         in response.text
     )
     assert "С чего начать?" in response.text
@@ -212,13 +212,13 @@ def test_root_renders_service_landing(monkeypatch):
     assert "Сохранить фильтры" in response.text
     assert "Поделиться выдачей" in response.text
     assert "Сроки в календарь" in response.text
-    assert "Для работы, а не для бесконечного поиска" in response.text
+    assert "Для редакции и анализа" in response.text
     assert "Открыть операторский раздел" in response.text
     assert 'href="/operator?lang=ru"' in response.text
     assert "<h4>Аналитику</h4>" not in response.text
     assert "С чего начать" in response.text
-    assert "Что можно проверить сейчас" in response.text
-    assert "Что проверить первым" in response.text
+    assert "Подборки для первого поиска" in response.text
+    assert "С чего начать проверку" in response.text
     assert "Субсидии и меры" in response.text
     assert "Что закрывается первым" in response.text
     assert "По задаче" in response.text
@@ -262,7 +262,7 @@ def test_root_renders_service_landing(monkeypatch):
     assert 'data-avds-component="funder-library"' in response.text
     assert 'data-avds-component="methodology-library"' in response.text
     assert 'id="methodology-panel"' in response.text
-    assert "Источники и прозрачность" in response.text
+    assert "Источники и обновление" in response.text
     assert response.text.index(
         'data-avds-component="trust-library"'
     ) < response.text.index('data-avds-component="funder-library"')
@@ -313,7 +313,7 @@ def test_root_renders_service_landing(monkeypatch):
     )
     assert 'property="og:type" content="website"' in response.text
     assert (
-        'property="og:title" content="QAZ.FUND – открытые программы поддержки '
+            'property="og:title" content="QAZ.FUND – каталог программ поддержки '
         'для Казахстана"' in response.text
     )
     assert 'property="og:url" content="http://testserver/?lang=ru"' in response.text
@@ -578,7 +578,7 @@ def test_root_renders_service_landing(monkeypatch):
     assert "color: color-mix(in oklab, var(--muted), var(--ink) 18%);" in response.text
     assert 'href="#methodology-panel"' in response.text
     assert 'id="methodology-panel"' in response.text
-    assert "Как мы работаем" in response.text
+    assert "Как проверить карточку" in response.text
     assert "Как это работает" in response.text
     assert 'data-avds-component="signal-pill"' in response.text
     assert "function renderPresetControls()" in response.text
@@ -3648,7 +3648,7 @@ def test_opportunity_page_renders_public_permalink(monkeypatch):
     assert "не подтверждает право на участие" in response.text
     assert 'data-avds-pattern="opportunity-readiness-meter"' in response.text
     assert "Что уже видно из карточки" in response.text
-    assert "Проверка перед действием" in response.text
+    assert "Проверка карточки" in response.text
     assert "Проверить свой профиль" in response.text
     assert f"/opportunities/{item.id}/fit.json" not in response.text
     assert "qazfund-applicant-profile-v1" in response.text
