@@ -1485,7 +1485,10 @@ async def root(request: Request) -> HTMLResponse:
     repository = _configured_repository()
     items = repository.size() if repository is not None else len(_cache)
     relevant_items = len(_cached_current_catalog_items(content_lang="en"))
-    source_count = len(PARSERS)
+    # The dashboard is server-rendered before its client data refresh.  Use the
+    # same public coverage aggregate as the refresh so the first paint never
+    # briefly reports zero configured sources.
+    source_count = int(_cached_coverage_payload().get("enabled_sources") or 0)
     lang = str(request.query_params.get("lang") or "").strip().lower()
     dashboard_lang = _public_lang(lang)
     return HTMLResponse(

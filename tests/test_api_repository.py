@@ -242,11 +242,11 @@ def test_root_renders_service_landing(monkeypatch):
     assert (
         '<strong id="metric-strong" data-catalog-count="0">0</strong>' in response.text
     )
-    parser_count = len(api_main.PARSERS)
-    assert f'<strong id="metric-sources">{parser_count}</strong>' in response.text
+    source_count = api_main._cached_coverage_payload()["enabled_sources"]
+    assert f'<strong id="metric-sources">{source_count}</strong>' in response.text
     assert '<strong id="health-status">Каталог доступен</strong>' in response.text
     assert '<strong id="health-items">0</strong>' in response.text
-    assert f'<strong id="health-sources">{parser_count}</strong>' in response.text
+    assert f'<strong id="health-sources">{source_count}</strong>' in response.text
     assert '<strong id="health-stale-sources">0</strong>' in response.text
     assert 'class="discovery-grid"' in response.text
     assert response.text.index('id="opportunities-panel"') < response.text.index(
@@ -4349,10 +4349,10 @@ def test_root_renders_initial_metrics_from_cached_items(monkeypatch):
     assert (
         '<strong id="metric-strong" data-catalog-count="1">1</strong>' in response.text
     )
-    parser_count = len(api_main.PARSERS)
-    assert f'<strong id="metric-sources">{parser_count}</strong>' in response.text
+    source_count = api_main._cached_coverage_payload()["enabled_sources"]
+    assert f'<strong id="metric-sources">{source_count}</strong>' in response.text
     assert '<strong id="health-items">3</strong>' in response.text
-    assert f'<strong id="health-sources">{parser_count}</strong>' in response.text
+    assert f'<strong id="health-sources">{source_count}</strong>' in response.text
 
 
 def test_large_opportunity_response_supports_gzip(monkeypatch):
