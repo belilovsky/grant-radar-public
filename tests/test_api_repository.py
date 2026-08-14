@@ -2176,6 +2176,14 @@ def test_funders_endpoint_aggregates_lifecycle(monkeypatch):
     assert by_title["Pipeline university innovation program"]["lifecycle"] == "forecast"
 
 
+def test_funders_head_uses_live_dashboard_cache_policy(monkeypatch):
+    _reset_api_state(monkeypatch)
+    response = TestClient(api_main.app).head("/funders")
+
+    assert response.status_code == 200
+    assert response.headers["cache-control"] == "no-store"
+
+
 def test_api_lists_persisted_opportunities_when_database_is_configured(
     tmp_path, monkeypatch
 ):

@@ -82,7 +82,7 @@ from api.funder_page import render_funder_page
 from api.history import build_history_snapshot
 from api.http_policy import PUBLIC_DISCOVERY_CACHE as _PUBLIC_DISCOVERY_CACHE
 from api.http_policy import PUBLIC_FAST_CACHE as _PUBLIC_FAST_CACHE
-from api.http_policy import apply_public_headers, is_machine_route
+from api.http_policy import apply_public_headers, cache_control_for, is_machine_route
 from api.insights import build_insights_payload
 from api.insights_page import build_insights_snapshot, render_insights_page
 from api.media import (
@@ -4203,7 +4203,10 @@ async def public_machine_head(request: Request) -> Response:
     """Answer discovery probes without running catalog projections."""
     is_ndjson = request.url.path.endswith(".ndjson")
     headers = {
-        "Cache-Control": (_PUBLIC_DISCOVERY_CACHE if is_ndjson else _PUBLIC_FAST_CACHE)
+        "Cache-Control": (
+            cache_control_for(request.url.path)
+            or (_PUBLIC_DISCOVERY_CACHE if is_ndjson else _PUBLIC_FAST_CACHE)
+        )
     }
     if request.url.path.startswith("/api/v1"):
         headers.update(
