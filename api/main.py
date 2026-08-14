@@ -180,17 +180,24 @@ except ImportError:  # pragma: no cover - Python < 3.11 compatibility
 log = logging.getLogger(__name__)
 
 
-@asynccontextmanager
-async def _lifespan(app: FastAPI):
+def _warm_public_startup_caches() -> None:
+    """Warm public projections without holding the application readiness gate."""
     _warm_public_sitemap_cache()
     _warm_public_items_cache()
+
+
+@asynccontextmanager
+async def _lifespan(app: FastAPI):
+    warm_task = asyncio.create_task(asyncio.to_thread(_warm_public_startup_caches))
     refresh_task = asyncio.create_task(_periodic_public_cache_refresh())
     try:
         yield
     finally:
-        refresh_task.cancel()
-        with suppress(asyncio.CancelledError):
-            await refresh_task
+        for task in (warm_task, refresh_task):
+            task.cancel()
+        for task in (warm_task, refresh_task):
+            with suppress(asyncio.CancelledError):
+                await task
 
 
 app = FastAPI(
