@@ -19,7 +19,12 @@ from api.page_primitives import catalog_path as _catalog_path
 from api.page_primitives import format_deadline as _format_deadline
 from api.public_meta import analytics_head_html, og_image_url
 from core.decision_support import browser_precheck_contract, program_truth
-from core.models import Opportunity, OpportunityDetail, OpportunityMetadataField
+from core.models import (
+    Opportunity,
+    OpportunityDetail,
+    OpportunityDetailSection,
+    OpportunityMetadataField,
+)
 from core.nlp import clean_source_summary
 
 PUBLIC_METADATA_KEYS = frozenset(
@@ -44,6 +49,363 @@ HERO_METADATA_KEYS = frozenset({"source", "funder", "deadline"})
 SOURCE_SECTION_NOISE_HEADINGS = frozenset(
     {"notification", "search", "поиск", "уведомление"}
 )
+_DETAIL_SECTION_TECHNICAL_HEADINGS = frozenset(
+    {
+        "source status",
+        "статус источника",
+        "дереккөз мәртебесі",
+    }
+)
+_DETAIL_SECTION_OVERVIEW_HEADINGS = frozenset({"overview", "обзор", "шолу"})
+_DETAIL_SECTION_ELIGIBILITY_HEADINGS = frozenset(
+    {
+        "eligibility",
+        "кто может подать заявку",
+        "кім өтінім бере алады",
+    }
+)
+
+
+OPPORTUNITY_DETAIL_CSS = r"""
+    .opportunity-article {
+      display: grid;
+      gap: 16px;
+    }
+    .opportunity-hero {
+      display: grid;
+      gap: clamp(18px, 2.4vw, 28px);
+      padding: clamp(24px, 4vw, 48px);
+      border: 1px solid var(--line);
+      border-radius: var(--av-radius-lg);
+      background: var(--surface);
+      box-shadow: var(--av-shadow-sm);
+    }
+    .opportunity-head {
+      display: grid;
+      gap: 12px;
+      max-width: 1020px;
+    }
+    .opportunity-kicker {
+      color: var(--brand);
+      font-size: var(--av-text-xs);
+      font-weight: 750;
+      letter-spacing: .06em;
+      text-transform: uppercase;
+    }
+    .opportunity-hero h1 {
+      max-width: 28ch;
+      margin: 0;
+      color: var(--text);
+      font-size: clamp(32px, 3.7vw, 54px);
+      line-height: 1.05;
+      letter-spacing: -0.035em;
+      text-wrap: balance;
+    }
+    .opportunity-summary {
+      max-width: 74ch;
+      margin: 0;
+      color: color-mix(in oklab, var(--text), var(--muted) 34%);
+      font-size: clamp(16px, 1.25vw, 19px);
+      line-height: 1.56;
+    }
+    .opportunity-facts {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(min(100%, 155px), 1fr));
+      gap: 8px;
+      margin: 0;
+    }
+    .opportunity-fact {
+      display: grid;
+      align-content: start;
+      gap: 5px;
+      min-height: 82px;
+      padding: 13px 14px;
+      border: 1px solid var(--line-subtle);
+      border-radius: var(--av-radius-md);
+      background: var(--surface-subtle);
+    }
+    .opportunity-fact--key {
+      border-top: 2px solid color-mix(in oklab, var(--brand), white 18%);
+      background: color-mix(in oklab, var(--surface), var(--brand-soft) 28%);
+    }
+    .opportunity-fact dt {
+      color: var(--muted);
+      font-size: var(--av-text-xs);
+      font-weight: 700;
+      line-height: 1.25;
+    }
+    .opportunity-fact dd {
+      margin: 0;
+      color: var(--text);
+      font-size: var(--av-text-base);
+      font-weight: 750;
+      line-height: 1.32;
+      overflow-wrap: anywhere;
+    }
+    .opportunity-actions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+    }
+    .opportunity-actions .button {
+      min-height: 44px;
+    }
+    .opportunity-layout {
+      display: grid;
+      grid-template-columns: minmax(0, 1.46fr) minmax(300px, .54fr);
+      gap: clamp(18px, 3vw, 40px);
+      align-items: start;
+    }
+    .opportunity-content {
+      display: grid;
+      gap: 14px;
+      min-width: 0;
+    }
+    .detail-section {
+      display: grid;
+      gap: 14px;
+      padding: clamp(18px, 2.4vw, 26px);
+      border: 1px solid var(--line);
+      border-radius: var(--av-radius-lg);
+      background: var(--surface);
+      box-shadow: var(--av-shadow-xs);
+    }
+    .detail-section-head {
+      display: grid;
+      gap: 5px;
+      max-width: 760px;
+    }
+    .detail-section-head h2 {
+      margin: 0;
+      color: var(--text);
+      font-size: clamp(20px, 2vw, 26px);
+      line-height: 1.16;
+      letter-spacing: -0.018em;
+    }
+    .detail-section-head p {
+      margin: 0;
+      color: var(--muted);
+      font-size: var(--av-text-sm);
+      line-height: 1.48;
+    }
+    .eligibility-list,
+    .source-guidance-list,
+    .application-steps {
+      display: grid;
+      gap: 9px;
+      margin: 0;
+      padding: 0;
+      list-style: none;
+    }
+    .eligibility-list li {
+      position: relative;
+      padding: 0 0 0 18px;
+      color: color-mix(in oklab, var(--text), var(--muted) 22%);
+      line-height: 1.58;
+    }
+    .eligibility-list li::before {
+      position: absolute;
+      top: .66em;
+      left: 0;
+      width: 7px;
+      height: 7px;
+      border-radius: 999px;
+      background: var(--brand);
+      content: "";
+    }
+    .detail-content-list {
+      display: grid;
+      gap: 22px;
+    }
+    .detail-content-entry {
+      display: grid;
+      gap: 9px;
+    }
+    .detail-content-entry + .detail-content-entry {
+      padding-top: 22px;
+      border-top: 1px solid var(--line-subtle);
+    }
+    .detail-content-entry h3 {
+      margin: 0;
+      color: var(--text);
+      font-size: var(--av-text-lg);
+      line-height: 1.3;
+    }
+    .detail-content-entry p {
+      max-width: 78ch;
+      margin: 0;
+      color: color-mix(in oklab, var(--text), var(--muted) 25%);
+      line-height: 1.67;
+    }
+    .source-guidance-list {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 10px;
+    }
+    .source-guidance-item,
+    .application-step {
+      display: grid;
+      gap: 5px;
+      padding: 13px 14px;
+      border: 1px solid var(--line-subtle);
+      border-radius: var(--av-radius-md);
+      background: var(--surface-subtle);
+    }
+    .source-guidance-item strong,
+    .application-step h3 {
+      margin: 0;
+      color: var(--text);
+      font-size: var(--av-text-sm);
+      line-height: 1.35;
+    }
+    .source-guidance-item p,
+    .application-step p {
+      margin: 0;
+      color: var(--muted);
+      font-size: var(--av-text-sm);
+      line-height: 1.5;
+    }
+    .application-steps {
+      counter-reset: application-step;
+    }
+    .application-step {
+      grid-template-columns: 30px minmax(0, 1fr);
+      gap: 11px;
+    }
+    .application-step::before {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 28px;
+      height: 28px;
+      border-radius: 999px;
+      background: var(--brand);
+      color: white;
+      counter-increment: application-step;
+      content: counter(application-step);
+      font-size: var(--av-text-xs);
+      font-weight: 750;
+    }
+    .source-panel {
+      position: sticky;
+      top: 88px;
+      display: grid;
+      gap: 14px;
+      padding: 20px;
+      border: 1px solid var(--line);
+      border-radius: var(--av-radius-lg);
+      background: var(--surface);
+      box-shadow: var(--av-shadow-xs);
+    }
+    .source-panel-head {
+      display: grid;
+      gap: 5px;
+    }
+    .source-panel h2 {
+      margin: 0;
+      color: var(--text);
+      font-size: var(--av-text-lg);
+      line-height: 1.22;
+      overflow-wrap: anywhere;
+    }
+    .source-host {
+      margin: 0;
+      color: var(--muted);
+      font-size: var(--av-text-sm);
+      line-height: 1.45;
+      overflow-wrap: anywhere;
+    }
+    .source-actions {
+      display: grid;
+      gap: 8px;
+    }
+    .source-actions .button {
+      width: 100%;
+      min-height: 44px;
+    }
+    .reference-list {
+      display: grid;
+      gap: 8px;
+      margin: 0;
+      padding-top: 14px;
+      border-top: 1px solid var(--line-subtle);
+    }
+    .reference-list div {
+      display: grid;
+      gap: 3px;
+    }
+    .reference-list dt {
+      color: var(--muted);
+      font-size: var(--av-text-xs);
+      font-weight: 700;
+    }
+    .reference-list dd {
+      margin: 0;
+      color: var(--text);
+      font-size: var(--av-text-sm);
+      font-weight: 700;
+      overflow-wrap: anywhere;
+    }
+    .site-footer--compact {
+      margin-top: 2px;
+    }
+    @media (min-width: 1440px) {
+      .opportunity-layout {
+        grid-template-columns: minmax(0, 1.5fr) minmax(340px, .5fr);
+      }
+      .opportunity-content {
+        max-width: 1120px;
+      }
+    }
+    @media (min-width: 2200px) {
+      .opportunity-layout {
+        grid-template-columns: minmax(0, 1.56fr) minmax(400px, .44fr);
+        gap: 56px;
+      }
+      .detail-content-entry p {
+        max-width: 88ch;
+      }
+    }
+    @media (max-width: 960px) {
+      .opportunity-layout {
+        grid-template-columns: 1fr;
+      }
+      .opportunity-facts {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+      }
+      .opportunity-fact:last-child:nth-child(odd) {
+        grid-column: 1 / -1;
+      }
+      .source-panel {
+        position: static;
+      }
+    }
+    @media (max-width: 720px) {
+      .opportunity-facts,
+      .source-guidance-list {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+      }
+    }
+    @media (max-width: 540px) {
+      .opportunity-hero,
+      .detail-section,
+      .source-panel {
+        padding: 18px;
+      }
+      .opportunity-hero h1 {
+        font-size: 30px;
+      }
+      .opportunity-facts,
+      .source-guidance-list {
+        grid-template-columns: 1fr;
+      }
+      .opportunity-actions {
+        display: grid;
+      }
+      .opportunity-actions .button {
+        width: 100%;
+      }
+    }
+"""
 
 
 _DECISION_SUPPORT_COPY: dict[str, dict[str, object]] = {
@@ -1456,6 +1818,376 @@ def _detail_metadata_value(detail: OpportunityDetail, *keys: str) -> str:
     return ""
 
 
+def _detail_metadata_values(detail: OpportunityDetail) -> dict[str, str]:
+    values: dict[str, str] = {}
+    for entry in detail.metadata:
+        key = str(entry.key or "").strip()
+        value = str(entry.value or "").strip()
+        if key and value and key not in values:
+            values[key] = value
+    return values
+
+
+def _display_detail_metadata_value(
+    value: str,
+    *,
+    key: str,
+    copy: dict[str, object],
+    lang: str,
+) -> str:
+    if not value:
+        return ""
+    if key in {"deadline", "closing_date", "board_approval"}:
+        try:
+            return _format_deadline(
+                date.fromisoformat(value), lang, str(copy["open_rolling"])
+            )
+        except ValueError:
+            pass
+    if key == "deadline_policy" and value.casefold() in {"rolling", "open"}:
+        return str(copy["open_rolling"])
+    return _label_value(value, copy)
+
+
+def _opportunity_facts_markup(
+    detail: OpportunityDetail,
+    *,
+    copy: dict[str, object],
+    lang: str,
+) -> str:
+    """Render every user-facing fact once, in an action-first order."""
+
+    values = _detail_metadata_values(detail)
+    raw_labels = copy.get("detail_meta_labels")
+    labels = raw_labels if isinstance(raw_labels, dict) else {}
+    missing = str(copy["detail_not_published"])
+
+    deadline = (
+        _format_deadline(detail.deadline, lang, str(copy["open_rolling"]))
+        if detail.deadline is not None
+        else _display_detail_metadata_value(
+            values.get("deadline_raw") or values.get("deadline_policy") or "",
+            key="deadline_raw" if values.get("deadline_raw") else "deadline_policy",
+            copy=copy,
+            lang=lang,
+        )
+    )
+    amount = _display_detail_metadata_value(
+        values.get("amount") or values.get("amount_raw") or "",
+        key="amount" if values.get("amount") else "amount_raw",
+        copy=copy,
+        lang=lang,
+    )
+    geography_values: list[str] = []
+    for key in ("country", "region"):
+        value = _display_detail_metadata_value(
+            values.get(key, ""), key=key, copy=copy, lang=lang
+        )
+        if value and value.casefold() not in {
+            item.casefold() for item in geography_values
+        }:
+            geography_values.append(value)
+    geography = ", ".join(geography_values)
+    organizer = _display_detail_metadata_value(
+        detail.funder or values.get("funder", ""),
+        key="funder",
+        copy=copy,
+        lang=lang,
+    )
+
+    facts: list[tuple[str, str, bool]] = [
+        (str(labels.get("deadline", "Deadline")), deadline or missing, True),
+        (str(labels.get("amount", "Amount")), amount or missing, True),
+        (str(copy["meta_format_label"]), _label_value(detail.type, copy), True),
+        (str(copy["detail_geography_label"]), geography or missing, True),
+    ]
+    if organizer:
+        facts.append((str(copy["detail_organizer_label"]), organizer, False))
+    if not detail.eligibility:
+        facts.append((str(copy["detail_eligibility_title"]), missing, False))
+    for key in (
+        "status",
+        "notice_type",
+        "borrower",
+        "board_approval",
+        "closing_date",
+    ):
+        value = _display_detail_metadata_value(
+            values.get(key, ""), key=key, copy=copy, lang=lang
+        )
+        if value and value not in {deadline, amount}:
+            facts.append(
+                (str(labels.get(key, key.replace("_", " ").title())), value, False)
+            )
+
+    rows = "".join(
+        """
+        <div class="opportunity-fact{key_class}">
+          <dt>{label}</dt>
+          <dd>{value}</dd>
+        </div>
+        """.format(
+            key_class=" opportunity-fact--key" if is_key else "",
+            label=escape(label),
+            value=escape(value),
+        )
+        for label, value, is_key in facts
+    )
+    return f'<dl class="opportunity-facts">{rows}</dl>'
+
+
+def _eligibility_markup(detail: OpportunityDetail, *, copy: dict[str, object]) -> str:
+    values = [
+        _label_value(value, copy)
+        for value in detail.eligibility
+        if isinstance(value, str) and value.strip()
+    ]
+    unique_values: list[str] = []
+    for value in values:
+        if value and value.casefold() not in {
+            item.casefold() for item in unique_values
+        }:
+            unique_values.append(value)
+    if not unique_values:
+        return ""
+    rows = "".join(f"<li>{escape(value)}</li>" for value in unique_values)
+    return """
+    <section class="detail-section" aria-labelledby="eligibility-title">
+      <div class="detail-section-head">
+        <h2 id="eligibility-title">{title}</h2>
+      </div>
+      <ul class="eligibility-list">{rows}</ul>
+    </section>
+    """.format(
+        title=escape(str(copy["detail_eligibility_title"])),
+        rows=rows,
+    )
+
+
+def _content_sections_markup(
+    detail: OpportunityDetail,
+    *,
+    title: str,
+    summary: str,
+    copy: dict[str, object],
+) -> str:
+    """Keep source-derived conditions readable without repeating the card header."""
+
+    sections = [section for section in detail.detail_sections if section.text.strip()]
+    if not sections and detail.detail_text.strip():
+        sections = [OpportunityDetailSection(heading="", text=detail.detail_text)]
+    normalized_summary = re.sub(r"\W+", " ", summary.casefold()).strip()
+    eligibility_text = re.sub(
+        r"\W+", " ", " ".join(detail.eligibility).casefold()
+    ).strip()
+    seen_sections: list[tuple[str, str]] = []
+    entries: list[str] = []
+    for section in sections:
+        heading_raw = (section.heading or "").strip()
+        text_raw = section.text.strip()
+        normalized_heading = re.sub(r"\W+", " ", heading_raw.casefold()).strip()
+        normalized_text = re.sub(r"\W+", " ", text_raw.casefold()).strip()
+        if (
+            not normalized_text
+            or normalized_heading in SOURCE_SECTION_NOISE_HEADINGS
+            or normalized_heading in _DETAIL_SECTION_TECHNICAL_HEADINGS
+        ):
+            continue
+        if (
+            normalized_heading in _DETAIL_SECTION_OVERVIEW_HEADINGS
+            and normalized_text == normalized_summary
+        ):
+            continue
+        if (
+            normalized_heading in _DETAIL_SECTION_ELIGIBILITY_HEADINGS
+            and eligibility_text
+            and normalized_text == eligibility_text
+        ):
+            continue
+        if any(
+            normalized_heading == seen_heading
+            and (
+                normalized_text.startswith(seen_text)
+                or seen_text.startswith(normalized_text)
+            )
+            for seen_heading, seen_text in seen_sections
+            if normalized_text and seen_text
+        ):
+            continue
+        seen_sections.append((normalized_heading, normalized_text))
+        paragraphs = "".join(
+            "<p>"
+            + escape(
+                (_clean_summary_text(chunk, title=title) or chunk.strip()).replace(
+                    "_", " "
+                )
+            )
+            + "</p>"
+            for chunk in _paragraph_chunks(text_raw, target_length=440)
+            if chunk.strip()
+        )
+        if not paragraphs:
+            continue
+        heading = heading_raw or str(copy["detail_content_fallback_heading"])
+        entries.append(
+            """
+            <section class="detail-content-entry">
+              <h3>{heading}</h3>
+              {paragraphs}
+            </section>
+            """.format(
+                heading=escape(heading),
+                paragraphs=paragraphs,
+            )
+        )
+    if not entries:
+        return ""
+    return """
+    <section class="detail-section" aria-labelledby="content-title">
+      <div class="detail-section-head">
+        <h2 id="content-title">{title}</h2>
+      </div>
+      <div class="detail-content-list">{entries}</div>
+    </section>
+    """.format(
+        title=escape(str(copy["detail_content_title"])),
+        entries="".join(entries),
+    )
+
+
+def _source_guidance_markup(
+    detail: OpportunityDetail,
+    *,
+    copy: dict[str, object],
+    lang: str,
+) -> str:
+    cards = _localized_card_items(detail, "prepare_items", lang)
+    if not cards:
+        return ""
+    rows = "".join("""
+        <li class="source-guidance-item">
+          <strong>{title}</strong>
+          <p>{text}</p>
+        </li>
+        """.format(title=escape(title), text=escape(text)) for title, text in cards)
+    return """
+    <section class="detail-section" aria-labelledby="guidance-title">
+      <div class="detail-section-head">
+        <h2 id="guidance-title">{title}</h2>
+      </div>
+      <ul class="source-guidance-list">{rows}</ul>
+    </section>
+    """.format(title=escape(str(copy["detail_guidance_title"])), rows=rows)
+
+
+def _application_steps_markup(
+    detail: OpportunityDetail,
+    *,
+    copy: dict[str, object],
+    lang: str,
+) -> str:
+    titles = _localized_item_list(detail, "application_step_titles", lang)
+    steps = _localized_item_list(detail, "application_steps", lang)
+    if not titles or len(titles) != len(steps):
+        return ""
+    rows = "".join(
+        """
+        <li class="application-step">
+          <div>
+            <h3>{title}</h3>
+            <p>{text}</p>
+          </div>
+        </li>
+        """.format(title=escape(title), text=escape(text))
+        for title, text in zip(titles, steps, strict=True)
+    )
+    return """
+    <section class="detail-section" aria-labelledby="application-title">
+      <div class="detail-section-head">
+        <h2 id="application-title">{title}</h2>
+      </div>
+      <ol class="application-steps">{rows}</ol>
+    </section>
+    """.format(title=escape(str(copy["detail_application_steps_title"])), rows=rows)
+
+
+def _source_panel_markup(
+    detail: OpportunityDetail,
+    *,
+    copy: dict[str, object],
+    lang: str,
+    source_label: str,
+    source_host: str,
+    source_href: str,
+    application_href: str,
+    applications_closed: bool,
+) -> str:
+    values = _detail_metadata_values(detail)
+    raw_labels = copy.get("detail_meta_labels")
+    labels = raw_labels if isinstance(raw_labels, dict) else {}
+    reference_rows: list[str] = []
+    for key in ("reference", "project_id"):
+        value = _display_detail_metadata_value(
+            values.get(key, ""), key=key, copy=copy, lang=lang
+        )
+        if value:
+            reference_rows.append(
+                """
+                <div><dt>{label}</dt><dd>{value}</dd></div>
+                """.format(
+                    label=escape(str(labels.get(key, key.replace("_", " ").title()))),
+                    value=escape(value),
+                )
+            )
+    reference_markup = (
+        """
+        <dl class="reference-list">
+          <div class="reference-list-title"><dt>{title}</dt></div>
+          {rows}
+        </dl>
+        """.format(
+            title=escape(str(copy["detail_reference_title"])),
+            rows="".join(reference_rows),
+        )
+        if reference_rows
+        else ""
+    )
+    application_action = (
+        """
+        <a class="button primary" href="{href}" target="_blank" rel="noopener">{label}</a>
+        """.format(
+            href=application_href,
+            label=escape(str(copy["detail_open_application"])),
+        )
+        if application_href and not applications_closed
+        else ""
+    )
+    source_button_class = "button slim" if application_action else "button primary"
+    return """
+    <aside class="source-panel" aria-labelledby="source-title">
+      <div class="source-panel-head">
+        <span class="eyebrow">{eyebrow}</span>
+        <h2 id="source-title">{source_label}</h2>
+        <p class="source-host">{source_host}</p>
+      </div>
+      <div class="source-actions">
+        {application_action}
+        <a class="{source_button_class}" href="{source_href}" target="_blank" rel="noopener">{source_button_label}</a>
+      </div>
+      {reference_markup}
+    </aside>
+    """.format(
+        eyebrow=escape(str(copy["detail_source_title"])),
+        source_label=escape(source_label),
+        source_host=escape(source_host),
+        application_action=application_action,
+        source_button_class=source_button_class,
+        source_href=source_href,
+        source_button_label=escape(str(copy["detail_open_source"])),
+        reference_markup=reference_markup,
+    )
+
+
 def _working_brief(
     detail: OpportunityDetail,
     *,
@@ -1608,30 +2340,6 @@ def render_opportunity_page(
         ),
         quote=True,
     )
-    status_href = escape(
-        (
-            f"{detail_base}/status?lang={active_lang}"
-            if detail_base
-            else f"/status?lang={active_lang}"
-        ),
-        quote=True,
-    )
-    docs_href = escape(
-        (
-            f"{detail_base}/docs?lang={active_lang}"
-            if detail_base
-            else f"/docs?lang={active_lang}"
-        ),
-        quote=True,
-    )
-    insights_href = escape(
-        (
-            f"{detail_base}/insights?lang={active_lang}"
-            if detail_base
-            else f"/insights?lang={active_lang}"
-        ),
-        quote=True,
-    )
     terms_href = escape(
         (
             f"{detail_base}/terms?lang={active_lang}"
@@ -1648,26 +2356,9 @@ def render_opportunity_page(
         ),
         quote=True,
     )
-    data_routes_href = escape(
-        (
-            f"{detail_base}/data-routes?lang={active_lang}"
-            if detail_base
-            else f"/data-routes?lang={active_lang}"
-        ),
-        quote=True,
-    )
-    data_routes_label = {
-        "ru": "Официальные данные РК",
-        "kk": "Қазақстанның ресми деректері",
-        "en": "Official Kazakhstan data",
-    }[active_lang]
-    attribution_href = escape(
-        (
-            f"{detail_base}/attribution?lang={active_lang}"
-            if detail_base
-            else f"/attribution?lang={active_lang}"
-        ),
-        quote=True,
+    source_href = escape(str(detail.source_url), quote=True)
+    application_href = (
+        escape(detail.application_url, quote=True) if detail.application_url else ""
     )
     prepare_href = escape(
         (
@@ -1677,57 +2368,6 @@ def render_opportunity_page(
         ),
         quote=True,
     )
-    source_href = escape(str(detail.source_url), quote=True)
-    application_href = (
-        escape(detail.application_url, quote=True) if detail.application_url else ""
-    )
-    raw_metadata_labels = copy.get("detail_meta_labels")
-    metadata_labels = (
-        raw_metadata_labels if isinstance(raw_metadata_labels, dict) else {}
-    )
-    secondary_metadata = [
-        entry for entry in detail.metadata if entry.key not in HERO_METADATA_KEYS
-    ]
-    metadata_markup = _metadata_markup(
-        secondary_metadata,
-        metadata_labels,
-        copy,
-        lang=active_lang,
-    )
-    content_grid_class = (
-        "content-grid" if metadata_markup else "content-grid content-grid--single"
-    )
-    sidebar_markup = (
-        f"""
-      <aside class="sidebar-card">
-        <h2>{escape(str(copy["detail_meta_title"]))}</h2>
-        <div class="meta-grid">{metadata_markup}</div>
-      </aside>
-        """
-        if metadata_markup
-        else ""
-    )
-    sections_markup = _sections_markup(
-        detail,
-        str(copy["detail_source_excerpt"]),
-        title=title,
-        expand_label=str(copy["detail_expand_source"]),
-        collapse_label=str(copy["detail_collapse_source"]),
-    )
-    prepare_markup = _prepare_markup(detail, copy=copy, lang=active_lang)
-    apply_markup = _apply_markup(
-        detail=detail,
-        has_application_url=bool(application_href),
-        copy=copy,
-        lang=active_lang,
-    )
-    verification_markup = _verification_markup(copy)
-    readiness_markup = _readiness_markup(detail, copy)
-    decision_support_markup = _decision_support_markup(
-        detail,
-        lang=active_lang,
-        lifecycle=lifecycle,
-    )
     related_markup = _related_markup(
         related_items or [],
         lang=active_lang,
@@ -1735,45 +2375,54 @@ def render_opportunity_page(
         copy=copy,
     )
     source_text = detail.funder or _label_value(detail.source, copy)
-    deadline_text = _format_deadline(
-        detail.deadline,
-        active_lang,
-        str(copy["open_rolling"]),
-    )
     format_text = _label_value(detail.type, copy)
-    source_label = escape(source_text)
-    deadline_label = escape(deadline_text)
-    source_host = escape(_host_label(str(detail.source_url)))
-    format_label = escape(format_text)
-    decision_check_markup = _decision_check_markup(
+    source_host = _host_label(str(detail.source_url))
+    applications_closed = lifecycle in {"closed", "awarded"}
+    application_button = (
+        """
+        <a class="button primary" href="{href}" target="_blank" rel="noopener">
+          {label}
+        </a>
+        """.format(
+            href=application_href,
+            label=escape(str(copy["detail_open_application"])),
+        )
+        if application_href and not applications_closed
+        else ""
+    )
+    prepare_button = (
+        """
+        <a class="button slim" href="{href}">{label}</a>
+        """.format(
+            href=prepare_href,
+            label=escape(str(copy["detail_prepare_application"])),
+        )
+        if not applications_closed
+        else ""
+    )
+    source_button_class = "button slim" if application_button else "button primary"
+    opportunity_facts = _opportunity_facts_markup(
         detail,
         copy=copy,
         lang=active_lang,
-        source_label=source_text,
-        format_label=format_text,
-        deadline_label=deadline_text,
     )
-    working_brief = _working_brief(
+    eligibility_markup = _eligibility_markup(detail, copy=copy)
+    content_markup = _content_sections_markup(
         detail,
         title=title,
         summary=summary,
-        source_label=source_text,
-        format_label=format_text,
-        deadline_label=deadline_text,
         copy=copy,
     )
-    working_brief_json = json.dumps(working_brief, ensure_ascii=False).replace(
-        "<", "\\u003c"
+    guidance_markup = _source_guidance_markup(
+        detail,
+        copy=copy,
+        lang=active_lang,
     )
-    brief_done_json = json.dumps(
-        str(copy["detail_copy_brief_done"]), ensure_ascii=False
+    application_steps_markup = (
+        _application_steps_markup(detail, copy=copy, lang=active_lang)
+        if not applications_closed
+        else ""
     )
-    brief_prompt_json = json.dumps(
-        str(copy["detail_copy_brief_prompt"]), ensure_ascii=False
-    )
-    share_title_json = json.dumps(title, ensure_ascii=False).replace("<", "\\u003c")
-    share_done_json = json.dumps(str(copy["detail_share_done"]), ensure_ascii=False)
-    share_prompt_json = json.dumps(str(copy["detail_share_prompt"]), ensure_ascii=False)
     og_locale = escape(active_lang.replace("-", "_") + "_KZ", quote=True)
     canonical_url = _absolute_href(site_origin, canonical_path)
     catalog_url = _absolute_href(site_origin, _catalog_path(root_path, active_lang))
@@ -1799,42 +2448,6 @@ def render_opportunity_page(
         if fallback_note
         else ""
     )
-    eligibility = [
-        escape(_label_value(value, copy))
-        for value in detail.eligibility
-        if isinstance(value, str) and value.strip()
-    ]
-    eligibility_markup = "".join(
-        f'<span class="pill">{value}</span>' for value in eligibility[:6]
-    )
-    eligibility_group_markup = (
-        f'<div class="pills">{eligibility_markup}</div>' if eligibility_markup else ""
-    )
-    applications_closed = lifecycle in {"closed", "awarded"}
-    prepare_button = (
-        """
-        <a class="button slim" href="{href}">
-          {label}
-        </a>
-        """.format(
-            href=prepare_href,
-            label=escape(str(copy["detail_prepare_application"])),
-        )
-        if not applications_closed
-        else ""
-    )
-    application_button = (
-        """
-        <a class="button slim" href="{href}" target="_blank" rel="noopener">
-          {label}
-        </a>
-        """.format(
-            href=application_href,
-            label=escape(str(copy["detail_open_application"])),
-        )
-        if application_href and not applications_closed
-        else ""
-    )
     lifecycle_notice = ""
     if applications_closed:
         lifecycle_notice = str(copy["detail_closed_notice"])
@@ -1846,16 +2459,20 @@ def render_opportunity_page(
         if lifecycle_notice
         else ""
     )
-    empty_markup = ""
-    if not metadata_markup and not sections_markup:
-        empty_markup = (
-            f'<div class="empty-state">{escape(str(copy["detail_empty"]))}</div>'
-        )
+    source_panel_markup = _source_panel_markup(
+        detail,
+        copy=copy,
+        lang=active_lang,
+        source_label=source_text,
+        source_host=source_host,
+        source_href=source_href,
+        application_href=application_href,
+        applications_closed=applications_closed,
+    )
     html_attrs = (
         f'lang="{escape(active_lang, quote=True)}" '
         'data-avds="grant-radar" data-av-theme="light" data-theme="light"'
     )
-    deadline_meta_label = escape(str(metadata_labels.get("deadline", "Deadline")))
     schema_json = _opportunity_schema(
         detail=detail,
         page_title=page_title,
@@ -2887,6 +3504,7 @@ def render_opportunity_page(
       }}
     }}
 {OPPORTUNITY_AVDS4_CSS}
+{OPPORTUNITY_DETAIL_CSS}
   </style>
 </head>
 <body>
@@ -2910,128 +3528,49 @@ def render_opportunity_page(
     </div>
     {fallback_note_markup}
 
-    <section class="hero" data-avds-component="hero-band">
-      <div class="hero-grid">
-        <div>
-          <div class="eyebrow">QAZ.FUND</div>
+    <article class="opportunity-article" data-avds-component="opportunity-detail">
+      <header class="opportunity-hero">
+        <div class="opportunity-head">
+          <span class="opportunity-kicker">{escape(format_text)}</span>
           <h1>{escape(title)}</h1>
-          <p class="summary">{escape(summary)}</p>
-          {eligibility_group_markup}
-          {lifecycle_notice_markup}
-          <div class="hero-actions">
-            <a class="button primary" href="{source_href}" target="_blank" rel="noopener">
-              {escape(str(copy["detail_open_source"]))}
-            </a>
-            {prepare_button}
-            <button class="button slim" type="button" id="copy-working-brief">
-              {escape(str(copy["detail_copy_brief"]))}
-            </button>
-            <span class="visually-hidden">{escape(str(copy["detail_brief_legacy_heading"]))}</span>
-            <button class="button slim" type="button" id="share-opportunity">
-              {escape(str(copy["detail_share"]))}
-            </button>
-            {application_button}
-          </div>
-          <p class="hero-action-status" id="copy-working-brief-status" aria-live="polite"></p>
+          <p class="opportunity-summary">{escape(summary)}</p>
         </div>
-        <aside class="hero-stats" data-avds-component="trust-facts-panel">
-          <div>
-            <span class="eyebrow">{escape(str(copy["detail_meta_title"]))}</span>
-          </div>
-          <div class="hero-fact hero-fact--source">
-            <strong>{source_label}</strong>
-            <div class="status-note">{source_host}</div>
-          </div>
-          <div class="hero-fact hero-fact--deadline">
-            <strong>{deadline_label}</strong>
-            <div class="status-note">{deadline_meta_label}</div>
-          </div>
-          <div class="hero-fact hero-fact--format">
-            <strong>{format_label}</strong>
-            <div class="status-note">{escape(str(copy["meta_format_label"]))}</div>
-          </div>
-        </aside>
-      </div>
-    </section>
+        {lifecycle_notice_markup}
+        {opportunity_facts}
+        <div class="opportunity-actions">
+          {application_button}
+          <a class="{source_button_class}" href="{source_href}" target="_blank" rel="noopener">
+            {escape(str(copy["detail_open_source"]))}
+          </a>
+          {prepare_button}
+        </div>
+      </header>
 
-    {readiness_markup}
-    {decision_support_markup}
-
-    <section class="{content_grid_class}">
-      <div class="section-stack">
-        {sections_markup}
-        {empty_markup}
+      <div class="opportunity-layout">
+        <div class="opportunity-content">
+          {eligibility_markup}
+          {content_markup}
+          {guidance_markup}
+          {application_steps_markup}
+        </div>
+        {source_panel_markup}
       </div>
-      {sidebar_markup}
-    </section>
-    {decision_check_markup}
-    {verification_markup}
-    {prepare_markup}
-    {apply_markup}
-    {related_markup}
-    <footer class="site-footer"><a class="footer-contact" href="mailto:contact@qaz.fund">contact@qaz.fund</a>
+      {related_markup}
+    </article>
+    <footer class="site-footer site-footer--compact">
       <nav class="site-footer-nav" aria-label="{escape(str(copy["views_aria"]), quote=True)}">
         <a href="{catalog_href}">{escape(str(copy["tab_opportunities"]))}</a>
         <a href="{sources_href}">{escape(str(copy["tab_sources"]))}</a>
-        <a href="{insights_href}">{escape(str(copy["insights_link"]))}</a>
         <a href="{terms_href}">{escape(str(copy["terms_link"]))}</a>
         <a href="{data_policy_href}">{escape(str(copy["data_policy_link"]))}</a>
-        <a href="{data_routes_href}">{escape(data_routes_label)}</a>
-        <a href="{attribution_href}">{escape(str(copy["attribution_link"]))}</a>
-        <a href="{status_href}">{escape(str(copy["status_link"]))}</a>
-        <a href="{docs_href}">{escape(str(copy["api_docs"]))}</a>
-        <a href="{terms_href}">{escape(str(copy["footer_terms"]))}</a>
-        <a href="{data_policy_href}">{escape(str(copy["footer_data_policy"]))}</a>
-        <a href="{attribution_href}">{escape(str(copy["footer_attribution"]))}</a>
       </nav>
       <p>
         {escape(str(copy["footer_owner"]))}
         <a href="https://qdev.run">{escape(str(copy["footer_qdev"]))}</a>
+        · <a class="footer-contact" href="mailto:contact@qaz.fund">contact@qaz.fund</a>
       </p>
       <p>{escape(str(copy["footer_disclaimer"]))}</p>
     </footer>
   </main>
-  <script>
-    (() => {{
-      const button = document.getElementById("copy-working-brief");
-      const status = document.getElementById("copy-working-brief-status");
-      const brief = {working_brief_json};
-      const doneMessage = {brief_done_json};
-      const promptLabel = {brief_prompt_json};
-      button?.addEventListener("click", async () => {{
-        try {{
-          if (!navigator.clipboard || !window.isSecureContext) throw new Error("clipboard");
-          await navigator.clipboard.writeText(brief);
-          status.textContent = doneMessage;
-        }} catch {{
-          window.prompt(promptLabel, brief);
-        }}
-      }});
-      const shareButton = document.getElementById("share-opportunity");
-      const shareStatus = document.getElementById("copy-working-brief-status");
-      const shareTitle = {share_title_json};
-      const shareDoneMessage = {share_done_json};
-      const sharePromptLabel = {share_prompt_json};
-      shareButton?.addEventListener("click", async () => {{
-        const shareUrl = window.location.href;
-        if (typeof navigator.share === "function") {{
-          try {{
-            await navigator.share({{ title: shareTitle, text: shareTitle, url: shareUrl }});
-            if (shareStatus) shareStatus.textContent = shareDoneMessage;
-            return;
-          }} catch (error) {{
-            if (error && error.name === "AbortError") return;
-          }}
-        }}
-        try {{
-          if (!navigator.clipboard || !window.isSecureContext) throw new Error("clipboard");
-          await navigator.clipboard.writeText(shareUrl);
-          if (shareStatus) shareStatus.textContent = shareDoneMessage;
-        }} catch {{
-          window.prompt(sharePromptLabel, shareUrl);
-        }}
-      }});
-    }})();
-  </script>
 </body>
 </html>"""

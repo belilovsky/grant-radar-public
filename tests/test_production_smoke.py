@@ -140,7 +140,9 @@ def _transport(
                 text=(
                     '<html lang="ru" data-avds="grant-radar">'
                     '<main data-avds-component="opportunity-page">'
-                    "<h1>Kazakhstan AI grant</h1><h2>Ключевые условия</h2>"
+                    '<section data-avds-component="opportunity-detail">'
+                    "<h1>Kazakhstan AI grant</h1><h2>Официальный источник</h2>"
+                    "</section>"
                     "</main></html>"
                 ),
                 headers={

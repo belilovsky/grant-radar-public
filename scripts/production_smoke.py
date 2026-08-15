@@ -520,7 +520,8 @@ def run_smoke(
         ),
         "detail_page": (
             'data-avds-component="opportunity-page"' in detail_page
-            and "Ключевые условия" in detail_page
+            and 'data-avds-component="opportunity-detail"' in detail_page
+            and "Официальный источник" in detail_page
             and "\u2014" not in detail_page
         ),
         "detail_head": detail_head.headers.get("content-type", "").startswith(

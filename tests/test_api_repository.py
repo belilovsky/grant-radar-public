@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from datetime import date, datetime, timedelta, timezone
+from decimal import Decimal
 from uuid import uuid4
 
 from fastapi.testclient import TestClient
@@ -2981,12 +2982,18 @@ def test_opportunity_page_renders_public_permalink(monkeypatch):
         type=OpportunityType.GRANT,
         title="Kazakhstan Digital Acceleration",
         summary="Broadband infrastructure and digital inclusion support.",
+        funder="Development Fund",
+        amount_max=Decimal("25000"),
+        deadline=date(2026, 10, 31),
         eligibility=["Registered NGOs"],
         tags=["kazakhstan", "digitalization", "project_pipeline"],
         score=0.92,
         raw={
             "project_id": "P179204-PAGE",
+            "reference": "QF-2026-17",
             "borrower": "Republic of Kazakhstan",
+            "country": "kazakhstan",
+            "region": "central_asia",
             "application_url": "https://example.org/apply/P179204-page",
             "deadline_raw": "deadline is October 31st, 2026",
             "page_title": "English source page title",
@@ -3014,63 +3021,52 @@ def test_opportunity_page_renders_public_permalink(monkeypatch):
     assert "public, max-age=60" in response.headers["cache-control"]
     assert '<html lang="ru"' in response.text
     assert 'data-avds-component="opportunity-page"' in response.text
-    assert 'data-avds-component="hero-band"' in response.text
+    assert 'data-avds-component="opportunity-detail"' in response.text
     assert "<title>Цифровое ускорение Казахстана – QAZ.FUND</title>" in response.text
     assert (
         'rel="canonical" href="http://testserver/opportunity/'
         f'{item.id}?lang=ru"' in response.text
     )
     assert "Поддержка цифровой инфраструктуры и инклюзивного доступа." in response.text
+    assert "31.10.2026" in response.text
+    assert "25" in response.text
+    assert "Казахстан" in response.text
+    assert "Организатор" in response.text
+    assert "Development Fund" in response.text
+    assert "Номер проекта" in response.text
+    assert "P179204-PAGE" in response.text
+    assert "Номер объявления" in response.text
+    assert "QF-2026-17" in response.text
+    assert "Кому подходит" in response.text
     assert "Что финансируется" in response.text
     assert "Зарегистрированные НПО" in response.text
-    assert response.text.count('class="pills"') == 1
-    assert "Что подготовить" in response.text
-    assert response.text.count('data-avds-component="action-path"') == 2
-    assert response.text.count('data-avds-pattern="action-path"') == 2
-    assert 'data-avds-component="evidence-disclosure"' in response.text
-    assert 'data-avds-pattern="evidence-disclosure"' in response.text
-    assert 'data-avds-component="trust-facts-panel"' in response.text
-    assert "Проверьте критерии" in response.text
-    assert "Соберите проектную заявку" in response.text
-    assert "Как подать" in response.text
-    assert "Скопировать сведения" in response.text
-    assert 'id="copy-working-brief"' in response.text
-    assert 'id="share-opportunity"' in response.text
-    assert 'id="copy-working-brief-status"' in response.text
-    assert "Рабочая справка скопирована." in response.text
-    assert "navigator.share" in response.text
-    assert "Перед подачей" in response.text
-    assert "Право на участие" in response.text
-    assert "Закупочная документация" in response.text
-    assert "Источник и дата проверки" in response.text
-    assert "не подтверждает право на участие" in response.text
-    assert 'data-avds-pattern="opportunity-readiness-meter"' in response.text
-    assert "Что уже видно из карточки" in response.text
-    assert "Проверка карточки" in response.text
-    assert "Проверить свой профиль" in response.text
-    assert f"/opportunities/{item.id}/fit.json" not in response.text
-    assert "qazfund-applicant-profile-v1" in response.text
-    assert "const precheck =" in response.text
-    assert "const evaluateProfile =" in response.text
-    assert "Официальные данные РК" in response.text
-    assert 'href="/data-routes?lang=ru"' in response.text
-    assert "QAZ.FUND – рабочая справка" in response.text
-    assert "Проверьте на официальном источнике условия" in response.text
-    assert "Откройте страницу подачи" in response.text
-    assert "--surface-wash-card:" in response.text
-    assert "background: var(--surface-wash-soft);" in response.text
-    assert "background: var(--surface-wash-card);" in response.text
-    assert "Сверьте критерии" in response.text
+    assert "Официальный источник" in response.text
+    assert 'class="opportunity-facts"' in response.text
+    assert 'class="source-panel"' in response.text
+    assert 'class="detail-content-list"' in response.text
+    assert 'class="application-steps"' not in response.text
+    assert 'data-avds-component="hero-band"' not in response.text
+    assert 'data-avds-component="trust-facts-panel"' not in response.text
+    assert 'data-avds-component="evidence-disclosure"' not in response.text
+    assert 'data-avds-component="action-path"' not in response.text
+    assert 'data-avds-pattern="opportunity-readiness-meter"' not in response.text
+    assert 'class="decision-support"' not in response.text
+    assert 'id="profile-fit"' not in response.text
+    assert 'id="copy-working-brief"' not in response.text
+    assert 'id="share-opportunity"' not in response.text
+    assert "qazfund-applicant-profile-v1" not in response.text
+    assert "Соберите проектную заявку" not in response.text
+    assert "Ключевые условия" not in response.text
     assert (
         "Описание и ключевые поля собраны с официального источника" not in response.text
     )
     assert "Статус источника" not in response.text
     assert "<strong>Точное</strong>" not in response.text
     assert ">0.92<" not in response.text
-    assert response.text.index("Что финансируется") < response.text.index(
-        "Что подготовить"
+    assert response.text.index("31.10.2026") < response.text.index("Кому подходит")
+    assert response.text.index("Кому подходит") < response.text.index(
+        "Что финансируется"
     )
-    assert "Быстрая оценка" not in response.text
     assert "structured_only" not in response.text
     assert "English source page title" not in response.text
     assert "deadline is October" not in response.text
@@ -3079,24 +3075,14 @@ def test_opportunity_page_renders_public_permalink(monkeypatch):
     assert 'href="/?lang=ru#opportunities"' in response.text
     assert 'class="site-footer-nav"' in response.text
     assert 'href="/?lang=ru#sources"' in response.text
-    assert 'href="/status?lang=ru"' in response.text
-    assert 'href="/docs?lang=ru"' in response.text
+    assert 'href="/status?lang=ru"' not in response.text
+    assert 'href="/docs?lang=ru"' not in response.text
     assert 'aria-label="Навигационная цепочка"' in response.text
-    assert 'class="hero-fact hero-fact--source"' in response.text
-    assert ".hero-actions .button" in response.text
-    assert "min-height: var(--av-control-height-lg);" in response.text
-    assert ".related-card h3 a," in response.text
-    assert ".site-footer-nav a," in response.text
+    assert 'class="hero-fact hero-fact--source"' not in response.text
+    assert ".opportunity-facts" in response.text
+    assert ".source-panel" in response.text
     assert (
-        ".site-footer > p a { display: inline-flex; align-items: center; min-height: 44px; }"
-        in response.text
-    )
-    hero_actions = response.text.split('<div class="hero-actions">', 1)[1].split(
-        "</div>", 1
-    )[0]
-    assert 'href="/?lang=ru#opportunities"' not in hero_actions
-    assert (
-        'class="button primary" href="https://example.org/project/P179204-page"'
+        'class="button primary" href="https://example.org/apply/P179204-page"'
         in response.text
     )
     assert (
@@ -3122,7 +3108,8 @@ def test_opportunity_page_renders_public_permalink(monkeypatch):
         f'href="http://testserver/opportunity/{item.id}?lang=kk" lang="kk" '
         'aria-current="page">KAZ</a>' in kk_response.text
     )
-    assert "Деректер мәртебесі" in kk_response.text
+    assert "Ресми дереккөз" in kk_response.text
+    assert "Кімге арналған" in kk_response.text
     assert "QAZ.FUND қаражат бөлмейді және өтінім қабылдамайды." in kk_response.text
     assert "QAZ.FUND не выдаёт средства и не принимает заявки." not in kk_response.text
 
@@ -3176,10 +3163,11 @@ def test_opportunity_page_hides_duplicate_source_funder_metadata(monkeypatch):
     response = client.get(f"/opportunity/{item.id}", params={"lang": "ru"})
 
     assert response.status_code == 200
-    assert "<strong>UNESCO IITE</strong>" in response.text
+    assert '<h2 id="source-title">UNESCO IITE</h2>' in response.text
+    assert "Организатор" in response.text
     assert '<aside class="sidebar-card">' not in response.text
     assert "<span>Фонд</span>" not in response.text
-    assert "<strong>13.07.2026</strong>" in response.text
+    assert "13.07.2026" in response.text
 
     detail_head = client.head(f"/opportunities/{item.id}", params={"lang": "ru"})
     assert detail_head.status_code == 200
@@ -3238,7 +3226,7 @@ def test_public_funder_index_excludes_usamraa_domestic_grants(monkeypatch):
     assert legacy_response.headers["location"] == "/?lang=ru&q=DOD-AMRAA"
 
 
-def test_opportunity_page_tailors_prepare_checklist_for_subsidies(monkeypatch):
+def test_opportunity_page_keeps_subsidy_page_to_source_facts(monkeypatch):
     _reset_api_state(monkeypatch)
     item = Opportunity(
         source="govkz",
@@ -3256,14 +3244,16 @@ def test_opportunity_page_tailors_prepare_checklist_for_subsidies(monkeypatch):
 
     assert response.status_code == 200
     assert 'aria-label="Breadcrumbs"' in response.text
-    assert "What to prepare" in response.text
-    assert "Copy working brief" in response.text
-    assert "Before applying" in response.text
-    assert "Procurement documents" in response.text
-    assert "does not confirm eligibility" in response.text
-    assert "Prepare local documents" in response.text
-    assert "Check company status, digital signature, tax status" in response.text
-    assert "Check current terms" in response.text
+    assert 'data-avds-component="opportunity-detail"' in response.text
+    assert "Open source" in response.text
+    assert "Not published by the organizer" in response.text
+    assert "What to prepare" not in response.text
+    assert "Copy working brief" not in response.text
+    assert "Before applying" not in response.text
+    assert "Procurement documents" not in response.text
+    assert "does not confirm eligibility" not in response.text
+    assert "Prepare local documents" not in response.text
+    assert "Check company status, digital signature, tax status" not in response.text
 
 
 def test_opportunity_page_lists_related_opportunities(monkeypatch):
