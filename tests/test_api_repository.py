@@ -3338,11 +3338,17 @@ def test_stored_domestic_legacy_alias_uses_current_canonical_source():
     assert "deadline_policy" not in item.raw
     refreshed = legacy.model_copy(
         update={
+            "id": uuid4(),
             "source_url": str(item.source_url),
+            "discovered_at": legacy.discovered_at + timedelta(days=1),
             "raw": {"canonical_source_url": str(item.source_url)},
         }
     )
-    assert api_main._public_dedup_key(item) == api_main._public_dedup_key(refreshed)
+    current_item = api_main._stored_opportunity(refreshed)
+
+    assert api_main._public_dedup_key(item) == api_main._public_dedup_key(current_item)
+    deduped = api_main._dedupe_public_items([item, current_item], content_lang="ru")
+    assert [candidate.id for candidate in deduped] == [item.id]
 
 
 def test_funder_page_defaults_to_russian_without_lang(monkeypatch):
