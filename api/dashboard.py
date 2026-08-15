@@ -347,6 +347,85 @@ def render_dashboard(
             >{escape(str(copy["hero_primary_cta"]))}</button>
           </div>
         </div>
+        <aside class="hero-stage" data-avds-component="hero-stage">
+          <div class="hero-stage-top">
+            <span class="hero-stage-eyebrow">{escape(str(copy["hero_picks_label"]))}</span>
+            <div
+              class="lang-switch hero-lang-switch"
+              role="group"
+              aria-label="{language_switch_label}"
+            >
+              <a
+                class="{lang_kk_class}"
+                href="{kk_href}"
+                hreflang="kk"
+                lang="kk"
+                {lang_kk_current}
+              >KAZ</a>
+              <a
+                class="{lang_ru_class}"
+                href="{ru_href}"
+                hreflang="ru"
+                lang="ru"
+                {lang_ru_current}
+              >RU</a>
+              <a
+                class="{lang_en_class}"
+                href="{en_href}"
+                hreflang="en"
+                lang="en"
+                {lang_en_current}
+              >EN</a>
+            </div>
+          </div>
+          <h2 class="hero-stage-title">{escape(str(copy["hero_stage_title"]))}</h2>
+          <div
+            class="hero-pick-row"
+            aria-label="{escape(str(copy["hero_picks_label"]), quote=True)}"
+          >
+            <button
+              class="hero-pick"
+              type="button"
+              data-hero-reset="true"
+              data-hero-view="opportunities"
+              data-hero-audience="startup"
+              data-avds-component="button"
+            >{escape(str(copy["hero_pick_startup"]))}</button>
+            <button
+              class="hero-pick"
+              type="button"
+              data-hero-reset="true"
+              data-hero-view="opportunities"
+              data-hero-focus="search"
+              data-avds-component="button"
+            >{escape(str(copy["hero_pick_business"]))}</button>
+            <button
+              class="hero-pick"
+              type="button"
+              data-hero-reset="true"
+              data-hero-view="opportunities"
+              data-hero-deadline="month"
+              data-avds-component="button"
+            >{escape(str(copy["hero_pick_farmer"]))}</button>
+            <button
+              class="hero-pick"
+              type="button"
+              data-hero-reset="true"
+              data-hero-view="opportunities"
+              data-hero-format="support"
+              data-hero-region="kazakhstan"
+              data-avds-component="button"
+            >{escape(str(copy["hero_pick_science"]))}</button>
+            <button
+              class="hero-pick"
+              type="button"
+              data-hero-reset="true"
+              data-hero-view="opportunities"
+              data-hero-format="tenders"
+              data-avds-component="button"
+            >{escape(str(copy["hero_pick_tenders"]))}</button>
+          </div>
+        </aside>
       </div>
     </section>
 

@@ -53,14 +53,19 @@ def test_dashboard_uses_extracted_static_styles() -> None:
     assert "const label = sourceDisplayName(source)" in html
     assert "grid-template-columns: repeat(2, minmax(0, 1fr));" in DASHBOARD_CSS
     assert "@media (min-width: 1440px)" in DASHBOARD_CSS
-    assert "grid-template-columns: minmax(0, 1fr);" in DASHBOARD_AVDS4_CSS
+    assert (
+        "grid-template-columns: minmax(0, 1fr) minmax(320px, 420px);"
+        in DASHBOARD_AVDS4_CSS
+    )
     assert ".opportunity-facts {" in DASHBOARD_AVDS4_CSS
     assert "grid-template-columns: repeat(3, minmax(0, 1fr));" in DASHBOARD_CSS
     assert "--panel-wash-card: color-mix" in DASHBOARD_CSS
     assert "background: var(--panel-wash-list);" in DASHBOARD_CSS
     assert "border-radius: var(--av-radius-md);" in DASHBOARD_CSS
     assert ".hero-copy > .topbar {" in DASHBOARD_CSS
-    assert '<section\n          class="hero-stage"' not in html
+    assert 'class="hero-stage" data-avds-component="hero-stage"' in html
+    assert 'data-hero-format="tenders"' in html
+    assert 'class="hero-stage-top"' in html
 
     preset_button_block = DASHBOARD_CSS.split(".preset-button {", 1)[1].split("}", 1)[0]
     assert "background: var(--brand-soft);" in preset_button_block

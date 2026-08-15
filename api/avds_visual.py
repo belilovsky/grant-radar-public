@@ -32,7 +32,7 @@ DASHBOARD_AVDS4_CSS = r"""
     }
 
     .hero-band {
-      padding: clamp(30px, 4vw, 52px) clamp(24px, 5vw, 72px);
+      padding: clamp(26px, 3vw, 44px) clamp(24px, 4vw, 64px);
       margin-bottom: 14px;
       border: 1px solid rgb(230 242 240 / 0.2);
       border-radius: var(--qaz-card-radius);
@@ -65,13 +65,15 @@ DASHBOARD_AVDS4_CSS = r"""
     }
 
     .hero-grid {
-      grid-template-columns: minmax(0, 1fr);
-      max-width: 820px;
-      gap: 0;
+      grid-template-columns: minmax(0, 1fr) minmax(320px, 420px);
+      align-items: stretch;
+      max-width: none;
+      gap: clamp(24px, 4vw, 56px);
       margin-bottom: 0;
     }
 
     .hero-copy {
+      align-content: center;
       gap: 18px;
       padding: 0;
     }
@@ -107,12 +109,20 @@ DASHBOARD_AVDS4_CSS = r"""
     }
 
     .hero-stage {
+      align-content: center;
       gap: 11px;
       padding: 18px;
       border: 1px solid var(--qaz-hero-line);
       border-radius: var(--qaz-section-radius);
       background: var(--qaz-hero-panel);
       box-shadow: none;
+    }
+
+    .hero-stage-top {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
     }
 
     .hero-stage-eyebrow {
@@ -122,6 +132,27 @@ DASHBOARD_AVDS4_CSS = r"""
     .hero-stage-title {
       color: white;
       font-size: 20px;
+    }
+
+    .hero-stage .lang-switch {
+      flex: 0 0 auto;
+      gap: 2px;
+    }
+
+    .hero-stage .lang-link {
+      min-height: 26px;
+      padding-inline: 6px;
+      color: var(--qaz-hero-muted);
+    }
+
+    .hero-stage .lang-link:hover,
+    .hero-stage .lang-link:focus-visible {
+      color: white;
+    }
+
+    .hero-stage .lang-link.active {
+      color: white;
+      box-shadow: inset 0 -2px 0 white;
     }
 
     .hero-pick-row {
@@ -181,8 +212,7 @@ DASHBOARD_AVDS4_CSS = r"""
     }
 
     .sticky-shell {
-      top: 8px;
-      margin-bottom: 14px;
+      display: none;
     }
 
     .sticky-bar {
@@ -265,10 +295,11 @@ DASHBOARD_AVDS4_CSS = r"""
     .list {
       grid-template-columns: repeat(2, minmax(0, 1fr));
       gap: 10px;
+      align-items: start;
     }
 
     .opportunity {
-      height: 100%;
+      height: auto;
       padding: 18px;
       border-radius: var(--qaz-card-radius);
       box-shadow: none;
@@ -283,7 +314,7 @@ DASHBOARD_AVDS4_CSS = r"""
     .opportunity-main {
       grid-template-columns: minmax(0, 1fr);
       gap: 13px;
-      height: 100%;
+      height: auto;
     }
 
     .opportunity-content {
@@ -436,6 +467,51 @@ DASHBOARD_AVDS4_CSS = r"""
       background: transparent;
     }
 
+    @media (min-width: 1280px) {
+      .preset-grid {
+        grid-template-columns: 0.82fr 1.08fr 1.35fr;
+        padding: 12px;
+      }
+
+      .preset-group {
+        padding-inline: 12px;
+      }
+    }
+
+    @media (min-width: 1440px) {
+      .shell {
+        width: min(1600px, calc(100% - 64px));
+      }
+
+      .hero-grid {
+        grid-template-columns: minmax(0, 1fr) minmax(440px, 560px);
+        gap: clamp(40px, 5vw, 72px);
+      }
+    }
+
+    @media (min-width: 1600px) {
+      .list {
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        gap: 12px;
+      }
+    }
+
+    @media (min-width: 1920px) {
+      .shell {
+        width: min(1760px, calc(100% - 96px));
+      }
+
+      .hero-grid {
+        grid-template-columns: minmax(0, 1fr) minmax(500px, 620px);
+      }
+    }
+
+    @media (min-width: 2200px) {
+      .shell {
+        width: min(1920px, calc(100% - 160px));
+      }
+    }
+
     @media (max-width: 1120px) {
       .hero-grid {
         grid-template-columns: minmax(0, 1fr) minmax(320px, 0.84fr);
@@ -542,6 +618,10 @@ DASHBOARD_AVDS4_CSS = r"""
     @media (max-width: 560px) {
       .hero-band {
         padding-inline: 16px;
+      }
+
+      .hero-stage .hero-lang-switch {
+        display: none;
       }
 
       .hero-copy > .topbar .brand h1 {
