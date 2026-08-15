@@ -11,7 +11,7 @@ DASHBOARD_AVDS4_CSS = r"""
       --qaz-hero: var(--qaz-brand-hero-start);
       --qaz-hero-muted: #d9e8e5;
       --qaz-hero-line: rgb(255 255 255 / 0.16);
-      --qaz-hero-panel: rgb(243 239 233 / 0.08);
+      --qaz-hero-panel: rgb(2 61 66 / 0.86);
       --qaz-page: var(--qaz-brand-cream);
       --qaz-card-radius: 10px;
       --qaz-section-radius: 8px;
@@ -174,6 +174,12 @@ DASHBOARD_AVDS4_CSS = r"""
       border-color: rgb(255 255 255 / 0.34);
       background: rgb(255 255 255 / 0.12);
       color: white;
+    }
+
+    @media (min-width: 981px) {
+      .hero-band .hero-actions {
+        display: none;
+      }
     }
 
     .hero-band .grid {
@@ -618,6 +624,10 @@ DASHBOARD_AVDS4_CSS = r"""
     @media (max-width: 560px) {
       .hero-band {
         padding-inline: 16px;
+      }
+
+      .hero-band .hero-actions {
+        display: none;
       }
 
       .hero-stage .hero-lang-switch {
