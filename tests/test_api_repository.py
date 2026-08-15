@@ -4,6 +4,7 @@ from datetime import date, datetime, timedelta, timezone
 from decimal import Decimal
 from types import SimpleNamespace
 from uuid import uuid4
+import xml.etree.ElementTree as ET
 
 from fastapi.testclient import TestClient
 
@@ -3718,6 +3719,20 @@ def test_sitemap_includes_public_story_pages(monkeypatch):
     assert "/insights?lang=ru" in response.text
     assert "/data-policy?lang=ru" in response.text
     assert "/data-routes?lang=ru" in response.text
+
+
+def test_sitemap_contains_each_location_once(monkeypatch):
+    _reset_api_state(monkeypatch)
+    client = TestClient(api_main.app)
+
+    response = client.get("/sitemap.xml")
+
+    assert response.status_code == 200
+    root = ET.fromstring(response.content)
+    namespace = {"s": "http://www.sitemaps.org/schemas/sitemap/0.9"}
+    locations = [node.text for node in root.findall("s:url/s:loc", namespace)]
+    assert locations
+    assert len(locations) == len(set(locations))
 
 
 def test_related_opportunities_diversify_sources(monkeypatch):

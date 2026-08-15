@@ -1412,13 +1412,11 @@ def _render_sitemap_xml(base_url: str) -> str:
             },
         ),
     ]
+    # Keep the static story pages here only once. Insights and the policy
+    # pages receive their canonical entries below with their own cadence.
     for path, priority in (
         ("/media?lang=ru", "0.85"),
-        ("/insights?lang=ru", "0.8"),
-        ("/terms?lang=ru", "0.4"),
-        ("/data-policy?lang=ru", "0.4"),
         ("/data-routes?lang=ru", "0.55"),
-        ("/attribution?lang=ru", "0.4"),
     ):
         ru_url = _public_url_from_base(base_url, path)
         kk_url = ru_url.replace("lang=ru", "lang=kk")
