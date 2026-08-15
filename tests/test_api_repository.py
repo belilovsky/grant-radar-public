@@ -12,6 +12,7 @@ from api import main as api_main
 from api import opportunity_page as opportunity_page_module
 from api.dashboard import dashboard_copy
 from api.insights_page import _bar_chart, _source_label, build_insights_snapshot
+from api.opportunity_og import _amount_text, _facts, _source_text
 from core.db import SqlRepository
 from core.models import (
     Opportunity,
@@ -20,6 +21,7 @@ from core.models import (
     OpportunityMetadataField,
     OpportunityType,
 )
+from core.public_contract import to_opportunity_v1
 from sources.base import GrantRecord
 
 
@@ -4112,6 +4114,29 @@ def test_opportunity_open_graph_cards_are_unique_raster_assets(monkeypatch) -> N
     head_response = client.head(f"/opportunity/{first.id}/og.png?lang=ru&v=first")
     assert head_response.status_code == 200
     assert head_response.headers["content-type"].startswith("image/png")
+
+
+def test_opportunity_og_uses_localized_facts_and_official_source_domain() -> None:
+    contest = Opportunity(
+        source="kazakhstan_domestic_support",
+        source_url="https://aaiff.ai/",
+        type=OpportunityType.CONTEST,
+        title="Международный конкурс Astana AI Film Festival",
+        summary="Официальный конкурс короткометражных AI-фильмов.",
+        amount_max=Decimal("1000000"),
+        currency="USD",
+        tags=["kazakhstan", "contest"],
+        score=0.9,
+        raw={"amount_raw": "total prize fund of USD 1,000,000"},
+    )
+    item = to_opportunity_v1(
+        contest,
+        source_name="Kazakhstan domestic support",
+    )
+
+    assert _amount_text(item, "ru") == "1 000 000 USD"
+    assert _source_text(item) == "aaiff.ai"
+    assert _facts(item, "ru")[0] == ("Призы", "1 000 000 USD")
 
 
 def test_opportunity_detail_endpoint_returns_404_for_unknown_id(monkeypatch):

@@ -9,7 +9,7 @@ import re
 from functools import lru_cache
 from pathlib import Path
 from typing import Any
-from urllib.parse import urlencode
+from urllib.parse import urlencode, urlparse
 
 from PIL import Image, ImageDraw, ImageFont, ImageOps
 
@@ -18,6 +18,7 @@ from api.page_primitives import absolute_href as _absolute_href
 from core.public_contract import OpportunityV1
 
 OG_IMAGE_SIZE = (1200, 630)
+OG_TEMPLATE_REVISION = "qazfund-og-v2"
 _BRAND_BACKGROUND_PATH = (
     BRANDING_ASSET_DIR / "qaz-fund-ornamental-background-1920x1080.webp"
 )
@@ -32,6 +33,31 @@ _FONT_PATHS = {
     ),
 }
 _SPACE_RE = re.compile(r"\s+")
+_LATIN_AMOUNT_TOKEN_RE = re.compile(r"[A-Za-z]{2,}")
+_CURRENCY_CODES = frozenset(
+    {
+        "AED",
+        "AUD",
+        "CAD",
+        "CHF",
+        "CNY",
+        "CZK",
+        "DKK",
+        "EUR",
+        "GBP",
+        "HKD",
+        "JPY",
+        "KRW",
+        "KZT",
+        "NOK",
+        "PLN",
+        "RUB",
+        "SEK",
+        "SGD",
+        "TRY",
+        "USD",
+    }
+)
 
 
 def _clean_text(value: Any) -> str:
@@ -42,7 +68,7 @@ def opportunity_og_version(**fields: Any) -> str:
     """Return a stable content revision for crawler cache invalidation."""
 
     payload = json.dumps(
-        fields,
+        {"template": OG_TEMPLATE_REVISION, "fields": fields},
         ensure_ascii=False,
         default=str,
         sort_keys=True,
@@ -196,9 +222,24 @@ def _deadline_text(item: OpportunityV1, lang: str) -> str | None:
     return None
 
 
+def _display_is_safe_for_language(display: str, lang: str) -> bool:
+    """Keep a foreign raw phrase out of an otherwise localized card.
+
+    Amount values may retain a source-language annotation in the public data
+    contract.  Currency codes are universal; an English sentence in a Russian
+    or Kazakh crawler card is not.  In that case the structured numeric amount
+    below is a shorter and more faithful fallback.
+    """
+
+    if lang == "en":
+        return True
+    tokens = {token.upper() for token in _LATIN_AMOUNT_TOKEN_RE.findall(display)}
+    return tokens.issubset(_CURRENCY_CODES)
+
+
 def _amount_text(item: OpportunityV1, lang: str) -> str | None:
     display = _clean_text(item.funding_amount.display)
-    if display:
+    if display and _display_is_safe_for_language(display, lang):
         return _clean_text(
             display.replace(
                 "₸", {"ru": "тенге", "kk": "теңге", "en": "KZT"}.get(lang, "KZT")
@@ -214,6 +255,23 @@ def _amount_text(item: OpportunityV1, lang: str) -> str | None:
     rendered = "–".join(f"{value:,.0f}".replace(",", " ") for value in amounts)
     currency = _clean_text(item.funding_amount.currency)
     return f"{rendered} {currency}".strip()
+
+
+def _amount_label(item: OpportunityV1, lang: str) -> str:
+    if "contest" in item.formats:
+        return _localized(
+            {"prize": ("Призы", "Жүлде қоры", "Prize fund")}, "prize", lang
+        )
+    return _localized({"amount": ("Поддержка", "Қолдау", "Support")}, "amount", lang)
+
+
+def _source_text(item: OpportunityV1) -> str:
+    """Prefer the official source domain over an internal source label."""
+
+    host = urlparse(_clean_text(item.source.url)).hostname
+    if host:
+        return host.removeprefix("www.")
+    return _clean_text(item.source.name)
 
 
 def _format_text(item: OpportunityV1, lang: str) -> str | None:
@@ -252,7 +310,6 @@ def _format_text(item: OpportunityV1, lang: str) -> str | None:
 
 def _facts(item: OpportunityV1, lang: str) -> list[tuple[str, str]]:
     labels = {
-        "amount": ("Поддержка", "Қолдау", "Support"),
         "deadline": ("Срок", "Мерзім", "Deadline"),
         "format": ("Формат", "Формат", "Format"),
         "source": ("Источник", "Дереккөз", "Source"),
@@ -260,14 +317,14 @@ def _facts(item: OpportunityV1, lang: str) -> list[tuple[str, str]]:
     facts: list[tuple[str, str]] = []
     amount = _amount_text(item, lang)
     if amount:
-        facts.append((_localized(labels, "amount", lang), amount))
+        facts.append((_amount_label(item, lang), amount))
     deadline = _deadline_text(item, lang)
     if deadline:
         facts.append((_localized(labels, "deadline", lang), deadline))
     format_text = _format_text(item, lang)
     if format_text:
         facts.append((_localized(labels, "format", lang), format_text))
-    source = _clean_text(item.source.name)
+    source = _source_text(item)
     if source:
         facts.append((_localized(labels, "source", lang), source))
     return facts[:3]
@@ -322,7 +379,7 @@ def render_opportunity_og_png(item: OpportunityV1, *, lang: str = "ru") -> bytes
     )
     source = _truncate_to_width(
         draw,
-        _clean_text(item.source.name),
+        _source_text(item),
         font=body_font,
         width=left_panel_right - margin - 44,
     )
