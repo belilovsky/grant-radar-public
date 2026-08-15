@@ -219,7 +219,8 @@ def test_application_workspace_localizes_internal_source_slug(monkeypatch):
     assert page.status_code == 200
     assert "kazakhstan_domestic_support" not in page.text
     assert "Поддержка РК" in page.text
-    assert "Стартап; Глобально" in page.text
+    assert "Индивидуальные авторы, команды и студии из любой страны" in page.text
+    assert "Стартап; Глобально" not in page.text
 
 
 def test_application_workspace_supports_kazakh(monkeypatch):

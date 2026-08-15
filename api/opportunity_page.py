@@ -19,6 +19,7 @@ from api.page_primitives import catalog_path as _catalog_path
 from api.page_primitives import format_deadline as _format_deadline
 from api.public_meta import analytics_head_html, og_image_url
 from core.decision_support import browser_precheck_contract, program_truth
+from core.opportunity_taxonomy import classify_opportunity
 from core.models import (
     Opportunity,
     OpportunityDetail,
@@ -73,8 +74,8 @@ OPPORTUNITY_DETAIL_CSS = r"""
     }
     .opportunity-hero {
       display: grid;
-      gap: clamp(18px, 2.4vw, 28px);
-      padding: clamp(24px, 4vw, 48px);
+      gap: clamp(16px, 2vw, 22px);
+      padding: clamp(22px, 3vw, 36px);
       border: 1px solid var(--line);
       border-radius: var(--av-radius-lg);
       background: var(--surface);
@@ -83,7 +84,7 @@ OPPORTUNITY_DETAIL_CSS = r"""
     .opportunity-head {
       display: grid;
       gap: 12px;
-      max-width: 1020px;
+      max-width: 1080px;
     }
     .opportunity-kicker {
       color: var(--brand);
@@ -93,16 +94,16 @@ OPPORTUNITY_DETAIL_CSS = r"""
       text-transform: uppercase;
     }
     .opportunity-hero h1 {
-      max-width: 28ch;
+      max-width: 31ch;
       margin: 0;
       color: var(--text);
-      font-size: clamp(32px, 3.7vw, 54px);
-      line-height: 1.05;
+      font-size: clamp(30px, 3.25vw, 50px);
+      line-height: 1.08;
       letter-spacing: -0.035em;
       text-wrap: balance;
     }
     .opportunity-summary {
-      max-width: 74ch;
+      max-width: 68ch;
       margin: 0;
       color: color-mix(in oklab, var(--text), var(--muted) 34%);
       font-size: clamp(16px, 1.25vw, 19px);
@@ -110,16 +111,16 @@ OPPORTUNITY_DETAIL_CSS = r"""
     }
     .opportunity-facts {
       display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(min(100%, 155px), 1fr));
-      gap: 8px;
+      grid-template-columns: repeat(auto-fit, minmax(min(100%, 180px), 1fr));
+      gap: 10px;
       margin: 0;
     }
     .opportunity-fact {
       display: grid;
       align-content: start;
       gap: 5px;
-      min-height: 82px;
-      padding: 13px 14px;
+      min-height: 74px;
+      padding: 12px 14px;
       border: 1px solid var(--line-subtle);
       border-radius: var(--av-radius-md);
       background: var(--surface-subtle);
@@ -189,6 +190,7 @@ OPPORTUNITY_DETAIL_CSS = r"""
       line-height: 1.48;
     }
     .eligibility-list,
+    .key-conditions-list,
     .source-guidance-list,
     .application-steps {
       display: grid;
@@ -213,6 +215,39 @@ OPPORTUNITY_DETAIL_CSS = r"""
       background: var(--brand);
       content: "";
     }
+    .key-conditions-list {
+      grid-template-columns: repeat(auto-fit, minmax(min(100%, 225px), 1fr));
+      gap: 10px;
+      counter-reset: key-condition;
+    }
+    .key-condition {
+      display: grid;
+      grid-template-columns: 28px minmax(0, 1fr);
+      gap: 10px;
+      align-items: start;
+      min-height: 100%;
+      padding: 13px 14px;
+      border: 1px solid var(--line-subtle);
+      border-radius: var(--av-radius-md);
+      background: var(--surface-subtle);
+      color: color-mix(in oklab, var(--text), var(--muted) 22%);
+      line-height: 1.52;
+    }
+    .key-condition::before {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 26px;
+      height: 26px;
+      border-radius: 999px;
+      background: color-mix(in oklab, var(--brand-soft), var(--surface) 40%);
+      color: var(--brand);
+      counter-increment: key-condition;
+      content: counter(key-condition, decimal-leading-zero);
+      font-size: var(--av-text-xs);
+      font-weight: 750;
+      line-height: 1;
+    }
     .detail-content-list {
       display: grid;
       gap: 22px;
@@ -236,6 +271,39 @@ OPPORTUNITY_DETAIL_CSS = r"""
       margin: 0;
       color: color-mix(in oklab, var(--text), var(--muted) 25%);
       line-height: 1.67;
+    }
+    .source-text-disclosure {
+      display: grid;
+      gap: 14px;
+    }
+    .source-text-disclosure summary {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+      cursor: pointer;
+      color: var(--text);
+      font-weight: 750;
+      list-style: none;
+    }
+    .source-text-disclosure summary::-webkit-details-marker {
+      display: none;
+    }
+    .source-text-disclosure summary::after {
+      flex: 0 0 auto;
+      color: var(--brand);
+      content: "+";
+      font-size: 20px;
+      font-weight: 600;
+      line-height: 1;
+    }
+    .source-text-disclosure[open] summary::after {
+      content: "–";
+    }
+    .source-text-disclosure-action {
+      color: var(--muted);
+      font-size: var(--av-text-sm);
+      font-weight: 650;
     }
     .source-guidance-list {
       grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -381,7 +449,8 @@ OPPORTUNITY_DETAIL_CSS = r"""
     }
     @media (max-width: 720px) {
       .opportunity-facts,
-      .source-guidance-list {
+      .source-guidance-list,
+      .key-conditions-list {
         grid-template-columns: repeat(2, minmax(0, 1fr));
       }
     }
@@ -395,7 +464,8 @@ OPPORTUNITY_DETAIL_CSS = r"""
         font-size: 30px;
       }
       .opportunity-facts,
-      .source-guidance-list {
+      .source-guidance-list,
+      .key-conditions-list {
         grid-template-columns: 1fr;
       }
       .opportunity-actions {
@@ -864,6 +934,9 @@ def _localized_item_value(
     value = localized.get(field) if isinstance(localized, dict) else None
     if isinstance(value, str) and value.strip():
         return value.strip()
+    raw_value = raw.get(field)
+    if isinstance(raw_value, str) and raw_value.strip():
+        return raw_value.strip()
     return fallback.strip()
 
 
@@ -872,6 +945,8 @@ def _localized_item_list(item: Opportunity, field: str, lang: str) -> list[str]:
     i18n = raw.get("i18n")
     localized = i18n.get(lang) if isinstance(i18n, dict) else None
     value = localized.get(field) if isinstance(localized, dict) else None
+    if not isinstance(value, list):
+        value = raw.get(field)
     if not isinstance(value, list):
         return []
     return [str(entry).strip() for entry in value if str(entry).strip()]
@@ -884,6 +959,8 @@ def _localized_card_items(
     i18n = raw.get("i18n")
     localized = i18n.get(lang) if isinstance(i18n, dict) else None
     value = localized.get(field) if isinstance(localized, dict) else None
+    if not isinstance(value, list):
+        value = raw.get(field)
     if not isinstance(value, list):
         return []
     cards: list[tuple[str, str]] = []
@@ -1849,6 +1926,42 @@ def _display_detail_metadata_value(
     return _label_value(value, copy)
 
 
+def _detail_format_label(detail: OpportunityDetail, copy: dict[str, object]) -> str:
+    """Use the orthogonal taxonomy when it is more precise than the source type."""
+
+    instrument = str(classify_opportunity(detail).get("instrument") or "").strip()
+    display_token = {
+        "loan": "preferential_financing",
+        "procurement": "tender",
+        "prize": "contest",
+        "scholarship": "fellowship",
+        "in_kind_support": "cloud_credit",
+    }.get(instrument, instrument)
+    if display_token and display_token != "unknown":
+        return _label_value(display_token, copy)
+    return _label_value(detail.type, copy)
+
+
+def _published_deadline_label(
+    item: Opportunity,
+    *,
+    copy: dict[str, object],
+    lang: str,
+) -> str:
+    """Show a deadline only when a source actually provides one."""
+
+    display = _localized_item_value(item, "deadline_display", lang, "")
+    if display:
+        return display
+    if item.deadline is not None:
+        return _format_deadline(item.deadline, lang, str(copy["open_rolling"]))
+    raw = item.raw if isinstance(item.raw, dict) else {}
+    policy = str(raw.get("deadline_policy") or "").strip().casefold()
+    if policy in {"rolling", "open"}:
+        return str(copy["open_rolling"])
+    return ""
+
+
 def _opportunity_facts_markup(
     detail: OpportunityDetail,
     *,
@@ -1860,24 +1973,22 @@ def _opportunity_facts_markup(
     values = _detail_metadata_values(detail)
     raw_labels = copy.get("detail_meta_labels")
     labels = raw_labels if isinstance(raw_labels, dict) else {}
-    missing = str(copy["detail_not_published"])
-
-    deadline = (
-        _format_deadline(detail.deadline, lang, str(copy["open_rolling"]))
-        if detail.deadline is not None
-        else _display_detail_metadata_value(
-            values.get("deadline_raw") or values.get("deadline_policy") or "",
-            key="deadline_raw" if values.get("deadline_raw") else "deadline_policy",
+    deadline = _published_deadline_label(detail, copy=copy, lang=lang)
+    if not deadline:
+        deadline = _display_detail_metadata_value(
+            values.get("deadline_raw") or "",
+            key="deadline_raw",
             copy=copy,
             lang=lang,
         )
-    )
-    amount = _display_detail_metadata_value(
-        values.get("amount") or values.get("amount_raw") or "",
-        key="amount" if values.get("amount") else "amount_raw",
-        copy=copy,
-        lang=lang,
-    )
+    amount = _localized_item_value(detail, "amount", lang, "")
+    if not amount:
+        amount = _display_detail_metadata_value(
+            values.get("amount") or values.get("amount_raw") or "",
+            key="amount" if values.get("amount") else "amount_raw",
+            copy=copy,
+            lang=lang,
+        )
     geography_values: list[str] = []
     for key in ("country", "region"):
         value = _display_detail_metadata_value(
@@ -1895,16 +2006,30 @@ def _opportunity_facts_markup(
         lang=lang,
     )
 
-    facts: list[tuple[str, str, bool]] = [
-        (str(labels.get("deadline", "Deadline")), deadline or missing, True),
-        (str(labels.get("amount", "Amount")), amount or missing, True),
-        (str(copy["meta_format_label"]), _label_value(detail.type, copy), True),
-        (str(copy["detail_geography_label"]), geography or missing, True),
-    ]
+    deadline_label = _localized_item_value(
+        detail,
+        "deadline_label",
+        lang,
+        str(labels.get("deadline", "Deadline")),
+    )
+    amount_label = _localized_item_value(
+        detail,
+        "amount_label",
+        lang,
+        str(labels.get("amount", "Amount")),
+    )
+    facts: list[tuple[str, str, bool]] = []
+    if deadline:
+        facts.append((deadline_label, deadline, True))
+    if amount:
+        facts.append((amount_label, amount, True))
+    format_label = _detail_format_label(detail, copy)
+    if format_label:
+        facts.append((str(copy["meta_format_label"]), format_label, False))
+    if geography:
+        facts.append((str(copy["detail_geography_label"]), geography, False))
     if organizer:
         facts.append((str(copy["detail_organizer_label"]), organizer, False))
-    if not detail.eligibility:
-        facts.append((str(copy["detail_eligibility_title"]), missing, False))
     for key in (
         "status",
         "notice_type",
@@ -1915,7 +2040,11 @@ def _opportunity_facts_markup(
         value = _display_detail_metadata_value(
             values.get(key, ""), key=key, copy=copy, lang=lang
         )
-        if value and value not in {deadline, amount}:
+        if (
+            value
+            and value not in {deadline, amount}
+            and all(value.casefold() != existing.casefold() for _, existing, _ in facts)
+        ):
             facts.append(
                 (str(labels.get(key, key.replace("_", " ").title())), value, False)
             )
@@ -1964,12 +2093,42 @@ def _eligibility_markup(detail: OpportunityDetail, *, copy: dict[str, object]) -
     )
 
 
+def _highlights_markup(
+    detail: OpportunityDetail,
+    *,
+    copy: dict[str, object],
+    lang: str,
+) -> str:
+    highlights = _localized_item_list(detail, "highlights", lang)
+    if not highlights:
+        return ""
+    title = _localized_item_value(
+        detail,
+        "highlights_label",
+        lang,
+        str(copy["decision_check_title"]),
+    )
+    rows = "".join(
+        '<li class="key-condition">{value}</li>'.format(value=escape(value))
+        for value in highlights
+    )
+    return """
+    <section class="detail-section detail-section--conditions" aria-labelledby="conditions-title">
+      <div class="detail-section-head">
+        <h2 id="conditions-title">{title}</h2>
+      </div>
+      <ol class="key-conditions-list">{rows}</ol>
+    </section>
+    """.format(title=escape(title), rows=rows)
+
+
 def _content_sections_markup(
     detail: OpportunityDetail,
     *,
     title: str,
     summary: str,
     copy: dict[str, object],
+    collapsed: bool = False,
 ) -> str:
     """Keep source-derived conditions readable without repeating the card header."""
 
@@ -2042,6 +2201,23 @@ def _content_sections_markup(
         )
     if not entries:
         return ""
+    entries_markup = "".join(entries)
+    if collapsed:
+        return """
+        <section class="detail-section detail-section--source">
+          <details class="source-text-disclosure">
+            <summary>
+              <span>{title}</span>
+              <span class="source-text-disclosure-action">{action}</span>
+            </summary>
+            <div class="detail-content-list">{entries}</div>
+          </details>
+        </section>
+        """.format(
+            title=escape(str(copy["detail_source_excerpt"])),
+            action=escape(str(copy["detail_expand_source"])),
+            entries=entries_markup,
+        )
     return """
     <section class="detail-section" aria-labelledby="content-title">
       <div class="detail-section-head">
@@ -2051,7 +2227,7 @@ def _content_sections_markup(
     </section>
     """.format(
         title=escape(str(copy["detail_content_title"])),
-        entries="".join(entries),
+        entries=entries_markup,
     )
 
 
@@ -2253,15 +2429,20 @@ def _related_markup(
         href = escape(_page_path(root_path, str(item.id), lang), quote=True)
         reason = escape(str(copy.get(reason_key, copy["related_reason_theme"])))
         source_label = escape(item.funder or _label_value(item.source, copy))
-        deadline_label = escape(
-            _format_deadline(item.deadline, lang, str(copy["open_rolling"]))
+        deadline_label = _published_deadline_label(item, copy=copy, lang=lang)
+        deadline_markup = (
+            '<span class="related-deadline">{deadline}</span>'.format(
+                deadline=escape(deadline_label)
+            )
+            if deadline_label
+            else ""
         )
         cards.append(
             """
             <article class="related-card" data-avds-component="document-card">
               <div class="related-top">
                 <span class="related-reason">{reason}</span>
-                <span class="related-deadline">{deadline}</span>
+                {deadline}
               </div>
               <h3><a href="{href}">{title}</a></h3>
               <p class="related-summary">{summary}</p>
@@ -2272,7 +2453,7 @@ def _related_markup(
             </article>
             """.format(
                 reason=reason,
-                deadline=deadline_label,
+                deadline=deadline_markup,
                 href=href,
                 title=escape(title),
                 summary=escape(summary),
@@ -2375,9 +2556,10 @@ def render_opportunity_page(
         copy=copy,
     )
     source_text = detail.funder or _label_value(detail.source, copy)
-    format_text = _label_value(detail.type, copy)
+    format_text = _detail_format_label(detail, copy)
     source_host = _host_label(str(detail.source_url))
     applications_closed = lifecycle in {"closed", "awarded"}
+    actionability = str(program_truth(detail, lifecycle=lifecycle)["actionability"])
     application_button = (
         """
         <a class="button primary" href="{href}" target="_blank" rel="noopener">
@@ -2397,7 +2579,7 @@ def render_opportunity_page(
             href=prepare_href,
             label=escape(str(copy["detail_prepare_application"])),
         )
-        if not applications_closed
+        if not applications_closed and actionability in {"apply", "verify"}
         else ""
     )
     source_button_class = "button slim" if application_button else "button primary"
@@ -2407,12 +2589,7 @@ def render_opportunity_page(
         lang=active_lang,
     )
     eligibility_markup = _eligibility_markup(detail, copy=copy)
-    content_markup = _content_sections_markup(
-        detail,
-        title=title,
-        summary=summary,
-        copy=copy,
-    )
+    highlights_markup = _highlights_markup(detail, copy=copy, lang=active_lang)
     guidance_markup = _source_guidance_markup(
         detail,
         copy=copy,
@@ -2422,6 +2599,18 @@ def render_opportunity_page(
         _application_steps_markup(detail, copy=copy, lang=active_lang)
         if not applications_closed
         else ""
+    )
+    content_markup = _content_sections_markup(
+        detail,
+        title=title,
+        summary=summary,
+        copy=copy,
+        collapsed=bool(
+            highlights_markup
+            or eligibility_markup
+            or guidance_markup
+            or application_steps_markup
+        ),
     )
     og_locale = escape(active_lang.replace("-", "_") + "_KZ", quote=True)
     canonical_url = _absolute_href(site_origin, canonical_path)
@@ -3548,10 +3737,11 @@ def render_opportunity_page(
 
       <div class="opportunity-layout">
         <div class="opportunity-content">
+          {highlights_markup}
           {eligibility_markup}
-          {content_markup}
           {guidance_markup}
           {application_steps_markup}
+          {content_markup}
         </div>
         {source_panel_markup}
       </div>

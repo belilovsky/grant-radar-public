@@ -128,15 +128,20 @@ class DomesticProgram:
     eligibility: tuple[str, ...] = ()
     title_ru: str = ""
     summary_ru: str = ""
+    funder: str = ""
+    country: str = ""
+    region: str = ""
     amount_raw: str | None = None
     amount_min: Decimal | None = None
     amount_max: Decimal | None = None
     currency: str = "USD"
     application_url: str | None = None
+    deadline_raw: str | None = None
     taxonomy_instrument: str = ""
     taxonomy_application_mode: str = ""
     taxonomy_deadline_model: str = ""
     application_windows: tuple[tuple[str, str], ...] = ()
+    source_aliases: tuple[str, ...] = ()
 
 
 DOMESTIC_PROGRAMS = (
@@ -1001,22 +1006,44 @@ DOMESTIC_PROGRAMS = (
         ),
     ),
     DomesticProgram(
-        url=(
-            "https://agrocredit.kz/en/main/press-center/news/"
-            "agrarnaya-kreditnaya-korporatsiya-zapustila-novoe-napravlenie-"
-            "kreditovaniya/"
-        ),
-        title="Agrarian Credit Corporation livestock lending",
+        url="https://agrocredit.kz/en/main/our-activities/programs/3569/",
+        title="Agrarian Credit Corporation feedlot and poultry financing",
         summary=(
-            "Official Agrarian Credit Corporation program for preferential "
-            "short-term lending to livestock and feedlot producers."
+            "Official Agrarian Credit Corporation loan programme for working "
+            "capital of feedlots and poultry farms."
         ),
+        title_ru="Льготное кредитование откормочных площадок и птицефабрик",
+        summary_ru=(
+            "Программа Аграрной кредитной корпорации для пополнения оборотного "
+            "капитала откормочных площадок и птицефабрик."
+        ),
+        funder="Agrarian Credit Corporation",
+        country="kazakhstan",
+        rolling=False,
+        opportunity_status="open",
+        lifecycle="open",
+        eligibility=(
+            "Direct borrowers, credit partnerships, second-tier banks, microfinance "
+            "organizations and regional investment centers financing feedlots or "
+            "poultry farms",
+        ),
+        amount_raw=(
+            "Direct borrowers: 5% per annum; KZT 1 million to 15 billion. Credit "
+            "line term up to 36 months; tranche term up to 12 months."
+        ),
+        currency="KZT",
+        taxonomy_instrument="loan",
         tags=(
             "preferential_financing",
             "agrotech",
             "vettech",
             "livestock",
             "agrocredit",
+        ),
+        source_aliases=(
+            "https://agrocredit.kz/en/main/press-center/news/"
+            "agrarnaya-kreditnaya-korporatsiya-zapustila-novoe-napravlenie-"
+            "kreditovaniya/",
         ),
     ),
     DomesticProgram(
@@ -1063,6 +1090,32 @@ DOMESTIC_PROGRAMS = (
             "Official QazIndustry state-stimulation measures for partial cost "
             "reimbursement to improve industrial productivity."
         ),
+        title_ru="Возмещение затрат QazIndustry для повышения производительности",
+        summary_ru=(
+            "Частичное возмещение затрат субъектов промышленно-инновационной "
+            "деятельности: 40% по четырём направлениям, с лимитами до 20–60 млн ₸ "
+            "в календарный год."
+        ),
+        funder="QazIndustry",
+        country="kazakhstan",
+        rolling=False,
+        opportunity_status="open",
+        lifecycle="open",
+        eligibility=(
+            "Kazakhstan producers of priority goods that meet the official "
+            "registration, tax-payment and arrears requirements",
+        ),
+        amount_raw=(
+            "40% of eligible costs, capped at KZT 20–60 million per calendar year "
+            "depending on the measure; installation and supervision installation "
+            "costs are capped at KZT 12 million."
+        ),
+        currency="KZT",
+        application_url="https://sez.qazindustry.gov.kz/ru/service/5/evaluate",
+        deadline_raw=(
+            "During the calendar year, until the allocated budget is exhausted"
+        ),
+        taxonomy_instrument="reimbursement",
         tags=("reimbursement", "industry", "digitalization", "business_support"),
     ),
     DomesticProgram(
@@ -1308,10 +1361,117 @@ DOMESTIC_EDITORIAL_RU: dict[str, dict[str, Any]] = {
                 ),
             },
         ],
-    }
+    },
+    ("https://qazindustry.gov.kz/ru/business_reimbursement"): {
+        "summary": (
+            "Частичное возмещение затрат субъектов промышленно-инновационной "
+            "деятельности: 40% по четырём направлениям, с лимитами до 20–60 млн ₸ "
+            "в календарный год."
+        ),
+        "eligibility": [
+            "Производители продукции из перечня приоритетных товаров; с даты "
+            "регистрации или уведомления должно пройти не менее года.",
+            "Не должно быть задолженности по налогам, обязательным пенсионным "
+            "взносам и социальным платежам, кроме предусмотренных исключений.",
+            "Налоговые отчисления за три предыдущих календарных года должны "
+            "увеличиваться; для отдельных категорий предусмотрены исключения.",
+        ],
+        "highlights_label": "Что компенсируют",
+        "highlights": [
+            "Повышение компетенций сотрудников – 40%, до 30 млн ₸ в календарный "
+            "год; обучение, переподготовка или повышение квалификации – до 3 месяцев.",
+            "Внедрение цифровых технологий – 40%, до 60 млн ₸ в календарный год.",
+            "Совершенствование технологических процессов – 40%, до 60 млн ₸ в "
+            "календарный год; монтаж и шеф-монтаж – до 12 млн ₸.",
+            "Повышение эффективности организации производства – 40%, до 20 млн ₸ "
+            "в календарный год.",
+        ],
+        "amount": "40% затрат – до 20–60 млн ₸ в год по направлению",
+        "amount_label": "Размер возмещения",
+        "deadline_display": "В течение календарного года – до освоения бюджета",
+        "deadline_label": "Период приёма",
+        "application_step_titles": [
+            "Проверьте соответствие",
+            "Подготовьте документы по расходам",
+            "Подайте через сервис QazIndustry",
+        ],
+        "application_steps": [
+            "Сверьте продукцию, срок работы и обязательные платежи с критериями "
+            "программы.",
+            "Соберите документы, подтверждающие расходы по выбранному направлению.",
+            "Откройте цифровой сервис QazIndustry и следуйте актуальному порядку "
+            "подачи.",
+        ],
+        "prepare_items": [
+            {
+                "title": "Сверьте перечень продукции",
+                "text": "Продукция заявителя должна входить в перечень приоритетных товаров.",
+            },
+            {
+                "title": "Проверьте лимит направления",
+                "text": "Лимит зависит от выбранной меры: от 20 до 60 млн ₸ в календарный год.",
+            },
+            {
+                "title": "Подтвердите расходы",
+                "text": "Порядок и подтверждающие документы нужно сверить в инструкции QazIndustry.",
+            },
+            {
+                "title": "Не откладывайте подачу",
+                "text": "Приём идёт до освоения бюджетных средств соответствующего года.",
+            },
+        ],
+    },
+    "https://agrocredit.kz/en/main/our-activities/programs/3569/": {
+        "summary": (
+            "Программа Аграрной кредитной корпорации для пополнения оборотного "
+            "капитала откормочных площадок и птицефабрик."
+        ),
+        "eligibility": [
+            "Прямые заёмщики, кредитные товарищества, банки второго уровня, МФО "
+            "и региональные инвестиционные центры.",
+            "Целевое назначение для прямых заёмщиков – пополнение оборотного капитала "
+            "откормочных площадок и птицефабрик.",
+        ],
+        "highlights_label": "Ключевые условия",
+        "highlights": [
+            "Для прямых заёмщиков – 5% годовых; для кредитных товариществ, банков, "
+            "МФО и РИЦ – 1,5% с ограничением маржи для конечного заёмщика.",
+            "Сумма для прямых заёмщиков – от 1 млн до 15 млрд ₸; для кредитных "
+            "товариществ – от 1 млн до 10 млрд ₸.",
+            "Срок кредитной линии – до 36 месяцев, срок транша – до 12 месяцев.",
+            "Залог принимается по залоговой политике Аграрной кредитной корпорации.",
+        ],
+        "amount": "5% годовых для прямых заёмщиков – 1–15 млрд ₸",
+        "amount_label": "Ставка и сумма",
+        "prepare_items": [
+            {
+                "title": "Определите канал финансирования",
+                "text": "Обратиться можно как прямой заёмщик, через кредитное товарищество, банк, МФО или региональный инвестиционный центр.",
+            },
+            {
+                "title": "Сверьте целевое назначение",
+                "text": "Программа предназначена для пополнения оборотного капитала откормочных площадок и птицефабрик.",
+            },
+            {
+                "title": "Проверьте лимит и срок",
+                "text": "Для прямых заёмщиков заявлен диапазон от 1 млн до 15 млрд ₸, линия – до 36 месяцев, транш – до 12 месяцев.",
+            },
+            {
+                "title": "Подготовьте обеспечение",
+                "text": "Требования к залогу определяются залоговой политикой Аграрной кредитной корпорации.",
+            },
+        ],
+    },
 }
 
-ACTIVE_DOMESTIC_URLS = frozenset(program.url for program in DOMESTIC_PROGRAMS)
+
+def _program_urls(program: DomesticProgram) -> tuple[str, ...]:
+    return (program.url, *program.source_aliases)
+
+
+ACTIVE_DOMESTIC_URLS = frozenset(
+    url for program in DOMESTIC_PROGRAMS for url in _program_urls(program)
+)
 
 
 def _detect_detail_language(text: str, html: str = "") -> str:
@@ -1548,6 +1708,40 @@ def _i18n_payload(program: DomesticProgram) -> dict[str, Any]:
     return {"i18n": {"ru": ru}}
 
 
+def domestic_program_payload(program: DomesticProgram) -> dict[str, Any]:
+    """Return source-backed static fields that must survive a stale DB snapshot."""
+
+    payload: dict[str, Any] = {
+        "canonical_source_url": program.url,
+        **_i18n_payload(program),
+        **_amount_raw_payload(program),
+        **_taxonomy_payload(program),
+    }
+    if program.funder:
+        payload["funder"] = program.funder
+    if program.country:
+        payload["country"] = program.country
+    if program.region:
+        payload["region"] = program.region
+    if program.rolling:
+        payload["deadline_policy"] = "rolling"
+    if program.deadline is not None:
+        payload["deadline"] = program.deadline.isoformat()
+    if program.deadline_raw:
+        payload["deadline_raw"] = program.deadline_raw
+    if program.opportunity_status:
+        payload["opportunity_status"] = program.opportunity_status
+    if program.lifecycle:
+        payload["lifecycle"] = program.lifecycle
+    if program.application_url:
+        payload["application_url"] = program.application_url
+    if program.eligibility:
+        payload["eligibility_raw"] = list(program.eligibility)
+    if program.amount_raw:
+        payload["currency"] = program.currency
+    return payload
+
+
 def _detail_snapshot(html: str) -> dict[str, Any] | None:
     sections, excerpt_only = _extract_detail_sections(html)
     sections = _drop_leading_navigation_section(sections)
@@ -1658,6 +1852,7 @@ class KazakhstanDomesticSupportSource(BaseSource):
             type=program.type,
             title=program.title,
             summary=program.summary,
+            funder=program.funder or None,
             amount_min=program.amount_min,
             amount_max=program.amount_max,
             currency=program.currency,
@@ -1718,19 +1913,7 @@ class KazakhstanDomesticSupportSource(BaseSource):
                             "external_id": program.url,
                             "page_title": program.title,
                             "status_code": None,
-                            "deadline_policy": ("rolling" if program.rolling else None),
-                            "deadline": (
-                                program.deadline.isoformat()
-                                if program.deadline
-                                else None
-                            ),
-                            "opportunity_status": program.opportunity_status,
-                            "lifecycle": program.lifecycle,
-                            **_i18n_payload(program),
-                            **_amount_raw_payload(program),
-                            **_taxonomy_payload(program),
-                            "application_url": program.application_url,
-                            "eligibility_raw": list(program.eligibility),
+                            **domestic_program_payload(program),
                             **_curated_detail_payload(program, "parse_error"),
                             "status_note": (
                                 "official curated domestic-support page "
@@ -1758,17 +1941,7 @@ class KazakhstanDomesticSupportSource(BaseSource):
                 "external_id": program.url,
                 "page_title": page_title,
                 "status_code": response.status_code,
-                "deadline_policy": "rolling" if program.rolling else None,
-                "deadline": (
-                    program.deadline.isoformat() if program.deadline else None
-                ),
-                "opportunity_status": program.opportunity_status,
-                "lifecycle": program.lifecycle,
-                **_i18n_payload(program),
-                **_amount_raw_payload(program),
-                **_taxonomy_payload(program),
-                "application_url": program.application_url,
-                "eligibility_raw": list(program.eligibility),
+                **domestic_program_payload(program),
             }
             if _is_blocked_fetch(response.status_code, page_title):
                 raw.update(
@@ -1795,7 +1968,9 @@ class KazakhstanDomesticSupportSource(BaseSource):
 
 
 KazakhstanDomesticSupportParser = KazakhstanDomesticSupportSource
-DOMESTIC_PROGRAM_BY_URL = {program.url: program for program in DOMESTIC_PROGRAMS}
+DOMESTIC_PROGRAM_BY_URL = {
+    url: program for program in DOMESTIC_PROGRAMS for url in _program_urls(program)
+}
 DOMESTIC_PROGRAM_TAGS = {
     program.url: _program_tags(program, KazakhstanDomesticSupportSource.default_tags)
     for program in DOMESTIC_PROGRAMS

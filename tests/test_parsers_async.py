@@ -944,11 +944,16 @@ async def test_kazakhstan_domestic_support_yields_official_programs():
     assert all("domestic_support" in item.tags for item in items)
     assert all("state_program" in item.tags for item in items)
     assert all(item.raw["page_title"] for item in items)
-    assert all("rolling" in item.tags for item in items if item.deadline is None)
+    programs_by_url = {program.url: program for program in DOMESTIC_PROGRAMS}
+    assert all(
+        "rolling" in item.tags
+        for item in items
+        if programs_by_url[str(item.source_url)].rolling
+    )
     assert all(
         item.raw["deadline_policy"] == "rolling"
         for item in items
-        if item.deadline is None
+        if programs_by_url[str(item.source_url)].rolling
     )
     by_title = {item.title: item for item in items}
     assert "State grant for startup business development" in by_title
@@ -982,6 +987,8 @@ async def test_kazakhstan_domestic_support_yields_official_programs():
     assert "Bgov.kz unified financial support platform" in by_title
     assert "KazAgroFinance Own Feed and Preferential Leasing" in by_title
     assert "Agrarian Credit Corporation Ken Dala financing" in by_title
+    assert "Agrarian Credit Corporation feedlot and poultry financing" in by_title
+    assert "QazIndustry productivity reimbursement measures" in by_title
     assert "Development Bank of Kazakhstan investment-project financing" in by_title
     assert "Astana Hub participant tax benefits" in by_title
     assert "Astana Hub Seed Money Smart City" in by_title
@@ -996,6 +1003,25 @@ async def test_kazakhstan_domestic_support_yields_official_programs():
     )
     assert (
         "leasing" in by_title["KazAgroFinance Own Feed and Preferential Leasing"].tags
+    )
+    livestock = by_title["Agrarian Credit Corporation feedlot and poultry financing"]
+    assert livestock.funder == "Agrarian Credit Corporation"
+    assert livestock.raw["opportunity_taxonomy"]["instrument"] == "loan"
+    assert "deadline_policy" not in livestock.raw
+    assert livestock.raw["i18n"]["ru"]["amount"] == (
+        "5% годовых для прямых заёмщиков – 1–15 млрд ₸"
+    )
+    assert livestock.raw["canonical_source_url"] == (
+        "https://agrocredit.kz/en/main/our-activities/programs/3569/"
+    )
+    qazindustry = by_title["QazIndustry productivity reimbursement measures"]
+    assert qazindustry.funder == "QazIndustry"
+    assert qazindustry.raw["opportunity_taxonomy"]["instrument"] == "reimbursement"
+    assert qazindustry.raw["application_url"] == (
+        "https://sez.qazindustry.gov.kz/ru/service/5/evaluate"
+    )
+    assert qazindustry.raw["i18n"]["ru"]["deadline_display"] == (
+        "В течение календарного года – до освоения бюджета"
     )
     assert (
         by_title["State grants for social entrepreneurship"].raw["amount_raw"]

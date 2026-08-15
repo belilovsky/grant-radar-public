@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from datetime import date, datetime, timedelta, timezone
 from decimal import Decimal
+from types import SimpleNamespace
 from uuid import uuid4
 
 from fastapi.testclient import TestClient
@@ -3173,6 +3174,177 @@ def test_opportunity_page_hides_duplicate_source_funder_metadata(monkeypatch):
     assert detail_head.status_code == 200
 
 
+def test_stored_domestic_program_overlay_replaces_stale_facts_and_renders_conditions():
+    source_url = "https://qazindustry.gov.kz/ru/business_reimbursement"
+    row = SimpleNamespace(
+        id=uuid4(),
+        dedup_key="qazindustry-reimbursement",
+        raw={
+            "deadline_policy": "rolling",
+            "amount_raw": "up to 60,000,000 USD",
+            "i18n": {
+                "ru": {
+                    "detail_sections": [
+                        {
+                            "heading": "Меры стимулирования",
+                            "text": "Полный фрагмент официального источника.",
+                        }
+                    ],
+                    "detail_text": "Полный фрагмент официального источника.",
+                    "detail_language": "ru",
+                }
+            },
+        },
+        source="kazakhstan_domestic_support",
+        source_url=source_url,
+        type=OpportunityType.GRANT,
+        title="Stale QazIndustry record",
+        summary="Stale summary.",
+        funder=None,
+        funder_slug=None,
+        amount_min=None,
+        amount_max=Decimal("60000000"),
+        currency="USD",
+        deadline=None,
+        eligibility=[],
+        tags=["grant"],
+        languages=["en", "ru"],
+        score=0.7,
+        opportunity_status="open",
+        lifecycle="open",
+        first_seen_at=None,
+        last_seen_at=None,
+        discovered_at=None,
+    )
+
+    item = api_main._stored_opportunity(row)
+    localized = api_main.localize_opportunity(item, "ru")
+    detail = OpportunityDetail(
+        **localized.model_dump(),
+        detail_sections=[
+            OpportunityDetailSection(
+                heading="Меры стимулирования",
+                text="Полный фрагмент официального источника.",
+            )
+        ],
+        metadata=[
+            OpportunityMetadataField(key="amount_raw", value=item.raw["amount_raw"]),
+            OpportunityMetadataField(key="country", value=item.raw["country"]),
+        ],
+    )
+    markup = opportunity_page_module.render_opportunity_page(
+        detail=detail,
+        lang="ru",
+        root_path="",
+        site_origin="http://testserver",
+    )
+
+    assert item.funder == "QazIndustry"
+    assert item.amount_max is None
+    assert item.currency == "KZT"
+    assert item.lifecycle == "open"
+    assert "deadline_policy" not in item.raw
+    assert item.raw["opportunity_taxonomy"]["instrument"] == "reimbursement"
+    assert item.raw["i18n"]["ru"]["detail_sections"][0]["text"] == (
+        "Полный фрагмент официального источника."
+    )
+    assert "40% затрат – до 20–60 млн ₸" in markup
+    assert "Возмещение затрат" in markup
+    assert "Что компенсируют" in markup
+    assert "Не указано организатором" not in markup
+    assert 'class="source-text-disclosure"' in markup
+    assert "Полный фрагмент официального источника." in markup
+
+
+def test_opportunity_page_uses_taxonomy_and_only_published_facts():
+    detail = OpportunityDetail(
+        source="kazakhstan_domestic_support",
+        source_url="https://agrocredit.kz/en/main/our-activities/programs/3569/",
+        type=OpportunityType.GRANT,
+        title="Льготное кредитование откормочных площадок и птицефабрик",
+        summary="Пополнение оборотного капитала откормочных площадок и птицефабрик.",
+        funder="Agrarian Credit Corporation",
+        tags=["kazakhstan", "preferential_financing", "livestock"],
+        raw={
+            "country": "kazakhstan",
+            "i18n": {
+                "ru": {
+                    "amount": "5% годовых для прямых заёмщиков – 1–15 млрд ₸",
+                    "amount_label": "Ставка и сумма",
+                    "highlights_label": "Ключевые условия",
+                    "highlights": [
+                        "Срок кредитной линии – до 36 месяцев, срок транша – до 12 месяцев.",
+                        "Залог принимается по залоговой политике Аграрной кредитной корпорации.",
+                    ],
+                }
+            },
+        },
+        metadata=[OpportunityMetadataField(key="country", value="kazakhstan")],
+    )
+
+    markup = opportunity_page_module.render_opportunity_page(
+        detail=detail,
+        lang="ru",
+        root_path="",
+        site_origin="http://testserver",
+    )
+
+    assert '<span class="opportunity-kicker">Льготное финансирование</span>' in markup
+    assert "Ставка и сумма" in markup
+    assert "5% годовых для прямых заёмщиков – 1–15 млрд ₸" in markup
+    assert "Ключевые условия" in markup
+    assert "Не указано организатором" not in markup
+
+
+def test_stored_domestic_legacy_alias_uses_current_canonical_source():
+    legacy = Opportunity(
+        source="kazakhstan_domestic_support",
+        source_url=(
+            "https://agrocredit.kz/en/main/press-center/news/"
+            "agrarnaya-kreditnaya-korporatsiya-zapustila-novoe-napravlenie-"
+            "kreditovaniya/"
+        ),
+        type=OpportunityType.GRANT,
+        title="Legacy livestock lending record",
+        summary="Legacy summary.",
+        tags=["grant"],
+        raw={
+            "external_id": "legacy-livestock",
+            "deadline_policy": "rolling",
+            "i18n": {
+                "ru": {
+                    "detail_text": "Устаревшие условия из публикации 2025 года.",
+                    "detail_sections": [
+                        {
+                            "heading": "Старые условия",
+                            "text": "Не должны попасть в новую карточку.",
+                        }
+                    ],
+                }
+            },
+        },
+    )
+
+    item = api_main._stored_opportunity(legacy)
+
+    assert str(item.source_url) == (
+        "https://agrocredit.kz/en/main/our-activities/programs/3569/"
+    )
+    assert item.title == "Agrarian Credit Corporation feedlot and poultry financing"
+    assert item.funder == "Agrarian Credit Corporation"
+    assert item.raw["canonical_source_url"] == str(item.source_url)
+    assert item.raw["legacy_source_url"].endswith("kreditovaniya/")
+    assert "detail_text" not in item.raw["i18n"]["ru"]
+    assert "deadline_policy" not in item.raw
+    refreshed = legacy.model_copy(
+        update={
+            "source_url": str(item.source_url),
+            "raw": {"canonical_source_url": str(item.source_url)},
+        }
+    )
+    assert api_main._public_dedup_key(item) == api_main._public_dedup_key(refreshed)
+
+
 def test_funder_page_defaults_to_russian_without_lang(monkeypatch):
     _reset_api_state(monkeypatch)
     open_item = Opportunity(
@@ -3246,7 +3418,8 @@ def test_opportunity_page_keeps_subsidy_page_to_source_facts(monkeypatch):
     assert 'aria-label="Breadcrumbs"' in response.text
     assert 'data-avds-component="opportunity-detail"' in response.text
     assert "Open source" in response.text
-    assert "Not published by the organizer" in response.text
+    assert "Not published by the organizer" not in response.text
+    assert "Subsidy" in response.text
     assert "What to prepare" not in response.text
     assert "Copy working brief" not in response.text
     assert "Before applying" not in response.text
@@ -3330,6 +3503,7 @@ def test_opportunity_page_lists_related_opportunities(monkeypatch):
     assert f'href="/opportunity/{same_source.id}?lang=en"' in response.text
     assert f'href="/opportunity/{same_theme.id}?lang=en"' in response.text
     assert "Road corridor procurement" not in response.text
+    assert "Open / Rolling" not in response.text
 
     ru_response = client.get(f"/opportunity/{target.id}", params={"lang": "ru"})
 

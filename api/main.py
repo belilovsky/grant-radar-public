@@ -138,6 +138,7 @@ from core.localization import (
     _localized_value,
     localize_opportunity,
     normalize_content_lang,
+    preserve_localized_raw,
 )
 from core.models import Digest, Opportunity, OpportunityDetail
 from core.persistence import Repository
@@ -167,6 +168,7 @@ from sources.kazakhstan_domestic import (
     ACTIVE_DOMESTIC_URLS,
     DOMESTIC_PROGRAM_BY_URL,
     DOMESTIC_PROGRAM_TAGS,
+    domestic_program_payload,
 )
 from sources.kazakhstan_watch import (
     ACTIVE_WATCH_URLS,
@@ -444,39 +446,76 @@ def _stored_opportunity(row: Any, *, content_lang: str = "en") -> Opportunity:
     if opportunity.source == "kazakhstan_domestic_support":
         program = DOMESTIC_PROGRAM_BY_URL.get(str(opportunity.source_url))
         if program is not None:
+            previous_source_url = str(opportunity.source_url)
+            if previous_source_url != program.url:
+                stale_detail_keys = {
+                    "detail_sections",
+                    "detail_text",
+                    "detail_language",
+                    "detail_fetch_status",
+                    "detail_fetched_at",
+                    "detail_excerpt_only",
+                    "detail_html_sha256",
+                }
+                migrated_raw = {
+                    key: value
+                    for key, value in opportunity.raw.items()
+                    if key not in stale_detail_keys
+                }
+                existing_i18n = migrated_raw.get("i18n")
+                if isinstance(existing_i18n, dict):
+                    migrated_raw["i18n"] = {
+                        language: (
+                            {
+                                key: value
+                                for key, value in localized.items()
+                                if key not in stale_detail_keys
+                            }
+                            if isinstance(localized, dict)
+                            else localized
+                        )
+                        for language, localized in existing_i18n.items()
+                    }
+                migrated_raw["legacy_source_url"] = previous_source_url
+                opportunity.raw = migrated_raw
+            opportunity.source_url = program.url
             opportunity.type = program.type
             opportunity.title = program.title
             opportunity.summary = program.summary
+            opportunity.funder = program.funder or opportunity.funder
             opportunity.tags = list(
                 DOMESTIC_PROGRAM_TAGS.get(program.url, opportunity.tags)
             )
-            opportunity.amount_min = opportunity.amount_min or program.amount_min
-            opportunity.amount_max = opportunity.amount_max or program.amount_max
+            if program.amount_raw:
+                opportunity.amount_min = program.amount_min
+                opportunity.amount_max = program.amount_max
+                opportunity.currency = program.currency
+            else:
+                opportunity.amount_min = opportunity.amount_min or program.amount_min
+                opportunity.amount_max = opportunity.amount_max or program.amount_max
             opportunity.deadline = opportunity.deadline or program.deadline
+            if program.eligibility:
+                opportunity.eligibility = list(program.eligibility)
             opportunity.opportunity_status = (
-                opportunity.opportunity_status or program.opportunity_status
+                program.opportunity_status or opportunity.opportunity_status
             )
-            opportunity.lifecycle = opportunity.lifecycle or program.lifecycle
+            opportunity.lifecycle = program.lifecycle or opportunity.lifecycle
             if program.amount_min is not None or program.amount_max is not None:
                 opportunity.currency = program.currency
-            if program.rolling:
-                domestic_raw = {
+            domestic_raw = preserve_localized_raw(
+                opportunity.raw,
+                {
                     **opportunity.raw,
-                    "deadline_policy": "rolling",
-                }
-                if program.amount_raw:
-                    domestic_raw["amount_raw"] = program.amount_raw
-                if program.amount_min is not None:
-                    domestic_raw["amount_min"] = str(program.amount_min)
-                if program.amount_max is not None:
-                    domestic_raw["amount_max"] = str(program.amount_max)
-                if program.amount_min is not None or program.amount_max is not None:
-                    domestic_raw["currency"] = program.currency
-                opportunity.raw = {
-                    key: value
-                    for key, value in domestic_raw.items()
-                    if value not in (None, "")
-                }
+                    **domestic_program_payload(program),
+                },
+            )
+            if not program.rolling:
+                domestic_raw.pop("deadline_policy", None)
+            opportunity.raw = {
+                key: value
+                for key, value in domestic_raw.items()
+                if value not in (None, "")
+            }
     opportunity.funder_slug = opportunity.funder_slug or _slugify_funder(
         _funder_name(opportunity)
     )
@@ -491,6 +530,11 @@ def _stored_opportunity(row: Any, *, content_lang: str = "en") -> Opportunity:
 def _public_dedup_key(item: Opportunity) -> str:
     raw = item.raw if isinstance(item.raw, dict) else {}
     source_url = str(item.source_url).rstrip("/").lower()
+    canonical_source_url = (
+        str(raw.get("canonical_source_url") or "").rstrip("/").lower()
+    )
+    if item.source == "kazakhstan_domestic_support" and canonical_source_url:
+        return f"{item.source}:url:{canonical_source_url}"
     if item.source == "undp_procurement" and "nego_id=" in source_url:
         # UNDP may revise the reference number without changing the notice URL.
         return f"{item.source}:url:{source_url}"

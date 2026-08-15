@@ -226,8 +226,9 @@ def test_missing_empty_and_broken_link_states_have_recovery(monkeypatch):
 
     incomplete = client.get(f"/opportunity/{items['missing'].id}?lang=ru")
     assert incomplete.status_code == 200
-    assert "Не указано организатором" in incomplete.text
-    assert "Кому подходит" in incomplete.text
+    assert "Не указано организатором" not in incomplete.text
+    assert "Кому подходит" not in incomplete.text
+    assert "Открыть источник" in incomplete.text
     assert "Что уточнить" not in incomplete.text
 
     browser_404 = client.get(
