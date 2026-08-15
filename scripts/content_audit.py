@@ -101,6 +101,18 @@ def _has_deadline_policy(item: dict[str, Any]) -> bool:
     raw = item.get("raw")
     if isinstance(raw, dict):
         policy = policy or raw.get("deadline_policy")
+        if raw.get("deadline_raw") or raw.get("deadline_display"):
+            return True
+        localized = raw.get("i18n")
+        if isinstance(localized, dict) and any(
+            isinstance(value, dict) and value.get("deadline_display")
+            for value in localized.values()
+        ):
+            return True
+        if raw.get("deadline_status") == "not_published" and raw.get(
+            "canonical_source_url"
+        ):
+            return True
         if raw.get("source_watch") and (
             raw.get("verification_note") or raw.get("status_note")
         ):
@@ -153,6 +165,8 @@ def _last_source_activity(row: dict[str, Any]) -> datetime | None:
 
 def _has_detail_contract(item: dict[str, Any]) -> bool:
     raw = _raw_payload(item)
+    if raw.get("detail_content_mode") == "curated" and raw.get("canonical_source_url"):
+        return True
     if str(raw.get("detail_text") or "").strip():
         return True
     sections = raw.get("detail_sections")
@@ -263,7 +277,10 @@ def analyze_content(
         if _rootish_source_url(item.get("source_url"))
         and not (
             isinstance(item.get("raw"), dict)
-            and item["raw"].get("source_watch")
+            and (
+                item["raw"].get("source_watch")
+                or item["raw"].get("source_url_root_validated")
+            )
             and item.get("source_url")
         )
     ][:20]

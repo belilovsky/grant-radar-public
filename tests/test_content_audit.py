@@ -504,3 +504,62 @@ def test_content_audit_flags_domestic_items_without_detail_contract():
     assert result.missing_detail_status_titles == [
         "State grant for startup business development"
     ]
+
+
+def test_content_audit_accepts_curated_current_records_without_invented_deadlines():
+    result = analyze_content(
+        coverage={
+            "enabled_sources": 2,
+            "relevant_open_items": 2,
+            "sources": [
+                {
+                    "slug": "kazakhstan_domestic_support",
+                    "enabled": True,
+                    "items": 2,
+                    "last_discovered_at": "2026-08-15T00:00:00+00:00",
+                }
+            ],
+        },
+        opportunities=[
+            {
+                "source": "kazakhstan_domestic_support",
+                "title": "Current livestock financing",
+                "summary": (
+                    "Official current lending product for working capital of "
+                    "feedlots and poultry farms in Kazakhstan."
+                ),
+                "tags": ["kazakhstan", "domestic_support"],
+                "source_url": "https://example.org/programs/livestock",
+                "raw": {
+                    "canonical_source_url": "https://example.org/programs/livestock",
+                    "deadline_status": "not_published",
+                    "detail_content_mode": "curated",
+                },
+            },
+            {
+                "source": "kazakhstan_domestic_support",
+                "title": "Validated application landing page",
+                "summary": (
+                    "Official application landing page with published contest terms "
+                    "and a direct route for eligible applicants."
+                ),
+                "tags": ["rolling", "kazakhstan"],
+                "source_url": "https://example.org/",
+                "raw": {
+                    "canonical_source_url": "https://example.org/",
+                    "detail_content_mode": "curated",
+                    "source_url_root_validated": True,
+                },
+            },
+        ],
+        forbidden_terms=[],
+        min_sources=2,
+        min_opportunities=2,
+        stale_after_days=7,
+        now=datetime(2026, 8, 15, tzinfo=UTC),
+    )
+
+    assert result.status == "ok"
+    assert result.missing_deadline_titles == []
+    assert result.missing_detail_status_titles == []
+    assert result.rootish_source_urls == []

@@ -1711,6 +1711,7 @@ def _i18n_payload(program: DomesticProgram) -> dict[str, Any]:
 def domestic_program_payload(program: DomesticProgram) -> dict[str, Any]:
     """Return source-backed static fields that must survive a stale DB snapshot."""
 
+    editorial = DOMESTIC_EDITORIAL_RU.get(program.url, {})
     payload: dict[str, Any] = {
         "canonical_source_url": program.url,
         **_i18n_payload(program),
@@ -1729,6 +1730,16 @@ def domestic_program_payload(program: DomesticProgram) -> dict[str, Any]:
         payload["deadline"] = program.deadline.isoformat()
     if program.deadline_raw:
         payload["deadline_raw"] = program.deadline_raw
+    elif (
+        not program.rolling
+        and program.deadline is None
+        and program.opportunity_status == "open"
+        and program.lifecycle == "open"
+    ):
+        # The official page describes a current product but publishes no
+        # application window. Keep that distinction instead of inventing a
+        # rolling deadline.
+        payload["deadline_status"] = "not_published"
     if program.opportunity_status:
         payload["opportunity_status"] = program.opportunity_status
     if program.lifecycle:
@@ -1739,6 +1750,15 @@ def domestic_program_payload(program: DomesticProgram) -> dict[str, Any]:
         payload["eligibility_raw"] = list(program.eligibility)
     if program.amount_raw:
         payload["currency"] = program.currency
+    if any(
+        editorial.get(key)
+        for key in ("highlights", "eligibility", "prepare_items", "application_steps")
+    ):
+        payload["detail_content_mode"] = "curated"
+    if program.application_url and program.application_url.rstrip(
+        "/"
+    ) == program.url.rstrip("/"):
+        payload["source_url_root_validated"] = True
     return payload
 
 
