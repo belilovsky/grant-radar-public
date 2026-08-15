@@ -52,6 +52,17 @@ def _catalog_host() -> str:
     return os.environ.get("GRANT_RADAR_SEMANTIC_CATALOG_HOST", "qaz.fund").strip()
 
 
+def _catalog_timeout_seconds() -> float:
+    """Allow the full public catalog to finish serializing on production data."""
+    return float(
+        _positive_int(
+            "GRANT_RADAR_SEMANTIC_CATALOG_TIMEOUT_SECONDS",
+            90,
+            maximum=300,
+        )
+    )
+
+
 def _qdrant_url() -> str:
     return os.environ.get("QDRANT_URL", "http://qdrant:6333").strip()
 
@@ -226,7 +237,7 @@ async def _load_catalog() -> list[dict[str, str]]:
     if not url:
         raise RuntimeError("GRANT_RADAR_SEMANTIC_CATALOG_URL is empty")
     headers = {"Host": _catalog_host()} if _catalog_host() else {}
-    async with httpx.AsyncClient(timeout=30) as client:
+    async with httpx.AsyncClient(timeout=_catalog_timeout_seconds()) as client:
         response = await client.get(url, headers=headers)
         response.raise_for_status()
     rows: list[dict[str, Any]] = []

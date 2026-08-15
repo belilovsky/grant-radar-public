@@ -7,6 +7,12 @@ import httpx
 import semantic_service.app as semantic_app
 
 
+def test_catalog_timeout_is_long_enough_for_the_public_catalog(monkeypatch):
+    monkeypatch.setenv("GRANT_RADAR_SEMANTIC_CATALOG_TIMEOUT_SECONDS", "120")
+
+    assert semantic_app._catalog_timeout_seconds() == 120.0
+
+
 def test_index_loop_retries_quickly_until_first_success(monkeypatch):
     state = semantic_app.ServiceState()
     delays: list[float] = []
