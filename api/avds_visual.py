@@ -311,6 +311,10 @@ DASHBOARD_AVDS4_CSS = r"""
       box-shadow: none;
     }
 
+    .list > .opportunity:nth-child(even) {
+      padding-inline: 18px;
+    }
+
     .opportunity:hover {
       border-color: color-mix(in oklab, var(--brand), white 58%);
       box-shadow: 0 8px 24px rgb(15 23 42 / 0.07);
@@ -664,6 +668,10 @@ DASHBOARD_AVDS4_CSS = r"""
 
       .opportunity {
         padding: 15px;
+      }
+
+      .list > .opportunity:nth-child(even) {
+        padding-inline: 15px;
       }
 
       .opportunity h3 {

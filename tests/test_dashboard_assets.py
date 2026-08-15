@@ -66,6 +66,14 @@ def test_dashboard_uses_extracted_static_styles() -> None:
     assert 'class="hero-stage" data-avds-component="hero-stage"' in html
     assert 'data-hero-format="tenders"' in html
     assert 'class="hero-stage-top"' in html
+    assert (
+        'id="opportunities-panel"\n'
+        '      data-avds-component="panel"\n'
+        "      data-avds-spacing-ignore"
+    ) in html
+    assert ".list > .opportunity:nth-child(even) {\n      padding-inline: 18px;" in (
+        DASHBOARD_AVDS4_CSS
+    )
 
     preset_button_block = DASHBOARD_CSS.split(".preset-button {", 1)[1].split("}", 1)[0]
     assert "background: var(--brand-soft);" in preset_button_block

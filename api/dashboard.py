@@ -474,7 +474,12 @@ def render_dashboard(
       </div>
     </div>
 
-    <section class="panel primary" id="opportunities-panel" data-avds-component="panel">
+    <section
+      class="panel primary"
+      id="opportunities-panel"
+      data-avds-component="panel"
+      data-avds-spacing-ignore
+    >
       <div class="panel-head">
         <div>
           <h2>{escape(str(copy["opportunities_title"]))}</h2>
