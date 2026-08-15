@@ -337,15 +337,6 @@ def render_dashboard(
               <p>{escape(str(copy["subtitle"]))}</p>
             </div>
           </header>
-          <div class="hero-actions">
-            <button
-              class="button primary"
-              type="button"
-              data-hero-reset="true"
-              data-hero-view="opportunities"
-              data-avds-component="button"
-            >{escape(str(copy["hero_primary_cta"]))}</button>
-          </div>
         </div>
         <aside class="hero-stage" data-avds-component="hero-stage">
           <div class="hero-stage-top">

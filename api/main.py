@@ -117,7 +117,10 @@ from api.opportunity_mapping import fallback_summary as _fallback_summary
 from api.opportunity_mapping import list_value as _list_value
 from api.opportunity_mapping import opportunity_type as _opportunity_type
 from api.opportunity_mapping import public_raw as _public_raw
-from api.opportunity_og import render_opportunity_og_png
+from api.opportunity_og import (
+    render_opportunity_og_png,
+    render_opportunity_portrait_png,
+)
 from api.opportunity_page import render_opportunity_page
 from api.public_info_page import render_public_info_page
 from api.public_meta import OG_IMAGE_PNG, OG_IMAGE_SVG
@@ -2268,6 +2271,29 @@ async def opportunity_open_graph_image(
 
 
 @app.api_route(
+    "/media/v1/opportunities/{opportunity_id}/portrait.png",
+    methods=["GET", "HEAD"],
+    include_in_schema=False,
+)
+async def opportunity_portrait_image(
+    request: Request,
+    opportunity_id: UUID,
+    lang: str | None = Query(None),
+) -> Response:
+    """Serve the source-grounded 4:5 feed card used by Instagram publishing."""
+
+    item = _find_opportunity_v1(request, opportunity_id, lang=lang)
+    headers = {"Cache-Control": _PUBLIC_LONG_CACHE}
+    if request.method == "HEAD":
+        return Response(content=b"", media_type="image/png", headers=headers)
+    return Response(
+        render_opportunity_portrait_png(item, lang=_public_lang(lang)),
+        media_type="image/png",
+        headers=headers,
+    )
+
+
+@app.api_route(
     "/opportunity/{opportunity_id}/prepare",
     methods=["GET", "HEAD"],
     response_class=HTMLResponse,
@@ -2617,6 +2643,7 @@ async def site_discovery(request: Request) -> Response:
             "media_content": "/media/v1/opportunities/{id}/content.json?lang={lang}",
             "media_citation": "/media/v1/opportunities/{id}/citation.txt?lang={lang}",
             "media_card": "/media/v1/opportunities/{id}/card.svg?lang={lang}",
+            "media_portrait": "/media/v1/opportunities/{id}/portrait.png?lang={lang}",
             "media_chart_svg": "/media/v1/charts/{chart_type}.svg?lang={lang}",
             "media_chart_csv": "/media/v1/charts/{chart_type}.csv?lang={lang}",
             "media_feed_json": "/media/v1/feed.json?lang={lang}",
@@ -2693,6 +2720,9 @@ async def site_discovery(request: Request) -> Response:
                 "/media/v1/opportunities/{id}/citation.txt?lang=ru|en"
             ),
             "card_template": "/media/v1/opportunities/{id}/card.svg?format=og",
+            "portrait_template": (
+                "/media/v1/opportunities/{id}/portrait.png?lang=ru|en"
+            ),
             "chart_svg_template": "/media/v1/charts/{chart_type}.svg?lang=ru|en",
             "chart_csv_template": "/media/v1/charts/{chart_type}.csv?lang=ru|en",
         },

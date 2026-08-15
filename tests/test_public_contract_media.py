@@ -128,6 +128,14 @@ def test_media_v1_outputs_citation_cards_charts_and_feeds(monkeypatch):
     assert "QAZ.FUND" in card.text
     assert "\u2014" not in card.text
 
+    portrait = client.get(
+        f"/media/v1/opportunities/{item.id}/portrait.png",
+        params={"lang": "ru"},
+    )
+    assert portrait.status_code == 200
+    assert portrait.headers["content-type"].startswith("image/png")
+    assert portrait.content[:8] == b"\x89PNG\r\n\x1a\n"
+
     chart = client.get("/media/v1/charts/active_by_theme.json", params={"lang": "ru"})
     assert chart.status_code == 200
     assert chart.json()["rows"][0]["label"] == "ИИ"

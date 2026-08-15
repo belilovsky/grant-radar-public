@@ -18,6 +18,7 @@ from api.page_primitives import absolute_href as _absolute_href
 from core.public_contract import OpportunityV1
 
 OG_IMAGE_SIZE = (1200, 630)
+PORTRAIT_IMAGE_SIZE = (1080, 1350)
 OG_TEMPLATE_REVISION = "qazfund-og-v2"
 _BRAND_BACKGROUND_PATH = (
     BRANDING_ASSET_DIR / "qaz-fund-ornamental-background-1920x1080.webp"
@@ -105,6 +106,17 @@ def _brand_background() -> Image.Image:
         return ImageOps.fit(
             source.convert("RGB"),
             OG_IMAGE_SIZE,
+            method=Image.Resampling.LANCZOS,
+            centering=(0.72, 0.5),
+        )
+
+
+@lru_cache(maxsize=4)
+def _brand_background_for_size(size: tuple[int, int]) -> Image.Image:
+    with Image.open(_BRAND_BACKGROUND_PATH) as source:
+        return ImageOps.fit(
+            source.convert("RGB"),
+            size,
             method=Image.Resampling.LANCZOS,
             centering=(0.72, 0.5),
         )
@@ -427,9 +439,150 @@ def render_opportunity_og_png(item: OpportunityV1, *, lang: str = "ru") -> bytes
     return output.getvalue()
 
 
+def render_opportunity_portrait_png(item: OpportunityV1, *, lang: str = "ru") -> bytes:
+    """Render a source-grounded 4:5 feed card for Instagram and similar feeds."""
+
+    width, height = PORTRAIT_IMAGE_SIZE
+    image = _brand_background_for_size(PORTRAIT_IMAGE_SIZE).copy().convert("RGBA")
+    draw = ImageDraw.Draw(image, "RGBA")
+    draw.rectangle((0, 0, width, height), fill=(0, 52, 59, 218))
+
+    margin = 72
+    content_width = width - (margin * 2)
+    brand_font = _font(32, "bold")
+    label_font = _font(19, "bold")
+    body_font = _font(27, "regular")
+    draw.text((margin, 72), "QAZ.FUND", fill="#FFFDFC", font=brand_font)
+    category = _localized(
+        {
+            "label": (
+                "КАРТОЧКА ПРОГРАММЫ",
+                "БАҒДАРЛАМА КАРТОЧКАСЫ",
+                "PROGRAMME CARD",
+            )
+        },
+        "label",
+        lang,
+    )
+    draw.text((margin, 123), category, fill="#B9DDD8", font=label_font)
+
+    title_font = None
+    title_lines: list[str] = []
+    for size in (58, 54, 50, 46, 42, 38):
+        candidate_font = _font(size, "bold")
+        candidate_lines = _wrap_text(
+            draw,
+            _clean_text(item.title),
+            font=candidate_font,
+            width=content_width,
+            max_lines=5,
+        )
+        if candidate_lines and not candidate_lines[-1].endswith("…"):
+            title_font = candidate_font
+            title_lines = candidate_lines
+            break
+    if title_font is None:
+        title_font = _font(38, "bold")
+        title_lines = _wrap_text(
+            draw,
+            _clean_text(item.title),
+            font=title_font,
+            width=content_width,
+            max_lines=5,
+        )
+
+    title_y = 210
+    title_line_height = int(title_font.size * 1.12)
+    for index, line in enumerate(title_lines):
+        draw.text(
+            (margin, title_y + index * title_line_height),
+            line,
+            fill="#FFFDFC",
+            font=title_font,
+        )
+
+    summary_y = title_y + max(1, len(title_lines)) * title_line_height + 36
+    summary_lines = _wrap_text(
+        draw,
+        _clean_text(item.summary),
+        font=body_font,
+        width=content_width,
+        max_lines=5,
+    )
+    for index, line in enumerate(summary_lines):
+        draw.text(
+            (margin, summary_y + index * 39),
+            line,
+            fill="#D9ECE9",
+            font=body_font,
+        )
+
+    facts = _facts(item, lang)
+    facts_y = max(650, summary_y + max(1, len(summary_lines)) * 39 + 48)
+    fact_gap = 18
+    fact_width = (content_width - fact_gap) // 2
+    fact_height = 148
+    value_font = _font(24, "bold")
+    for index, (label, value) in enumerate(facts[:4]):
+        column = index % 2
+        row = index // 2
+        x = margin + column * (fact_width + fact_gap)
+        y = facts_y + row * (fact_height + fact_gap)
+        draw.rounded_rectangle(
+            (x, y, x + fact_width, y + fact_height),
+            radius=18,
+            fill=(255, 253, 252, 242),
+            outline="#B9DDD8",
+            width=2,
+        )
+        draw.text((x + 24, y + 24), label.upper(), fill="#4A7975", font=label_font)
+        value_lines = _wrap_text(
+            draw,
+            value,
+            font=value_font,
+            width=fact_width - 48,
+            max_lines=2,
+        )
+        for line_index, line in enumerate(value_lines):
+            draw.text(
+                (x + 24, y + 64 + line_index * 31),
+                line,
+                fill="#00343B",
+                font=value_font,
+            )
+
+    footer_y = height - 82
+    source = _truncate_to_width(
+        draw,
+        _source_text(item),
+        font=label_font,
+        width=content_width,
+    )
+    draw.line(
+        (margin, footer_y - 28, width - margin, footer_y - 28),
+        fill=(185, 221, 216, 180),
+        width=2,
+    )
+    source_label = _localized(
+        {"source": ("Источник", "Дереккөз", "Source")}, "source", lang
+    )
+    draw.text(
+        (margin, footer_y),
+        f"{source_label}: {source}",
+        fill="#D9ECE9",
+        font=label_font,
+    )
+
+    output = io.BytesIO()
+    image.convert("RGB").save(output, format="PNG", optimize=True)
+    return output.getvalue()
+
+
 __all__ = [
     "OG_IMAGE_SIZE",
+    "PORTRAIT_IMAGE_SIZE",
     "opportunity_og_image_url",
     "opportunity_og_version",
     "render_opportunity_og_png",
+    "render_opportunity_portrait_png",
 ]
