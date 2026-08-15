@@ -3457,12 +3457,13 @@ def test_opportunity_page_lists_related_opportunities(monkeypatch):
         tags=["science", "labs", "kazakhstan"],
         score=0.74,
         raw={
+            "deadline_policy": "rolling",
             "i18n": {
                 "ru": {
                     "title": "Прикладной грант для лабораторий",
                     "summary": "Поддержка прикладных исследований и лабораторий.",
                 }
-            }
+            },
         },
     )
     same_theme = Opportunity(

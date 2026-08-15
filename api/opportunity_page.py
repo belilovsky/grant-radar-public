@@ -1962,6 +1962,22 @@ def _published_deadline_label(
     return ""
 
 
+def _related_deadline_label(
+    item: Opportunity,
+    *,
+    copy: dict[str, object],
+    lang: str,
+) -> str:
+    """Keep related cards focused on dates or source-specific time windows."""
+
+    display = _localized_item_value(item, "deadline_display", lang, "")
+    if display:
+        return display
+    if item.deadline is not None:
+        return _format_deadline(item.deadline, lang, str(copy["open_rolling"]))
+    return ""
+
+
 def _opportunity_facts_markup(
     detail: OpportunityDetail,
     *,
@@ -2429,7 +2445,7 @@ def _related_markup(
         href = escape(_page_path(root_path, str(item.id), lang), quote=True)
         reason = escape(str(copy.get(reason_key, copy["related_reason_theme"])))
         source_label = escape(item.funder or _label_value(item.source, copy))
-        deadline_label = _published_deadline_label(item, copy=copy, lang=lang)
+        deadline_label = _related_deadline_label(item, copy=copy, lang=lang)
         deadline_markup = (
             '<span class="related-deadline">{deadline}</span>'.format(
                 deadline=escape(deadline_label)
