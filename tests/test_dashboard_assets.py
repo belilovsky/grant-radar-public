@@ -40,7 +40,8 @@ def test_dashboard_uses_extracted_static_styles() -> None:
     assert 'data-avds-version="4.6.0"' in html
     assert 'data-avds-component="quick-links-rail"' not in html
     assert 'data-avds-component="public-summary-strip"' not in html
-    assert "qaz-fund-ornamental-background" not in html
+    assert "qaz-fund-ornamental-background-1920x1080.webp" in html
+    assert "radial-gradient(circle at 92% 6%" not in html
     assert "#F0C64D" not in html
     assert html.count("<h1>") == 1
     assert html.count('class="topbar"') == 1

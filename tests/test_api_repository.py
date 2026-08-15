@@ -116,7 +116,8 @@ def test_root_renders_service_landing(monkeypatch):
         "проверить до подачи." in response.text
     )
     assert "Найти поддержку" in response.text
-    assert "qaz-fund-ornamental-background" not in response.text
+    assert "qaz-fund-ornamental-background-1920x1080.webp" in response.text
+    assert "radial-gradient(circle at 92% 6%" not in response.text
     assert "#F0C64D" not in response.text
     assert 'data-avds-component="quick-links-rail"' not in response.text
     assert 'data-avds-component="public-summary-strip"' not in response.text

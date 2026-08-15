@@ -8,9 +8,9 @@ BRANDING_ASSET_DIR = Path(__file__).with_name("static") / "branding"
 BRANDING_ASSET_PREFIX = "/assets/branding"
 BRAND_FAVICON_PATH = BRANDING_ASSET_DIR / "favicon.ico"
 
-# The public interface uses the supplied sign and its ivory counterpart. The
-# ornamental artwork remains an asset, but is deliberately not used as a page
-# background: it competes with the interface and reduces text contrast.
+# Use the supplied QAZ.FUND package directly: the teal and ivory signs, plus
+# the approved ornamental background. The artwork belongs to the dedicated
+# dashboard hero; page-local ``.hero`` blocks retain their readable layouts.
 BRAND_MARK_IVORY_HTML = (
     f'<img src="{BRANDING_ASSET_PREFIX}/qaz-fund-symbol-ivory.svg" '
     'alt="" decoding="async">'
@@ -34,6 +34,7 @@ BRAND_CSS = r"""
       --qaz-brand-gold: #B9DDD8;
       --qaz-brand-gold-soft: #E6F2F0;
       --qaz-brand-gold-deep: #4A7975;
+      --qaz-brand-hero-art: url("/assets/branding/qaz-fund-ornamental-background-1920x1080.webp");
     }
 
     .brand-mark {
@@ -65,27 +66,26 @@ BRAND_CSS = r"""
       text-decoration: none;
     }
 
-    .hero-band,
-    .hero {
+    .hero-band {
       position: relative;
       overflow: hidden;
       isolation: isolate;
     }
 
-    .hero-band::before,
-    .hero::before {
+    .hero-band::before {
       content: "";
       position: absolute;
       inset: 0;
       z-index: 0;
-      background:
-        radial-gradient(circle at 92% 6%, rgb(137 206 196 / 0.18), transparent 32%),
-        linear-gradient(135deg, var(--qaz-brand-hero-start), var(--qaz-brand-hero-end));
+      background-color: var(--qaz-brand-hero-start);
+      background-image: var(--qaz-brand-hero-art);
+      background-position: center;
+      background-repeat: no-repeat;
+      background-size: cover;
       pointer-events: none;
     }
 
-    .hero-band > *,
-    .hero > * {
+    .hero-band > * {
       position: relative;
       z-index: 1;
     }
@@ -96,7 +96,9 @@ BRAND_CSS = r"""
         height: 34px;
       }
 
-      .hero-band::before,
-      .hero::before { opacity: 1; }
+      .hero-band::before {
+        background-position: center;
+        background-size: cover;
+      }
     }
 """
