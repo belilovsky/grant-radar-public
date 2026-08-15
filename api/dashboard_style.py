@@ -1163,15 +1163,19 @@ DASHBOARD_CSS = r"""    :root {
       margin-top: calc(var(--section-gap) * 0.58);
       border: 1px solid var(--line-subtle);
       border-radius: var(--av-radius-lg);
-      background: color-mix(in oklab, var(--panel), var(--panel-subtle) 32%);
-      box-shadow: var(--shadow-2xs);
+      background:
+        linear-gradient(145deg, rgb(255 255 255 / 0.66), transparent 32%),
+        color-mix(in oklab, var(--panel), var(--panel-subtle) 32%);
+      box-shadow: 0 10px 28px rgb(15 23 42 / 0.035), var(--shadow-2xs);
       scroll-margin-top: 156px;
     }
     .panel.primary {
       border-top: 1px solid var(--line-subtle);
       margin-top: 0;
       padding-top: 14px;
-      background: color-mix(in oklab, var(--panel), var(--panel-subtle) 24%);
+      background:
+        linear-gradient(180deg, rgb(255 255 255 / 0.86), rgb(255 255 255 / 0.24)),
+        color-mix(in oklab, var(--panel), var(--panel-subtle) 24%);
     }
     .panel-head {
       display: flex;
@@ -1214,10 +1218,12 @@ DASHBOARD_CSS = r"""    :root {
       gap: 8px;
       margin: 8px 0;
       padding: 10px 12px 12px;
-      border: 1px solid var(--line-subtle);
+      border: 1px solid color-mix(in oklab, var(--line-subtle), white 28%);
       border-radius: var(--av-radius-md);
-      background: var(--panel-wash-strong);
-      box-shadow: var(--shadow-2xs);
+      background:
+        linear-gradient(135deg, rgb(255 255 255 / 0.58), transparent 42%),
+        var(--panel-wash-strong);
+      box-shadow: inset 0 1px 0 rgb(255 255 255 / 0.72), var(--shadow-2xs);
     }
     .filters {
       display: grid;
@@ -1252,7 +1258,9 @@ DASHBOARD_CSS = r"""    :root {
       font-size: var(--av-text-sm);
       font-weight: 650;
       list-style: none;
+      transition: background var(--av-duration-base) var(--av-easing-emphasized), color var(--av-duration-base) var(--av-easing-emphasized);
     }
+    .advanced-filters > summary:hover { background: color-mix(in oklab, var(--brand-soft), transparent 28%); color: var(--brand); }
     .advanced-filters > summary::-webkit-details-marker { display: none; }
     .advanced-filters > summary::after {
       content: "⌄";
@@ -1287,7 +1295,10 @@ DASHBOARD_CSS = r"""    :root {
       padding: 8px;
       border: 1px solid var(--line-subtle);
       border-radius: var(--av-radius-md);
-      background: color-mix(in oklab, var(--panel), var(--panel-subtle) 58%);
+      background:
+        linear-gradient(135deg, rgb(255 255 255 / 0.62), transparent 54%),
+        color-mix(in oklab, var(--panel), var(--panel-subtle) 58%);
+      box-shadow: inset 0 1px 0 rgb(255 255 255 / 0.72);
     }
     .preset-group {
       display: grid;
@@ -1297,7 +1308,7 @@ DASHBOARD_CSS = r"""    :root {
       padding: 8px 10px;
       border: 0;
       border-radius: var(--av-radius-sm);
-      background: color-mix(in oklab, var(--panel), var(--panel-subtle) 36%);
+      background: color-mix(in oklab, var(--panel), var(--panel-subtle) 26%);
     }
     .preset-group:first-child,
     .preset-group:last-child { padding-inline: 10px; }
@@ -2441,7 +2452,7 @@ DASHBOARD_CSS = r"""    :root {
       gap: 12px;
       margin-top: var(--section-gap);
       padding: 28px 4px 10px;
-      border-top: 1px solid var(--line);
+      border-top: 1px solid color-mix(in oklab, var(--line), white 18%);
       color: var(--muted);
       font-size: var(--av-text-sm);
       line-height: 1.55;
@@ -2462,6 +2473,14 @@ DASHBOARD_CSS = r"""    :root {
       color: var(--ink);
       font-weight: 650;
       text-decoration: none;
+    }
+    .site-footer .footer-contact {
+      width: fit-content;
+      padding: 6px 10px;
+      border: 1px solid var(--line-subtle);
+      border-radius: var(--av-radius-full);
+      background: color-mix(in oklab, var(--panel), var(--brand-soft) 20%);
+      color: var(--brand);
     }
     .site-footer a:hover,
     .site-footer a:focus-visible {
