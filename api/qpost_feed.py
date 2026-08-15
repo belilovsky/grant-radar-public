@@ -212,16 +212,24 @@ def _localized_list(item: Opportunity, lang: str, key: str) -> list[str]:
     ]
 
 
-def _campaign_url(base_url: str, item_id: str, *, lang: str, template: str) -> str:
-    query = urlencode(
-        {
-            "lang": lang,
-            "utm_source": "telegram",
-            "utm_medium": "social",
-            "utm_campaign": f"qazfund_{template}",
-            "utm_content": item_id,
-        }
-    )
+def _campaign_url(
+    base_url: str,
+    item_id: str,
+    *,
+    lang: str,
+    template: str,
+    platform: str = "telegram",
+) -> str:
+    query_params: dict[str, str] = {"lang": lang, "utm_source": platform}
+    if platform != "threads":
+        query_params.update(
+            {
+                "utm_medium": "social",
+                "utm_campaign": f"qazfund_{template}",
+                "utm_content": item_id,
+            }
+        )
+    query = urlencode(query_params)
     return f"{base_url.rstrip('/')}/opportunity/{item_id}?{query}"
 
 
@@ -280,7 +288,19 @@ def _source_item(
         "amount_label": _localized_text(item, lang, "amount_label"),
         "deadline_label": _localized_text(item, lang, "deadline_label"),
         "steps_title": _localized_text(item, lang, "steps_title"),
-        "canonical_url": _campaign_url(base_url, item_id, lang=lang, template=template),
+        "canonical_url": _campaign_url(
+            base_url,
+            item_id,
+            lang=lang,
+            template=template,
+        ),
+        "threads_url": _campaign_url(
+            base_url,
+            item_id,
+            lang=lang,
+            template=template,
+            platform="threads",
+        ),
         "source_url": str(item.source_url),
         "language": lang,
         "audience_focus": "kazakhstan",
@@ -351,6 +371,88 @@ def _single_body(
     sections.append(f"{steps_title}:\n{steps}")
     body = "\n\n".join(sections)
     return title, body[:4096]
+
+
+_UNKNOWN_SOCIAL_VALUES = {
+    "не указан",
+    "не указана",
+    "көрсетілмеген",
+    "not stated",
+}
+
+
+def _shorten_threads_text(value: str, limit: int) -> str:
+    normalized = " ".join(str(value or "").split()).replace("\u2014", "\u2013")
+    if len(normalized) <= limit:
+        return normalized
+    clipped = normalized[: max(1, limit - 1)].rstrip(" ,.;:")
+    last_stop = max(clipped.rfind("."), clipped.rfind("!"), clipped.rfind("?"))
+    if last_stop >= max(36, limit // 2):
+        clipped = clipped[: last_stop + 1]
+    return clipped.rstrip(" ,.;:") + "…"
+
+
+def _known_social_value(value: Any) -> str | None:
+    text = " ".join(str(value or "").split()).replace("\u2014", "\u2013")
+    return text if text.casefold() not in _UNKNOWN_SOCIAL_VALUES else None
+
+
+def _threads_body(source: dict[str, Any], *, lang: str) -> str:
+    """Build a native Threads post, not a title-less link accompaniment."""
+
+    labels = {
+        "ru": ("Поддержка", "Срок"),
+        "kk": ("Қолдау", "Мерзім"),
+        "en": ("Support", "Deadline"),
+    }[lang]
+    title = _shorten_threads_text(str(source["social_title"]), 120)
+    facts: list[str] = []
+    amount = _known_social_value(source.get("amount"))
+    if amount:
+        facts.append(
+            _shorten_threads_text(
+                f"{source.get('amount_label') or labels[0]}: {amount}", 112
+            )
+        )
+    deadline = _known_social_value(source.get("deadline_display"))
+    if deadline:
+        facts.append(
+            _shorten_threads_text(
+                f"{source.get('deadline_label') or labels[1]}: {deadline}", 112
+            )
+        )
+    url = str(source["threads_url"])
+    while True:
+        facts_text = "\n".join(facts)
+        fixed = "\n\n".join(part for part in (title, facts_text, url) if part)
+        if len(fixed) <= 390 or not facts:
+            break
+        facts.pop()
+    if len(fixed) > 450:
+        title = _shorten_threads_text(title, max(64, 450 - len(url)))
+        fixed = "\n\n".join(part for part in (title, facts_text, url) if part)
+    summary_budget = max(0, 500 - len(fixed) - 4)
+    summary = (
+        _shorten_threads_text(str(source["summary"]), summary_budget)
+        if summary_budget >= 2
+        else ""
+    )
+    return "\n\n".join(part for part in (title, summary, facts_text, url) if part)
+
+
+def _threads_draft(source: dict[str, Any], *, lang: str) -> dict[str, Any]:
+    body = _threads_body(source, lang=lang)
+    return {
+        "body_text": body,
+        "canonical_url": source["threads_url"],
+        "character_count": len(body),
+        "edpol": evaluate_social_copy(
+            title="",
+            body_text=body,
+            link_label="",
+            channel="threads",
+        ),
+    }
 
 
 def _weekly_body(
@@ -458,7 +560,8 @@ def build_qpost_draft_feed(
             )
             title, body = _single_body(source, template=template, lang=active_lang)
             edpol = evaluate_social_copy(title=title, body_text=body)
-            if edpol["decision"] != "pass":
+            threads = _threads_draft(source, lang=active_lang)
+            if edpol["decision"] != "pass" or threads["edpol"]["decision"] != "pass":
                 rejected_count += 1
                 continue
             period_key = (
@@ -475,6 +578,7 @@ def build_qpost_draft_feed(
                     "human_review_required": True,
                     "source_items": [source],
                     "edpol": edpol,
+                    "threads": threads,
                 }
             )
 

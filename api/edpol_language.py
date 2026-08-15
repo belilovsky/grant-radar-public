@@ -99,6 +99,7 @@ _UNKNOWN_VALUE_RE = re.compile(
 )
 _EM_DASH_NAMED_ENTITY = "&" + "mdash;"
 _EM_DASH_DECIMAL_ENTITY = "&#" + "8212;"
+_URL_RE = re.compile(r"https?://[^\s]+", re.IGNORECASE)
 
 
 def _normalized(value: str) -> str:
@@ -106,12 +107,17 @@ def _normalized(value: str) -> str:
 
 
 def evaluate_social_copy(
-    *, title: str, body_text: str, link_label: str = QAZ_FUND_TELEGRAM_LINK_LABEL
+    *,
+    title: str,
+    body_text: str,
+    link_label: str = QAZ_FUND_TELEGRAM_LINK_LABEL,
+    channel: str = "telegram",
 ) -> dict[str, Any]:
     """Return the exact local decision QPost must reproduce before publication."""
 
     title = str(title or "").strip()
     body = str(body_text or "").strip()
+    channel = str(channel or "telegram").strip().lower()
     visible_text = "\n".join(part for part in (title, body, link_label) if part)
     normalized = _normalized(visible_text)
     findings: list[dict[str, str]] = []
@@ -138,6 +144,27 @@ def evaluate_social_copy(
         findings.append(
             {"id": "unknown-value-placeholder", "excerpt": placeholder.group(0)}
         )
+    if channel == "threads":
+        if len(visible_text) > 500:
+            findings.append(
+                {
+                    "id": "threads-character-limit",
+                    "excerpt": str(len(visible_text)),
+                }
+            )
+        context = _URL_RE.sub("", body).strip()
+        if len(_normalized(context)) < 80:
+            findings.append(
+                {"id": "threads-link-only-copy", "excerpt": "short context"}
+            )
+        urls = _URL_RE.findall(body)
+        if urls:
+            last_line = next(
+                (line.strip() for line in reversed(body.splitlines()) if line.strip()),
+                "",
+            )
+            if last_line != urls[-1]:
+                findings.append({"id": "threads-link-placement", "excerpt": urls[-1]})
     fingerprint = hashlib.sha256(visible_text.encode("utf-8")).hexdigest()
     return {
         "contract": "edpol-editorial-language-decision-v1",
@@ -146,6 +173,7 @@ def evaluate_social_copy(
         "policy_version": EDPOL_LANGUAGE_POLICY_VERSION,
         "typography_policy_url": EDPOL_TYPOGRAPHY_POLICY_URL,
         "typography_policy_version": EDPOL_TYPOGRAPHY_POLICY_VERSION,
+        "channel": channel,
         "content_fingerprint": f"sha256:{fingerprint}",
         "finding_ids": [finding["id"] for finding in findings],
         "findings": findings,

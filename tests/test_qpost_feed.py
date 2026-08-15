@@ -81,6 +81,14 @@ def test_grant_day_contract_is_draft_only_and_complete() -> None:
     assert source["safety"]["status"] == "source_grounded_review_required"
     assert source["safety"]["human_review_required"] is True
     assert item["edpol"]["decision"] == "pass"
+    threads = item["threads"]
+    assert threads["edpol"]["decision"] == "pass"
+    assert threads["edpol"]["channel"] == "threads"
+    assert threads["canonical_url"].endswith("utm_source=threads")
+    assert threads["body_text"].endswith(threads["canonical_url"])
+    assert threads["character_count"] == len(threads["body_text"])
+    assert threads["character_count"] <= 500
+    assert "Технологические проекты" in threads["body_text"]
     assert payload["edpol_policy"]["version"] == "1.1.0"
     assert payload["audience_focus"] == "kazakhstan"
     assert payload["currency_display"] == "symbols"
@@ -116,6 +124,27 @@ def test_edpol_blocks_paraphrased_slop_in_all_supported_languages() -> None:
         report = evaluate_social_copy(title=title, body_text=body)
         assert report["decision"] == "blocked"
         assert "generic-opportunity-framing" in report["finding_ids"]
+
+
+def test_edpol_blocks_link_only_or_overlong_threads_copy() -> None:
+    link_only = evaluate_social_copy(
+        title="",
+        body_text="https://qaz.fund/opportunity/example?lang=ru",
+        link_label="",
+        channel="threads",
+    )
+    assert link_only["decision"] == "blocked"
+    assert "threads-link-only-copy" in link_only["finding_ids"]
+
+    long_copy = evaluate_social_copy(
+        title="",
+        body_text=("Проверяемый текст. " * 40)
+        + "\nhttps://qaz.fund/opportunity/example",
+        link_label="",
+        channel="threads",
+    )
+    assert long_copy["decision"] == "blocked"
+    assert "threads-character-limit" in long_copy["finding_ids"]
 
 
 def test_russian_feed_does_not_leak_english_only_audience_text() -> None:
@@ -182,6 +211,10 @@ def test_grant_day_uses_source_grounded_editorial_fields() -> None:
     assert item["body_text"].startswith(
         "Финансирование для команд с действующим продуктом."
     )
+    assert item["threads"]["body_text"].startswith(
+        "AI'Preneurs – программа для AI-основателей"
+    )
+    assert item["threads"]["edpol"]["decision"] == "pass"
     assert item["source_items"][0]["title"] == ("Технологические гранты для Казахстана")
     assert "Для кого:\nСпециалисты и предприниматели от 18 лет" in item["body_text"]
     assert "Что получите:\n• Founder Lab\n• Доступ к GPU" in item["body_text"]
@@ -244,9 +277,7 @@ def test_weekly_digest_has_one_stable_candidate_with_multiple_sources() -> None:
     assert payload["items"][0]["idempotency_key"] == "qazfund:weekly:ru:2026-W33"
     assert len(payload["items"][0]["source_items"]) == 2
     assert payload["items"][0]["human_review_required"] is True
-    assert payload["items"][0]["body_text"].startswith(
-        "Для заявителей из Казахстана:"
-    )
+    assert payload["items"][0]["body_text"].startswith("Для заявителей из Казахстана:")
 
 
 def test_currency_codes_are_compacted_to_symbols_across_visible_copy() -> None:

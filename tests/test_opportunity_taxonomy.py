@@ -3,10 +3,7 @@ from __future__ import annotations
 from datetime import date
 
 from core.models import Opportunity, OpportunityType
-from core.opportunity_taxonomy import (
-    classify_opportunity,
-    template_accepts_taxonomy,
-)
+from core.opportunity_taxonomy import classify_opportunity, template_accepts_taxonomy
 
 
 def _item(*, item_type: OpportunityType, tags: list[str], raw: dict | None = None):

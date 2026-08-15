@@ -14,12 +14,12 @@ from api.avds import AVDS_CSS, AVDS_FONT_HEAD
 from api.avds_visual import OPPORTUNITY_AVDS4_CSS
 from api.branding import BRAND_MARK_TEAL_HTML
 from api.dashboard import dashboard_copy
+from api.opportunity_og import opportunity_og_image_url, opportunity_og_version
 from api.page_primitives import absolute_href as _absolute_href
 from api.page_primitives import catalog_path as _catalog_path
 from api.page_primitives import format_deadline as _format_deadline
-from api.public_meta import analytics_head_html, og_image_url
+from api.public_meta import analytics_head_html
 from core.decision_support import browser_precheck_contract, program_truth
-from core.opportunity_taxonomy import classify_opportunity
 from core.models import (
     Opportunity,
     OpportunityDetail,
@@ -27,6 +27,7 @@ from core.models import (
     OpportunityMetadataField,
 )
 from core.nlp import clean_source_summary
+from core.opportunity_taxonomy import classify_opportunity
 
 PUBLIC_METADATA_KEYS = frozenset(
     {
@@ -2639,7 +2640,36 @@ def render_opportunity_page(
             else f"/?lang={active_lang}"
         ),
     )
-    social_image = escape(og_image_url(site_origin, root_path), quote=True)
+    raw_detail = detail.raw if isinstance(detail.raw, dict) else {}
+    social_image_version = opportunity_og_version(
+        id=str(detail.id),
+        lang=active_lang,
+        title=title,
+        summary=summary,
+        source=detail.source,
+        source_url=str(detail.source_url),
+        funder=detail.funder,
+        deadline=detail.deadline,
+        amount_min=detail.amount_min,
+        amount_max=detail.amount_max,
+        currency=detail.currency,
+        amount_raw=raw_detail.get("amount_raw"),
+        lifecycle=lifecycle,
+        formats=detail.tags,
+    )
+    social_image = escape(
+        opportunity_og_image_url(
+            site_origin,
+            root_path,
+            opportunity_id=str(detail.id),
+            lang=active_lang,
+            content_version=social_image_version,
+        ),
+        quote=True,
+    )
+    social_image_alt = escape(
+        f"QAZ.FUND: {title}".replace("\u2014", "\u2013"), quote=True
+    )
     analytics_head = analytics_head_html()
     ru_lang_class = "active" if active_lang == "ru" else ""
     kk_lang_class = "active" if active_lang == "kk" else ""
@@ -2713,13 +2743,16 @@ def render_opportunity_page(
   <meta property="og:description" content="{escape(seo_summary, quote=True)}">
   <meta property="og:url" content="{canonical_href}">
   <meta property="og:image" content="{social_image}">
+  <meta property="og:image:type" content="image/png">
   <meta property="og:image:width" content="1200">
   <meta property="og:image:height" content="630">
+  <meta property="og:image:alt" content="{social_image_alt}">
   <meta property="og:locale" content="{og_locale}">
   <meta name="twitter:card" content="summary_large_image">
   <meta name="twitter:title" content="{escape(page_title, quote=True)}">
   <meta name="twitter:description" content="{escape(seo_summary, quote=True)}">
   <meta name="twitter:image" content="{social_image}">
+  <meta name="twitter:image:alt" content="{social_image_alt}">
   <script type="application/ld+json">{schema_json}</script>
 {analytics_head}
 {AVDS_FONT_HEAD}

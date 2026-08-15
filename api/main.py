@@ -83,6 +83,7 @@ from api.funder_page import render_funder_page
 from api.history import build_history_snapshot
 from api.http_policy import PUBLIC_DISCOVERY_CACHE as _PUBLIC_DISCOVERY_CACHE
 from api.http_policy import PUBLIC_FAST_CACHE as _PUBLIC_FAST_CACHE
+from api.http_policy import PUBLIC_LONG_CACHE as _PUBLIC_LONG_CACHE
 from api.http_policy import apply_public_headers, cache_control_for, is_machine_route
 from api.insights import build_insights_payload
 from api.insights_page import build_insights_snapshot, render_insights_page
@@ -116,6 +117,7 @@ from api.opportunity_mapping import fallback_summary as _fallback_summary
 from api.opportunity_mapping import list_value as _list_value
 from api.opportunity_mapping import opportunity_type as _opportunity_type
 from api.opportunity_mapping import public_raw as _public_raw
+from api.opportunity_og import render_opportunity_og_png
 from api.opportunity_page import render_opportunity_page
 from api.public_info_page import render_public_info_page
 from api.public_meta import OG_IMAGE_PNG, OG_IMAGE_SVG
@@ -2233,6 +2235,36 @@ async def opportunity_page(
     )
     response.headers["Cache-Control"] = "public, max-age=60, stale-while-revalidate=300"
     return response
+
+
+@app.api_route(
+    "/opportunity/{opportunity_id}/og.png",
+    methods=["GET", "HEAD"],
+    include_in_schema=False,
+)
+async def opportunity_open_graph_image(
+    request: Request,
+    opportunity_id: UUID,
+    lang: str | None = Query(None),
+    v: str | None = Query(None, max_length=64),
+) -> Response:
+    """Serve a unique raster card for Meta, Threads, and other crawlers.
+
+    ``v`` is intentionally part of the public URL, but the card is always
+    derived from the current source-grounded record.  The content revision in
+    the page metadata gives crawlers a fresh URL whenever visible facts change.
+    """
+
+    _ = v
+    item = _find_opportunity_v1(request, opportunity_id, lang=lang)
+    headers = {"Cache-Control": _PUBLIC_LONG_CACHE}
+    if request.method == "HEAD":
+        return Response(content=b"", media_type="image/png", headers=headers)
+    return Response(
+        render_opportunity_og_png(item, lang=_public_lang(lang)),
+        media_type="image/png",
+        headers=headers,
+    )
 
 
 @app.api_route(

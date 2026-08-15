@@ -3086,11 +3086,15 @@ def test_opportunity_page_renders_public_permalink(monkeypatch):
         'class="button primary" href="https://example.org/apply/P179204-page"'
         in response.text
     )
-    assert (
-        'property="og:image" content="http://testserver/og-image.png"' in response.text
+    social_image_prefix = (
+        f"http://testserver/opportunity/{item.id}/og.png?lang=ru&amp;v="
     )
+    assert f'property="og:image" content="{social_image_prefix}' in response.text
+    assert f'name="twitter:image" content="{social_image_prefix}' in response.text
+    assert 'property="og:image:type" content="image/png"' in response.text
     assert (
-        'name="twitter:image" content="http://testserver/og-image.png"' in response.text
+        'property="og:image:alt" content="QAZ.FUND: Цифровое ускорение Казахстана"'
+        in response.text
     )
     assert "googletagmanager.com/gtag/js?id=G-9EF720PSER" in response.text
     assert '"@type": "BreadcrumbList"' in response.text
@@ -4027,7 +4031,8 @@ def test_opportunity_page_prefers_public_base_url(monkeypatch):
         f'{item.id}?lang=kk"' in response.text
     )
     assert (
-        'property="og:image" content="https://qaz.fund/og-image.png"' in response.text
+        'property="og:image" content="https://qaz.fund/opportunity/'
+        f"{item.id}/og.png?lang=en&amp;v=" in response.text
     )
 
 
@@ -4052,6 +4057,61 @@ def test_og_image_route_supports_get_and_head() -> None:
     png_head_response = client.head("/og-image.png")
     assert png_head_response.status_code == 200
     assert png_head_response.headers["content-type"].startswith("image/png")
+
+
+def test_opportunity_open_graph_cards_are_unique_raster_assets(monkeypatch) -> None:
+    _reset_api_state(monkeypatch)
+    first = Opportunity(
+        source="official_source",
+        source_url="https://example.org/first",
+        type=OpportunityType.GRANT,
+        title="Компенсация цифровых решений для производственных компаний",
+        summary="Возмещение части затрат на внедрение цифровых технологий.",
+        amount_max=Decimal("60000000"),
+        currency="KZT",
+        deadline=date(2026, 9, 30),
+        tags=["kazakhstan", "digital"],
+        score=0.9,
+    )
+    second = Opportunity(
+        source="agrocredit",
+        source_url="https://example.org/second",
+        type=OpportunityType.GRANT,
+        title="Льготное кредитование животноводства",
+        summary="Кредитование откормочных площадок и производителей кормов.",
+        deadline=None,
+        lifecycle="rolling",
+        tags=["kazakhstan", "livestock"],
+        score=0.9,
+        raw={"deadline_policy": "rolling"},
+    )
+    api_main._cache.extend([first, second])
+    client = TestClient(api_main.app)
+
+    first_page = client.get(f"/opportunity/{first.id}", params={"lang": "ru"})
+    second_page = client.get(f"/opportunity/{second.id}", params={"lang": "ru"})
+    assert first_page.status_code == 200
+    assert second_page.status_code == 200
+    first_prefix = f"http://testserver/opportunity/{first.id}/og.png?lang=ru&amp;v="
+    second_prefix = f"http://testserver/opportunity/{second.id}/og.png?lang=ru&amp;v="
+    assert first_prefix in first_page.text
+    assert second_prefix in second_page.text
+    assert first_prefix != second_prefix
+
+    first_image = client.get(f"/opportunity/{first.id}/og.png?lang=ru&v=first")
+    second_image = client.get(f"/opportunity/{second.id}/og.png?lang=ru&v=second")
+    assert first_image.status_code == 200
+    assert second_image.status_code == 200
+    assert first_image.headers["content-type"].startswith("image/png")
+    assert first_image.headers["cache-control"].startswith("public, max-age=3600")
+    assert first_image.content.startswith(b"\x89PNG\r\n\x1a\n")
+    assert int.from_bytes(first_image.content[16:20], "big") == 1200
+    assert int.from_bytes(first_image.content[20:24], "big") == 630
+    assert first_image.content != second_image.content
+
+    head_response = client.head(f"/opportunity/{first.id}/og.png?lang=ru&v=first")
+    assert head_response.status_code == 200
+    assert head_response.headers["content-type"].startswith("image/png")
 
 
 def test_opportunity_detail_endpoint_returns_404_for_unknown_id(monkeypatch):
