@@ -1313,9 +1313,9 @@ DASHBOARD_CSS = r"""    :root {
     .preset-button {
       min-height: 28px;
       padding: 0 10px;
-      border: 1px solid transparent;
+      border: 1px solid color-mix(in oklab, var(--brand), var(--line) 72%);
       border-radius: var(--av-radius-md);
-      background: var(--panel-subtle);
+      background: var(--brand-soft);
       color: var(--muted);
       font-size: var(--av-text-xs);
       font-weight: 700;

@@ -62,6 +62,13 @@ def test_dashboard_uses_extracted_static_styles() -> None:
     assert ".hero-copy > .topbar {" in DASHBOARD_CSS
     assert '<section\n          class="hero-stage"' not in html
 
+    preset_button_block = DASHBOARD_CSS.split(".preset-button {", 1)[1].split("}", 1)[0]
+    assert "background: var(--brand-soft);" in preset_button_block
+    assert (
+        "border: 1px solid color-mix(in oklab, var(--brand), var(--line) 72%);"
+        in preset_button_block
+    )
+
     mobile_touch_block = DASHBOARD_AVDS4_CSS.split("@media (max-width: 820px) {", 1)[
         1
     ].split("@media (max-width: 560px)", 1)[0]
