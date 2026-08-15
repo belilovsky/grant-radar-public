@@ -58,6 +58,8 @@ def test_dashboard_uses_extracted_static_styles() -> None:
         in DASHBOARD_AVDS4_CSS
     )
     assert ".opportunity-facts {" in DASHBOARD_AVDS4_CSS
+    assert "grid-auto-rows: 1fr;" in DASHBOARD_AVDS4_CSS
+    assert ".list > .opportunity:last-child:nth-child(3n + 2)" in (DASHBOARD_AVDS4_CSS)
     assert "grid-template-columns: repeat(3, minmax(0, 1fr));" in DASHBOARD_CSS
     assert "--panel-wash-card: color-mix" in DASHBOARD_CSS
     assert "background: var(--panel-wash-list);" in DASHBOARD_CSS
@@ -74,6 +76,7 @@ def test_dashboard_uses_extracted_static_styles() -> None:
     assert ".list > .opportunity:nth-child(even) {\n      padding-inline: 18px;" in (
         DASHBOARD_AVDS4_CSS
     )
+    assert 'window.matchMedia("(min-width: 1600px)").matches\n        ? 9' in html
 
     preset_button_block = DASHBOARD_CSS.split(".preset-button {", 1)[1].split("}", 1)[0]
     assert "background: var(--brand-soft);" in preset_button_block

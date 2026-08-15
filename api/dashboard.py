@@ -1058,7 +1058,11 @@ def render_dashboard(
     const DEFAULT_LIFECYCLE = "all";
     const DEFAULT_REGION = "all";
     const DEFAULT_DEADLINE = "all";
-    const DEFAULT_VISIBLE_ITEMS = window.matchMedia("(max-width: 560px)").matches ? 6 : 8;
+    const DEFAULT_VISIBLE_ITEMS = window.matchMedia("(max-width: 560px)").matches
+      ? 6
+      : window.matchMedia("(min-width: 1600px)").matches
+        ? 9
+        : 8;
     const COLLAPSED_SOURCES = 5;
     const SAVED_VIEW_STORAGE_KEY = "grantRadarSavedViews.v1";
     const SAVED_OPPORTUNITY_STORAGE_KEY = "grantRadarSavedOpportunities.v1";

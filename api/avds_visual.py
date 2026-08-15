@@ -301,11 +301,11 @@ DASHBOARD_AVDS4_CSS = r"""
     .list {
       grid-template-columns: repeat(2, minmax(0, 1fr));
       gap: 10px;
-      align-items: start;
+      align-items: stretch;
     }
 
     .opportunity {
-      height: auto;
+      height: 100%;
       padding: 18px;
       border-radius: var(--qaz-card-radius);
       box-shadow: none;
@@ -324,12 +324,14 @@ DASHBOARD_AVDS4_CSS = r"""
     .opportunity-main {
       grid-template-columns: minmax(0, 1fr);
       gap: 13px;
-      height: auto;
+      height: 100%;
     }
 
     .opportunity-content {
-      align-content: start;
+      display: flex;
+      flex-direction: column;
       gap: 10px;
+      height: 100%;
       padding: 0;
     }
 
@@ -436,6 +438,10 @@ DASHBOARD_AVDS4_CSS = r"""
       gap: 7px 12px;
     }
 
+    .card-actions {
+      margin-top: auto;
+    }
+
     .detail-link {
       min-height: 31px;
       padding: 0 9px;
@@ -499,10 +505,30 @@ DASHBOARD_AVDS4_CSS = r"""
       }
     }
 
+    @media (min-width: 1121px) {
+      .list {
+        grid-auto-rows: 1fr;
+      }
+    }
+
+    @media (min-width: 1121px) and (max-width: 1599px) {
+      .list > .opportunity:last-child:nth-child(2n + 1) {
+        grid-column: 1 / -1;
+      }
+    }
+
     @media (min-width: 1600px) {
       .list {
         grid-template-columns: repeat(3, minmax(0, 1fr));
         gap: 12px;
+      }
+
+      .list > .opportunity:last-child:nth-child(3n + 1) {
+        grid-column: 1 / -1;
+      }
+
+      .list > .opportunity:last-child:nth-child(3n + 2) {
+        grid-column: span 2;
       }
     }
 
