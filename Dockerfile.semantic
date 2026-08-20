@@ -8,7 +8,9 @@ ENV PYTHONUNBUFFERED=1 \
 
 WORKDIR /app
 
-RUN groupadd --gid 10001 qazfund \
+RUN apt-get update && apt-get upgrade -y \
+    && rm -rf /var/lib/apt/lists/* \
+    && groupadd --gid 10001 qazfund \
     && useradd --uid 10001 --gid qazfund --create-home --shell /usr/sbin/nologin qazfund \
     && mkdir -p /models \
     && chown -R qazfund:qazfund /models
@@ -17,6 +19,7 @@ COPY requirements-semantic.txt ./
 # FlagEmbedding accepts an existing torch installation.  Install the official
 # CPU wheel first so a CPU-only host never downloads CUDA/NVIDIA packages.
 RUN pip install --upgrade pip \
+    && pip install setuptools==80.9.0 \
     && pip install --index-url https://download.pytorch.org/whl/cpu torch==2.9.1 \
     && pip install -r requirements-semantic.txt
 

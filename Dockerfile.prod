@@ -7,7 +7,8 @@ ENV PYTHONUNBUFFERED=1 \
 
 WORKDIR /app
 
-RUN apt-get update && apt-get install -y --no-install-recommends \
+RUN apt-get update && apt-get upgrade -y \
+    && apt-get install -y --no-install-recommends \
         curl ca-certificates fonts-dejavu-core \
     && rm -rf /var/lib/apt/lists/* \
     && groupadd --gid 10001 qazfund \
@@ -18,6 +19,7 @@ COPY vendor/qazstack-1.41.2-py3-none-any.whl vendor/qazstack-1.41.2-py3-none-any
 COPY vendor/qazstack-1.41.2.sha256 vendor/qazstack-1.41.2.sha256
 RUN sha256sum -c vendor/qazstack-1.41.2.sha256 \
     && pip install --upgrade pip \
+    && pip install setuptools==80.9.0 \
     && pip install -r requirements-prod.txt
 
 COPY --chown=qazfund:qazfund . .
