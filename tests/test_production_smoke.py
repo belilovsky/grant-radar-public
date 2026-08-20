@@ -7,6 +7,8 @@ import pytest
 
 from scripts.production_smoke import SmokeError, _contains_key, run_smoke
 
+_DASHBOARD_ASSET = "/assets/generated/" + "a" * 64 + ".js"
+
 
 def test_contains_key_checks_nested_structures_without_matching_text() -> None:
     assert _contains_key({"cards": [{"title": "raw materials"}]}, "raw") is False
@@ -27,6 +29,14 @@ def _transport(
         base_prefix = "/grant-radar" if path.startswith("/grant-radar") else ""
         public_root = f"{root}{base_prefix}"
         endpoint_path = path.removeprefix("/grant-radar")
+        if endpoint_path == _DASHBOARD_ASSET:
+            return httpx.Response(
+                200,
+                text=(
+                    '<article class="avds-document-row"'
+                    ' data-avds-component="opportunity-card"></article>'
+                ),
+            )
         if path in {"/", "/grant-radar/"} and request.url.params.get("lang") == "en":
             return httpx.Response(
                 200,
@@ -48,8 +58,7 @@ def _transport(
                 '<input class="field avds-field">'
                 '<div data-avds-component="filter-summary"></div>'
                 '<details id="filter-disclosure"></details>'
-                '<article class="avds-document-row"'
-                ' data-avds-component="opportunity-card"></article>'
+                f'<script defer src="{_DASHBOARD_ASSET}"></script>'
                 "</main>"
                 "</html>"
             )

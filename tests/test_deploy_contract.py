@@ -94,6 +94,9 @@ def test_remote_release_has_capacity_backup_lock_identity_and_rollback_gates() -
     assert "reconcile_from_dump" in remote
     assert "reconciliation.json" in remote
     assert "reconciliation is not idempotent" in remote
+    assert "ensure_semantic_volume_owner" in remote
+    assert '"$semantic_volume:/models"' in remote
+    assert "chown -R 10001:10001 /models" in remote
 
 
 def test_deploy_script_verifies_the_public_revision() -> None:
