@@ -6,8 +6,11 @@ on:
     branches:
       - main
       - "release/**"
-      - "codex/**"
   workflow_dispatch:
+
+concurrency:
+  group: verify-${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
 
 permissions:
   contents: read
