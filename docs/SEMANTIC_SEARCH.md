@@ -44,6 +44,10 @@ retried every `GRANT_RADAR_SEMANTIC_STARTUP_RETRY_SECONDS` (default: 15 seconds)
 The deploy helper waits for `/health` after the API is ready, unless semantic
 search is explicitly disabled in `.env.prod`.
 
+Model snapshots explicitly omit ONNX and OpenVINO exports because this service
+loads both models through the PyTorch-only FlagEmbedding runtime. This keeps the
+durable model volume from downloading several gigabytes of unused weights.
+
 ## Capacity and evaluation gate
 
 BGE-M3's local runtime and reranker need a dedicated model cache and materially

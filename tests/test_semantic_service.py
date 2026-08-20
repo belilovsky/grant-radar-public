@@ -1,10 +1,33 @@
 import asyncio
 import json
+import sys
 from datetime import UTC, datetime
+from types import SimpleNamespace
 
 import httpx
 
 import semantic_service.app as semantic_app
+
+
+def test_model_snapshot_omits_unused_inference_exports(monkeypatch):
+    captured: dict[str, object] = {}
+
+    def snapshot_download(repository, *, ignore_patterns):
+        captured["repository"] = repository
+        captured["ignore_patterns"] = ignore_patterns
+        return "/models/snapshot"
+
+    monkeypatch.setitem(
+        sys.modules,
+        "huggingface_hub",
+        SimpleNamespace(snapshot_download=snapshot_download),
+    )
+
+    assert semantic_app._model_snapshot_path("BAAI/bge-m3") == "/models/snapshot"
+    assert captured == {
+        "repository": "BAAI/bge-m3",
+        "ignore_patterns": ["onnx/*", "openvino/*"],
+    }
 
 
 def test_catalog_timeout_is_long_enough_for_the_public_catalog(monkeypatch):
