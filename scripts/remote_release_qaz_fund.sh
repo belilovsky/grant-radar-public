@@ -306,6 +306,29 @@ if ! [[ "$semantic_image_digest" =~ ^sha256:[0-9a-f]{64}$ ]]; then
   exit 1
 fi
 
+ensure_semantic_volume_owner() {
+  # The semantic image is deliberately non-root.  Older QAZ.FUND volumes may
+  # have been populated by a root runtime, so repair ownership only on the
+  # mounted QAZ.FUND models volume before starting the immutable candidate.
+  local semantic_container semantic_volume
+  semantic_container="$(docker compose --env-file "$ENV_FILE" $COMPOSE_FILES ps -q semantic | head -n 1)"
+  if [[ -z "$semantic_container" ]]; then
+    echo "QAZ.FUND semantic volume gate failed: current semantic container is missing." >&2
+    return 1
+  fi
+  semantic_volume="$(docker inspect --format '{{range .Mounts}}{{if eq .Destination "/models"}}{{.Name}}{{end}}{{end}}' "$semantic_container")"
+  if [[ -z "$semantic_volume" ]]; then
+    echo "QAZ.FUND semantic volume gate failed: /models volume is missing." >&2
+    return 1
+  fi
+  docker run --rm --user 0:0 \
+    --volume "$semantic_volume:/models" \
+    --entrypoint /bin/sh "$QAZ_FUND_SEMANTIC_IMAGE" \
+    -c 'chown -R 10001:10001 /models'
+}
+
+ensure_semantic_volume_owner
+
 release_env_tmp="$(mktemp .release.env.XXXXXX)"
 printf '%s\n' \
   "APP_REVISION=$REVISION" \

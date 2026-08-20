@@ -35,6 +35,9 @@ MARKETING_MARKERS = (
     "Sitemap:",
     "<urlset",
 )
+GENERATED_ASSET_PATTERN = re.compile(
+    r'(?:href|src)="(?P<path>/assets/generated/[0-9a-f]{64}\.(?:css|js))"'
+)
 
 
 class SmokeError(RuntimeError):
@@ -83,6 +86,17 @@ def _head(client: httpx.Client, base_url: str, path: str) -> httpx.Response:
     response = client.head(_url(base_url, path))
     response.raise_for_status()
     return response
+
+
+def _dashboard_assets(client: httpx.Client, base_url: str, dashboard_html: str) -> str:
+    """Load only same-origin, content-hashed dashboard assets for UI markers."""
+    paths = sorted(
+        {
+            match.group("path")
+            for match in GENERATED_ASSET_PATTERN.finditer(dashboard_html)
+        }
+    )
+    return "\n".join(_get_text(client, base_url, path) for path in paths)
 
 
 def _require(condition: bool, message: str) -> None:
@@ -137,6 +151,9 @@ def run_smoke(
         dashboard = client.get(_url(base_url, "/"))
         dashboard.raise_for_status()
         dashboard_html = dashboard.text
+        dashboard_surface = (
+            dashboard_html + "\n" + _dashboard_assets(client, base_url, dashboard_html)
+        )
         dashboard_en = client.get(_url(base_url, "/?lang=en"))
         dashboard_en.raise_for_status()
         dashboard_en_html = dashboard_en.text
@@ -423,7 +440,9 @@ def run_smoke(
             f"marketing marker missing: {marker}",
         )
 
-    marker_status = {marker: marker in dashboard_html for marker in DASHBOARD_MARKERS}
+    marker_status = {
+        marker: marker in dashboard_surface for marker in DASHBOARD_MARKERS
+    }
     missing_markers = [
         marker for marker, present in marker_status.items() if not present
     ]
