@@ -20,7 +20,10 @@ COPY vendor/qazstack-1.41.2.sha256 vendor/qazstack-1.41.2.sha256
 RUN sha256sum -c vendor/qazstack-1.41.2.sha256 \
     && pip install --upgrade pip \
     && pip install setuptools==80.9.0 \
-    && pip install -r requirements-prod.txt
+    && pip install -r requirements-prod.txt \
+    && pip check \
+    && pip uninstall -y pip setuptools \
+    && rm -rf /usr/local/lib/python3.12/ensurepip
 
 COPY --chown=qazfund:qazfund . .
 

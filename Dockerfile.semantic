@@ -21,7 +21,10 @@ COPY requirements-semantic.txt ./
 RUN pip install --upgrade pip \
     && pip install setuptools==80.9.0 \
     && pip install --index-url https://download.pytorch.org/whl/cpu torch==2.9.1 \
-    && pip install -r requirements-semantic.txt
+    && pip install -r requirements-semantic.txt \
+    && pip check \
+    && pip uninstall -y pip setuptools \
+    && rm -rf /usr/local/lib/python3.12/ensurepip
 
 COPY --chown=qazfund:qazfund semantic_service ./semantic_service
 
