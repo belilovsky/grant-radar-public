@@ -4,15 +4,15 @@ from __future__ import annotations
 
 DASHBOARD_AVDS4_CSS = r"""
     /*
-     * AV DS 4.6 public-workbench pass.
-     * One strong surface, quiet separators, compact controls and semantic color.
+     * AV DS 4.6 public-catalog pass.
+     * One clear starting point, quiet separators and compact controls.
      */
     :root {
-      --qaz-hero: #0b1734;
-      --qaz-hero-muted: #bac8e8;
+      --qaz-hero: var(--qaz-brand-hero-start);
+      --qaz-hero-muted: #d9e8e5;
       --qaz-hero-line: rgb(255 255 255 / 0.16);
-      --qaz-hero-panel: rgb(255 255 255 / 0.07);
-      --qaz-page: #f2f5fa;
+      --qaz-hero-panel: rgb(2 61 66 / 0.86);
+      --qaz-page: var(--qaz-brand-cream);
       --qaz-card-radius: 10px;
       --qaz-section-radius: 8px;
     }
@@ -32,10 +32,9 @@ DASHBOARD_AVDS4_CSS = r"""
     }
 
     .hero-band {
-      padding: 28px 30px 22px;
-      margin-bottom: 12px;
-      border: 0;
-      border-left: 4px solid #5f83ff;
+      padding: clamp(26px, 3vw, 44px) clamp(24px, 4vw, 64px);
+      margin-bottom: 14px;
+      border: 1px solid rgb(230 242 240 / 0.2);
       border-radius: var(--qaz-card-radius);
       background: var(--qaz-hero);
       color: white;
@@ -47,51 +46,83 @@ DASHBOARD_AVDS4_CSS = r"""
     }
 
     .hero-band .eyebrow {
-      color: #9bb5ff;
+      color: #b9ddd8;
       letter-spacing: 0.08em;
     }
 
     .hero-band .brand h1 {
       color: white;
-      font-size: clamp(40px, 4vw, 58px);
+      font-size: clamp(40px, 4.2vw, 60px);
+    }
+
+    .hero-band .hero-copy > .topbar .brand > p {
+      display: block;
+      max-width: 620px;
+      margin: 0;
+      color: #e9f1ef;
+      font-size: clamp(17px, 1.45vw, 21px);
+      line-height: 1.45;
     }
 
     .hero-grid {
-      grid-template-columns: minmax(0, 1.12fr) minmax(360px, 0.88fr);
-      gap: clamp(28px, 4vw, 52px);
-      margin-bottom: 20px;
+      grid-template-columns: minmax(0, 1fr) minmax(320px, 420px);
+      align-items: stretch;
+      max-width: none;
+      gap: clamp(24px, 4vw, 56px);
+      margin-bottom: 0;
     }
 
     .hero-copy {
-      gap: 16px;
-      padding: 6px 0;
+      align-content: center;
+      gap: 18px;
+      padding: 0;
     }
 
     .hero-intro {
       max-width: 50ch;
-      color: #e5ebf8;
+      color: #e9f1ef;
       font-size: clamp(18px, 1.5vw, 21px);
       line-height: 1.42;
     }
 
+    .hero-band .hero-point {
+      color: #d9e8e5;
+    }
+
+    .hero-band .hero-point-index {
+      background: rgb(243 239 233 / 0.92);
+      color: var(--qaz-brand-teal);
+      box-shadow: inset 0 0 0 1px var(--qaz-brand-gold);
+    }
+
     .hero-band .button.primary {
-      border-color: #6487ff;
-      background: #5a7df0;
+      border-color: #fffdfc;
+      background: #fffdfc;
+      color: var(--qaz-brand-ink);
       box-shadow: none;
     }
 
     .hero-band .button.primary:hover {
-      border-color: #86a0ff;
-      background: #6a8bf4;
+      border-color: var(--qaz-brand-gold-soft);
+      background: var(--qaz-brand-gold-soft);
+      color: var(--qaz-brand-ink);
     }
 
     .hero-stage {
+      align-content: center;
       gap: 11px;
       padding: 18px;
       border: 1px solid var(--qaz-hero-line);
       border-radius: var(--qaz-section-radius);
       background: var(--qaz-hero-panel);
       box-shadow: none;
+    }
+
+    .hero-stage-top {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
     }
 
     .hero-stage-eyebrow {
@@ -101,6 +132,27 @@ DASHBOARD_AVDS4_CSS = r"""
     .hero-stage-title {
       color: white;
       font-size: 20px;
+    }
+
+    .hero-stage .lang-switch {
+      flex: 0 0 auto;
+      gap: 2px;
+    }
+
+    .hero-stage .lang-link {
+      min-height: 26px;
+      padding-inline: 6px;
+      color: var(--qaz-hero-muted);
+    }
+
+    .hero-stage .lang-link:hover,
+    .hero-stage .lang-link:focus-visible {
+      color: white;
+    }
+
+    .hero-stage .lang-link.active {
+      color: white;
+      box-shadow: inset 0 -2px 0 white;
     }
 
     .hero-pick-row {
@@ -113,7 +165,7 @@ DASHBOARD_AVDS4_CSS = r"""
       border-color: var(--qaz-hero-line);
       border-radius: 6px;
       background: rgb(255 255 255 / 0.05);
-      color: #f8faff;
+      color: #fffdfc;
       font-size: 12px;
     }
 
@@ -122,6 +174,12 @@ DASHBOARD_AVDS4_CSS = r"""
       border-color: rgb(255 255 255 / 0.34);
       background: rgb(255 255 255 / 0.12);
       color: white;
+    }
+
+    @media (min-width: 981px) {
+      .hero-band .hero-actions {
+        display: none;
+      }
     }
 
     .hero-band .grid {
@@ -143,25 +201,24 @@ DASHBOARD_AVDS4_CSS = r"""
     }
 
     .hero-band .metric span {
-      color: var(--qaz-hero-muted);
+      color: var(--qaz-brand-teal);
     }
 
     .hero-band .metric strong {
-      color: white;
+      color: var(--qaz-brand-ink);
       font-size: 28px;
     }
 
     .hero-band .metric.strong strong {
-      color: #64d2a3;
+      color: var(--qaz-brand-teal-light);
     }
 
     .hero-band .metric.sources strong {
-      color: #f2c978;
+      color: var(--qaz-brand-gold);
     }
 
     .sticky-shell {
-      top: 8px;
-      margin-bottom: 14px;
+      display: none;
     }
 
     .sticky-bar {
@@ -244,6 +301,7 @@ DASHBOARD_AVDS4_CSS = r"""
     .list {
       grid-template-columns: repeat(2, minmax(0, 1fr));
       gap: 10px;
+      align-items: stretch;
     }
 
     .opportunity {
@@ -251,6 +309,10 @@ DASHBOARD_AVDS4_CSS = r"""
       padding: 18px;
       border-radius: var(--qaz-card-radius);
       box-shadow: none;
+    }
+
+    .list > .opportunity:nth-child(even) {
+      padding-inline: 18px;
     }
 
     .opportunity:hover {
@@ -266,8 +328,10 @@ DASHBOARD_AVDS4_CSS = r"""
     }
 
     .opportunity-content {
-      align-content: start;
+      display: flex;
+      flex-direction: column;
       gap: 10px;
+      height: 100%;
       padding: 0;
     }
 
@@ -284,6 +348,32 @@ DASHBOARD_AVDS4_CSS = r"""
       font-size: 14px;
       line-height: 1.5;
       -webkit-line-clamp: 2;
+    }
+
+    .opportunity-facts {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px 18px;
+      color: var(--muted);
+      font-size: 12px;
+      line-height: 1.4;
+    }
+
+    .opportunity-facts > span {
+      display: inline-flex;
+      align-items: baseline;
+      gap: 5px;
+      min-width: 0;
+    }
+
+    .opportunity-fact-label {
+      color: var(--muted);
+    }
+
+    .opportunity-facts strong {
+      color: var(--ink);
+      font-weight: 700;
+      overflow-wrap: anywhere;
     }
 
     .tag {
@@ -348,6 +438,10 @@ DASHBOARD_AVDS4_CSS = r"""
       gap: 7px 12px;
     }
 
+    .card-actions {
+      margin-top: auto;
+    }
+
     .detail-link {
       min-height: 31px;
       padding: 0 9px;
@@ -389,6 +483,71 @@ DASHBOARD_AVDS4_CSS = r"""
       background: transparent;
     }
 
+    @media (min-width: 1280px) {
+      .preset-grid {
+        grid-template-columns: 0.82fr 1.08fr 1.35fr;
+        padding: 12px;
+      }
+
+      .preset-group {
+        padding-inline: 12px;
+      }
+    }
+
+    @media (min-width: 1440px) {
+      .shell {
+        width: min(1600px, calc(100% - 64px));
+      }
+
+      .hero-grid {
+        grid-template-columns: minmax(0, 1fr) minmax(440px, 560px);
+        gap: clamp(40px, 5vw, 72px);
+      }
+    }
+
+    @media (min-width: 1121px) {
+      .list {
+        grid-auto-rows: 1fr;
+      }
+    }
+
+    @media (min-width: 1121px) and (max-width: 1599px) {
+      .list > .opportunity:last-child:nth-child(2n + 1) {
+        grid-column: 1 / -1;
+      }
+    }
+
+    @media (min-width: 1600px) {
+      .list {
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        gap: 12px;
+      }
+
+      .list > .opportunity:last-child:nth-child(3n + 1) {
+        grid-column: 1 / -1;
+      }
+
+      .list > .opportunity:last-child:nth-child(3n + 2) {
+        grid-column: span 2;
+      }
+    }
+
+    @media (min-width: 1920px) {
+      .shell {
+        width: min(1760px, calc(100% - 96px));
+      }
+
+      .hero-grid {
+        grid-template-columns: minmax(0, 1fr) minmax(500px, 620px);
+      }
+    }
+
+    @media (min-width: 2200px) {
+      .shell {
+        width: min(1920px, calc(100% - 160px));
+      }
+    }
+
     @media (max-width: 1120px) {
       .hero-grid {
         grid-template-columns: minmax(0, 1fr) minmax(320px, 0.84fr);
@@ -420,9 +579,40 @@ DASHBOARD_AVDS4_CSS = r"""
           calc(82px + env(safe-area-inset-bottom));
       }
 
+      .mobile-app-brand,
+      .mobile-lang-switch a,
+      .hero-actions .button,
+      .hero-pick,
+      .preset-button,
+      .detail-link,
+      .advanced-filters > summary {
+        min-height: var(--av-control-height-lg);
+      }
+
+      .mobile-app-brand {
+        align-content: center;
+      }
+
+      .mobile-lang-switch a {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        min-width: var(--av-control-height-lg);
+      }
+
+      .mobile-icon-button {
+        width: var(--av-control-height-lg);
+        min-width: var(--av-control-height-lg);
+        height: var(--av-control-height-lg);
+        min-height: var(--av-control-height-lg);
+      }
+
+      .hero-copy > .topbar .brand h1 {
+        font-size: 32px;
+      }
+
       .hero-band {
         padding: 24px 20px 18px;
-        border-left-width: 3px;
       }
 
       .hero-grid {
@@ -466,8 +656,16 @@ DASHBOARD_AVDS4_CSS = r"""
         padding-inline: 16px;
       }
 
-      .hero-band .brand h1 {
-        font-size: 37px;
+      .hero-band .hero-actions {
+        display: none;
+      }
+
+      .hero-stage .hero-lang-switch {
+        display: none;
+      }
+
+      .hero-copy > .topbar .brand h1 {
+        font-size: 30px;
       }
 
       .hero-intro {
@@ -498,6 +696,10 @@ DASHBOARD_AVDS4_CSS = r"""
         padding: 15px;
       }
 
+      .list > .opportunity:nth-child(even) {
+        padding-inline: 15px;
+      }
+
       .opportunity h3 {
         font-size: 18px;
       }
@@ -507,10 +709,10 @@ DASHBOARD_AVDS4_CSS = r"""
 
 OPPORTUNITY_AVDS4_CSS = r"""
     :root {
-      --qaz-detail-hero: #0b1734;
-      --qaz-detail-muted: #becaea;
+      --qaz-detail-hero: var(--qaz-brand-hero-start);
+      --qaz-detail-muted: #d9e8e5;
       --qaz-detail-line: rgb(255 255 255 / 0.16);
-      --qaz-detail-page: #f2f5fa;
+      --qaz-detail-page: var(--qaz-brand-cream);
       --qaz-detail-radius: 10px;
     }
 
@@ -552,8 +754,7 @@ OPPORTUNITY_AVDS4_CSS = r"""
     .hero {
       margin-bottom: 0;
       padding: clamp(28px, 4vw, 46px);
-      border: 0;
-      border-left: 4px solid #5f83ff;
+      border: 1px solid rgb(230 242 240 / 0.2);
       border-radius: var(--qaz-detail-radius);
       background: var(--qaz-detail-hero);
       color: white;
@@ -567,7 +768,7 @@ OPPORTUNITY_AVDS4_CSS = r"""
     }
 
     .hero .eyebrow {
-      color: #9bb5ff;
+      color: #b9ddd8;
     }
 
     .hero h1 {
@@ -579,7 +780,7 @@ OPPORTUNITY_AVDS4_CSS = r"""
 
     .summary {
       max-width: 62ch;
-      color: #e4eaf7;
+      color: #e9f1ef;
       font-size: clamp(16px, 1.35vw, 19px);
       line-height: 1.48;
     }
@@ -589,7 +790,7 @@ OPPORTUNITY_AVDS4_CSS = r"""
     }
 
     .hero .button {
-      min-height: 42px;
+      min-height: 44px;
       border-color: var(--qaz-detail-line);
       border-radius: 6px;
       box-shadow: none;
@@ -601,8 +802,9 @@ OPPORTUNITY_AVDS4_CSS = r"""
     }
 
     .hero .button.primary {
-      border-color: #6487ff;
-      background: #5a7df0;
+      border-color: #fffdfc;
+      background: #fffdfc;
+      color: var(--qaz-brand-ink);
     }
 
     .hero .button.slim {
@@ -611,7 +813,7 @@ OPPORTUNITY_AVDS4_CSS = r"""
     }
 
     .hero-action-status {
-      color: #77dfb3;
+      color: var(--qaz-brand-teal-light);
     }
 
     .hero-stats {
@@ -651,7 +853,7 @@ OPPORTUNITY_AVDS4_CSS = r"""
       border-color: var(--qaz-detail-line);
       border-radius: 5px;
       background: rgb(255 255 255 / 0.08);
-      color: #eef3ff;
+      color: #fffdfc;
       font-size: 12px;
     }
 

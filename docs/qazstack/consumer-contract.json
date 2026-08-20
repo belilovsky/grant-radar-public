@@ -28,6 +28,7 @@
     "unverified-source-promotion",
     "secret-export"
   ],
+  "language_surface": "docs/qazstack/language-surface.json",
   "evidence": {
     "source_files": [
       "core/qazstack_bridge.py",
@@ -46,11 +47,11 @@
       "https://qaz.fund/.well-known/qazstack-consumer.json",
       "https://qaz.fund/ready"
     ],
-    "verified_at": "2026-07-27T00:24:00+05:00",
+    "verified_at": "2026-08-04T00:47:27Z",
     "environment": "production",
     "source_revision": "986cfca3779f74c0f734ed174e7a28c944fd30f7",
     "schema_digest": "sha256:6ca8e38c09315d02993e3600b7a05dc23d695cd152545f8a970566e303fc158c",
-    "checked_by": "codex"
+    "checked_by": "qazfund-release-gate"
   },
   "owner": "qdev-platform",
   "notes": "Checked-in discovery copy of the live QAZ.FUND QazStack consumer contract. Public records and evaluation mathematics are shared; product-specific opportunity relevance and publication remain owned by QAZ.FUND."

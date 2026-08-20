@@ -1,0 +1,19 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="512" height="512" viewBox="0 0 512 512" role="img" aria-label="QAZ.FUND favicon">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#08747B"/>
+      <stop offset="54%" stop-color="#00545D"/>
+      <stop offset="100%" stop-color="#002D34"/>
+    </linearGradient>
+    <linearGradient id="gold" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#FFF2A8"/>
+      <stop offset="52%" stop-color="#F0C64D"/>
+      <stop offset="100%" stop-color="#B47305"/>
+    </linearGradient>
+  </defs>
+  <rect width="512" height="512" rx="112" fill="url(#bg)"/>
+  <circle cx="236" cy="226" r="132" fill="none" stroke="url(#gold)" stroke-width="48"/>
+  <path d="M316 306 L405 395" fill="none" stroke="url(#gold)" stroke-width="48" stroke-linecap="round"/>
+  <path d="M352 329 C383 336 410 361 418 390 C389 383 363 358 352 329 Z" fill="#E8B536"/>
+  <path d="M274 116 C322 127 357 162 367 207" fill="none" stroke="#FFF4B0" stroke-opacity="0.34" stroke-width="12" stroke-linecap="round"/>
+</svg>

@@ -26,6 +26,8 @@ from core.models import (
     OpportunityDetailSection,
     OpportunityMetadataField,
 )
+from core.provenance import provenance_profile
+from core.typography_policy import normalize_public_detail
 from sources import PARSERS
 
 try:
@@ -133,6 +135,11 @@ _SECTION_HEADINGS = {
         "overview": "Обзор",
         "eligibility": "Кто может подать заявку",
         "source_status": "Статус источника",
+    },
+    "kk": {
+        "overview": "Шолу",
+        "eligibility": "Кім өтінім бере алады",
+        "source_status": "Дереккөз мәртебесі",
     },
 }
 
@@ -803,8 +810,16 @@ async def build_opportunity_detail(
     detail_fetch_status = str(remote.get("detail_fetch_status") or "structured_only")
     if content_lang != "en" and not has_localized_remote:
         detail_fetch_status = "structured_only"
-    return OpportunityDetail(
-        **item.model_dump(),
+    localized_item = item.model_copy(
+        update={
+            "raw": {
+                **raw,
+                "provenance": provenance_profile(item),
+            }
+        }
+    )
+    detail = OpportunityDetail(
+        **localized_item.model_dump(),
         application_url=application_url,
         detail_available=detail_available,
         detail_fetch_status=detail_fetch_status,
@@ -814,3 +829,4 @@ async def build_opportunity_detail(
         detail_sections=merged_sections,
         metadata=_metadata_fields(item, lang=content_lang),
     )
+    return normalize_public_detail(detail)

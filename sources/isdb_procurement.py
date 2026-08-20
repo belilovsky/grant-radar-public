@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 import re
-from collections.abc import AsyncIterator, Iterable
+from collections.abc import AsyncIterator
 from dataclasses import dataclass
 from datetime import date, datetime
 from typing import ClassVar
@@ -14,6 +14,8 @@ import structlog
 from core.models import Opportunity, OpportunityType
 from core.source_text import clean_source_text as _clean_text
 from sources.base import BaseSource
+from sources.parsing import infer_substring_tags as _shared_infer_tags
+from sources.parsing import unique_normalized as _unique
 
 log = structlog.get_logger()
 
@@ -98,18 +100,6 @@ class IsdbTender:
     deadline_raw: str | None
 
 
-def _unique(values: Iterable[str]) -> list[str]:
-    seen: set[str] = set()
-    out: list[str] = []
-    for value in values:
-        normalized = value.strip().lower()
-        if not normalized or normalized in seen:
-            continue
-        seen.add(normalized)
-        out.append(normalized)
-    return out
-
-
 def _field(pattern: re.Pattern[str], html: str) -> str | None:
     match = pattern.search(html)
     if match is None:
@@ -142,12 +132,7 @@ def _is_central_asia_country(country: str) -> bool:
 
 
 def _infer_tags(text: str) -> list[str]:
-    lowered = text.lower()
-    tags: list[str] = []
-    for tag, keywords in THEME_KEYWORDS.items():
-        if any(keyword in lowered for keyword in keywords):
-            tags.append(tag)
-    return tags
+    return _shared_infer_tags(text, THEME_KEYWORDS)
 
 
 def _extract_tenders(html: str) -> list[IsdbTender]:
@@ -206,6 +191,7 @@ class IsdbProjectProcurementSource(BaseSource):
                 response = await self.client.get(listing_url)
                 response.raise_for_status()
             except Exception as exc:  # noqa: BLE001
+                self._mark_fetch_error(exc)
                 log.warning(
                     "isdb_project_procurement.fetch_failed",
                     url=listing_url,

@@ -2,34 +2,36 @@
 
 from __future__ import annotations
 
+from api.branding import BRAND_CSS
+
 AVDS_FONT_HEAD = ""
 
 AVDS_CSS = """
     :root {
-      --button-outline: rgb(30 64 175 / 0.16);
-      --badge-outline: rgb(30 64 175 / 0.12);
+      --button-outline: rgb(0 84 91 / 0.18);
+      --badge-outline: rgb(0 84 91 / 0.14);
       --radius: 8px;
-      --av-color-blue-50: #eff6ff;
-      --av-color-blue-100: #dbeafe;
-      --av-color-blue-600: #315fdc;
-      --av-color-blue-700: #214bb8;
-      --av-color-blue-800: #183b94;
-      --av-color-slate-25: #f5f7fb;
-      --av-color-slate-50: #f8fafc;
-      --av-color-slate-75: #f1f5f9;
-      --av-color-slate-100: #eef2f7;
-      --av-color-slate-200: #e2e8f0;
-      --av-color-slate-300: #cbd5e1;
-      --av-color-slate-400: #94a3b8;
-      --av-color-slate-500: #64748b;
-      --av-color-slate-700: #334155;
-      --av-color-slate-900: #0f172a;
-      --av-color-emerald-50: #edf8f2;
-      --av-color-emerald-100: #d8efe3;
-      --av-color-emerald-700: #15724e;
-      --av-color-amber-50: #fbf5e8;
-      --av-color-amber-100: #f2e5c8;
-      --av-color-amber-700: #9a6414;
+      --av-color-blue-50: #eaf2f0;
+      --av-color-blue-100: #d5e8e4;
+      --av-color-blue-600: #08747B;
+      --av-color-blue-700: #00545B;
+      --av-color-blue-800: #00343B;
+      --av-color-slate-25: #F3EFE9;
+      --av-color-slate-50: #FFFDFC;
+      --av-color-slate-75: #eeeae3;
+      --av-color-slate-100: #e3dfd8;
+      --av-color-slate-200: #d7d2ca;
+      --av-color-slate-300: #c0c0b8;
+      --av-color-slate-400: #87928d;
+      --av-color-slate-500: #5d6d6a;
+      --av-color-slate-700: #385354;
+      --av-color-slate-900: #00343B;
+      --av-color-emerald-50: #eaf5ef;
+      --av-color-emerald-100: #d7ecdf;
+      --av-color-emerald-700: #18714e;
+      --av-color-amber-50: #f2f0ed;
+      --av-color-amber-100: #e6e1db;
+      --av-color-amber-700: #6d6258;
       --av-color-red-50: #fef2f2;
       --av-color-red-100: #fee2e2;
       --av-color-red-600: #dc2626;
@@ -51,13 +53,13 @@ AVDS_CSS = """
       --av-shadow-2xs: 0 1px 1px rgb(15 23 42 / 0.03);
       --av-shadow-xs: 0 1px 2px rgb(15 23 42 / 0.04);
       --av-shadow-sm: 0 1px 2px rgb(30 41 59 / 0.08);
-      --av-shadow-md: 0 10px 24px rgb(30 41 59 / 0.07), 0 2px 6px rgb(30 41 59 / 0.04);
-      --av-shadow-lg: 0 18px 40px rgb(30 41 59 / 0.10), 0 6px 14px rgb(30 41 59 / 0.05);
+      --av-shadow-md: 0 10px 24px rgb(0 52 59 / 0.07), 0 2px 6px rgb(0 52 59 / 0.04);
+      --av-shadow-lg: 0 18px 40px rgb(0 52 59 / 0.10), 0 6px 14px rgb(0 52 59 / 0.05);
       --av-duration-base: 180ms;
       --av-easing-emphasized: cubic-bezier(0.2, 0, 0.1, 1);
       --motion-duration-base: var(--av-duration-base);
       --motion-easing-standard: var(--av-easing-emphasized);
-      --av-container-dashboard: 1440px;
+      --av-container-dashboard: clamp(1280px, calc(100vw - 96px), 2240px);
       --av-control-height-sm: 32px;
       --av-control-height-md: 36px;
       --av-control-height-lg: 44px;
@@ -152,4 +154,25 @@ AVDS_CSS = """
       outline-offset: 2px;
       border-radius: var(--av-radius-sm);
     }
-"""
+
+    :where(a, button, input, select, summary) {
+      transition:
+        color var(--av-duration-base) var(--av-easing-emphasized),
+        background-color var(--av-duration-base) var(--av-easing-emphasized),
+        border-color var(--av-duration-base) var(--av-easing-emphasized),
+        box-shadow var(--av-duration-base) var(--av-easing-emphasized),
+        transform var(--av-duration-base) var(--av-easing-emphasized);
+    }
+
+    :where(.metric, .insight-metric, .stat) strong {
+      font-variant-numeric: tabular-nums;
+    }
+
+    html {
+      text-rendering: optimizeLegibility;
+    }
+
+    body {
+      -webkit-font-smoothing: antialiased;
+    }
+""" + BRAND_CSS

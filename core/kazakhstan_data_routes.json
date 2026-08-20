@@ -1,0 +1,290 @@
+{
+  "page_copy": {
+    "ru": {
+      "title": "Официальные данные РК – QAZ.FUND",
+      "description": "Практические маршруты к официальным данным Казахстана для проверки программы, закупки, субсидии или экологического проекта.",
+      "back": "Вернуться в каталог",
+      "eyebrow": "Маршруты проверки",
+      "heading": "Где проверить важное до подачи",
+      "intro": "QAZ.FUND показывает возможности и ведёт к организатору. Если решение зависит от закупки, бюджета, отраслевого правила или экологического проекта, сверяйте его в официальной системе ниже.",
+      "boundary_title": "Честная граница покрытия",
+      "boundary_text": "Эти реестры не выдаются за карточки финансирования. У каждой карточки видно, входит ли контур в автоматический индекс QAZ.FUND или нужен переход к первоисточнику.",
+      "not_indexed": "Проверяется в первоисточнике",
+      "partial": "Покрывается частично",
+      "what_to_check": "Что проверить",
+      "access": "Статус покрытия",
+      "role_prefix": "Для кого",
+      "status": "Статус источников",
+      "policy": "Политика данных",
+      "footer": "QAZ.FUND не принимает заявки и не подтверждает право на финансирование. Последнее решение всегда остаётся за официальным организатором.",
+      "role_labels": {
+        "startup": "стартап",
+        "business": "бизнес",
+        "farmer": "фермер",
+        "ngo": "НКО",
+        "researcher": "исследователь",
+        "supplier": "поставщик",
+        "government": "госорган"
+      }
+    },
+    "kk": {
+      "title": "Қазақстанның ресми деректері – QAZ.FUND",
+      "description": "Бағдарламаны, сатып алуды, субсидияны немесе экологиялық жобаны тексеруге арналған Қазақстанның ресми деректеріне практикалық жолдар.",
+      "back": "Каталогқа оралу",
+      "eyebrow": "Тексеру жолдары",
+      "heading": "Өтінім берер алдында маңыздыны қайдан тексеруге болады",
+      "intro": "QAZ.FUND мүмкіндіктерді көрсетіп, ұйымдастырушыға апарады. Шешім сатып алуға, бюджетке, салалық ережеге не экологиялық жобаға тәуелді болса, оны төмендегі ресми жүйеден салыстырыңыз.",
+      "boundary_title": "Қамтудың ашық шекарасы",
+      "boundary_text": "Бұл тізілімдер қаржыландыру карточкасы ретінде көрсетілмейді. Әр карточкада контур QAZ.FUND автоматты индексіне кіре ме, әлде бастапқы дереккөзге өту керек пе – соны көресіз.",
+      "not_indexed": "Бастапқы дереккөзден тексеріледі",
+      "partial": "Ішінара қамтылған",
+      "what_to_check": "Нені тексеру керек",
+      "access": "Қамту мәртебесі",
+      "role_prefix": "Кімге",
+      "status": "Дереккөз мәртебесі",
+      "policy": "Деректер саясаты",
+      "footer": "QAZ.FUND өтінім қабылдамайды және қаржыландыруға құқықты растамайды. Соңғы шешім әрқашан ресми ұйымдастырушыда қалады.",
+      "role_labels": {
+        "startup": "стартап",
+        "business": "бизнес",
+        "farmer": "фермер",
+        "ngo": "ҮЕҰ",
+        "researcher": "зерттеуші",
+        "supplier": "жеткізуші",
+        "government": "меморган"
+      }
+    },
+    "en": {
+      "title": "Official Kazakhstan data – QAZ.FUND",
+      "description": "Practical routes to official Kazakhstan data for checking a programme, procurement, subsidy, or environmental project.",
+      "back": "Back to catalogue",
+      "eyebrow": "Verification routes",
+      "heading": "Where to check the important facts before applying",
+      "intro": "QAZ.FUND shows opportunities and leads to the organiser. If a decision depends on a procurement, budget, sector rule, or environmental project, verify it in the official system below.",
+      "boundary_title": "An honest coverage boundary",
+      "boundary_text": "These registries are not presented as funding cards. Every card makes clear whether the surface is automatically indexed by QAZ.FUND or needs a primary-source check.",
+      "not_indexed": "Check in the primary source",
+      "partial": "Partially covered",
+      "what_to_check": "What to check",
+      "access": "Coverage status",
+      "role_prefix": "For",
+      "status": "Source status",
+      "policy": "Data policy",
+      "footer": "QAZ.FUND does not accept applications or confirm eligibility for funding. The official organiser always makes the final decision.",
+      "role_labels": {
+        "startup": "startup",
+        "business": "business",
+        "farmer": "farmer",
+        "ngo": "NGO",
+        "researcher": "researcher",
+        "supplier": "supplier",
+        "government": "public body"
+      }
+    }
+  },
+  "routes": [
+    {
+      "id": "public_procurement",
+      "coverage": "not_indexed",
+      "url": "https://goszakup.gov.kz/ru/developer/ows_v3",
+      "roles": ["supplier", "business", "ngo", "government"],
+      "copy": {
+        "ru": {
+          "title": "Государственные закупки",
+          "purpose": "Объявления, планы закупок, итоги и сведения для поставщика.",
+          "use": "Проверьте номер, статус, документацию и срок на официальном портале. План или итоги не равны открытому набору заявок.",
+          "access": "Публичный портал; официальный API требует отдельного технического доступа.",
+          "link_label": "Открыть документацию Госзакупок"
+        },
+        "kk": {
+          "title": "Мемлекеттік сатып алу",
+          "purpose": "Хабарландырулар, сатып алу жоспарлары, қорытындылар және жеткізушіге арналған мәліметтер.",
+          "use": "Нөмірін, мәртебесін, құжаттамасын және мерзімін ресми порталдан тексеріңіз. Жоспар не қорытынды ашық өтінім емес.",
+          "access": "Портал ашық; ресми API үшін бөлек техникалық қолжетімділік қажет.",
+          "link_label": "Мемлекеттік сатып алу құжаттамасын ашу"
+        },
+        "en": {
+          "title": "Public procurement",
+          "purpose": "Notices, procurement plans, awards, and supplier-facing records.",
+          "use": "Check the reference number, status, documents, and deadline on the official portal. A plan or award is not an open application call.",
+          "access": "The portal is public; the official API needs separate technical access.",
+          "link_label": "Open procurement documentation"
+        }
+      }
+    },
+    {
+      "id": "open_data",
+      "coverage": "not_indexed",
+      "url": "https://data.egov.kz/pages/samples",
+      "roles": ["business", "farmer", "ngo", "researcher", "government"],
+      "copy": {
+        "ru": {
+          "title": "Открытые данные eGov",
+          "purpose": "Паспорта и наборы данных госорганов, в том числе отраслевые и региональные.",
+          "use": "Сначала найдите конкретный набор и проверьте его владельца, дату обновления и условия использования. Набор данных не подтверждает право на финансирование.",
+          "access": "В QAZ.FUND пока нет автоматического импорта наборов Open Data.",
+          "link_label": "Открыть каталог Open Data"
+        },
+        "kk": {
+          "title": "eGov ашық деректері",
+          "purpose": "Меморгандардың деректер паспорттары мен жинақтары, соның ішінде салалық және өңірлік деректер.",
+          "use": "Алдымен нақты жинақты тауып, иесін, жаңарту күнін және қолдану шартын тексеріңіз. Деректер жинағы қаржыландыруға құқығын растамайды.",
+          "access": "QAZ.FUND-та Open Data жинақтарын автоматты импорттау әзірге жоқ.",
+          "link_label": "Open Data каталогын ашу"
+        },
+        "en": {
+          "title": "eGov open data",
+          "purpose": "Government dataset catalogues and metadata, including sector and regional data.",
+          "use": "Find the specific dataset first, then verify its owner, update date, and reuse terms. A dataset does not confirm funding eligibility.",
+          "access": "QAZ.FUND does not yet automatically ingest Open Data datasets.",
+          "link_label": "Open the Open Data catalogue"
+        }
+      }
+    },
+    {
+      "id": "open_budgets",
+      "coverage": "not_indexed",
+      "url": "https://budget.egov.kz/isgpcontroller/archivelist",
+      "roles": ["business", "farmer", "ngo", "researcher", "government"],
+      "copy": {
+        "ru": {
+          "title": "Открытые бюджеты",
+          "purpose": "Бюджетные документы и контекст программ на уровне государства и регионов.",
+          "use": "Проверьте период, уровень бюджета, паспорт программы и решение маслихата. Бюджетная строка сама по себе не является конкурсом.",
+          "access": "Официальная публичная витрина; отдельного автоматического индекса в QAZ.FUND пока нет.",
+          "link_label": "Открыть Открытые бюджеты"
+        },
+        "kk": {
+          "title": "Ашық бюджеттер",
+          "purpose": "Мемлекеттік және өңірлік бағдарламалардың бюджеттік құжаттары мен контексті.",
+          "use": "Кезеңін, бюджет деңгейін, бағдарлама паспортын және мәслихат шешімін тексеріңіз. Бюджет жолы өздігінен конкурс емес.",
+          "access": "Ресми ашық витрина; QAZ.FUND-та бөлек автоматты индекс әзірге жоқ.",
+          "link_label": "Ашық бюджеттерді ашу"
+        },
+        "en": {
+          "title": "Open budgets",
+          "purpose": "Budget documents and programme context at national and regional levels.",
+          "use": "Check the period, budget level, programme passport, and maslikhat decision. A budget line is not an application call on its own.",
+          "access": "Official public portal; QAZ.FUND does not yet run a separate automated index for it.",
+          "link_label": "Open Open Budgets"
+        }
+      }
+    },
+    {
+      "id": "agro_livestock",
+      "coverage": "not_indexed",
+      "url": "https://www.gov.kz/memleket/entities/moa/activities/169",
+      "roles": ["farmer", "business", "government"],
+      "copy": {
+        "ru": {
+          "title": "АПК и животноводство",
+          "purpose": "Официальные отраслевые сведения Минсельхоза для фермеров и хозяйств.",
+          "use": "Сверьте регион, направление, текущий порядок и точку подачи у оператора. Условия субсидий часто зависят от вида продукции и области.",
+          "access": "QAZ.FUND не подменяет отраслевую систему подачи и пока не импортирует этот контур автоматически.",
+          "link_label": "Открыть раздел Минсельхоза"
+        },
+        "kk": {
+          "title": "АӨК және мал шаруашылығы",
+          "purpose": "Фермерлер мен шаруашылықтарға арналған Ауыл шаруашылығы министрлігінің ресми салалық мәліметтері.",
+          "use": "Өңірді, бағытты, қолданыстағы тәртіпті және оператордағы өтінім жолын салыстырыңыз. Субсидия шарттары өнім түрі мен облысқа тәуелді болады.",
+          "access": "QAZ.FUND салалық өтінім жүйесін алмастырмайды және бұл контурды әзірге автоматты импорттамайды.",
+          "link_label": "Министрлік бөлімін ашу"
+        },
+        "en": {
+          "title": "Agriculture and livestock",
+          "purpose": "Official sector information from the Ministry of Agriculture for farmers and farm businesses.",
+          "use": "Verify the region, line of activity, current rules, and application route with the operator. Subsidy terms often depend on product type and oblast.",
+          "access": "QAZ.FUND does not replace the sector application system and does not yet ingest this surface automatically.",
+          "link_label": "Open the Ministry section"
+        }
+      }
+    },
+    {
+      "id": "ecology_hearings",
+      "coverage": "not_indexed",
+      "url": "https://ecoportal.kz/Public/PubHearings/PublicHearingIndex",
+      "roles": ["ngo", "business", "researcher", "government"],
+      "copy": {
+        "ru": {
+          "title": "Экологические слушания",
+          "purpose": "Публичные слушания и материалы по экологическим проектам.",
+          "use": "Ищите регион, заказчика, проект и дату слушания. Это доказательный и партнёрский контекст для эколога, а не объявление о гранте.",
+          "access": "QAZ.FUND пока не индексирует слушания автоматически, чтобы не выдавать их за финансирование.",
+          "link_label": "Открыть Ecoportal"
+        },
+        "kk": {
+          "title": "Экологиялық тыңдаулар",
+          "purpose": "Экологиялық жобалар бойынша қоғамдық тыңдаулар мен материалдар.",
+          "use": "Өңірін, тапсырыс берушіні, жобаны және тыңдау күнін іздеңіз. Бұл эколог үшін дәлел мен серіктестік контексі, грант туралы хабарландыру емес.",
+          "access": "QAZ.FUND тыңдауларды қаржыландыру ретінде көрсетпеу үшін әзірге автоматты индекстемейді.",
+          "link_label": "Ecoportal ашу"
+        },
+        "en": {
+          "title": "Environmental hearings",
+          "purpose": "Public hearings and materials related to environmental projects.",
+          "use": "Look for the region, client, project, and hearing date. This is evidence and partnership context for environmental work, not a grant notice.",
+          "access": "QAZ.FUND does not yet index hearings automatically so that they are not presented as funding.",
+          "link_label": "Open Ecoportal"
+        }
+      }
+    },
+    {
+      "id": "subsidy_rules",
+      "coverage": "not_indexed",
+      "url": "https://adilet.zan.kz/rus/docs/V2000020209",
+      "roles": ["farmer", "business", "ngo", "researcher", "government"],
+      "copy": {
+        "ru": {
+          "title": "Правила и нормативная база",
+          "purpose": "Действующая нормативная база, включая правила субсидирования в АПК.",
+          "use": "Проверяйте редакцию, дату изменения, применимость к вашему региону и связанные акты. Правило описывает условия, но не подтверждает открытый приём.",
+          "access": "Это проверочный маршрут к первоисточнику, а не автоматически индексируемая карточка QAZ.FUND.",
+          "link_label": "Открыть правила в Әділет"
+        },
+        "kk": {
+          "title": "Ережелер және нормативтік база",
+          "purpose": "Қолданыстағы нормативтік база, соның ішінде АӨК-ті субсидиялау ережелері.",
+          "use": "Редакциясын, өзгерту күнін, өңірге қолданылуын және байланысты актілерді тексеріңіз. Ереже шарттарды сипаттайды, бірақ қабылдаудың ашық екенін растамайды.",
+          "access": "Бұл QAZ.FUND-та автоматты индекстелетін карточка емес, бастапқы дереккөзді тексеру жолы.",
+          "link_label": "Әділеттегі ережені ашу"
+        },
+        "en": {
+          "title": "Rules and legal basis",
+          "purpose": "Current regulatory materials, including agricultural subsidy rules.",
+          "use": "Check the revision, amendment date, regional applicability, and related acts. A rule describes terms but does not confirm that applications are open.",
+          "access": "This is a primary-source verification route, not an automatically indexed QAZ.FUND card.",
+          "link_label": "Open the rules in Adilet"
+        }
+      }
+    },
+    {
+      "id": "innovation_and_it",
+      "coverage": "partial",
+      "url": "https://astanahub.com/",
+      "roles": ["startup", "business", "researcher"],
+      "copy": {
+        "ru": {
+          "title": "Инновации и IT",
+          "purpose": "Программы для стартапов, технологических команд и коммерциализации.",
+          "use": "В каталоге уже отслеживаются отдельные структурированные источники Astana Hub и QazInnovations. Перед подачей всё равно проверьте живой статус, форму и требования на странице организатора.",
+          "access": "Покрытие частичное: каталог не является полным реестром всех IT-мер и не обещает открытый приём без ссылки на организатора.",
+          "link_label": "Открыть Astana Hub"
+        },
+        "kk": {
+          "title": "Инновациялар және IT",
+          "purpose": "Стартаптарға, технологиялық командаларға және коммерцияландыруға арналған бағдарламалар.",
+          "use": "Каталог Astana Hub пен QazInnovations-тың кейбір құрылымдалған дереккөздерін қадағалайды. Өтінім алдында ұйымдастырушы бетіндегі тірі мәртебені, нысанды және талаптарды тексеріңіз.",
+          "access": "Қамту ішінара: каталог барлық IT қолдау шараларының толық тізілімі емес және ұйымдастырушы сілтемесінсіз қабылдаудың ашық екенін уәде етпейді.",
+          "link_label": "Astana Hub ашу"
+        },
+        "en": {
+          "title": "Innovation and IT",
+          "purpose": "Programmes for startups, technology teams, and commercialisation.",
+          "use": "The catalogue already monitors selected structured Astana Hub and QazInnovations sources. Before applying, still check the live status, form, and requirements on the organiser's page.",
+          "access": "Coverage is partial: the catalogue is not a complete register of IT support and does not promise an open call without an organiser link.",
+          "link_label": "Open Astana Hub"
+        }
+      }
+    }
+  ]
+}

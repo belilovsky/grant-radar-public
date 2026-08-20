@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 import re
-from collections.abc import AsyncIterator, Iterable
+from collections.abc import AsyncIterator
 from dataclasses import dataclass
 from datetime import date
 from typing import ClassVar
@@ -15,6 +15,8 @@ from core.models import Opportunity, OpportunityType
 from core.public_clock import public_today
 from core.source_text import clean_source_text as _clean_text
 from sources.base import BaseSource
+from sources.parsing import parse_text_date as _shared_parse_text_date
+from sources.parsing import unique_normalized as _unique
 
 log = structlog.get_logger()
 
@@ -120,18 +122,6 @@ class ActionEntry:
     rolling: bool = False
 
 
-def _unique(values: Iterable[str]) -> list[str]:
-    seen: set[str] = set()
-    out: list[str] = []
-    for value in values:
-        normalized = value.strip().lower()
-        if not normalized or normalized in seen:
-            continue
-        seen.add(normalized)
-        out.append(normalized)
-    return out
-
-
 def _parse_listing_date(value: str) -> date | None:
     match = LISTING_DATE_RE.search(value)
     if match is None:
@@ -147,13 +137,7 @@ def _parse_listing_date(value: str) -> date | None:
 
 
 def _parse_text_date(day: str, month: str, year: str) -> date | None:
-    month_number = MONTHS.get(month.strip().lower())
-    if month_number is None:
-        return None
-    try:
-        return date(int(year), month_number, int(day))
-    except ValueError:
-        return None
+    return _shared_parse_text_date(day, month, year, MONTHS)
 
 
 def _listing_urls(today: date | None = None) -> list[str]:
@@ -339,6 +323,7 @@ class ErasmusKazakhstanSource(BaseSource):
                 response = await self.client.get(listing_url)
                 response.raise_for_status()
             except Exception as exc:  # noqa: BLE001
+                self._mark_fetch_error(exc)
                 log.warning(
                     "erasmus_kazakhstan.listing_failed",
                     url=listing_url,
@@ -358,6 +343,7 @@ class ErasmusKazakhstanSource(BaseSource):
                 detail_response = await self.client.get(entry.url)
                 detail_response.raise_for_status()
             except Exception as exc:  # noqa: BLE001
+                self._mark_fetch_error(exc)
                 log.warning(
                     "erasmus_kazakhstan.detail_failed",
                     url=entry.url,

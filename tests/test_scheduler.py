@@ -75,6 +75,28 @@ class _FailingParser(_Parser):
         raise RuntimeError("source failed")
 
 
+class _SoftFailingParser(_Parser):
+    name = "soft_failing_source"
+    slug = "soft_failing_source"
+
+    async def fetch(self):
+        self.last_fetch_error = "ConnectError: upstream unavailable"
+        if self.last_fetch_error:
+            return
+        yield GrantRecord(
+            source=self.slug,
+            external_id="unused",
+            title="Unused",
+            url="https://example.org/unused",
+        )
+
+
+class _StaleErrorParser(_Parser):
+    name = "stale_error_source"
+    slug = "stale_error_source"
+    last_fetch_error = "old failure"
+
+
 class _CloseFailingParser(_Parser):
     name = "close_failing_source"
     slug = "close_failing_source"
@@ -166,6 +188,43 @@ def test_run_once_records_source_failure() -> None:
         assert recorder.errors == 1
         assert recorder.finished == [
             {"run_id": 1, "processed": 0, "errors": 1, "status": "error"}
+        ]
+
+    asyncio.run(_go())
+
+
+def test_run_once_records_parser_reported_failure() -> None:
+    async def _go() -> None:
+        recorder = _Recorder()
+        scheduler = SourceScheduler(
+            parsers=[_SoftFailingParser()],
+            recorder_factory=lambda _source: recorder,
+        )
+
+        await scheduler.run_once()
+
+        assert recorder.errors == 1
+        assert recorder.finished == [
+            {"run_id": 1, "processed": 0, "errors": 1, "status": "error"}
+        ]
+
+    asyncio.run(_go())
+
+
+def test_run_once_clears_stale_parser_error_before_fetch() -> None:
+    async def _go() -> None:
+        recorder = _Recorder()
+        parser = _StaleErrorParser()
+        scheduler = SourceScheduler(
+            parsers=[parser],
+            recorder_factory=lambda _source: recorder,
+        )
+
+        await scheduler.run_once()
+
+        assert parser.last_fetch_error is None
+        assert recorder.finished == [
+            {"run_id": 1, "processed": 0, "errors": 0, "status": "ok"}
         ]
 
     asyncio.run(_go())

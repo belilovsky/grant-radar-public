@@ -10,8 +10,17 @@ RSYNC_DELETE="${RSYNC_DELETE:-0}"
 READY_URL="${READY_URL:-http://127.0.0.1:8000/ready}"
 READY_ATTEMPTS="${READY_ATTEMPTS:-30}"
 READY_DELAY="${READY_DELAY:-2}"
+SEMANTIC_READY_ATTEMPTS="${SEMANTIC_READY_ATTEMPTS:-450}"
+SEMANTIC_READY_DELAY="${SEMANTIC_READY_DELAY:-2}"
+WORKER_READY_ATTEMPTS="${WORKER_READY_ATTEMPTS:-120}"
+WORKER_READY_DELAY="${WORKER_READY_DELAY:-2}"
 PUBLIC_URL="${PUBLIC_URL:-}"
 REQUIRE_PUBLIC_VERIFY="${REQUIRE_PUBLIC_VERIFY:-1}"
+MIN_FREE_BYTES="${MIN_FREE_BYTES:-21474836480}"
+RECONCILE_SOURCE_DUMP="${RECONCILE_SOURCE_DUMP:-}"
+RECONCILE_SOURCE_DUMP_SHA256="${RECONCILE_SOURCE_DUMP_SHA256:-}"
+RECONCILE_EXPECTED_SOURCE_COUNT="${RECONCILE_EXPECTED_SOURCE_COUNT:-}"
+RECONCILE_EXPECTED_TARGET_COUNT="${RECONCILE_EXPECTED_TARGET_COUNT:-}"
 
 cd "$ROOT_DIR"
 
@@ -34,6 +43,58 @@ fi
 
 REVISION="$(git rev-parse HEAD)"
 DEPLOYED_AT="$(date -u +%Y-%m-%dT%H:%M:%SZ)"
+BUILT_AT="$DEPLOYED_AT"
+if command -v sha256sum >/dev/null 2>&1; then
+  ARTIFACT_DIGEST="sha256:$(git archive "$REVISION" | sha256sum | awk '{print $1}')"
+else
+  ARTIFACT_DIGEST="sha256:$(git archive "$REVISION" | shasum -a 256 | awk '{print $1}')"
+fi
+
+run_remote_capacity_preflight() {
+  local remote_command
+  printf -v remote_command \
+    'env DEPLOY_PATH=%q ENV_FILE=%q COMPOSE_FILES=%q MIN_FREE_BYTES=%q bash -s' \
+    "$DEPLOY_PATH" "$ENV_FILE" "$COMPOSE_FILES" "$MIN_FREE_BYTES"
+  ssh "$DEPLOY_HOST" "$remote_command" <<'QAZ_FUND_CAPACITY_PREFLIGHT'
+set -euo pipefail
+
+root_dir="${DEPLOY_PATH:-/opt/grant-radar}"
+env_file="${ENV_FILE:-.env.prod}"
+compose_files="${COMPOSE_FILES:--f docker-compose.yml -f docker-compose.prod.yml}"
+min_free_bytes="${MIN_FREE_BYTES:-21474836480}"
+cd "$root_dir"
+
+current_api_image="$(docker compose --env-file "$env_file" $compose_files images -q api 2>/dev/null | head -n 1)"
+current_semantic_image="$(docker compose --env-file "$env_file" $compose_files images -q semantic 2>/dev/null | head -n 1)"
+if [[ -z "$current_api_image" || -z "$current_semantic_image" ]]; then
+  echo "QAZ.FUND preflight rollback gate failed: current images are missing." >&2
+  exit 74
+fi
+
+image_size() {
+  local image_id="$1"
+  if [[ -z "$image_id" ]]; then
+    printf '0\n'
+    return
+  fi
+  docker image inspect --format '{{.Size}}' "$image_id" 2>/dev/null || printf '0\n'
+}
+
+current_bytes="$(( $(image_size "$current_api_image") + $(image_size "$current_semantic_image") ))"
+required_bytes="$(( 2 * (current_bytes + current_bytes) ))"
+if (( required_bytes < min_free_bytes )); then
+  required_bytes="$min_free_bytes"
+fi
+free_bytes="$(df -PB1 "$root_dir" | awk 'NR==2 {print $4}')"
+if (( free_bytes < required_bytes )); then
+  echo "QAZ.FUND preflight capacity gate failed: free=$free_bytes required=$required_bytes." >&2
+  echo "Remote source, images, databases, and unrelated products were not changed." >&2
+  exit 73
+fi
+printf 'QAZ.FUND preflight capacity gate passed: free=%s required=%s.\n' \
+  "$free_bytes" "$required_bytes"
+QAZ_FUND_CAPACITY_PREFLIGHT
+}
 
 RSYNC_ARGS=(
   -az
@@ -42,38 +103,40 @@ RSYNC_ARGS=(
   --exclude "__pycache__"
   --exclude ".pytest_cache"
   --exclude ".mypy_cache"
+  --exclude "work"
 )
 
 if [[ "$RSYNC_DELETE" == "1" ]]; then
   RSYNC_ARGS+=(--delete)
 fi
 
+run_remote_capacity_preflight
 rsync "${RSYNC_ARGS[@]}" "$ROOT_DIR/" "$DEPLOY_HOST:$DEPLOY_PATH/"
 
-ssh "$DEPLOY_HOST" "
-  set -euo pipefail
-  cd '$DEPLOY_PATH'
-  export APP_REVISION='$REVISION'
-  export APP_DEPLOYED_AT='$DEPLOYED_AT'
-  docker compose --env-file '$ENV_FILE' $COMPOSE_FILES up -d --build
-  ready_ok=0
-  for attempt in \$(seq 1 '$READY_ATTEMPTS'); do
-    if docker compose --env-file '$ENV_FILE' $COMPOSE_FILES exec -T api \
-      curl -fsS '$READY_URL' >/dev/null 2>&1; then
-      ready_ok=1
-      break
-    fi
-    sleep '$READY_DELAY'
-  done
-  if [[ \"\$ready_ok\" != \"1\" ]]; then
-    echo 'API readiness check failed after deploy.' >&2
-    docker compose --env-file '$ENV_FILE' $COMPOSE_FILES logs --tail=80 api >&2 || true
-    exit 1
-  fi
-  printf '%s\n' '$REVISION' > .deployed-revision
-  printf '%s\n' '$DEPLOYED_AT' > .deployed-at
-  docker compose --env-file '$ENV_FILE' $COMPOSE_FILES ps
-"
+ssh "$DEPLOY_HOST" \
+  "cd '$DEPLOY_PATH' && env \
+    DEPLOY_PATH='$DEPLOY_PATH' \
+    ENV_FILE='$ENV_FILE' \
+    COMPOSE_FILES='$COMPOSE_FILES' \
+    REVISION='$REVISION' \
+    DEPLOYED_AT='$DEPLOYED_AT' \
+    BUILT_AT='$BUILT_AT' \
+    ARTIFACT_DIGEST='$ARTIFACT_DIGEST' \
+    MIN_FREE_BYTES='$MIN_FREE_BYTES' \
+    READY_URL='$READY_URL' \
+    READY_ATTEMPTS='$READY_ATTEMPTS' \
+    READY_DELAY='$READY_DELAY' \
+    SEMANTIC_READY_ATTEMPTS='$SEMANTIC_READY_ATTEMPTS' \
+    SEMANTIC_READY_DELAY='$SEMANTIC_READY_DELAY' \
+    WORKER_READY_ATTEMPTS='$WORKER_READY_ATTEMPTS' \
+    WORKER_READY_DELAY='$WORKER_READY_DELAY' \
+    PUBLIC_URL='$PUBLIC_URL' \
+    REQUIRE_PUBLIC_VERIFY='$REQUIRE_PUBLIC_VERIFY' \
+    RECONCILE_SOURCE_DUMP='$RECONCILE_SOURCE_DUMP' \
+    RECONCILE_SOURCE_DUMP_SHA256='$RECONCILE_SOURCE_DUMP_SHA256' \
+    RECONCILE_EXPECTED_SOURCE_COUNT='$RECONCILE_EXPECTED_SOURCE_COUNT' \
+    RECONCILE_EXPECTED_TARGET_COUNT='$RECONCILE_EXPECTED_TARGET_COUNT' \
+    bash scripts/remote_release_qaz_fund.sh"
 
 if [[ -n "$PUBLIC_URL" ]]; then
   release_url="${PUBLIC_URL%/}/.well-known/release.json?revision=$REVISION"

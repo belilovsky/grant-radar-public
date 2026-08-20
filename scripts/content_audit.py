@@ -8,12 +8,14 @@ import re
 from dataclasses import asdict, dataclass, field
 from datetime import datetime, timedelta, timezone
 from typing import Any
-from urllib.parse import urljoin, urlparse
+from urllib.parse import urlparse
 
 import httpx
 
 from api.dashboard import dashboard_copy
+from core.content_safety import blocked_publication_reason
 from core.public_clock import public_today
+from scripts.http_utils import join_url as _url
 
 try:
     from datetime import UTC
@@ -28,8 +30,14 @@ DEFAULT_FORBIDDEN_TERMS = (
     "Technical Difficulties",
 )
 
-# Seasonal monitors are healthy while their official annual window is closed.
-EXPECTED_EMPTY_SOURCE_SLUGS = frozenset({"canada_cfli_ca"})
+# Seasonal or intermittent official listings remain healthy when a successful,
+# fresh source check confirms that no call is currently published.
+EXPECTED_EMPTY_SOURCE_SLUGS = frozenset(
+    {
+        "canada_cfli_ca",
+        "unicef_kazakhstan",
+    }
+)
 
 
 @dataclass(frozen=True)
@@ -49,11 +57,8 @@ class ContentAuditResult:
     unlocalized_tags: dict[str, list[str]] = field(default_factory=dict)
     unlocalized_sources: dict[str, list[str]] = field(default_factory=dict)
     forbidden_hits: dict[str, list[str]] = field(default_factory=dict)
+    blocked_publication_titles: list[str] = field(default_factory=list)
     issues: list[str] = field(default_factory=list)
-
-
-def _url(base_url: str, path: str) -> str:
-    return urljoin(f"{base_url.rstrip('/')}/", path.lstrip("/"))
 
 
 def _parse_datetime(value: Any) -> datetime | None:
@@ -94,6 +99,36 @@ def _visible_item_text(item: dict[str, Any]) -> str:
     return " ".join(parts)
 
 
+def _has_deadline_policy(item: dict[str, Any]) -> bool:
+    """Return whether the public record explains why a date is absent."""
+    if item.get("deadline"):
+        return True
+    policy = item.get("deadline_policy")
+    raw = item.get("raw")
+    if isinstance(raw, dict):
+        policy = policy or raw.get("deadline_policy")
+        if raw.get("deadline_raw") or raw.get("deadline_display"):
+            return True
+        localized = raw.get("i18n")
+        if isinstance(localized, dict) and any(
+            isinstance(value, dict) and value.get("deadline_display")
+            for value in localized.values()
+        ):
+            return True
+        if raw.get("deadline_status") == "not_published" and raw.get(
+            "canonical_source_url"
+        ):
+            return True
+        if raw.get("source_watch") and (
+            raw.get("verification_note") or raw.get("status_note")
+        ):
+            return True
+    if policy:
+        return True
+    lifecycle = str(item.get("lifecycle") or item.get("opportunity_status") or "")
+    return lifecycle.lower() in {"closed", "archived", "awarded"}
+
+
 def _rootish_source_url(value: Any) -> bool:
     if not value:
         return True
@@ -120,37 +155,24 @@ def _raw_payload(item: dict[str, Any]) -> dict[str, Any]:
     return raw if isinstance(raw, dict) else {}
 
 
-def _is_source_watch(item: dict[str, Any]) -> bool:
-    tags = {str(tag).strip().lower() for tag in item.get("tags") or []}
-    return "source_watch" in tags or _raw_payload(item).get("source_watch") is True
+def _last_source_activity(row: dict[str, Any]) -> datetime | None:
+    """Use a successful source check when a monitor has no new records.
 
-
-def _has_deadline_policy(item: dict[str, Any]) -> bool:
-    if item.get("deadline"):
-        return True
-    tags = {str(tag).strip().lower() for tag in item.get("tags") or []}
-    raw = _raw_payload(item)
-    status = (
-        str(
-            item.get("lifecycle")
-            or item.get("opportunity_status")
-            or raw.get("lifecycle")
-            or raw.get("opportunity_status")
-            or ""
-        )
-        .strip()
-        .lower()
-    )
-    return bool(
-        "rolling" in tags
-        or raw.get("deadline_policy")
-        or status in {"forecast", "upcoming"}
-        or _is_source_watch(item)
-    )
+    Monitored pages can legitimately keep the same item for weeks. Treating
+    last_discovered_at as the only freshness signal marks those sources stale
+    even though the adapter has just checked the official page.
+    """
+    timestamps = [
+        _parse_datetime(row.get("last_checked_at")),
+        _parse_datetime(row.get("last_discovered_at")),
+    ]
+    return max((value for value in timestamps if value is not None), default=None)
 
 
 def _has_detail_contract(item: dict[str, Any]) -> bool:
     raw = _raw_payload(item)
+    if raw.get("detail_content_mode") == "curated" and raw.get("canonical_source_url"):
+        return True
     if str(raw.get("detail_text") or "").strip():
         return True
     sections = raw.get("detail_sections")
@@ -168,7 +190,7 @@ def _label_key(value: Any) -> str:
 
 def _dashboard_label_maps() -> dict[str, dict[str, object]]:
     result: dict[str, dict[str, object]] = {}
-    for lang in ("ru", "en"):
+    for lang in ("ru", "kk", "en"):
         raw = dashboard_copy(lang).get("label_map")
         result[lang] = dict(raw) if isinstance(raw, dict) else {}
     return result
@@ -183,6 +205,7 @@ def analyze_content(
     min_opportunities: int,
     stale_after_days: int,
     label_maps: dict[str, dict[str, object]] | None = None,
+    safety_opportunities: list[dict[str, Any]] | None = None,
     now: datetime | None = None,
 ) -> ContentAuditResult:
     now = now or datetime.now(UTC)
@@ -201,7 +224,7 @@ def analyze_content(
             and slug not in EXPECTED_EMPTY_SOURCE_SLUGS
         ):
             zero_item_sources.append(slug)
-        last_seen = _parse_datetime(row.get("last_discovered_at"))
+        last_seen = _last_source_activity(row)
         if row.get("enabled") and items > 0 and last_seen and last_seen < stale_cutoff:
             stale_sources.append(slug)
 
@@ -246,6 +269,8 @@ def analyze_content(
         str(item.get("title") or "")
         for item in opportunities
         if not _has_deadline_policy(item)
+        and "rolling"
+        not in {str(tag).strip().lower() for tag in (item.get("tags") or [])}
     ][:20]
     if missing_deadline_titles:
         issues.append(
@@ -255,7 +280,15 @@ def analyze_content(
     rootish_source_urls = [
         str(item.get("source_url") or "")
         for item in opportunities
-        if _rootish_source_url(item.get("source_url")) and not _is_source_watch(item)
+        if _rootish_source_url(item.get("source_url"))
+        and not (
+            isinstance(item.get("raw"), dict)
+            and (
+                item["raw"].get("source_watch")
+                or item["raw"].get("source_url_root_validated")
+            )
+            and item.get("source_url")
+        )
     ][:20]
     if rootish_source_urls:
         issues.append(f"{len(rootish_source_urls)} opportunities have weak source_url")
@@ -327,6 +360,17 @@ def analyze_content(
     if forbidden_hits:
         issues.append("forbidden content terms found")
 
+    safety_items = (
+        safety_opportunities if safety_opportunities is not None else opportunities
+    )
+    blocked_publication_titles = [
+        str(item.get("title") or item.get("source_url") or "unknown")
+        for item in safety_items
+        if blocked_publication_reason(item)
+    ][:20]
+    if blocked_publication_titles:
+        issues.append("known unsafe publications are publicly accessible")
+
     status = "ok" if not issues else "needs_attention"
     return ContentAuditResult(
         status=status,
@@ -344,6 +388,7 @@ def analyze_content(
         unlocalized_tags=unlocalized_tags,
         unlocalized_sources=unlocalized_sources,
         forbidden_hits=forbidden_hits,
+        blocked_publication_titles=blocked_publication_titles,
         issues=issues,
     )
 
@@ -371,9 +416,17 @@ def run_audit(
             )
         )
         opportunities.raise_for_status()
+        safety_opportunities = client.get(
+            _url(
+                base_url,
+                "/opportunities?limit=5000&min_score=0&include_irrelevant=true",
+            )
+        )
+        safety_opportunities.raise_for_status()
     return analyze_content(
         coverage=coverage.json(),
         opportunities=opportunities.json(),
+        safety_opportunities=safety_opportunities.json(),
         forbidden_terms=forbidden_terms,
         min_sources=min_sources,
         min_opportunities=min_opportunities,

@@ -6,7 +6,6 @@ import argparse
 import json
 from dataclasses import asdict, dataclass, field
 from typing import Any
-from urllib.parse import urljoin
 
 import httpx
 
@@ -15,6 +14,7 @@ from core.nlp import (
     extract_rule_based_entities,
     text_quality_flags,
 )
+from scripts.http_utils import join_url as _url
 
 
 @dataclass(frozen=True)
@@ -33,10 +33,6 @@ class NlpAuditResult:
     missing_entity_count: int
     flag_counts: dict[str, int] = field(default_factory=dict)
     issues: list[NlpAuditIssue] = field(default_factory=list)
-
-
-def _url(base_url: str, path: str) -> str:
-    return urljoin(f"{base_url.rstrip('/')}/", path.lstrip("/"))
 
 
 def analyze_nlp_quality(

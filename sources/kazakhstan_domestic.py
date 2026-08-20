@@ -27,6 +27,10 @@ from bs4 import BeautifulSoup
 from core.models import Opportunity, OpportunityType
 from core.source_text import clean_plain_source_text as _clean_text
 from sources.base import BaseSource
+from sources.parsing import html_title as _shared_html_title
+from sources.parsing import is_blocked_fetch as _is_blocked_fetch
+from sources.parsing import is_unavailable_page as _shared_is_unavailable_page
+from sources.parsing import unique_normalized as _unique
 
 log = structlog.get_logger()
 
@@ -124,11 +128,20 @@ class DomesticProgram:
     eligibility: tuple[str, ...] = ()
     title_ru: str = ""
     summary_ru: str = ""
+    funder: str = ""
+    country: str = ""
+    region: str = ""
     amount_raw: str | None = None
     amount_min: Decimal | None = None
     amount_max: Decimal | None = None
     currency: str = "USD"
     application_url: str | None = None
+    deadline_raw: str | None = None
+    taxonomy_instrument: str = ""
+    taxonomy_application_mode: str = ""
+    taxonomy_deadline_model: str = ""
+    application_windows: tuple[tuple[str, str], ...] = ()
+    source_aliases: tuple[str, ...] = ()
 
 
 DOMESTIC_PROGRAMS = (
@@ -303,7 +316,7 @@ DOMESTIC_PROGRAMS = (
             "22 August for middle-specialist and applied-bachelor programmes, "
             "27 August for working qualifications and 20 September for part-time study."
         ),
-        title_ru="6300 грантовых мест в колледжах Павлодарской области",
+        title_ru="6300 мест по госзаказу в колледжах Павлодарской области",
         summary_ru=(
             "Официальное сообщение Управления образования Павлодарской области "
             "о приёме в колледжи на 2026-2027 учебный год. Регион выделил "
@@ -316,8 +329,8 @@ DOMESTIC_PROGRAMS = (
             "для заочной формы."
         ),
         tags=(
-            "grant",
-            "scholarship",
+            "education_admission",
+            "state_funded_seat",
             "education",
             "citizen_support",
             "regional_development",
@@ -333,6 +346,17 @@ DOMESTIC_PROGRAMS = (
         ),
         amount_raw="6,300 state-funded college places for 2026-2027",
         application_url="https://egov.kz/cms/ru/online-services/for_citizen/pr_5",
+        taxonomy_instrument="education_admission",
+        taxonomy_application_mode="admission",
+        taxonomy_deadline_model="multiple",
+        application_windows=(
+            ("creative_programmes", "2026-07-20"),
+            ("pedagogy_and_some_medical_programmes", "2026-08-10"),
+            ("medical_after_grade_11_or_tvet", "2026-08-15"),
+            ("state_order_middle_specialist_and_applied_bachelor", "2026-08-22"),
+            ("working_qualifications", "2026-08-27"),
+            ("part_time_study", "2026-09-20"),
+        ),
     ),
     DomesticProgram(
         url="https://www.gov.kz/memleket/entities/astana/press/news/details/1247988?lang=ru",
@@ -345,7 +369,7 @@ DOMESTIC_PROGRAMS = (
             "education places. Applications are accepted online through eGov.kz; "
             "published deadlines run by track from 20 July to 20 September 2026."
         ),
-        title_ru="10 300 грантовых мест в колледжах Астаны",
+        title_ru="10 300 мест по госзаказу в колледжах Астаны",
         summary_ru=(
             "Официальное сообщение акимата Астаны о приёме в колледжи на "
             "2026-2027 учебный год. В городе выделено 10 300 грантовых мест, "
@@ -356,8 +380,8 @@ DOMESTIC_PROGRAMS = (
             "20 июля до 20 сентября 2026 года."
         ),
         tags=(
-            "grant",
-            "scholarship",
+            "education_admission",
+            "state_funded_seat",
             "education",
             "citizen_support",
             "regional_development",
@@ -373,24 +397,34 @@ DOMESTIC_PROGRAMS = (
         ),
         amount_raw="10,300 state-funded college places for 2026-2027",
         application_url="https://egov.kz/cms/ru/online-services/for_citizen/pr_5",
+        taxonomy_instrument="education_admission",
+        taxonomy_application_mode="admission",
+        taxonomy_deadline_model="multiple",
+        application_windows=(
+            ("creative_programmes", "2026-07-20"),
+            ("pedagogy_and_some_medical_programmes", "2026-08-10"),
+            ("medical_after_grade_11_or_tvet", "2026-08-15"),
+            ("state_order_middle_specialist_and_applied_bachelor", "2026-08-22"),
+            ("working_qualifications", "2026-08-27"),
+            ("part_time_study", "2026-09-20"),
+        ),
     ),
     DomesticProgram(
-        url="https://www.gov.kz/memleket/entities/mfa-delhi/press/news/details/1228534?lang=ru",
+        url="https://aaiff.ai/",
         title="Astana AI Film Festival international contest",
         summary=(
-            "Official Kazakhstan MFA notice on the Astana AI Film Festival "
-            "international contest for AI-created short films. Applications are "
-            "open to individual authors and teams worldwide until 15 August 2026; "
-            "the festival will select 25 finalists and has a total prize fund "
-            "of USD 1 million."
+            "Official Astana AI Film Festival open call for AI-created short "
+            "films. Applications are free and open to individual authors, teams "
+            "and studios worldwide until 31 August 2026; the total prize fund is "
+            "USD 1 million."
         ),
         title_ru="Международный конкурс Astana AI Film Festival",
         summary_ru=(
-            "Официальное сообщение МИД Казахстана о международном конкурсе "
-            "короткометражных фильмов, созданных с использованием искусственного "
-            "интеллекта. Заявки принимаются от индивидуальных авторов и команд "
-            "со всего мира до 15 августа 2026 года; фестиваль отберёт 25 "
-            "финалистов, общий призовой фонд составляет 1 млн долларов США."
+            "Официальный open call Astana AI Film Festival для короткометражных "
+            "фильмов, созданных с использованием генеративного AI. Бесплатные "
+            "заявки принимаются от индивидуальных авторов, команд и студий со "
+            "всего мира до 31 августа 2026 года; общий призовой фонд составляет "
+            "1 млн долларов США."
         ),
         tags=(
             "contest",
@@ -403,7 +437,7 @@ DOMESTIC_PROGRAMS = (
         ),
         type=OpportunityType.CONTEST,
         rolling=False,
-        deadline=date(2026, 8, 15),
+        deadline=date(2026, 8, 31),
         opportunity_status="open",
         lifecycle="open",
         eligibility=(
@@ -972,22 +1006,44 @@ DOMESTIC_PROGRAMS = (
         ),
     ),
     DomesticProgram(
-        url=(
-            "https://agrocredit.kz/en/main/press-center/news/"
-            "agrarnaya-kreditnaya-korporatsiya-zapustila-novoe-napravlenie-"
-            "kreditovaniya/"
-        ),
-        title="Agrarian Credit Corporation livestock lending",
+        url="https://agrocredit.kz/en/main/our-activities/programs/3569/",
+        title="Agrarian Credit Corporation feedlot and poultry financing",
         summary=(
-            "Official Agrarian Credit Corporation program for preferential "
-            "short-term lending to livestock and feedlot producers."
+            "Official Agrarian Credit Corporation loan programme for working "
+            "capital of feedlots and poultry farms."
         ),
+        title_ru="Льготное кредитование откормочных площадок и птицефабрик",
+        summary_ru=(
+            "Программа Аграрной кредитной корпорации для пополнения оборотного "
+            "капитала откормочных площадок и птицефабрик."
+        ),
+        funder="Agrarian Credit Corporation",
+        country="kazakhstan",
+        rolling=False,
+        opportunity_status="open",
+        lifecycle="open",
+        eligibility=(
+            "Direct borrowers, credit partnerships, second-tier banks, microfinance "
+            "organizations and regional investment centers financing feedlots or "
+            "poultry farms",
+        ),
+        amount_raw=(
+            "Direct borrowers: 5% per annum; KZT 1 million to 15 billion. Credit "
+            "line term up to 36 months; tranche term up to 12 months."
+        ),
+        currency="KZT",
+        taxonomy_instrument="loan",
         tags=(
             "preferential_financing",
             "agrotech",
             "vettech",
             "livestock",
             "agrocredit",
+        ),
+        source_aliases=(
+            "https://agrocredit.kz/en/main/press-center/news/"
+            "agrarnaya-kreditnaya-korporatsiya-zapustila-novoe-napravlenie-"
+            "kreditovaniya/",
         ),
     ),
     DomesticProgram(
@@ -1034,6 +1090,32 @@ DOMESTIC_PROGRAMS = (
             "Official QazIndustry state-stimulation measures for partial cost "
             "reimbursement to improve industrial productivity."
         ),
+        title_ru="Возмещение затрат QazIndustry для повышения производительности",
+        summary_ru=(
+            "Частичное возмещение затрат субъектов промышленно-инновационной "
+            "деятельности: 40% по четырём направлениям, с лимитами до 20–60 млн ₸ "
+            "в календарный год."
+        ),
+        funder="QazIndustry",
+        country="kazakhstan",
+        rolling=False,
+        opportunity_status="open",
+        lifecycle="open",
+        eligibility=(
+            "Kazakhstan producers of priority goods that meet the official "
+            "registration, tax-payment and arrears requirements",
+        ),
+        amount_raw=(
+            "40% of eligible costs, capped at KZT 20–60 million per calendar year "
+            "depending on the measure; installation and supervision installation "
+            "costs are capped at KZT 12 million."
+        ),
+        currency="KZT",
+        application_url="https://sez.qazindustry.gov.kz/ru/service/5/evaluate",
+        deadline_raw=(
+            "During the calendar year, until the allocated budget is exhausted"
+        ),
+        taxonomy_instrument="reimbursement",
         tags=("reimbursement", "industry", "digitalization", "business_support"),
     ),
     DomesticProgram(
@@ -1221,7 +1303,190 @@ DOMESTIC_PROGRAMS = (
     ),
 )
 
-ACTIVE_DOMESTIC_URLS = frozenset(program.url for program in DOMESTIC_PROGRAMS)
+DOMESTIC_EDITORIAL_RU: dict[str, dict[str, Any]] = {
+    "https://aaiff.ai/": {
+        "social_title": "Astana AI Film Festival: конкурс с фондом 1 млн USD",
+        "summary": (
+            "Международный конкурс короткометражных фильмов, в которых "
+            "генеративный AI является частью процесса создания."
+        ),
+        "audience_label": "Кому подходит",
+        "eligibility": [
+            "Индивидуальные авторы, команды и студии из любой страны; "
+            "участие бесплатное"
+        ],
+        "highlights_label": "Требования к фильму",
+        "highlights": [
+            "продолжительность – от 3 минут",
+            "генеративный AI должен участвовать в создании, а не только в постобработке",
+            "в видео нужны встроенные английские субтитры",
+            "для YouTube обязателен хэштег #SpecialForAAIFF в описании",
+        ],
+        "amount": "общий фонд – 1 000 000 USD; главный приз – 450 000 USD",
+        "amount_label": "Призы",
+        "deadline_display": "31 августа 2026",
+        "deadline_label": "Дедлайн",
+        "steps_title": "Как подать",
+        "application_step_titles": [
+            "Загрузите фильм",
+            "Выберите секцию",
+            "Заполните форму",
+        ],
+        "application_steps": [
+            "Загрузить фильм в 1080p на YouTube или Google Drive и открыть доступ",
+            "Выбрать тематическую или открытую конкурсную секцию",
+            "Заполнить форму на aaiff.ai, указать AI-инструменты и всех участников",
+        ],
+        "prepare_items": [
+            {
+                "title": "Проверьте хронометраж",
+                "text": "Фестиваль принимает фильмы продолжительностью от трёх минут.",
+            },
+            {
+                "title": "Добавьте английские субтитры",
+                "text": "Субтитры должны быть встроены непосредственно в видео.",
+            },
+            {
+                "title": "Опишите AI-процесс",
+                "text": (
+                    "В заявке нужно раскрыть использованные модели, инструменты "
+                    "и вклад участников."
+                ),
+            },
+            {
+                "title": "Подготовьте ссылку",
+                "text": (
+                    "Можно использовать публичное или unlisted-видео на YouTube "
+                    "либо Google Drive с доступом по ссылке."
+                ),
+            },
+        ],
+    },
+    ("https://qazindustry.gov.kz/ru/business_reimbursement"): {
+        "summary": (
+            "Частичное возмещение затрат субъектов промышленно-инновационной "
+            "деятельности: 40% по четырём направлениям, с лимитами до 20–60 млн ₸ "
+            "в календарный год."
+        ),
+        "eligibility": [
+            "Производители продукции из перечня приоритетных товаров; с даты "
+            "регистрации или уведомления должно пройти не менее года.",
+            "Не должно быть задолженности по налогам, обязательным пенсионным "
+            "взносам и социальным платежам, кроме предусмотренных исключений.",
+            "Налоговые отчисления за три предыдущих календарных года должны "
+            "увеличиваться; для отдельных категорий предусмотрены исключения.",
+        ],
+        "highlights_label": "Что компенсируют",
+        "highlights": [
+            "Повышение компетенций сотрудников – 40%, до 30 млн ₸ в календарный "
+            "год; обучение, переподготовка или повышение квалификации – до 3 месяцев.",
+            "Внедрение цифровых технологий – 40%, до 60 млн ₸ в календарный год.",
+            "Совершенствование технологических процессов – 40%, до 60 млн ₸ в "
+            "календарный год; монтаж и шеф-монтаж – до 12 млн ₸.",
+            "Повышение эффективности организации производства – 40%, до 20 млн ₸ "
+            "в календарный год.",
+        ],
+        "amount": "40% затрат – до 20–60 млн ₸ в год по направлению",
+        "amount_label": "Размер возмещения",
+        "deadline_display": "В течение календарного года – до освоения бюджета",
+        "deadline_label": "Период приёма",
+        "application_step_titles": [
+            "Проверьте соответствие",
+            "Подготовьте документы по расходам",
+            "Подайте через сервис QazIndustry",
+        ],
+        "application_steps": [
+            "Сверьте продукцию, срок работы и обязательные платежи с критериями "
+            "программы.",
+            "Соберите документы, подтверждающие расходы по выбранному направлению.",
+            "Откройте цифровой сервис QazIndustry и следуйте актуальному порядку "
+            "подачи.",
+        ],
+        "prepare_items": [
+            {
+                "title": "Сверьте перечень продукции",
+                "text": "Продукция заявителя должна входить в перечень приоритетных товаров.",
+            },
+            {
+                "title": "Проверьте лимит направления",
+                "text": "Лимит зависит от выбранной меры: от 20 до 60 млн ₸ в календарный год.",
+            },
+            {
+                "title": "Подтвердите расходы",
+                "text": (
+                    "Порядок и подтверждающие документы нужно сверить в инструкции "
+                    "QazIndustry."
+                ),
+            },
+            {
+                "title": "Не откладывайте подачу",
+                "text": "Приём идёт до освоения бюджетных средств соответствующего года.",
+            },
+        ],
+    },
+    "https://agrocredit.kz/en/main/our-activities/programs/3569/": {
+        "summary": (
+            "Программа Аграрной кредитной корпорации для пополнения оборотного "
+            "капитала откормочных площадок и птицефабрик."
+        ),
+        "eligibility": [
+            "Прямые заёмщики, кредитные товарищества, банки второго уровня, МФО "
+            "и региональные инвестиционные центры.",
+            "Целевое назначение для прямых заёмщиков – пополнение оборотного капитала "
+            "откормочных площадок и птицефабрик.",
+        ],
+        "highlights_label": "Ключевые условия",
+        "highlights": [
+            "Для прямых заёмщиков – 5% годовых; для кредитных товариществ, банков, "
+            "МФО и РИЦ – 1,5% с ограничением маржи для конечного заёмщика.",
+            "Сумма для прямых заёмщиков – от 1 млн до 15 млрд ₸; для кредитных "
+            "товариществ – от 1 млн до 10 млрд ₸.",
+            "Срок кредитной линии – до 36 месяцев, срок транша – до 12 месяцев.",
+            "Залог принимается по залоговой политике Аграрной кредитной корпорации.",
+        ],
+        "amount": "5% годовых для прямых заёмщиков – 1–15 млрд ₸",
+        "amount_label": "Ставка и сумма",
+        "prepare_items": [
+            {
+                "title": "Определите канал финансирования",
+                "text": (
+                    "Обратиться можно как прямой заёмщик, через кредитное товарищество, "
+                    "банк, МФО или региональный инвестиционный центр."
+                ),
+            },
+            {
+                "title": "Сверьте целевое назначение",
+                "text": (
+                    "Программа предназначена для пополнения оборотного капитала "
+                    "откормочных площадок и птицефабрик."
+                ),
+            },
+            {
+                "title": "Проверьте лимит и срок",
+                "text": (
+                    "Для прямых заёмщиков заявлен диапазон от 1 млн до 15 млрд ₸, "
+                    "линия – до 36 месяцев, транш – до 12 месяцев."
+                ),
+            },
+            {
+                "title": "Подготовьте обеспечение",
+                "text": (
+                    "Требования к залогу определяются залоговой политикой Аграрной "
+                    "кредитной корпорации."
+                ),
+            },
+        ],
+    },
+}
+
+
+def _program_urls(program: DomesticProgram) -> tuple[str, ...]:
+    return (program.url, *program.source_aliases)
+
+
+ACTIVE_DOMESTIC_URLS = frozenset(
+    url for program in DOMESTIC_PROGRAMS for url in _program_urls(program)
+)
 
 
 def _detect_detail_language(text: str, html: str = "") -> str:
@@ -1424,15 +1689,92 @@ def _amount_raw_payload(program: DomesticProgram) -> dict[str, Any]:
     return payload
 
 
+def _taxonomy_payload(program: DomesticProgram) -> dict[str, Any]:
+    taxonomy = {
+        key: value
+        for key, value in {
+            "instrument": program.taxonomy_instrument,
+            "application_mode": program.taxonomy_application_mode,
+            "deadline_model": program.taxonomy_deadline_model,
+        }.items()
+        if value
+    }
+    payload: dict[str, Any] = {}
+    if taxonomy:
+        payload["opportunity_taxonomy"] = taxonomy
+    if program.application_windows:
+        payload["application_windows"] = [
+            {"route": route, "deadline": deadline}
+            for route, deadline in program.application_windows
+        ]
+    return payload
+
+
 def _i18n_payload(program: DomesticProgram) -> dict[str, Any]:
-    if not program.title_ru and not program.summary_ru:
+    editorial = DOMESTIC_EDITORIAL_RU.get(program.url, {})
+    if not program.title_ru and not program.summary_ru and not editorial:
         return {}
-    ru: dict[str, str] = {}
+    ru: dict[str, Any] = {}
     if program.title_ru:
         ru["title"] = program.title_ru
     if program.summary_ru:
         ru["summary"] = program.summary_ru
+    ru.update(editorial)
     return {"i18n": {"ru": ru}}
+
+
+def domestic_program_payload(program: DomesticProgram) -> dict[str, Any]:
+    """Return source-backed static fields that must survive a stale DB snapshot."""
+
+    editorial = DOMESTIC_EDITORIAL_RU.get(program.url, {})
+    payload: dict[str, Any] = {
+        "canonical_source_url": program.url,
+        **_i18n_payload(program),
+        **_amount_raw_payload(program),
+        **_taxonomy_payload(program),
+    }
+    if program.funder:
+        payload["funder"] = program.funder
+    if program.country:
+        payload["country"] = program.country
+    if program.region:
+        payload["region"] = program.region
+    if program.rolling:
+        payload["deadline_policy"] = "rolling"
+    if program.deadline is not None:
+        payload["deadline"] = program.deadline.isoformat()
+    if program.deadline_raw:
+        payload["deadline_raw"] = program.deadline_raw
+    elif (
+        not program.rolling
+        and program.deadline is None
+        and program.opportunity_status == "open"
+        and program.lifecycle == "open"
+    ):
+        # The official page describes a current product but publishes no
+        # application window. Keep that distinction instead of inventing a
+        # rolling deadline.
+        payload["deadline_status"] = "not_published"
+    if program.opportunity_status:
+        payload["opportunity_status"] = program.opportunity_status
+    if program.lifecycle:
+        payload["lifecycle"] = program.lifecycle
+    if program.application_url:
+        payload["application_url"] = program.application_url
+    if program.eligibility:
+        payload["eligibility_raw"] = list(program.eligibility)
+    if program.amount_raw:
+        payload["currency"] = program.currency
+    if any(
+        editorial.get(key)
+        for key in ("highlights", "eligibility", "prepare_items", "application_steps")
+    ):
+        payload["detail_content_mode"] = "curated"
+    if program.application_url and program.application_url.rstrip(
+        "/"
+    ) == program.url.rstrip("/"):
+        payload["source_url_root_validated"] = True
+    return payload
 
 
 def _detail_snapshot(html: str) -> dict[str, Any] | None:
@@ -1455,29 +1797,11 @@ def _detail_snapshot(html: str) -> dict[str, Any] | None:
 
 
 def _html_title(html: str) -> str | None:
-    match = re.search(
-        r"<title[^>]*>(?P<title>.*?)</title>", html, re.IGNORECASE | re.DOTALL
-    )
-    if match is None:
-        return None
-    return _clean_text(re.sub(r"<[^>]+>", " ", match.group("title")))
+    return _shared_html_title(html, _clean_text, strip_tags=True)
 
 
 def _is_unavailable_page(html: str) -> bool:
-    title = (_html_title(html) or "").lower()
-    text = _clean_text(re.sub(r"<[^>]+>", " ", html)).lower()
-    return "technical difficulties" in title or (
-        "experiencing technical difficulties" in text and "please try again" in text
-    )
-
-
-def _is_blocked_fetch(status_code: int, page_title: str | None) -> bool:
-    title = (page_title or "").strip().lower()
-    return status_code in {401, 403, 429} or title in {
-        "access denied",
-        "403 forbidden",
-        "too many requests",
-    }
+    return _shared_is_unavailable_page(html, _clean_text)
 
 
 def _needs_qazindustry_ca_fallback(url: str, exc: Exception) -> bool:
@@ -1533,18 +1857,6 @@ def _looks_like_unhydrated_govkz_shell(url: str, html: str) -> bool:
     return not re.search(r"<(?:h1|h2|h3|p|li|tr)\b", html, re.IGNORECASE)
 
 
-def _unique(values: Iterable[str]) -> list[str]:
-    seen: set[str] = set()
-    out: list[str] = []
-    for value in values:
-        normalized = value.strip().lower()
-        if not normalized or normalized in seen:
-            continue
-        seen.add(normalized)
-        out.append(normalized)
-    return out
-
-
 def _program_tags(program: DomesticProgram, default_tags: Iterable[str]) -> list[str]:
     tags = [*default_tags, *program.tags]
     if program.rolling:
@@ -1575,6 +1887,7 @@ class KazakhstanDomesticSupportSource(BaseSource):
             type=program.type,
             title=program.title,
             summary=program.summary,
+            funder=program.funder or None,
             amount_min=program.amount_min,
             amount_max=program.amount_max,
             currency=program.currency,
@@ -1619,6 +1932,7 @@ class KazakhstanDomesticSupportSource(BaseSource):
                 if response.status_code == 404 or response.status_code >= 500:
                     response.raise_for_status()
             except Exception as exc:  # noqa: BLE001
+                self._mark_fetch_error(exc)
                 if program.retain_on_fetch_error and not isinstance(
                     exc, httpx.HTTPStatusError
                 ):
@@ -1634,18 +1948,7 @@ class KazakhstanDomesticSupportSource(BaseSource):
                             "external_id": program.url,
                             "page_title": program.title,
                             "status_code": None,
-                            "deadline_policy": ("rolling" if program.rolling else None),
-                            "deadline": (
-                                program.deadline.isoformat()
-                                if program.deadline
-                                else None
-                            ),
-                            "opportunity_status": program.opportunity_status,
-                            "lifecycle": program.lifecycle,
-                            **_i18n_payload(program),
-                            **_amount_raw_payload(program),
-                            "application_url": program.application_url,
-                            "eligibility_raw": list(program.eligibility),
+                            **domestic_program_payload(program),
                             **_curated_detail_payload(program, "parse_error"),
                             "status_note": (
                                 "official curated domestic-support page "
@@ -1673,16 +1976,7 @@ class KazakhstanDomesticSupportSource(BaseSource):
                 "external_id": program.url,
                 "page_title": page_title,
                 "status_code": response.status_code,
-                "deadline_policy": "rolling" if program.rolling else None,
-                "deadline": (
-                    program.deadline.isoformat() if program.deadline else None
-                ),
-                "opportunity_status": program.opportunity_status,
-                "lifecycle": program.lifecycle,
-                **_i18n_payload(program),
-                **_amount_raw_payload(program),
-                "application_url": program.application_url,
-                "eligibility_raw": list(program.eligibility),
+                **domestic_program_payload(program),
             }
             if _is_blocked_fetch(response.status_code, page_title):
                 raw.update(
@@ -1709,7 +2003,9 @@ class KazakhstanDomesticSupportSource(BaseSource):
 
 
 KazakhstanDomesticSupportParser = KazakhstanDomesticSupportSource
-DOMESTIC_PROGRAM_BY_URL = {program.url: program for program in DOMESTIC_PROGRAMS}
+DOMESTIC_PROGRAM_BY_URL = {
+    url: program for program in DOMESTIC_PROGRAMS for url in _program_urls(program)
+}
 DOMESTIC_PROGRAM_TAGS = {
     program.url: _program_tags(program, KazakhstanDomesticSupportSource.default_tags)
     for program in DOMESTIC_PROGRAMS

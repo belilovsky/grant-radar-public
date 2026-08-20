@@ -41,6 +41,16 @@ def test_rule_based_entities_extract_project_finance_and_tenders():
     assert "tender" in tender["support_types"]
 
 
+def test_rule_based_entities_extract_contest_support_type():
+    entities = extract_rule_based_entities(
+        title="UNESCO Photo Contest on Nomadic Culture of Central Asia",
+        summary="Professional and amateur photographers may submit photographs.",
+        tags=["contest", "culture"],
+    )
+
+    assert "contest" in entities["support_types"]
+
+
 def test_clean_source_summary_removes_read_more_noise():
     assert (
         clean_source_summary("Описание программы. Читать далее Прием заявок")

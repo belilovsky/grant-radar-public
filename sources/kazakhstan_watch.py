@@ -6,7 +6,6 @@ grant pages that do not yet have stable item-level APIs in this project.
 
 from __future__ import annotations
 
-import re
 from collections.abc import AsyncIterator, Iterable
 from dataclasses import dataclass
 from typing import Any, ClassVar
@@ -17,6 +16,10 @@ import structlog
 from core.models import Opportunity, OpportunityType
 from core.source_text import clean_plain_source_text as _clean_text
 from sources.base import BaseSource
+from sources.parsing import html_title as _shared_html_title
+from sources.parsing import is_blocked_fetch as _is_blocked_fetch
+from sources.parsing import is_unavailable_page as _shared_is_unavailable_page
+from sources.parsing import unique_normalized as _unique
 
 log = structlog.get_logger()
 
@@ -113,41 +116,11 @@ ACTIVE_WATCH_URLS = frozenset(page.url for page in WATCH_PAGES)
 
 
 def _html_title(html: str) -> str | None:
-    match = re.search(
-        r"<title[^>]*>(?P<title>.*?)</title>", html, re.IGNORECASE | re.DOTALL
-    )
-    if match is None:
-        return None
-    return _clean_text(re.sub(r"<[^>]+>", " ", match.group("title")))
+    return _shared_html_title(html, _clean_text, strip_tags=True)
 
 
 def _is_unavailable_page(html: str) -> bool:
-    title = (_html_title(html) or "").lower()
-    text = _clean_text(re.sub(r"<[^>]+>", " ", html)).lower()
-    return "technical difficulties" in title or (
-        "experiencing technical difficulties" in text and "please try again" in text
-    )
-
-
-def _is_blocked_fetch(status_code: int, page_title: str | None) -> bool:
-    title = (page_title or "").strip().lower()
-    return status_code in {401, 403, 429} or title in {
-        "access denied",
-        "403 forbidden",
-        "too many requests",
-    }
-
-
-def _unique(values: Iterable[str]) -> list[str]:
-    seen: set[str] = set()
-    out: list[str] = []
-    for value in values:
-        normalized = value.strip().lower()
-        if not normalized or normalized in seen:
-            continue
-        seen.add(normalized)
-        out.append(normalized)
-    return out
+    return _shared_is_unavailable_page(html, _clean_text)
 
 
 def _page_tags(page: WatchPage, default_tags: Iterable[str]) -> list[str]:
@@ -201,6 +174,7 @@ class KazakhstanWatchSource(BaseSource):
                 if response.status_code == 404 or response.status_code >= 500:
                     response.raise_for_status()
             except Exception as exc:  # noqa: BLE001
+                self._mark_fetch_error(exc)
                 if page.retain_on_fetch_error and not isinstance(
                     exc, httpx.HTTPStatusError
                 ):

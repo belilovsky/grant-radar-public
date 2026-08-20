@@ -10,9 +10,8 @@ Keeps PipelineRunner / DedupProcessor backend-agnostic.
 
 from __future__ import annotations
 
-import os
-
 from .persistence import InMemoryRepository, Repository
+from .runtime_config import resolve_database_url
 
 
 def _load_sql_repository(url: str, echo: bool = False) -> Repository:
@@ -34,14 +33,7 @@ def make_repository(url: str | None = None, *, echo: bool = False) -> Repository
       * "memory" / ":memory:" / "" -> InMemoryRepository
       * any sqlite/postgres/mysql URL -> SqlRepository (SQLAlchemy)
     """
-    resolved = (
-        url
-        if url is not None
-        else (
-            os.environ.get("GRANT_RADAR_DB_URL") or os.environ.get("DATABASE_URL") or ""
-        )
-    )
-    resolved = (resolved or "").strip()
+    resolved = resolve_database_url(url)
 
     if resolved in ("", "memory", ":memory:"):
         return InMemoryRepository()

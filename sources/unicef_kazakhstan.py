@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 import re
-from collections.abc import AsyncIterator, Iterable
+from collections.abc import AsyncIterator
 from dataclasses import dataclass
 from datetime import date, datetime
 from typing import Any, ClassVar, cast
@@ -15,13 +15,19 @@ from core.models import Opportunity, OpportunityType
 from core.public_clock import public_today
 from core.source_text import clean_source_text as _clean_text
 from sources.base import BaseSource
+from sources.parsing import infer_substring_tags as _shared_infer_tags
+from sources.parsing import unique_normalized as _unique
 
 log = structlog.get_logger()
 
 UNICEF_KAZAKHSTAN_TENDERS_URL = "https://www.unicef.org/kazakhstan/en/tenders"
 UNICEF_KAZAKHSTAN_TENDERS_READER_URL = (
-    "https://r.jina.ai/http://r.jina.ai/http://" f"{UNICEF_KAZAKHSTAN_TENDERS_URL}"
+    "https://r.jina.ai/http://www.unicef.org/kazakhstan/en/tenders"
 )
+UNICEF_READER_HEADERS = {
+    "User-Agent": "grant-radar/1.0 (+https://qaz.fund)",
+    "Accept": "text/plain,text/markdown;q=0.9,*/*;q=0.8",
+}
 UNICEF_FETCH_HEADERS: list[dict[str, str]] = [
     {
         "User-Agent": (
@@ -113,18 +119,6 @@ class UnicefTender:
     application_url: str | None
 
 
-def _unique(values: Iterable[str]) -> list[str]:
-    seen: set[str] = set()
-    out: list[str] = []
-    for value in values:
-        normalized = value.strip().lower()
-        if not normalized or normalized in seen:
-            continue
-        seen.add(normalized)
-        out.append(normalized)
-    return out
-
-
 def _parse_deadline(text: str) -> date | None:
     match = RECEIVED_BY_RE.search(text)
     if match is not None:
@@ -167,12 +161,7 @@ def _policy_for_closed_deadline(
 
 
 def _infer_tags(text: str) -> list[str]:
-    lowered = text.lower()
-    tags: list[str] = []
-    for tag, keywords in THEME_KEYWORDS.items():
-        if any(keyword in lowered for keyword in keywords):
-            tags.append(tag)
-    return tags
+    return _shared_infer_tags(text, THEME_KEYWORDS)
 
 
 def _is_operational_service_tender(text: str) -> bool:
@@ -305,6 +294,7 @@ class UnicefKazakhstanSource(BaseSource):
                     headers=headers,
                 )
             except Exception as exc:  # noqa: BLE001
+                self._mark_fetch_error(exc)
                 log.debug(
                     "unicef_kazakhstan.fetch_retry_failed",
                     error=str(exc),
@@ -319,19 +309,23 @@ class UnicefKazakhstanSource(BaseSource):
             response = candidate
             break
 
+        if response is not None:
+            self.last_fetch_error = None
+
         if response is None:
             try:
                 candidate = await self.client.get(
                     UNICEF_KAZAKHSTAN_TENDERS_READER_URL,
-                    headers={
-                        "User-Agent": UNICEF_FETCH_HEADERS[-1]["User-Agent"],
-                        "Accept": "text/plain,text/markdown;q=0.9,*/*;q=0.8",
-                    },
+                    headers=UNICEF_READER_HEADERS,
                 )
             except Exception as exc:  # noqa: BLE001
+                self._mark_fetch_error(exc)
                 log.warning("unicef_kazakhstan.reader_fetch_failed", error=str(exc))
                 return
             if _is_blocked_page(candidate.text, candidate.status_code):
+                self._mark_fetch_error(
+                    f"reader returned blocked status {candidate.status_code}"
+                )
                 log.warning(
                     "unicef_kazakhstan.fetch_failed",
                     reader_status=candidate.status_code,
@@ -339,6 +333,7 @@ class UnicefKazakhstanSource(BaseSource):
                 return
             log.info("unicef_kazakhstan.reader_fallback_used")
             response = candidate
+            self.last_fetch_error = None
 
         count = 0
         for tender in _extract_tenders(response.text):

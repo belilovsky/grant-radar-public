@@ -4,6 +4,8 @@ from __future__ import annotations
 
 from datetime import datetime, timezone
 
+import pytest
+
 try:
     UTC = timezone.utc
 except AttributeError:  # pragma: no cover - Python < 3.11 compatibility
@@ -99,6 +101,42 @@ def test_content_audit_flags_current_catalog_count_drift():
     )
 
 
+def test_content_audit_scans_full_catalog_for_blocked_publications():
+    clean_item = {
+        "title": "Current support program",
+        "summary": (
+            "Current support opportunity with enough public context and a direct "
+            "source for applicants in Kazakhstan."
+        ),
+        "tags": ["rolling"],
+        "source_url": "https://example.org/program/current",
+    }
+    blocked_item = {
+        "title": "International Finance Corporation Women-Led Business Grant 2026",
+        "summary": "Secondary publication for a confirmed unsafe programme.",
+        "tags": ["grant"],
+        "source_url": (
+            "https://opportunitydesk.org/2026/06/30/"
+            "ifc-women-led-business-grant-2026/"
+        ),
+    }
+
+    result = analyze_content(
+        coverage={"enabled_sources": 1, "relevant_open_items": 1, "sources": []},
+        opportunities=[clean_item],
+        safety_opportunities=[clean_item, blocked_item],
+        forbidden_terms=[],
+        min_sources=1,
+        min_opportunities=1,
+        stale_after_days=7,
+        now=datetime(2026, 8, 13, tzinfo=UTC),
+    )
+
+    assert result.status == "needs_attention"
+    assert result.blocked_publication_titles == [blocked_item["title"]]
+    assert "known unsafe publications are publicly accessible" in result.issues
+
+
 def test_content_audit_accepts_clean_rolling_items():
     result = analyze_content(
         coverage={
@@ -137,47 +175,135 @@ def test_content_audit_accepts_clean_rolling_items():
     assert result.rootish_source_urls == []
 
 
-def test_content_audit_accepts_forecast_source_watch_without_deadline():
+def test_content_audit_uses_recent_successful_check_for_unchanged_monitor():
     result = analyze_content(
         coverage={
             "enabled_sources": 1,
             "relevant_open_items": 1,
             "sources": [
                 {
-                    "slug": "official_watch",
+                    "slug": "unchanged_monitor",
                     "enabled": True,
                     "items": 1,
-                    "last_discovered_at": "2026-07-28T00:00:00+00:00",
+                    "last_discovered_at": "2026-07-01T00:00:00+00:00",
+                    "last_checked_at": "2026-08-03T00:00:00+00:00",
+                    "freshness_basis": "source_check",
                 }
             ],
         },
         opportunities=[
             {
-                "title": "Future official call",
+                "title": "Monitored support program",
                 "summary": (
-                    "Official monitored entry point for a forthcoming program "
-                    "relevant to applicants in Kazakhstan and Central Asia."
+                    "An unchanged official program page checked recently; verify "
+                    "the current terms before taking action."
                 ),
-                "tags": ["source_watch", "official_source"],
-                "source_url": "https://example.org/tenders",
-                "opportunity_status": "upcoming",
-                "lifecycle": "forecast",
-                "raw": {"source_watch": True},
+                "tags": ["rolling"],
+                "source_url": "https://example.org/programs/monitor",
             }
         ],
         forbidden_terms=[],
         min_sources=1,
         min_opportunities=1,
         stale_after_days=7,
-        now=datetime(2026, 7, 28, tzinfo=UTC),
+        now=datetime(2026, 8, 3, tzinfo=UTC),
+    )
+
+    assert result.status == "ok"
+    assert result.stale_sources == []
+
+
+def test_content_audit_accepts_source_policy_and_archived_items_without_dates():
+    result = analyze_content(
+        coverage={
+            "enabled_sources": 2,
+            "relevant_open_items": 2,
+            "sources": [
+                {
+                    "slug": "watch",
+                    "enabled": True,
+                    "items": 2,
+                    "last_discovered_at": "2026-05-25T00:00:00+00:00",
+                }
+            ],
+        },
+        opportunities=[
+            {
+                "title": "Forecast call",
+                "summary": (
+                    "Forecast record with an explicit source policy; verify the next "
+                    "official notice before preparing an application."
+                ),
+                "tags": ["grant"],
+                "raw": {"deadline_policy": "verify_notice_no_search_close_date"},
+                "source_url": "https://example.org/programs/forecast-call",
+            },
+            {
+                "title": "Awarded cycle archive",
+                "summary": (
+                    "Archived results record for historical analysis; it is not an "
+                    "open application and has no active submission window."
+                ),
+                "tags": ["results_archive"],
+                "lifecycle": "awarded",
+                "source_url": "https://example.org/archive/2020",
+            },
+        ],
+        forbidden_terms=[],
+        min_sources=2,
+        min_opportunities=2,
+        stale_after_days=7,
+        now=datetime(2026, 5, 25, tzinfo=UTC),
     )
 
     assert result.status == "ok"
     assert result.missing_deadline_titles == []
-    assert result.rootish_source_urls == []
 
 
-def test_content_audit_allows_closed_seasonal_source_without_items():
+def test_content_audit_accepts_monitored_watch_records_without_dates():
+    result = analyze_content(
+        coverage={
+            "enabled_sources": 1,
+            "relevant_open_items": 1,
+            "sources": [
+                {
+                    "slug": "watch",
+                    "enabled": True,
+                    "items": 1,
+                    "last_discovered_at": "2026-05-25T00:00:00+00:00",
+                }
+            ],
+        },
+        opportunities=[
+            {
+                "title": "Monitored programme page",
+                "summary": (
+                    "A monitored official page whose current call window must be "
+                    "verified before any submission is prepared."
+                ),
+                "tags": ["grant"],
+                "source_url": "https://example.org/programmes/current",
+                "raw": {
+                    "source_watch": True,
+                    "verification_note": "Verify the current call window on the source.",
+                },
+            }
+        ],
+        forbidden_terms=[],
+        min_sources=1,
+        min_opportunities=1,
+        stale_after_days=7,
+        now=datetime(2026, 5, 25, tzinfo=UTC),
+    )
+
+    assert result.status == "ok"
+    assert result.missing_deadline_titles == []
+
+
+@pytest.mark.parametrize("source_slug", ["canada_cfli_ca", "unicef_kazakhstan"])
+def test_content_audit_allows_verified_intermittent_source_without_items(
+    source_slug: str,
+):
     result = analyze_content(
         coverage={
             "enabled_sources": 2,
@@ -190,7 +316,7 @@ def test_content_audit_allows_closed_seasonal_source_without_items():
                     "last_discovered_at": "2026-07-13T00:00:00+00:00",
                 },
                 {
-                    "slug": "canada_cfli_ca",
+                    "slug": source_slug,
                     "enabled": True,
                     "items": 0,
                     "last_discovered_at": None,
@@ -383,3 +509,62 @@ def test_content_audit_flags_domestic_items_without_detail_contract():
     assert result.missing_detail_status_titles == [
         "State grant for startup business development"
     ]
+
+
+def test_content_audit_accepts_curated_current_records_without_invented_deadlines():
+    result = analyze_content(
+        coverage={
+            "enabled_sources": 2,
+            "relevant_open_items": 2,
+            "sources": [
+                {
+                    "slug": "kazakhstan_domestic_support",
+                    "enabled": True,
+                    "items": 2,
+                    "last_discovered_at": "2026-08-15T00:00:00+00:00",
+                }
+            ],
+        },
+        opportunities=[
+            {
+                "source": "kazakhstan_domestic_support",
+                "title": "Current livestock financing",
+                "summary": (
+                    "Official current lending product for working capital of "
+                    "feedlots and poultry farms in Kazakhstan."
+                ),
+                "tags": ["kazakhstan", "domestic_support"],
+                "source_url": "https://example.org/programs/livestock",
+                "raw": {
+                    "canonical_source_url": "https://example.org/programs/livestock",
+                    "deadline_status": "not_published",
+                    "detail_content_mode": "curated",
+                },
+            },
+            {
+                "source": "kazakhstan_domestic_support",
+                "title": "Validated application landing page",
+                "summary": (
+                    "Official application landing page with published contest terms "
+                    "and a direct route for eligible applicants."
+                ),
+                "tags": ["rolling", "kazakhstan"],
+                "source_url": "https://example.org/",
+                "raw": {
+                    "canonical_source_url": "https://example.org/",
+                    "detail_content_mode": "curated",
+                    "source_url_root_validated": True,
+                },
+            },
+        ],
+        forbidden_terms=[],
+        min_sources=2,
+        min_opportunities=2,
+        stale_after_days=7,
+        now=datetime(2026, 8, 15, tzinfo=UTC),
+    )
+
+    assert result.status == "ok"
+    assert result.missing_deadline_titles == []
+    assert result.missing_detail_status_titles == []
+    assert result.rootish_source_urls == []

@@ -7,14 +7,27 @@ import re
 from datetime import date
 from enum import Enum
 from html import escape
+from typing import cast
 from urllib.parse import urlparse
 
 from api.avds import AVDS_CSS, AVDS_FONT_HEAD
 from api.avds_visual import OPPORTUNITY_AVDS4_CSS
+from api.branding import BRAND_MARK_TEAL_HTML
 from api.dashboard import dashboard_copy
-from api.public_meta import analytics_head_html, og_image_url
-from core.models import Opportunity, OpportunityDetail, OpportunityMetadataField
+from api.opportunity_og import opportunity_og_image_url, opportunity_og_version
+from api.page_primitives import absolute_href as _absolute_href
+from api.page_primitives import catalog_path as _catalog_path
+from api.page_primitives import format_deadline as _format_deadline
+from api.public_meta import analytics_head_html
+from core.decision_support import browser_precheck_contract, program_truth
+from core.models import (
+    Opportunity,
+    OpportunityDetail,
+    OpportunityDetailSection,
+    OpportunityMetadataField,
+)
 from core.nlp import clean_source_summary
+from core.opportunity_taxonomy import classify_opportunity
 
 PUBLIC_METADATA_KEYS = frozenset(
     {
@@ -38,15 +51,844 @@ HERO_METADATA_KEYS = frozenset({"source", "funder", "deadline"})
 SOURCE_SECTION_NOISE_HEADINGS = frozenset(
     {"notification", "search", "поиск", "уведомление"}
 )
+_DETAIL_SECTION_TECHNICAL_HEADINGS = frozenset(
+    {
+        "source status",
+        "статус источника",
+        "дереккөз мәртебесі",
+    }
+)
+_DETAIL_SECTION_OVERVIEW_HEADINGS = frozenset({"overview", "обзор", "шолу"})
+_DETAIL_SECTION_ELIGIBILITY_HEADINGS = frozenset(
+    {
+        "eligibility",
+        "кто может подать заявку",
+        "кім өтінім бере алады",
+    }
+)
 
 
-def _absolute_href(origin: str, path: str) -> str:
-    clean_origin = origin.rstrip("/")
-    if path.startswith(("http://", "https://")):
-        return path
-    if not clean_origin:
-        return path or "/"
-    return f"{clean_origin}{path}"
+OPPORTUNITY_DETAIL_CSS = r"""
+    .opportunity-article {
+      display: grid;
+      gap: 16px;
+    }
+    .opportunity-hero {
+      display: grid;
+      gap: clamp(16px, 2vw, 22px);
+      padding: clamp(22px, 3vw, 36px);
+      border: 1px solid var(--line);
+      border-radius: var(--av-radius-lg);
+      background: var(--surface);
+      box-shadow: var(--av-shadow-sm);
+    }
+    .opportunity-head {
+      display: grid;
+      gap: 12px;
+      max-width: 1080px;
+    }
+    .opportunity-kicker {
+      color: var(--brand);
+      font-size: var(--av-text-xs);
+      font-weight: 750;
+      letter-spacing: .06em;
+      text-transform: uppercase;
+    }
+    .opportunity-hero h1 {
+      max-width: 31ch;
+      margin: 0;
+      color: var(--text);
+      font-size: clamp(30px, 3.25vw, 50px);
+      line-height: 1.08;
+      letter-spacing: -0.035em;
+      text-wrap: balance;
+    }
+    .opportunity-summary {
+      max-width: 68ch;
+      margin: 0;
+      color: color-mix(in oklab, var(--text), var(--muted) 34%);
+      font-size: clamp(16px, 1.25vw, 19px);
+      line-height: 1.56;
+    }
+    .opportunity-facts {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(min(100%, 180px), 1fr));
+      gap: 10px;
+      margin: 0;
+    }
+    .opportunity-fact {
+      display: grid;
+      align-content: start;
+      gap: 5px;
+      min-height: 74px;
+      padding: 12px 14px;
+      border: 1px solid var(--line-subtle);
+      border-radius: var(--av-radius-md);
+      background: var(--surface-subtle);
+    }
+    .opportunity-fact--key {
+      border-top: 2px solid color-mix(in oklab, var(--brand), white 18%);
+      background: color-mix(in oklab, var(--surface), var(--brand-soft) 28%);
+    }
+    .opportunity-fact dt {
+      color: var(--muted);
+      font-size: var(--av-text-xs);
+      font-weight: 700;
+      line-height: 1.25;
+    }
+    .opportunity-fact dd {
+      margin: 0;
+      color: var(--text);
+      font-size: var(--av-text-base);
+      font-weight: 750;
+      line-height: 1.32;
+      overflow-wrap: anywhere;
+    }
+    .opportunity-actions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+    }
+    .opportunity-actions .button {
+      min-height: 44px;
+    }
+    .opportunity-layout {
+      display: grid;
+      grid-template-columns: minmax(0, 1.46fr) minmax(300px, .54fr);
+      gap: clamp(18px, 3vw, 40px);
+      align-items: start;
+    }
+    .opportunity-content {
+      display: grid;
+      gap: 14px;
+      min-width: 0;
+    }
+    .detail-section {
+      display: grid;
+      gap: 14px;
+      padding: clamp(18px, 2.4vw, 26px);
+      border: 1px solid var(--line);
+      border-radius: var(--av-radius-lg);
+      background: var(--surface);
+      box-shadow: var(--av-shadow-xs);
+    }
+    .detail-section-head {
+      display: grid;
+      gap: 5px;
+      max-width: 760px;
+    }
+    .detail-section-head h2 {
+      margin: 0;
+      color: var(--text);
+      font-size: clamp(20px, 2vw, 26px);
+      line-height: 1.16;
+      letter-spacing: -0.018em;
+    }
+    .detail-section-head p {
+      margin: 0;
+      color: var(--muted);
+      font-size: var(--av-text-sm);
+      line-height: 1.48;
+    }
+    .eligibility-list,
+    .key-conditions-list,
+    .source-guidance-list,
+    .application-steps {
+      display: grid;
+      gap: 9px;
+      margin: 0;
+      padding: 0;
+      list-style: none;
+    }
+    .eligibility-list li {
+      position: relative;
+      padding: 0 0 0 18px;
+      color: color-mix(in oklab, var(--text), var(--muted) 22%);
+      line-height: 1.58;
+    }
+    .eligibility-list li::before {
+      position: absolute;
+      top: .66em;
+      left: 0;
+      width: 7px;
+      height: 7px;
+      border-radius: 999px;
+      background: var(--brand);
+      content: "";
+    }
+    .key-conditions-list {
+      grid-template-columns: repeat(auto-fit, minmax(min(100%, 225px), 1fr));
+      gap: 10px;
+      counter-reset: key-condition;
+    }
+    .key-condition {
+      display: grid;
+      grid-template-columns: 28px minmax(0, 1fr);
+      gap: 10px;
+      align-items: start;
+      min-height: 100%;
+      padding: 13px 14px;
+      border: 1px solid var(--line-subtle);
+      border-radius: var(--av-radius-md);
+      background: var(--surface-subtle);
+      color: color-mix(in oklab, var(--text), var(--muted) 22%);
+      line-height: 1.52;
+    }
+    .key-condition::before {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 26px;
+      height: 26px;
+      border-radius: 999px;
+      background: color-mix(in oklab, var(--brand-soft), var(--surface) 40%);
+      color: var(--brand);
+      counter-increment: key-condition;
+      content: counter(key-condition, decimal-leading-zero);
+      font-size: var(--av-text-xs);
+      font-weight: 750;
+      line-height: 1;
+    }
+    .detail-content-list {
+      display: grid;
+      gap: 22px;
+    }
+    .detail-content-entry {
+      display: grid;
+      gap: 9px;
+    }
+    .detail-content-entry + .detail-content-entry {
+      padding-top: 22px;
+      border-top: 1px solid var(--line-subtle);
+    }
+    .detail-content-entry h3 {
+      margin: 0;
+      color: var(--text);
+      font-size: var(--av-text-lg);
+      line-height: 1.3;
+    }
+    .detail-content-entry p {
+      max-width: 78ch;
+      margin: 0;
+      color: color-mix(in oklab, var(--text), var(--muted) 25%);
+      line-height: 1.67;
+    }
+    .source-text-disclosure {
+      display: grid;
+      gap: 14px;
+    }
+    .source-text-disclosure summary {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+      cursor: pointer;
+      color: var(--text);
+      font-weight: 750;
+      list-style: none;
+    }
+    .source-text-disclosure summary::-webkit-details-marker {
+      display: none;
+    }
+    .source-text-disclosure summary::after {
+      flex: 0 0 auto;
+      color: var(--brand);
+      content: "+";
+      font-size: 20px;
+      font-weight: 600;
+      line-height: 1;
+    }
+    .source-text-disclosure[open] summary::after {
+      content: "–";
+    }
+    .source-text-disclosure-action {
+      color: var(--muted);
+      font-size: var(--av-text-sm);
+      font-weight: 650;
+    }
+    .source-guidance-list {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 10px;
+    }
+    .source-guidance-item,
+    .application-step {
+      display: grid;
+      gap: 5px;
+      padding: 13px 14px;
+      border: 1px solid var(--line-subtle);
+      border-radius: var(--av-radius-md);
+      background: var(--surface-subtle);
+    }
+    .source-guidance-item strong,
+    .application-step h3 {
+      margin: 0;
+      color: var(--text);
+      font-size: var(--av-text-sm);
+      line-height: 1.35;
+    }
+    .source-guidance-item p,
+    .application-step p {
+      margin: 0;
+      color: var(--muted);
+      font-size: var(--av-text-sm);
+      line-height: 1.5;
+    }
+    .application-steps {
+      counter-reset: application-step;
+    }
+    .application-step {
+      grid-template-columns: 30px minmax(0, 1fr);
+      gap: 11px;
+    }
+    .application-step::before {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 28px;
+      height: 28px;
+      border-radius: 999px;
+      background: var(--brand);
+      color: white;
+      counter-increment: application-step;
+      content: counter(application-step);
+      font-size: var(--av-text-xs);
+      font-weight: 750;
+    }
+    .source-panel {
+      position: sticky;
+      top: 88px;
+      display: grid;
+      gap: 14px;
+      padding: 20px;
+      border: 1px solid var(--line);
+      border-radius: var(--av-radius-lg);
+      background: var(--surface);
+      box-shadow: var(--av-shadow-xs);
+    }
+    .source-panel-head {
+      display: grid;
+      gap: 5px;
+    }
+    .source-panel h2 {
+      margin: 0;
+      color: var(--text);
+      font-size: var(--av-text-lg);
+      line-height: 1.22;
+      overflow-wrap: anywhere;
+    }
+    .source-host {
+      margin: 0;
+      color: var(--muted);
+      font-size: var(--av-text-sm);
+      line-height: 1.45;
+      overflow-wrap: anywhere;
+    }
+    .source-actions {
+      display: grid;
+      gap: 8px;
+    }
+    .source-actions .button {
+      width: 100%;
+      min-height: 44px;
+    }
+    .reference-list {
+      display: grid;
+      gap: 8px;
+      margin: 0;
+      padding-top: 14px;
+      border-top: 1px solid var(--line-subtle);
+    }
+    .reference-list div {
+      display: grid;
+      gap: 3px;
+    }
+    .reference-list dt {
+      color: var(--muted);
+      font-size: var(--av-text-xs);
+      font-weight: 700;
+    }
+    .reference-list dd {
+      margin: 0;
+      color: var(--text);
+      font-size: var(--av-text-sm);
+      font-weight: 700;
+      overflow-wrap: anywhere;
+    }
+    .site-footer--compact {
+      margin-top: 2px;
+    }
+    @media (min-width: 1440px) {
+      .opportunity-layout {
+        grid-template-columns: minmax(0, 1.5fr) minmax(340px, .5fr);
+      }
+      .opportunity-content {
+        max-width: 1120px;
+      }
+    }
+    @media (min-width: 2200px) {
+      .opportunity-layout {
+        grid-template-columns: minmax(0, 1.56fr) minmax(400px, .44fr);
+        gap: 56px;
+      }
+      .detail-content-entry p {
+        max-width: 88ch;
+      }
+    }
+    @media (max-width: 960px) {
+      .opportunity-layout {
+        grid-template-columns: 1fr;
+      }
+      .opportunity-facts {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+      }
+      .opportunity-fact:last-child:nth-child(odd) {
+        grid-column: 1 / -1;
+      }
+      .source-panel {
+        position: static;
+      }
+    }
+    @media (max-width: 720px) {
+      .opportunity-facts,
+      .source-guidance-list,
+      .key-conditions-list {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+      }
+    }
+    @media (max-width: 540px) {
+      .opportunity-hero,
+      .detail-section,
+      .source-panel {
+        padding: 18px;
+      }
+      .opportunity-hero h1 {
+        font-size: 30px;
+      }
+      .opportunity-facts,
+      .source-guidance-list,
+      .key-conditions-list {
+        grid-template-columns: 1fr;
+      }
+      .opportunity-actions {
+        display: grid;
+      }
+      .opportunity-actions .button {
+        width: 100%;
+      }
+    }
+"""
+
+
+_DECISION_SUPPORT_COPY: dict[str, dict[str, object]] = {
+    "ru": {
+        "title": "Проверка карточки",
+        "note": "Сначала убедитесь, что это набор заявок, а не справка или постоянная услуга. Затем сравните опубликованные условия со своим профилем; данные остаются в браузере.",
+        "kind_label": "Тип записи",
+        "action_label": "Что можно сделать сейчас",
+        "known_label": "Что подтверждено в карточке",
+        "fit_title": "Проверить свой профиль",
+        "fit_note": "Выберите известные признаки. Профиль остаётся в этом браузере и не подтверждает право на участие.",
+        "fit_boundary": "Это предварительная сверка по опубликованным данным, а не подтверждение права на участие.",
+        "applicant": "Кто подаёт",
+        "legal_form": "Форма заявителя",
+        "region": "Где проект",
+        "sector": "Направление",
+        "support_need": "Что нужно",
+        "has_eds": "Есть ЭЦП",
+        "all": "Не указывать",
+        "applicant_options": {
+            "startup": "Стартап",
+            "business": "Бизнес",
+            "farmer": "Фермер / АПК",
+            "ngo": "НКО",
+            "researcher": "Исследователь / вуз",
+            "student": "Студент",
+            "individual": "Физлицо",
+            "supplier": "Поставщик / подрядчик",
+        },
+        "legal_form_options": {
+            "ip": "ИП",
+            "too": "ТОО",
+            "kfh": "КХ / ФХ",
+            "ngo": "НКО",
+            "university": "Вуз / НИИ",
+            "individual": "Физлицо",
+            "government": "Госорган / акимат",
+        },
+        "region_options": {
+            "almaty_city": "Алматы",
+            "astana": "Астана",
+            "shymkent": "Шымкент",
+            "almaty_region": "Алматинская область",
+            "abay": "область Абай",
+            "akmola": "Акмолинская область",
+            "aktobe": "Актюбинская область",
+            "atyrau": "Атырауская область",
+            "east_kazakhstan": "Восточно-Казахстанская область",
+            "zhambyl": "Жамбылская область",
+            "zhetysu": "область Жетісу",
+            "west_kazakhstan": "Западно-Казахстанская область",
+            "karaganda": "Карагандинская область",
+            "kostanay": "Костанайская область",
+            "kyzylorda": "Кызылординская область",
+            "mangystau": "Мангистауская область",
+            "pavlodar": "Павлодарская область",
+            "north_kazakhstan": "Северо-Казахстанская область",
+            "turkistan": "Туркестанская область",
+            "ulytau": "область Ұлытау",
+        },
+        "sector_options": {
+            "agro": "Растениеводство / АПК",
+            "livestock": "Животноводство / вет",
+            "ecology": "Экология / отходы",
+            "climate": "Климат / зелёные решения",
+            "it": "IT / цифровые продукты",
+            "science": "Наука / R&D",
+            "social": "Социальный проект",
+            "manufacturing": "Производство",
+            "export": "Экспорт",
+        },
+        "support_options": {
+            "grant": "Грант / конкурс",
+            "subsidy": "Субсидия / возмещение",
+            "loan": "Кредит / гарантия / лизинг",
+            "accelerator": "Акселератор",
+            "procurement": "Тендер / закупка",
+            "tax": "Налоговая льгота",
+        },
+        "eds_options": {"yes": "Да", "no": "Нет / не знаю"},
+        "fit_action": "Проверить признаки",
+        "fit_loading": "Сверяем только опубликованные признаки…",
+        "fit_local_error": "Браузер не разрешил сохранить профиль. Проверка всё равно работает на этой странице.",
+        "status": {
+            "potential_fit": "Есть признаки совпадения",
+            "verification_needed": "Нужна проверка условий",
+            "profile_needed": "Заполните хотя бы один признак",
+            "not_an_application": "Это не открытая заявка",
+        },
+        "kind": {
+            "application_call": "Набор заявок",
+            "standing_service": "Постоянная мера / услуга",
+            "regulatory_guidance": "Правила и справка",
+            "procurement_notice": "Закупка / тендер",
+            "procurement_plan": "План закупок",
+            "award_result": "Результаты / архив",
+            "information": "Информационная запись",
+        },
+        "action": {
+            "apply": "Есть отдельный путь подачи",
+            "verify": "Проверьте путь подачи у организатора",
+            "reference": "Используйте как правила перед подачей",
+            "plan": "Следите за публикацией объявления",
+            "results": "Сверьте результаты и следующий набор",
+            "monitor": "Следите за обновлением источника",
+            "closed": "Приём завершён или результаты опубликованы",
+        },
+        "fact": {
+            "source": "Источник",
+            "deadline": "Срок",
+            "amount": "Сумма",
+            "eligibility": "Критерии",
+            "application_route": "Путь подачи",
+            "region": "Регион",
+        },
+        "signals": {
+            "applicant_signal": "тип заявителя совпадает по тексту",
+            "legal_form_signal": "форма заявителя упомянута",
+            "sector_signal": "направление совпадает",
+            "support_need_signal": "формат поддержки совпадает",
+            "region_signal": "регион указан напрямую",
+            "kazakhstan_scope": "Казахстан указан в охвате",
+            "eds_ready": "ЭЦП отмечена как готовая",
+            "applicant_verify": "подтвердите тип заявителя",
+            "legal_form_verify": "подтвердите допустимую форму заявителя",
+            "sector_verify": "подтвердите отраслевое ограничение",
+            "support_need_verify": "подтвердите формат поддержки",
+            "region_verify": "подтвердите региональную доступность",
+            "eds_verify": "уточните требование к ЭЦП",
+            "eligibility_missing": "в карточке нет полного критерия участия",
+            "programme_facts_missing": "в карточке не хватает части ключевых фактов",
+            "application_route_verify": "уточните отдельную форму подачи",
+            "record_reference": "это справочная запись, а не набор",
+            "record_results": "это результаты или архив",
+            "record_plan": "это план, а не объявление",
+            "record_monitor": "источник нужно мониторить",
+            "record_closed": "приём завершён",
+        },
+    },
+    "kk": {
+        "title": "Әрекет алдындағы тексеру",
+        "note": "Нақты қабылдауды анықтамалықтан ажыратып, бағдарламаны жеке профиліңізбен серверге дерек жібермей салыстырыңыз.",
+        "kind_label": "Жазба түрі",
+        "action_label": "Қазір не істеуге болады",
+        "known_label": "Карточкада расталғаны",
+        "fit_title": "Профильді тексеру",
+        "fit_note": "Тек жұмыс белгілерін таңдаңыз. Профиль осы браузерде қалады және қатысу құқығын растамайды.",
+        "fit_boundary": "Бұл жарияланған дерекке негізделген алдын ала тексеру, қатысу құқығын растау емес.",
+        "applicant": "Өтініш беруші",
+        "legal_form": "Ұйым нысаны",
+        "region": "Жоба өңірі",
+        "sector": "Бағыт",
+        "support_need": "Қажет қолдау",
+        "has_eds": "ЭЦҚ бар",
+        "all": "Көрсетпеу",
+        "applicant_options": {
+            "startup": "Стартап",
+            "business": "Бизнес",
+            "farmer": "Фермер / АӨК",
+            "ngo": "ҮЕҰ",
+            "researcher": "Зерттеуші / ЖОО",
+            "student": "Студент",
+            "individual": "Жеке тұлға",
+            "supplier": "Жеткізуші / мердігер",
+        },
+        "legal_form_options": {
+            "ip": "ЖК",
+            "too": "ЖШС",
+            "kfh": "ШҚ / ФҚ",
+            "ngo": "ҮЕҰ",
+            "university": "ЖОО / ҒЗИ",
+            "individual": "Жеке тұлға",
+            "government": "Меморган / әкімдік",
+        },
+        "region_options": {
+            "almaty_city": "Алматы",
+            "astana": "Астана",
+            "shymkent": "Шымкент",
+            "almaty_region": "Алматы облысы",
+            "abay": "Абай облысы",
+            "akmola": "Ақмола облысы",
+            "aktobe": "Ақтөбе облысы",
+            "atyrau": "Атырау облысы",
+            "east_kazakhstan": "Шығыс Қазақстан облысы",
+            "zhambyl": "Жамбыл облысы",
+            "zhetysu": "Жетісу облысы",
+            "west_kazakhstan": "Батыс Қазақстан облысы",
+            "karaganda": "Қарағанды облысы",
+            "kostanay": "Қостанай облысы",
+            "kyzylorda": "Қызылорда облысы",
+            "mangystau": "Маңғыстау облысы",
+            "pavlodar": "Павлодар облысы",
+            "north_kazakhstan": "Солтүстік Қазақстан облысы",
+            "turkistan": "Түркістан облысы",
+            "ulytau": "Ұлытау облысы",
+        },
+        "sector_options": {
+            "agro": "Өсімдік шаруашылығы / АӨК",
+            "livestock": "Мал шаруашылығы / ветеринария",
+            "ecology": "Экология / қалдық",
+            "climate": "Климат / жасыл шешім",
+            "it": "IT / цифрлық өнім",
+            "science": "Ғылым / R&D",
+            "social": "Әлеуметтік жоба",
+            "manufacturing": "Өндіріс",
+            "export": "Экспорт",
+        },
+        "support_options": {
+            "grant": "Грант / конкурс",
+            "subsidy": "Субсидия / өтеу",
+            "loan": "Несие / кепілдік / лизинг",
+            "accelerator": "Акселератор",
+            "procurement": "Тендер / сатып алу",
+            "tax": "Салықтық жеңілдік",
+        },
+        "eds_options": {"yes": "Иә", "no": "Жоқ / білмеймін"},
+        "fit_action": "Белгілерді тексеру",
+        "fit_loading": "Тек жарияланған белгілер салыстырылуда…",
+        "fit_local_error": "Браузер профильді сақтауға рұқсат бермеді. Тексеру осы бетте жұмыс істейді.",
+        "status": {
+            "potential_fit": "Сәйкестік белгілері бар",
+            "verification_needed": "Шарттарды тексеру қажет",
+            "profile_needed": "Кемінде бір белгіні толтырыңыз",
+            "not_an_application": "Бұл ашық өтінім емес",
+        },
+        "kind": {
+            "application_call": "Өтінім қабылдау",
+            "standing_service": "Тұрақты шара / қызмет",
+            "regulatory_guidance": "Ереже және анықтама",
+            "procurement_notice": "Сатып алу / тендер",
+            "procurement_plan": "Сатып алу жоспары",
+            "award_result": "Нәтижелер / мұрағат",
+            "information": "Ақпараттық жазба",
+        },
+        "action": {
+            "apply": "Бөлек өтінім жолы бар",
+            "verify": "Өтінім жолын ұйымдастырушыдан тексеріңіз",
+            "reference": "Өтінім алдында ереже ретінде қолданыңыз",
+            "plan": "Хабарландыруды күтіңіз",
+            "results": "Нәтиже мен келесі қабылдауды тексеріңіз",
+            "monitor": "Дереккөз жаңартуын бақылаңыз",
+            "closed": "Қабылдау аяқталды немесе нәтиже шықты",
+        },
+        "fact": {
+            "source": "Дереккөз",
+            "deadline": "Мерзім",
+            "amount": "Сома",
+            "eligibility": "Талаптар",
+            "application_route": "Өтінім жолы",
+            "region": "Өңір",
+        },
+        "signals": {
+            "applicant_signal": "өтінім беруші түрі мәтінде сәйкес",
+            "legal_form_signal": "ұйым нысаны аталған",
+            "sector_signal": "бағыт сәйкес",
+            "support_need_signal": "қолдау форматы сәйкес",
+            "region_signal": "өңір тікелей көрсетілген",
+            "kazakhstan_scope": "Қазақстан қамтуда көрсетілген",
+            "eds_ready": "ЭЦҚ дайын деп белгіленді",
+            "applicant_verify": "өтінім беруші түрін растаңыз",
+            "legal_form_verify": "ұйым нысанын растаңыз",
+            "sector_verify": "салалық шектеуді растаңыз",
+            "support_need_verify": "қолдау форматын растаңыз",
+            "region_verify": "өңірлік қолжетімділікті растаңыз",
+            "eds_verify": "ЭЦҚ талабын нақтылаңыз",
+            "eligibility_missing": "карточкада толық талап жоқ",
+            "programme_facts_missing": "карточкада кей маңызды дерек жетіспейді",
+            "application_route_verify": "жеке өтінім формасын нақтылаңыз",
+            "record_reference": "бұл анықтама, қабылдау емес",
+            "record_results": "бұл нәтиже немесе мұрағат",
+            "record_plan": "бұл жоспар, хабарландыру емес",
+            "record_monitor": "дереккөзді бақылау керек",
+            "record_closed": "қабылдау аяқталды",
+        },
+    },
+    "en": {
+        "title": "Check before acting",
+        "note": "First separate a live call from a guide or standing service. Then compare published signals with your profile without sending it to the server.",
+        "kind_label": "Record type",
+        "action_label": "What you can do now",
+        "known_label": "Confirmed in this card",
+        "fit_title": "Check your profile",
+        "fit_note": "Choose only working facts. The profile stays in this browser and does not confirm eligibility.",
+        "fit_boundary": "This is a pre-check based on published facts, not a confirmation of eligibility.",
+        "applicant": "Applicant",
+        "legal_form": "Legal form",
+        "region": "Project region",
+        "sector": "Sector",
+        "support_need": "Need",
+        "has_eds": "Digital signature",
+        "all": "Do not specify",
+        "applicant_options": {
+            "startup": "Startup",
+            "business": "Business",
+            "farmer": "Farmer / agriculture",
+            "ngo": "NGO",
+            "researcher": "Researcher / university",
+            "student": "Student",
+            "individual": "Individual",
+            "supplier": "Supplier / contractor",
+        },
+        "legal_form_options": {
+            "ip": "Sole proprietor",
+            "too": "LLP",
+            "kfh": "Farm enterprise",
+            "ngo": "NGO",
+            "university": "University / research institute",
+            "individual": "Individual",
+            "government": "Public body",
+        },
+        "region_options": {
+            "almaty_city": "Almaty",
+            "astana": "Astana",
+            "shymkent": "Shymkent",
+            "almaty_region": "Almaty region",
+            "abay": "Abai region",
+            "akmola": "Akmola region",
+            "aktobe": "Aktobe region",
+            "atyrau": "Atyrau region",
+            "east_kazakhstan": "East Kazakhstan region",
+            "zhambyl": "Zhambyl region",
+            "zhetysu": "Zhetysu region",
+            "west_kazakhstan": "West Kazakhstan region",
+            "karaganda": "Karaganda region",
+            "kostanay": "Kostanay region",
+            "kyzylorda": "Kyzylorda region",
+            "mangystau": "Mangystau region",
+            "pavlodar": "Pavlodar region",
+            "north_kazakhstan": "North Kazakhstan region",
+            "turkistan": "Turkistan region",
+            "ulytau": "Ulytau region",
+        },
+        "sector_options": {
+            "agro": "Crop production / agriculture",
+            "livestock": "Livestock / veterinary",
+            "ecology": "Environment / waste",
+            "climate": "Climate / green solutions",
+            "it": "IT / digital product",
+            "science": "Science / R&D",
+            "social": "Social project",
+            "manufacturing": "Manufacturing",
+            "export": "Export",
+        },
+        "support_options": {
+            "grant": "Grant / contest",
+            "subsidy": "Subsidy / reimbursement",
+            "loan": "Loan / guarantee / leasing",
+            "accelerator": "Accelerator",
+            "procurement": "Tender / procurement",
+            "tax": "Tax incentive",
+        },
+        "eds_options": {"yes": "Yes", "no": "No / unsure"},
+        "fit_action": "Check signals",
+        "fit_loading": "Checking published signals…",
+        "fit_local_error": "The browser did not allow profile storage. The check still works on this page.",
+        "status": {
+            "potential_fit": "There are matching signals",
+            "verification_needed": "Terms need checking",
+            "profile_needed": "Choose at least one signal",
+            "not_an_application": "This is not an open application",
+        },
+        "kind": {
+            "application_call": "Application call",
+            "standing_service": "Standing service",
+            "regulatory_guidance": "Rules and guidance",
+            "procurement_notice": "Tender / procurement",
+            "procurement_plan": "Procurement plan",
+            "award_result": "Results / archive",
+            "information": "Information record",
+        },
+        "action": {
+            "apply": "A dedicated application route is known",
+            "verify": "Verify the application route with the organiser",
+            "reference": "Use as rules before applying",
+            "plan": "Watch for the published notice",
+            "results": "Check results and the next call",
+            "monitor": "Monitor the source for changes",
+            "closed": "The call is closed or results are published",
+        },
+        "fact": {
+            "source": "Source",
+            "deadline": "Deadline",
+            "amount": "Amount",
+            "eligibility": "Eligibility",
+            "application_route": "Application route",
+            "region": "Region",
+        },
+        "signals": {
+            "applicant_signal": "applicant type is mentioned",
+            "legal_form_signal": "legal form is mentioned",
+            "sector_signal": "sector matches",
+            "support_need_signal": "support format matches",
+            "region_signal": "region is stated directly",
+            "kazakhstan_scope": "Kazakhstan is in scope",
+            "eds_ready": "digital signature marked ready",
+            "applicant_verify": "verify applicant type",
+            "legal_form_verify": "verify legal form",
+            "sector_verify": "verify sector restriction",
+            "support_need_verify": "verify support format",
+            "region_verify": "verify regional availability",
+            "eds_verify": "verify digital-signature requirement",
+            "eligibility_missing": "full eligibility is missing from the card",
+            "programme_facts_missing": "some key facts are missing from the card",
+            "application_route_verify": "verify a dedicated application form",
+            "record_reference": "this is a reference record, not a call",
+            "record_results": "this is a result or archive",
+            "record_plan": "this is a plan, not a notice",
+            "record_monitor": "monitor the source",
+            "record_closed": "the call is closed",
+        },
+    },
+}
 
 
 def _page_path(root_path: str, opportunity_id: str, lang: str) -> str:
@@ -55,13 +897,6 @@ def _page_path(root_path: str, opportunity_id: str, lang: str) -> str:
     if base:
         path = f"{base}{path}"
     return f"{path}?lang={lang}"
-
-
-def _catalog_path(root_path: str, lang: str) -> str:
-    base = root_path.rstrip("/")
-    if base:
-        return f"{base}/?lang={lang}#opportunities"
-    return f"/?lang={lang}#opportunities"
 
 
 def _host_label(value: str) -> str:
@@ -100,7 +935,44 @@ def _localized_item_value(
     value = localized.get(field) if isinstance(localized, dict) else None
     if isinstance(value, str) and value.strip():
         return value.strip()
+    raw_value = raw.get(field)
+    if isinstance(raw_value, str) and raw_value.strip():
+        return raw_value.strip()
     return fallback.strip()
+
+
+def _localized_item_list(item: Opportunity, field: str, lang: str) -> list[str]:
+    raw = item.raw if isinstance(item.raw, dict) else {}
+    i18n = raw.get("i18n")
+    localized = i18n.get(lang) if isinstance(i18n, dict) else None
+    value = localized.get(field) if isinstance(localized, dict) else None
+    if not isinstance(value, list):
+        value = raw.get(field)
+    if not isinstance(value, list):
+        return []
+    return [str(entry).strip() for entry in value if str(entry).strip()]
+
+
+def _localized_card_items(
+    item: Opportunity, field: str, lang: str
+) -> list[tuple[str, str]]:
+    raw = item.raw if isinstance(item.raw, dict) else {}
+    i18n = raw.get("i18n")
+    localized = i18n.get(lang) if isinstance(i18n, dict) else None
+    value = localized.get(field) if isinstance(localized, dict) else None
+    if not isinstance(value, list):
+        value = raw.get(field)
+    if not isinstance(value, list):
+        return []
+    cards: list[tuple[str, str]] = []
+    for entry in value:
+        if not isinstance(entry, dict):
+            continue
+        title = str(entry.get("title") or "").strip()
+        text = str(entry.get("text") or "").strip()
+        if title and text:
+            cards.append((title, text))
+    return cards
 
 
 def _has_cyrillic(value: str) -> bool:
@@ -154,14 +1026,6 @@ def _seo_excerpt(text: str, *, max_length: int = 280) -> str:
     return window.rstrip(" -:;,") + "..."
 
 
-def _format_deadline(value: date | None, lang: str, rolling_label: str) -> str:
-    if value is None:
-        return rolling_label
-    if lang == "en":
-        return value.strftime("%b %d, %Y")
-    return value.strftime("%d.%m.%Y")
-
-
 def _metadata_markup(
     metadata: list[OpportunityMetadataField],
     labels: dict[str, str],
@@ -211,6 +1075,318 @@ def _metadata_markup(
             )
         )
     return "".join(items)
+
+
+def _readiness_markup(detail: OpportunityDetail, copy: dict[str, object]) -> str:
+    """Turn available application facts into a quiet, source-grounded signal."""
+    raw = detail.raw if isinstance(detail.raw, dict) else {}
+    signals = [
+        ("readiness_source", bool(str(detail.source_url).strip())),
+        (
+            "readiness_deadline",
+            bool(detail.deadline or raw.get("deadline_policy") == "rolling"),
+        ),
+        (
+            "readiness_amount",
+            bool(
+                detail.amount_min is not None
+                or detail.amount_max is not None
+                or raw.get("amount_raw")
+            ),
+        ),
+        ("readiness_eligibility", bool(detail.eligibility or raw.get("eligibility"))),
+    ]
+    known = sum(1 for _, available in signals if available)
+    rows = "".join(
+        f'<div class="readiness-signal {"is-known" if available else "is-missing"}"><span class="readiness-dot" aria-hidden="true"></span><span>{escape(str(copy[label_key]))}</span></div>'
+        for label_key, available in signals
+    )
+    return f"""
+    <section class="readiness-panel" data-avds-component="DataViz" data-avds-pattern="opportunity-readiness-meter" aria-label="{escape(str(copy["readiness_title"]), quote=True)}">
+      <div class="readiness-head"><div><h2>{escape(str(copy["readiness_title"]))}</h2><p>{escape(str(copy["readiness_note"]))}</p></div><strong>{known}/4</strong></div>
+      <div class="readiness-track" role="img" aria-label="{known} of 4 signals available"><span style="width:{known * 25}%"></span></div>
+      <div class="readiness-grid">{rows}</div>
+    </section>"""
+
+
+def _decision_copy(lang: str) -> dict[str, object]:
+    return _DECISION_SUPPORT_COPY.get(lang, _DECISION_SUPPORT_COPY["en"])
+
+
+def _profile_select_markup(
+    *,
+    name: str,
+    label: str,
+    options: object,
+    empty_label: str,
+) -> str:
+    items = options if isinstance(options, dict) else {}
+    rows = [f'<option value="">{escape(empty_label)}</option>']
+    for value, option_label in items.items():
+        rows.append(
+            f'<option value="{escape(str(value), quote=True)}">'
+            f"{escape(str(option_label))}</option>"
+        )
+    return f"""
+      <label class="profile-fit-field" for="profile-fit-{escape(name, quote=True)}">
+        <span>{escape(label)}</span>
+        <select id="profile-fit-{escape(name, quote=True)}" name="{escape(name, quote=True)}">
+          {''.join(rows)}
+        </select>
+      </label>"""
+
+
+def _decision_support_markup(
+    detail: OpportunityDetail,
+    *,
+    lang: str,
+    lifecycle: str,
+) -> str:
+    """Render an anonymous, source-bound pre-check on a detail page."""
+
+    copy = _decision_copy(lang)
+    truth = program_truth(detail, lifecycle=lifecycle)
+    known = truth["known_fields"]
+    fact_labels = (
+        cast(dict[str, object], copy.get("fact"))
+        if isinstance(copy.get("fact"), dict)
+        else {}
+    )
+    known_rows = "".join(
+        '<li class="{state}"><span aria-hidden="true"></span>{label}</li>'.format(
+            state="is-known" if available else "is-missing",
+            label=escape(str(fact_labels.get(field, field))),
+        )
+        for field, available in known.items()
+    )
+    kind_labels = (
+        cast(dict[str, object], copy.get("kind"))
+        if isinstance(copy.get("kind"), dict)
+        else {}
+    )
+    action_labels = (
+        cast(dict[str, object], copy.get("action"))
+        if isinstance(copy.get("action"), dict)
+        else {}
+    )
+    applicant_options = copy.get("applicant_options")
+    legal_form_options = copy.get("legal_form_options")
+    region_options = copy.get("region_options")
+    sector_options = copy.get("sector_options")
+    support_options = copy.get("support_options")
+    eds_options = copy.get("eds_options")
+    fields = "".join(
+        (
+            _profile_select_markup(
+                name="applicant",
+                label=str(copy["applicant"]),
+                options=applicant_options,
+                empty_label=str(copy["all"]),
+            ),
+            _profile_select_markup(
+                name="legal_form",
+                label=str(copy["legal_form"]),
+                options=legal_form_options,
+                empty_label=str(copy["all"]),
+            ),
+            _profile_select_markup(
+                name="region",
+                label=str(copy["region"]),
+                options=region_options,
+                empty_label=str(copy["all"]),
+            ),
+            _profile_select_markup(
+                name="sector",
+                label=str(copy["sector"]),
+                options=sector_options,
+                empty_label=str(copy["all"]),
+            ),
+            _profile_select_markup(
+                name="support_need",
+                label=str(copy["support_need"]),
+                options=support_options,
+                empty_label=str(copy["all"]),
+            ),
+            _profile_select_markup(
+                name="has_eds",
+                label=str(copy["has_eds"]),
+                options=eds_options,
+                empty_label=str(copy["all"]),
+            ),
+        )
+    )
+    copy_json = json.dumps(copy, ensure_ascii=False).replace("<", "\\u003c")
+    truth_json = json.dumps(truth, ensure_ascii=False).replace("<", "\\u003c")
+    precheck_json = json.dumps(
+        browser_precheck_contract(detail, lifecycle=lifecycle), ensure_ascii=False
+    ).replace("<", "\\u003c")
+    return """
+    <section class="decision-support" aria-labelledby="decision-support-title" data-avds-component="decision-support">
+      <div class="decision-support-head">
+        <div>
+          <span class="eyebrow">QAZ.FUND</span>
+          <h2 id="decision-support-title">{title}</h2>
+          <p>{note}</p>
+        </div>
+        <div class="decision-truth" aria-label="{kind_label}">
+          <span>{kind_label}</span>
+          <strong>{kind}</strong>
+          <small>{action}</small>
+        </div>
+      </div>
+      <div class="decision-facts">
+        <span>{known_label}</span>
+        <ul>{known_rows}</ul>
+      </div>
+      <details class="profile-fit" id="profile-fit">
+        <summary>
+          <span>{fit_title}</span>
+          <span>{fit_note}</span>
+        </summary>
+        <form id="profile-fit-form" novalidate>
+          <div class="profile-fit-grid">{fields}</div>
+          <div class="profile-fit-actions">
+            <button class="button primary" type="submit">{fit_action}</button>
+            <p id="profile-fit-storage" aria-live="polite"></p>
+          </div>
+          <div class="profile-fit-result" id="profile-fit-result" hidden aria-live="polite"></div>
+        </form>
+      </details>
+    </section>
+    <script>
+      (() => {{
+        const form = document.getElementById("profile-fit-form");
+        if (!form) return;
+        const result = document.getElementById("profile-fit-result");
+        const storageStatus = document.getElementById("profile-fit-storage");
+        const storageKey = "qazfund-applicant-profile-v1";
+        const copy = {copy_json};
+        const truth = {truth_json};
+        const precheck = {precheck_json};
+        const fieldNames = ["applicant", "legal_form", "region", "sector", "support_need", "has_eds"];
+        const escapeHtml = (value) => String(value || "")
+          .replace(/&/g, "&amp;").replace(/</g, "&lt;")
+          .replace(/>/g, "&gt;").replace(/\"/g, "&quot;");
+        const labels = copy.signals || {{}};
+        const statusLabels = copy.status || {{}};
+        const restore = () => {{
+          try {{
+            const saved = JSON.parse(localStorage.getItem(storageKey) || "{{}}");
+            fieldNames.forEach((name) => {{
+              const control = form.elements.namedItem(name);
+              if (control && typeof saved[name] === "string") control.value = saved[name];
+            }});
+          }} catch {{
+            try {{ localStorage.removeItem(storageKey); }} catch {{}}
+          }}
+        }};
+        const save = () => {{
+          const values = Object.fromEntries(fieldNames.map((name) => [
+            name, String(form.elements.namedItem(name)?.value || "")
+          ]));
+          try {{
+            localStorage.setItem(storageKey, JSON.stringify(values));
+          }} catch {{
+            if (storageStatus) storageStatus.textContent = copy.fit_local_error;
+          }}
+          return values;
+        }};
+        const renderResult = (payload) => {{
+          const status = statusLabels[payload.status] || payload.status;
+          const signals = Array.isArray(payload.positive_signals) ? payload.positive_signals : [];
+          const checks = Array.isArray(payload.checks) ? payload.checks : [];
+          const list = [...signals, ...checks].map((code) => `
+            <li class="${{signals.includes(code) ? "is-positive" : "is-check"}}">
+              ${{escapeHtml(labels[code] || code.replaceAll("_", " "))}}
+            </li>`).join("");
+          result.hidden = false;
+          result.innerHTML = `
+            <strong>${{escapeHtml(status)}}</strong>
+            <p>${{escapeHtml(payload.legal_boundary || "")}}</p>
+            ${{list ? `<ul>${{list}}</ul>` : ""}}`;
+          result.dataset.actionability = String(payload.truth?.actionability || truth.actionability || "");
+        }};
+        const evaluateProfile = (values) => {{
+          const localTruth = precheck.truth || truth || {{}};
+          const matches = precheck.matches || {{}};
+          const actionability = String(localTruth.actionability || "");
+          const kind = String(localTruth.kind || "");
+          const positiveSignals = [];
+          const checks = [];
+          const recordStates = ["reference", "results", "plan", "monitor", "closed"];
+          if (recordStates.includes(actionability)) checks.push(`record_${{actionability}}`);
+          ["applicant", "legal_form", "sector", "support_need"].forEach((field) => {{
+            const value = values[field];
+            if (!value) return;
+            if (Array.isArray(matches[field]) && matches[field].includes(value)) {{
+              positiveSignals.push(`${{field}}_signal`);
+            }} else {{
+              checks.push(`${{field}}_verify`);
+            }}
+          }});
+          if (values.region) {{
+            if (Array.isArray(matches.region) && matches.region.includes(values.region)) {{
+              positiveSignals.push("region_signal");
+            }} else if (precheck.kazakhstan_scope) {{
+              positiveSignals.push("kazakhstan_scope");
+            }} else {{
+              checks.push("region_verify");
+            }}
+          }}
+          if (values.has_eds === "yes" && ["standing_service", "application_call", "procurement_notice"].includes(kind)) {{
+            positiveSignals.push("eds_ready");
+          }} else if (["standing_service", "procurement_notice"].includes(kind)) {{
+            checks.push("eds_verify");
+          }}
+          const known = localTruth.known_fields || {{}};
+          if (!known.eligibility) checks.push("eligibility_missing");
+          if (!known.application_route && actionability === "apply") {{
+            checks.push("application_route_verify");
+          }}
+          if (Array.isArray(localTruth.missing_fields) && localTruth.missing_fields.length) {{
+            checks.push("programme_facts_missing");
+          }}
+          const hasProfile = Object.values(values).some(Boolean);
+          let status = "verification_needed";
+          if (recordStates.includes(actionability)) status = "not_an_application";
+          else if (!hasProfile) status = "profile_needed";
+          else if (positiveSignals.length >= 2 && !checks.includes("eligibility_missing")) {{
+            status = "potential_fit";
+          }}
+          return {{
+            status,
+            truth: localTruth,
+            positive_signals: positiveSignals,
+            checks: [...new Set(checks)],
+            legal_boundary: copy.fit_boundary || "",
+          }};
+        }};
+        restore();
+        form.addEventListener("submit", (event) => {{
+          event.preventDefault();
+          const values = save();
+          renderResult(evaluateProfile(values));
+        }});
+      }})();
+    </script>
+    """.format(
+        title=escape(str(copy["title"])),
+        note=escape(str(copy["note"])),
+        kind_label=escape(str(copy["kind_label"])),
+        kind=escape(str(kind_labels.get(truth["kind"], truth["kind"]))),
+        action=escape(
+            str(action_labels.get(truth["actionability"], truth["actionability"]))
+        ),
+        known_label=escape(str(copy["known_label"])),
+        known_rows=known_rows,
+        fit_title=escape(str(copy["fit_title"])),
+        fit_note=escape(str(copy["fit_note"])),
+        fields=fields,
+        fit_action=escape(str(copy["fit_action"])),
+        copy_json=copy_json,
+        truth_json=truth_json,
+        precheck_json=precheck_json,
+    )
 
 
 def _json_ld(payload: dict[str, object]) -> str:
@@ -461,6 +1637,7 @@ def _prepare_markup(
     detail: OpportunityDetail,
     *,
     copy: dict[str, object],
+    lang: str,
 ) -> str:
     focus_key = _prepare_focus_key(detail)
     focus_map = {
@@ -476,14 +1653,15 @@ def _prepare_markup(
         if detail.deadline is not None
         else ("prepare_rolling_title", "prepare_rolling_text")
     )
-    cards = [
-        ("prepare_eligibility_title", "prepare_eligibility_text"),
-        deadline_pair,
-        focus_map[focus_key],
-        ("prepare_source_title", "prepare_source_text"),
+    custom_cards = _localized_card_items(detail, "prepare_items", lang)
+    cards = custom_cards or [
+        (str(copy["prepare_eligibility_title"]), str(copy["prepare_eligibility_text"])),
+        (str(copy[deadline_pair[0]]), str(copy[deadline_pair[1]])),
+        (str(copy[focus_map[focus_key][0]]), str(copy[focus_map[focus_key][1]])),
+        (str(copy["prepare_source_title"]), str(copy["prepare_source_text"])),
     ]
     card_markup = []
-    for index, (title_key, text_key) in enumerate(cards, start=1):
+    for index, (title, text) in enumerate(cards, start=1):
         card_markup.append(
             """
             <article class="prepare-card">
@@ -493,8 +1671,8 @@ def _prepare_markup(
             </article>
             """.format(
                 index=index,
-                title=escape(str(copy[title_key])),
-                text=escape(str(copy[text_key])),
+                title=escape(title),
+                text=escape(text),
             )
         )
     return """
@@ -614,22 +1792,30 @@ def _decision_check_markup(
 
 def _apply_markup(
     *,
+    detail: OpportunityDetail,
     has_application_url: bool,
     copy: dict[str, object],
+    lang: str,
 ) -> str:
     first_step = (
         ("apply_step_open_apply_title", "apply_step_open_apply_text")
         if has_application_url
         else ("apply_step_open_source_title", "apply_step_open_source_text")
     )
-    steps = [
-        first_step,
-        ("apply_step_check_title", "apply_step_check_text"),
-        ("apply_step_pack_title", "apply_step_pack_text"),
-        ("apply_step_submit_title", "apply_step_submit_text"),
-    ]
+    custom_titles = _localized_item_list(detail, "application_step_titles", lang)
+    custom_steps = _localized_item_list(detail, "application_steps", lang)
+    steps = (
+        list(zip(custom_titles, custom_steps, strict=True))
+        if custom_titles and len(custom_titles) == len(custom_steps)
+        else [
+            (str(copy[first_step[0]]), str(copy[first_step[1]])),
+            (str(copy["apply_step_check_title"]), str(copy["apply_step_check_text"])),
+            (str(copy["apply_step_pack_title"]), str(copy["apply_step_pack_text"])),
+            (str(copy["apply_step_submit_title"]), str(copy["apply_step_submit_text"])),
+        ]
+    )
     step_markup = []
-    for index, (title_key, text_key) in enumerate(steps, start=1):
+    for index, (title, text) in enumerate(steps, start=1):
         step_markup.append(
             """
             <li class="apply-step">
@@ -641,8 +1827,8 @@ def _apply_markup(
             </li>
             """.format(
                 index=index,
-                title=escape(str(copy[title_key])),
-                text=escape(str(copy[text_key])),
+                title=escape(title),
+                text=escape(text),
             )
         )
     return """
@@ -666,12 +1852,533 @@ def _apply_markup(
     )
 
 
+def _verification_markup(copy: dict[str, object]) -> str:
+    items = (
+        ("verification_eligibility_title", "verification_eligibility_text"),
+        ("verification_terms_title", "verification_terms_text"),
+        ("verification_procurement_title", "verification_procurement_text"),
+        ("verification_publication_title", "verification_publication_text"),
+    )
+    item_markup = "".join(
+        """
+        <li class="verification-item">
+          <strong>{title}</strong>
+          <span>{text}</span>
+        </li>
+        """.format(
+            title=escape(str(copy[title_key])),
+            text=escape(str(copy[text_key])),
+        )
+        for title_key, text_key in items
+    )
+    return """
+    <section class="verification-section">
+      <div class="verification-head">
+        <span class="eyebrow">{eyebrow}</span>
+        <h2>{title}</h2>
+        <p>{description}</p>
+      </div>
+      <ul class="verification-list">{items}</ul>
+    </section>
+    """.format(
+        eyebrow=escape(str(copy["verification_eyebrow"])),
+        title=escape(str(copy["verification_title"])),
+        description=escape(str(copy["verification_description"])),
+        items=item_markup,
+    )
+
+
 def _detail_metadata_value(detail: OpportunityDetail, *keys: str) -> str:
     wanted = set(keys)
     for entry in detail.metadata:
         if entry.key in wanted and str(entry.value or "").strip():
             return str(entry.value).strip()
     return ""
+
+
+def _detail_metadata_values(detail: OpportunityDetail) -> dict[str, str]:
+    values: dict[str, str] = {}
+    for entry in detail.metadata:
+        key = str(entry.key or "").strip()
+        value = str(entry.value or "").strip()
+        if key and value and key not in values:
+            values[key] = value
+    return values
+
+
+def _display_detail_metadata_value(
+    value: str,
+    *,
+    key: str,
+    copy: dict[str, object],
+    lang: str,
+) -> str:
+    if not value:
+        return ""
+    if key in {"deadline", "closing_date", "board_approval"}:
+        try:
+            return _format_deadline(
+                date.fromisoformat(value), lang, str(copy["open_rolling"])
+            )
+        except ValueError:
+            pass
+    if key == "deadline_policy" and value.casefold() in {"rolling", "open"}:
+        return str(copy["open_rolling"])
+    return _label_value(value, copy)
+
+
+def _detail_format_label(detail: OpportunityDetail, copy: dict[str, object]) -> str:
+    """Use the orthogonal taxonomy when it is more precise than the source type."""
+
+    instrument = str(classify_opportunity(detail).get("instrument") or "").strip()
+    display_token = {
+        "loan": "preferential_financing",
+        "procurement": "tender",
+        "prize": "contest",
+        "scholarship": "fellowship",
+        "in_kind_support": "cloud_credit",
+    }.get(instrument, instrument)
+    if display_token and display_token != "unknown":
+        return _label_value(display_token, copy)
+    return _label_value(detail.type, copy)
+
+
+def _published_deadline_label(
+    item: Opportunity,
+    *,
+    copy: dict[str, object],
+    lang: str,
+) -> str:
+    """Show a deadline only when a source actually provides one."""
+
+    display = _localized_item_value(item, "deadline_display", lang, "")
+    if display:
+        return display
+    if item.deadline is not None:
+        return _format_deadline(item.deadline, lang, str(copy["open_rolling"]))
+    raw = item.raw if isinstance(item.raw, dict) else {}
+    policy = str(raw.get("deadline_policy") or "").strip().casefold()
+    if policy in {"rolling", "open"}:
+        return str(copy["open_rolling"])
+    return ""
+
+
+def _related_deadline_label(
+    item: Opportunity,
+    *,
+    copy: dict[str, object],
+    lang: str,
+) -> str:
+    """Keep related cards focused on dates or source-specific time windows."""
+
+    display = _localized_item_value(item, "deadline_display", lang, "")
+    if display:
+        return display
+    if item.deadline is not None:
+        return _format_deadline(item.deadline, lang, str(copy["open_rolling"]))
+    return ""
+
+
+def _opportunity_facts_markup(
+    detail: OpportunityDetail,
+    *,
+    copy: dict[str, object],
+    lang: str,
+) -> str:
+    """Render every user-facing fact once, in an action-first order."""
+
+    values = _detail_metadata_values(detail)
+    raw_labels = copy.get("detail_meta_labels")
+    labels = raw_labels if isinstance(raw_labels, dict) else {}
+    deadline = _published_deadline_label(detail, copy=copy, lang=lang)
+    if not deadline:
+        deadline = _display_detail_metadata_value(
+            values.get("deadline_raw") or "",
+            key="deadline_raw",
+            copy=copy,
+            lang=lang,
+        )
+    amount = _localized_item_value(detail, "amount", lang, "")
+    if not amount:
+        amount = _display_detail_metadata_value(
+            values.get("amount") or values.get("amount_raw") or "",
+            key="amount" if values.get("amount") else "amount_raw",
+            copy=copy,
+            lang=lang,
+        )
+    geography_values: list[str] = []
+    for key in ("country", "region"):
+        value = _display_detail_metadata_value(
+            values.get(key, ""), key=key, copy=copy, lang=lang
+        )
+        if value and value.casefold() not in {
+            item.casefold() for item in geography_values
+        }:
+            geography_values.append(value)
+    geography = ", ".join(geography_values)
+    organizer = _display_detail_metadata_value(
+        detail.funder or values.get("funder", ""),
+        key="funder",
+        copy=copy,
+        lang=lang,
+    )
+
+    deadline_label = _localized_item_value(
+        detail,
+        "deadline_label",
+        lang,
+        str(labels.get("deadline", "Deadline")),
+    )
+    amount_label = _localized_item_value(
+        detail,
+        "amount_label",
+        lang,
+        str(labels.get("amount", "Amount")),
+    )
+    facts: list[tuple[str, str, bool]] = []
+    if deadline:
+        facts.append((deadline_label, deadline, True))
+    if amount:
+        facts.append((amount_label, amount, True))
+    format_label = _detail_format_label(detail, copy)
+    if format_label:
+        facts.append((str(copy["meta_format_label"]), format_label, False))
+    if geography:
+        facts.append((str(copy["detail_geography_label"]), geography, False))
+    if organizer:
+        facts.append((str(copy["detail_organizer_label"]), organizer, False))
+    for key in (
+        "status",
+        "notice_type",
+        "borrower",
+        "board_approval",
+        "closing_date",
+    ):
+        value = _display_detail_metadata_value(
+            values.get(key, ""), key=key, copy=copy, lang=lang
+        )
+        if (
+            value
+            and value not in {deadline, amount}
+            and all(value.casefold() != existing.casefold() for _, existing, _ in facts)
+        ):
+            facts.append(
+                (str(labels.get(key, key.replace("_", " ").title())), value, False)
+            )
+
+    rows = "".join(
+        """
+        <div class="opportunity-fact{key_class}">
+          <dt>{label}</dt>
+          <dd>{value}</dd>
+        </div>
+        """.format(
+            key_class=" opportunity-fact--key" if is_key else "",
+            label=escape(label),
+            value=escape(value),
+        )
+        for label, value, is_key in facts
+    )
+    return f'<dl class="opportunity-facts">{rows}</dl>'
+
+
+def _eligibility_markup(detail: OpportunityDetail, *, copy: dict[str, object]) -> str:
+    values = [
+        _label_value(value, copy)
+        for value in detail.eligibility
+        if isinstance(value, str) and value.strip()
+    ]
+    unique_values: list[str] = []
+    for value in values:
+        if value and value.casefold() not in {
+            item.casefold() for item in unique_values
+        }:
+            unique_values.append(value)
+    if not unique_values:
+        return ""
+    rows = "".join(f"<li>{escape(value)}</li>" for value in unique_values)
+    return """
+    <section class="detail-section" aria-labelledby="eligibility-title">
+      <div class="detail-section-head">
+        <h2 id="eligibility-title">{title}</h2>
+      </div>
+      <ul class="eligibility-list">{rows}</ul>
+    </section>
+    """.format(
+        title=escape(str(copy["detail_eligibility_title"])),
+        rows=rows,
+    )
+
+
+def _highlights_markup(
+    detail: OpportunityDetail,
+    *,
+    copy: dict[str, object],
+    lang: str,
+) -> str:
+    highlights = _localized_item_list(detail, "highlights", lang)
+    if not highlights:
+        return ""
+    title = _localized_item_value(
+        detail,
+        "highlights_label",
+        lang,
+        str(copy["decision_check_title"]),
+    )
+    rows = "".join(
+        '<li class="key-condition">{value}</li>'.format(value=escape(value))
+        for value in highlights
+    )
+    return """
+    <section class="detail-section detail-section--conditions" aria-labelledby="conditions-title">
+      <div class="detail-section-head">
+        <h2 id="conditions-title">{title}</h2>
+      </div>
+      <ol class="key-conditions-list">{rows}</ol>
+    </section>
+    """.format(title=escape(title), rows=rows)
+
+
+def _content_sections_markup(
+    detail: OpportunityDetail,
+    *,
+    title: str,
+    summary: str,
+    copy: dict[str, object],
+    collapsed: bool = False,
+) -> str:
+    """Keep source-derived conditions readable without repeating the card header."""
+
+    sections = [section for section in detail.detail_sections if section.text.strip()]
+    if not sections and detail.detail_text.strip():
+        sections = [OpportunityDetailSection(heading="", text=detail.detail_text)]
+    normalized_summary = re.sub(r"\W+", " ", summary.casefold()).strip()
+    eligibility_text = re.sub(
+        r"\W+", " ", " ".join(detail.eligibility).casefold()
+    ).strip()
+    seen_sections: list[tuple[str, str]] = []
+    entries: list[str] = []
+    for section in sections:
+        heading_raw = (section.heading or "").strip()
+        text_raw = section.text.strip()
+        normalized_heading = re.sub(r"\W+", " ", heading_raw.casefold()).strip()
+        normalized_text = re.sub(r"\W+", " ", text_raw.casefold()).strip()
+        if (
+            not normalized_text
+            or normalized_heading in SOURCE_SECTION_NOISE_HEADINGS
+            or normalized_heading in _DETAIL_SECTION_TECHNICAL_HEADINGS
+        ):
+            continue
+        if (
+            normalized_heading in _DETAIL_SECTION_OVERVIEW_HEADINGS
+            and normalized_text == normalized_summary
+        ):
+            continue
+        if (
+            normalized_heading in _DETAIL_SECTION_ELIGIBILITY_HEADINGS
+            and eligibility_text
+            and normalized_text == eligibility_text
+        ):
+            continue
+        if any(
+            normalized_heading == seen_heading
+            and (
+                normalized_text.startswith(seen_text)
+                or seen_text.startswith(normalized_text)
+            )
+            for seen_heading, seen_text in seen_sections
+            if normalized_text and seen_text
+        ):
+            continue
+        seen_sections.append((normalized_heading, normalized_text))
+        paragraphs = "".join(
+            "<p>"
+            + escape(
+                (_clean_summary_text(chunk, title=title) or chunk.strip()).replace(
+                    "_", " "
+                )
+            )
+            + "</p>"
+            for chunk in _paragraph_chunks(text_raw, target_length=440)
+            if chunk.strip()
+        )
+        if not paragraphs:
+            continue
+        heading = heading_raw or str(copy["detail_content_fallback_heading"])
+        entries.append(
+            """
+            <section class="detail-content-entry">
+              <h3>{heading}</h3>
+              {paragraphs}
+            </section>
+            """.format(
+                heading=escape(heading),
+                paragraphs=paragraphs,
+            )
+        )
+    if not entries:
+        return ""
+    entries_markup = "".join(entries)
+    if collapsed:
+        return """
+        <section class="detail-section detail-section--source">
+          <details class="source-text-disclosure">
+            <summary>
+              <span>{title}</span>
+              <span class="source-text-disclosure-action">{action}</span>
+            </summary>
+            <div class="detail-content-list">{entries}</div>
+          </details>
+        </section>
+        """.format(
+            title=escape(str(copy["detail_source_excerpt"])),
+            action=escape(str(copy["detail_expand_source"])),
+            entries=entries_markup,
+        )
+    return """
+    <section class="detail-section" aria-labelledby="content-title">
+      <div class="detail-section-head">
+        <h2 id="content-title">{title}</h2>
+      </div>
+      <div class="detail-content-list">{entries}</div>
+    </section>
+    """.format(
+        title=escape(str(copy["detail_content_title"])),
+        entries=entries_markup,
+    )
+
+
+def _source_guidance_markup(
+    detail: OpportunityDetail,
+    *,
+    copy: dict[str, object],
+    lang: str,
+) -> str:
+    cards = _localized_card_items(detail, "prepare_items", lang)
+    if not cards:
+        return ""
+    rows = "".join("""
+        <li class="source-guidance-item">
+          <strong>{title}</strong>
+          <p>{text}</p>
+        </li>
+        """.format(title=escape(title), text=escape(text)) for title, text in cards)
+    return """
+    <section class="detail-section" aria-labelledby="guidance-title">
+      <div class="detail-section-head">
+        <h2 id="guidance-title">{title}</h2>
+      </div>
+      <ul class="source-guidance-list">{rows}</ul>
+    </section>
+    """.format(title=escape(str(copy["detail_guidance_title"])), rows=rows)
+
+
+def _application_steps_markup(
+    detail: OpportunityDetail,
+    *,
+    copy: dict[str, object],
+    lang: str,
+) -> str:
+    titles = _localized_item_list(detail, "application_step_titles", lang)
+    steps = _localized_item_list(detail, "application_steps", lang)
+    if not titles or len(titles) != len(steps):
+        return ""
+    rows = "".join(
+        """
+        <li class="application-step">
+          <div>
+            <h3>{title}</h3>
+            <p>{text}</p>
+          </div>
+        </li>
+        """.format(title=escape(title), text=escape(text))
+        for title, text in zip(titles, steps, strict=True)
+    )
+    return """
+    <section class="detail-section" aria-labelledby="application-title">
+      <div class="detail-section-head">
+        <h2 id="application-title">{title}</h2>
+      </div>
+      <ol class="application-steps">{rows}</ol>
+    </section>
+    """.format(title=escape(str(copy["detail_application_steps_title"])), rows=rows)
+
+
+def _source_panel_markup(
+    detail: OpportunityDetail,
+    *,
+    copy: dict[str, object],
+    lang: str,
+    source_label: str,
+    source_host: str,
+    source_href: str,
+    application_href: str,
+    applications_closed: bool,
+) -> str:
+    values = _detail_metadata_values(detail)
+    raw_labels = copy.get("detail_meta_labels")
+    labels = raw_labels if isinstance(raw_labels, dict) else {}
+    reference_rows: list[str] = []
+    for key in ("reference", "project_id"):
+        value = _display_detail_metadata_value(
+            values.get(key, ""), key=key, copy=copy, lang=lang
+        )
+        if value:
+            reference_rows.append(
+                """
+                <div><dt>{label}</dt><dd>{value}</dd></div>
+                """.format(
+                    label=escape(str(labels.get(key, key.replace("_", " ").title()))),
+                    value=escape(value),
+                )
+            )
+    reference_markup = (
+        """
+        <dl class="reference-list">
+          <div class="reference-list-title"><dt>{title}</dt></div>
+          {rows}
+        </dl>
+        """.format(
+            title=escape(str(copy["detail_reference_title"])),
+            rows="".join(reference_rows),
+        )
+        if reference_rows
+        else ""
+    )
+    application_action = (
+        """
+        <a class="button primary" href="{href}" target="_blank" rel="noopener">{label}</a>
+        """.format(
+            href=application_href,
+            label=escape(str(copy["detail_open_application"])),
+        )
+        if application_href and not applications_closed
+        else ""
+    )
+    source_button_class = "button slim" if application_action else "button primary"
+    return """
+    <aside class="source-panel" aria-labelledby="source-title">
+      <div class="source-panel-head">
+        <span class="eyebrow">{eyebrow}</span>
+        <h2 id="source-title">{source_label}</h2>
+        <p class="source-host">{source_host}</p>
+      </div>
+      <div class="source-actions">
+        {application_action}
+        <a class="{source_button_class}" href="{source_href}" target="_blank" rel="noopener">{source_button_label}</a>
+      </div>
+      {reference_markup}
+    </aside>
+    """.format(
+        eyebrow=escape(str(copy["detail_source_title"])),
+        source_label=escape(source_label),
+        source_host=escape(source_host),
+        application_action=application_action,
+        source_button_class=source_button_class,
+        source_href=source_href,
+        source_button_label=escape(str(copy["detail_open_source"])),
+        reference_markup=reference_markup,
+    )
 
 
 def _working_brief(
@@ -739,15 +2446,20 @@ def _related_markup(
         href = escape(_page_path(root_path, str(item.id), lang), quote=True)
         reason = escape(str(copy.get(reason_key, copy["related_reason_theme"])))
         source_label = escape(item.funder or _label_value(item.source, copy))
-        deadline_label = escape(
-            _format_deadline(item.deadline, lang, str(copy["open_rolling"]))
+        deadline_label = _related_deadline_label(item, copy=copy, lang=lang)
+        deadline_markup = (
+            '<span class="related-deadline">{deadline}</span>'.format(
+                deadline=escape(deadline_label)
+            )
+            if deadline_label
+            else ""
         )
         cards.append(
             """
             <article class="related-card" data-avds-component="document-card">
               <div class="related-top">
                 <span class="related-reason">{reason}</span>
-                <span class="related-deadline">{deadline}</span>
+                {deadline}
               </div>
               <h3><a href="{href}">{title}</a></h3>
               <p class="related-summary">{summary}</p>
@@ -758,7 +2470,7 @@ def _related_markup(
             </article>
             """.format(
                 reason=reason,
-                deadline=deadline_label,
+                deadline=deadline_markup,
                 href=href,
                 title=escape(title),
                 summary=escape(summary),
@@ -810,37 +2522,19 @@ def render_opportunity_page(
         _absolute_href(site_origin, _page_path(root_path, str(detail.id), "en")),
         quote=True,
     )
+    kk_href = escape(
+        _absolute_href(site_origin, _page_path(root_path, str(detail.id), "kk")),
+        quote=True,
+    )
     catalog_href = escape(_catalog_path(root_path, active_lang), quote=True)
     detail_base = root_path.rstrip("/")
+    asset_base = f"{detail_base}/assets/branding" if detail_base else "/assets/branding"
+    favicon_href = f"{detail_base}/favicon.ico" if detail_base else "/favicon.ico"
     sources_href = escape(
         (
             f"{detail_base}/?lang={active_lang}#sources"
             if detail_base
             else f"/?lang={active_lang}#sources"
-        ),
-        quote=True,
-    )
-    status_href = escape(
-        (
-            f"{detail_base}/status?lang={active_lang}"
-            if detail_base
-            else f"/status?lang={active_lang}"
-        ),
-        quote=True,
-    )
-    docs_href = escape(
-        (
-            f"{detail_base}/docs?lang={active_lang}"
-            if detail_base
-            else f"/docs?lang={active_lang}"
-        ),
-        quote=True,
-    )
-    insights_href = escape(
-        (
-            f"{detail_base}/insights?lang={active_lang}"
-            if detail_base
-            else f"/insights?lang={active_lang}"
         ),
         quote=True,
     )
@@ -860,13 +2554,9 @@ def render_opportunity_page(
         ),
         quote=True,
     )
-    attribution_href = escape(
-        (
-            f"{detail_base}/attribution?lang={active_lang}"
-            if detail_base
-            else f"/attribution?lang={active_lang}"
-        ),
-        quote=True,
+    source_href = escape(str(detail.source_url), quote=True)
+    application_href = (
+        escape(detail.application_url, quote=True) if detail.application_url else ""
     )
     prepare_href = escape(
         (
@@ -876,48 +2566,6 @@ def render_opportunity_page(
         ),
         quote=True,
     )
-    source_href = escape(str(detail.source_url), quote=True)
-    application_href = (
-        escape(detail.application_url, quote=True) if detail.application_url else ""
-    )
-    raw_metadata_labels = copy.get("detail_meta_labels")
-    metadata_labels = (
-        raw_metadata_labels if isinstance(raw_metadata_labels, dict) else {}
-    )
-    secondary_metadata = [
-        entry for entry in detail.metadata if entry.key not in HERO_METADATA_KEYS
-    ]
-    metadata_markup = _metadata_markup(
-        secondary_metadata,
-        metadata_labels,
-        copy,
-        lang=active_lang,
-    )
-    content_grid_class = (
-        "content-grid" if metadata_markup else "content-grid content-grid--single"
-    )
-    sidebar_markup = (
-        f"""
-      <aside class="sidebar-card">
-        <h2>{escape(str(copy["detail_meta_title"]))}</h2>
-        <div class="meta-grid">{metadata_markup}</div>
-      </aside>
-        """
-        if metadata_markup
-        else ""
-    )
-    sections_markup = _sections_markup(
-        detail,
-        str(copy["detail_source_excerpt"]),
-        title=title,
-        expand_label=str(copy["detail_expand_source"]),
-        collapse_label=str(copy["detail_collapse_source"]),
-    )
-    prepare_markup = _prepare_markup(detail, copy=copy)
-    apply_markup = _apply_markup(
-        has_application_url=bool(application_href),
-        copy=copy,
-    )
     related_markup = _related_markup(
         related_items or [],
         lang=active_lang,
@@ -925,41 +2573,61 @@ def render_opportunity_page(
         copy=copy,
     )
     source_text = detail.funder or _label_value(detail.source, copy)
-    deadline_text = _format_deadline(
-        detail.deadline,
-        active_lang,
-        str(copy["open_rolling"]),
+    format_text = _detail_format_label(detail, copy)
+    source_host = _host_label(str(detail.source_url))
+    applications_closed = lifecycle in {"closed", "awarded"}
+    actionability = str(program_truth(detail, lifecycle=lifecycle)["actionability"])
+    application_button = (
+        """
+        <a class="button primary" href="{href}" target="_blank" rel="noopener">
+          {label}
+        </a>
+        """.format(
+            href=application_href,
+            label=escape(str(copy["detail_open_application"])),
+        )
+        if application_href and not applications_closed
+        else ""
     )
-    format_text = _label_value(detail.type, copy)
-    source_label = escape(source_text)
-    deadline_label = escape(deadline_text)
-    source_host = escape(_host_label(str(detail.source_url)))
-    format_label = escape(format_text)
-    decision_check_markup = _decision_check_markup(
+    prepare_button = (
+        """
+        <a class="button slim" href="{href}">{label}</a>
+        """.format(
+            href=prepare_href,
+            label=escape(str(copy["detail_prepare_application"])),
+        )
+        if not applications_closed and actionability in {"apply", "verify"}
+        else ""
+    )
+    source_button_class = "button slim" if application_button else "button primary"
+    opportunity_facts = _opportunity_facts_markup(
         detail,
         copy=copy,
         lang=active_lang,
-        source_label=source_text,
-        format_label=format_text,
-        deadline_label=deadline_text,
     )
-    working_brief = _working_brief(
+    eligibility_markup = _eligibility_markup(detail, copy=copy)
+    highlights_markup = _highlights_markup(detail, copy=copy, lang=active_lang)
+    guidance_markup = _source_guidance_markup(
+        detail,
+        copy=copy,
+        lang=active_lang,
+    )
+    application_steps_markup = (
+        _application_steps_markup(detail, copy=copy, lang=active_lang)
+        if not applications_closed
+        else ""
+    )
+    content_markup = _content_sections_markup(
         detail,
         title=title,
         summary=summary,
-        source_label=source_text,
-        format_label=format_text,
-        deadline_label=deadline_text,
         copy=copy,
-    )
-    working_brief_json = json.dumps(working_brief, ensure_ascii=False).replace(
-        "<", "\\u003c"
-    )
-    brief_done_json = json.dumps(
-        str(copy["detail_copy_brief_done"]), ensure_ascii=False
-    )
-    brief_prompt_json = json.dumps(
-        str(copy["detail_copy_brief_prompt"]), ensure_ascii=False
+        collapsed=bool(
+            highlights_markup
+            or eligibility_markup
+            or guidance_markup
+            or application_steps_markup
+        ),
     )
     og_locale = escape(active_lang.replace("-", "_") + "_KZ", quote=True)
     canonical_url = _absolute_href(site_origin, canonical_path)
@@ -972,41 +2640,47 @@ def render_opportunity_page(
             else f"/?lang={active_lang}"
         ),
     )
-    social_image = escape(og_image_url(site_origin, root_path), quote=True)
+    raw_detail = detail.raw if isinstance(detail.raw, dict) else {}
+    social_image_version = opportunity_og_version(
+        id=str(detail.id),
+        lang=active_lang,
+        title=title,
+        summary=summary,
+        source=detail.source,
+        source_url=str(detail.source_url),
+        funder=detail.funder,
+        deadline=detail.deadline,
+        amount_min=detail.amount_min,
+        amount_max=detail.amount_max,
+        currency=detail.currency,
+        amount_raw=raw_detail.get("amount_raw"),
+        lifecycle=lifecycle,
+        formats=detail.tags,
+    )
+    social_image = escape(
+        opportunity_og_image_url(
+            site_origin,
+            root_path,
+            opportunity_id=str(detail.id),
+            lang=active_lang,
+            content_version=social_image_version,
+        ),
+        quote=True,
+    )
+    social_image_alt = escape(
+        f"QAZ.FUND: {title}".replace("\u2014", "\u2013"), quote=True
+    )
     analytics_head = analytics_head_html()
     ru_lang_class = "active" if active_lang == "ru" else ""
+    kk_lang_class = "active" if active_lang == "kk" else ""
     en_lang_class = "active" if active_lang == "en" else ""
-    eligibility = [
-        escape(_label_value(value, copy))
-        for value in detail.eligibility
-        if isinstance(value, str) and value.strip()
-    ]
-    eligibility_markup = "".join(
-        f'<span class="pill">{value}</span>' for value in eligibility[:6]
-    )
-    applications_closed = lifecycle in {"closed", "awarded"}
-    prepare_button = (
-        """
-        <a class="button slim" href="{href}">
-          {label}
-        </a>
-        """.format(
-            href=prepare_href,
-            label=escape(str(copy["detail_prepare_application"])),
-        )
-        if not applications_closed
-        else ""
-    )
-    application_button = (
-        """
-        <a class="button slim" href="{href}" target="_blank" rel="noopener">
-          {label}
-        </a>
-        """.format(
-            href=application_href,
-            label=escape(str(copy["detail_open_application"])),
-        )
-        if application_href and not applications_closed
+    ru_lang_current = ' aria-current="page"' if active_lang == "ru" else ""
+    kk_lang_current = ' aria-current="page"' if active_lang == "kk" else ""
+    en_lang_current = ' aria-current="page"' if active_lang == "en" else ""
+    fallback_note = str(copy.get("language_fallback_note") or "").strip()
+    fallback_note_markup = (
+        f'<p class="language-fallback-note" lang="kk" data-language-fallback="source">{escape(fallback_note)}</p>'
+        if fallback_note
         else ""
     )
     lifecycle_notice = ""
@@ -1020,16 +2694,20 @@ def render_opportunity_page(
         if lifecycle_notice
         else ""
     )
-    empty_markup = ""
-    if not metadata_markup and not sections_markup:
-        empty_markup = (
-            f'<div class="empty-state">{escape(str(copy["detail_empty"]))}</div>'
-        )
+    source_panel_markup = _source_panel_markup(
+        detail,
+        copy=copy,
+        lang=active_lang,
+        source_label=source_text,
+        source_host=source_host,
+        source_href=source_href,
+        application_href=application_href,
+        applications_closed=applications_closed,
+    )
     html_attrs = (
         f'lang="{escape(active_lang, quote=True)}" '
         'data-avds="grant-radar" data-av-theme="light" data-theme="light"'
     )
-    deadline_meta_label = escape(str(metadata_labels.get("deadline", "Deadline")))
     schema_json = _opportunity_schema(
         detail=detail,
         page_title=page_title,
@@ -1047,9 +2725,16 @@ def render_opportunity_page(
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#00545D">
+  <link rel="icon" href="{favicon_href}" sizes="any">
+  <link rel="icon" type="image/svg+xml" href="{asset_base}/favicon.svg">
+  <link rel="icon" type="image/png" sizes="32x32" href="{asset_base}/favicon-32x32.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="{asset_base}/favicon-16x16.png">
+  <link rel="apple-touch-icon" sizes="180x180" href="{asset_base}/apple-touch-icon.png">
   <title>{escape(page_title)}</title>
   <meta name="description" content="{escape(seo_summary, quote=True)}">
   <link rel="canonical" href="{canonical_href}">
+  <link rel="alternate" hreflang="kk" href="{kk_href}">
   <link rel="alternate" hreflang="ru" href="{ru_href}">
   <link rel="alternate" hreflang="en" href="{en_href}">
   <link rel="alternate" hreflang="x-default" href="{ru_href}">
@@ -1058,13 +2743,16 @@ def render_opportunity_page(
   <meta property="og:description" content="{escape(seo_summary, quote=True)}">
   <meta property="og:url" content="{canonical_href}">
   <meta property="og:image" content="{social_image}">
+  <meta property="og:image:type" content="image/png">
   <meta property="og:image:width" content="1200">
   <meta property="og:image:height" content="630">
+  <meta property="og:image:alt" content="{social_image_alt}">
   <meta property="og:locale" content="{og_locale}">
   <meta name="twitter:card" content="summary_large_image">
   <meta name="twitter:title" content="{escape(page_title, quote=True)}">
   <meta name="twitter:description" content="{escape(seo_summary, quote=True)}">
   <meta name="twitter:image" content="{social_image}">
+  <meta name="twitter:image:alt" content="{social_image_alt}">
   <script type="application/ld+json">{schema_json}</script>
 {analytics_head}
 {AVDS_FONT_HEAD}
@@ -1077,6 +2765,8 @@ def render_opportunity_page(
       --surface-subtle: var(--color-bg-subtle);
       --surface-raised: var(--color-surface-raised);
       --surface-wash: color-mix(in oklab, var(--surface), var(--surface-subtle) 42%);
+      --surface-wash-soft: color-mix(in oklab, var(--surface), var(--surface-subtle) 28%);
+      --surface-wash-card: color-mix(in oklab, var(--surface), var(--surface-subtle) 36%);
       --accent-wash: color-mix(in oklab, var(--surface), var(--brand-soft) 24%);
       --text: var(--color-text);
       --muted: var(--color-text-muted);
@@ -1088,7 +2778,7 @@ def render_opportunity_page(
       --success-soft: var(--color-success-subtle);
       --radius: var(--av-radius-lg);
       --shadow: var(--shadow-md);
-      --container-max: min(var(--av-container-dashboard), calc(100% - 64px));
+      --container-max: min(var(--av-container-dashboard), calc(100% - 48px));
     }}
     * {{ box-sizing: border-box; }}
     body {{
@@ -1132,6 +2822,8 @@ def render_opportunity_page(
       color: var(--muted);
       font-size: var(--av-text-sm);
     }}
+    .language-fallback-note {{ margin:0 0 14px; padding:9px 12px; border-left:3px solid var(--brand);
+      color:var(--muted); background:var(--surface-subtle); font-size:12px; line-height:1.45; }}
     .breadcrumbs a:hover {{
       color: var(--brand);
     }}
@@ -1156,13 +2848,12 @@ def render_opportunity_page(
     .hero {{
       display: grid;
       gap: 12px;
-      padding: clamp(26px, 4vw, 48px);
-      border: 1px solid color-mix(in oklab, var(--line), transparent 12%);
-      border-radius: 24px;
-      background:
-        linear-gradient(135deg, var(--surface) 0%, var(--accent-wash) 100%);
-      box-shadow: var(--av-shadow-md);
-      margin-bottom: 18px;
+      padding: 24px 26px;
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      background: var(--accent-wash);
+      box-shadow: var(--shadow);
+      margin-bottom: 14px;
     }}
     .eyebrow {{
       color: var(--brand);
@@ -1223,6 +2914,15 @@ def render_opportunity_page(
     .button.primary {{
       border-color: color-mix(in oklab, var(--brand), black 12%);
       background: var(--brand);
+      color: white;
+    }}
+    .button:hover {{
+      border-color: var(--line-strong);
+      background: var(--surface-subtle);
+    }}
+    .button.primary:hover {{
+      border-color: color-mix(in oklab, var(--brand), black 18%);
+      background: color-mix(in oklab, var(--brand), black 10%);
       color: white;
     }}
     .button.slim {{
@@ -1294,6 +2994,87 @@ def render_opportunity_page(
       font-size: var(--av-text-sm);
       font-weight: 600;
     }}
+    .readiness-panel {{
+      display: grid;
+      gap: 10px;
+      margin: 0 0 14px;
+      padding: 14px 16px;
+      border: 1px solid var(--line);
+      border-radius: var(--av-radius-md);
+      background: var(--surface);
+      box-shadow: var(--av-shadow-xs);
+    }}
+    .readiness-head {{
+      display: flex;
+      align-items: start;
+      justify-content: space-between;
+      gap: 16px;
+    }}
+    .readiness-head h2 {{ margin: 0 0 3px; font-size: 16px; line-height: 1.2; }}
+    .readiness-head p {{ margin: 0; color: var(--muted); font-size: var(--av-text-sm); }}
+    .readiness-head > strong {{ color: var(--brand); font-size: 18px; line-height: 1; }}
+    .readiness-track {{ height: 7px; overflow: hidden; border-radius: 999px; background: var(--surface-subtle); }}
+    .readiness-track span {{ display: block; height: 100%; border-radius: inherit; background: var(--brand); transition: width 180ms ease; }}
+    .readiness-grid {{ display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 8px; }}
+    .readiness-signal {{ display: flex; align-items: center; gap: 7px; color: var(--muted); font-size: var(--av-text-xs); font-weight: 700; }}
+    .readiness-dot {{ width: 8px; height: 8px; flex: 0 0 auto; border-radius: 50%; background: var(--line-strong); }}
+    .readiness-signal.is-known {{ color: var(--success); }}
+    .readiness-signal.is-known .readiness-dot {{ background: var(--success); }}
+    .decision-support {{
+      display: grid;
+      gap: 14px;
+      margin: 0 0 14px;
+      padding: clamp(16px, 2.4vw, 26px);
+      border: 1px solid color-mix(in oklab, var(--brand), white 72%);
+      border-radius: var(--av-radius-lg);
+      background: linear-gradient(128deg, var(--surface-wash-soft), var(--surface));
+      box-shadow: var(--av-shadow-xs);
+    }}
+    .decision-support-head {{
+      display: flex;
+      align-items: start;
+      justify-content: space-between;
+      gap: 20px;
+    }}
+    .decision-support-head h2 {{ margin: 3px 0 6px; font-size: clamp(18px, 2vw, 24px); line-height: 1.16; }}
+    .decision-support-head p {{ max-width: 760px; margin: 0; color: var(--muted); font-size: var(--av-text-sm); line-height: 1.48; }}
+    .decision-truth {{
+      display: grid;
+      min-width: min(250px, 36vw);
+      gap: 4px;
+      padding: 11px 13px;
+      border: 1px solid var(--line);
+      border-radius: var(--av-radius-md);
+      background: var(--surface);
+    }}
+    .decision-truth > span {{ color: var(--muted); font-size: var(--av-text-xs); font-weight: 700; letter-spacing: .04em; text-transform: uppercase; }}
+    .decision-truth strong {{ color: var(--brand); font-size: var(--av-text-sm); line-height: 1.25; }}
+    .decision-truth small {{ color: var(--muted); font-size: var(--av-text-xs); line-height: 1.35; }}
+    .decision-facts {{ display: grid; gap: 8px; }}
+    .decision-facts > span {{ font-size: var(--av-text-sm); font-weight: 700; }}
+    .decision-facts ul {{ display: flex; flex-wrap: wrap; gap: 7px 12px; margin: 0; padding: 0; list-style: none; }}
+    .decision-facts li {{ display: inline-flex; align-items: center; gap: 6px; color: var(--muted); font-size: var(--av-text-xs); font-weight: 700; }}
+    .decision-facts li > span {{ width: 7px; height: 7px; border-radius: 999px; background: var(--line-strong); }}
+    .decision-facts li.is-known {{ color: var(--success); }}
+    .decision-facts li.is-known > span {{ background: var(--success); }}
+    .profile-fit {{ border-top: 1px solid var(--line); padding-top: 12px; }}
+    .profile-fit summary {{ display: grid; gap: 3px; cursor: pointer; list-style: none; }}
+    .profile-fit summary::-webkit-details-marker {{ display: none; }}
+    .profile-fit summary > span:first-child {{ color: var(--brand); font-size: var(--av-text-base); font-weight: 750; }}
+    .profile-fit summary > span:last-child {{ color: var(--muted); font-size: var(--av-text-sm); line-height: 1.42; }}
+    .profile-fit form {{ display: grid; gap: 12px; margin-top: 14px; }}
+    .profile-fit-grid {{ display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; }}
+    .profile-fit-field {{ display: grid; gap: 5px; color: var(--muted); font-size: var(--av-text-xs); font-weight: 700; }}
+    .profile-fit-field select {{ min-width: 0; min-height: 40px; padding: 8px 30px 8px 10px; border: 1px solid var(--line-strong); border-radius: var(--av-radius-sm); color: var(--text); background: var(--surface); font: inherit; }}
+    .profile-fit-actions {{ display: flex; align-items: center; gap: 12px; }}
+    .profile-fit-actions p {{ margin: 0; color: var(--muted); font-size: var(--av-text-xs); line-height: 1.35; }}
+    .profile-fit-result {{ display: grid; gap: 7px; padding: 12px 13px; border-radius: var(--av-radius-md); background: var(--surface); box-shadow: var(--av-shadow-2xs); }}
+    .profile-fit-result > strong {{ color: var(--brand); font-size: var(--av-text-sm); }}
+    .profile-fit-result > p {{ margin: 0; color: var(--muted); font-size: var(--av-text-xs); line-height: 1.42; }}
+    .profile-fit-result ul {{ display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 6px 12px; margin: 0; padding-left: 16px; }}
+    .profile-fit-result li {{ color: var(--muted); font-size: var(--av-text-xs); line-height: 1.36; }}
+    .profile-fit-result li.is-positive {{ color: var(--success); }}
+    .profile-fit-result li.is-check {{ color: color-mix(in oklab, var(--text), var(--muted) 28%); }}
     .content-grid {{
       display: grid;
       grid-template-columns: minmax(0, 1.48fr) minmax(280px, 0.62fr);
@@ -1463,13 +3244,13 @@ def render_opportunity_page(
     }}
     .verification-section {{
       display: grid;
-      gap: 18px;
-      margin-top: 18px;
-      padding: 24px;
-      border: 1px solid var(--line);
+      gap: 12px;
+      margin-bottom: 12px;
+      padding: 16px;
+      border: 1px solid var(--line-subtle);
       border-radius: var(--av-radius-lg);
-      background: var(--surface);
-      box-shadow: var(--av-shadow-xs);
+      background: var(--surface-wash-soft);
+      box-shadow: var(--av-shadow-2xs);
     }}
     .verification-head {{
       display: grid;
@@ -1571,13 +3352,13 @@ def render_opportunity_page(
     }}
     .prepare-section {{
       display: grid;
-      gap: 18px;
-      margin-top: 18px;
-      padding: 24px;
-      border: 1px solid var(--line);
+      gap: 10px;
+      margin-bottom: 12px;
+      padding: 16px;
+      border: 1px solid var(--line-subtle);
       border-radius: var(--av-radius-lg);
-      background: var(--surface);
-      box-shadow: var(--av-shadow-xs);
+      background: var(--surface-wash-soft);
+      box-shadow: var(--av-shadow-2xs);
     }}
     .prepare-head {{
       display: grid;
@@ -1600,19 +3381,20 @@ def render_opportunity_page(
     .prepare-grid {{
       display: grid;
       grid-template-columns: repeat(4, minmax(0, 1fr));
-      gap: 12px;
+      gap: 8px;
     }}
     .prepare-card {{
       display: grid;
       gap: 6px;
-      min-height: 100%;
-      padding: 16px;
+      min-height: 0;
+      padding: 12px;
       border: 1px solid var(--line-subtle);
+      border-left: 3px solid color-mix(in oklab, var(--brand), white 36%);
       border-radius: var(--av-radius-md);
-      background: var(--surface-subtle);
-      box-shadow: none;
+      background: var(--surface-wash-card);
+      box-shadow: var(--av-shadow-2xs);
     }}
-    .prepare-card:first-child {{ border-left: 1px solid var(--line-subtle); }}
+    .prepare-card:first-child {{ border-left-color: var(--brand); }}
     .prepare-index {{
       display: inline-flex;
       align-items: center;
@@ -1639,13 +3421,13 @@ def render_opportunity_page(
     }}
     .apply-section {{
       display: grid;
-      gap: 18px;
-      margin-top: 18px;
-      padding: 24px;
-      border: 1px solid var(--line);
+      gap: 10px;
+      margin-bottom: 12px;
+      padding: 16px;
+      border: 1px solid var(--line-subtle);
       border-radius: var(--av-radius-lg);
-      background: var(--surface);
-      box-shadow: var(--av-shadow-xs);
+      background: var(--surface-wash-soft);
+      box-shadow: var(--av-shadow-2xs);
     }}
     .apply-head {{
       display: grid;
@@ -1668,7 +3450,7 @@ def render_opportunity_page(
     .apply-list {{
       display: grid;
       grid-template-columns: repeat(4, minmax(0, 1fr));
-      gap: 12px;
+      gap: 8px;
       padding: 0;
       margin: 0;
       list-style: none;
@@ -1678,13 +3460,13 @@ def render_opportunity_page(
       grid-template-columns: 28px minmax(0, 1fr);
       gap: 10px;
       align-items: start;
-      min-height: 100%;
-      padding: 16px;
+      padding: 12px;
       border: 1px solid var(--line-subtle);
+      border-left: 3px solid color-mix(in oklab, var(--success), white 34%);
       border-radius: var(--av-radius-md);
-      background: var(--surface-subtle);
+      background: var(--surface-wash-card);
     }}
-    .apply-step:first-child {{ border-left: 1px solid var(--line-subtle); }}
+    .apply-step:first-child {{ border-left-color: var(--success); }}
     .apply-index {{
       display: inline-flex;
       align-items: center;
@@ -1828,6 +3610,36 @@ def render_opportunity_page(
       outline-offset:2px;
       border-radius:var(--av-radius-sm);
     }}
+    @media (min-width:1440px) {{
+      .hero-grid {{
+        grid-template-columns:minmax(0,1.55fr) minmax(360px,.65fr);
+        gap:64px;
+      }}
+      .content-grid--single .section-stack {{
+        grid-template-columns:repeat(3,minmax(0,1fr));
+        column-gap:32px;
+      }}
+      .prepare-grid,
+      .related-grid {{ gap:16px; }}
+      .readiness-grid {{ gap:16px; }}
+    }}
+    @media (min-width:2200px) {{
+      .shell {{
+        width: min(1920px, calc(100% - 160px));
+      }}
+      .hero-grid {{
+        grid-template-columns: minmax(0, 1.35fr) minmax(420px, .65fr);
+        gap: 72px;
+      }}
+      .hero h1 {{ max-width: 36ch; }}
+      .summary {{ max-width: 78ch; }}
+      .content-grid--single .section-stack > .section-card:not(.source-disclosure) {{
+        grid-column: span 2;
+      }}
+      .richtext p {{ max-width: 90ch; }}
+      .verification-head,
+      .related-head {{ max-width: 920px; }}
+    }}
     @media (max-width: 900px) {{
       .hero-grid,
       .content-grid,
@@ -1839,6 +3651,9 @@ def render_opportunity_page(
         grid-template-columns: 1fr;
       }}
       .content-grid--single .section-stack {{ grid-template-columns: 1fr; }}
+      .decision-support-head {{ display: grid; }}
+      .decision-truth {{ min-width: 0; }}
+      .profile-fit-grid {{ grid-template-columns: repeat(2, minmax(0, 1fr)); }}
       .hero-stats,
       .sidebar-card {{
         position: static;
@@ -1855,10 +3670,27 @@ def render_opportunity_page(
       .decision-check-card,
       .apply-step,
       .apply-step:first-child {{
-        min-height: auto;
-        padding: 16px;
-        border: 1px solid var(--line-subtle);
+        padding: 12px;
+        border-left: 3px solid color-mix(in oklab, var(--brand), white 36%);
+        border-top: 1px solid var(--line-subtle);
+        border-radius: var(--av-radius-md);
+        background: var(--surface-wash-card);
       }}
+      .prepare-card:first-child {{ border-left-color: var(--brand); }}
+      .apply-step,
+      .apply-step:first-child {{
+        border-left-color: color-mix(in oklab, var(--success), white 34%);
+      }}
+      .apply-step:first-child {{ border-left-color: var(--success); }}
+    }}
+    @media (max-width: 820px) {{
+      .lang-switch a {{ min-width: 44px; min-height: 44px; }}
+      .breadcrumbs a,
+      .related-card h3 a,
+      .related-link,
+      .site-footer-nav a,
+      .site-footer > p a {{ display: inline-flex; align-items: center; min-height: 44px; }}
+      .site-footer-nav a {{ justify-content: center; min-width: 44px; }}
     }}
     @media (max-width: 640px) {{
       .hero-actions .button,
@@ -1879,6 +3711,7 @@ def render_opportunity_page(
         padding: 22px 18px;
         border-radius: 20px;
       }}
+      .hero {{ padding: 16px; }}
       .hero h1 {{
         font-size: 30px;
       }}
@@ -1898,24 +3731,10 @@ def render_opportunity_page(
       .hero-stats strong {{
         font-size: 14px;
       }}
-      .verification-section,
-      .prepare-section,
-      .apply-section,
-      .related-section,
-      .site-footer {{
-        padding: 18px;
-        border-radius: 16px;
-      }}
-      .source-disclosure summary {{
-        align-items: flex-start;
-        padding: 16px;
-      }}
-      .source-disclosure-action {{
-        padding: 4px 8px;
-      }}
-      .related-card {{
-        padding: 16px;
-      }}
+      .readiness-grid {{ grid-template-columns: repeat(2, minmax(0, 1fr)); }}
+      .profile-fit-grid,
+      .profile-fit-result ul {{ grid-template-columns: 1fr; }}
+      .profile-fit-actions {{ align-items: flex-start; flex-direction: column; }}
       .prepare-head h2,
       .apply-head h2,
       .related-head h2 {{
@@ -1923,116 +3742,74 @@ def render_opportunity_page(
       }}
     }}
 {OPPORTUNITY_AVDS4_CSS}
+{OPPORTUNITY_DETAIL_CSS}
   </style>
 </head>
 <body>
-  <main
-    class="shell"
-    data-avds-component="lite-reading-surface"
-    data-avds-version="4.6.0"
-  >
+  <main class="shell" data-avds-component="opportunity-page">
     <div class="topbar">
       <nav class="breadcrumbs" aria-label="{escape(str(copy["breadcrumbs_aria"]), quote=True)}">
-        <a href="{catalog_href}">QAZ.FUND</a>
+        <a class="site-brand" href="{catalog_href}">
+          <span class="brand-mark brand-mark--compact">{BRAND_MARK_TEAL_HTML}</span>
+          <strong>QAZ.FUND</strong>
+        </a>
         <span>/</span>
         <a href="{catalog_href}">{escape(str(copy["opportunities_title"]))}</a>
         <span>/</span>
         <span>{escape(title)}</span>
       </nav>
       <nav class="lang-switch" aria-label="{escape(str(copy['language_switch']), quote=True)}">
-        <a class="{ru_lang_class}" href="{ru_href}" lang="ru">RU</a>
-        <a class="{en_lang_class}" href="{en_href}" lang="en">EN</a>
+        <a class="{kk_lang_class}" href="{kk_href}" lang="kk"{kk_lang_current}>KAZ</a>
+        <a class="{ru_lang_class}" href="{ru_href}" lang="ru"{ru_lang_current}>RU</a>
+        <a class="{en_lang_class}" href="{en_href}" lang="en"{en_lang_current}>EN</a>
       </nav>
     </div>
+    {fallback_note_markup}
 
-    <section class="hero" data-avds-component="editorial-lead-rail">
-      <div class="hero-grid">
-        <div>
-          <div class="eyebrow">QAZ.FUND</div>
+    <article class="opportunity-article" data-avds-component="opportunity-detail">
+      <header class="opportunity-hero">
+        <div class="opportunity-head">
+          <span class="opportunity-kicker">{escape(format_text)}</span>
           <h1>{escape(title)}</h1>
-          <p class="summary">{escape(summary)}</p>
-          <div class="pills">{eligibility_markup}</div>
-          {lifecycle_notice_markup}
-          <div class="hero-actions">
-            <a class="button primary" href="{source_href}" target="_blank" rel="noopener">
-              {escape(str(copy["detail_open_source"]))}
-            </a>
-            {prepare_button}
-            <button class="button slim" type="button" id="copy-working-brief">
-              {escape(str(copy["detail_copy_brief"]))}
-            </button>
-            {application_button}
-          </div>
-          <p class="hero-action-status" id="copy-working-brief-status" aria-live="polite"></p>
+          <p class="opportunity-summary">{escape(summary)}</p>
         </div>
-        <aside class="hero-stats" data-avds-component="trust-facts-panel">
-          <div>
-            <span class="eyebrow">{escape(str(copy["detail_meta_title"]))}</span>
-          </div>
-          <div class="hero-fact hero-fact--source">
-            <strong>{source_label}</strong>
-            <div class="status-note">{source_host}</div>
-          </div>
-          <div class="hero-fact hero-fact--deadline">
-            <strong>{deadline_label}</strong>
-            <div class="status-note">{deadline_meta_label}</div>
-          </div>
-          <div class="hero-fact hero-fact--format">
-            <strong>{format_label}</strong>
-            <div class="status-note">{escape(str(copy["meta_format_label"]))}</div>
-          </div>
-        </aside>
-      </div>
-    </section>
+        {lifecycle_notice_markup}
+        {opportunity_facts}
+        <div class="opportunity-actions">
+          {application_button}
+          <a class="{source_button_class}" href="{source_href}" target="_blank" rel="noopener">
+            {escape(str(copy["detail_open_source"]))}
+          </a>
+          {prepare_button}
+        </div>
+      </header>
 
-    <div class="detail-flow">
-      <section class="{content_grid_class}">
-        <div class="section-stack">
-          {sections_markup}
-          {empty_markup}
+      <div class="opportunity-layout">
+        <div class="opportunity-content">
+          {highlights_markup}
+          {eligibility_markup}
+          {guidance_markup}
+          {application_steps_markup}
+          {content_markup}
         </div>
-        {sidebar_markup}
-      </section>
-      {decision_check_markup}
-      {prepare_markup}
-      {apply_markup}
+        {source_panel_markup}
+      </div>
       {related_markup}
-    </div>
-    <footer class="site-footer">
+    </article>
+    <footer class="site-footer site-footer--compact">
       <nav class="site-footer-nav" aria-label="{escape(str(copy["views_aria"]), quote=True)}">
         <a href="{catalog_href}">{escape(str(copy["tab_opportunities"]))}</a>
         <a href="{sources_href}">{escape(str(copy["tab_sources"]))}</a>
-        <a href="{insights_href}">{escape("Аналитика" if active_lang == "ru" else "Insights")}</a>
-        <a href="{status_href}">{escape(str(copy["status_link"]))}</a>
-        <a href="{docs_href}">{escape(str(copy["api_docs"]))}</a>
-        <a href="{terms_href}">{escape(str(copy["footer_terms"]))}</a>
-        <a href="{data_policy_href}">{escape(str(copy["footer_data_policy"]))}</a>
-        <a href="{attribution_href}">{escape(str(copy["footer_attribution"]))}</a>
+        <a href="{terms_href}">{escape(str(copy["terms_link"]))}</a>
+        <a href="{data_policy_href}">{escape(str(copy["data_policy_link"]))}</a>
       </nav>
       <p>
         {escape(str(copy["footer_owner"]))}
         <a href="https://qdev.run">{escape(str(copy["footer_qdev"]))}</a>
+        · <a class="footer-contact" href="mailto:contact@qaz.fund">contact@qaz.fund</a>
       </p>
       <p>{escape(str(copy["footer_disclaimer"]))}</p>
     </footer>
   </main>
-  <script>
-    (() => {{
-      const button = document.getElementById("copy-working-brief");
-      const status = document.getElementById("copy-working-brief-status");
-      const brief = {working_brief_json};
-      const doneMessage = {brief_done_json};
-      const promptLabel = {brief_prompt_json};
-      button?.addEventListener("click", async () => {{
-        try {{
-          if (!navigator.clipboard || !window.isSecureContext) throw new Error("clipboard");
-          await navigator.clipboard.writeText(brief);
-          status.textContent = doneMessage;
-        }} catch {{
-          window.prompt(promptLabel, brief);
-        }}
-      }});
-    }})();
-  </script>
 </body>
 </html>"""

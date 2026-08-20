@@ -14,6 +14,9 @@ from qazstack.opportunities import public_lifecycle
 
 from api.avds import AVDS_CSS, AVDS_FONT_HEAD
 from api.dashboard import dashboard_copy
+from api.page_primitives import absolute_href as _absolute_href
+from api.page_primitives import catalog_path as _catalog_path
+from api.page_primitives import format_deadline as _format_deadline
 from api.public_meta import analytics_head_html, og_image_url
 from core.models import Opportunity
 from core.nlp import clean_source_summary
@@ -37,22 +40,6 @@ _ACRONYM_MAP = {
     "unicef": "UNICEF",
     "us": "US",
 }
-
-
-def _absolute_href(origin: str, path: str) -> str:
-    clean_origin = origin.rstrip("/")
-    if path.startswith(("http://", "https://")):
-        return path
-    if not clean_origin:
-        return path or "/"
-    return f"{clean_origin}{path}"
-
-
-def _catalog_path(root_path: str, lang: str) -> str:
-    base = root_path.rstrip("/")
-    if base:
-        return f"{base}/?lang={lang}#opportunities"
-    return f"/?lang={lang}#opportunities"
 
 
 def _funder_path(root_path: str, slug: str, lang: str) -> str:
@@ -158,14 +145,6 @@ def _overview_sentence(funder: dict[str, object], copy: dict[str, object]) -> st
     if regions:
         bits.append(str(copy["funder_overview_regions"]).format(regions=regions))
     return " ".join(bits).strip()
-
-
-def _format_deadline(value: date | None, lang: str, rolling_label: str) -> str:
-    if value is None:
-        return rolling_label
-    if lang == "en":
-        return value.strftime("%b %d, %Y")
-    return value.strftime("%d.%m.%Y")
 
 
 def _tag_is_supported(item: Opportunity, raw_tag: object) -> bool:
@@ -316,8 +295,11 @@ def _opportunity_card(
         if item.deadline is not None
         else ""
     )
+    search_blob = " ".join(
+        [item.title, item.summary, primary_format, *public_tags]
+    ).lower()
     return f"""
-    <article class="opportunity-card">
+    <article class="opportunity-card" data-card-search="{escape(search_blob, quote=True)}">
       <div class="opportunity-head">
         <div>
           <h3><a href="{href}">{escape(item.title)}</a></h3>
@@ -366,6 +348,12 @@ def render_funder_page(
     en_href = escape(
         _absolute_href(
             site_origin, _funder_path(root_path.rstrip("/"), str(funder["slug"]), "en")
+        ),
+        quote=True,
+    )
+    kk_href = escape(
+        _absolute_href(
+            site_origin, _funder_path(root_path.rstrip("/"), str(funder["slug"]), "kk")
         ),
         quote=True,
     )
@@ -486,11 +474,14 @@ def render_funder_page(
     )
     archive_section = (
         f"""
-    <section class="section">
-      <h2>{escape(str(copy["funder_archive_title"]))}</h2>
-      <p class="section-note">{escape(str(copy["funder_archive_note"]))}</p>
-      <div class="opportunity-list">{archive_markup}</div>
-    </section>
+    <details class="section archive-disclosure">
+      <summary><span>{escape(str(copy["funder_archive_title"]))}</span>
+        <strong>{len(archive_items)}</strong></summary>
+      <div class="archive-body">
+        <p class="section-note">{escape(str(copy["funder_archive_note"]))}</p>
+        <div class="opportunity-list">{archive_markup}</div>
+      </div>
+    </details>
         """
         if archive_markup
         else ""
@@ -508,8 +499,29 @@ def render_funder_page(
     )
     social_image = escape(og_image_url(site_origin, root_path), quote=True)
     analytics_head = analytics_head_html()
+    search_label = {
+        "ru": "Поиск по программам фонда",
+        "kk": "Қор бағдарламаларын іздеу",
+        "en": "Search this funder's programmes",
+    }[active_lang]
+    no_search_results = {
+        "ru": "По этому запросу программ не найдено.",
+        "kk": "Бұл сұрау бойынша бағдарлама табылмады.",
+        "en": "No programmes match this search.",
+    }[active_lang]
     ru_lang_class = "active" if active_lang == "ru" else ""
+    kk_lang_class = "active" if active_lang == "kk" else ""
     en_lang_class = "active" if active_lang == "en" else ""
+    ru_lang_current = ' aria-current="page"' if active_lang == "ru" else ""
+    kk_lang_current = ' aria-current="page"' if active_lang == "kk" else ""
+    en_lang_current = ' aria-current="page"' if active_lang == "en" else ""
+    fallback_note = str(copy.get("language_fallback_note") or "").strip()
+    fallback_note_markup = (
+        f'<p class="language-fallback-note" lang="kk" '
+        f'data-language-fallback="source">{escape(fallback_note)}</p>'
+        if fallback_note
+        else ""
+    )
 
     return f"""<!doctype html>
 <html lang="{html_lang}" {html_theme_attrs}>
@@ -519,6 +531,7 @@ def render_funder_page(
   <title>{funder_name} – QAZ.FUND</title>
   <meta name="description" content="{overview}">
   <link rel="canonical" href="{canonical_href}">
+  <link rel="alternate" hreflang="kk" href="{kk_href}">
   <link rel="alternate" hreflang="ru" href="{ru_href}">
   <link rel="alternate" hreflang="en" href="{en_href}">
   <link rel="alternate" hreflang="x-default" href="{ru_href}">
@@ -544,6 +557,8 @@ def render_funder_page(
       --panel: var(--color-surface);
       --panel-subtle: color-mix(in oklab, var(--panel), var(--av-color-background) 28%);
       --panel-wash: color-mix(in oklab, var(--panel), var(--av-color-background) 42%);
+      --panel-wash-section: color-mix(in oklab, var(--panel), var(--av-color-background) 20%);
+      --panel-wash-card: color-mix(in oklab, var(--panel), var(--av-color-background) 32%);
       --line: var(--color-border);
       --muted: var(--color-text-muted);
       --ink: var(--color-text);
@@ -587,6 +602,8 @@ def render_funder_page(
       backdrop-filter: blur(16px);
     }}
     .back-link:hover {{ color: var(--brand); }}
+    .language-fallback-note {{ margin:0 0 14px; padding:9px 12px; border-left:3px solid var(--brand);
+      color:var(--muted); background:var(--panel-wash); font-size:12px; line-height:1.45; }}
     .topbar {{
       display: flex;
       align-items: center;
@@ -617,13 +634,12 @@ def render_funder_page(
     .hero {{
       display: grid;
       grid-template-columns: minmax(0, 1fr) minmax(250px, 0.44fr);
-      gap: 18px clamp(28px, 5vw, 72px);
-      padding: clamp(26px, 4vw, 48px);
-      border: 1px solid color-mix(in oklab, var(--line), transparent 12%);
-      border-radius: 24px;
-      background:
-        linear-gradient(135deg, var(--panel) 0%, var(--brand-soft) 130%);
-      box-shadow: var(--av-shadow-md);
+      gap: 14px 36px;
+      padding: 24px 26px;
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      background: color-mix(in oklab, var(--panel), var(--brand-soft) 22%);
+      box-shadow: var(--shadow);
     }}
     .hero > .eyebrow {{ grid-column: 1 / -1; }}
     .eyebrow {{
@@ -685,12 +701,12 @@ def render_funder_page(
       font-family: var(--av-font-sans, Arial, sans-serif);
     }}
     .section {{
-      padding: 24px;
-      margin-top: 18px;
+      padding: 16px;
+      margin-top: 14px;
       border: 1px solid var(--line);
-      border-radius: var(--av-radius-lg);
-      background: var(--panel);
-      box-shadow: var(--av-shadow-xs);
+      border-radius: var(--radius);
+      background: var(--panel-wash-section);
+      box-shadow: var(--av-shadow-2xs);
     }}
     .section h2 {{
       margin: 0 0 10px;
@@ -704,6 +720,29 @@ def render_funder_page(
       font-size: 14px;
       line-height: 1.45;
     }}
+    .funder-search {{
+      display:grid; gap:6px; margin-top:14px; color:var(--muted);
+      font-size:12px; font-weight:700;
+    }}
+    .funder-search input {{
+      width:100%; min-height:44px; padding:10px 12px; border:1px solid var(--line);
+      border-radius:var(--av-radius-md); background:var(--panel); color:var(--ink);
+    }}
+    .funder-search-empty {{ display:none; margin:12px 0 0; color:var(--muted); font-size:13px; }}
+    .opportunity-card[hidden],.archive-disclosure[hidden] {{ display:none !important; }}
+    .archive-disclosure {{ padding:0; overflow:clip; }}
+    .archive-disclosure > summary {{
+      min-height:64px; padding:16px; display:flex; align-items:center;
+      justify-content:space-between; gap:14px; list-style:none; cursor:pointer;
+      font-size:20px; font-weight:800;
+    }}
+    .archive-disclosure > summary::-webkit-details-marker {{ display:none; }}
+    .archive-disclosure > summary strong {{
+      display:grid; place-items:center; min-width:34px; height:34px; border-radius:999px;
+      background:var(--brand-soft); color:var(--brand); font-size:12px;
+    }}
+    .archive-disclosure[open] > summary {{ border-bottom:1px solid var(--line); }}
+    .archive-body {{ padding:16px; }}
     .topic-row {{
       display: flex;
       flex-wrap: wrap;
@@ -731,9 +770,8 @@ def render_funder_page(
     }}
     .opportunity-list {{
       display: grid;
-      grid-template-columns: repeat(2, minmax(0, 1fr));
-      gap: 14px;
-      border-bottom: 0;
+      grid-template-columns: 1fr;
+      gap: 8px;
     }}
     .opportunity-card {{
       display: grid;
@@ -742,20 +780,14 @@ def render_funder_page(
       gap: 14px;
       align-items: start;
       align-content: start;
-      min-height: 100%;
-      border: 1px solid var(--line);
-      border-radius: var(--av-radius-lg);
-      background: var(--panel);
-      padding: 18px;
-      box-shadow: var(--av-shadow-xs);
-      transition:
-        transform var(--av-motion-fast) ease,
-        box-shadow var(--av-motion-fast) ease;
+      border: 1px solid var(--line-subtle);
+      border-left: 3px solid color-mix(in oklab, var(--brand), white 38%);
+      border-radius: var(--av-radius-md);
+      background: var(--panel-wash-card);
+      padding: 16px 14px;
+      box-shadow: var(--av-shadow-2xs);
     }}
-    .opportunity-card:hover {{
-      transform: translateY(-2px);
-      box-shadow: var(--av-shadow-sm);
-    }}
+    .opportunity-card:first-child {{ border-left-color: var(--brand); }}
     .opportunity-head {{
       display: grid;
       grid-template-columns: 1fr;
@@ -817,20 +849,28 @@ def render_funder_page(
       color: var(--brand);
       border-color: color-mix(in oklab, var(--brand), transparent 76%);
     }}
+    .button:not(.soft):hover {{
+      background: color-mix(in oklab, var(--brand), black 10%);
+    }}
+    .button.soft:hover {{
+      border-color: var(--color-border-subtle);
+      background: var(--panel-subtle);
+      color: var(--brand);
+    }}
     .source-grid {{
       display: grid;
-      grid-template-columns: repeat(2, minmax(0, 1fr));
-      gap: 12px;
+      grid-template-columns: 1fr;
+      gap: 8px;
     }}
     .source-link {{
       display: grid;
       gap: 4px;
-      padding: 16px;
-      border: 1px solid var(--line);
+      padding: 12px;
+      border: 1px solid var(--line-subtle);
       border-radius: var(--av-radius-md);
-      background: var(--panel-subtle);
+      background: var(--panel-wash-card);
       text-decoration: none;
-      box-shadow: var(--av-shadow-xs);
+      box-shadow: var(--av-shadow-2xs);
     }}
     .source-link strong {{
       font-size: 15px;
@@ -874,7 +914,54 @@ def render_funder_page(
       outline-offset:2px;
       border-radius:var(--av-radius-sm);
     }}
+    @media (min-width:1440px) {{
+      .hero {{
+        grid-template-columns:minmax(0,1.25fr) minmax(420px,.55fr);
+        gap:56px;
+        padding:32px 36px;
+      }}
+      .opportunity-card {{
+        grid-template-columns:minmax(380px,1.08fr) minmax(360px,.92fr) minmax(250px,.44fr);
+        gap:40px;
+      }}
+      .source-grid {{
+        grid-template-columns:repeat(2,minmax(0,1fr));
+        column-gap:40px;
+      }}
+    }}
+    @media (min-width:2200px) {{
+      .shell {{
+        width: min(1920px, calc(100% - 160px));
+      }}
+      .hero {{
+        grid-template-columns:minmax(0,1.45fr) minmax(520px,.65fr);
+        gap:72px;
+        padding-block:40px;
+      }}
+      .hero-copy {{ max-width:1080px; }}
+      .opportunity-card {{
+        grid-template-columns:minmax(420px,1.18fr) minmax(420px,.92fr) minmax(280px,.42fr);
+        gap:48px;
+      }}
+      .source-grid {{
+        grid-template-columns:repeat(4,minmax(0,1fr));
+        column-gap:48px;
+      }}
+    }}
     @media (max-width: 900px) {{
+      .button,
+      .lang-switch a,
+      .back-link,
+      .opportunity-card h3 a,
+      .site-footer-nav a,
+      .site-footer > p a {{
+        display: inline-flex;
+        align-items: center;
+        min-height: var(--av-control-height-lg);
+      }}
+      .lang-switch a,
+      .site-footer-nav a {{ min-width: var(--av-control-height-lg); }}
+      .site-footer-nav a {{ justify-content: center; }}
       .hero {{ grid-template-columns: 1fr; }}
       .stat-grid {{
         grid-column: auto;
@@ -907,8 +994,7 @@ def render_funder_page(
         padding: 8px 10px;
       }}
       .hero {{
-        padding: 22px 18px;
-        border-radius: 20px;
+        padding: 16px;
       }}
       .stat-grid {{
         grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -919,9 +1005,8 @@ def render_funder_page(
       .opportunity-head {{
         grid-template-columns: 1fr;
       }}
-      .section,
-      .site-footer {{ padding: 18px; border-radius: 16px; }}
-      .opportunity-card {{ padding: 16px; }}
+      .section {{ padding: 14px; }}
+      .opportunity-card {{ padding: 14px 12px; }}
       .card-actions {{
         display: grid;
         grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -931,15 +1016,17 @@ def render_funder_page(
   </style>
 </head>
 <body>
-  <main class="shell">
+  <main class="shell" data-avds-component="funder-page">
     <div class="topbar">
       <a class="back-link" href="{catalog_href}">{back_label}</a>
       <nav class="lang-switch" aria-label="{escape(str(copy['language_switch']), quote=True)}">
-        <a class="{ru_lang_class}" href="{ru_href}" lang="ru">RU</a>
-        <a class="{en_lang_class}" href="{en_href}" lang="en">EN</a>
+        <a class="{kk_lang_class}" href="{kk_href}" lang="kk"{kk_lang_current}>KAZ</a>
+        <a class="{ru_lang_class}" href="{ru_href}" lang="ru"{ru_lang_current}>RU</a>
+        <a class="{en_lang_class}" href="{en_href}" lang="en"{en_lang_current}>EN</a>
       </nav>
     </div>
-    <section class="hero">
+    {fallback_note_markup}
+    <section class="hero" data-avds-component="hero-band">
       <span class="eyebrow">{escape(str(copy["funder_page_eyebrow"]))}</span>
       <div class="hero-copy">
         <h1>{funder_name}</h1>
@@ -948,6 +1035,13 @@ def render_funder_page(
       </div>
       <div class="stat-grid">{stat_markup}</div>
     </section>
+
+    <label class="funder-search" for="funder-program-search">
+      {escape(search_label)}
+      <input id="funder-program-search" type="search" autocomplete="off"
+        placeholder="{escape(search_label, quote=True)}">
+    </label>
+    <p class="funder-search-empty" id="funder-search-empty">{escape(no_search_results)}</p>
 
     <section class="section">
       <h2>{escape(str(copy["funder_live_title"]))}</h2>
@@ -969,6 +1063,7 @@ def render_funder_page(
       </div>
     </section>
     <footer class="site-footer">
+      <a class="footer-contact" href="mailto:contact@qaz.fund">contact@qaz.fund</a>
       <nav class="site-footer-nav" aria-label="{escape(str(copy["views_aria"]), quote=True)}">
         <a href="{catalog_href}">{escape(str(copy["tab_opportunities"]))}</a>
         <a href="{sources_href}">{escape(str(copy["tab_sources"]))}</a>
@@ -986,5 +1081,29 @@ def render_funder_page(
       <p>{escape(str(copy["footer_disclaimer"]))}</p>
     </footer>
   </main>
+  <script>
+    (() => {{
+      const input = document.getElementById("funder-program-search");
+      const cards = [...document.querySelectorAll(".opportunity-card")];
+      const empty = document.getElementById("funder-search-empty");
+      const archive = document.querySelector(".archive-disclosure");
+      input.addEventListener("input", () => {{
+        const query = String(input.value || "").trim().toLowerCase();
+        let visible = 0;
+        cards.forEach((card) => {{
+          card.hidden = Boolean(query) && !(card.dataset.cardSearch || "").includes(query);
+          if (!card.hidden) visible += 1;
+        }});
+        if (archive) {{
+          const archiveVisible = [...archive.querySelectorAll(".opportunity-card")]
+            .some((card) => !card.hidden);
+          archive.hidden = Boolean(query) && !archiveVisible;
+          if (query && archiveVisible) archive.open = true;
+          if (!query) archive.hidden = false;
+        }}
+        empty.style.display = visible ? "none" : "block";
+      }});
+    }})();
+  </script>
 </body>
 </html>"""

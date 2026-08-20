@@ -64,7 +64,7 @@ def test_insights_api_and_page_are_data_backed(monkeypatch):
     page = client.get("/insights", params={"lang": "ru"})
     assert page.status_code == 200
     assert 'data-avds-component="data-centre"' in page.text
-    assert 'data-avds-version="4.6.0"' in page.text
+    assert 'data-avds-version="4.7.0"' in page.text
     assert 'data-avds-component="DataQualityScorecard"' in page.text
     assert 'data-avds-pattern="change-ledger"' in page.text
     assert 'data-avds-pattern="machine-entrypoints"' in page.text
@@ -72,7 +72,13 @@ def test_insights_api_and_page_are_data_backed(monkeypatch):
     assert "Данные о финансировании Казахстана" in page.text
     assert "Что известно до перехода к источнику" in page.text
     assert ".footer nav { display: flex; flex-wrap: wrap;" in page.text
-    assert ".hero { grid-template-columns: minmax(0, 1fr); }" in page.text
+    assert ".hero{grid-template-columns:minmax(0,1fr);padding:20px}" in page.text
+    assert ".upcoming-title,.viz-card[data-avds-pattern] p > a,.footer a" in page.text
+    assert (
+        ".upcoming-title{display:block;min-width:0;max-width:100%;overflow:hidden"
+        in page.text
+    )
+    assert "min-height:44px" in page.text
     assert "/api/v1/changes?hours=24" in page.text
     assert "\u2014" not in page.text
     assert "QazCompute" not in page.text
@@ -108,6 +114,7 @@ def test_insights_head_skips_analytics_projection(monkeypatch):
 
     assert response.status_code == 200
     assert response.content == b""
+    assert "public, max-age=60" in response.headers["cache-control"]
 
 
 def test_insights_separates_current_catalog_from_full_index():
@@ -177,7 +184,16 @@ def test_application_workspace_is_local_and_exportable(monkeypatch):
     assert "localStorage.setItem" in page.text
     assert "qazfund-application-draft-v1" in page.text
     assert "Скачать .md" in page.text
+    assert "Напоминания о сроке" in page.text
+    assert "Добавить в календарь" in page.text
+    assert 'id="download-deadline-reminder"' in page.text
+    assert "TRIGGER:-P14D" in page.text
+    assert "TRIGGER:-P3D" in page.text
+    assert "DTEND;VALUE=DATE:${endDate}" in page.text
     assert "navigator.clipboard.writeText" in page.text
+    assert ".topbar a {" in page.text
+    assert "min-height: 44px;" in page.text
+    assert ".footer nav a { min-width:44px; justify-content:center; }" in page.text
     assert "fetch(" not in page.text
     assert 'method="post"' not in page.text.lower()
     assert "\u2014" not in page.text
@@ -203,7 +219,38 @@ def test_application_workspace_localizes_internal_source_slug(monkeypatch):
     assert page.status_code == 200
     assert "kazakhstan_domestic_support" not in page.text
     assert "Поддержка РК" in page.text
-    assert "Стартап; Глобально" in page.text
+    assert "Индивидуальные авторы, команды и студии из любой страны" in page.text
+    assert "Стартап; Глобально" not in page.text
+
+
+def test_application_workspace_supports_kazakh(monkeypatch):
+    _reset_api_state(monkeypatch)
+    item = _item()
+    api_main._cache.append(item)
+
+    page = TestClient(api_main.app).get(
+        f"/opportunity/{item.id}/prepare",
+        params={"lang": "kk"},
+    )
+
+    assert page.status_code == 200
+    assert '<html lang="kk"' in page.text
+    assert "Өтінімді дайындау" in page.text
+    assert "Деректер осы браузерде қалады" in page.text
+    assert "Бағдарлама талаптарына сай өтінім жобасын құрастырыңыз" in page.text
+    assert "Жобаның сипаттамасы және күтілетін нәтиже" in page.text
+    assert f'href="/opportunity/{item.id}?lang=kk"' in page.text
+    assert 'href="/terms?lang=kk"' in page.text
+    assert 'href="/data-policy?lang=kk"' in page.text
+    assert 'href="/data-routes?lang=kk"' in page.text
+    assert 'href="/attribution?lang=kk"' in page.text
+    assert f"qazfund-application-draft-v1:{item.id}:kk" in page.text
+    assert '"source_label": "Дереккөз"' in page.text
+    assert "`${copy.source_label}: ${facts.official_source}`" in page.text
+    assert "[^a-zа-яёәғқңөұүһі0-9]" in page.text
+    assert "Источник:" not in page.text
+    assert "Подготовка заявки" not in page.text
+    assert "Данные остаются в этом браузере" not in page.text
 
 
 def test_application_workspace_head_skips_detail_projection(monkeypatch):

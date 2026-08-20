@@ -74,7 +74,26 @@ class BaseSourceParser(abc.ABC):
             },
             follow_redirects=True,
         )
+        # Parsers historically log and swallow transport errors so one
+        # source cannot stop the worker.  A parser that does so can set this
+        # marker, allowing the scheduler to record the run as failed while
+        # keeping the resilient fetch contract.
+        self.last_fetch_error: str | None = None
         self._log = log.bind(source=self.name)
+
+    def _mark_fetch_error(self, error: BaseException | str) -> None:
+        """Expose a swallowed fetch failure to the scheduler.
+
+        Source adapters keep transport failures isolated so one broken
+        upstream cannot stop the worker.  The marker preserves that contract
+        while allowing run accounting to distinguish an empty result from a
+        failed fetch.
+        """
+
+        if isinstance(error, BaseException):
+            self.last_fetch_error = f"{type(error).__name__}: {error}"
+        else:
+            self.last_fetch_error = str(error)
 
     @abc.abstractmethod
     def fetch(self) -> AsyncIterator[GrantRecord | Opportunity]:
@@ -103,15 +122,6 @@ class BaseSource(BaseSourceParser):
     name: str
     base_url: str
     default_tags: ClassVar[list[str]] = []
-
-    def __init__(self, client: httpx.AsyncClient | None = None) -> None:
-        self.client = client or httpx.AsyncClient(
-            timeout=30.0,
-            headers={
-                "User-Agent": "grant-radar/0.1 (+https://github.com/belilovsky/grant-radar)"
-            },
-            follow_redirects=True,
-        )
 
     @abc.abstractmethod
     def fetch(self) -> AsyncIterator[Opportunity]:

@@ -7,8 +7,7 @@ cloud credits, startup support, AI tooling, mentorship, and partner ecosystems.
 
 from __future__ import annotations
 
-import re
-from collections.abc import AsyncIterator, Iterable
+from collections.abc import AsyncIterator
 from dataclasses import dataclass
 from decimal import Decimal
 from typing import ClassVar
@@ -18,6 +17,8 @@ import structlog
 from core.models import Opportunity, OpportunityType
 from core.source_text import clean_source_text as _clean_text
 from sources.base import BaseSource
+from sources.parsing import html_title as _shared_html_title
+from sources.parsing import unique_normalized as _unique
 
 log = structlog.get_logger()
 
@@ -125,25 +126,7 @@ PROGRAM_SPECS = {
 
 
 def _html_title(html: str) -> str | None:
-    match = re.search(
-        r"<title[^>]*>(?P<title>.*?)</title>", html, re.IGNORECASE | re.DOTALL
-    )
-    if match is None:
-        return None
-    title = _clean_text(match.group("title"))
-    return title or None
-
-
-def _unique(values: Iterable[str]) -> list[str]:
-    seen: set[str] = set()
-    out: list[str] = []
-    for value in values:
-        normalized = value.strip().lower()
-        if not normalized or normalized in seen:
-            continue
-        seen.add(normalized)
-        out.append(normalized)
-    return out
+    return _shared_html_title(html, _clean_text)
 
 
 class StartupProgramSource(BaseSource):
@@ -160,6 +143,7 @@ class StartupProgramSource(BaseSource):
             response = await self.client.get(self.program.url)
             response.raise_for_status()
         except Exception as exc:  # noqa: BLE001
+            self._mark_fetch_error(exc)
             log.warning(
                 "startup_program.fetch_failed",
                 source=self.program.slug,

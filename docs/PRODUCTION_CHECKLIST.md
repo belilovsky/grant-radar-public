@@ -28,7 +28,23 @@ historic backup filenames, and maintainer-only evidence.
 - `GET` and `HEAD /opportunity/{id}/prepare` render a browser-local draft
   workspace and never accept form submissions.
 - `GET` and `HEAD /funder/{slug}` render public funder pages.
+- `GET` and `HEAD /insights` render the public data-story view.
+- `GET` and `HEAD /terms`, `/data-policy`, and `/attribution` render concise
+  public guidance pages linked from every public surface.
+- `GET` and `HEAD /.well-known/notification-contract.json` expose the explicit
+  identity, consent and delivery-disabled boundary; the route must not imply an
+  account, cross-device sync or active subscription.
+- `GET` and `HEAD /.well-known/source-onboarding.json` expose only the public
+  admission policy and candidate statuses; credentials and private responses
+  must never appear there.
+- `GET` and `HEAD /compare.json?ids=...` expose the bounded comparison read model;
+  missing values must remain explicit and the endpoint must not imply eligibility.
+- `GET` and `HEAD /compare?ids=...` render the same comparison in the public AVDS4
+  shell with working language links and a JSON alternate.
 - `GET` and `HEAD /opportunities/{id}` return public opportunity detail availability.
+- `GET` and `HEAD /opportunities/{id}/history.json` expose only normalized public
+  field changes; `status=not_available` must remain explicit when the history
+  backend or snapshot is absent.
 - `GET` and `HEAD /robots.txt`, `/sitemap.xml`, `/llms.txt`, and `/site-discovery.json` are public.
 - `GET /docs` and `GET /openapi.json` must stay reachable for public API consumers.
 - `llms.txt` and `site-discovery.json` should expose the read-only data endpoints
@@ -43,6 +59,7 @@ historic backup filenames, and maintainer-only evidence.
 ```bash
 make lint
 make ci-fast
+PYTHONPATH=. ./.venv/bin/python -m pytest -q tests/test_workbench.py
 PYTHONPATH=. ./.venv/bin/python -m scripts.production_smoke --base-url https://example.org
 PYTHONPATH=. ./.venv/bin/python -m scripts.content_audit --base-url https://example.org
 PYTHONPATH=. ./.venv/bin/python -m scripts.nlp_quality_audit --base-url https://example.org --lang ru --limit 150
@@ -88,6 +105,10 @@ curl -fsSI https://example.org/ready
 curl -fsSI https://example.org/favicon.ico
 curl -fsS https://example.org/llms.txt
 curl -fsS https://example.org/site-discovery.json
+curl -fsS https://example.org/.well-known/notification-contract.json
+curl -fsS https://example.org/.well-known/source-onboarding.json
+curl -fsS 'https://example.org/compare.json?ids=<id>,<id>&lang=ru'
+curl -fsS 'https://example.org/opportunities/<uuid>/history.json?lang=ru&limit=50'
 curl -fsSI 'https://example.org/status?lang=ru'
 curl -fsSI 'https://example.org/insights?lang=ru'
 curl -fsSI 'https://example.org/operator?lang=ru'
@@ -109,6 +130,10 @@ curl -fsS 'https://example.org/media/v1/digest/daily.json?lang=ru'
 ## Operational notes
 
 - Run Alembic migrations before serving traffic.
+- Migration `0006_opportunity_versions` (after the already deployed
+  `0005_opportunity_observations`) seeds an `initial` public snapshot and
+  future refreshes append only changed normalized fields; verify the history
+  endpoint after applying it.
 - Set `PUBLIC_URL` for every public deploy. A green container readiness check is
   insufficient when edge and application origin are separate; the deploy must
   verify the exact revision through the public route.

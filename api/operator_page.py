@@ -6,6 +6,7 @@ import json
 from html import escape
 
 from api.avds import AVDS_CSS, AVDS_FONT_HEAD
+from core.localization import normalize_content_lang
 
 COPY = {
     "ru": {
@@ -19,7 +20,7 @@ COPY = {
         "disconnect": "Выйти",
         "back": "Каталог",
         "hint": "Токен хранится только в текущей вкладке и не попадает в URL.",
-        "loading": "Загружаем состояние...",
+        "loading": "Загрузка состояния",
         "unauthorized": "Токен не принят или операторский доступ не настроен.",
         "error": "Не удалось загрузить операторские данные.",
         "catalog": "Записей",
@@ -48,7 +49,7 @@ COPY = {
         "disconnect": "Sign out",
         "back": "Catalog",
         "hint": "The token stays in this browser tab and is never placed in the URL.",
-        "loading": "Loading status...",
+        "loading": "Loading status",
         "unauthorized": "The token was rejected or operator access is not configured.",
         "error": "Operator data could not be loaded.",
         "catalog": "Records",
@@ -66,20 +67,51 @@ COPY = {
         "message": "Message",
         "empty": "No records.",
     },
+    "kk": {
+        "title": "Операторлық бақылау – QAZ.FUND",
+        "brand_context": "Операторлық контур",
+        "eyebrow": "Конвейер күйі",
+        "heading": "Дереккөздерді бақылау",
+        "intro": "Жинаушылардың техникалық күйі және соңғы іске қосулар.",
+        "token": "Оператор токені",
+        "connect": "Қосылу",
+        "disconnect": "Шығу",
+        "back": "Каталог",
+        "hint": "Токен тек осы браузер қойындысында сақталады және URL мекенжайына жазылмайды.",
+        "loading": "Күй жүктелуде",
+        "unauthorized": "Токен қабылданбады немесе операторлық қолжетімділік бапталмаған.",
+        "error": "Оператор деректерін жүктеу мүмкін болмады.",
+        "catalog": "Жазбалар",
+        "relevant": "Өзекті",
+        "sources": "Дереккөздер",
+        "fresh": "Жаңа",
+        "stale": "Назар аударуды қажет етеді",
+        "failed": "Сәтсіз іске қосулар",
+        "recent": "Соңғы іске қосулар",
+        "source": "Дереккөз",
+        "status": "Күйі",
+        "started": "Басталды",
+        "seen": "Алынды",
+        "new": "Жаңа",
+        "message": "Хабарлама",
+        "empty": "Жазба жоқ.",
+    },
 }
 
 
 def render_operator_page(*, lang: str, root_path: str = "") -> str:
-    active_lang = lang if lang in COPY else "ru"
+    active_lang = normalize_content_lang(lang)
     copy = COPY[active_lang]
     base = root_path.rstrip("/")
     catalog_href = f"{base}/?lang={active_lang}" if base else f"/?lang={active_lang}"
     ru_href = f"{base}/operator?lang=ru" if base else "/operator?lang=ru"
+    kk_href = f"{base}/operator?lang=kk" if base else "/operator?lang=kk"
     en_href = f"{base}/operator?lang=en" if base else "/operator?lang=en"
     health_path = f"{base}/operator/health" if base else "/operator/health"
     copy_json = json.dumps(copy, ensure_ascii=False)
     endpoint_json = json.dumps(health_path, ensure_ascii=False)
     ru_current = ' aria-current="page"' if active_lang == "ru" else ""
+    kk_current = ' aria-current="page"' if active_lang == "kk" else ""
     en_current = ' aria-current="page"' if active_lang == "en" else ""
     return f"""<!doctype html>
 <html lang="{active_lang}" data-avds="grant-radar" data-av-theme="light" data-theme="light">
@@ -88,6 +120,9 @@ def render_operator_page(*, lang: str, root_path: str = "") -> str:
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="robots" content="noindex,nofollow">
   <title>{escape(str(copy["title"]))}</title>
+  <link rel="alternate" hreflang="kk" href="{escape(kk_href, quote=True)}">
+  <link rel="alternate" hreflang="ru" href="{escape(ru_href, quote=True)}">
+  <link rel="alternate" hreflang="en" href="{escape(en_href, quote=True)}">
   {AVDS_FONT_HEAD}
   <style>
     {AVDS_CSS}
@@ -144,6 +179,10 @@ def render_operator_page(*, lang: str, root_path: str = "") -> str:
       border-radius:var(--av-radius-md);
       background:var(--brand); color:#fff; font-weight:700; cursor:pointer; }}
     button.secondary {{ background:var(--brand-soft); color:var(--brand); }}
+    button:not(:disabled):hover {{ background:color-mix(in oklab,var(--brand),black 10%); }}
+    button.secondary:not(:disabled):hover {{
+      background:color-mix(in oklab,var(--brand-soft),var(--brand) 10%);
+    }}
     .hint {{ margin-top:9px; font-size:12px; }}
     .message {{ min-height:20px; margin:10px 0 0; color:var(--muted); }}
     .message.bad {{ color:var(--bad); }}
@@ -174,11 +213,25 @@ def render_operator_page(*, lang: str, root_path: str = "") -> str:
     .status-ok {{ color:var(--good); }}
     .status-error {{ color:var(--bad); }}
     .status-running {{ color:var(--warn); }}
-    @media(max-width:760px) {{
+    @media (min-width:1440px) {{
+      .intro-grid {{
+        grid-template-columns:minmax(0,1.35fr) minmax(420px,.65fr);
+        gap:56px;
+      }}
+      .grid {{
+        grid-template-columns:minmax(0,.9fr) minmax(0,2.1fr);
+        gap:24px;
+      }}
+    }}
+    @media (min-width:2200px) {{
+      main {{ width:min(1920px,calc(100% - 160px)); }}
+    }}
+    @media(max-width:900px) {{
       .auth-controls > :is(input, button),
       .lang-switch a,
       .catalog-link {{ min-height: var(--av-control-height-lg); }}
       .lang-switch a {{ min-width: var(--av-control-height-lg); }}
+      .operator-brand {{ min-height: var(--av-control-height-lg); align-items: center; }}
       main {{ width:min(100% - 20px,var(--av-container-dashboard)); padding-top:10px; }}
       .operator-topbar {{ top:8px; padding:8px 10px; }}
       .operator-topbar {{ align-items:flex-start; }}
@@ -204,6 +257,7 @@ def render_operator_page(*, lang: str, root_path: str = "") -> str:
         </a>
         <div class="operator-tools">
           <nav class="lang-switch" aria-label="Language">
+            <a href="{escape(kk_href, quote=True)}" lang="kk"{kk_current}>KAZ</a>
             <a href="{escape(ru_href, quote=True)}" lang="ru"{ru_current}>RU</a>
             <a href="{escape(en_href, quote=True)}" lang="en"{en_current}>EN</a>
           </nav>

@@ -16,6 +16,22 @@ def test_deploy_script_requires_explicit_delete_opt_in() -> None:
     assert (
         'rsync "${RSYNC_ARGS[@]}" "$ROOT_DIR/" "$DEPLOY_HOST:$DEPLOY_PATH/"' in script
     )
+    assert '--exclude "work"' in script
+
+
+def test_deploy_script_checks_capacity_before_remote_source_changes() -> None:
+    script = (ROOT / "scripts" / "deploy_qaz_fund.sh").read_text()
+
+    preflight = script.index("run_remote_capacity_preflight\n")
+    rsync = script.index(
+        'rsync "${RSYNC_ARGS[@]}" "$ROOT_DIR/" "$DEPLOY_HOST:$DEPLOY_PATH/"'
+    )
+    assert preflight < rsync
+    assert "QAZ.FUND preflight capacity gate failed" in script
+    assert (
+        "Remote source, images, databases, and unrelated products were not changed."
+        in script
+    )
 
 
 def test_deploy_script_no_longer_uses_unconditional_delete() -> None:
@@ -26,15 +42,32 @@ def test_deploy_script_no_longer_uses_unconditional_delete() -> None:
 
 def test_deploy_script_waits_for_ready_endpoint() -> None:
     script = (ROOT / "scripts" / "deploy_qaz_fund.sh").read_text()
+    remote = (ROOT / "scripts" / "remote_release_qaz_fund.sh").read_text()
 
     assert 'READY_URL="${READY_URL:-http://127.0.0.1:8000/ready}"' in script
     assert 'READY_ATTEMPTS="${READY_ATTEMPTS:-30}"' in script
     assert 'READY_DELAY="${READY_DELAY:-2}"' in script
-    assert (
-        "docker compose --env-file '$ENV_FILE' $COMPOSE_FILES exec -T api \\" in script
-    )
-    assert "curl -fsS '$READY_URL' >/dev/null 2>&1" in script
-    assert "API readiness check failed after deploy." in script
+    assert 'compose exec -T api curl -fsS "$READY_URL"' in remote
+    assert "API readiness check failed after deploy." in remote
+    assert "Semantic search did not become ready after deploy." in remote
+    assert "Worker heartbeat did not become ready after deploy." in remote
+
+
+def test_remote_release_has_capacity_backup_lock_identity_and_rollback_gates() -> None:
+    remote = (ROOT / "scripts" / "remote_release_qaz_fund.sh").read_text()
+
+    assert 'MIN_FREE_BYTES="${MIN_FREE_BYTES:-21474836480}"' in remote
+    assert "2 * (current_bytes + current_bytes)" in remote
+    assert "flock -n 9" in remote
+    assert "QAZ.FUND rollback gate failed" in remote
+    assert "scripts/backup_postgres.sh" in remote
+    assert "APP_SOURCE_DIRTY=false" in remote
+    assert "APP_IMAGE_DIGEST=$api_image_digest" in remote
+    assert "pg_restore --clean --if-exists --no-owner" in remote
+    assert "deploy/nginx/qaz.fund.conf" in remote
+    assert "reconcile_from_dump" in remote
+    assert "reconciliation.json" in remote
+    assert "reconciliation is not idempotent" in remote
 
 
 def test_deploy_script_verifies_the_public_revision() -> None:
@@ -49,6 +82,15 @@ def test_deploy_script_verifies_the_public_revision() -> None:
     assert "APP_DEPLOYED_AT: ${APP_DEPLOYED_AT:-}" in production_compose
 
 
+def test_remote_release_runs_public_smoke_before_accepting_switch() -> None:
+    remote = (ROOT / "scripts" / "remote_release_qaz_fund.sh").read_text()
+
+    smoke = remote.index("python -m scripts.production_smoke")
+    accepted = remote.index("switched=0\ntrap - ERR")
+    assert smoke < accepted
+    assert "--expect-backend database" in remote
+
+
 def test_production_compose_requires_password_and_checks_api_readiness() -> None:
     base_compose = (ROOT / "docker-compose.yml").read_text()
     production_compose = (ROOT / "docker-compose.prod.yml").read_text()
@@ -56,6 +98,17 @@ def test_production_compose_requires_password_and_checks_api_readiness() -> None
     assert "http://127.0.0.1:8000/ready" in base_compose
     assert "POSTGRES_PASSWORD must be set in .env.prod" in production_compose
     assert "  db:\n    env_file:" not in production_compose
+
+
+def test_semantic_catalog_uses_the_public_host_on_the_internal_network() -> None:
+    production_compose = (ROOT / "docker-compose.prod.yml").read_text()
+
+    assert "GRANT_RADAR_SEMANTIC_CATALOG_HOST" in production_compose
+    assert "${GRANT_RADAR_SEMANTIC_CATALOG_HOST:-qaz.fund}" in production_compose
+    assert "${GRANT_RADAR_SEMANTIC_CATALOG_TIMEOUT_SECONDS:-90}" in production_compose
+    assert "${GRANT_RADAR_SEMANTIC_TIMEOUT_SECONDS:-15}" in production_compose
+    assert "${GRANT_RADAR_SEMANTIC_RERANK_LIMIT:-5}" in production_compose
+    assert "${GRANT_RADAR_SEMANTIC_RERANK_MAX_LENGTH:-256}" in production_compose
 
 
 def test_worker_does_not_run_migrations_concurrently_with_api() -> None:

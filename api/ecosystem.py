@@ -7,6 +7,16 @@ from typing import Any
 from qazstack import __version__ as qazstack_version
 from qazstack.contracts import validate_consumer_contract
 
+from api.integration_versions import (
+    AVDS_PACKAGE,
+    AVDS_PATTERN_PACKAGE,
+    AVDS_PATTERN_SOURCE_REVISION,
+    AVDS_PATTERN_VERSION,
+    AVDS_SOURCE_REVISION,
+    AVDS_VERIFIED_AT,
+    AVDS_VERSION,
+    QAZSTACK_VERSION,
+)
 from core.public_contract import DATASET_SCHEMA_VERSION, SCHEMA_VERSION
 from core.qazcompute_bridge import (
     DEADLINE_ANOMALY_MODEL,
@@ -23,12 +33,16 @@ QAZSTACK_SOURCE_REVISION = "986cfca3779f74c0f734ed174e7a28c944fd30f7"
 QAZSTACK_SCHEMA_DIGEST = (
     "sha256:6ca8e38c09315d02993e3600b7a05dc23d695cd152545f8a970566e303fc158c"
 )
-QAZSTACK_VERIFIED_AT = "2026-07-26T19:24:00Z"
-AVDS_PACKAGE = "@sgeo/ui-kit"
-AVDS_VERSION = "4.6.0"
-AVDS_PATTERN_PACKAGE = "@av/patterns"
-AVDS_PATTERN_VERSION = "0.1.0"
-AVDS_PATTERN_SOURCE_REVISION = "3d482e1c7592e2f8ae359c3e3b2d10c5c1118c37"
+QAZSTACK_VERIFIED_AT = "2026-08-04T00:47:27Z"
+
+
+def _verified_qazstack_version() -> str:
+    if qazstack_version != QAZSTACK_VERSION:
+        raise RuntimeError(
+            "QazStack runtime mismatch: "
+            f"loaded {qazstack_version}, expected {QAZSTACK_VERSION}"
+        )
+    return qazstack_version
 
 
 def _url(origin: str, path: str) -> str:
@@ -44,7 +58,7 @@ def qazstack_consumer_contract(origin: str) -> dict[str, Any]:
         "product_name": "QAZ.FUND",
         "lifecycle": "production",
         "integration_mode": "python-package",
-        "qazstack_version": qazstack_version,
+        "qazstack_version": _verified_qazstack_version(),
         "source_revision": QAZSTACK_SOURCE_REVISION,
         "primitives": [
             "collectors-and-entity-pipeline",
@@ -99,7 +113,7 @@ def qazstack_consumer_contract(origin: str) -> dict[str, Any]:
     return payload
 
 
-def avds_ui_contract() -> dict[str, Any]:
+def avds_ui_contract(*, coverage: dict[str, Any] | None = None) -> dict[str, Any]:
     """Return the AV DS 4 compatibility boundary for the server-rendered UI."""
 
     return {
@@ -109,17 +123,26 @@ def avds_ui_contract() -> dict[str, Any]:
             "site": "https://avds.digital",
             "package": AVDS_PACKAGE,
             "version": AVDS_VERSION,
+            "source_revision": AVDS_SOURCE_REVISION,
         },
         "verification": {
-            "checked_at": "2026-07-27T14:55:04Z",
+            "checked_at": AVDS_VERIFIED_AT,
             "public_site_status": "live",
             "reference_release": AVDS_VERSION,
-            "foundation_candidate": "4.0.0-rc.1",
             "note": (
-                "The public AV DS showcase identifies release 4.6.0. "
+                f"The official AV DS release contract identifies release {AVDS_VERSION}. "
                 "QAZ.FUND composes its server-rendered adapter from documented "
                 "tokens and component semantics; it does not import the React package."
             ),
+        },
+        "coverage": coverage
+        or {
+            "basis": "route-registry-unavailable",
+            "route_count": 0,
+            "covered": 0,
+            "total": 0,
+            "percent": 0.0,
+            "gaps": ["runtime route registry was not supplied"],
         },
         "component_families": [
             {
@@ -456,6 +479,7 @@ def ecosystem_manifest(origin: str) -> dict[str, Any]:
 
     opportunities = _url(origin, "/opportunities")
     opportunities_ndjson = _url(origin, "/opportunities.ndjson")
+    opportunity_history = _url(origin, "/opportunities/{id}/history.json")
     return {
         "schema_version": "qdev-ecosystem-integration-v1",
         "project": {
@@ -467,23 +491,31 @@ def ecosystem_manifest(origin: str) -> dict[str, Any]:
         "contracts": {
             "qazstack": _url(origin, "/.well-known/qazstack-consumer.json"),
             "avds4": _url(origin, "/.well-known/avds-ui-contract.json"),
-            "qazpipe": _url(origin, "/.well-known/qazpipe-source.json"),
-            "qazcompute": _url(origin, "/.well-known/qazcompute-profiles.json"),
+            "notifications": _url(origin, "/.well-known/notification-contract.json"),
+            "source_onboarding": _url(origin, "/.well-known/source-onboarding.json"),
             "openapi": _url(origin, "/openapi.json"),
             "discovery": _url(origin, "/site-discovery.json"),
         },
         "data_plane": {
             "read_only_feed": opportunities,
             "machine_export": opportunities_ndjson,
+            "history_read_model": opportunity_history,
+            "history_schema": "history.v1",
             "format": "application/json",
             "formats": ["application/json", "application/x-ndjson"],
             "pagination": {"limit": "1..5000", "offset": "integer >= 0"},
-            "provenance_fields": ["source", "source_url", "discovered_at"],
+            "provenance_fields": [
+                "source",
+                "source_url",
+                "discovered_at",
+                "raw.provenance",
+            ],
             "machine_export_fields": [
                 "source",
                 "source_url",
                 "discovered_at",
                 "evidence_state",
+                "raw.provenance",
             ],
             "write_api": False,
         },
@@ -547,6 +579,15 @@ def ecosystem_manifest(origin: str) -> dict[str, Any]:
                 ],
                 "decision_ready": False,
                 "candidate_jobs": [],
+            },
+            "notifications": {
+                "status": "not-enabled",
+                "mode": "contract-only",
+                "delivery_enabled": False,
+                "reason": (
+                    "Identity, explicit opt-in, delivery receipts, unsubscribe, "
+                    "deletion and retention rules are not enabled yet."
+                ),
             },
             "edpol": {
                 "status": "query-ready",

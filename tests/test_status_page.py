@@ -10,6 +10,7 @@ def test_status_page_keeps_last_check_visible_in_mobile_rows() -> None:
                 {
                     "enabled": True,
                     "name": "Example source",
+                    "slug": "kazakhstan_domestic_support",
                     "base_url": "https://example.org/programs",
                     "items": 4,
                     "relevant_open_items": 2,
@@ -28,4 +29,81 @@ def test_status_page_keeps_last_check_visible_in_mobile_rows() -> None:
     assert 'class="mobile-updated"' in html
     assert "Последняя проверка: 17.07.2026 08:30 UTC" in html
     assert ".mobile-updated { display:block; }" in html
-    assert "contact@qaz.fund" not in html
+    assert 'href="mailto:contact@qaz.fund"' in html
+    assert "Поддержка РК" in html
+    assert "tbody tr:nth-child(even)" in html
+
+
+def test_status_page_has_editorial_kazakh_shell_and_three_language_switch() -> None:
+    html = render_status_page(
+        coverage={"sources": [], "enabled_sources": 0},
+        lang="kk",
+    )
+
+    assert '<html lang="kk"' in html
+    assert "Дереккөздер мәртебесі" in html
+    assert 'href="/status?lang=kk" lang="kk" aria-current="page"' in html
+    assert 'href="/status?lang=ru" lang="ru"' in html
+    assert 'href="/status?lang=en" lang="en"' in html
+
+
+def test_status_page_has_share_preview_metadata() -> None:
+    html = render_status_page(
+        coverage={"sources": [], "enabled_sources": 0},
+        lang="en",
+        site_origin="https://qaz.fund",
+    )
+
+    assert 'property="og:type" content="website"' in html
+    assert 'property="og:url" content="https://qaz.fund/status?lang=en"' in html
+    assert 'property="og:image" content="https://qaz.fund/og-image.png"' in html
+    assert 'name="twitter:card" content="summary_large_image"' in html
+    assert 'name="twitter:image" content="https://qaz.fund/og-image.png"' in html
+
+
+def test_status_page_localizes_source_names_in_kazakh() -> None:
+    html = render_status_page(
+        coverage={
+            "sources": [
+                {
+                    "enabled": True,
+                    "name": "Kazakhstan domestic support",
+                    "slug": "kazakhstan_domestic_support",
+                    "base_url": "https://example.org/programs",
+                    "items": 2,
+                    "relevant_open_items": 1,
+                    "freshness_status": "fresh",
+                }
+            ],
+            "enabled_sources": 1,
+            "fresh_sources": 1,
+        },
+        lang="kk",
+    )
+
+    assert "Қазақстандағы қолдау бағдарламалары" in html
+    assert "Kazakhstan domestic support" not in html
+
+
+def test_status_page_keeps_official_name_when_slug_has_no_curated_label() -> None:
+    html = render_status_page(
+        coverage={
+            "sources": [
+                {
+                    "enabled": True,
+                    "name": "Grants.gov (US Federal)",
+                    "slug": "grants_gov",
+                    "base_url": "https://grants.gov",
+                    "items": 1,
+                    "relevant_open_items": 1,
+                    "freshness_status": "fresh",
+                }
+            ],
+            "enabled_sources": 1,
+            "fresh_sources": 1,
+        },
+        lang="en",
+    )
+
+    assert "Grants.gov (US Federal)" in html
+    assert "grants gov" not in html

@@ -1,14 +1,17 @@
 # grant-radar
 
-Opportunity radar for grants, accelerators, cloud credits, tenders, and public
-support programs relevant to Kazakhstan and Central Asia.
+QAZ.FUND is a public opportunity navigator for grants, accelerators, cloud
+credits, tenders, and support programs relevant to Kazakhstan and Central Asia.
+It helps people find a route, check the source, and keep the next step clear.
 
 ## What it does
 
 - collects opportunities from public source adapters;
 - normalizes, deduplicates, and scores them;
 - serves a public FastAPI dashboard and JSON endpoints;
-- supports localized Russian detail pages and public shareable permalinks.
+- supports localized Kazakh, Russian, and English detail pages and public
+  shareable permalinks; original source language and translation availability
+  remain explicit in each record.
 
 The repository is structured for clean local development, reproducible
 validation, and public-safe deployment documentation.
@@ -33,15 +36,24 @@ The main public endpoints are:
 - `GET /ready`
 - `GET /sources`
 - `GET /coverage`
-- `GET /status?lang=ru|en`
-- `GET /insights?lang=ru|en`
+- `GET /status?lang=kk|ru|en`
 - `GET /funders`
 - `GET /opportunities`
 - `GET /opportunities.ndjson`
 - `GET /opportunities/{opportunity_id}`
-- `GET /opportunity/{opportunity_id}?lang=ru|en`
-- `GET /opportunity/{opportunity_id}/prepare?lang=ru|en`
-- `GET /funder/{funder_slug}?lang=ru|en`
+- `GET /opportunities/{opportunity_id}/history.json?lang=kk|ru|en`
+- `GET /.well-known/source-onboarding.json` – machine-readable admission
+  boundary for active and prospective sources
+- `GET /opportunity/{opportunity_id}?lang=kk|ru|en`
+- `GET /funder/{funder_slug}?lang=kk|ru|en`
+- `GET /media?lang=kk|ru|en`
+- `GET /media.json?lang=kk|ru|en`
+- `GET /media/feed.json?lang=kk|ru|en` (JSON Feed 1.1)
+- `GET /media/rss.xml?lang=kk|ru|en` (RSS 2.0)
+- `GET /insights?lang=kk|ru|en`
+- `GET /terms?lang=kk|ru|en`
+- `GET /data-policy?lang=kk|ru|en`
+- `GET /attribution?lang=kk|ru|en`
 - `GET /digest`
 - `GET /api/v1/insights`
 - `GET /api/v1/changes`
@@ -53,12 +65,15 @@ The main public endpoints are:
 - `GET /sitemap.xml`
 - `GET /llms.txt`
 - `GET /site-discovery.json`
+- `GET /og-image.png` (crawler-safe social preview; `/og-image.svg` remains available)
 - `GET /operator` (noindex operator shell; token is never embedded in HTML)
 - `GET /operator/health` (requires `GRANT_RADAR_ADMIN_TOKEN`)
 - `POST /refresh` (requires `GRANT_RADAR_ADMIN_TOKEN`)
 
 For machine consumers, `llms.txt` and `site-discovery.json` publish the public
 entry points, read-only JSON/NDJSON endpoints, and supported query templates.
+The history endpoint exposes only normalized public field changes and returns an
+explicit `not_available` status when no snapshot backend is configured.
 Use `/opportunities.ndjson?compact=true` for bulk discovery; keep the full
 `/opportunities.ndjson` export for consumers that explicitly need raw source
 payloads.
@@ -111,6 +126,12 @@ Useful commands:
 - `make db-upgrade`
 - `make show-runs`
 - `python -m scripts.performance_smoke --base-url http://localhost:8000`
+
+The local workbench export creates a safe editorial handoff from public
+Opportunities NDJSON. It writes normalized `workbench.json`,
+`opportunities.csv`, and `README.md` files without carrying the `raw` payload,
+storing user selections, or enabling notifications. See
+[docs/WORKBENCH_EXPORT.md](docs/WORKBENCH_EXPORT.md).
 
 ## Active source coverage
 
@@ -200,6 +221,7 @@ Deployment guidance lives in [DEPLOYMENT.md](DEPLOYMENT.md) and
 - [docs/QAZFUND_DATA_CENTRE_2026-07-27.md](docs/QAZFUND_DATA_CENTRE_2026-07-27.md)
 - [docs/UX_CJM_2026-07-27.md](docs/UX_CJM_2026-07-27.md)
 - [docs/REPRODUCIBILITY_AND_RUNTIME.md](docs/REPRODUCIBILITY_AND_RUNTIME.md)
+- [docs/SEMANTIC_SEARCH.md](docs/SEMANTIC_SEARCH.md)
 - [docs/TELEGRAM_DIGEST.md](docs/TELEGRAM_DIGEST.md)
 
 ## License

@@ -1,0 +1,9 @@
+# Isolated from the public API image: this pulls PyTorch and two local models.
+# BGE-M3 and its reranker are downloaded into the semantic-models Docker volume.
+fastapi==0.136.3
+uvicorn[standard]==0.32.0
+httpx==0.27.2
+qdrant-client==1.16.2
+# FlagEmbedding 1.4.0 is compatible with the pinned Transformers 4.x API.
+transformers>=4.44.2,<5
+FlagEmbedding==1.4.0

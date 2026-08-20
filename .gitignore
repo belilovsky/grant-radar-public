@@ -218,6 +218,9 @@ tempCodeRunnerFile.py
 output/playwright/
 output/ranking-evaluation/
 
+# Local task/audit workspaces
+work/
+
 # Ruff stuff:
 .ruff_cache/
 

@@ -9,6 +9,11 @@ DASHBOARD_CSS = r"""    :root {
       --panel-subtle: var(--color-bg-subtle);
       --panel-strong: color-mix(in oklab, var(--panel), var(--brand-soft) 16%);
       --panel-wash: color-mix(in oklab, var(--panel), var(--panel-subtle) 44%);
+      --panel-wash-soft: color-mix(in oklab, var(--panel), var(--panel-subtle) 18%);
+      --panel-wash-strong: color-mix(in oklab, var(--panel), var(--panel-subtle) 68%);
+      --panel-wash-list: color-mix(in oklab, var(--panel), var(--panel-subtle) 34%);
+      --panel-wash-card: color-mix(in oklab, var(--panel), var(--panel-subtle) 42%);
+      --panel-wash-card-alt: color-mix(in oklab, var(--panel), var(--panel-subtle) 60%);
       --accent-wash: color-mix(in oklab, var(--panel), var(--brand-soft) 26%);
       --ink: var(--color-text);
       --muted: var(--color-text-muted);
@@ -67,24 +72,16 @@ DASHBOARD_CSS = r"""    :root {
     .hero-band {
       position: relative;
       overflow: hidden;
-      padding: 32px 36px 24px;
-      margin-bottom: 18px;
-      border: 1px solid color-mix(in oklab, var(--line), var(--brand) 8%);
-      border-radius: 24px;
-      background:
-        radial-gradient(
-          circle at 92% 10%,
-          color-mix(in oklab, var(--brand-soft), transparent 8%),
-          transparent 34%
-        ),
-        linear-gradient(145deg, #ffffff 0%, #fbfdff 54%, #f4f7ff 100%);
-      box-shadow:
-        0 18px 50px rgb(15 23 42 / 0.06),
-        0 2px 8px rgb(15 23 42 / 0.03);
+      padding: 16px 18px 0;
+      margin-bottom: 12px;
+      border: 1px solid var(--line-subtle);
+      border-radius: var(--av-radius-lg);
+      background: var(--accent-wash);
+      box-shadow: var(--shadow-xs);
       isolation: isolate;
     }
     .hero-band::before {
-      content: none;
+      content: "";
     }
     .hero-band::after {
       content: none;
@@ -94,29 +91,37 @@ DASHBOARD_CSS = r"""    :root {
       top: 10px;
       z-index: 24;
       padding: 0;
-      margin-bottom: 18px;
-      background: transparent;
-      backdrop-filter: none;
+      margin-bottom: 8px;
+      background: color-mix(in oklab, var(--bg), transparent 5%);
+      backdrop-filter: blur(14px);
     }
     .sticky-bar {
       display: flex;
       align-items: center;
       justify-content: space-between;
       gap: var(--av-spacing-3);
-      min-height: 58px;
-      padding: 8px 12px;
-      border: 1px solid color-mix(in oklab, var(--line), transparent 6%);
-      border-radius: 16px;
-      background: color-mix(in oklab, var(--panel), transparent 4%);
-      box-shadow:
-        0 10px 30px rgb(15 23 42 / 0.07),
-        0 1px 3px rgb(15 23 42 / 0.04);
-      backdrop-filter: blur(18px);
+      min-height: 46px;
+      padding: 5px 0;
+      border: 0;
+      border-bottom: 1px solid var(--line);
+      border-radius: 0;
+      background: transparent;
+      box-shadow: none;
+      backdrop-filter: none;
     }
     .topbar {
       display: grid;
       gap: var(--av-spacing-1);
       margin-bottom: 18px;
+    }
+    .language-fallback-note {
+      margin: 0 0 var(--av-spacing-3);
+      padding: 9px 12px;
+      border-left: 3px solid var(--brand);
+      color: var(--muted);
+      background: var(--panel-wash);
+      font-size: var(--av-text-xs);
+      line-height: 1.45;
     }
     .brand {
       min-width: 0;
@@ -175,14 +180,14 @@ DASHBOARD_CSS = r"""    :root {
     }
     .hero-grid {
       display: grid;
-      grid-template-columns: minmax(0, 1fr) minmax(430px, 0.72fr);
-      gap: 56px;
-      align-items: center;
-      margin-bottom: 24px;
+      grid-template-columns: minmax(0, 1fr) minmax(390px, 0.6fr);
+      gap: 34px;
+      align-items: start;
+      margin-bottom: var(--av-spacing-2);
     }
     .hero-copy {
       display: grid;
-      gap: 20px;
+      gap: var(--av-spacing-2);
       align-content: start;
       min-width: 0;
       padding: 4px 0 8px;
@@ -232,14 +237,15 @@ DASHBOARD_CSS = r"""    :root {
     }
     .hero-stage {
       display: grid;
-      gap: 14px;
+      gap: var(--av-spacing-2);
       min-width: 0;
       align-content: start;
-      padding: 20px;
-      border: 1px solid color-mix(in oklab, var(--line), var(--brand) 8%);
-      border-radius: 18px;
-      background: rgb(255 255 255 / 0.78);
-      box-shadow: 0 10px 30px rgb(15 23 42 / 0.045);
+      padding: 2px 0 2px 22px;
+      border: 0;
+      border-left: 1px solid var(--line-subtle);
+      border-radius: 0;
+      background: transparent;
+      box-shadow: none;
     }
     .hero-stage-eyebrow {
       color: var(--muted);
@@ -260,7 +266,7 @@ DASHBOARD_CSS = r"""    :root {
     .hero-points {
       display: none;
       grid-template-columns: repeat(3, minmax(0, 1fr));
-      gap: var(--av-spacing-2);
+      gap: 6px;
     }
     .hero-point {
       display: grid;
@@ -323,18 +329,16 @@ DASHBOARD_CSS = r"""    :root {
       gap: 12px;
       margin-bottom: 0;
       border: 0;
-      background: transparent;
+      border-top: 1px solid var(--line-subtle);
+      background: var(--panel-wash-soft);
       box-shadow: none;
       backdrop-filter: none;
       border-radius: 0;
     }
     .hero-band .metric {
-      min-height: 82px;
-      padding: 16px 18px;
-      border: 1px solid color-mix(in oklab, var(--line), transparent 10%);
-      border-radius: 14px;
-      background: rgb(255 255 255 / 0.72);
-      box-shadow: 0 4px 16px rgb(15 23 42 / 0.025);
+      min-height: 60px;
+      padding: 10px 16px;
+      border-top: 0;
     }
     .hero-band .metric + .metric { border-left: 1px solid var(--line); }
     .hero-band .metric span {
@@ -511,9 +515,8 @@ DASHBOARD_CSS = r"""    :root {
       margin: 18px 0;
       padding: 0 16px;
       border: 1px solid var(--line-subtle);
-      border-radius: 14px;
-      background: var(--panel);
-      box-shadow: 0 8px 24px rgb(15 23 42 / 0.025);
+      border-radius: var(--av-radius-md);
+      background: var(--panel-wash-strong);
     }
     .discovery-library > summary,
     .trust-library > summary {
@@ -1156,15 +1159,19 @@ DASHBOARD_CSS = r"""    :root {
       font-feature-settings: "tnum" 1, "lnum" 1;
     }
     .panel {
-      padding: calc(var(--section-gap) * 0.58) 0 0;
+      padding: calc(var(--section-gap) * 0.58) 14px 14px;
       margin-top: calc(var(--section-gap) * 0.58);
-      border-top: 1px solid var(--line);
+      border: 1px solid var(--line-subtle);
+      border-radius: var(--av-radius-lg);
+      background: color-mix(in oklab, var(--panel), var(--panel-subtle) 32%);
+      box-shadow: var(--shadow-2xs);
       scroll-margin-top: 156px;
     }
     .panel.primary {
-      border-top: 0;
+      border-top: 1px solid var(--line-subtle);
       margin-top: 0;
-      padding-top: 10px;
+      padding-top: 14px;
+      background: color-mix(in oklab, var(--panel), var(--panel-subtle) 24%);
     }
     .panel-head {
       display: flex;
@@ -1172,7 +1179,7 @@ DASHBOARD_CSS = r"""    :root {
       align-items: flex-end;
       flex-wrap: wrap;
       gap: var(--av-spacing-1);
-      margin-bottom: 18px;
+      margin-bottom: 8px;
     }
     .panel-head h2 {
       margin: 0;
@@ -1198,23 +1205,24 @@ DASHBOARD_CSS = r"""    :root {
       color: var(--muted);
       font-size: var(--av-text-sm);
     }
+    /* Keep native disclosure semantics when a component styles its body. */
+    details:not([open]) > :not(summary) { display: none !important; }
     .filter-disclosure > summary { display: none; }
     .filter-disclosure-body { display: contents; }
     .filters-shell {
       display: grid;
-      gap: 16px;
-      margin-bottom: 14px;
-      padding: 18px;
-      border: 1px solid var(--line);
-      border-top: 0;
-      border-radius: 0 0 18px 18px;
-      background: var(--panel);
-      box-shadow: 0 12px 32px rgb(15 23 42 / 0.045);
+      gap: 8px;
+      margin: 8px 0;
+      padding: 10px 12px 12px;
+      border: 1px solid var(--line-subtle);
+      border-radius: var(--av-radius-md);
+      background: var(--panel-wash-strong);
+      box-shadow: var(--shadow-2xs);
     }
     .filters {
       display: grid;
       grid-template-columns: minmax(220px, 1fr) repeat(3, minmax(128px, 0.28fr));
-      gap: 10px;
+      gap: 8px;
       margin: 0;
       padding: 0;
       border: 0;
@@ -1227,7 +1235,7 @@ DASHBOARD_CSS = r"""    :root {
     }
     .advanced-filters {
       border-top: 1px solid var(--line-subtle);
-      padding-top: 12px;
+      padding-top: 8px;
     }
     .advanced-filters > summary {
       display: inline-flex;
@@ -1276,24 +1284,23 @@ DASHBOARD_CSS = r"""    :root {
       grid-template-columns: repeat(3, minmax(0, 1fr));
       gap: 0;
       margin-bottom: 0;
-      padding: 18px;
-      border: 1px solid var(--line);
-      border-bottom: 1px solid var(--line-subtle);
-      border-radius: 18px 18px 0 0;
-      background: color-mix(in oklab, var(--panel), var(--panel-subtle) 32%);
+      padding: 8px;
+      border: 1px solid var(--line-subtle);
+      border-radius: var(--av-radius-md);
+      background: color-mix(in oklab, var(--panel), var(--panel-subtle) 58%);
     }
     .preset-group {
       display: grid;
       align-content: start;
-      gap: 9px;
+      gap: 5px;
       min-width: 0;
-      padding: 0 18px;
+      padding: 8px 10px;
       border: 0;
-      border-radius: 0;
-      background: transparent;
+      border-radius: var(--av-radius-sm);
+      background: color-mix(in oklab, var(--panel), var(--panel-subtle) 36%);
     }
-    .preset-group:first-child { padding-left: 0; }
-    .preset-group:last-child { padding-right: 0; }
+    .preset-group:first-child,
+    .preset-group:last-child { padding-inline: 10px; }
     .preset-group + .preset-group {
       border-left: 1px solid var(--line-subtle);
     }
@@ -1304,11 +1311,11 @@ DASHBOARD_CSS = r"""    :root {
       min-width: 0;
     }
     .preset-button {
-      min-height: 36px;
-      padding: 0 12px;
-      border: 1px solid var(--line-subtle);
-      border-radius: 9px;
-      background: var(--panel);
+      min-height: 28px;
+      padding: 0 10px;
+      border: 1px solid color-mix(in oklab, var(--brand), var(--line) 72%);
+      border-radius: var(--av-radius-md);
+      background: var(--brand-soft);
       color: var(--muted);
       font-size: var(--av-text-xs);
       font-weight: 700;
@@ -1332,7 +1339,7 @@ DASHBOARD_CSS = r"""    :root {
     }
     .filter-block {
       display: grid;
-      gap: 6px;
+      gap: 5px;
     }
     .filter-label {
       display: inline-flex;
@@ -1364,12 +1371,13 @@ DASHBOARD_CSS = r"""    :root {
     }
     .saved-views {
       display: grid;
-      gap: 8px;
-      margin-bottom: 14px;
-      padding: 12px 14px;
-      border: 1px solid var(--line-subtle);
-      border-radius: 12px;
-      background: color-mix(in oklab, var(--panel), var(--panel-subtle) 24%);
+      gap: 4px;
+      margin-bottom: var(--av-spacing-1);
+      padding: 6px 2px;
+      border: 0;
+      border-bottom: 1px solid var(--line-subtle);
+      border-radius: 0;
+      background: transparent;
     }
     .saved-views-head {
       display: flex;
@@ -1427,7 +1435,7 @@ DASHBOARD_CSS = r"""    :root {
     .workspace-queue {
       display: grid;
       gap: var(--av-spacing-2);
-      margin: 0 0 var(--av-spacing-3);
+      margin: 0 0 var(--av-spacing-2);
       padding: 12px 0;
       border: 0;
       border-bottom: 1px solid var(--line-subtle);
@@ -1504,6 +1512,69 @@ DASHBOARD_CSS = r"""    :root {
       color: var(--muted);
       font-size: var(--av-text-xs);
       font-weight: 600;
+    }
+    .profile-builder {
+      display: grid;
+      gap: 0;
+      margin: 0 0 var(--av-spacing-3);
+      border: 1px solid color-mix(in oklab, var(--brand), var(--line) 72%);
+      border-radius: var(--av-radius-md);
+      background: color-mix(in oklab, var(--panel), var(--brand-soft) 18%);
+      overflow: hidden;
+    }
+    .profile-builder > summary {
+      position: relative;
+      display: flex;
+      align-items: baseline;
+      justify-content: space-between;
+      gap: var(--av-spacing-3);
+      padding: 10px 12px;
+      cursor: pointer;
+      list-style: none;
+    }
+    .profile-builder > summary::-webkit-details-marker { display: none; }
+    .profile-builder > summary::after {
+      content: "+";
+      flex: 0 0 auto;
+      color: var(--brand);
+      font-size: 18px;
+      font-weight: 700;
+    }
+    .profile-builder[open] > summary::after { content: "−"; }
+    .profile-builder-title {
+      color: var(--ink);
+      font-size: var(--av-text-sm);
+      font-weight: 750;
+    }
+    .profile-builder-intro {
+      flex: 1 1 auto;
+      color: var(--muted);
+      font-size: var(--av-text-xs);
+      line-height: 1.45;
+    }
+    .profile-builder-body {
+      display: grid;
+      gap: var(--av-spacing-2);
+      padding: 0 12px 12px;
+      border-top: 1px solid color-mix(in oklab, var(--brand), var(--line) 78%);
+    }
+    .profile-grid {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: var(--av-spacing-2);
+      padding-top: 12px;
+    }
+    .profile-builder-actions {
+      display: flex;
+      align-items: center;
+      gap: var(--av-spacing-2);
+      flex-wrap: wrap;
+    }
+    .profile-builder-note {
+      margin: 0;
+      color: var(--muted);
+      font-size: var(--av-text-xs);
+      line-height: 1.45;
     }
     .saved-view-pill {
       display: inline-flex;
@@ -1654,8 +1725,11 @@ DASHBOARD_CSS = r"""    :root {
     }
     .list {
       display: grid;
-      gap: 14px;
-      border-bottom: 0;
+      gap: 4px;
+      padding: 6px;
+      border: 1px solid var(--line-subtle);
+      border-radius: var(--av-radius-md);
+      background: var(--panel-wash-list);
     }
     .list-actions {
       display: flex;
@@ -1663,19 +1737,39 @@ DASHBOARD_CSS = r"""    :root {
       margin-top: var(--av-spacing-3);
     }
     .opportunity {
-      border: 1px solid color-mix(in oklab, var(--line), transparent 2%);
-      border-radius: 18px;
-      background: var(--panel);
-      padding: 22px;
-      box-shadow:
-        0 10px 28px rgb(15 23 42 / 0.04),
-        0 1px 2px rgb(15 23 42 / 0.025);
+      border: 1px solid var(--line-subtle);
+      border-radius: var(--av-radius-md);
+      background:
+        linear-gradient(135deg, rgb(255 255 255 / 0.56), transparent 48%),
+        var(--panel-wash-card);
+      padding: 16px 14px;
+      box-shadow: 0 1px 1px rgb(15 23 42 / 0.025);
       position: relative;
       overflow: hidden;
       transition:
         background var(--av-duration-base) var(--av-easing-emphasized),
         border-color var(--av-duration-base) var(--av-easing-emphasized),
         box-shadow var(--av-duration-base) var(--av-easing-emphasized),
+        transform var(--av-duration-base) var(--av-easing-emphasized);
+    }
+    .opportunity::before {
+      content: "";
+      position: absolute;
+      top: 0;
+      right: 18px;
+      left: 18px;
+      height: 2px;
+      border-radius: 0 0 var(--av-radius-full) var(--av-radius-full);
+      background: linear-gradient(
+        90deg,
+        var(--brand),
+        color-mix(in oklab, var(--brand), transparent 72%)
+      );
+      opacity: 0;
+      transform: scaleX(0.65);
+      transform-origin: left;
+      transition:
+        opacity var(--av-duration-base) var(--av-easing-emphasized),
         transform var(--av-duration-base) var(--av-easing-emphasized);
     }
     .opportunity:hover {
@@ -1686,17 +1780,26 @@ DASHBOARD_CSS = r"""    :root {
         0 2px 6px rgb(15 23 42 / 0.035);
       transform: translateY(-2px);
     }
+    .opportunity:hover::before,
+    .opportunity:focus-within::before {
+      opacity: 1;
+      transform: scaleX(1);
+    }
+    .list > .opportunity:nth-child(even) {
+      padding-inline: 14px;
+      background: var(--panel-wash-card-alt);
+    }
     .opportunity.good,
     .opportunity.warn { border-left-color: transparent; }
     .opportunity-main {
       display: grid;
-      grid-template-columns: minmax(0, 1fr) minmax(340px, 0.38fr);
-      gap: 28px;
+      grid-template-columns: minmax(0, 1fr) minmax(310px, 0.36fr);
+      gap: 30px;
       align-items: start;
     }
     .opportunity-content {
       display: grid;
-      gap: 14px;
+      gap: 10px;
       min-width: 0;
       padding: 2px 0;
     }
@@ -1709,12 +1812,13 @@ DASHBOARD_CSS = r"""    :root {
         "fit"
         "actions";
       align-content: start;
-      gap: 14px;
+      gap: 10px;
       min-width: 0;
-      padding: 16px;
-      border: 1px solid var(--line-subtle);
-      border-radius: 14px;
-      background: color-mix(in oklab, var(--panel), var(--panel-subtle) 48%);
+      padding: 5px 0 5px 20px;
+      border: 0;
+      border-left: 1px solid var(--line-subtle);
+      border-radius: 0;
+      background: color-mix(in oklab, var(--panel), var(--panel-subtle) 52%);
     }
     .opportunity-heading {
       display: grid;
@@ -1757,7 +1861,7 @@ DASHBOARD_CSS = r"""    :root {
     .tag {
       border-radius: 7px;
       border: 1px solid var(--line-subtle);
-      background: var(--panel-subtle);
+      background: color-mix(in oklab, var(--panel-subtle), white 26%);
       color: var(--muted);
       padding: 4px 8px;
       font-family: var(--font-sans);
@@ -2062,6 +2166,10 @@ DASHBOARD_CSS = r"""    :root {
       display: grid;
       grid-template-columns: 1fr;
       gap: var(--av-spacing-1);
+      padding: 8px 12px;
+      border: 1px solid var(--line-subtle);
+      border-radius: var(--av-radius-md);
+      background: var(--panel-wash);
     }
     .source-card {
       display: flex;
@@ -2273,7 +2381,7 @@ DASHBOARD_CSS = r"""    :root {
       color: var(--brand-hover);
       text-decoration: none;
       background: color-mix(in oklab, var(--brand-soft), var(--brand) 8%);
-      box-shadow: 0 4px 12px rgb(33 75 184 / 0.1);
+      box-shadow: 0 6px 16px rgb(33 75 184 / 0.12);
     }
     .opportunity-click {
       position: absolute;
@@ -2790,9 +2898,8 @@ DASHBOARD_CSS = r"""    :root {
         padding-top: calc(70px + env(safe-area-inset-top));
       }
       .hero-band {
-        padding: 14px 16px 0;
+        display: none;
       }
-      .hero-band .topbar,
       .hero-stage {
         display: none;
       }
@@ -2803,6 +2910,24 @@ DASHBOARD_CSS = r"""    :root {
       .hero-copy {
         gap: 10px;
         padding: 0;
+      }
+      .hero-copy > .topbar {
+        display: block;
+        margin: 0;
+        padding: 0;
+        border: 0;
+        background: transparent;
+        box-shadow: none;
+        backdrop-filter: none;
+      }
+      .hero-copy > .topbar .eyebrow,
+      .hero-copy > .topbar .brand > p,
+      .hero-copy > .topbar .focus-row {
+        display: none;
+      }
+      .hero-copy > .topbar .brand h1 {
+        font-size: clamp(28px, 8vw, 34px);
+        line-height: 1;
       }
       .hero-intro {
         max-width: 72ch;
@@ -2874,6 +2999,9 @@ DASHBOARD_CSS = r"""    :root {
         border: 0;
         border-top: 1px solid var(--line-subtle);
       }
+      .profile-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+      }
     }
 
     @media (max-width: 820px) {
@@ -2896,6 +3024,19 @@ DASHBOARD_CSS = r"""    :root {
         min-width: var(--av-control-height-lg);
         min-height: var(--av-control-height-lg);
       }
+      .more-link,
+      .footer-funder-link,
+      .opportunity h3 a,
+      .site-footer-nav a,
+      .site-footer > p a {
+        display: inline-flex;
+        align-items: center;
+        min-height: var(--av-control-height-lg);
+      }
+      .site-footer-nav a {
+        justify-content: center;
+        min-width: var(--av-control-height-lg);
+      }
       .shell {
         width: 100%;
         padding: calc(66px + env(safe-area-inset-top)) 12px
@@ -2904,10 +3045,10 @@ DASHBOARD_CSS = r"""    :root {
       .hero-band {
         padding: 12px 12px 0;
         margin-bottom: 8px;
-        border: 0;
-        border-radius: 0;
-        background: transparent;
-        box-shadow: none;
+        border: 1px solid var(--line-subtle);
+        border-radius: var(--av-radius-lg);
+        background: var(--accent-wash);
+        box-shadow: var(--shadow-xs);
       }
       .topic-brief {
         padding: 14px 16px;
@@ -3142,7 +3283,7 @@ DASHBOARD_CSS = r"""    :root {
         inset: auto 0 0;
         z-index: 48;
         display: grid;
-        grid-template-columns: repeat(4, minmax(0, 1fr));
+        grid-template-columns: repeat(2, minmax(0, 1fr));
         min-height: calc(62px + env(safe-area-inset-bottom));
         padding: 5px 8px calc(5px + env(safe-area-inset-bottom));
         border-top: 1px solid var(--line-subtle);
@@ -3413,6 +3554,19 @@ DASHBOARD_CSS = r"""    :root {
           "fit"
           "actions";
       }
+      .profile-grid {
+        grid-template-columns: 1fr;
+      }
+      .profile-builder > summary {
+        align-items: flex-start;
+        flex-direction: column;
+        gap: 4px;
+      }
+      .profile-builder > summary::after {
+        position: absolute;
+        right: 14px;
+        margin-top: -2px;
+      }
       .saved-actions .workspace-backup,
       .saved-actions .workspace-filter:disabled { display: none; }
     }
@@ -3501,6 +3655,143 @@ DASHBOARD_CSS = r"""    :root {
       }
       .opportunity p {
         -webkit-line-clamp: 2;
+      }
+    }
+
+    /* Wide screens get a second composition, not a scaled-up mobile grid. */
+    @media (min-width: 981px) and (max-width: 1439px) {
+      .spotlight-grid {
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+      }
+      .source-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        column-gap: var(--av-spacing-5);
+      }
+    }
+
+    @media (min-width: 1440px) {
+      .shell {
+        width: min(var(--container-max), calc(100% - 96px));
+      }
+      .hero-grid {
+        grid-template-columns: minmax(0, 1.25fr) minmax(460px, 0.75fr);
+        gap: 64px;
+      }
+      .hero-copy {
+        max-width: 980px;
+      }
+      .hero-intro {
+        max-width: 58ch;
+      }
+      .hero-points {
+        display: grid;
+      }
+      .discovery-grid {
+        grid-template-columns: minmax(420px, 0.72fr) minmax(0, 1.28fr);
+        gap: var(--av-spacing-8);
+      }
+      .pathways-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+      }
+      .opportunity-main {
+        grid-template-columns: minmax(0, 1.35fr) minmax(420px, 0.65fr);
+        gap: 64px;
+      }
+      .source-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        column-gap: var(--av-spacing-8);
+      }
+      .source-card {
+        padding-inline: 8px;
+      }
+    }
+
+    @media (min-width: 1280px) and (max-width: 1919px) {
+      .list {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        column-gap: var(--av-spacing-6);
+      }
+      .opportunity-main {
+        grid-template-columns: minmax(0, 1.18fr) minmax(250px, 0.82fr);
+        gap: var(--av-spacing-6);
+      }
+      .opportunity-rail {
+        padding-left: 14px;
+      }
+    }
+
+    @media (min-width: 1920px) {
+      .list {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        column-gap: var(--av-spacing-6);
+      }
+      .themes-grid {
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+      }
+      .opportunity-main {
+        grid-template-columns: minmax(0, 1.1fr) minmax(300px, 0.9fr);
+        gap: var(--av-spacing-6);
+      }
+      .pathways-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+      }
+      .source-grid {
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        column-gap: var(--av-spacing-6);
+      }
+      .filters-shell {
+        gap: var(--av-spacing-4);
+      }
+    }
+
+    @media (min-width: 2200px) {
+      .shell {
+        width: min(1920px, calc(100% - 160px));
+      }
+      .hero-grid {
+        grid-template-columns: minmax(0, 1.5fr) minmax(520px, 0.72fr);
+        gap: 80px;
+      }
+      .hero-copy {
+        max-width: 1080px;
+      }
+      .hero-intro {
+        max-width: 62ch;
+      }
+      .discovery-grid {
+        grid-template-columns: minmax(520px, 0.68fr) minmax(0, 1.32fr);
+        gap: var(--av-spacing-10);
+      }
+      .funder-grid {
+        grid-template-columns: repeat(4, minmax(0, 1fr));
+      }
+      .source-grid {
+        grid-template-columns: repeat(4, minmax(0, 1fr));
+        column-gap: var(--av-spacing-6);
+      }
+      .role-list {
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+      }
+      .faq-list {
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+      }
+      .opportunity-main {
+        grid-template-columns: minmax(0, 1.5fr) minmax(520px, 0.72fr);
+        gap: 80px;
+      }
+    }
+
+    @media (max-width: 560px) {
+      .profile-grid {
+        grid-template-columns: 1fr;
+      }
+      .profile-builder > summary {
+        display: grid;
+        grid-template-columns: minmax(0, 1fr) auto;
+        align-items: start;
+      }
+      .profile-builder-intro {
+        grid-column: 1 / -1;
       }
     }
 

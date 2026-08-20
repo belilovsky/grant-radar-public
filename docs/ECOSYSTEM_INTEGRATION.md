@@ -33,6 +33,8 @@ prove.
 - `/.well-known/qazcompute-profiles.json` – executable local profiles and
   safety boundary.
 - `/.well-known/qdev-ecosystem.json` – implemented and deferred integrations.
+- `/.well-known/source-onboarding.json` – active adapters and gated source
+  candidates with admission checks.
 - `/site-discovery.json` – public routes, query templates and contracts.
 - `/llms.txt` – compact discovery guidance for AI systems.
 - `/openapi.json` – executable API contract.
@@ -55,7 +57,8 @@ computations. AV DS owns visual primitives and semantic UI roles.
 
 Private operator credentials, saved user selections and internal refresh tokens
 must never enter the public feed. Public records sent downstream retain at least
-`source`, `source_url` and `discovered_at`.
+`source`, `source_url`, `discovered_at` and `raw.provenance`. The provenance
+contract is documented in [`DATA_PROVENANCE_CONTRACT.md`](DATA_PROVENANCE_CONTRACT.md).
 
 Application draft text stays in browser storage. It is not a QazLake record,
 QazPipe payload or QazCompute task. Telegram delivery is disabled by default
@@ -77,6 +80,8 @@ and cannot create its own scheduler.
    execution still requires fixture parity and a private server-side sync path.
 7. New visual patterns use AV DS 4 component families; a local SSR exception is
    documented instead of forking React source.
+8. Candidate sources remain outside the public opportunity feed until the
+   source-onboarding contract is satisfied.
 
 ## Next safe integrations
 
@@ -102,6 +107,9 @@ The enabled contracts are:
   `qazcompute_source_freshness`.
 - `duplicate_cluster.v1` at `/opportunities/duplicate-candidates` as a
   review-only candidate queue.
+- `provenance.v1` in public opportunity payloads as `raw.provenance`; this
+  distinguishes parser observation from explicit source verification and keeps
+  field-level confidence visible to downstream consumers.
 
 All four keep `decision_ready=false`; they are technical review signals, not
 legal eligibility, publication, funding or source-control decisions.
@@ -124,8 +132,8 @@ to a versioned QazStack contract rather than adding product-to-product imports.
 
 - Full QAZ.FUND tests, lint and type checks pass.
 - Strict QazStack consumer validation passes from the installed wheel.
-- Production smoke verifies QazStack, AV DS 4, QazPipe, QazCompute and the
-  combined ecosystem document.
+- Production smoke verifies the ecosystem, AVDS4, notification, QazStack and
+  source-onboarding `/.well-known/` contracts.
 - QazStack registry probes are added only after the public endpoints are live.
 - Platform catalog status changes only from runtime evidence, never from this
   document alone.

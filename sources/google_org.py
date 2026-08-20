@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-import re
 from collections.abc import AsyncIterator
 from typing import ClassVar
 
@@ -11,6 +10,7 @@ import structlog
 from core.models import Opportunity, OpportunityType
 from core.source_text import clean_source_text as _clean_text
 from sources.base import BaseSource
+from sources.parsing import html_title as _shared_html_title
 
 log = structlog.get_logger()
 
@@ -20,12 +20,7 @@ GOOGLE_ORG_KNOWLEDGE_URL = (
 
 
 def _html_title(html: str) -> str | None:
-    match = re.search(
-        r"<title[^>]*>(?P<title>.*?)</title>", html, re.IGNORECASE | re.DOTALL
-    )
-    if match is None:
-        return None
-    return _clean_text(match.group("title")) or None
+    return _shared_html_title(html, _clean_text)
 
 
 class GoogleOrgAiOpportunitySource(BaseSource):
@@ -49,6 +44,7 @@ class GoogleOrgAiOpportunitySource(BaseSource):
             response = await self.client.get(GOOGLE_ORG_KNOWLEDGE_URL)
             response.raise_for_status()
         except Exception as exc:  # noqa: BLE001
+            self._mark_fetch_error(exc)
             log.warning(
                 "google_org_ai_opportunity.fetch_failed",
                 url=GOOGLE_ORG_KNOWLEDGE_URL,
@@ -80,6 +76,10 @@ class GoogleOrgAiOpportunitySource(BaseSource):
                 "program_url": GOOGLE_ORG_KNOWLEDGE_URL,
                 "source_watch": True,
                 "item_level_parser": False,
+                "status_note": (
+                    "No open application window is confirmed; this record monitors "
+                    "the official page for future calls."
+                ),
                 "i18n": {
                     "ru": {
                         "title": (

@@ -11,8 +11,25 @@ from core.russian_summary import (
     russian_opportunity_title_fallback,
     russian_summary_fallback,
 )
+from core.typography_policy import normalize_public_opportunity
 
-SUPPORTED_CONTENT_LANGS = frozenset({"en", "ru"})
+SUPPORTED_CONTENT_LANGS = frozenset({"en", "kk", "ru"})
+LANGUAGE_ALIASES = {
+    "ru": "ru",
+    "ru-ru": "ru",
+    "rus": "ru",
+    "russian": "ru",
+    "kk": "kk",
+    "kk-kz": "kk",
+    "kz": "kk",
+    "kaz": "kk",
+    "kaz-cyrl": "kk",
+    "kazakh": "kk",
+    "en": "en",
+    "en-us": "en",
+    "eng": "en",
+    "english": "en",
+}
 _DIRECT_TRANSLATION_SUFFIXES = ("ru", "kk")
 _TRANSLATABLE_KEYS = (
     "title",
@@ -27,7 +44,8 @@ _LATIN_RE = re.compile(r"[A-Za-z]")
 
 
 def normalize_content_lang(value: str | None) -> str:
-    return "en" if str(value or "").strip().lower() == "en" else "ru"
+    normalized = str(value or "").strip().lower().replace("_", "-")
+    return LANGUAGE_ALIASES.get(normalized, "ru")
 
 
 def raw_localization_target(raw: dict[str, Any]) -> dict[str, Any]:
@@ -37,10 +55,13 @@ def raw_localization_target(raw: dict[str, Any]) -> dict[str, Any]:
     return raw
 
 
-def _string_value(value: Any) -> str:
+def string_value(value: Any) -> str:
     if value is None:
         return ""
     return str(value).strip()
+
+
+_string_value = string_value
 
 
 def _remove_repeated_title_prefix(summary: str, title: str) -> str:
@@ -139,6 +160,27 @@ def _english_source_fallback(
     item: Opportunity, title: str, summary: str
 ) -> tuple[str, str]:
     """Keep the English surface readable when an official notice is Russian-only."""
+    grants_summary_lower = summary.casefold()
+    if item.source == "grants_gov" and (
+        len(summary) < 120
+        or "regional screening rules" in grants_summary_lower
+        or "record is retained for kazakhstan" in grants_summary_lower
+    ):
+        raw = item.raw if isinstance(item.raw, dict) else {}
+        agency = _string_value(
+            raw.get("agencyName") or raw.get("agency") or item.funder
+        )
+        close_date = _string_value(raw.get("closeDate") or raw.get("deadline"))
+        prefix = "Grants.gov notice"
+        if agency:
+            prefix += f" from {agency}"
+        if close_date:
+            prefix += f" closing {close_date}"
+        summary = (
+            f"{prefix}. The card is included for Kazakhstan and Central Asia "
+            "monitoring. The official notice determines eligible countries, applicant "
+            "type, budget ceiling and submission requirements."
+        )
     if item.source == "eeas_kazakhstan" and len(summary) < 80:
         summary = (
             f"Official EEAS Kazakhstan call: {title.rstrip('.')}. Review the source "
@@ -292,7 +334,7 @@ def localize_opportunity(item: Opportunity, lang: str) -> Opportunity:
         title = localized_text(raw, content_lang, "title", fallback=item.title)
         summary = localized_text(raw, content_lang, "summary", fallback=item.summary)
         title, summary = _english_source_fallback(item, title, summary)
-        return item.model_copy(
+        localized = item.model_copy(
             update={
                 "title": title,
                 "summary": _remove_repeated_title_prefix(summary, title),
@@ -304,6 +346,7 @@ def localize_opportunity(item: Opportunity, lang: str) -> Opportunity:
                 ),
             }
         )
+        return normalize_public_opportunity(localized)
     raw = item.raw if isinstance(item.raw, dict) else {}
     summary = localized_text(
         raw,
@@ -316,7 +359,7 @@ def localize_opportunity(item: Opportunity, lang: str) -> Opportunity:
     )
     summary_item = item.model_copy(update={"title": title})
     public_summary = russian_summary_fallback(summary_item, summary)
-    return item.model_copy(
+    localized = item.model_copy(
         update={
             "title": title,
             "summary": _remove_repeated_title_prefix(public_summary, title),
@@ -328,6 +371,7 @@ def localize_opportunity(item: Opportunity, lang: str) -> Opportunity:
             ),
         }
     )
+    return normalize_public_opportunity(localized)
 
 
 def preserve_localized_raw(

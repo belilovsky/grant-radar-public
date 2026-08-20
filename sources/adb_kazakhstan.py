@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 import re
-from collections.abc import AsyncIterator, Iterable
+from collections.abc import AsyncIterator
 from datetime import date
 from decimal import Decimal, InvalidOperation
 from typing import ClassVar
@@ -14,6 +14,9 @@ from lxml import etree as ET
 from core.models import Opportunity, OpportunityType
 from core.source_text import clean_plain_source_text as _clean_text
 from sources.base import BaseSource
+from sources.parsing import infer_tags as _shared_infer_tags
+from sources.parsing import secure_xml_parser as _secure_xml_parser
+from sources.parsing import unique_normalized as _unique
 
 log = structlog.get_logger()
 
@@ -96,39 +99,8 @@ MONTHS = {
 }
 
 
-def _secure_xml_parser() -> ET.XMLParser:
-    return ET.XMLParser(
-        resolve_entities=False,
-        no_network=True,
-        huge_tree=False,
-    )
-
-
-def _unique(values: Iterable[str]) -> list[str]:
-    seen: set[str] = set()
-    out: list[str] = []
-    for value in values:
-        normalized = value.strip().lower()
-        if not normalized or normalized in seen:
-            continue
-        seen.add(normalized)
-        out.append(normalized)
-    return out
-
-
-def _contains_term(text: str, keyword: str) -> bool:
-    normalized_keyword = re.escape(keyword.lower()).replace(r"\ ", r"[\s_-]+")
-    pattern = rf"(?<![a-z0-9]){normalized_keyword}(?![a-z0-9])"
-    return re.search(pattern, text) is not None
-
-
 def _infer_tags(text: str) -> list[str]:
-    lowered = text.lower()
-    tags: list[str] = []
-    for tag, keywords in THEME_KEYWORDS.items():
-        if any(_contains_term(lowered, keyword) for keyword in keywords):
-            tags.append(tag)
-    return tags
+    return _shared_infer_tags(text, THEME_KEYWORDS)
 
 
 def _parse_date(value: str | None) -> date | None:
@@ -253,6 +225,7 @@ class AdbKazakhstanSource(BaseSource):
             response.raise_for_status()
             root = ET.fromstring(response.content, parser=_secure_xml_parser())
         except Exception as exc:  # noqa: BLE001
+            self._mark_fetch_error(exc)
             log.warning("adb_kazakhstan.fetch_failed", error=str(exc))
             return
 

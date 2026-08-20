@@ -9,6 +9,8 @@ from urllib.parse import urlparse
 
 from api.avds import AVDS_CSS, AVDS_FONT_HEAD
 from api.dashboard_copy import dashboard_copy
+from api.insights_page import _source_label
+from api.public_meta import og_image_url
 
 COPY = {
     "ru": {
@@ -16,8 +18,8 @@ COPY = {
         "eyebrow": "Прозрачность данных",
         "heading": "Статус источников",
         "intro": (
-            "Показываем покрытие и свежесть подключённых источников. "
-            "Карточки всегда нужно сверять с официальной страницей программы."
+            "Показываем, какие источники подключены, когда их проверяли и "
+            "где нужна дополнительная сверка."
         ),
         "back": "Вернуться в каталог",
         "sources": "Подключено",
@@ -31,20 +33,26 @@ COPY = {
         "fresh_label": "Проверен недавно",
         "stale_label": "Требует внимания",
         "unknown_label": "Нет данных",
-        "empty": "Подключённые источники пока не найдены.",
+        "empty": "Подключённых источников пока нет.",
         "disclaimer": (
-            "Статус отражает время последней успешной проверки или обнаруженной "
-            "записи, а не юридическую актуальность каждой программы."
+            "Статус показывает время последней успешной проверки или найденной записи. "
+            "Он не подтверждает юридическую актуальность каждой программы."
         ),
         "summary_aria": "Сводка состояния источников",
+        "search": "Поиск по источникам",
+        "filter": "Показать",
+        "attention": "Сначала требующие внимания",
+        "all": "Все источники",
+        "fresh_only": "Только проверенные недавно",
+        "no_results": "По заданным условиям источники не найдены.",
     },
     "en": {
         "title": "Source status – QAZ.FUND",
         "eyebrow": "Data transparency",
         "heading": "Source status",
         "intro": (
-            "Coverage and freshness of connected sources. Always verify each "
-            "opportunity against the official program page."
+            "See which sources are connected, when they were checked, and where "
+            "you need an extra review."
         ),
         "back": "Back to catalog",
         "sources": "Connected",
@@ -60,10 +68,49 @@ COPY = {
         "unknown_label": "No data",
         "empty": "No connected sources are available yet.",
         "disclaimer": (
-            "Freshness reflects the latest successful check or discovered record, "
-            "not the legal validity of every program."
+            "Status shows the latest successful check or discovered record. It does "
+            "not confirm the legal validity of every program."
         ),
         "summary_aria": "Source status summary",
+        "search": "Search sources",
+        "filter": "Show",
+        "attention": "Needs attention first",
+        "all": "All sources",
+        "fresh_only": "Recently checked only",
+        "no_results": "No sources match these filters.",
+    },
+    "kk": {
+        "title": "Дереккөздер мәртебесі – QAZ.FUND",
+        "eyebrow": "Деректер ашықтығы",
+        "heading": "Дереккөздер мәртебесі",
+        "intro": (
+            "Қай дереккөздер қосылғанын, олар қашан тексерілгенін және қай жерде "
+            "қосымша тексеру қажет екенін көрсетеміз."
+        ),
+        "back": "Каталогқа оралу",
+        "sources": "Қосылғаны",
+        "fresh": "Жаңартылғаны",
+        "stale": "Назар аударуды қажет етеді",
+        "unknown": "Белгісіз",
+        "source": "Дереккөз",
+        "coverage": "Жазбалар / өзекті",
+        "updated": "Соңғы тексеру",
+        "state": "Мәртебесі",
+        "fresh_label": "Жаңартылған",
+        "stale_label": "Назар аударуды қажет етеді",
+        "unknown_label": "Дерек жоқ",
+        "empty": "Қосылған дереккөздер әзірше жоқ.",
+        "disclaimer": (
+            "Мәртебе соңғы сәтті тексеруді немесе табылған жазбаны көрсетеді. "
+            "Ол әр бағдарламаның заңдық тұрғыдан өзектілігін растамайды."
+        ),
+        "summary_aria": "Дереккөздер мәртебесінің қысқаша қорытындысы",
+        "search": "Дереккөздерді іздеу",
+        "filter": "Көрсету",
+        "attention": "Алдымен назар аударатындары",
+        "all": "Барлық дереккөздер",
+        "fresh_only": "Жақында тексерілгендері",
+        "no_results": "Бұл сүзгілерге сәйкес дереккөз табылмады.",
     },
 }
 
@@ -82,6 +129,23 @@ def _date_label(value: Any, lang: str) -> str:
 
 def _host(value: Any) -> str:
     return (urlparse(str(value or "")).hostname or "").removeprefix("www.")
+
+
+def _source_display_name(row: dict[str, Any], lang: str) -> str:
+    """Prefer a curated label, then preserve the source's official name."""
+
+    slug = str(row.get("slug") or "").strip()
+    name = str(row.get("name") or "").strip()
+    if slug:
+        label = _source_label(slug, lang)
+        normalized_slug = slug.lower().replace("-", "_").replace(" ", "_")
+        if label and label != normalized_slug.replace("_", " "):
+            if name and name.lower().startswith(label.lower()) and name != label:
+                return name
+            return label
+    if name:
+        return _source_label(name, lang)
+    return _source_label(slug, lang)
 
 
 def render_status_page(
@@ -119,6 +183,7 @@ def render_status_page(
     )
     product_copy = dashboard_copy(active_lang)
     ru_href = f"{base}/status?lang=ru" if base else "/status?lang=ru"
+    kk_href = f"{base}/status?lang=kk" if base else "/status?lang=kk"
     en_href = f"{base}/status?lang=en" if base else "/status?lang=en"
     status_path = (
         f"{base}/status?lang={active_lang}" if base else f"/status?lang={active_lang}"
@@ -127,7 +192,12 @@ def render_status_page(
         f"{site_origin.rstrip('/')}{status_path}" if site_origin else status_path
     )
     ru_current = ' aria-current="page"' if active_lang == "ru" else ""
+    kk_current = ' aria-current="page"' if active_lang == "kk" else ""
     en_current = ' aria-current="page"' if active_lang == "en" else ""
+    origin = site_origin.rstrip("/") if site_origin else ""
+    kk_canonical = f"{origin}{kk_href}" if origin else kk_href
+    ru_canonical = f"{origin}{ru_href}" if origin else ru_href
+    en_canonical = f"{origin}{en_href}" if origin else en_href
     sources = [row for row in coverage.get("sources", []) if row.get("enabled")]
     sources.sort(
         key=lambda row: (
@@ -150,10 +220,13 @@ def render_status_page(
         )
         freshness = str(row.get("freshness_status") or "unknown")
         mobile_updated = f'{copy["updated"]}: {last_checked}'
+        source_name = _source_display_name(row, active_lang)
+        search_value = f"{source_name} {_host(row.get('base_url'))}".lower()
         rendered_rows.append(f"""
-            <tr>
+            <tr data-source-state="{escape(freshness, quote=True)}"
+              data-source-search="{escape(search_value, quote=True)}">
               <td>
-                <strong>{escape(str(row.get("name") or row.get("slug") or ""))}</strong>
+                <strong>{escape(source_name)}</strong>
                 <span>{escape(_host(row.get("base_url")))}</span>
                 <span class="mobile-updated">{escape(mobile_updated)}</span>
               </td>
@@ -176,7 +249,19 @@ def render_status_page(
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>{escape(str(copy["title"]))}</title>
   <meta name="description" content="{escape(str(copy["intro"]), quote=True)}">
+  <meta property="og:type" content="website">
+  <meta property="og:title" content="{escape(str(copy["title"]), quote=True)}">
+  <meta property="og:description" content="{escape(str(copy["intro"]), quote=True)}">
+  <meta property="og:url" content="{escape(canonical, quote=True)}">
+  <meta property="og:image" content="{escape(og_image_url(site_origin, root_path), quote=True)}">
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="{escape(str(copy["title"]), quote=True)}">
+  <meta name="twitter:description" content="{escape(str(copy["intro"]), quote=True)}">
+  <meta name="twitter:image" content="{escape(og_image_url(site_origin, root_path), quote=True)}">
   <link rel="canonical" href="{escape(canonical, quote=True)}">
+  <link rel="alternate" hreflang="kk" href="{escape(kk_canonical, quote=True)}">
+  <link rel="alternate" hreflang="ru" href="{escape(ru_canonical, quote=True)}">
+  <link rel="alternate" hreflang="en" href="{escape(en_canonical, quote=True)}">
   {AVDS_FONT_HEAD}
   <style>
     {AVDS_CSS}
@@ -218,18 +303,16 @@ def render_status_page(
       color:var(--muted); text-align:center; text-decoration:none; font-size:12px;
       font-weight:700; }}
     .lang-switch a[aria-current="page"] {{ border-bottom-color:var(--brand); color:var(--ink); }}
-    .overview {{ display:grid; grid-template-columns:minmax(0,1.2fr) minmax(420px,.8fr);
-      gap:clamp(28px,5vw,72px); margin-bottom:18px; padding:clamp(26px,4vw,48px);
-      border:1px solid color-mix(in oklab,var(--line),transparent 12%);
-      border-radius:24px; background:linear-gradient(135deg,var(--panel),var(--brand-soft) 130%);
-      box-shadow:var(--av-shadow-md); }}
-    .hero {{ padding:0; align-self:center; }}
-    .eyebrow {{ color:var(--brand); font-size:var(--av-text-xs); font-weight:750;
-      letter-spacing:.06em; text-transform:uppercase; }}
-    h1 {{ margin:8px 0 10px; font-size:clamp(36px,4.2vw,58px); line-height:1.02;
-      letter-spacing:-.035em; }}
-    .hero p {{ max-width:680px; margin:0; color:var(--muted); font-size:17px;
-      line-height:1.58; }}
+    .lang-switch a:not([aria-current="page"]):hover {{ color:var(--brand); }}
+    .overview {{ display:grid; grid-template-columns:minmax(0,1.25fr) minmax(420px,.75fr);
+      gap:0; margin-bottom:16px; border:1px solid var(--line);
+      border-radius:var(--av-radius-lg);
+      background:color-mix(in oklab,var(--panel),var(--brand-soft) 24%);
+      box-shadow:var(--shadow-xs); }}
+    .hero {{ padding:24px; }}
+    .eyebrow {{ color:var(--brand); font-size:var(--av-text-xs); font-weight:700; }}
+    h1 {{ margin:5px 0; font-size:36px; line-height:1.08; letter-spacing:0; }}
+    .hero p {{ max-width:720px; margin:0; color:var(--muted); line-height:1.5; }}
     .metrics {{ display:grid; grid-template-columns:repeat(2,minmax(0,1fr));
       align-content:stretch; gap:10px; margin:0; }}
     .metric {{ display:grid; align-content:center; padding:14px;
@@ -238,13 +321,14 @@ def render_status_page(
     .metric span {{ display:block; color:var(--muted); font-size:12px; }}
     .metric strong {{ display:block; margin-top:3px; font-size:22px; line-height:1; }}
     .table-wrap {{ overflow-x:auto; border:1px solid var(--line);
-      border-radius:var(--av-radius-lg); background:var(--panel); box-shadow:var(--av-shadow-xs); }}
+      border-radius:var(--av-radius-lg); background:var(--panel); box-shadow:var(--shadow-xs); }}
     table {{ width:100%; border-collapse:collapse; }}
     th,td {{ padding:10px 14px; border-bottom:1px solid var(--line-subtle); text-align:left;
       vertical-align:middle; }}
     th {{ position:sticky; top:0; z-index:1; color:var(--muted); background:var(--panel-subtle);
       font-size:12px; font-weight:700; }}
     td {{ font-size:14px; }}
+    tbody tr:nth-child(even) {{ background:var(--panel-wash-soft); }}
     tbody tr:hover {{ background:color-mix(in oklab,var(--panel),var(--brand-soft) 10%); }}
     td strong,td span {{ display:block; }}
     td > span:not(.state) {{ margin-top:3px; color:var(--muted); font-size:12px; }}
@@ -262,12 +346,49 @@ def render_status_page(
     .site-footer-nav {{ display:flex; flex-wrap:wrap; gap:6px 16px;
       align-items:center; font-weight:650; }}
     .site-footer a {{ color:var(--ink); font-weight:700; text-decoration:none; }}
+    .site-footer a:hover {{ color:var(--brand); }}
     a:focus-visible {{ outline:2px solid var(--brand); outline-offset:2px;
       border-radius:var(--av-radius-sm); }}
+    @media (min-width:1440px) {{
+      .overview {{ grid-template-columns:minmax(0,1.4fr) minmax(520px,.6fr); }}
+      .metrics {{ grid-template-columns:repeat(3,minmax(0,1fr)); margin-left:48px; }}
+    }}
+    @media (min-width:2200px) {{
+      main {{ width:min(1920px,calc(100% - 160px)); }}
+      .overview {{ grid-template-columns:minmax(0,1.25fr) minmax(520px,.75fr); }}
+      .hero p {{ max-width:900px; }}
+      .metrics {{ margin-left:64px; }}
+    }}
     .empty {{ color:var(--muted); text-align:center; }}
+    .status-controls {{
+      display:grid;
+      grid-template-columns:minmax(220px,1fr) minmax(220px,.45fr);
+      gap:10px;
+      margin:18px 0 10px;
+    }}
+    .status-control {{
+      display:grid; gap:5px; color:var(--muted); font-size:11px; font-weight:750;
+    }}
+    .status-control input,.status-control select {{
+      width:100%; min-height:44px; padding:9px 11px; border:1px solid var(--line);
+      border-radius:var(--av-radius-md); background:var(--panel); color:var(--ink);
+    }}
+    .status-no-results {{ display:none; padding:24px; text-align:center; color:var(--muted); }}
     @media (max-width:860px) {{
       .overview {{ grid-template-columns:1fr; }}
       .metrics {{ margin:0; padding:0; border:0; }}
+      .status-controls {{ grid-template-columns:1fr; }}
+    }}
+    @media (max-width:860px) {{
+      .lang-switch a,
+      .status-topbar .back,
+      .site-footer-nav a {{
+        display:inline-flex;
+        align-items:center;
+        min-height:var(--av-control-height-lg);
+      }}
+      .lang-switch a,
+      .site-footer-nav a {{ min-width:var(--av-control-height-lg); justify-content:center; }}
     }}
     @media (max-width:720px) {{
       .lang-switch a {{
@@ -278,10 +399,8 @@ def render_status_page(
         min-height:var(--av-control-height-lg);
       }}
       .status-topbar .back {{ min-height:var(--av-control-height-lg); }}
-      main {{ width:min(100% - 24px,var(--av-container-dashboard)); padding-top:14px; }}
-      .status-topbar {{ top:8px; padding:8px 10px; }}
-      .overview {{ padding:22px 18px; border-radius:20px; }}
-      .hero {{ padding:0; }}
+      main {{ width:min(100% - 20px,var(--av-container-dashboard)); padding-top:10px; }}
+      .hero {{ padding:18px 16px; }}
       .metrics {{ grid-template-columns:repeat(2,minmax(0,1fr)); }}
       thead {{ display:none; }}
       tbody, tr, td {{ display:block; }}
@@ -300,21 +419,23 @@ def render_status_page(
   </style>
 </head>
 <body>
-  <main>
+  <main data-avds-component="status-page">
     <div class="status-topbar">
       <a class="back" href="{escape(catalog_href, quote=True)}">← {escape(str(copy["back"]))}</a>
       <nav class="lang-switch" aria-label="Language">
+        <a href="{escape(kk_href, quote=True)}" lang="kk"{kk_current}>KAZ</a>
         <a href="{escape(ru_href, quote=True)}" lang="ru"{ru_current}>RU</a>
         <a href="{escape(en_href, quote=True)}" lang="en"{en_current}>EN</a>
       </nav>
     </div>
-    <section class="overview">
+    <section class="overview" data-avds-component="hero-band">
       <div class="hero">
         <span class="eyebrow">{escape(str(copy["eyebrow"]))}</span>
         <h1>{escape(str(copy["heading"]))}</h1>
         <p>{escape(str(copy["intro"]))}</p>
       </div>
-      <div class="metrics" aria-label="{escape(str(copy["summary_aria"]), quote=True)}">
+      <div class="metrics" data-avds-component="stat-group"
+        aria-label="{escape(str(copy["summary_aria"]), quote=True)}">
         <div class="metric"><span>{escape(str(copy["sources"]))}</span>
           <strong>{int(coverage.get("enabled_sources") or 0)}</strong></div>
         <div class="metric"><span>{escape(str(copy["fresh"]))}</span>
@@ -325,7 +446,20 @@ def render_status_page(
           <strong>{int(coverage.get("unknown_freshness_sources") or 0)}</strong></div>
       </div>
     </section>
-    <div class="table-wrap">
+    <div class="status-controls" data-avds-pattern="filter-state-summary">
+      <label class="status-control" for="source-search">{escape(str(copy["search"]))}
+        <input id="source-search" type="search" autocomplete="off"
+          placeholder="{escape(str(copy["search"]), quote=True)}">
+      </label>
+      <label class="status-control" for="source-filter">{escape(str(copy["filter"]))}
+        <select id="source-filter">
+          <option value="attention">{escape(str(copy["attention"]))}</option>
+          <option value="all">{escape(str(copy["all"]))}</option>
+          <option value="fresh">{escape(str(copy["fresh_only"]))}</option>
+        </select>
+      </label>
+    </div>
+    <div class="table-wrap" data-avds-component="data-table">
       <table>
         <thead><tr><th>{escape(str(copy["source"]))}</th>
           <th>{escape(str(copy["coverage"]))}</th>
@@ -333,9 +467,13 @@ def render_status_page(
           <th>{escape(str(copy["state"]))}</th></tr></thead>
         <tbody>{rows}</tbody>
       </table>
+      <div class="status-no-results" id="status-no-results">
+        {escape(str(copy["no_results"]))}
+      </div>
     </div>
     <p class="note">{escape(str(copy["disclaimer"]))}</p>
     <footer class="site-footer">
+      <a class="footer-contact" href="mailto:contact@qaz.fund">contact@qaz.fund</a>
       <nav class="site-footer-nav"
         aria-label="{escape(str(product_copy["views_aria"]), quote=True)}">
         <a href="{escape(catalog_href, quote=True)}"
@@ -355,5 +493,41 @@ def render_status_page(
       </nav>
     </footer>
   </main>
+  <script>
+    (() => {{
+      const search = document.getElementById("source-search");
+      const filter = document.getElementById("source-filter");
+      const rows = [...document.querySelectorAll("tbody tr[data-source-state]")];
+      const body = document.querySelector("tbody");
+      const empty = document.getElementById("status-no-results");
+      rows.forEach((row, index) => {{ row.dataset.sourceIndex = String(index); }});
+      const apply = () => {{
+        const query = String(search.value || "").trim().toLowerCase();
+        const mode = filter.value;
+        let visible = 0;
+        const ordered = [...rows].sort((left, right) => {{
+          if (mode !== "attention") {{
+            return Number(left.dataset.sourceIndex) - Number(right.dataset.sourceIndex);
+          }}
+          const leftAttention = left.dataset.sourceState === "fresh" ? 1 : 0;
+          const rightAttention = right.dataset.sourceState === "fresh" ? 1 : 0;
+          return leftAttention - rightAttention ||
+            Number(left.dataset.sourceIndex) - Number(right.dataset.sourceIndex);
+        }});
+        ordered.forEach((row) => body.appendChild(row));
+        rows.forEach((row) => {{
+          const state = row.dataset.sourceState || "unknown";
+          const stateMatch = mode !== "fresh" || state === "fresh";
+          const searchMatch = !query || (row.dataset.sourceSearch || "").includes(query);
+          row.hidden = !(stateMatch && searchMatch);
+          if (!row.hidden) visible += 1;
+        }});
+        empty.style.display = visible ? "none" : "block";
+      }};
+      search.addEventListener("input", apply);
+      filter.addEventListener("change", apply);
+      apply();
+    }})();
+  </script>
 </body>
 </html>"""

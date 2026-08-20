@@ -20,11 +20,13 @@ def test_avds_contract_declares_runtime_neutral_catalog_patterns() -> None:
     assert contract["avds_source"] == {
         "site": "https://avds.digital",
         "package": "@sgeo/ui-kit",
-        "version": "4.6.0",
+        "version": "4.7.0",
+        "source_revision": "5411a219f3b8f03d12c23bc1543e268fe355d0ec",
     }
     assert contract["runtime_neutral_patterns"]["source_revision"] == (
-        "3d482e1c7592e2f8ae359c3e3b2d10c5c1118c37"
+        "ea32d93aa05fa6faa4278ccc030c1d3567c1de35"
     )
+    assert contract["runtime_neutral_patterns"]["version"] == "0.2.0"
     families = {
         family["id"]: family["components"] for family in contract["component_families"]
     }
@@ -43,7 +45,7 @@ def test_avds_contract_declares_runtime_neutral_catalog_patterns() -> None:
     assert "FormField" in families["foundation"]
     assert "Progress" in families["application-preparation"]
     assert contract["verification"]["public_site_status"] == "live"
-    assert contract["verification"]["reference_release"] == "4.6.0"
+    assert contract["verification"]["reference_release"] == "4.7.0"
     assert contract["local_recipes"]["package_claim"] is False
     assert "application-workspace" in contract["local_recipes"]["recipes"]
     assert "machine-entrypoints" in contract["local_recipes"]["recipes"]

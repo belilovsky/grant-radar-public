@@ -6,8 +6,12 @@ services:
       POSTGRES_DB: ${POSTGRES_DB:-grantradar}
     ports:
       - "${DB_BIND_HOST:-127.0.0.1}:${DB_BIND_PORT:-5432}:5432"
+    cpus: "1.0"
+    mem_limit: 1g
+    pids_limit: 256
 
   api:
+    image: ${QAZ_FUND_IMAGE:-qaz-fund:${APP_REVISION:-development}}
     build:
       context: .
       dockerfile: Dockerfile.prod
@@ -16,14 +20,32 @@ services:
     environment:
       APP_DEPLOYED_AT: ${APP_DEPLOYED_AT:-}
       APP_REVISION: ${APP_REVISION:-development}
+      APP_SOURCE_DIRTY: ${APP_SOURCE_DIRTY:-true}
+      APP_IMAGE_DIGEST: ${APP_IMAGE_DIGEST:-}
+      APP_ARTIFACT_DIGEST: ${APP_ARTIFACT_DIGEST:-}
+      APP_BUILT_AT: ${APP_BUILT_AT:-}
       DATABASE_URL: ${DATABASE_URL:-postgresql+psycopg://grantradar:${POSTGRES_PASSWORD:-changeme}@db:5432/grantradar}
       GRANT_RADAR_DB_URL: ${GRANT_RADAR_DB_URL:-postgresql+psycopg://grantradar:${POSTGRES_PASSWORD:-changeme}@db:5432/grantradar}
       PUBLIC_BASE_URL: ${PUBLIC_BASE_URL:-https://example.org}
       WEB_CONCURRENCY: ${WEB_CONCURRENCY:-2}
+      GRANT_RADAR_SEMANTIC_SEARCH_ENABLED: ${GRANT_RADAR_SEMANTIC_SEARCH_ENABLED:-1}
+      GRANT_RADAR_SEMANTIC_SEARCH_URL: ${GRANT_RADAR_SEMANTIC_SEARCH_URL:-http://semantic:8010}
+      GRANT_RADAR_SEMANTIC_TIMEOUT_SECONDS: ${GRANT_RADAR_SEMANTIC_TIMEOUT_SECONDS:-15}
     ports:
       - "${API_BIND_HOST:-127.0.0.1}:${API_BIND_PORT:-8000}:8000"
+    cpus: "1.5"
+    mem_limit: 1g
+    pids_limit: 256
+    read_only: true
+    tmpfs:
+      - /tmp:size=134217728,mode=1777
+    cap_drop:
+      - ALL
+    security_opt:
+      - no-new-privileges:true
 
   worker:
+    image: ${QAZ_FUND_IMAGE:-qaz-fund:${APP_REVISION:-development}}
     build:
       context: .
       dockerfile: Dockerfile.prod
@@ -32,6 +54,76 @@ services:
     environment:
       APP_DEPLOYED_AT: ${APP_DEPLOYED_AT:-}
       APP_REVISION: ${APP_REVISION:-development}
+      APP_SOURCE_DIRTY: ${APP_SOURCE_DIRTY:-true}
+      APP_IMAGE_DIGEST: ${APP_IMAGE_DIGEST:-}
+      APP_ARTIFACT_DIGEST: ${APP_ARTIFACT_DIGEST:-}
+      APP_BUILT_AT: ${APP_BUILT_AT:-}
       DATABASE_URL: ${DATABASE_URL:-postgresql+psycopg://grantradar:${POSTGRES_PASSWORD:-changeme}@db:5432/grantradar}
       GRANT_RADAR_DB_URL: ${GRANT_RADAR_DB_URL:-postgresql+psycopg://grantradar:${POSTGRES_PASSWORD:-changeme}@db:5432/grantradar}
       PUBLIC_BASE_URL: ${PUBLIC_BASE_URL:-https://example.org}
+    cpus: "1.0"
+    mem_limit: 1g
+    pids_limit: 256
+    read_only: true
+    tmpfs:
+      - /tmp:size=134217728,mode=1777
+    cap_drop:
+      - ALL
+    security_opt:
+      - no-new-privileges:true
+
+  qdrant:
+    image: qdrant/qdrant:v1.16.2@sha256:dab6de32f7b2cc599985a7c764db3e8b062f70508fb85ca074aa856f829bf335
+    restart: unless-stopped
+    volumes:
+      - qdrantdata:/qdrant/storage
+    cpus: "1.0"
+    mem_limit: 1g
+    pids_limit: 256
+
+  semantic:
+    image: ${QAZ_FUND_SEMANTIC_IMAGE:-qaz-fund-semantic:${APP_REVISION:-development}}
+    build:
+      context: .
+      dockerfile: Dockerfile.semantic
+    restart: unless-stopped
+    environment:
+      QDRANT_URL: http://qdrant:6333
+      GRANT_RADAR_SEMANTIC_CATALOG_URL: ${GRANT_RADAR_SEMANTIC_CATALOG_URL:-http://api:8000/opportunities.ndjson?compact=true&limit=5000}
+      GRANT_RADAR_SEMANTIC_CATALOG_HOST: ${GRANT_RADAR_SEMANTIC_CATALOG_HOST:-qaz.fund}
+      GRANT_RADAR_SEMANTIC_CATALOG_TIMEOUT_SECONDS: ${GRANT_RADAR_SEMANTIC_CATALOG_TIMEOUT_SECONDS:-90}
+      GRANT_RADAR_SEMANTIC_REINDEX_INTERVAL_SECONDS: ${GRANT_RADAR_SEMANTIC_REINDEX_INTERVAL_SECONDS:-21600}
+      GRANT_RADAR_SEMANTIC_RERANK_LIMIT: ${GRANT_RADAR_SEMANTIC_RERANK_LIMIT:-5}
+      GRANT_RADAR_SEMANTIC_RERANK_QUERY_MAX_LENGTH: ${GRANT_RADAR_SEMANTIC_RERANK_QUERY_MAX_LENGTH:-64}
+      GRANT_RADAR_SEMANTIC_RERANK_MAX_LENGTH: ${GRANT_RADAR_SEMANTIC_RERANK_MAX_LENGTH:-256}
+    volumes:
+      - semantic-models:/models
+    cpus: "2.0"
+    mem_limit: 3g
+    pids_limit: 384
+    read_only: true
+    tmpfs:
+      - /tmp:size=268435456,mode=1777
+    cap_drop:
+      - ALL
+    security_opt:
+      - no-new-privileges:true
+    depends_on:
+      qdrant:
+        condition: service_started
+      api:
+        condition: service_started
+    healthcheck:
+      test:
+        [
+          "CMD-SHELL",
+          "python -c \"from urllib.request import urlopen; urlopen('http://127.0.0.1:8010/health', timeout=3).read()\"",
+        ]
+      interval: 30s
+      timeout: 5s
+      retries: 20
+      start_period: 900s
+
+volumes:
+  qdrantdata: {}
+  semantic-models: {}

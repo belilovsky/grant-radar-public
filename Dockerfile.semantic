@@ -1,0 +1,33 @@
+FROM python:3.12-slim@sha256:2c941e860699f878900b0edc2403613c234d4b32eda3cc9fa7036991a2a63c4a
+
+ENV PYTHONUNBUFFERED=1 \
+    PYTHONDONTWRITEBYTECODE=1 \
+    PIP_NO_CACHE_DIR=1 \
+    HF_HOME=/models/huggingface \
+    TRANSFORMERS_CACHE=/models/huggingface
+
+WORKDIR /app
+
+RUN apt-get update && apt-get upgrade -y \
+    && rm -rf /var/lib/apt/lists/* \
+    && groupadd --gid 10001 qazfund \
+    && useradd --uid 10001 --gid qazfund --create-home --shell /usr/sbin/nologin qazfund \
+    && mkdir -p /models \
+    && chown -R qazfund:qazfund /models
+
+COPY requirements-semantic.txt ./
+# FlagEmbedding accepts an existing torch installation.  Install the official
+# CPU wheel first so a CPU-only host never downloads CUDA/NVIDIA packages.
+RUN pip install --upgrade pip \
+    && pip install setuptools==80.9.0 \
+    && pip install --index-url https://download.pytorch.org/whl/cpu torch==2.9.1 \
+    && pip install -r requirements-semantic.txt \
+    && pip check \
+    && pip uninstall -y pip setuptools \
+    && rm -rf /usr/local/lib/python3.12/ensurepip
+
+COPY --chown=qazfund:qazfund semantic_service ./semantic_service
+
+EXPOSE 8010
+USER 10001:10001
+CMD ["uvicorn", "semantic_service.app:app", "--host", "0.0.0.0", "--port", "8010"]

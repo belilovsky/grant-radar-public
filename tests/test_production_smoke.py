@@ -5,7 +5,12 @@ import json
 import httpx
 import pytest
 
-from scripts.production_smoke import SmokeError, run_smoke
+from scripts.production_smoke import SmokeError, _contains_key, run_smoke
+
+
+def test_contains_key_checks_nested_structures_without_matching_text() -> None:
+    assert _contains_key({"cards": [{"title": "raw materials"}]}, "raw") is False
+    assert _contains_key({"cards": [{"raw": {"title": "private"}}]}, "raw") is True
 
 
 def _transport(
@@ -14,10 +19,10 @@ def _transport(
     opportunity_count: int = 44,
     coverage_current: int = 44,
     insights_current: int = 44,
+    release_override: dict[str, object] | None = None,
 ) -> httpx.MockTransport:
     def handler(request: httpx.Request) -> httpx.Response:
         path = request.url.path
-        sample_id = "00000000-0000-4000-8000-000000000001"
         root = str(request.url.copy_with(path="/", query=None)).rstrip("/")
         base_prefix = "/grant-radar" if path.startswith("/grant-radar") else ""
         public_root = f"{root}{base_prefix}"
@@ -35,23 +40,13 @@ def _transport(
             html = (
                 '<html lang="ru" data-avds="grant-radar" data-av-theme="light">'
                 '<main data-lang="ru" data-avds-component="admin-shell">'
+                '<section data-avds-component="hero-band"></section>'
                 '<div data-avds-component="sticky-shell"></div>'
                 '<nav class="toolbar avds-tabs-list">'
                 '<button class="button tab avds-tabs-trigger"></button>'
                 "</nav>"
                 '<input class="field avds-field">'
                 '<div data-avds-component="filter-summary"></div>'
-                '<div data-avds-component="quick-links-rail"></div>'
-                '<div data-avds-component="public-summary-strip">'
-                '<strong id="metric-strong" data-catalog-count="44">44</strong>'
-                '<strong id="metric-sources">23</strong>'
-                "</div>"
-                '<div data-avds-component="source-card"></div>'
-                '<span data-avds-component="source-icon"></span>'
-                '<span class="avds-source-card__arrow"></span>'
-                '<a data-avds-component="source-url"></a>'
-                '<details data-avds-component="trust-library"></details>'
-                '<button id="workspace-filter"></button>'
                 '<details id="filter-disclosure"></details>'
                 '<article class="avds-document-row"'
                 ' data-avds-component="opportunity-card"></article>'
@@ -62,13 +57,22 @@ def _transport(
         if endpoint_path == "/health":
             return httpx.Response(200, json={"status": "ok", "items": 55})
         if endpoint_path == "/.well-known/release.json":
+            release_payload: dict[str, object] = {
+                "schemaVersion": "qaz-fund-release-v1",
+                "service": "qaz-fund",
+                "revision": "a" * 40,
+                "deployed_at": "2026-07-15T00:01:00Z",
+                "sourceSha": "a" * 40,
+                "sourceDirty": False,
+                "imageDigest": "sha256:" + "b" * 64,
+                "artifactDigest": "sha256:" + "c" * 64,
+                "builtAt": "2026-07-15T00:00:00Z",
+                "deployedAt": "2026-07-15T00:01:00Z",
+            }
+            release_payload.update(release_override or {})
             return httpx.Response(
                 200,
-                json={
-                    "service": "qaz-fund",
-                    "revision": "a" * 40,
-                    "deployed_at": "2026-07-15T00:00:00Z",
-                },
+                json=release_payload,
             )
         if endpoint_path == "/ready":
             return httpx.Response(
@@ -91,23 +95,181 @@ def _transport(
                 200,
                 json=[
                     {
-                        "id": sample_id,
+                        "id": f"00000000-0000-0000-0000-{index + 1:012d}",
                         "title": opportunity_title,
                         "source": "world_bank_kazakhstan",
+                        "funder_slug": "world-bank",
                     }
-                    for _ in range(opportunity_count)
+                    for index in range(44)
                 ],
             )
-        if endpoint_path == "/funders":
+        if endpoint_path.startswith("/opportunities/") and endpoint_path.endswith(
+            "/history.json"
+        ):
             return httpx.Response(
                 200,
-                json=[
-                    {
-                        "slug": "development-fund",
-                        "name": "Development Fund",
-                        "current_items": 3,
-                    }
-                ],
+                json={
+                    "schema_version": "history.v1",
+                    "status": "ready",
+                    "items": [
+                        {
+                            "version": 1,
+                            "changed_fields": ["initial"],
+                            "fields": {"title": opportunity_title},
+                        }
+                    ],
+                },
+                headers={"cache-control": "public, max-age=60"},
+            )
+        if endpoint_path == "/opportunity/not-a-valid-id":
+            return httpx.Response(
+                404,
+                text=(
+                    "<html lang='ru'><h1>Такой страницы нет</h1>"
+                    "<a href='/'>Вернуться в каталог</a></html>"
+                ),
+                headers={"content-type": "text/html; charset=utf-8"},
+            )
+        if endpoint_path.startswith("/opportunity/") and endpoint_path.endswith(
+            "/prepare"
+        ):
+            return httpx.Response(
+                200,
+                text=(
+                    '<html lang="ru" data-avds="grant-radar">'
+                    '<main data-avds-component="application-workspace">'
+                    "<p>Данные остаются в этом браузере</p>"
+                    "<script>localStorage.setItem('draft','value')</script>"
+                    "</main></html>"
+                ),
+                headers={"content-type": "text/html; charset=utf-8"},
+            )
+        if endpoint_path.startswith("/opportunity/"):
+            return httpx.Response(
+                200,
+                text=(
+                    '<html lang="ru" data-avds="grant-radar">'
+                    '<main data-avds-component="opportunity-page">'
+                    '<section data-avds-component="opportunity-detail">'
+                    "<h1>Kazakhstan AI grant</h1><h2>Официальный источник</h2>"
+                    "</section>"
+                    "</main></html>"
+                ),
+                headers={
+                    "content-type": "text/html; charset=utf-8",
+                    "cache-control": "public, max-age=60",
+                },
+            )
+        if endpoint_path.startswith("/funder/"):
+            lang = request.url.params.get("lang", "ru")
+            return httpx.Response(
+                200,
+                text=(
+                    f'<html lang="{lang}" data-avds="grant-radar">'
+                    "<body><h1>Development Fund</h1><span>QAZ.FUND</span></body>"
+                    "</html>"
+                ),
+                headers={
+                    "content-type": "text/html; charset=utf-8",
+                    "cache-control": "public, max-age=60",
+                },
+            )
+        if endpoint_path == "/compare.json":
+            return httpx.Response(
+                200,
+                json={
+                    "schema_version": "comparison.v1",
+                    "status": "ready",
+                    "cards": [{"id": "sample"}, {"id": "sample-2"}],
+                },
+                headers={"cache-control": "public, max-age=60"},
+            )
+        if endpoint_path == "/insights":
+            return httpx.Response(
+                200,
+                text=(
+                    '<html lang="ru" data-avds="grant-radar">'
+                    '<main data-avds-component="DataViz">'
+                    '<svg data-avds-pattern="decision-readiness"></svg>'
+                    "</main>"
+                    "</html>"
+                ),
+                headers={
+                    "content-type": "text/html; charset=utf-8",
+                    "cache-control": "public, max-age=60",
+                },
+            )
+        if endpoint_path == "/insights.json":
+            return httpx.Response(
+                200,
+                json={
+                    "schema_version": "insights.v1",
+                    "decision_readiness": {"complete": 1, "partial": 1},
+                },
+                headers={"cache-control": "public, max-age=60"},
+            )
+        if endpoint_path == "/media":
+            return httpx.Response(
+                200,
+                text=(
+                    '<html lang="ru" data-avds="grant-radar">'
+                    '<section data-avds-component="media-lead">'
+                    '<link rel="alternate" type="application/feed+json">'
+                    '<link rel="alternate" type="application/rss+xml">'
+                    "</section></html>"
+                ),
+                headers={
+                    "content-type": "text/html; charset=utf-8",
+                    "cache-control": "public, max-age=60",
+                },
+            )
+        if endpoint_path == "/media.json":
+            return httpx.Response(
+                200,
+                json={
+                    "schema_version": "media.v1",
+                    "language": "ru",
+                    "cards": [{"id": "sample", "title": "AI grant"}],
+                },
+                headers={"cache-control": "public, max-age=60"},
+            )
+        if endpoint_path == "/media/feed.json":
+            return httpx.Response(
+                200,
+                json={
+                    "version": "https://jsonfeed.org/version/1.1",
+                    "language": "ru",
+                    "items": [
+                        {"id": "sample", "url": f"{public_root}/opportunity/sample"}
+                    ],
+                },
+                headers={"cache-control": "public, max-age=60"},
+            )
+        if endpoint_path == "/media/rss.xml":
+            return httpx.Response(
+                200,
+                text=(
+                    '<?xml version="1.0" encoding="UTF-8"?>'
+                    '<rss version="2.0"><channel><title>Media</title></channel></rss>'
+                ),
+                headers={
+                    "content-type": "application/rss+xml",
+                    "cache-control": "public, max-age=60",
+                },
+            )
+        if endpoint_path == "/compare":
+            return httpx.Response(
+                200,
+                text=(
+                    '<html lang="ru" data-avds="grant-radar">'
+                    '<link rel="alternate" type="application/json">'
+                    '<table data-avds-component="comparison-table"></table>'
+                    "</html>"
+                ),
+                headers={
+                    "content-type": "text/html; charset=utf-8",
+                    "cache-control": "public, max-age=60",
+                },
             )
         if endpoint_path == "/opportunities.ndjson":
             return httpx.Response(
@@ -171,12 +333,20 @@ def _transport(
                     f"{public_root}/.well-known/qazstack-consumer.json\n"
                     f"- AV DS 4 UI contract: "
                     f"{public_root}/.well-known/avds-ui-contract.json\n"
-                    f"- QazPipe source contract: "
-                    f"{public_root}/.well-known/qazpipe-source.json\n"
-                    f"- QazCompute profile contract: "
-                    f"{public_root}/.well-known/qazcompute-profiles.json\n"
+                    f"- Notification contract: "
+                    f"{public_root}/.well-known/notification-contract.json\n"
+                    f"- Source onboarding contract: "
+                    f"{public_root}/.well-known/source-onboarding.json\n"
+                    f"- Comparison JSON: "
+                    f"{public_root}/compare.json?ids={{id}},{{id}}&lang=ru|kk|en\n"
+                    f"- Opportunity history JSON: "
+                    f"{public_root}/opportunities/{{id}}/history.json?lang=kk|ru|en&limit={{n}}\n"
                     f"- Source status page: {public_root}/status\n"
                     f"- Coverage JSON: {public_root}/coverage\n"
+                    f"- Media page: {public_root}/media\n"
+                    f"- Media JSON: {public_root}/media.json\n"
+                    f"- Media JSON Feed: {public_root}/media/feed.json\n"
+                    f"- Media RSS: {public_root}/media/rss.xml\n"
                     f"- Opportunities JSON: {public_root}/opportunities\n"
                     f"- Opportunities NDJSON: {public_root}/opportunities.ndjson\n"
                     "- Compact Opportunities NDJSON: "
@@ -216,57 +386,11 @@ def _transport(
                     "x-robots-tag": "noindex, nofollow",
                 },
             )
-        if endpoint_path == "/insights":
-            return httpx.Response(
-                200,
-                text=(
-                    '<html lang="ru" data-avds="grant-radar">'
-                    '<main data-avds-component="data-centre">'
-                    "<span>В текущем каталоге</span>"
-                    "<span>Релевантных карточек в индексе</span>"
-                    '<section data-avds-pattern="data-quality-scorecard"></section>'
-                    "</main></html>"
-                ),
-                headers={"content-type": "text/html; charset=utf-8"},
-            )
-        if endpoint_path == f"/opportunity/{sample_id}":
-            return httpx.Response(
-                200,
-                text=(
-                    '<html lang="ru" data-avds="grant-radar">'
-                    '<main data-avds-component="lite-reading-surface">'
-                    "<h1>Kazakhstan AI grant</h1><h2>Ключевые условия</h2>"
-                    "</main></html>"
-                ),
-                headers={"content-type": "text/html; charset=utf-8"},
-            )
-        if endpoint_path == f"/opportunity/{sample_id}/prepare":
-            return httpx.Response(
-                200,
-                text=(
-                    '<html lang="ru" data-avds="grant-radar">'
-                    '<main data-avds-component="application-workspace">'
-                    "<p>Данные остаются в этом браузере</p>"
-                    "<script>localStorage.setItem('draft','value')</script>"
-                    "</main></html>"
-                ),
-                headers={"content-type": "text/html; charset=utf-8"},
-            )
-        if endpoint_path == "/funder/development-fund":
-            return httpx.Response(
-                200,
-                text=(
-                    '<html lang="ru" data-avds="grant-radar">'
-                    "<main><h1>Development Fund</h1><span>QAZ.FUND</span></main>"
-                    "</html>"
-                ),
-                headers={"content-type": "text/html; charset=utf-8"},
-            )
         if endpoint_path in {"/terms", "/data-policy", "/attribution"}:
             labels = {
                 "/terms": "Условия использования",
                 "/data-policy": "Политика данных",
-                "/attribution": "Цитирование и повторное использование",
+                "/attribution": "Использование данных",
             }
             return httpx.Response(
                 200,
@@ -345,12 +469,14 @@ def _transport(
                             f"{public_root}/.well-known/qazstack-consumer.json"
                         ),
                         "avds4": (f"{public_root}/.well-known/avds-ui-contract.json"),
-                        "qazpipe": (f"{public_root}/.well-known/qazpipe-source.json"),
-                        "qazcompute": (
-                            f"{public_root}/.well-known/qazcompute-profiles.json"
+                        "notifications": (
+                            f"{public_root}/.well-known/notification-contract.json"
+                        ),
+                        "source_onboarding": (
+                            f"{public_root}/.well-known/source-onboarding.json"
                         ),
                     },
-                    "languages": ["ru", "en"],
+                    "languages": ["kk", "ru", "en"],
                     "routes": {
                         "home": "/?lang={lang}",
                         "coverage": "/coverage",
@@ -360,9 +486,24 @@ def _transport(
                             "/opportunities.ndjson?lang={lang}&compact=true"
                         ),
                         "opportunity_api": "/opportunities/{id}?lang={lang}",
+                        "opportunity_history": (
+                            "/opportunities/{id}/history.json?lang={lang}&limit={n}"
+                        ),
                         "opportunity": "/opportunity/{id}?lang={lang}",
                         "funder": "/funder/{slug}?lang={lang}",
                         "digest": "/digest?lang={lang}",
+                        "insights": "/insights?lang={lang}",
+                        "insights_json": "/insights.json?lang={lang}",
+                        "media": "/media?lang={lang}",
+                        "media_json": "/media.json?lang={lang}",
+                        "media_feed": "/media/feed.json?lang={lang}",
+                        "media_rss": "/media/rss.xml?lang={lang}",
+                        "compare": "/compare?ids={id},{id}&lang={lang}",
+                        "compare_json": "/compare.json?ids={id},{id}&lang={lang}",
+                        "notification_contract": (
+                            "/.well-known/notification-contract.json"
+                        ),
+                        "source_onboarding": "/.well-known/source-onboarding.json",
                     },
                     "data_endpoints": {
                         "coverage": f"{public_root}/coverage",
@@ -371,10 +512,24 @@ def _transport(
                         "opportunities_ndjson_compact": (
                             f"{public_root}/opportunities.ndjson?compact=true"
                         ),
-                        "api_v1_opportunities_ndjson": (
-                            f"{public_root}/api/v1/opportunities.ndjson"
+                        "opportunity_history": (
+                            f"{public_root}/opportunities/{{id}}/history.json"
                         ),
                         "digest": f"{public_root}/digest",
+                        "insights": f"{public_root}/insights",
+                        "insights_json": f"{public_root}/insights.json",
+                        "media": f"{public_root}/media",
+                        "media_json": f"{public_root}/media.json",
+                        "media_feed": f"{public_root}/media/feed.json",
+                        "media_rss": f"{public_root}/media/rss.xml",
+                        "compare": f"{public_root}/compare.json",
+                        "compare_json": f"{public_root}/compare.json",
+                        "notification_contract": (
+                            f"{public_root}/.well-known/notification-contract.json"
+                        ),
+                        "source_onboarding": (
+                            f"{public_root}/.well-known/source-onboarding.json"
+                        ),
                     },
                     "versioned_api": f"{public_root}/api/v1",
                     "ai_consumption": {
@@ -383,6 +538,10 @@ def _transport(
                         ),
                         "preferred_legacy_bulk_export": (
                             f"{public_root}/opportunities.ndjson?compact=true"
+                        ),
+                        "history_template": (
+                            f"{public_root}/opportunities/{{id}}/history.json"
+                            "?lang={lang}&limit={n}"
                         ),
                         "cache_policy": {"ndjson_seconds": 300},
                     },
@@ -398,8 +557,12 @@ def _transport(
                         "public opportunity pages",
                         "public funder pages",
                         "machine-readable opportunity api",
+                        "machine-readable opportunity comparison",
+                        "public opportunity change history",
                         "machine-readable source coverage",
                         "official source links",
+                        "notification contract (delivery disabled)",
+                        "source onboarding contract",
                         "read-only public catalog",
                     ],
                 },
@@ -424,7 +587,7 @@ def _transport(
                 200,
                 json={
                     "schema_version": "avds-ui-contract-v1",
-                    "avds_source": {"version": "4.6.0"},
+                    "avds_source": {"version": "4.7.0"},
                     "runtime_neutral_patterns": {
                         "adopted": [
                             "evidence-summary",
@@ -475,6 +638,31 @@ def _transport(
                 },
                 headers={"cache-control": "public, max-age=60"},
             )
+        if endpoint_path == "/.well-known/notification-contract.json":
+            return httpx.Response(
+                200,
+                json={
+                    "schema_version": "notification-v1",
+                    "status": "not_enabled",
+                    "delivery": {"enabled": False, "worker_running": False},
+                    "identity": {
+                        "authenticated_owner": False,
+                        "cross_device_sync": False,
+                    },
+                    "consent": {"collection_enabled": False, "version": None},
+                },
+                headers={"cache-control": "public, max-age=60"},
+            )
+        if endpoint_path == "/.well-known/source-onboarding.json":
+            return httpx.Response(
+                200,
+                json={
+                    "schema_version": "source-onboarding.v1",
+                    "policy": {"credentials_in_public_contract": False},
+                    "candidates": [{"slug": "openalex_context"}],
+                },
+                headers={"cache-control": "public, max-age=60"},
+            )
         if endpoint_path == "/.well-known/qdev-ecosystem.json":
             return httpx.Response(
                 200,
@@ -485,6 +673,7 @@ def _transport(
                         "qazpipe": {"status": "producer-ready"},
                         "qazlake": {"direct_write": False},
                         "qazcompute": {"status": "local-runtime-proven"},
+                        "notifications": {"delivery_enabled": False},
                     },
                 },
                 headers={"cache-control": "public, max-age=60"},
@@ -509,15 +698,45 @@ def test_run_smoke_passes_for_expected_live_contract():
 
     assert result.health_items == 55
     assert result.release_revision == "a" * 40
+    assert result.release_image_digest == "sha256:" + "b" * 64
+    assert result.release_artifact_digest == "sha256:" + "c" * 64
     assert result.ready_backend == "database"
     assert result.coverage_sources == 23
     assert result.coverage_stale_sources == 1
     assert result.coverage_unknown_freshness_sources == 2
     assert result.opportunities == 44
     assert result.ndjson_items == 1
+    assert result.media_items == 1
+    assert result.media_feed_items == 1
     assert all(result.dashboard_markers.values())
     assert result.english_dashboard is True
     assert all(result.discovery_surfaces.values())
+
+
+@pytest.mark.parametrize(
+    ("override", "message"),
+    [
+        ({"sourceDirty": True}, "release source is dirty"),
+        ({"imageDigest": None}, "release image digest is missing"),
+        ({"sourceSha": "d" * 40}, "release source SHA mismatch"),
+        ({"deployedAt": "2026-07-14T23:59:00Z"}, "timestamps are reversed"),
+    ],
+)
+def test_run_smoke_rejects_inexact_release_identity(
+    override: dict[str, object], message: str
+) -> None:
+    with pytest.raises(SmokeError, match=message):
+        run_smoke(
+            base_url="https://grant.example.org",
+            deadline_after="2026-05-23",
+            min_sources=23,
+            min_opportunities=40,
+            min_digest_items=1,
+            expect_backend="database",
+            forbidden=[],
+            timeout=1.0,
+            transport=_transport(release_override=override),
+        )
 
 
 def test_run_smoke_supports_dedicated_domain_root():

@@ -23,6 +23,8 @@ from typing import Any, Dict, Iterable, Optional, Protocol
 
 from qazstack.source import canonicalize_source_url
 
+from .history import changed_fields, history_entry, public_snapshot, snapshot_hash
+
 
 def compute_fingerprint(record: Any) -> str:
     """Compute a stable fingerprint for any record-like object/dict.
@@ -112,12 +114,17 @@ class Repository(Protocol):
     def all(self) -> Iterable[Any]: ...
     def size(self) -> int: ...
 
+    def history_for(
+        self, fingerprint: str, *, limit: int = 50
+    ) -> list[dict[str, Any]]: ...
+
 
 @dataclass
 class InMemoryRepository:
     """Thread-safe in-memory repository keyed by fingerprint."""
 
     _store: Dict[str, Any] = field(default_factory=dict)
+    _history: Dict[str, list[dict[str, Any]]] = field(default_factory=dict)
     _lock: threading.Lock = field(default_factory=threading.Lock)
 
     def exists(self, fingerprint: str) -> bool:
@@ -128,6 +135,21 @@ class InMemoryRepository:
         fp = compute_fingerprint(record)
         with self._lock:
             is_new = fp not in self._store
+            snapshot = public_snapshot(record)
+            entries = self._history.setdefault(fp, [])
+            previous = entries[-1] if entries else None
+            previous_fields = previous.get("fields") if previous else None
+            if is_new or snapshot_hash(snapshot) != snapshot_hash(
+                previous_fields or {}
+            ):
+                entries.append(
+                    history_entry(
+                        version=len(entries) + 1,
+                        observed_at=getattr(record, "discovered_at", None),
+                        snapshot=snapshot,
+                        changed=changed_fields(previous_fields, snapshot),
+                    )
+                )
             self._store[fp] = record
             return is_new
 
@@ -142,6 +164,13 @@ class InMemoryRepository:
     def clear(self) -> None:
         with self._lock:
             self._store.clear()
+            self._history.clear()
+
+    def history_for(self, fingerprint: str, *, limit: int = 50) -> list[dict[str, Any]]:
+        with self._lock:
+            entries = self._history.get(fingerprint, [])
+            bounded = entries[-max(1, limit) :]
+            return [dict(entry) for entry in bounded]
 
 
 class DedupProcessor:

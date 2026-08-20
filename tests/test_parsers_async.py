@@ -944,11 +944,16 @@ async def test_kazakhstan_domestic_support_yields_official_programs():
     assert all("domestic_support" in item.tags for item in items)
     assert all("state_program" in item.tags for item in items)
     assert all(item.raw["page_title"] for item in items)
-    assert all("rolling" in item.tags for item in items if item.deadline is None)
+    programs_by_url = {program.url: program for program in DOMESTIC_PROGRAMS}
+    assert all(
+        "rolling" in item.tags
+        for item in items
+        if programs_by_url[str(item.source_url)].rolling
+    )
     assert all(
         item.raw["deadline_policy"] == "rolling"
         for item in items
-        if item.deadline is None
+        if programs_by_url[str(item.source_url)].rolling
     )
     by_title = {item.title: item for item in items}
     assert "State grant for startup business development" in by_title
@@ -982,6 +987,8 @@ async def test_kazakhstan_domestic_support_yields_official_programs():
     assert "Bgov.kz unified financial support platform" in by_title
     assert "KazAgroFinance Own Feed and Preferential Leasing" in by_title
     assert "Agrarian Credit Corporation Ken Dala financing" in by_title
+    assert "Agrarian Credit Corporation feedlot and poultry financing" in by_title
+    assert "QazIndustry productivity reimbursement measures" in by_title
     assert "Development Bank of Kazakhstan investment-project financing" in by_title
     assert "Astana Hub participant tax benefits" in by_title
     assert "Astana Hub Seed Money Smart City" in by_title
@@ -996,6 +1003,25 @@ async def test_kazakhstan_domestic_support_yields_official_programs():
     )
     assert (
         "leasing" in by_title["KazAgroFinance Own Feed and Preferential Leasing"].tags
+    )
+    livestock = by_title["Agrarian Credit Corporation feedlot and poultry financing"]
+    assert livestock.funder == "Agrarian Credit Corporation"
+    assert livestock.raw["opportunity_taxonomy"]["instrument"] == "loan"
+    assert "deadline_policy" not in livestock.raw
+    assert livestock.raw["i18n"]["ru"]["amount"] == (
+        "5% годовых для прямых заёмщиков – 1–15 млрд ₸"
+    )
+    assert livestock.raw["canonical_source_url"] == (
+        "https://agrocredit.kz/en/main/our-activities/programs/3569/"
+    )
+    qazindustry = by_title["QazIndustry productivity reimbursement measures"]
+    assert qazindustry.funder == "QazIndustry"
+    assert qazindustry.raw["opportunity_taxonomy"]["instrument"] == "reimbursement"
+    assert qazindustry.raw["application_url"] == (
+        "https://sez.qazindustry.gov.kz/ru/service/5/evaluate"
+    )
+    assert qazindustry.raw["i18n"]["ru"]["deadline_display"] == (
+        "В течение календарного года – до освоения бюджета"
     )
     assert (
         by_title["State grants for social entrepreneurship"].raw["amount_raw"]
@@ -1105,7 +1131,7 @@ async def test_kazakhstan_domestic_support_yields_official_programs():
         by_title["Pavlodar region college state-funded places"].raw["i18n"]["ru"][
             "title"
         ]
-        == "6300 грантовых мест в колледжах Павлодарской области"
+        == "6300 мест по госзаказу в колледжах Павлодарской области"
     )
     assert by_title["Astana college state-funded places"].deadline == date(2026, 9, 20)
     assert (
@@ -1118,14 +1144,27 @@ async def test_kazakhstan_domestic_support_yields_official_programs():
     )
     assert (
         by_title["Astana college state-funded places"].raw["i18n"]["ru"]["title"]
-        == "10 300 грантовых мест в колледжах Астаны"
+        == "10 300 мест по госзаказу в колледжах Астаны"
     )
+    for title in (
+        "Pavlodar region college state-funded places",
+        "Astana college state-funded places",
+    ):
+        college = by_title[title]
+        assert "grant" not in college.tags
+        assert "scholarship" not in college.tags
+        assert college.raw["opportunity_taxonomy"] == {
+            "instrument": "education_admission",
+            "application_mode": "admission",
+            "deadline_model": "multiple",
+        }
+        assert len(college.raw["application_windows"]) == 6
     assert (
         by_title["Astana AI Film Festival international contest"].type
         == OpportunityType.CONTEST
     )
     assert by_title["Astana AI Film Festival international contest"].deadline == date(
-        2026, 8, 15
+        2026, 8, 31
     )
     assert (
         by_title["Astana AI Film Festival international contest"].raw["amount_raw"]
@@ -1145,6 +1184,12 @@ async def test_kazakhstan_domestic_support_yields_official_programs():
         ]
         == "Международный конкурс Astana AI Film Festival"
     )
+    festival_ru = by_title["Astana AI Film Festival international contest"].raw["i18n"][
+        "ru"
+    ]
+    assert festival_ru["social_title"].startswith("Astana AI Film Festival")
+    assert festival_ru["amount"].startswith("общий фонд – 1 000 000 USD")
+    assert len(festival_ru["application_steps"]) == 3
     assert by_title["Aiboz national literary prize"].type == OpportunityType.CONTEST
     assert by_title["Aiboz national literary prize"].deadline == date(2026, 9, 1)
     assert (
@@ -1813,6 +1858,7 @@ async def test_google_org_fetch_yields_ai_opportunity_watch():
     assert item.lifecycle == "forecast"
     assert item.raw["external_id"] == "google_org_ai_opportunity"
     assert item.raw["source_watch"] is True
+    assert "No open application window is confirmed" in item.raw["status_note"]
     assert item.raw["i18n"]["ru"]["title"].startswith("Программы Google.org")
 
 
@@ -1864,6 +1910,9 @@ async def test_global_training_fetch_yields_official_mid_career_course():
     assert flta.raw["page_title"] is None
     assert "monthly stipend" in flta.raw["amount_raw"]
     assert flta.raw["i18n"]["ru"]["title"].startswith("Fulbright Foreign Language")
+    assert flta.raw["i18n"]["ru"]["social_title"].startswith("Fulbright FLTA")
+    assert len(flta.raw["i18n"]["ru"]["application_steps"]) == 3
+    assert "ежемесячную стипендию" in flta.raw["i18n"]["ru"]["highlights"]
     assert "kazakhstan" in flta.tags
     assert "fulbright" in flta.tags
     assert "teacher_training" in flta.tags
@@ -1876,6 +1925,9 @@ async def test_global_training_fetch_yields_official_mid_career_course():
         "https://www.daad-kyrgyzstan.org/en/find-funding/scholarship-database/"
     )
     assert daad.raw["i18n"]["ru"]["title"] == "Исследовательские гранты DAAD в Германии"
+    assert daad.raw["i18n"]["ru"]["social_title"].startswith("DAAD:")
+    assert daad.raw["i18n"]["ru"]["deadline_display"] == "17 августа 2026"
+    assert len(daad.raw["i18n"]["ru"]["application_steps"]) == 3
     assert "kazakhstan" in daad.tags
     assert "daad" in daad.tags
     assert "doctoral" in daad.tags
@@ -1949,6 +2001,21 @@ async def test_undp_procurement_fetch_yields_central_asia_active_notices():
 
 @pytest.mark.asyncio
 @respx.mock
+async def test_undp_procurement_corrects_known_kazakhstan_notice():
+    html = UNDP_LISTING_HTML.replace("UNDP-KAZ-2099-TECH-001", "UNDP-KAZ-00748")
+    respx.get(UNDP_LISTING_URL).mock(return_value=httpx.Response(200, text=html))
+
+    items = await _collect(UndpProcurementSource())
+
+    assert len(items) == 1
+    item = items[0]
+    assert item.title == "Purchase and delivery of pickup trucks with canopy (2 units)"
+    assert "two high-clearance pickup trucks" in item.summary
+    assert item.raw["i18n"]["ru"]["title"] == "Закупка и поставка двух пикапов с кунгом"
+
+
+@pytest.mark.asyncio
+@respx.mock
 async def test_undp_procurement_skips_russian_operational_service_notice():
     respx.get(UNDP_LISTING_URL).mock(
         return_value=httpx.Response(200, text=UNDP_LISTING_RU_OPERATIONAL_HTML)
@@ -1957,6 +2024,20 @@ async def test_undp_procurement_skips_russian_operational_service_notice():
     items = await _collect(UndpProcurementSource())
 
     assert items == []
+
+
+@pytest.mark.asyncio
+@respx.mock
+async def test_undp_procurement_marks_transport_error_for_scheduler():
+    respx.get(UNDP_LISTING_URL).mock(
+        side_effect=httpx.ConnectError("upstream unavailable")
+    )
+
+    source = UndpProcurementSource()
+    items = await _collect(source)
+
+    assert items == []
+    assert source.last_fetch_error == ("ConnectError: upstream unavailable")
 
 
 def test_grants_gov_does_not_publish_query_keyword_without_content_signal():
@@ -2139,7 +2220,8 @@ async def test_unicef_kazakhstan_fetch_yields_only_open_tenders():
         return_value=httpx.Response(200, text=UNICEF_TENDERS_HTML)
     )
 
-    items = await _collect(UnicefKazakhstanSource())
+    source = UnicefKazakhstanSource()
+    items = await _collect(source)
 
     assert len(items) == 1
     item = items[0]
@@ -2152,6 +2234,13 @@ async def test_unicef_kazakhstan_fetch_yields_only_open_tenders():
     assert "hotel" not in item.title.lower()
     assert (
         item.raw["application_url"] == "https://drive.google.com/drive/folders/example"
+    )
+
+
+def test_unicef_reader_fallback_uses_single_proxy_hop():
+    assert "r.jina.ai/http://r.jina.ai" not in UNICEF_KAZAKHSTAN_TENDERS_READER_URL
+    assert UNICEF_KAZAKHSTAN_TENDERS_READER_URL.endswith(
+        "/http://www.unicef.org/kazakhstan/en/tenders"
     )
 
 
@@ -2207,7 +2296,8 @@ async def test_unicef_kazakhstan_uses_reader_fallback_when_vps_is_blocked():
         return_value=httpx.Response(200, text=UNICEF_TENDERS_MARKDOWN)
     )
 
-    items = await _collect(UnicefKazakhstanSource())
+    source = UnicefKazakhstanSource()
+    items = await _collect(source)
 
     assert len(items) == 1
     assert items[0].raw["reference"] == "RFP/KAZA/2099/001"
@@ -2215,6 +2305,7 @@ async def test_unicef_kazakhstan_uses_reader_fallback_when_vps_is_blocked():
         items[0].raw["application_url"]
         == "https://drive.google.com/drive/folders/example"
     )
+    assert source.last_fetch_error is None
 
 
 @pytest.mark.asyncio
@@ -2336,6 +2427,15 @@ async def test_astana_hub_fetch_uses_curated_pages_on_404():
     assert "ai" in by_title["AI'Preneurs 3.0"].tags
     assert "gpu" in by_title["AI'Preneurs 3.0"].tags
     assert "pre-seed" in by_title["AI'Preneurs 3.0"].summary
+    ai_ru = by_title["AI'Preneurs 3.0"].raw["i18n"]["ru"]
+    assert "бесплатную 14-недельную" in ai_ru["summary"]
+    assert ai_ru["eligibility"] == [
+        "Специалисты и предприниматели от 18 лет с сильной экспертизой и "
+        "готовностью активно работать над AI-продуктом"
+    ]
+    assert ai_ru["application_steps"][0] == "Заполнить заявку до 17 августа"
+    assert "Доступ к AlemPlus" in ai_ru["highlights"][2]
+    assert by_title["AI'Preneurs 3.0"].raw["amount_raw"].startswith("Бесплатно")
     assert by_title["Hero Training for OTS startup founders"].deadline == date(
         2026, 8, 6
     )
@@ -2499,6 +2599,30 @@ async def test_opportunity_desk_rss_fetch_yields_opportunities():
     assert items[0].deadline.isoformat() == "2026-06-30"
     assert "ai" in items[0].tags
     assert "edtech" in items[0].tags
+
+
+@pytest.mark.asyncio
+@respx.mock
+async def test_opportunity_desk_rss_blocks_confirmed_unsafe_publication():
+    feed = """<?xml version="1.0" encoding="UTF-8"?>
+    <rss version="2.0">
+      <channel>
+        <item>
+          <title>International Finance Corporation Women-Led Business Grant 2026</title>
+          <link>https://opportunitydesk.org/2026/06/30/ifc-women-led-business-grant-2026/</link>
+          <guid>ifc-women-led-business-grant-2026</guid>
+          <description>Deadline: 20 Aug 2026. Global business grant.</description>
+          <category>Grants</category>
+        </item>
+      </channel>
+    </rss>
+    """
+    for url in OPPORTUNITY_DESK_FEED_URLS:
+        respx.get(url).mock(return_value=httpx.Response(200, text=feed))
+
+    items = await _collect(OpportunityDeskSource())
+
+    assert items == []
 
 
 @pytest.mark.asyncio

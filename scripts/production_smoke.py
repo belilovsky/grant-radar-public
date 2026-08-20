@@ -6,12 +6,14 @@ import argparse
 import json
 import re
 from dataclasses import asdict, dataclass
+from datetime import datetime
 from typing import Any
-from urllib.parse import urljoin
 
 import httpx
 
+from api.integration_versions import AVDS_VERSION, QAZSTACK_VERSION
 from core.public_clock import public_today
+from scripts.http_utils import join_url as _url
 
 DASHBOARD_MARKERS = (
     '<html lang="ru"',
@@ -19,20 +21,13 @@ DASHBOARD_MARKERS = (
     'data-av-theme="light"',
     'data-lang="ru"',
     'data-avds-component="admin-shell"',
+    'data-avds-component="hero-band"',
     'data-avds-component="sticky-shell"',
     'data-avds-component="filter-summary"',
-    'data-avds-component="quick-links-rail"',
-    'data-avds-component="public-summary-strip"',
     'class="toolbar avds-tabs-list"',
     "avds-tabs-trigger",
     "avds-field",
-    'data-avds-component="source-card"',
-    'data-avds-component="source-icon"',
-    "avds-source-card__arrow",
-    'data-avds-component="source-url"',
     'data-avds-component="opportunity-card"',
-    'data-avds-component="trust-library"',
-    'id="workspace-filter"',
     'id="filter-disclosure"',
     "avds-document-row",
 )
@@ -50,6 +45,10 @@ class SmokeError(RuntimeError):
 class SmokeResult:
     base_url: str
     release_revision: str
+    release_image_digest: str
+    release_artifact_digest: str
+    release_built_at: str
+    release_deployed_at: str
     deadline_after: str
     health_items: int
     ready_backend: str
@@ -60,14 +59,12 @@ class SmokeResult:
     opportunities: int
     ndjson_items: int
     digest_items: int
+    media_items: int
+    media_feed_items: int
     forbidden_hits: list[str]
     dashboard_markers: dict[str, bool]
     english_dashboard: bool
     discovery_surfaces: dict[str, bool]
-
-
-def _url(base_url: str, path: str) -> str:
-    return urljoin(f"{base_url.rstrip('/')}/", path.lstrip("/"))
 
 
 def _get_json(client: httpx.Client, base_url: str, path: str) -> Any:
@@ -93,9 +90,28 @@ def _require(condition: bool, message: str) -> None:
         raise SmokeError(message)
 
 
+def _release_timestamp(value: Any, field: str) -> datetime:
+    try:
+        parsed = datetime.fromisoformat(str(value or "").replace("Z", "+00:00"))
+    except ValueError as exc:
+        raise SmokeError(f"release {field} is not an ISO timestamp") from exc
+    _require(parsed.tzinfo is not None, f"release {field} lacks a timezone")
+    return parsed
+
+
 def _is_public_cacheable(response: httpx.Response, min_age: int) -> bool:
     cache_control = response.headers.get("cache-control", "").lower()
     return "public" in cache_control and f"max-age={min_age}" in cache_control
+
+
+def _contains_key(value: Any, key: str) -> bool:
+    if isinstance(value, dict):
+        return key in value or any(
+            _contains_key(child, key) for child in value.values()
+        )
+    if isinstance(value, list):
+        return any(_contains_key(child, key) for child in value)
+    return False
 
 
 def run_smoke(
@@ -124,6 +140,18 @@ def run_smoke(
         dashboard_en = client.get(_url(base_url, "/?lang=en"))
         dashboard_en.raise_for_status()
         dashboard_en_html = dashboard_en.text
+        insights_page = _get_text(client, base_url, "/insights?lang=ru")
+        insights_page_head = _head(client, base_url, "/insights?lang=ru")
+        insights_snapshot = _get_json(client, base_url, "/insights.json?lang=ru")
+        insights_snapshot_head = _head(client, base_url, "/insights.json?lang=ru")
+        media_page = _get_text(client, base_url, "/media?lang=ru")
+        media_page_head = _head(client, base_url, "/media?lang=ru")
+        media_snapshot = _get_json(client, base_url, "/media.json?lang=ru")
+        media_snapshot_head = _head(client, base_url, "/media.json?lang=ru")
+        media_feed = _get_json(client, base_url, "/media/feed.json?lang=ru")
+        media_feed_head = _head(client, base_url, "/media/feed.json?lang=ru")
+        media_rss = _get_text(client, base_url, "/media/rss.xml?lang=ru")
+        media_rss_head = _head(client, base_url, "/media/rss.xml?lang=ru")
 
         health = _get_json(client, base_url, "/health")
         release = _get_json(client, base_url, "/.well-known/release.json")
@@ -137,13 +165,71 @@ def run_smoke(
                 f"&deadline_after={deadline_after}"
             ),
         )
-        _require(bool(opportunities), "opportunity list is empty")
-        opportunity_id = str(opportunities[0].get("id") or "")
-        _require(bool(opportunity_id), "opportunity list has no stable id")
-        funders = _get_json(client, base_url, "/funders?limit=1")
-        _require(bool(funders), "funder list is empty")
-        funder_slug = str(funders[0].get("slug") or "")
-        _require(bool(funder_slug), "funder list has no stable slug")
+        compare_ids = [
+            str(item.get("id") or "")
+            for item in opportunities[:4]
+            if str(item.get("id") or "")
+        ]
+        history_id = compare_ids[0] if compare_ids else ""
+        opportunity_id = history_id
+        history = _get_json(
+            client,
+            base_url,
+            f"/opportunities/{history_id}/history.json?lang=ru&limit=50",
+        )
+        history_head = _head(
+            client,
+            base_url,
+            f"/opportunities/{history_id}/history.json?lang=ru&limit=50",
+        )
+        opportunity_page = _get_text(
+            client,
+            base_url,
+            f"/opportunity/{history_id}?lang=ru",
+        )
+        opportunity_page_head = _head(
+            client,
+            base_url,
+            f"/opportunity/{history_id}?lang=ru",
+        )
+        funder_slug = next(
+            (
+                str(item.get("funder_slug") or "").strip()
+                for item in opportunities
+                if str(item.get("funder_slug") or "").strip()
+            ),
+            "world-bank",
+        )
+        funder_page_en = _get_text(
+            client,
+            base_url,
+            f"/funder/{funder_slug}?lang=en",
+        )
+        funder_page_en_head = _head(
+            client,
+            base_url,
+            f"/funder/{funder_slug}?lang=en",
+        )
+        comparison = _get_json(
+            client,
+            base_url,
+            f"/compare.json?ids={','.join(compare_ids)}&lang=ru",
+        )
+        comparison_head = _head(
+            client,
+            base_url,
+            f"/compare.json?ids={','.join(compare_ids)}&lang=ru",
+        )
+        comparison_page = _get_text(
+            client,
+            base_url,
+            f"/compare?ids={','.join(compare_ids)}&lang=ru",
+        )
+        comparison_page_head = _head(
+            client,
+            base_url,
+            f"/compare?ids={','.join(compare_ids)}&lang=ru",
+        )
         ndjson_response = client.get(
             _url(base_url, "/opportunities.ndjson?limit=20&min_score=0.3")
         )
@@ -171,7 +257,6 @@ def run_smoke(
         status_head = _head(client, base_url, "/status?lang=ru")
         operator_page = _get_text(client, base_url, "/operator?lang=ru")
         operator_head = _head(client, base_url, "/operator?lang=ru")
-        insights_page = _get_text(client, base_url, "/insights?lang=ru")
         insights_head = _head(client, base_url, "/insights?lang=ru")
         detail_page = _get_text(
             client,
@@ -193,7 +278,7 @@ def run_smoke(
             base_url,
             f"/opportunity/{opportunity_id}/prepare?lang=ru",
         )
-        funder_page = _get_text(
+        funder_page_ru = _get_text(
             client,
             base_url,
             f"/funder/{funder_slug}?lang=ru",
@@ -249,12 +334,47 @@ def run_smoke(
         )
         ecosystem = _get_json(client, base_url, "/.well-known/qdev-ecosystem.json")
         ecosystem_head = _head(client, base_url, "/.well-known/qdev-ecosystem.json")
+        notification_contract = _get_json(
+            client, base_url, "/.well-known/notification-contract.json"
+        )
+        notification_head = _head(
+            client, base_url, "/.well-known/notification-contract.json"
+        )
+        source_onboarding = _get_json(
+            client, base_url, "/.well-known/source-onboarding.json"
+        )
+        source_onboarding_head = _head(
+            client, base_url, "/.well-known/source-onboarding.json"
+        )
 
     _require(health.get("status") == "ok", "health status is not ok")
+    revision = str(release.get("revision") or "")
+    image_digest = str(release.get("imageDigest") or "")
+    artifact_digest = str(release.get("artifactDigest") or "")
+    built_at = str(release.get("builtAt") or "")
+    deployed_at = str(release.get("deployedAt") or "")
     _require(
-        release.get("service") == "qaz-fund"
-        and bool(re.fullmatch(r"[0-9a-f]{40}", str(release.get("revision") or ""))),
+        release.get("schemaVersion") == "qaz-fund-release-v1"
+        and release.get("service") == "qaz-fund"
+        and bool(re.fullmatch(r"[0-9a-f]{40}", revision)),
         "release metadata is missing",
+    )
+    _require(release.get("sourceSha") == revision, "release source SHA mismatch")
+    _require(release.get("sourceDirty") is False, "release source is dirty")
+    _require(
+        bool(re.fullmatch(r"sha256:[0-9a-f]{64}", image_digest)),
+        "release image digest is missing",
+    )
+    _require(
+        bool(re.fullmatch(r"sha256:[0-9a-f]{64}", artifact_digest)),
+        "release artifact digest is missing",
+    )
+    built_timestamp = _release_timestamp(built_at, "builtAt")
+    deployed_timestamp = _release_timestamp(deployed_at, "deployedAt")
+    _require(built_timestamp <= deployed_timestamp, "release timestamps are reversed")
+    _require(
+        release.get("deployed_at") == deployed_at,
+        "legacy and canonical deploy timestamps differ",
     )
     _require(ready.get("status") == "ok", "ready status is not ok")
     if expect_backend:
@@ -314,20 +434,69 @@ def run_smoke(
     _require(english_dashboard, "english dashboard variant is missing")
 
     discovery_status = {
-        "dashboard_initial_current_metric": (
-            f'id="metric-strong" data-catalog-count="'
-            f'{int(coverage.get("relevant_open_items") or 0)}">'
-            f'{int(coverage.get("relevant_open_items") or 0)}</strong>'
-            in dashboard_html
+        "insights_page": (
+            '<html lang="ru"' in insights_page
+            and 'data-avds-pattern="decision-readiness"' in insights_page
+            and 'data-avds-component="DataViz"' in insights_page
+            and _is_public_cacheable(insights_page_head, 60)
         ),
-        "dashboard_initial_source_metric": (
-            f'<strong id="metric-sources">'
-            f'{int(coverage.get("enabled_sources") or 0)}</strong>' in dashboard_html
+        "insights_snapshot": (
+            insights_snapshot.get("schema_version") == "insights.v1"
+            and isinstance(insights_snapshot.get("decision_readiness"), dict)
+            and _is_public_cacheable(insights_snapshot_head, 60)
+        ),
+        "media_page": (
+            '<html lang="ru"' in media_page
+            and 'data-avds="grant-radar"' in media_page
+            and 'data-avds-component="media-lead"' in media_page
+            and 'type="application/feed+json"' in media_page
+            and 'type="application/rss+xml"' in media_page
+            and _is_public_cacheable(media_page_head, 60)
+        ),
+        "media_snapshot": (
+            media_snapshot.get("schema_version") == "media.v1"
+            and isinstance(media_snapshot.get("cards"), list)
+            and not _contains_key(media_snapshot, "raw")
+            and _is_public_cacheable(media_snapshot_head, 60)
+        ),
+        "media_json_feed": (
+            media_feed.get("version") == "https://jsonfeed.org/version/1.1"
+            and isinstance(media_feed.get("items"), list)
+            and str(media_feed.get("language") or "") == "ru"
+            and _is_public_cacheable(media_feed_head, 60)
+        ),
+        "media_rss": (
+            '<rss version="2.0"' in media_rss
+            and "<channel>" in media_rss
+            and "raw" not in media_rss
+            and _is_public_cacheable(media_rss_head, 60)
+        ),
+        "opportunity_history": (
+            history.get("schema_version") == "history.v1"
+            and history.get("status") in {"ready", "not_available"}
+            and isinstance(history.get("items"), list)
+            and _is_public_cacheable(history_head, 60)
+        ),
+        "opportunity_page": (
+            '<html lang="ru"' in opportunity_page
+            and 'data-avds="grant-radar"' in opportunity_page
+            and _is_public_cacheable(opportunity_page_head, 60)
+        ),
+        "funder_page_en": (
+            '<html lang="en"' in funder_page_en
+            and 'data-avds="grant-radar"' in funder_page_en
+            and _is_public_cacheable(funder_page_en_head, 60)
         ),
         "llms_home": f"Home: {_url(base_url, '/')}" in llms,
         "llms_sitemap": f"Sitemap: {_url(base_url, '/sitemap.xml')}" in llms,
         "llms_openapi": f"OpenAPI schema: {_url(base_url, '/openapi.json')}" in llms,
         "llms_coverage": f"Coverage JSON: {_url(base_url, '/coverage')}" in llms,
+        "llms_media": f"Media page: {_url(base_url, '/media')}" in llms,
+        "llms_media_json": f"Media JSON: {_url(base_url, '/media.json')}" in llms,
+        "llms_media_feed": (
+            f"Media JSON Feed: {_url(base_url, '/media/feed.json')}" in llms
+        ),
+        "llms_media_rss": f"Media RSS: {_url(base_url, '/media/rss.xml')}" in llms,
         "llms_opportunities": (
             f"Opportunities JSON: {_url(base_url, '/opportunities')}" in llms
         ),
@@ -346,13 +515,22 @@ def run_smoke(
             f"Release metadata JSON: "
             f"{_url(base_url, '/.well-known/release.json')}" in llms
         ),
-        "llms_qazpipe": (
-            f"QazPipe source contract: "
-            f"{_url(base_url, '/.well-known/qazpipe-source.json')}" in llms
+        "llms_notification_contract": (
+            f"Notification contract: "
+            f"{_url(base_url, '/.well-known/notification-contract.json')}" in llms
         ),
-        "llms_qazcompute": (
-            f"QazCompute profile contract: "
-            f"{_url(base_url, '/.well-known/qazcompute-profiles.json')}" in llms
+        "llms_comparison": (
+            "Comparison JSON: "
+            f"{_url(base_url, '/compare.json')}?ids={{id}},{{id}}&lang=ru|kk|en" in llms
+        ),
+        "llms_history": (
+            "Opportunity history JSON: "
+            f"{_url(base_url, '/opportunities/{id}/history.json')}?lang=kk|ru|en&limit={{n}}"
+            in llms
+        ),
+        "llms_source_onboarding": (
+            "Source onboarding contract: "
+            f"{_url(base_url, '/.well-known/source-onboarding.json')}" in llms
         ),
         "llms_ai_guidance": "## AI consumption guidance" in llms,
         "llms_ndjson_guidance": (
@@ -375,19 +553,13 @@ def run_smoke(
         ),
         "operator_noindex": "noindex"
         in operator_head.headers.get("x-robots-tag", "").lower(),
-        "insights_page": (
-            'data-avds-component="data-centre"' in insights_page
-            and 'data-avds-pattern="data-quality-scorecard"' in insights_page
-            and "В текущем каталоге" in insights_page
-            and "Релевантных карточек в индексе" in insights_page
-            and "\u2014" not in insights_page
-        ),
         "insights_head": insights_head.headers.get("content-type", "").startswith(
             "text/html"
         ),
         "detail_page": (
-            'data-avds-component="lite-reading-surface"' in detail_page
-            and "Ключевые условия" in detail_page
+            'data-avds-component="opportunity-page"' in detail_page
+            and 'data-avds-component="opportunity-detail"' in detail_page
+            and "Официальный источник" in detail_page
             and "\u2014" not in detail_page
         ),
         "detail_head": detail_head.headers.get("content-type", "").startswith(
@@ -402,15 +574,15 @@ def run_smoke(
         "application_workspace_head": prepare_head.headers.get(
             "content-type", ""
         ).startswith("text/html"),
-        "funder_page": (
-            "QAZ.FUND" in funder_page
-            and 'data-avds="grant-radar"' in funder_page
-            and "\u2014" not in funder_page
+        "funder_page_ru": (
+            "QAZ.FUND" in funder_page_ru
+            and 'data-avds="grant-radar"' in funder_page_ru
+            and "\u2014" not in funder_page_ru
         ),
         "policy_routes": (
             "Условия использования" in policy_terms
             and "Политика данных" in policy_data
-            and "Цитирование и повторное использование" in policy_attribution
+            and "Использование данных" in policy_attribution
         ),
         "browser_404": (
             missing_page.status_code == 404
@@ -464,6 +636,8 @@ def run_smoke(
         == _url(base_url, "/docs"),
         "site_discovery_status": str(discovery.get("source_status") or "")
         == _url(base_url, "/status"),
+        "site_discovery_languages": list(discovery.get("languages") or [])
+        == ["kk", "ru", "en"],
         "site_discovery_release": str(discovery.get("release") or "")
         == _url(base_url, "/.well-known/release.json"),
         "site_discovery_coverage": str(
@@ -483,13 +657,26 @@ def run_smoke(
             or ""
         )
         == _url(base_url, "/opportunities.ndjson?compact=true"),
-        "site_discovery_api_v1": str(discovery.get("versioned_api") or "")
-        == _url(base_url, "/api/v1"),
-        "site_discovery_api_v1_ndjson": str(
-            (discovery.get("data_endpoints") or {}).get("api_v1_opportunities_ndjson")
-            or ""
+        "site_discovery_history": str(
+            (discovery.get("data_endpoints") or {}).get("opportunity_history") or ""
         )
-        == _url(base_url, "/api/v1/opportunities.ndjson"),
+        == _url(base_url, "/opportunities/{id}/history.json"),
+        "site_discovery_media": str(
+            (discovery.get("data_endpoints") or {}).get("media") or ""
+        )
+        == _url(base_url, "/media"),
+        "site_discovery_media_json": str(
+            (discovery.get("data_endpoints") or {}).get("media_json") or ""
+        )
+        == _url(base_url, "/media.json"),
+        "site_discovery_media_feed": str(
+            (discovery.get("data_endpoints") or {}).get("media_feed") or ""
+        )
+        == _url(base_url, "/media/feed.json"),
+        "site_discovery_media_rss": str(
+            (discovery.get("data_endpoints") or {}).get("media_rss") or ""
+        )
+        == _url(base_url, "/media/rss.xml"),
         "site_discovery_cache": _is_public_cacheable(discovery_head, 300),
         "site_discovery_ai_bulk_export": str(
             (discovery.get("ai_consumption") or {}).get("preferred_bulk_export") or ""
@@ -500,6 +687,10 @@ def run_smoke(
             or ""
         )
         == _url(base_url, "/opportunities.ndjson?compact=true"),
+        "site_discovery_ai_history_template": str(
+            (discovery.get("ai_consumption") or {}).get("history_template") or ""
+        )
+        == _url(base_url, "/opportunities/{id}/history.json?lang={lang}&limit={n}"),
         "site_discovery_ai_cache_policy": int(
             ((discovery.get("ai_consumption") or {}).get("cache_policy") or {}).get(
                 "ndjson_seconds"
@@ -515,17 +706,33 @@ def run_smoke(
             (discovery.get("contracts") or {}).get("avds4") or ""
         )
         == _url(base_url, "/.well-known/avds-ui-contract.json"),
-        "site_discovery_qazpipe": str(
-            (discovery.get("contracts") or {}).get("qazpipe") or ""
+        "site_discovery_notification_contract": str(
+            (discovery.get("contracts") or {}).get("notifications") or ""
         )
-        == _url(base_url, "/.well-known/qazpipe-source.json"),
-        "site_discovery_qazcompute": str(
-            (discovery.get("contracts") or {}).get("qazcompute") or ""
+        == _url(base_url, "/.well-known/notification-contract.json"),
+        "site_discovery_source_onboarding": str(
+            (discovery.get("data_endpoints") or {}).get("source_onboarding") or ""
         )
-        == _url(base_url, "/.well-known/qazcompute-profiles.json"),
+        == _url(base_url, "/.well-known/source-onboarding.json"),
+        "site_discovery_comparison": str(
+            (discovery.get("data_endpoints") or {}).get("compare_json") or ""
+        )
+        == _url(base_url, "/compare.json"),
+        "comparison_contract": (
+            comparison.get("schema_version") == "comparison.v1"
+            and comparison.get("status") in {"ready", "partial", "insufficient"}
+            and len(comparison.get("cards") or []) <= 4
+            and _is_public_cacheable(comparison_head, 60)
+        ),
+        "comparison_page": (
+            '<html lang="ru"' in comparison_page
+            and 'data-avds-component="comparison-table"' in comparison_page
+            and 'rel="alternate" type="application/json"' in comparison_page
+            and _is_public_cacheable(comparison_page_head, 60)
+        ),
         "qazstack_contract": (
             qazstack_contract.get("schema_version") == "qazstack-consumer-v1"
-            and qazstack_contract.get("qazstack_version") == "1.41.2"
+            and qazstack_contract.get("qazstack_version") == QAZSTACK_VERSION
             and {
                 "opportunity-public-contract",
                 "opportunity-ranking-evaluation",
@@ -535,7 +742,7 @@ def run_smoke(
         ),
         "avds4_contract": (
             avds_contract.get("schema_version") == "avds-ui-contract-v1"
-            and (avds_contract.get("avds_source") or {}).get("version") == "4.6.0"
+            and (avds_contract.get("avds_source") or {}).get("version") == AVDS_VERSION
             and (avds_contract.get("runtime_neutral_patterns") or {}).get("adopted")
             == [
                 "evidence-summary",
@@ -550,15 +757,8 @@ def run_smoke(
             qazpipe_contract.get("schema_version") == "qazpipe-pull-source-v1"
             and qazpipe_contract.get("mode") == "pull"
             and qazpipe_contract.get("direction") == "outbound-read-only"
-            and (qazpipe_contract.get("endpoints") or {}).get("bulk_ndjson")
-            == _url(base_url, "/api/v1/opportunities.ndjson")
             and (qazpipe_contract.get("qazlake_handoff") or {}).get("direct_write")
             is False
-            and {
-                "source.url",
-                "provenance.content_hash",
-                "provenance.verification_method",
-            }.issubset(set(qazpipe_contract.get("required_provenance") or []))
             and _is_public_cacheable(qazpipe_head, 60)
         ),
         "qazcompute_contract": (
@@ -570,19 +770,31 @@ def run_smoke(
                 "remote_execution_active"
             )
             is False
-            and (qazcompute_contract.get("execution") or {}).get("decision_ready")
-            is False
-            and {
-                "evidence_readiness.v1",
-                "deadline_anomaly.v1",
-                "source_freshness.v1",
-                "duplicate_cluster.v1",
-            }
-            == {
-                str(profile.get("schema_version") or "")
-                for profile in qazcompute_contract.get("profiles") or []
-            }
             and _is_public_cacheable(qazcompute_head, 60)
+        ),
+        "notification_contract": (
+            notification_contract.get("schema_version") == "notification-v1"
+            and notification_contract.get("status") == "not_enabled"
+            and (notification_contract.get("delivery") or {}).get("enabled") is False
+            and (notification_contract.get("delivery") or {}).get("worker_running")
+            is False
+            and (notification_contract.get("identity") or {}).get("authenticated_owner")
+            is False
+            and (notification_contract.get("identity") or {}).get("cross_device_sync")
+            is False
+            and (notification_contract.get("consent") or {}).get("collection_enabled")
+            is False
+            and (notification_contract.get("consent") or {}).get("version") is None
+            and _is_public_cacheable(notification_head, 60)
+        ),
+        "source_onboarding_contract": (
+            source_onboarding.get("schema_version") == "source-onboarding.v1"
+            and (source_onboarding.get("policy") or {}).get(
+                "credentials_in_public_contract"
+            )
+            is False
+            and isinstance(source_onboarding.get("candidates"), list)
+            and _is_public_cacheable(source_onboarding_head, 60)
         ),
         "ecosystem_contract": (
             ecosystem.get("schema_version") == "qdev-ecosystem-integration-v1"
@@ -615,7 +827,11 @@ def run_smoke(
 
     return SmokeResult(
         base_url=base_url.rstrip("/"),
-        release_revision=str(release.get("revision") or ""),
+        release_revision=revision,
+        release_image_digest=image_digest,
+        release_artifact_digest=artifact_digest,
+        release_built_at=built_at,
+        release_deployed_at=deployed_at,
         deadline_after=deadline_after,
         health_items=int(health.get("items") or 0),
         ready_backend=str(ready.get("backend") or ""),
@@ -628,6 +844,8 @@ def run_smoke(
         opportunities=len(opportunities),
         ndjson_items=len(ndjson_items),
         digest_items=len(digest.get("items") or []),
+        media_items=len(media_snapshot.get("cards") or []),
+        media_feed_items=len(media_feed.get("items") or []),
         forbidden_hits=forbidden_hits,
         dashboard_markers=marker_status,
         english_dashboard=english_dashboard,
@@ -657,7 +875,9 @@ def _parser() -> argparse.ArgumentParser:
         default=["AI3 Action Institute", "Technical Difficulties"],
         help="Text that must not appear in the current relevant opportunity feed.",
     )
-    parser.add_argument("--timeout", type=float, default=20.0)
+    # The gate performs a deliberately sequential public-route matrix. Keep
+    # enough headroom for a healthy deployment when the origin is cold.
+    parser.add_argument("--timeout", type=float, default=60.0)
     return parser
 
 

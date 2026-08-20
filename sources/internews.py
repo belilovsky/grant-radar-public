@@ -136,6 +136,7 @@ class InternewsSource(BaseSource):
                 return
             resp.raise_for_status()
         except Exception as e:  # noqa: BLE001
+            self._mark_fetch_error(e)
             log.warning("internews.fetch_failed", error=str(e))
             return
 
@@ -168,6 +169,7 @@ class InternewsSource(BaseSource):
             resp = await self.client.get(FEED_URL)
             resp.raise_for_status()
         except Exception as e:  # noqa: BLE001
+            self._mark_fetch_error(e)
             log.warning("internews.feed_failed", error=str(e))
             return
 
@@ -175,6 +177,7 @@ class InternewsSource(BaseSource):
         try:
             root = ET.fromstring(resp.content, parser=_secure_xml_parser())
         except ET.ParseError as e:
+            self._mark_fetch_error(e)
             log.warning("internews.feed_parse_failed", error=str(e))
             return
 
@@ -232,13 +235,6 @@ class InternewsSource(BaseSource):
                 ),
             },
         )
-
-    async def healthcheck(self) -> bool:
-        try:
-            resp = await self.client.get(self.base_url)
-            return resp.status_code < 500
-        except Exception:  # noqa: BLE001
-            return False
 
 
 InternewsParser = InternewsSource

@@ -26,6 +26,7 @@ from qazstack.opportunities import (
 from qazstack.opportunities import source_host as _source_host
 
 from core.models import Opportunity
+from core.opportunity_taxonomy import classify_opportunity
 
 SCHEMA_VERSION = OPPORTUNITY_SCHEMA_VERSION
 DATASET_SCHEMA_VERSION = "qazfund-dataset.v1"
@@ -80,30 +81,24 @@ def _localized(raw: dict[str, Any], field: str) -> LocalizedText:
 
 
 def _formats(item: Opportunity) -> list[str]:
-    tags = {str(tag).strip().lower() for tag in item.tags}
-    formats: list[str] = []
-    mapping = (
-        ("reimbursement", {"reimbursement", "cost_reimbursement"}),
-        ("subsidy", {"subsidy"}),
-        ("loan_guarantee", {"loan_guarantee", "guarantee"}),
-        ("preferential_finance", {"preferential_financing", "loan"}),
-        ("leasing", {"leasing"}),
-        ("tax_benefit", {"tax_benefit", "tax_benefits"}),
-        ("grant", {"grant"}),
-        ("accelerator", {"accelerator", "incubator"}),
-        ("cloud_credit", {"cloud_credit", "cloud_credits"}),
-        ("procurement", {"tender", "procurement"}),
-        ("fellowship", {"fellowship"}),
-        ("contest", {"contest", "competition"}),
-    )
-    for name, signals in mapping:
-        if tags.intersection(signals):
-            formats.append(name)
-    type_value = str(getattr(item.type, "value", item.type))
-    fallback = "procurement" if type_value == "tender" else type_value
-    if fallback and fallback not in formats:
-        formats.append(fallback)
-    return formats
+    taxonomy = classify_opportunity(item)
+    instrument = str(taxonomy.get("instrument") or "unknown")
+    public_format = {
+        "reimbursement": "reimbursement",
+        "subsidy": "subsidy",
+        "guarantee": "loan_guarantee",
+        "loan": "preferential_finance",
+        "leasing": "leasing",
+        "tax_benefit": "tax_benefit",
+        "grant": "grant",
+        "accelerator": "accelerator",
+        "in_kind_support": "in_kind_support",
+        "procurement": "procurement",
+        "scholarship": "scholarship",
+        "prize": "contest",
+        "education_admission": "education_admission",
+    }.get(instrument)
+    return [public_format] if public_format else []
 
 
 def _audiences(item: Opportunity) -> list[str]:
@@ -277,6 +272,7 @@ def to_opportunity_v1(
         "amount_min": item.amount_min,
         "amount_max": item.amount_max,
         "amount_raw": amount_display,
+        "taxonomy": classify_opportunity(item),
     }
     content_hash = semantic_payload_hash(semantic)
     base = public_base_url.rstrip("/")

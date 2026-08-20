@@ -4,6 +4,9 @@ Revision ID: 0005_opportunity_observations
 Revises: 0004_runs_table
 Create Date: 2026-07-27 18:00:00.000000
 
+This revision is retained because it is already applied to the production
+database.  The public normalized history read model follows it in revision
+0006.
 """
 
 from __future__ import annotations

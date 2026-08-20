@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import re
 from datetime import date, datetime, timedelta, timezone
 from html.parser import HTMLParser
 from urllib.parse import urlsplit
@@ -9,6 +10,11 @@ from fastapi.testclient import TestClient
 
 from api import main as api_main
 from core.models import Opportunity, OpportunityType
+
+
+def _with_generated_assets(client: TestClient, response) -> str:
+    urls = re.findall(r'(?:href|src)="([^"]*/assets/generated/[^"]+)"', response.text)
+    return response.text + "".join(client.get(url).text for url in urls)
 
 
 class _LinkParser(HTMLParser):
@@ -157,6 +163,7 @@ def test_human_route_graph_is_connected_in_both_languages(monkeypatch):
         "/status",
         "/terms",
         "/data-policy",
+        "/data-routes",
         "/attribution",
         "/operator",
     )
@@ -166,6 +173,7 @@ def test_human_route_graph_is_connected_in_both_languages(monkeypatch):
         "/status",
         "/terms",
         "/data-policy",
+        "/data-routes",
         "/attribution",
         *dynamic_paths,
     )
@@ -224,10 +232,10 @@ def test_missing_empty_and_broken_link_states_have_recovery(monkeypatch):
 
     incomplete = client.get(f"/opportunity/{items['missing'].id}?lang=ru")
     assert incomplete.status_code == 200
-    assert "Что уточнить" in incomplete.text
-    assert "сумму" in incomplete.text
-    assert "требования к заявителю" in incomplete.text
-    assert "путь подачи" in incomplete.text
+    assert "Не указано организатором" not in incomplete.text
+    assert "Кому подходит" not in incomplete.text
+    assert "Открыть источник" in incomplete.text
+    assert "Что уточнить" not in incomplete.text
 
     browser_404 = client.get(
         "/opportunity/not-a-uuid",
@@ -256,8 +264,9 @@ def test_missing_empty_and_broken_link_states_have_recovery(monkeypatch):
     assert "Данных пока недостаточно" in empty_insights.text
     assert "Статус источников" in empty_status.text
     assert "Записей / актуально" in empty_status.text
-    assert "Каталог временно не содержит доступных карточек" in empty_home.text
-    assert "emptyStateActions" in empty_home.text
+    empty_home_with_assets = _with_generated_assets(client, empty_home)
+    assert "Каталог временно не содержит доступных карточек" in empty_home_with_assets
+    assert "emptyStateActions" in empty_home_with_assets
 
 
 def test_machine_and_operator_routes_have_explicit_boundaries(monkeypatch):

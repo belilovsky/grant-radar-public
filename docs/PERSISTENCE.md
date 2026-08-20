@@ -70,9 +70,10 @@ runner = build_default_runner(queue, repository=repo)
 - M2 (current): in-memory, SQLite and Postgres-compatible SQL backends are functional.
 - M3 (current): Alembic migrations live under `alembic/versions/`; `Dockerfile.prod` runs `alembic upgrade head` on container start with retry while Postgres is booting.
 - M4 (current): dashboard reads persisted `opportunities` plus `/coverage` source
-  metrics.
-- M5 (current): an immutable observation ledger records semantic versions and
-  supports change feeds, daily digests and data-centre analytics.
+  metrics; future analytics can extend this with historical `runs` trends.
+- M5 (current): public normalized opportunity versions are stored in
+  `opportunity_versions` and exposed read-only through `history.v1`; routine
+  unchanged refreshes do not create extra versions.
 
 
 ## Migrations (Alembic)
@@ -84,6 +85,10 @@ the repository root, and the runtime environment is defined in
 
 - Baseline: `alembic/versions/0001_initial.py` creates `opportunities` and
   `dedup_keys`.
+- Revision `0005_opportunity_observations.py` is retained as the already deployed
+  observation ledger.
+- Revision `0006_opportunity_versions.py` creates and backfills one `initial`
+  snapshot per existing opportunity, then records only changed public fields.
 - Migration smoke tests live in `tests/test_alembic_migrations.py` and cover a
   sqlite upgrade/downgrade cycle.
 

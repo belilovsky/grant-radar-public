@@ -339,3 +339,51 @@ def test_sql_repository_works_after_alembic_head(tmp_path, monkeypatch):
     assert len(rows) == 1
     assert rows[0].title == "Migrated updated"
     assert rows[0].dedup_key == "grants_gov:MIG-1"
+
+
+def test_opportunity_versions_migration_backfills_initial_snapshot(tmp_path):
+    pytest.importorskip("alembic")
+
+    from sqlalchemy import MetaData, Table, create_engine, insert
+
+    from alembic import command
+    from alembic.config import Config
+
+    repo_root = os.path.dirname(os.path.dirname(__file__))
+    db_path = tmp_path / "history-backfill.sqlite"
+    url = f"sqlite:///{db_path}"
+    cfg = Config(os.path.join(repo_root, "alembic.ini"))
+    cfg.set_main_option("script_location", os.path.join(repo_root, "alembic"))
+    cfg.set_main_option("sqlalchemy.url", url)
+    command.upgrade(cfg, "0004_runs_table")
+
+    engine = create_engine(url, future=True)
+    opportunities_table = Table("opportunities", MetaData(), autoload_with=engine)
+
+    with engine.begin() as connection:
+        connection.execute(
+            insert(opportunities_table).values(
+                id="grants_gov:BACKFILL-1",
+                dedup_key="grants_gov:BACKFILL-1",
+                source="grants_gov",
+                source_url="https://example.org/backfill",
+                title="Backfilled opportunity",
+                summary="Public summary",
+                currency="USD",
+                raw={
+                    "type": "grant",
+                    "eligibility": ["Kazakhstan teams"],
+                    "tags": ["kazakhstan"],
+                    "languages": ["en"],
+                    "raw": {"external_id": "BACKFILL-1"},
+                },
+            )
+        )
+
+    command.upgrade(cfg, "head")
+    repo = SqlRepository(url)
+    entries = repo.history_for("grants_gov:BACKFILL-1")
+    assert len(entries) == 1
+    assert entries[0]["changed_fields"] == ["initial"]
+    assert entries[0]["fields"]["title"] == "Backfilled opportunity"
+    assert entries[0]["fields"]["tags"] == ["kazakhstan"]

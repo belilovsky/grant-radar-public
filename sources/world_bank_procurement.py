@@ -43,6 +43,71 @@ COUNTRY_TAGS = {
     "Central Asia": "central_asia",
 }
 
+NOTICE_EDITORIAL_RU = {
+    "OP00460945": {
+        "title": (
+            "Строительный надзор за созданием Центра передового опыта "
+            "в аграрных исследованиях"
+        ),
+        "summary": (
+            "В проекте модернизации сельского хозяйства выбирают компанию "
+            "для надзора за EPC-строительством центра аграрных исследований."
+        ),
+        "social_title": "Узбекистан: контракт на строительный надзор",
+        "audience_label": "Кому подходит",
+        "eligibility": [
+            "Инженерно-консалтинговые компании с опытом строительного надзора, "
+            "проектов IFI и EPC/FIDIC-контрактов"
+        ],
+        "highlights_label": "Ключевые требования",
+        "highlights": [
+            "10+ лет строительного надзора и инженерного консалтинга",
+            "минимум 2 похожих высокотехнологичных объекта за последние 10 лет",
+            "опыт проектов Всемирного банка или других IFI",
+            "опыт в Центральной Азии будет преимуществом",
+        ],
+        "amount": "QCBS (качество + стоимость) · 800 000 USD",
+        "amount_label": "Условия",
+        "deadline_display": "20 августа · 15:00 по времени Ташкента",
+        "deadline_label": "Дедлайн",
+        "steps_title": "Что сделать сейчас",
+        "application_step_titles": [
+            "Запросите техническое задание",
+            "Подтвердите квалификацию",
+            "Отправьте выражение заинтересованности",
+        ],
+        "application_steps": [
+            "Запросить TOR по адресу amp@iscad.uz",
+            "Собрать подтверждение опыта и квалификации",
+            "Отправить expression of interest письменно или по email до дедлайна",
+        ],
+        "prepare_items": [
+            {
+                "title": "Проверьте 10-летний опыт",
+                "text": "Подтвердите опыт строительного надзора и инженерного консалтинга.",
+            },
+            {
+                "title": "Подберите похожие объекты",
+                "text": (
+                    "Нужно показать не менее двух сопоставимых высокотехнологичных "
+                    "объектов за последние 10 лет."
+                ),
+            },
+            {
+                "title": "Соберите опыт IFI и EPC/FIDIC",
+                "text": (
+                    "Выделите проекты международных финансовых организаций и "
+                    "контракты EPC, turnkey или design-build."
+                ),
+            },
+            {
+                "title": "Запросите TOR",
+                "text": "Техническое задание можно запросить по адресу amp@iscad.uz.",
+            },
+        ],
+    }
+}
+
 
 def _iso_date(value: Any) -> date | None:
     text = str(value or "").strip()
@@ -117,6 +182,7 @@ class WorldBankCentralAsiaProcurementSource(BaseSource):
             response.raise_for_status()
             payload = response.json()
         except Exception as exc:  # noqa: BLE001
+            self._mark_fetch_error(exc)
             log.warning("world_bank_procurement.fetch_failed", error=str(exc))
             return
 
@@ -136,6 +202,7 @@ class WorldBankCentralAsiaProcurementSource(BaseSource):
             country = str(notice.get("project_ctry_name") or "").strip()
             notice_type = str(notice.get("notice_type") or "").strip()
             deadline = _iso_date(notice.get("submission_deadline_date"))
+            editorial_ru = NOTICE_EDITORIAL_RU.get(notice_id)
             text = " ".join(
                 [title, _summary(notice), str(notice.get("project_name") or "")]
             )
@@ -148,6 +215,26 @@ class WorldBankCentralAsiaProcurementSource(BaseSource):
                 ]
             )
             count += 1
+            raw: dict[str, Any] = {
+                "external_id": notice_id,
+                "notice_type": notice_type,
+                "published": notice.get("noticedate"),
+                "project_id": notice.get("project_id"),
+                "project_name": notice.get("project_name"),
+                "country": country,
+                "reference": notice.get("bid_reference_no"),
+                "procurement_group": notice.get("procurement_group"),
+                "procurement_method": notice.get("procurement_method_name"),
+                "estimated_amount": notice.get("bid_estimate_amount"),
+                "estimated_currency": notice.get("bid_estimate_currency"),
+                "submission_deadline_time": notice.get("submission_deadline_time"),
+                "agency_name": notice.get("agency_name"),
+                "contact_email": notice.get("contact_email"),
+                "api_url": str(response.request.url),
+            }
+            if editorial_ru:
+                raw["i18n"] = {"ru": editorial_ru}
+
             yield Opportunity(
                 source=self.slug,
                 source_url=PROCUREMENT_DETAIL_URL.format(  # type: ignore[arg-type]
@@ -161,18 +248,7 @@ class WorldBankCentralAsiaProcurementSource(BaseSource):
                 tags=tags,
                 opportunity_status="open",
                 lifecycle="forecast" if deadline is None else "open",
-                raw={
-                    "external_id": notice_id,
-                    "notice_type": notice_type,
-                    "published": notice.get("noticedate"),
-                    "project_id": notice.get("project_id"),
-                    "project_name": notice.get("project_name"),
-                    "country": country,
-                    "reference": notice.get("bid_reference_no"),
-                    "procurement_group": notice.get("procurement_group"),
-                    "procurement_method": notice.get("procurement_method_name"),
-                    "api_url": str(response.request.url),
-                },
+                raw=raw,
             )
 
         log.info("world_bank_procurement.batch", count=count)

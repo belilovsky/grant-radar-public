@@ -8,8 +8,7 @@ as a recurring funding/procurement watch surface.
 
 from __future__ import annotations
 
-import re
-from collections.abc import AsyncIterator, Iterable
+from collections.abc import AsyncIterator
 from dataclasses import dataclass
 from typing import ClassVar
 
@@ -19,6 +18,8 @@ import structlog
 from core.models import Opportunity, OpportunityType
 from core.source_text import clean_source_text as _clean_text
 from sources.base import BaseSource
+from sources.parsing import html_title as _shared_html_title
+from sources.parsing import unique_normalized as _unique
 
 log = structlog.get_logger()
 
@@ -221,24 +222,7 @@ STRATEGIC_WATCH_SPECS = {
 
 
 def _html_title(html: str) -> str | None:
-    match = re.search(
-        r"<title[^>]*>(?P<title>.*?)</title>", html, re.IGNORECASE | re.DOTALL
-    )
-    if match is None:
-        return None
-    return _clean_text(match.group("title")) or None
-
-
-def _unique(values: Iterable[str]) -> list[str]:
-    seen: set[str] = set()
-    out: list[str] = []
-    for value in values:
-        normalized = value.strip().lower()
-        if not normalized or normalized in seen:
-            continue
-        seen.add(normalized)
-        out.append(normalized)
-    return out
+    return _shared_html_title(html, _clean_text)
 
 
 class StrategicWatchSource(BaseSource):

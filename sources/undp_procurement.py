@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 import re
-from collections.abc import AsyncIterator, Iterable
+from collections.abc import AsyncIterator
 from dataclasses import dataclass
 from datetime import date, datetime
 from typing import ClassVar
@@ -15,6 +15,8 @@ from core.models import Opportunity, OpportunityType
 from core.public_clock import public_today
 from core.source_text import clean_source_text as _clean_text
 from sources.base import BaseSource
+from sources.parsing import infer_substring_tags as _shared_infer_tags
+from sources.parsing import unique_normalized as _unique
 
 log = structlog.get_logger()
 
@@ -95,6 +97,27 @@ OPERATIONAL_SERVICE_TERMS = (
     "venue",
 )
 
+NOTICE_OVERRIDES = {
+    "UNDP-KAZ-00748": {
+        "title": "Purchase and delivery of pickup trucks with canopy (2 units)",
+        "summary": (
+            "UNDP Kazakhstan request for quotations for the purchase and delivery "
+            "of two high-clearance pickup trucks with canopies for the Kazakh "
+            "Scientific Research Institute of Water Management."
+        ),
+        "i18n": {
+            "ru": {
+                "title": "Закупка и поставка двух пикапов с кунгом",
+                "summary": (
+                    "ПРООН в Казахстане принимает ценовые предложения на закупку "
+                    "и поставку двух пикапов повышенной проходимости с кунгом для "
+                    "Казахского научно-исследовательского института водного хозяйства."
+                ),
+            }
+        },
+    }
+}
+
 
 @dataclass(frozen=True)
 class UndpNotice:
@@ -109,18 +132,6 @@ class UndpNotice:
 
 def _normalize_label(value: str) -> str:
     return re.sub(r"\s+", " ", value).strip().lower()
-
-
-def _unique(values: Iterable[str]) -> list[str]:
-    seen: set[str] = set()
-    out: list[str] = []
-    for value in values:
-        normalized = value.strip().lower()
-        if not normalized or normalized in seen:
-            continue
-        seen.add(normalized)
-        out.append(normalized)
-    return out
 
 
 def _parse_date(value: str) -> date | None:
@@ -146,12 +157,7 @@ def _contains_central_asia(text: str) -> bool:
 
 
 def _infer_tags(text: str) -> list[str]:
-    lowered = text.lower()
-    tags: list[str] = []
-    for tag, keywords in THEME_KEYWORDS.items():
-        if any(keyword in lowered for keyword in keywords):
-            tags.append(tag)
-    return tags
+    return _shared_infer_tags(text, THEME_KEYWORDS)
 
 
 def _is_operational_service_notice(text: str) -> bool:
@@ -237,27 +243,35 @@ class UndpProcurementSource(BaseSource):
     ]
 
     async def fetch(self) -> AsyncIterator[Opportunity]:
+        self.last_fetch_error = None
         try:
             response = await self.client.get(LISTING_URL)
             response.raise_for_status()
         except Exception as exc:  # noqa: BLE001
+            self._mark_fetch_error(exc)
             log.warning("undp_procurement.fetch_failed", error=str(exc))
             return
 
         count = 0
         for notice in _extract_notices(response.text):
-            text = f"{notice.title} {notice.office} {notice.process} {notice.reference}"
+            override = NOTICE_OVERRIDES.get(notice.reference, {})
+            title = str(override.get("title") or notice.title)
+            summary = str(
+                override.get("summary")
+                or (
+                    f"UNDP procurement opportunity in {notice.office}. "
+                    f"Reference number: {notice.reference}."
+                )
+            )
+            text = f"{title} {notice.office} {notice.process} {notice.reference}"
             tags = _unique([*self.default_tags, *_infer_tags(text)])
             count += 1
             yield Opportunity(
                 source=self.slug,
                 source_url=notice.url,  # type: ignore[arg-type]
                 type=OpportunityType.TENDER,
-                title=notice.title,
-                summary=(
-                    f"UNDP procurement opportunity in {notice.office}. "
-                    f"Reference number: {notice.reference}."
-                ),
+                title=title,
+                summary=summary,
                 funder="United Nations Development Programme",
                 deadline=notice.deadline,
                 tags=tags,
@@ -267,6 +281,7 @@ class UndpProcurementSource(BaseSource):
                     "office": notice.office,
                     "process": notice.process,
                     "listing_url": LISTING_URL,
+                    **({"i18n": override["i18n"]} if override.get("i18n") else {}),
                 },
             )
 
