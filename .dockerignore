@@ -13,11 +13,15 @@ __pycache__/
 .env
 .env.*
 !.env.example
+.release.env
+.deployed-revision
+.deployed-at
 
-data/*.db
-data/*.sqlite
-data/*.sqlite3
-data/*.db-journal
+data/
+work/
+output/
+.playwright-cli/
+.qazfund-release-staging/
 
 *.pyc
 *.pyo

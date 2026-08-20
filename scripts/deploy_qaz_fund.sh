@@ -6,7 +6,6 @@ DEPLOY_HOST="${DEPLOY_HOST:-}"
 DEPLOY_PATH="${DEPLOY_PATH:-/opt/grant-radar}"
 COMPOSE_FILES="${COMPOSE_FILES:--f docker-compose.yml -f docker-compose.prod.yml}"
 ENV_FILE="${ENV_FILE:-.env.prod}"
-RSYNC_DELETE="${RSYNC_DELETE:-0}"
 READY_URL="${READY_URL:-http://127.0.0.1:8000/ready}"
 READY_ATTEMPTS="${READY_ATTEMPTS:-30}"
 READY_DELAY="${READY_DELAY:-2}"
@@ -17,6 +16,7 @@ WORKER_READY_DELAY="${WORKER_READY_DELAY:-2}"
 PUBLIC_URL="${PUBLIC_URL:-}"
 REQUIRE_PUBLIC_VERIFY="${REQUIRE_PUBLIC_VERIFY:-1}"
 MIN_FREE_BYTES="${MIN_FREE_BYTES:-21474836480}"
+SOURCE_BACKUP_ROOT="${SOURCE_BACKUP_ROOT:-/var/backups/grant-radar/source-sync}"
 RECONCILE_SOURCE_DUMP="${RECONCILE_SOURCE_DUMP:-}"
 RECONCILE_SOURCE_DUMP_SHA256="${RECONCILE_SOURCE_DUMP_SHA256:-}"
 RECONCILE_EXPECTED_SOURCE_COUNT="${RECONCILE_EXPECTED_SOURCE_COUNT:-}"
@@ -44,6 +44,7 @@ fi
 REVISION="$(git rev-parse HEAD)"
 DEPLOYED_AT="$(date -u +%Y-%m-%dT%H:%M:%SZ)"
 BUILT_AT="$DEPLOYED_AT"
+RELEASE_STAMP="$(date -u +%Y%m%dT%H%M%SZ)"
 if command -v sha256sum >/dev/null 2>&1; then
   ARTIFACT_DIGEST="sha256:$(git archive "$REVISION" | sha256sum | awk '{print $1}')"
 else
@@ -96,22 +97,39 @@ printf 'QAZ.FUND preflight capacity gate passed: free=%s required=%s.\n' \
 QAZ_FUND_CAPACITY_PREFLIGHT
 }
 
+run_remote_capacity_preflight
+
+# Build the transport tree from Git, not from the checkout.  This prevents
+# ignored local files or residue from an older remote release entering the
+# production Docker context while preserving operational state explicitly.
+SOURCE_STAGE="$(mktemp -d "${TMPDIR:-/tmp}/qaz-fund-source.${REVISION:0:12}.XXXXXX")"
+cleanup_source_stage() {
+  rm -rf -- "$SOURCE_STAGE"
+}
+trap cleanup_source_stage EXIT
+git archive "$REVISION" | tar -x -C "$SOURCE_STAGE"
+
+SOURCE_BACKUP_DIR="$SOURCE_BACKUP_ROOT/$RELEASE_STAMP-${REVISION:0:12}"
+printf -v source_backup_command 'install -d -m 700 %q' "$SOURCE_BACKUP_DIR"
+ssh "$DEPLOY_HOST" "$source_backup_command"
+
 RSYNC_ARGS=(
   -az
+  --delete-delay
+  --backup
+  "--backup-dir=$SOURCE_BACKUP_DIR"
+  --exclude ".env.prod*"
+  --exclude ".release.env"
+  --exclude ".deployed-revision"
+  --exclude ".deployed-at"
   --exclude ".git"
   --exclude ".venv"
-  --exclude "__pycache__"
-  --exclude ".pytest_cache"
-  --exclude ".mypy_cache"
   --exclude "work"
+  --exclude "data"
 )
 
-if [[ "$RSYNC_DELETE" == "1" ]]; then
-  RSYNC_ARGS+=(--delete)
-fi
-
-run_remote_capacity_preflight
-rsync "${RSYNC_ARGS[@]}" "$ROOT_DIR/" "$DEPLOY_HOST:$DEPLOY_PATH/"
+rsync "${RSYNC_ARGS[@]}" "$SOURCE_STAGE/" "$DEPLOY_HOST:$DEPLOY_PATH/"
+echo "Exact source sync completed; replaced files retained in $SOURCE_BACKUP_DIR"
 
 ssh "$DEPLOY_HOST" \
   "cd '$DEPLOY_PATH' && env \

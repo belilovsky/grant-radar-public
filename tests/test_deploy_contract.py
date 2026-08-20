@@ -7,16 +7,21 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[1]
 
 
-def test_deploy_script_requires_explicit_delete_opt_in() -> None:
+def test_deploy_script_syncs_an_exact_git_archive_and_preserves_runtime_state() -> None:
     script = (ROOT / "scripts" / "deploy_qaz_fund.sh").read_text()
 
-    assert 'RSYNC_DELETE="${RSYNC_DELETE:-0}"' in script
-    assert 'if [[ "$RSYNC_DELETE" == "1" ]]; then' in script
-    assert "RSYNC_ARGS+=(--delete)" in script
+    assert 'git archive "$REVISION" | tar -x -C "$SOURCE_STAGE"' in script
+    assert "--delete-delay" in script
+    assert "--backup" in script
+    assert '"--backup-dir=$SOURCE_BACKUP_DIR"' in script
     assert (
-        'rsync "${RSYNC_ARGS[@]}" "$ROOT_DIR/" "$DEPLOY_HOST:$DEPLOY_PATH/"' in script
+        'rsync "${RSYNC_ARGS[@]}" "$SOURCE_STAGE/" "$DEPLOY_HOST:$DEPLOY_PATH/"'
+        in script
     )
+    assert '--exclude ".env.prod*"' in script
+    assert '--exclude ".release.env"' in script
     assert '--exclude "work"' in script
+    assert '--exclude "data"' in script
 
 
 def test_deploy_script_checks_capacity_before_remote_source_changes() -> None:
@@ -24,7 +29,7 @@ def test_deploy_script_checks_capacity_before_remote_source_changes() -> None:
 
     preflight = script.index("run_remote_capacity_preflight\n")
     rsync = script.index(
-        'rsync "${RSYNC_ARGS[@]}" "$ROOT_DIR/" "$DEPLOY_HOST:$DEPLOY_PATH/"'
+        'rsync "${RSYNC_ARGS[@]}" "$SOURCE_STAGE/" "$DEPLOY_HOST:$DEPLOY_PATH/"'
     )
     assert preflight < rsync
     assert "QAZ.FUND preflight capacity gate failed" in script
@@ -34,10 +39,31 @@ def test_deploy_script_checks_capacity_before_remote_source_changes() -> None:
     )
 
 
-def test_deploy_script_no_longer_uses_unconditional_delete() -> None:
+def test_deploy_script_backs_up_replaced_source_before_exact_sync() -> None:
     script = (ROOT / "scripts" / "deploy_qaz_fund.sh").read_text()
 
-    assert "rsync -az --delete" not in script
+    backup_dir = script.index('ssh "$DEPLOY_HOST" "$source_backup_command"')
+    rsync = script.index(
+        'rsync "${RSYNC_ARGS[@]}" "$SOURCE_STAGE/" "$DEPLOY_HOST:$DEPLOY_PATH/"'
+    )
+    assert backup_dir < rsync
+    assert "Exact source sync completed; replaced files retained" in script
+
+
+def test_production_context_excludes_runtime_and_browser_artifacts() -> None:
+    dockerignore = (ROOT / ".dockerignore").read_text().splitlines()
+
+    for path in (
+        ".release.env",
+        ".deployed-revision",
+        ".deployed-at",
+        "data/",
+        "work/",
+        "output/",
+        ".playwright-cli/",
+        ".qazfund-release-staging/",
+    ):
+        assert path in dockerignore
 
 
 def test_deploy_script_waits_for_ready_endpoint() -> None:
