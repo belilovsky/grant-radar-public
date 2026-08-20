@@ -8,7 +8,7 @@ import sqlalchemy as sa
 
 from alembic import op
 
-revision: str = "0007_opportunity_publication_state"
+revision: str = "0007_publication_state"
 down_revision: Union[str, None] = "0006_opportunity_versions"
 branch_labels: Union[str, Sequence[str], None] = None
 depends_on: Union[str, Sequence[str], None] = None

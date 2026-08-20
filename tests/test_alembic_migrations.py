@@ -16,6 +16,7 @@ pytest.importorskip("alembic")
 
 from alembic import command  # noqa: E402
 from alembic.config import Config  # noqa: E402
+from alembic.script import ScriptDirectory  # noqa: E402
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
 ALEMBIC_INI = REPO_ROOT / "alembic.ini"
@@ -35,6 +36,16 @@ def alembic_cfg(tmp_path, monkeypatch):
 def test_upgrade_head_creates_tables(alembic_cfg):
     command.upgrade(alembic_cfg, "head")
     # If we got here without raising, schema was created.
+
+
+def test_revision_ids_fit_postgresql_alembic_version_column(alembic_cfg):
+    """PostgreSQL's default Alembic version column is VARCHAR(32)."""
+    revisions = ScriptDirectory.from_config(alembic_cfg).walk_revisions()
+    oversized = [
+        revision.revision for revision in revisions if len(revision.revision) > 32
+    ]
+
+    assert oversized == []
 
 
 def test_downgrade_to_base_drops_tables(alembic_cfg):
