@@ -32,6 +32,7 @@ COLLECTION_NAME = "qazfund-public-opportunities-v1"
 EMBEDDING_MODEL = "BAAI/bge-m3"
 RERANKER_MODEL = "BAAI/bge-reranker-v2-m3"
 VECTOR_SIZE = 1024
+MODEL_SNAPSHOT_IGNORE_PATTERNS = ("onnx/*", "openvino/*")
 
 
 def _positive_int(name: str, default: int, *, maximum: int) -> int:
@@ -65,6 +66,16 @@ def _catalog_timeout_seconds() -> float:
 
 def _qdrant_url() -> str:
     return os.environ.get("QDRANT_URL", "http://qdrant:6333").strip()
+
+
+def _model_snapshot_path(repository: str) -> str:
+    """Download only files used by the PyTorch semantic runtime."""
+    from huggingface_hub import snapshot_download
+
+    return snapshot_download(
+        repository,
+        ignore_patterns=list(MODEL_SNAPSHOT_IGNORE_PATTERNS),
+    )
 
 
 @dataclass
@@ -109,11 +120,13 @@ class BgeM3QdrantBackend:
             ) from exc
         self._models = models
         self._client = QdrantClient(url=_qdrant_url(), timeout=15)
+        embedding_path = _model_snapshot_path(EMBEDDING_MODEL)
+        reranker_path = _model_snapshot_path(RERANKER_MODEL)
         self._embedding = BGEM3FlagModel(
-            EMBEDDING_MODEL,
+            embedding_path,
             use_fp16=False,
         )
-        self._reranker = FlagReranker(RERANKER_MODEL, use_fp16=False)
+        self._reranker = FlagReranker(reranker_path, use_fp16=False)
         self._ensure_collection()
 
     def _ensure_collection(self) -> None:
