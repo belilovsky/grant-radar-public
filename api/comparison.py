@@ -13,8 +13,8 @@ from uuid import UUID
 
 from qazstack.opportunities import public_lifecycle
 
+from api.presentation import format_public_amount, opportunity_presentation
 from core.models import Opportunity
-from sources import PARSERS
 
 COMPARISON_SCHEMA_VERSION = "comparison.v1"
 MAX_COMPARISON_ITEMS = 4
@@ -122,22 +122,17 @@ def _text(value: Any) -> str | None:
     return normalized or None
 
 
-def _source_label(item: Opportunity) -> str:
-    source_cls = PARSERS.get(item.source)
-    if source_cls is not None:
-        return str(source_cls.name)
-    return str(item.source).replace("_", " ").strip().title() or "Source"
+def _source_label(item: Opportunity, *, lang: str) -> str:
+    return opportunity_presentation(item, lang=lang).source
 
 
-def _amount(item: Opportunity, unknown: str) -> dict[str, Any]:
+def _amount(item: Opportunity, unknown: str, *, lang: str) -> dict[str, Any]:
     minimum = item.amount_min
     maximum = item.amount_max
     if minimum is None and maximum is None:
         return {"min": None, "max": None, "currency": None, "display": unknown}
     currency = _text(item.currency) or unknown
-    display = f"{minimum or maximum}–{maximum or minimum} {currency}"
-    if minimum == maximum or minimum is None or maximum is None:
-        display = f"{minimum or maximum} {currency}"
+    display = format_public_amount(minimum, maximum, currency, lang=lang)
     return {
         "min": str(minimum) if minimum is not None else None,
         "max": str(maximum) if maximum is not None else None,
@@ -146,11 +141,12 @@ def _amount(item: Opportunity, unknown: str) -> dict[str, Any]:
     }
 
 
-def _field_value(item: Opportunity, field: str, *, unknown: str) -> Any:
+def _field_value(item: Opportunity, field: str, *, unknown: str, lang: str) -> Any:
+    presentation = opportunity_presentation(item, lang=lang)
     if field == "funder":
-        return _text(item.funder) or unknown
+        return presentation.organisation or unknown
     if field == "source":
-        return _text(item.source) or unknown
+        return presentation.source or unknown
     if field == "type":
         return item.type.value
     if field == "lifecycle":
@@ -158,7 +154,7 @@ def _field_value(item: Opportunity, field: str, *, unknown: str) -> Any:
     if field == "deadline":
         return item.deadline.isoformat() if item.deadline else unknown
     if field == "amount":
-        return _amount(item, unknown)
+        return _amount(item, unknown, lang=lang)
     if field == "eligibility":
         return list(item.eligibility) or [unknown]
     if field == "tags":
@@ -168,11 +164,11 @@ def _field_value(item: Opportunity, field: str, *, unknown: str) -> Any:
     raise KeyError(field)
 
 
-def _field_present(item: Opportunity, field: str) -> bool:
+def _field_present(item: Opportunity, field: str, *, lang: str) -> bool:
     if field == "funder":
-        return bool(_text(item.funder))
+        return bool(opportunity_presentation(item, lang=lang).organisation)
     if field == "source":
-        return bool(_text(item.source))
+        return bool(opportunity_presentation(item, lang=lang).source)
     if field == "type":
         return bool(item.type)
     if field == "lifecycle":
@@ -208,7 +204,9 @@ def build_comparison_snapshot(
     fields = tuple(_FIELD_LABELS)
     field_coverage: dict[str, dict[str, Any]] = {}
     for field in fields:
-        present = sum(1 for item in selected if _field_present(item, field))
+        present = sum(
+            1 for item in selected if _field_present(item, field, lang=active_lang)
+        )
         total = len(selected)
         field_coverage[field] = {
             "label": _FIELD_LABELS[field][active_lang],
@@ -222,15 +220,19 @@ def build_comparison_snapshot(
         cards.append(
             {
                 "id": str(item.id),
-                "title": item.title,
+                "title": opportunity_presentation(item, lang=active_lang).title,
                 "summary": item.summary,
-                "source_label": _source_label(item),
+                "source_label": _source_label(item, lang=active_lang),
                 "fields": {
-                    field: _field_value(item, field, unknown=copy["unknown"])
+                    field: _field_value(
+                        item, field, unknown=copy["unknown"], lang=active_lang
+                    )
                     for field in fields
                 },
                 "unknown_fields": [
-                    field for field in fields if not _field_present(item, field)
+                    field
+                    for field in fields
+                    if not _field_present(item, field, lang=active_lang)
                 ],
             }
         )

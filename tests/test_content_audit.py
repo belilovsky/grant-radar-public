@@ -4,6 +4,8 @@ from __future__ import annotations
 
 from datetime import datetime, timezone
 
+import pytest
+
 try:
     UTC = timezone.utc
 except AttributeError:  # pragma: no cover - Python < 3.11 compatibility
@@ -298,7 +300,10 @@ def test_content_audit_accepts_monitored_watch_records_without_dates():
     assert result.missing_deadline_titles == []
 
 
-def test_content_audit_allows_closed_seasonal_source_without_items():
+@pytest.mark.parametrize("source_slug", ["canada_cfli_ca", "unicef_kazakhstan"])
+def test_content_audit_allows_verified_intermittent_source_without_items(
+    source_slug: str,
+):
     result = analyze_content(
         coverage={
             "enabled_sources": 2,
@@ -311,7 +316,7 @@ def test_content_audit_allows_closed_seasonal_source_without_items():
                     "last_discovered_at": "2026-07-13T00:00:00+00:00",
                 },
                 {
-                    "slug": "canada_cfli_ca",
+                    "slug": source_slug,
                     "enabled": True,
                     "items": 0,
                     "last_discovered_at": None,

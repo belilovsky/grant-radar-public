@@ -2,11 +2,13 @@
 
 from __future__ import annotations
 
+from datetime import date
 from html import escape
 from typing import Any
 
 from api.avds import AVDS_CSS, AVDS_FONT_HEAD
 from api.comparison import comparison_copy, comparison_field_labels
+from api.presentation import format_public_date, localized_public_label
 from api.public_meta import analytics_head_html, og_image_url
 
 _VALUE_LABELS: dict[str, dict[str, dict[str, str]]] = {
@@ -76,11 +78,16 @@ def _display(value: Any, *, field: str, lang: str) -> str:
         return str(value.get("display") or "")
     if isinstance(value, list):
         return " · ".join(
-            str(part).replace("_", " ").replace("-", " ").strip()
+            localized_public_label(part, lang=lang)
             for part in value
             if str(part).strip()
         )
     normalized = str(value or "")
+    if field == "deadline" and normalized:
+        try:
+            return format_public_date(date.fromisoformat(normalized), lang=lang)
+        except ValueError:
+            pass
     return _VALUE_LABELS.get(field, {}).get(lang, {}).get(normalized, normalized)
 
 
@@ -161,6 +168,45 @@ def render_comparison_page(
         if cards
         else f'<div class="empty" data-avds-component="empty-state">{escape(copy["not_enough"])}</div>'
     )
+    mobile_cards: list[str] = []
+    for card in cards:
+        facts: list[str] = []
+        for field in fields:
+            raw_value = (card.get("fields") or {}).get(field)
+            if field == "source":
+                raw_value = card.get("source_label") or raw_value
+            if field == "source_url" and str(raw_value or "").strip():
+                rendered_value = (
+                    '<a class="source-link" target="_blank" rel="noopener noreferrer" '
+                    f'href="{escape(str(raw_value), quote=True)}">'
+                    f'{escape(copy["source_link"])}</a>'
+                )
+            else:
+                rendered_value = escape(
+                    _display(raw_value, field=field, lang=lang) or copy["unknown"]
+                )
+            facts.append(
+                f'<div class="compare-fact"><dt>{escape(labels[field])}</dt>'
+                f"<dd>{rendered_value}</dd></div>"
+            )
+        detail_href = (
+            (base + "/opportunity/" if base else "/opportunity/")
+            + str(card["id"])
+            + "?lang="
+            + lang
+        )
+        mobile_cards.append(
+            '<article class="compare-card" data-avds-component="comparison-card">'
+            f'<h3><a href="{escape(detail_href, quote=True)}">'
+            f'{escape(str(card.get("title") or copy["unknown"]))}</a></h3>'
+            f'<dl>{"".join(facts)}</dl></article>'
+        )
+    mobile_markup = (
+        '<div class="compare-cards-mobile" data-avds-pattern="comparison-stacked">'
+        f'{"".join(mobile_cards)}</div>'
+        if mobile_cards
+        else ""
+    )
     warnings = " ".join(str(value) for value in payload.get("warnings") or [])
     warning_markup = (
         f'<aside class="notice" data-avds-component="evidence-summary">{escape(warnings)}</aside>'
@@ -187,14 +233,14 @@ def render_comparison_page(
     *{{box-sizing:border-box}} body{{margin:0;background:var(--color-bg);color:var(--color-text);font-family:var(--av-font-sans);line-height:1.5}}
     .shell{{width:min(1920px,calc(100% - 48px));margin:0 auto;padding:20px 0 48px}} .topbar{{display:flex;justify-content:space-between;align-items:center;gap:18px;margin-bottom:16px}} .back{{font-size:13px;font-weight:750;text-decoration:none;color:var(--color-text-muted)}} .back:hover{{color:var(--color-accent)}} .langs{{display:flex;gap:6px}} .langs a{{padding:5px 8px;border-bottom:2px solid transparent;color:var(--color-text-muted);font-size:12px;font-weight:800;text-decoration:none}} .langs a.active{{color:var(--color-text);border-color:var(--color-accent)}}
     .hero{{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:24px;align-items:end;padding:28px;border:1px solid var(--color-border);border-radius:var(--av-radius-lg);background:linear-gradient(135deg,var(--color-surface),var(--color-accent-subtle));box-shadow:var(--shadow-md)}} .eyebrow{{color:var(--color-accent);font-size:12px;font-weight:800;letter-spacing:.06em;text-transform:uppercase}} h1{{margin:8px 0 10px;font-size:clamp(30px,4vw,48px);line-height:1.06}} .hero p{{max-width:70ch;margin:0;color:var(--color-text-muted);font-size:15px}} .hero-meta{{display:grid;grid-template-columns:repeat(2,minmax(120px,1fr));gap:10px}} .meta{{padding:13px;border:1px solid var(--color-border);border-radius:var(--av-radius-md);background:rgb(255 255 255 / .76)}} .meta strong{{display:block;font-size:25px;line-height:1}} .meta span{{display:block;margin-top:5px;color:var(--color-text-muted);font-size:11px;font-weight:750}}
-    .section{{margin-top:22px;padding:22px;border:1px solid var(--color-border);border-radius:var(--av-radius-lg);background:var(--color-surface);box-shadow:var(--shadow-xs)}} .section-head{{display:flex;justify-content:space-between;align-items:end;gap:16px;margin-bottom:15px}} .section h2{{margin:0;font-size:23px;line-height:1.15}} .section-note{{margin:3px 0 0;color:var(--color-text-muted);font-size:13px}} .json-link{{color:var(--color-accent);font-size:12px;font-weight:750;text-decoration:none;white-space:nowrap}} .table-scroll-hint{{display:none}} .table-wrap{{overflow:auto;border:1px solid var(--color-border);border-radius:var(--av-radius-md);scrollbar-gutter:stable}} .table-wrap:focus-visible{{outline:2px solid var(--color-accent);outline-offset:3px}} .compare-table{{width:100%;min-width:760px;border-collapse:collapse;font-size:13px}} .compare-table th,.compare-table td{{padding:13px 14px;border-bottom:1px solid var(--color-border-subtle);text-align:left;vertical-align:top}} .compare-table thead th{{background:var(--color-surface-subtle);font-size:13px}} .compare-table thead th:not(:first-child){{min-width:190px}} .compare-table thead a{{color:var(--color-text);font-size:14px;font-weight:800;text-decoration:none}} .compare-table tbody th{{width:150px;background:var(--color-surface-subtle);color:var(--color-text-muted);font-size:12px;font-weight:800}} .compare-table tbody tr:last-child th,.compare-table tbody tr:last-child td{{border-bottom:0}} .source-link{{color:var(--color-accent);font-weight:750;text-decoration:none}} .notice{{margin-top:14px;padding:12px 14px;border-left:4px solid var(--color-accent);border-radius:var(--av-radius-md);background:var(--color-accent-subtle);color:var(--color-text-muted);font-size:13px}} .empty{{padding:36px 20px;text-align:center;color:var(--color-text-muted)}} .footer{{display:flex;justify-content:space-between;gap:14px;flex-wrap:wrap;margin-top:22px;padding-top:16px;border-top:1px solid var(--color-border);color:var(--color-text-muted);font-size:12px}} .footer a{{font-weight:750}}
+    .section{{margin-top:22px;padding:22px;border:1px solid var(--color-border);border-radius:var(--av-radius-lg);background:var(--color-surface);box-shadow:var(--shadow-xs)}} .section-head{{display:flex;justify-content:space-between;align-items:end;gap:16px;margin-bottom:15px}} .section h2{{margin:0;font-size:23px;line-height:1.15}} .section-note{{margin:3px 0 0;color:var(--color-text-muted);font-size:13px}} .json-link{{color:var(--color-accent);font-size:12px;font-weight:750;text-decoration:none;white-space:nowrap}} .table-scroll-hint{{display:none}} .table-wrap{{overflow:auto;border:1px solid var(--color-border);border-radius:var(--av-radius-md);scrollbar-gutter:stable}} .table-wrap:focus-visible{{outline:2px solid var(--color-accent);outline-offset:3px}} .compare-table{{width:100%;min-width:760px;border-collapse:collapse;font-size:13px}} .compare-table th,.compare-table td{{padding:13px 14px;border-bottom:1px solid var(--color-border-subtle);text-align:left;vertical-align:top}} .compare-table thead th{{background:var(--color-surface-subtle);font-size:13px}} .compare-table thead th:not(:first-child){{min-width:190px}} .compare-table thead a{{color:var(--color-text);font-size:14px;font-weight:800;text-decoration:none}} .compare-table tbody th{{width:150px;background:var(--color-surface-subtle);color:var(--color-text-muted);font-size:12px;font-weight:800}} .compare-table tbody tr:last-child th,.compare-table tbody tr:last-child td{{border-bottom:0}} .source-link{{color:var(--color-accent);font-weight:750;text-decoration:none}} .compare-cards-mobile{{display:none}} .notice{{margin-top:14px;padding:12px 14px;border-left:4px solid var(--color-accent);border-radius:var(--av-radius-md);background:var(--color-accent-subtle);color:var(--color-text-muted);font-size:13px}} .empty{{padding:36px 20px;text-align:center;color:var(--color-text-muted)}} .footer{{display:flex;justify-content:space-between;gap:14px;flex-wrap:wrap;margin-top:22px;padding-top:16px;border-top:1px solid var(--color-border);color:var(--color-text-muted);font-size:12px}} .footer a{{color:var(--color-text);font-weight:750;text-decoration:none}}
     @media(min-width:1800px){{.shell{{width:min(2080px,calc(100% - 128px))}} .hero{{grid-template-columns:minmax(0,1fr) 440px;padding:34px 38px}} .section{{padding:28px}} .compare-table{{font-size:14px}} .compare-table thead th:not(:first-child){{min-width:240px}}}}
-    @media(max-width:820px){{.shell{{width:min(100% - 24px,680px);padding-top:12px}} .hero{{grid-template-columns:1fr;padding:20px}} .section{{padding:16px}} .section-head{{align-items:start;flex-direction:column}} .hero-meta{{grid-template-columns:repeat(2,minmax(0,1fr))}} .back,.langs a,.json-link,.compare-table a,.footer a{{display:inline-flex;align-items:center;min-height:var(--av-control-height-lg)}} .langs a,.json-link{{justify-content:center;min-width:var(--av-control-height-lg)}} .table-scroll-hint{{display:block;margin:0 0 8px;color:var(--color-text-muted);font-size:12px;font-weight:700}} .table-wrap{{overscroll-behavior-inline:contain}} .compare-table{{min-width:680px}}}}
+    @media(max-width:820px){{.shell{{width:min(100% - 24px,680px);padding-top:12px}} .hero{{grid-template-columns:1fr;padding:20px}} .section{{padding:16px}} .section-head{{align-items:start;flex-direction:column}} .hero-meta{{grid-template-columns:repeat(2,minmax(0,1fr))}} .back,.langs a,.json-link,.compare-card a,.footer a{{display:inline-flex;align-items:center;min-height:var(--av-control-height-lg)}} .langs a,.json-link{{justify-content:center;min-width:var(--av-control-height-lg)}} .table-scroll-hint,.table-wrap{{display:none}} .compare-cards-mobile{{display:grid;gap:12px}} .compare-card{{padding:16px;border:1px solid var(--color-border);border-radius:var(--av-radius-md);background:var(--color-surface-subtle)}} .compare-card h3{{margin:0 0 12px;font-size:17px;line-height:1.25}} .compare-card h3 a{{color:var(--color-text);text-decoration:none}} .compare-card dl{{margin:0;display:grid;gap:0}} .compare-fact{{display:grid;grid-template-columns:minmax(100px,.7fr) minmax(0,1fr);gap:12px;padding:9px 0;border-top:1px solid var(--color-border-subtle)}} .compare-fact dt{{color:var(--color-text-muted);font-size:11px;font-weight:800}} .compare-fact dd{{min-width:0;margin:0;font-size:12px;overflow-wrap:anywhere}}}}
   </style>
 </head>
 <body><main class="shell">
   <div class="topbar"><a class="back" href="{escape(home, quote=True)}">← {escape(copy["back"])}</a><nav class="langs" aria-label="Language"><a class="{'active' if lang == 'kk' else ''}" href="{escape(language_hrefs['kk'], quote=True)}" lang="kk"{language_current['kk']}>KAZ</a><a class="{'active' if lang == 'ru' else ''}" href="{escape(language_hrefs['ru'], quote=True)}" lang="ru"{language_current['ru']}>RU</a><a class="{'active' if lang == 'en' else ''}" href="{escape(language_hrefs['en'], quote=True)}" lang="en"{language_current['en']}>EN</a></nav></div>
   <section class="hero" data-avds-component="hero-band"><div><span class="eyebrow">QAZ.FUND</span><h1>{escape(copy["heading"])}</h1><p>{escape(copy["intro"])}</p></div><div class="hero-meta"><div class="meta"><strong>{len(cards)}</strong><span>{escape(copy["cards"])}</span></div><div class="meta"><strong>{escape(status_label)}</strong><span>{escape(copy["status"])}</span></div></div></section>
-  <section class="section"><div class="section-head"><div><h2>{escape(copy["table_heading"])}</h2><p class="section-note">{escape(copy["warning"])}</p></div><a class="json-link" href="{escape(json_href, quote=True)}">JSON</a></div>{table_markup}{warning_markup}</section>
+  <section class="section"><div class="section-head"><div><h2>{escape(copy["table_heading"])}</h2><p class="section-note">{escape(copy["warning"])}</p></div><a class="json-link" href="{escape(json_href, quote=True)}">JSON</a></div>{table_markup}{mobile_markup}{warning_markup}</section>
   <footer class="footer"><a class="footer-contact" href="mailto:contact@qaz.fund">contact@qaz.fund</a><span>{escape(copy["footer"])}</span><a href="{escape(home, quote=True)}">{escape(copy["back"])}</a></footer>
 </main></body></html>"""

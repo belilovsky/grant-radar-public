@@ -34,7 +34,7 @@ def test_parse_comparison_ids_is_stable_and_deduplicated() -> None:
     assert parse_comparison_ids(f" {item_id},{item_id}, ") == [item_id]
 
 
-def test_comparison_snapshot_keeps_unknown_fields_explicit() -> None:
+def test_comparison_snapshot_keeps_unknown_fields_and_resolves_known_source() -> None:
     first = _item()
     second = _item(
         title="Second programme",
@@ -54,10 +54,14 @@ def test_comparison_snapshot_keeps_unknown_fields_explicit() -> None:
     assert payload["schema_version"] == "comparison.v1"
     assert payload["status"] == "partial"
     assert len(payload["cards"]) == 2
-    assert "funder" in payload["cards"][1]["unknown_fields"]
-    assert payload["field_coverage"]["funder"]["present"] == 1
+    assert "funder" not in payload["cards"][1]["unknown_fields"]
+    assert payload["cards"][1]["fields"]["funder"] == "Официальный источник"
+    assert payload["field_coverage"]["funder"]["present"] == 2
     assert payload["selection"]["missing_ids"]
     assert payload["as_of"] == "2026-08-04"
+    assert payload["cards"][0]["fields"]["amount"]["display"] == (
+        "1\u202f000 – 5\u202f000 USD"
+    )
 
 
 def test_public_compare_json_is_source_grounded(monkeypatch) -> None:
@@ -107,7 +111,9 @@ def test_public_compare_json_is_source_grounded(monkeypatch) -> None:
     )
     assert ".table-scroll-hint" in page.text
     assert "@media(max-width:820px)" in page.text
-    assert ".compare-table a,.footer a" in page.text
+    assert 'data-avds-pattern="comparison-stacked"' in page.text
+    assert ".compare-card a,.footer a" in page.text
+    assert ".table-scroll-hint,.table-wrap{display:none}" in page.text
     assert ".langs a,.json-link" in page.text
     assert "min-width:var(--av-control-height-lg)" in page.text
 

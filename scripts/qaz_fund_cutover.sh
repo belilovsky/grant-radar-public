@@ -5,7 +5,7 @@ set -euo pipefail
 DOMAIN="${QAZ_FUND_DOMAIN:-qaz.fund}"
 WWW_DOMAIN="${QAZ_FUND_WWW_DOMAIN:-www.qaz.fund}"
 SERVER_IP="${QAZ_FUND_SERVER_IP:-}"
-UPSTREAM="${QAZ_FUND_UPSTREAM:-http://127.0.0.1:8000}"
+UPSTREAM="${QAZ_FUND_UPSTREAM:-http://127.0.0.1:8610}"
 EMAIL="${QAZ_FUND_CERT_EMAIL:-}"
 SITE_AVAILABLE="/etc/nginx/sites-available/${DOMAIN}.conf"
 SITE_ENABLED="/etc/nginx/sites-enabled/${DOMAIN}.conf"

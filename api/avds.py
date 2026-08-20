@@ -23,7 +23,7 @@ AVDS_CSS = """
       --av-color-slate-200: #d7d2ca;
       --av-color-slate-300: #c0c0b8;
       --av-color-slate-400: #87928d;
-      --av-color-slate-500: #62726f;
+      --av-color-slate-500: #5d6d6a;
       --av-color-slate-700: #385354;
       --av-color-slate-900: #00343B;
       --av-color-emerald-50: #eaf5ef;

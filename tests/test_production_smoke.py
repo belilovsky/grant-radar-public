@@ -19,6 +19,7 @@ def _transport(
     opportunity_count: int = 44,
     coverage_current: int = 44,
     insights_current: int = 44,
+    release_override: dict[str, object] | None = None,
 ) -> httpx.MockTransport:
     def handler(request: httpx.Request) -> httpx.Response:
         path = request.url.path
@@ -56,13 +57,22 @@ def _transport(
         if endpoint_path == "/health":
             return httpx.Response(200, json={"status": "ok", "items": 55})
         if endpoint_path == "/.well-known/release.json":
+            release_payload: dict[str, object] = {
+                "schemaVersion": "qaz-fund-release-v1",
+                "service": "qaz-fund",
+                "revision": "a" * 40,
+                "deployed_at": "2026-07-15T00:01:00Z",
+                "sourceSha": "a" * 40,
+                "sourceDirty": False,
+                "imageDigest": "sha256:" + "b" * 64,
+                "artifactDigest": "sha256:" + "c" * 64,
+                "builtAt": "2026-07-15T00:00:00Z",
+                "deployedAt": "2026-07-15T00:01:00Z",
+            }
+            release_payload.update(release_override or {})
             return httpx.Response(
                 200,
-                json={
-                    "service": "qaz-fund",
-                    "revision": "a" * 40,
-                    "deployed_at": "2026-07-15T00:00:00Z",
-                },
+                json=release_payload,
             )
         if endpoint_path == "/ready":
             return httpx.Response(
@@ -577,7 +587,7 @@ def _transport(
                 200,
                 json={
                     "schema_version": "avds-ui-contract-v1",
-                    "avds_source": {"version": "4.6.0"},
+                    "avds_source": {"version": "4.7.0"},
                     "runtime_neutral_patterns": {
                         "adopted": [
                             "evidence-summary",
@@ -688,6 +698,8 @@ def test_run_smoke_passes_for_expected_live_contract():
 
     assert result.health_items == 55
     assert result.release_revision == "a" * 40
+    assert result.release_image_digest == "sha256:" + "b" * 64
+    assert result.release_artifact_digest == "sha256:" + "c" * 64
     assert result.ready_backend == "database"
     assert result.coverage_sources == 23
     assert result.coverage_stale_sources == 1
@@ -699,6 +711,32 @@ def test_run_smoke_passes_for_expected_live_contract():
     assert all(result.dashboard_markers.values())
     assert result.english_dashboard is True
     assert all(result.discovery_surfaces.values())
+
+
+@pytest.mark.parametrize(
+    ("override", "message"),
+    [
+        ({"sourceDirty": True}, "release source is dirty"),
+        ({"imageDigest": None}, "release image digest is missing"),
+        ({"sourceSha": "d" * 40}, "release source SHA mismatch"),
+        ({"deployedAt": "2026-07-14T23:59:00Z"}, "timestamps are reversed"),
+    ],
+)
+def test_run_smoke_rejects_inexact_release_identity(
+    override: dict[str, object], message: str
+) -> None:
+    with pytest.raises(SmokeError, match=message):
+        run_smoke(
+            base_url="https://grant.example.org",
+            deadline_after="2026-05-23",
+            min_sources=23,
+            min_opportunities=40,
+            min_digest_items=1,
+            expect_backend="database",
+            forbidden=[],
+            timeout=1.0,
+            transport=_transport(release_override=override),
+        )
 
 
 def test_run_smoke_supports_dedicated_domain_root():

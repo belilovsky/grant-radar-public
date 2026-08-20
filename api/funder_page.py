@@ -295,8 +295,11 @@ def _opportunity_card(
         if item.deadline is not None
         else ""
     )
+    search_blob = " ".join(
+        [item.title, item.summary, primary_format, *public_tags]
+    ).lower()
     return f"""
-    <article class="opportunity-card">
+    <article class="opportunity-card" data-card-search="{escape(search_blob, quote=True)}">
       <div class="opportunity-head">
         <div>
           <h3><a href="{href}">{escape(item.title)}</a></h3>
@@ -471,11 +474,14 @@ def render_funder_page(
     )
     archive_section = (
         f"""
-    <section class="section">
-      <h2>{escape(str(copy["funder_archive_title"]))}</h2>
-      <p class="section-note">{escape(str(copy["funder_archive_note"]))}</p>
-      <div class="opportunity-list">{archive_markup}</div>
-    </section>
+    <details class="section archive-disclosure">
+      <summary><span>{escape(str(copy["funder_archive_title"]))}</span>
+        <strong>{len(archive_items)}</strong></summary>
+      <div class="archive-body">
+        <p class="section-note">{escape(str(copy["funder_archive_note"]))}</p>
+        <div class="opportunity-list">{archive_markup}</div>
+      </div>
+    </details>
         """
         if archive_markup
         else ""
@@ -493,6 +499,16 @@ def render_funder_page(
     )
     social_image = escape(og_image_url(site_origin, root_path), quote=True)
     analytics_head = analytics_head_html()
+    search_label = {
+        "ru": "Поиск по программам фонда",
+        "kk": "Қор бағдарламаларын іздеу",
+        "en": "Search this funder's programmes",
+    }[active_lang]
+    no_search_results = {
+        "ru": "По этому запросу программ не найдено.",
+        "kk": "Бұл сұрау бойынша бағдарлама табылмады.",
+        "en": "No programmes match this search.",
+    }[active_lang]
     ru_lang_class = "active" if active_lang == "ru" else ""
     kk_lang_class = "active" if active_lang == "kk" else ""
     en_lang_class = "active" if active_lang == "en" else ""
@@ -704,6 +720,29 @@ def render_funder_page(
       font-size: 14px;
       line-height: 1.45;
     }}
+    .funder-search {{
+      display:grid; gap:6px; margin-top:14px; color:var(--muted);
+      font-size:12px; font-weight:700;
+    }}
+    .funder-search input {{
+      width:100%; min-height:44px; padding:10px 12px; border:1px solid var(--line);
+      border-radius:var(--av-radius-md); background:var(--panel); color:var(--ink);
+    }}
+    .funder-search-empty {{ display:none; margin:12px 0 0; color:var(--muted); font-size:13px; }}
+    .opportunity-card[hidden],.archive-disclosure[hidden] {{ display:none !important; }}
+    .archive-disclosure {{ padding:0; overflow:clip; }}
+    .archive-disclosure > summary {{
+      min-height:64px; padding:16px; display:flex; align-items:center;
+      justify-content:space-between; gap:14px; list-style:none; cursor:pointer;
+      font-size:20px; font-weight:800;
+    }}
+    .archive-disclosure > summary::-webkit-details-marker {{ display:none; }}
+    .archive-disclosure > summary strong {{
+      display:grid; place-items:center; min-width:34px; height:34px; border-radius:999px;
+      background:var(--brand-soft); color:var(--brand); font-size:12px;
+    }}
+    .archive-disclosure[open] > summary {{ border-bottom:1px solid var(--line); }}
+    .archive-body {{ padding:16px; }}
     .topic-row {{
       display: flex;
       flex-wrap: wrap;
@@ -997,6 +1036,13 @@ def render_funder_page(
       <div class="stat-grid">{stat_markup}</div>
     </section>
 
+    <label class="funder-search" for="funder-program-search">
+      {escape(search_label)}
+      <input id="funder-program-search" type="search" autocomplete="off"
+        placeholder="{escape(search_label, quote=True)}">
+    </label>
+    <p class="funder-search-empty" id="funder-search-empty">{escape(no_search_results)}</p>
+
     <section class="section">
       <h2>{escape(str(copy["funder_live_title"]))}</h2>
       <p class="section-note">{escape(str(copy["funder_live_note"]))}</p>
@@ -1016,14 +1062,12 @@ def render_funder_page(
         )}
       </div>
     </section>
-    <footer class="site-footer"><a class="footer-contact" href="mailto:contact@qaz.fund">contact@qaz.fund</a>
+    <footer class="site-footer">
+      <a class="footer-contact" href="mailto:contact@qaz.fund">contact@qaz.fund</a>
       <nav class="site-footer-nav" aria-label="{escape(str(copy["views_aria"]), quote=True)}">
         <a href="{catalog_href}">{escape(str(copy["tab_opportunities"]))}</a>
         <a href="{sources_href}">{escape(str(copy["tab_sources"]))}</a>
         <a href="{insights_href}">{escape(str(copy["insights_link"]))}</a>
-        <a href="{terms_href}">{escape(str(copy["terms_link"]))}</a>
-        <a href="{data_policy_href}">{escape(str(copy["data_policy_link"]))}</a>
-        <a href="{attribution_href}">{escape(str(copy["attribution_link"]))}</a>
         <a href="{status_href}">{escape(str(copy["status_link"]))}</a>
         <a href="{docs_href}">{escape(str(copy["api_docs"]))}</a>
         <a href="{terms_href}">{escape(str(copy["footer_terms"]))}</a>
@@ -1037,5 +1081,29 @@ def render_funder_page(
       <p>{escape(str(copy["footer_disclaimer"]))}</p>
     </footer>
   </main>
+  <script>
+    (() => {{
+      const input = document.getElementById("funder-program-search");
+      const cards = [...document.querySelectorAll(".opportunity-card")];
+      const empty = document.getElementById("funder-search-empty");
+      const archive = document.querySelector(".archive-disclosure");
+      input.addEventListener("input", () => {{
+        const query = String(input.value || "").trim().toLowerCase();
+        let visible = 0;
+        cards.forEach((card) => {{
+          card.hidden = Boolean(query) && !(card.dataset.cardSearch || "").includes(query);
+          if (!card.hidden) visible += 1;
+        }});
+        if (archive) {{
+          const archiveVisible = [...archive.querySelectorAll(".opportunity-card")]
+            .some((card) => !card.hidden);
+          archive.hidden = Boolean(query) && !archiveVisible;
+          if (query && archiveVisible) archive.open = true;
+          if (!query) archive.hidden = false;
+        }}
+        empty.style.display = visible ? "none" : "block";
+      }});
+    }})();
+  </script>
 </body>
 </html>"""

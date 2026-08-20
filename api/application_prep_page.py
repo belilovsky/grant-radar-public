@@ -10,6 +10,7 @@ from typing import Any
 
 from api.avds import AVDS_CSS, AVDS_FONT_HEAD
 from api.dashboard_copy import dashboard_copy
+from api.integration_versions import AVDS_VERSION
 from api.public_meta import analytics_head_html
 from core.decision_support import program_truth
 from core.models import OpportunityDetail
@@ -46,20 +47,20 @@ def _deadline(value: date | None, lang: str) -> str:
 
 def _amount(detail: OpportunityDetail, lang: str) -> str:
     raw = detail.raw if isinstance(detail.raw, dict) else {}
+    values = [detail.amount_min, detail.amount_max]
+    if any(value is not None for value in values):
+        formatted = [
+            f"{value:,.0f}".replace(",", " ") for value in values if value is not None
+        ]
+        return "–".join(formatted) + f" {detail.currency}"
     amount_raw = str(raw.get("amount_raw") or "").strip()
     if amount_raw:
         return amount_raw
-    values = [detail.amount_min, detail.amount_max]
-    if all(value is None for value in values):
-        return {
-            "ru": "Не указана",
-            "kk": "Көрсетілмеген",
-            "en": "Not stated",
-        }.get(lang, "Not stated")
-    formatted = [
-        f"{value:,.0f}".replace(",", " ") for value in values if value is not None
-    ]
-    return "–".join(formatted) + f" {detail.currency}"
+    return {
+        "ru": "Не указана",
+        "kk": "Көрсетілмеген",
+        "en": "Not stated",
+    }.get(lang, "Not stated")
 
 
 def _checklist(detail: OpportunityDetail, lang: str) -> list[str]:
@@ -692,6 +693,107 @@ def render_application_prep_page(
         placeholder=copy["fit_placeholder"],
     )
 
+    def step(
+        number: int,
+        title: str,
+        note: str,
+        body: str,
+        *,
+        opened: bool = False,
+    ) -> str:
+        open_attr = " open" if opened else ""
+        return f"""
+        <details
+          class="panel step-panel"
+          data-step="{number}"
+          data-avds-component="Card"
+          {open_attr}
+        >
+          <summary class="step-summary">
+            <span class="step-number">{number:02d}</span>
+            <span class="step-copy">
+              <h2>{escape(title)}</h2>
+              <p>{escape(note)}</p>
+            </span>
+            <span class="step-progress" aria-live="polite">0/0</span>
+          </summary>
+          <div class="step-body">{body}</div>
+        </details>
+        """
+
+    applicant_step = step(
+        1,
+        copy["applicant"],
+        copy["applicant_note"],
+        f"""
+          <div class="field-grid">
+            {field("org_name", copy["org_name"], required=True)}
+            {field("legal_form", copy["legal_form"])}
+            {field("country", copy["country"], required=True)}
+            {field("contact", copy["contact"])}
+          </div>
+          <div class="field-grid single" style="margin-top:12px">{fit_field}</div>
+        """,
+        opened=True,
+    )
+    project_step = step(
+        2,
+        copy["project"],
+        copy["project_note"],
+        f"""
+          <div class="field-grid">
+            {field("project_name", copy["project_name"], required=True)}
+            {field("geography", copy["geography"])}
+            {field("problem", copy["problem"], textarea=True, required=True)}
+            {field("solution", copy["solution"], textarea=True, required=True)}
+            {field("beneficiaries", copy["beneficiaries"], textarea=True)}
+          </div>
+        """,
+    )
+    impact_step = step(
+        3,
+        copy["impact"],
+        copy["impact_note"],
+        f"""
+          <div class="field-grid">
+            {field("outcomes", copy["outcomes"], textarea=True, required=True)}
+            {field("indicators", copy["indicators"], textarea=True, required=True)}
+            {field("evidence", copy["evidence"], textarea=True)}
+          </div>
+        """,
+    )
+    delivery_step = step(
+        4,
+        copy["delivery"],
+        copy["delivery_note"],
+        f"""
+          <div class="field-grid">
+            {field("team", copy["team"], textarea=True, required=True)}
+            {field("timeline", copy["timeline"], textarea=True, required=True)}
+            {field("partners", copy["partners"], textarea=True)}
+            {field("risks", copy["risks"], textarea=True)}
+          </div>
+        """,
+    )
+    finance_step = step(
+        5,
+        copy["finance"],
+        copy["finance_note"],
+        f"""
+          <div class="field-grid">
+            {field("request_amount", copy["request_amount"], required=True)}
+            {field("cofinance", copy["cofinance"])}
+            {field("budget", copy["budget"], textarea=True, required=True)}
+          </div>
+        """,
+    )
+    documents_step = step(
+        6,
+        copy["documents"],
+        copy["documents_note"],
+        f'<div class="check-list">{checklist_markup}</div>',
+    )
+
     return f"""<!doctype html>
 <html lang="{active_lang}" data-avds="grant-radar" data-av-theme="light" data-theme="light">
 <head>
@@ -857,6 +959,50 @@ def render_application_prep_page(
     }}
     .panel-head h2 {{ margin: 0 0 4px; font-size: 20px; letter-spacing: -.025em; }}
     .panel-head p {{ max-width: 650px; margin: 0; color: var(--muted); font-size: 11px; }}
+    .step-panel {{ padding: 0; overflow: clip; }}
+    .step-summary {{
+      min-height: 76px;
+      padding: 16px 20px;
+      display: grid;
+      grid-template-columns: 36px minmax(0, 1fr) auto auto;
+      gap: 13px;
+      align-items: center;
+      cursor: pointer;
+      list-style: none;
+    }}
+    .step-summary::-webkit-details-marker {{ display: none; }}
+    .step-summary::after {{
+      content: "+";
+      width: 28px;
+      height: 28px;
+      display: grid;
+      place-items: center;
+      border: 1px solid var(--line);
+      border-radius: 50%;
+      color: var(--blue);
+      font-size: 18px;
+      font-weight: 750;
+    }}
+    .step-panel[open] > .step-summary::after {{ content: "−"; }}
+    .step-panel[open] > .step-summary {{ border-bottom: 1px solid var(--line); }}
+    .step-number {{
+      width: 34px;
+      height: 34px;
+      display: grid;
+      place-items: center;
+      border-radius: 10px;
+      background: var(--color-bg-subtle);
+      color: var(--blue);
+      font: 800 11px/1 var(--av-font-mono);
+    }}
+    .step-panel[data-complete="true"] .step-number {{
+      background: color-mix(in srgb, var(--green) 16%, white);
+      color: var(--green);
+    }}
+    .step-copy h2 {{ margin: 0 0 4px; font-size: 19px; letter-spacing: -.025em; }}
+    .step-copy p {{ margin: 0; color: var(--muted); font-size: 11px; }}
+    .step-body {{ padding: 20px; }}
+    .step-progress {{ color: var(--muted); font: 750 10px/1 var(--av-font-mono); }}
     .field-grid {{
       display: grid;
       grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -940,6 +1086,19 @@ def render_application_prep_page(
       transition: width 160ms ease;
     }}
     .readiness small {{ color: #aec0d5; font-size: 10px; }}
+    .button {{
+      min-height: var(--av-control-height-lg);
+      padding: 10px 14px;
+      border: 1px solid var(--blue);
+      border-radius: var(--av-radius-md);
+      background: var(--blue);
+      color: white;
+      font-size: 11px;
+      font-weight: 800;
+      cursor: pointer;
+    }}
+    .button:hover {{ background: color-mix(in oklab, var(--blue), black 14%); }}
+    .button:disabled {{ opacity: .55; cursor: not-allowed; }}
     .draft-panel {{ padding: 0; overflow: hidden; }}
     .draft-head {{
       padding: 17px 18px;
@@ -1012,6 +1171,14 @@ def render_application_prep_page(
       .facts, .field-grid {{ grid-template-columns: 1fr; }}
       .fact {{ min-height: 72px; }}
       .panel {{ padding: 18px 14px; }}
+      .step-panel {{ padding: 0; }}
+      .step-summary {{
+        min-height: 72px;
+        padding: 14px;
+        grid-template-columns: 34px minmax(0, 1fr) auto;
+      }}
+      .step-progress {{ display: none; }}
+      .step-body {{ padding: 16px 14px; }}
       .panel-head, .draft-head {{ flex-direction: column; }}
       .draft-actions {{ width: 100%; justify-content: flex-start; }}
     }}
@@ -1021,7 +1188,11 @@ def render_application_prep_page(
   </style>
 </head>
 <body>
-  <main class="shell" data-avds-component="application-workspace" data-avds-version="4.6.0">
+  <main
+    class="shell"
+    data-avds-component="application-workspace"
+    data-avds-version="{AVDS_VERSION}"
+  >
     <header class="topbar" data-avds-component="Breadcrumbs">
       <a href="{escape(detail_path, quote=True)}">QAZ.FUND</a>
       <a href="{escape(detail_path, quote=True)}">← {escape(copy["back"])}</a>
@@ -1065,92 +1236,12 @@ def render_application_prep_page(
       data-avds-pattern="application-workspace"
     >
       <div class="form-stack">
-        <section class="panel" data-avds-component="Card">
-          <div class="panel-head">
-            <div>
-              <h2>{escape(copy["applicant"])}</h2>
-              <p>{escape(copy["applicant_note"])}</p>
-            </div>
-          </div>
-          <div class="field-grid">
-            {field("org_name", copy["org_name"], required=True)}
-            {field("legal_form", copy["legal_form"])}
-            {field("country", copy["country"], required=True)}
-            {field("contact", copy["contact"])}
-          </div>
-          <div class="field-grid single" style="margin-top:12px">
-            {fit_field}
-          </div>
-        </section>
-
-        <section class="panel" data-avds-component="Card">
-          <div class="panel-head">
-            <div>
-              <h2>{escape(copy["project"])}</h2>
-              <p>{escape(copy["project_note"])}</p>
-            </div>
-          </div>
-          <div class="field-grid">
-            {field("project_name", copy["project_name"], required=True)}
-            {field("geography", copy["geography"])}
-            {field("problem", copy["problem"], textarea=True, required=True)}
-            {field("solution", copy["solution"], textarea=True, required=True)}
-            {field("beneficiaries", copy["beneficiaries"], textarea=True)}
-          </div>
-        </section>
-
-        <section class="panel" data-avds-component="Card">
-          <div class="panel-head">
-            <div>
-              <h2>{escape(copy["impact"])}</h2>
-              <p>{escape(copy["impact_note"])}</p>
-            </div>
-          </div>
-          <div class="field-grid">
-            {field("outcomes", copy["outcomes"], textarea=True, required=True)}
-            {field("indicators", copy["indicators"], textarea=True, required=True)}
-            {field("evidence", copy["evidence"], textarea=True)}
-          </div>
-        </section>
-
-        <section class="panel" data-avds-component="Card">
-          <div class="panel-head">
-            <div>
-              <h2>{escape(copy["delivery"])}</h2>
-              <p>{escape(copy["delivery_note"])}</p>
-            </div>
-          </div>
-          <div class="field-grid">
-            {field("team", copy["team"], textarea=True, required=True)}
-            {field("timeline", copy["timeline"], textarea=True, required=True)}
-            {field("partners", copy["partners"], textarea=True)}
-            {field("risks", copy["risks"], textarea=True)}
-          </div>
-        </section>
-
-        <section class="panel" data-avds-component="Card">
-          <div class="panel-head">
-            <div>
-              <h2>{escape(copy["finance"])}</h2>
-              <p>{escape(copy["finance_note"])}</p>
-            </div>
-          </div>
-          <div class="field-grid">
-            {field("request_amount", copy["request_amount"], required=True)}
-            {field("cofinance", copy["cofinance"])}
-            {field("budget", copy["budget"], textarea=True, required=True)}
-          </div>
-        </section>
-
-        <section class="panel" data-avds-component="Card">
-          <div class="panel-head">
-            <div>
-              <h2>{escape(copy["documents"])}</h2>
-              <p>{escape(copy["documents_note"])}</p>
-            </div>
-          </div>
-          <div class="check-list">{checklist_markup}</div>
-        </section>
+        {applicant_step}
+        {project_step}
+        {impact_step}
+        {delivery_step}
+        {finance_step}
+        {documents_step}
       </div>
 
       <aside class="side">
@@ -1162,6 +1253,7 @@ def render_application_prep_page(
           <div
             class="progress"
             role="progressbar"
+            aria-label="{escape(copy["readiness"], quote=True)}"
             aria-valuemin="0"
             aria-valuemax="100"
             aria-valuenow="0"
@@ -1223,7 +1315,8 @@ def render_application_prep_page(
         </section>
       </aside>
     </form>
-    <footer class="footer"><a class="footer-contact" href="mailto:contact@qaz.fund">contact@qaz.fund</a>
+    <footer class="footer">
+      <a class="footer-contact" href="mailto:contact@qaz.fund">contact@qaz.fund</a>
       <p>
         {escape(copy["generated_note"])}
         <a
@@ -1255,6 +1348,21 @@ def render_application_prep_page(
       const storageKey = {json.dumps(storage_key)};
       const inputs = [...form.querySelectorAll("input, textarea")];
       const required = [...form.querySelectorAll("[required]")];
+      const steps = [...form.querySelectorAll(".step-panel")];
+      const isDone = (control) => control.type === "checkbox"
+        ? control.checked
+        : Boolean(String(control.value || "").trim());
+      const updateSteps = () => steps.forEach((step) => {{
+        const requiredControls = [...step.querySelectorAll("[required]")];
+        const controls = requiredControls.length
+          ? requiredControls
+          : [...step.querySelectorAll('input[type="checkbox"]')];
+        const done = controls.filter(isDone).length;
+        const total = controls.length;
+        step.dataset.complete = String(total > 0 && done === total);
+        const label = step.querySelector(".step-progress");
+        if (label) label.textContent = `${{done}}/${{total}}`;
+      }});
       const value = (name) => {{
         const control = form.elements.namedItem(name);
         return String(control?.value || "").trim() || copy.empty_value;
@@ -1341,6 +1449,7 @@ def render_application_prep_page(
           .replace("{{total}}", String(required.length));
         progress.setAttribute("aria-valuenow", String(percent));
         output.value = buildDraft();
+        updateSteps();
         try {{
           localStorage.setItem(storageKey, JSON.stringify(serialize()));
         }} catch {{
@@ -1353,6 +1462,10 @@ def render_application_prep_page(
         timer = setTimeout(update, 80);
       }}));
       inputs.forEach((control) => control.addEventListener("change", update));
+      inputs.forEach((control) => control.addEventListener("focus", () => {{
+        const step = control.closest(".step-panel");
+        if (step) step.open = true;
+      }}));
       document.getElementById("copy-draft").addEventListener("click", async () => {{
         try {{
           await navigator.clipboard.writeText(output.value);
@@ -1435,6 +1548,7 @@ def render_application_prep_page(
           status.textContent = copy.storage_error;
         }}
         form.reset();
+        steps.forEach((step, index) => {{ step.open = index === 0; }});
         if (status.textContent !== copy.storage_error) status.textContent = "";
         update();
       }});

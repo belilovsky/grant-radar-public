@@ -37,7 +37,7 @@ def test_dashboard_uses_extracted_static_styles() -> None:
     assert 'data-avds-pattern="evidence-summary"' in html
     assert 'data-avds-pattern="catalog-card"' in html
     assert 'data-avds-component="trust-strip"' in html
-    assert 'data-avds-version="4.6.0"' in html
+    assert 'data-avds-version="4.7.0"' in html
     assert 'data-avds-component="quick-links-rail"' not in html
     assert 'data-avds-component="public-summary-strip"' not in html
     assert "qaz-fund-ornamental-background-1920x1080.webp" in html

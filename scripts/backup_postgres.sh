@@ -7,6 +7,8 @@ KEEP_DAYS="${KEEP_DAYS:-14}"
 POSTGRES_USER="${POSTGRES_USER:-grantradar}"
 POSTGRES_DB="${POSTGRES_DB:-grantradar}"
 BACKUP_GPG_RECIPIENT="${BACKUP_GPG_RECIPIENT:-}"
+ENV_FILE="${ENV_FILE:-.env.prod}"
+COMPOSE_FILES="${COMPOSE_FILES:--f docker-compose.yml -f docker-compose.prod.yml}"
 
 if ! [[ "$KEEP_DAYS" =~ ^[0-9]+$ ]]; then
   echo "KEEP_DAYS must be a non-negative integer." >&2
@@ -27,7 +29,7 @@ cleanup() {
 }
 trap cleanup EXIT
 
-docker compose -f docker-compose.yml -f docker-compose.prod.yml exec -T db \
+docker compose --env-file "$ENV_FILE" $COMPOSE_FILES exec -T db \
   pg_dump -U "$POSTGRES_USER" -d "$POSTGRES_DB" --format=custom >"$temporary_path"
 
 if [[ ! -s "$temporary_path" ]]; then
@@ -36,6 +38,12 @@ if [[ ! -s "$temporary_path" ]]; then
 fi
 
 chmod 600 "$temporary_path"
+if command -v pg_restore >/dev/null 2>&1; then
+  pg_restore --list "$temporary_path" >/dev/null
+else
+  docker compose --env-file "$ENV_FILE" $COMPOSE_FILES exec -T db \
+    pg_restore --list <"$temporary_path" >/dev/null
+fi
 if [[ -n "$BACKUP_GPG_RECIPIENT" ]]; then
   if ! command -v gpg >/dev/null 2>&1; then
     echo "gpg is required when BACKUP_GPG_RECIPIENT is set." >&2

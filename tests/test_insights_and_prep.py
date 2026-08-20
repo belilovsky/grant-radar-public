@@ -64,7 +64,7 @@ def test_insights_api_and_page_are_data_backed(monkeypatch):
     page = client.get("/insights", params={"lang": "ru"})
     assert page.status_code == 200
     assert 'data-avds-component="data-centre"' in page.text
-    assert 'data-avds-version="4.6.0"' in page.text
+    assert 'data-avds-version="4.7.0"' in page.text
     assert 'data-avds-component="DataQualityScorecard"' in page.text
     assert 'data-avds-pattern="change-ledger"' in page.text
     assert 'data-avds-pattern="machine-entrypoints"' in page.text

@@ -1,4 +1,4 @@
-FROM python:3.12-slim
+FROM python:3.12-slim@sha256:2c941e860699f878900b0edc2403613c234d4b32eda3cc9fa7036991a2a63c4a
 
 ENV PYTHONUNBUFFERED=1 \
     PYTHONDONTWRITEBYTECODE=1 \
@@ -8,6 +8,11 @@ ENV PYTHONUNBUFFERED=1 \
 
 WORKDIR /app
 
+RUN groupadd --gid 10001 qazfund \
+    && useradd --uid 10001 --gid qazfund --create-home --shell /usr/sbin/nologin qazfund \
+    && mkdir -p /models \
+    && chown -R qazfund:qazfund /models
+
 COPY requirements-semantic.txt ./
 # FlagEmbedding accepts an existing torch installation.  Install the official
 # CPU wheel first so a CPU-only host never downloads CUDA/NVIDIA packages.
@@ -15,7 +20,8 @@ RUN pip install --upgrade pip \
     && pip install --index-url https://download.pytorch.org/whl/cpu torch==2.9.1 \
     && pip install -r requirements-semantic.txt
 
-COPY semantic_service ./semantic_service
+COPY --chown=qazfund:qazfund semantic_service ./semantic_service
 
 EXPOSE 8010
+USER 10001:10001
 CMD ["uvicorn", "semantic_service.app:app", "--host", "0.0.0.0", "--port", "8010"]

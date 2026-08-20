@@ -30,8 +30,14 @@ DEFAULT_FORBIDDEN_TERMS = (
     "Technical Difficulties",
 )
 
-# Seasonal monitors are healthy while their official annual window is closed.
-EXPECTED_EMPTY_SOURCE_SLUGS = frozenset({"canada_cfli_ca"})
+# Seasonal or intermittent official listings remain healthy when a successful,
+# fresh source check confirms that no call is currently published.
+EXPECTED_EMPTY_SOURCE_SLUGS = frozenset(
+    {
+        "canada_cfli_ca",
+        "unicef_kazakhstan",
+    }
+)
 
 
 @dataclass(frozen=True)
@@ -184,7 +190,7 @@ def _label_key(value: Any) -> str:
 
 def _dashboard_label_maps() -> dict[str, dict[str, object]]:
     result: dict[str, dict[str, object]] = {}
-    for lang in ("ru", "en"):
+    for lang in ("ru", "kk", "en"):
         raw = dashboard_copy(lang).get("label_map")
         result[lang] = dict(raw) if isinstance(raw, dict) else {}
     return result

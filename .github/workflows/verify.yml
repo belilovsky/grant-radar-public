@@ -5,6 +5,8 @@ on:
   push:
     branches:
       - main
+      - "release/**"
+      - "codex/**"
   workflow_dispatch:
 
 permissions:
@@ -29,8 +31,94 @@ jobs:
       - name: Install dependencies
         run: python -m pip install --upgrade pip && python -m pip install -r requirements.txt
 
+      - name: Verify dependency consistency and known vulnerabilities
+        run: |
+          python -m pip check
+          python -m pip install pip-audit==2.10.1
+          sed '/qazstack-.*\.whl/d' requirements-prod.txt > /tmp/qaz-fund-audit.txt
+          python -m pip_audit --strict --requirement /tmp/qaz-fund-audit.txt
+
       - name: Check formatting, imports, lint and types
         run: make lint
 
       - name: Run test suite
         run: python -m pytest -q
+
+  browser:
+    name: Browser and accessibility matrix
+    needs: quality
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+          cache-dependency-path: requirements.txt
+
+      - name: Install browser dependencies
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install -r requirements.txt
+          python -m playwright install --with-deps chromium
+          npm install --no-save axe-core@4.13.0
+
+      - name: Start production-shaped HTTP process
+        run: |
+          python -m scripts.browser_seed_server --host 127.0.0.1 --port 8000 \
+            > /tmp/qaz-fund-browser.log 2>&1 &
+          for attempt in $(seq 1 30); do
+            curl -fsS http://127.0.0.1:8000/ready && exit 0
+            sleep 1
+          done
+          cat /tmp/qaz-fund-browser.log
+          exit 1
+
+      - name: Run route, viewport, console, overflow, and axe checks
+        run: >-
+          python -m scripts.browser_matrix
+          --base-url http://127.0.0.1:8000
+          --axe-path node_modules/axe-core/axe.min.js
+          --opportunity-id 11111111-1111-4111-8111-111111111111
+          --funder-slug astana-hub
+          --comparison-ids 11111111-1111-4111-8111-111111111111,33333333-3333-4333-8333-333333333333
+          --output output/browser-matrix.json
+
+      - name: Upload browser evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: browser-matrix
+          path: output/browser-matrix.json
+
+  production-image:
+    name: Production image, vulnerability scan, and SBOM
+    needs: quality
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Build immutable candidate image
+        run: docker build -f Dockerfile.prod -t qaz-fund:${{ github.sha }} .
+
+      - name: Scan candidate image
+        uses: aquasecurity/trivy-action@ed142fd0673e97e23eac54620cfb913e5ce36c25 # v0.36.0
+        with:
+          image-ref: qaz-fund:${{ github.sha }}
+          format: table
+          severity: HIGH,CRITICAL
+          ignore-unfixed: true
+          exit-code: "1"
+
+      - name: Generate CycloneDX SBOM
+        uses: anchore/sbom-action@e22c389904149dbc22b58101806040fa8d37a610 # v0.24.0
+        with:
+          image: qaz-fund:${{ github.sha }}
+          format: cyclonedx-json
+          artifact-name: qaz-fund-${{ github.sha }}.cdx.json

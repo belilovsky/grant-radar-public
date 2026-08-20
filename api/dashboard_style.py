@@ -1760,7 +1760,11 @@ DASHBOARD_CSS = r"""    :root {
       left: 18px;
       height: 2px;
       border-radius: 0 0 var(--av-radius-full) var(--av-radius-full);
-      background: linear-gradient(90deg, var(--brand), color-mix(in oklab, var(--brand), transparent 72%));
+      background: linear-gradient(
+        90deg,
+        var(--brand),
+        color-mix(in oklab, var(--brand), transparent 72%)
+      );
       opacity: 0;
       transform: scaleX(0.65);
       transform-origin: left;
@@ -2894,7 +2898,7 @@ DASHBOARD_CSS = r"""    :root {
         padding-top: calc(70px + env(safe-area-inset-top));
       }
       .hero-band {
-        padding: 14px 16px 0;
+        display: none;
       }
       .hero-stage {
         display: none;

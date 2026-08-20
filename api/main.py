@@ -7,7 +7,6 @@ import json
 import logging
 import mimetypes
 import os
-import re
 import threading
 from collections.abc import Awaitable, Callable, Iterable, Mapping
 from contextlib import asynccontextmanager, suppress
@@ -34,7 +33,7 @@ from fastapi.responses import (
     Response,
 )
 from fastapi.staticfiles import StaticFiles
-from pydantic import TypeAdapter
+from pydantic import HttpUrl, TypeAdapter
 from qazstack.content import diversify_ranked_items
 from qazstack.evidence import count_evidence_states, resolve_public_evidence_state
 from qazstack.export import cached_body_response
@@ -80,6 +79,7 @@ from api.ecosystem import (
 from api.embed_page import render_coverage_embed, render_opportunities_embed
 from api.error_page import render_not_found_page
 from api.funder_page import render_funder_page
+from api.generated_assets import externalize_html_response, generated_asset_path
 from api.history import build_history_snapshot
 from api.http_policy import PUBLIC_DISCOVERY_CACHE as _PUBLIC_DISCOVERY_CACHE
 from api.http_policy import PUBLIC_FAST_CACHE as _PUBLIC_FAST_CACHE
@@ -122,9 +122,11 @@ from api.opportunity_og import (
     render_opportunity_portrait_png,
 )
 from api.opportunity_page import render_opportunity_page
+from api.presentation import release_evidence_from_env
 from api.public_info_page import render_public_info_page
 from api.public_meta import OG_IMAGE_PNG, OG_IMAGE_SVG
 from api.qpost_feed import QPOST_TEMPLATES, build_qpost_draft_feed
+from api.route_registry import build_route_registry, route_coverage
 from api.runtime_config import admin_token as _admin_token
 from api.runtime_config import allowed_hosts as _allowed_hosts
 from api.runtime_config import bearer_token as _bearer_token
@@ -224,6 +226,7 @@ app.mount(
     name="branding-assets",
 )
 _OPPORTUNITY_LIST_ADAPTER = TypeAdapter(list[Opportunity])
+_URL_ADAPTER = TypeAdapter(HttpUrl)
 
 
 @app.exception_handler(StarletteHTTPException)
@@ -350,6 +353,7 @@ async def add_security_headers(
     call_next: Callable[[Request], Awaitable[Response]],
 ) -> Response:
     response = await call_next(request)
+    response = await externalize_html_response(request, response)
     return apply_public_headers(request, response)
 
 
@@ -483,7 +487,7 @@ def _stored_opportunity(row: Any, *, content_lang: str = "en") -> Opportunity:
                     }
                 migrated_raw["legacy_source_url"] = previous_source_url
                 opportunity.raw = migrated_raw
-            opportunity.source_url = program.url
+            opportunity.source_url = _URL_ADAPTER.validate_python(program.url)
             opportunity.type = program.type
             opportunity.title = program.title
             opportunity.summary = program.summary
@@ -622,10 +626,9 @@ def _stored_items(content_lang: str = "en") -> list[Opportunity]:
     return _dedupe_public_items(
         [
             item
-            for item in (
-                _stored_opportunity(row, content_lang=content_lang)
-                for row in repository.all()
-            )
+            for row in repository.all()
+            if str(getattr(row, "publication_state", "published")) == "published"
+            for item in [_stored_opportunity(row, content_lang=content_lang)]
             if _is_active_item(item) and not is_publication_blocked(item)
         ],
         content_lang=content_lang,
@@ -2837,7 +2840,26 @@ async def public_qazstack_consumer_contract(request: Request) -> Response:
     include_in_schema=False,
 )
 async def public_avds_ui_contract() -> Response:
-    return JSONResponse(avds_ui_contract())
+    coverage = route_coverage(build_route_registry(app))
+    return JSONResponse(avds_ui_contract(coverage=coverage))
+
+
+@app.api_route(
+    "/.well-known/avds-adoption.json",
+    methods=["GET", "HEAD"],
+    include_in_schema=False,
+)
+async def public_avds_adoption_contract() -> Response:
+    coverage = route_coverage(build_route_registry(app))
+    return JSONResponse(
+        {
+            "schema_version": "avds-adoption-v1",
+            "product": "QAZ.FUND",
+            "integration": "server-rendered-adapter",
+            "coverage": coverage,
+            "ui_contract": "/.well-known/avds-ui-contract.json",
+        }
+    )
 
 
 @app.api_route(
@@ -2912,18 +2934,38 @@ async def public_ecosystem_manifest(request: Request) -> Response:
 async def public_release_metadata() -> Response:
     """Expose the immutable revision needed for end-to-end deploy proof."""
 
-    configured_revision = os.environ.get("APP_REVISION", "").strip().lower()
-    revision = (
-        configured_revision
-        if re.fullmatch(r"[0-9a-f]{40}", configured_revision)
-        else "development"
-    )
+    evidence = release_evidence_from_env()
     payload = {
+        "schemaVersion": "qaz-fund-release-v1",
         "service": "qaz-fund",
-        "revision": revision,
-        "deployed_at": os.environ.get("APP_DEPLOYED_AT", "").strip() or None,
+        # ``revision`` and ``deployed_at`` stay for existing consumers.
+        "revision": evidence.source_sha,
+        "deployed_at": evidence.deployed_at,
+        "sourceSha": evidence.source_sha,
+        "sourceDirty": evidence.source_dirty,
+        "imageDigest": evidence.image_digest,
+        "artifactDigest": evidence.artifact_digest,
+        "builtAt": evidence.built_at,
+        "deployedAt": evidence.deployed_at,
     }
     return JSONResponse(payload, headers={"Cache-Control": "no-store"})
+
+
+@app.api_route(
+    "/assets/generated/{asset_name}",
+    methods=["GET", "HEAD"],
+    include_in_schema=False,
+)
+async def generated_asset(asset_name: str) -> Response:
+    path = generated_asset_path(asset_name)
+    if path is None:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND)
+    media_type = "text/css" if path.suffix == ".css" else "application/javascript"
+    return FileResponse(
+        path,
+        media_type=media_type,
+        headers={"Cache-Control": "public, max-age=31536000, immutable"},
+    )
 
 
 @app.api_route("/favicon.ico", methods=["GET", "HEAD"], include_in_schema=False)
@@ -2941,7 +2983,11 @@ async def og_image_png() -> Response:
     return Response(OG_IMAGE_PNG, media_type="image/png")
 
 
-@app.get(f"/{GOOGLE_SITE_VERIFICATION_FILENAME}", include_in_schema=False)
+@app.api_route(
+    f"/{GOOGLE_SITE_VERIFICATION_FILENAME}",
+    methods=["GET", "HEAD"],
+    include_in_schema=False,
+)
 async def google_site_verification() -> Response:
     return Response(
         GOOGLE_SITE_VERIFICATION_CONTENT,
@@ -3053,7 +3099,7 @@ async def operator_page(request: Request) -> HTMLResponse:
     return response
 
 
-@app.get("/operator/health", include_in_schema=False)
+@app.api_route("/operator/health", methods=["GET", "HEAD"], include_in_schema=False)
 async def operator_health(_: None = Depends(require_admin_token)) -> dict[str, Any]:
     """Protected operational summary for source and pipeline supervision."""
     coverage_payload = _cached_coverage_payload()
@@ -3794,7 +3840,11 @@ async def export_opportunities_v1_ndjson(
     )
 
 
-@app.get("/api/v1/opportunities/{opportunity_id}", response_model=OpportunityV1)
+@app.api_route(
+    "/api/v1/opportunities/{opportunity_id}",
+    methods=["GET", "HEAD"],
+    response_model=OpportunityV1,
+)
 async def get_opportunity_v1(
     request: Request,
     opportunity_id: UUID,
@@ -3803,7 +3853,9 @@ async def get_opportunity_v1(
     return _find_opportunity_v1(request, opportunity_id, lang=lang)
 
 
-@app.get("/media/v1/opportunities/{opportunity_id}/content.json")
+@app.api_route(
+    "/media/v1/opportunities/{opportunity_id}/content.json", methods=["GET", "HEAD"]
+)
 async def opportunity_media_content(
     request: Request,
     opportunity_id: UUID,
@@ -3815,7 +3867,9 @@ async def opportunity_media_content(
     )
 
 
-@app.get("/media/v1/opportunities/{opportunity_id}/citation.txt")
+@app.api_route(
+    "/media/v1/opportunities/{opportunity_id}/citation.txt", methods=["GET", "HEAD"]
+)
 async def opportunity_media_citation(
     request: Request,
     opportunity_id: UUID,
@@ -3827,7 +3881,9 @@ async def opportunity_media_citation(
     return Response(text, media_type="text/plain; charset=utf-8")
 
 
-@app.get("/media/v1/opportunities/{opportunity_id}/card.svg")
+@app.api_route(
+    "/media/v1/opportunities/{opportunity_id}/card.svg", methods=["GET", "HEAD"]
+)
 async def opportunity_media_card(
     request: Request,
     opportunity_id: UUID,
@@ -3847,7 +3903,7 @@ async def opportunity_media_card(
     )
 
 
-@app.get("/media/v1/charts/{chart_type}.json")
+@app.api_route("/media/v1/charts/{chart_type}.json", methods=["GET", "HEAD"])
 async def media_chart_json(
     request: Request,
     chart_type: str,
@@ -3876,7 +3932,7 @@ async def media_chart_json(
     )
 
 
-@app.get("/media/v1/charts/{chart_type}.csv")
+@app.api_route("/media/v1/charts/{chart_type}.csv", methods=["GET", "HEAD"])
 async def media_chart_csv(
     request: Request,
     chart_type: str,
@@ -3895,7 +3951,7 @@ async def media_chart_csv(
     return Response(chart_csv(rows), media_type="text/csv; charset=utf-8")
 
 
-@app.get("/media/v1/charts/{chart_type}.svg")
+@app.api_route("/media/v1/charts/{chart_type}.svg", methods=["GET", "HEAD"])
 async def media_chart_svg(
     request: Request,
     chart_type: str,
@@ -3922,7 +3978,7 @@ async def media_chart_svg(
     )
 
 
-@app.get("/media/v1/feed.json")
+@app.api_route("/media/v1/feed.json", methods=["GET", "HEAD"])
 async def media_feed_json(
     request: Request,
     lang: str | None = Query(None),
@@ -3942,7 +3998,7 @@ async def media_feed_json(
     )
 
 
-@app.get("/media/v1/feed.rss")
+@app.api_route("/media/v1/feed.rss", methods=["GET", "HEAD"])
 async def media_feed_rss(
     request: Request,
     lang: str | None = Query(None),
@@ -3962,7 +4018,7 @@ async def media_feed_rss(
     )
 
 
-@app.get("/media/v1/digest/daily.json")
+@app.api_route("/media/v1/digest/daily.json", methods=["GET", "HEAD"])
 async def media_daily_digest_json(
     request: Request,
     lang: str | None = Query(None),
@@ -3980,7 +4036,7 @@ async def media_daily_digest_json(
     return _versioned_json_response(payload)
 
 
-@app.get("/media/v1/digest/daily.txt")
+@app.api_route("/media/v1/digest/daily.txt", methods=["GET", "HEAD"])
 async def media_daily_digest_text(
     request: Request,
     lang: str | None = Query(None),
@@ -4000,7 +4056,7 @@ async def media_daily_digest_text(
     )
 
 
-@app.get("/media/v1/qpost/drafts.json")
+@app.api_route("/media/v1/qpost/drafts.json", methods=["GET", "HEAD"])
 async def media_qpost_drafts(
     request: Request,
     lang: str | None = Query(None),
@@ -4078,7 +4134,7 @@ async def list_opportunities(
     return _opportunities_json_response(results, total_count=total_count)
 
 
-@app.get("/opportunities/duplicate-candidates")
+@app.api_route("/opportunities/duplicate-candidates", methods=["GET", "HEAD"])
 async def duplicate_candidates(
     min_score: float = Query(0.3, ge=0.0, le=1.0),
     limit: int = Query(200, ge=2, le=500),
@@ -4247,7 +4303,11 @@ async def get_opportunity_detail(
     )
 
 
-@app.get("/opportunities/{opportunity_id}/fit.json", include_in_schema=False)
+@app.api_route(
+    "/opportunities/{opportunity_id}/fit.json",
+    methods=["GET", "HEAD"],
+    include_in_schema=False,
+)
 async def get_opportunity_fit(
     opportunity_id: UUID,
     applicant: str | None = Query(None, max_length=32),

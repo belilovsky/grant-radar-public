@@ -205,6 +205,9 @@ def og_image_url(site_origin: str, root_path: str = "") -> str:
 
 
 def analytics_head_html() -> str:
+    analytics_enabled = os.environ.get("PUBLIC_ANALYTICS_ENABLED", "1").strip().lower()
+    if analytics_enabled in {"0", "false", "no", "off"}:
+        return ""
     ga4_id = _env_value("PUBLIC_GA4_MEASUREMENT_ID", DEFAULT_GA4_ID)
     yandex_id = _env_value("PUBLIC_YANDEX_METRICA_ID", DEFAULT_YANDEX_METRICA_ID)
     clarity_id = _env_value("PUBLIC_CLARITY_PROJECT_ID", DEFAULT_CLARITY_PROJECT_ID)

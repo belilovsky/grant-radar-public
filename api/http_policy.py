@@ -66,6 +66,8 @@ def cache_control_for(path: str) -> str | None:
     # catalogue and creates visibly contradictory metrics after an update.
     if path in _LIVE_DASHBOARD_PATHS:
         return PUBLIC_NO_STORE
+    if path.startswith("/assets/generated/"):
+        return "public, max-age=31536000, immutable"
     if path.startswith("/assets/branding/"):
         return PUBLIC_LONG_CACHE
     if path in _FAST_CACHE_PATHS:

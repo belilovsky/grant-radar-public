@@ -6,10 +6,12 @@ import argparse
 import json
 import re
 from dataclasses import asdict, dataclass
+from datetime import datetime
 from typing import Any
 
 import httpx
 
+from api.integration_versions import AVDS_VERSION, QAZSTACK_VERSION
 from core.public_clock import public_today
 from scripts.http_utils import join_url as _url
 
@@ -43,6 +45,10 @@ class SmokeError(RuntimeError):
 class SmokeResult:
     base_url: str
     release_revision: str
+    release_image_digest: str
+    release_artifact_digest: str
+    release_built_at: str
+    release_deployed_at: str
     deadline_after: str
     health_items: int
     ready_backend: str
@@ -82,6 +88,15 @@ def _head(client: httpx.Client, base_url: str, path: str) -> httpx.Response:
 def _require(condition: bool, message: str) -> None:
     if not condition:
         raise SmokeError(message)
+
+
+def _release_timestamp(value: Any, field: str) -> datetime:
+    try:
+        parsed = datetime.fromisoformat(str(value or "").replace("Z", "+00:00"))
+    except ValueError as exc:
+        raise SmokeError(f"release {field} is not an ISO timestamp") from exc
+    _require(parsed.tzinfo is not None, f"release {field} lacks a timezone")
+    return parsed
 
 
 def _is_public_cacheable(response: httpx.Response, min_age: int) -> bool:
@@ -333,10 +348,33 @@ def run_smoke(
         )
 
     _require(health.get("status") == "ok", "health status is not ok")
+    revision = str(release.get("revision") or "")
+    image_digest = str(release.get("imageDigest") or "")
+    artifact_digest = str(release.get("artifactDigest") or "")
+    built_at = str(release.get("builtAt") or "")
+    deployed_at = str(release.get("deployedAt") or "")
     _require(
-        release.get("service") == "qaz-fund"
-        and bool(re.fullmatch(r"[0-9a-f]{40}", str(release.get("revision") or ""))),
+        release.get("schemaVersion") == "qaz-fund-release-v1"
+        and release.get("service") == "qaz-fund"
+        and bool(re.fullmatch(r"[0-9a-f]{40}", revision)),
         "release metadata is missing",
+    )
+    _require(release.get("sourceSha") == revision, "release source SHA mismatch")
+    _require(release.get("sourceDirty") is False, "release source is dirty")
+    _require(
+        bool(re.fullmatch(r"sha256:[0-9a-f]{64}", image_digest)),
+        "release image digest is missing",
+    )
+    _require(
+        bool(re.fullmatch(r"sha256:[0-9a-f]{64}", artifact_digest)),
+        "release artifact digest is missing",
+    )
+    built_timestamp = _release_timestamp(built_at, "builtAt")
+    deployed_timestamp = _release_timestamp(deployed_at, "deployedAt")
+    _require(built_timestamp <= deployed_timestamp, "release timestamps are reversed")
+    _require(
+        release.get("deployed_at") == deployed_at,
+        "legacy and canonical deploy timestamps differ",
     )
     _require(ready.get("status") == "ok", "ready status is not ok")
     if expect_backend:
@@ -694,7 +732,7 @@ def run_smoke(
         ),
         "qazstack_contract": (
             qazstack_contract.get("schema_version") == "qazstack-consumer-v1"
-            and qazstack_contract.get("qazstack_version") == "1.41.2"
+            and qazstack_contract.get("qazstack_version") == QAZSTACK_VERSION
             and {
                 "opportunity-public-contract",
                 "opportunity-ranking-evaluation",
@@ -704,7 +742,7 @@ def run_smoke(
         ),
         "avds4_contract": (
             avds_contract.get("schema_version") == "avds-ui-contract-v1"
-            and (avds_contract.get("avds_source") or {}).get("version") == "4.6.0"
+            and (avds_contract.get("avds_source") or {}).get("version") == AVDS_VERSION
             and (avds_contract.get("runtime_neutral_patterns") or {}).get("adopted")
             == [
                 "evidence-summary",
@@ -789,7 +827,11 @@ def run_smoke(
 
     return SmokeResult(
         base_url=base_url.rstrip("/"),
-        release_revision=str(release.get("revision") or ""),
+        release_revision=revision,
+        release_image_digest=image_digest,
+        release_artifact_digest=artifact_digest,
+        release_built_at=built_at,
+        release_deployed_at=deployed_at,
         deadline_after=deadline_after,
         health_items=int(health.get("items") or 0),
         ready_backend=str(ready.get("backend") or ""),

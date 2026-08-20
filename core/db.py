@@ -66,6 +66,13 @@ class OpportunityRow(Base):
     first_seen_at = Column(DateTime, default=_utcnow, nullable=False)
     last_seen_at = Column(DateTime, default=_utcnow, nullable=False, index=True)
     content_hash = Column(String(71), nullable=True)
+    publication_state = Column(
+        String(32),
+        nullable=False,
+        default="published",
+        server_default="published",
+        index=True,
+    )
     raw = Column(JSON, nullable=True)
 
     @property
@@ -311,6 +318,7 @@ class SqlRepository:
             discovered_at=observed_at,
             first_seen_at=observed_at,
             last_seen_at=observed_at,
+            publication_state="published",
             raw=_json_payload(record),
         )
         setattr(row, "content_hash", _snapshot_hash(_semantic_snapshot(row)))
@@ -392,6 +400,9 @@ class SqlRepository:
             )
             setattr(existing, "discovered_at", now)
             setattr(existing, "last_seen_at", now)
+            # A fresh successful parser observation is the only automatic path
+            # from a reconciled archive back into the public catalogue.
+            setattr(existing, "publication_state", "published")
             if existing.first_seen_at is None:
                 setattr(existing, "first_seen_at", now)
             existing_raw = cast(dict[str, Any] | None, existing.raw)

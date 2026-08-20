@@ -1,10 +1,11 @@
 from __future__ import annotations
 
+import re
+import xml.etree.ElementTree as ET
 from datetime import date, datetime, timedelta, timezone
 from decimal import Decimal
 from types import SimpleNamespace
 from uuid import uuid4
-import xml.etree.ElementTree as ET
 
 from fastapi.testclient import TestClient
 
@@ -26,6 +27,11 @@ from core.public_contract import to_opportunity_v1
 from sources.base import GrantRecord
 
 
+def _with_generated_assets(client: TestClient, response) -> str:
+    urls = re.findall(r'(?:href|src)="([^"]*/assets/generated/[^"]+)"', response.text)
+    return response.text + "".join(client.get(url).text for url in urls)
+
+
 def _reset_api_state(monkeypatch) -> None:
     monkeypatch.delenv("GRANT_RADAR_DB_URL", raising=False)
     monkeypatch.delenv("DATABASE_URL", raising=False)
@@ -34,6 +40,15 @@ def _reset_api_state(monkeypatch) -> None:
     monkeypatch.delenv("GRANT_RADAR_ALLOWED_HOSTS", raising=False)
     monkeypatch.delenv("GRANT_RADAR_SEMANTIC_SEARCH_ENABLED", raising=False)
     monkeypatch.delenv("GRANT_RADAR_SEMANTIC_SEARCH_URL", raising=False)
+    for name in (
+        "APP_REVISION",
+        "APP_SOURCE_DIRTY",
+        "APP_IMAGE_DIGEST",
+        "APP_ARTIFACT_DIGEST",
+        "APP_BUILT_AT",
+        "APP_DEPLOYED_AT",
+    ):
+        monkeypatch.delenv(name, raising=False)
     api_main._repository_for_url.cache_clear()
     api_main._cache.clear()
     api_main._clear_sitemap_cache()
@@ -108,6 +123,15 @@ def test_root_renders_service_landing(monkeypatch):
     response = client.get("/")
 
     assert response.status_code == 200
+    asset_urls = re.findall(
+        r'(?:href|src)="([^"]*/assets/generated/[^"]+)"', response.text
+    )
+    assets = {url: client.get(url).text for url in asset_urls}
+    styles = "".join(body for url, body in assets.items() if url.endswith(".css"))
+    scripts = "".join(body for url, body in assets.items() if url.endswith(".js"))
+    rendered = response.text + styles + scripts
+    assert len(response.content) < 100_000
+    assert len(asset_urls) == 2
     assert '<html lang="ru"' in response.text
     assert 'data-avds="grant-radar"' in response.text
     assert 'data-av-theme="light"' in response.text
@@ -121,9 +145,9 @@ def test_root_renders_service_landing(monkeypatch):
         "проверить до подачи." in response.text
     )
     assert "Найти поддержку" in response.text
-    assert "qaz-fund-ornamental-background-1920x1080.webp" in response.text
-    assert "radial-gradient(circle at 92% 6%" not in response.text
-    assert "#F0C64D" not in response.text
+    assert "qaz-fund-ornamental-background-1920x1080.webp" in styles
+    assert "radial-gradient(circle at 92% 6%" not in styles
+    assert "#F0C64D" not in styles
     assert 'data-avds-component="quick-links-rail"' not in response.text
     assert 'data-avds-component="public-summary-strip"' not in response.text
     assert '<strong id="metric-total">' not in response.text
@@ -134,12 +158,12 @@ def test_root_renders_service_landing(monkeypatch):
     assert 'data-avds-component="trust-library"\n      hidden' in response.text
     assert 'id="filter-disclosure"' in response.text
     assert 'id="opportunities-list"' in response.text
-    assert 'data-avds-component="opportunity-card"' in response.text
-    assert 'data-avds-pattern="catalog-card"' in response.text
-    assert 'data-mobile-view="opportunities"' in response.text
-    assert 'data-mobile-view="sources"' not in response.text
-    assert 'data-mobile-action="saved"' not in response.text
-    assert 'data-mobile-action="filters"' in response.text
+    assert 'data-avds-component="opportunity-card"' in rendered
+    assert 'data-avds-pattern="catalog-card"' in rendered
+    assert 'data-mobile-view="opportunities"' in rendered
+    assert 'data-mobile-view="sources"' not in rendered
+    assert 'data-mobile-action="saved"' not in rendered
+    assert 'data-mobile-action="filters"' in rendered
     assert 'href="/?lang=kk"' in response.text
     assert 'href="/?lang=ru"' in response.text
     assert 'href="/?lang=en"' in response.text
@@ -156,10 +180,10 @@ def test_root_renders_service_landing(monkeypatch):
         'property="og:image" content="http://testserver/og-image.png"' in response.text
     )
     assert 'name="twitter:card" content="summary_large_image"' in response.text
-    assert "window.setTimeout(startAnalytics, 20000)" in response.text
-    assert "syncFilterDisclosureForViewport" in response.text
-    assert "function publicDateISO" in response.text
-    assert "getTimezoneOffset" not in response.text
+    assert "window.setTimeout(startAnalytics, 20000)" in rendered
+    assert "syncFilterDisclosureForViewport" in rendered
+    assert "function publicDateISO" in rendered
+    assert "getTimezoneOffset" not in rendered
 
 
 def test_root_rejects_untrusted_host_header(monkeypatch):
@@ -515,10 +539,11 @@ def test_root_dashboard_does_not_reference_removed_compare_items_symbol(monkeypa
     client = TestClient(api_main.app)
 
     response = client.get("/")
+    rendered = _with_generated_assets(client, response)
 
     assert response.status_code == 200
-    assert "sort(compareItems)" not in response.text
-    assert "sort(comparePriorityItems)" in response.text
+    assert "sort(compareItems)" not in rendered
+    assert "sort(comparePriorityItems)" in rendered
 
 
 def test_root_supports_explicit_english_dashboard(monkeypatch):
@@ -526,6 +551,7 @@ def test_root_supports_explicit_english_dashboard(monkeypatch):
     client = TestClient(api_main.app)
 
     response = client.get("/?lang=en")
+    rendered = _with_generated_assets(client, response)
 
     assert response.status_code == 200
     assert '<html lang="en"' in response.text
@@ -541,7 +567,7 @@ def test_root_supports_explicit_english_dashboard(monkeypatch):
     assert "Timing" in response.text
     assert "All regions" in response.text
     assert "Rolling" in response.text
-    assert "Open card" in response.text
+    assert "Open card" in rendered
     assert 'rel="canonical" href="http://testserver/?lang=en"' in response.text
     assert 'data-avds-component="quick-links-rail"' not in response.text
     assert 'data-avds-component="public-summary-strip"' not in response.text
@@ -556,6 +582,7 @@ def test_root_supports_explicit_kazakh_dashboard_route(monkeypatch):
     client = TestClient(api_main.app)
 
     response = client.get("/?lang=kk")
+    rendered = _with_generated_assets(client, response)
 
     assert response.status_code == 200
     assert '<html lang="kk"' in response.text
@@ -573,8 +600,8 @@ def test_root_supports_explicit_kazakh_dashboard_route(monkeypatch):
     assert "Қолдауды табу" in response.text
     assert 'data-avds-component="quick-links-rail"' not in response.text
     assert 'data-avds-component="public-summary-strip"' not in response.text
-    assert 'data-mobile-view="sources"' not in response.text
-    assert 'data-mobile-action="saved"' not in response.text
+    assert 'data-mobile-view="sources"' not in rendered
+    assert 'data-mobile-action="saved"' not in rendered
 
 
 def test_root_head_is_available(monkeypatch):
@@ -847,15 +874,16 @@ def test_marketing_endpoints_are_exposed(monkeypatch):
     assert avds_contract.json()["avds_source"] == {
         "site": "https://avds.digital",
         "package": "@sgeo/ui-kit",
-        "version": "4.6.0",
+        "version": "4.7.0",
+        "source_revision": "5411a219f3b8f03d12c23bc1543e268fe355d0ec",
     }
     assert avds_contract.json()["runtime_neutral_patterns"] == {
         "package": "@av/patterns",
-        "version": "0.1.0",
-        "source_revision": "3d482e1c7592e2f8ae359c3e3b2d10c5c1118c37",
+        "version": "0.2.0",
+        "source_revision": "ea32d93aa05fa6faa4278ccc030c1d3567c1de35",
         "source": (
             "https://github.com/belilovsky/av-platform-core/tree/"
-            "3d482e1c7592e2f8ae359c3e3b2d10c5c1118c37/packages/patterns"
+            "ea32d93aa05fa6faa4278ccc030c1d3567c1de35/packages/patterns"
         ),
         "adopted": [
             "evidence-summary",
@@ -958,9 +986,16 @@ def test_marketing_endpoints_are_exposed(monkeypatch):
     release = client.get("/.well-known/release.json")
     assert release.status_code == 200
     assert release.json() == {
+        "schemaVersion": "qaz-fund-release-v1",
         "service": "qaz-fund",
         "revision": "development",
         "deployed_at": None,
+        "sourceSha": "development",
+        "sourceDirty": True,
+        "imageDigest": None,
+        "artifactDigest": None,
+        "builtAt": None,
+        "deployedAt": None,
     }
     assert release.headers["cache-control"] == "no-store"
     assert client.head("/.well-known/release.json").status_code == 200
@@ -1019,19 +1054,34 @@ def test_marketing_endpoints_are_exposed(monkeypatch):
 def test_release_metadata_accepts_only_an_immutable_git_revision(monkeypatch):
     _reset_api_state(monkeypatch)
     monkeypatch.setenv("APP_REVISION", "A" * 40)
+    monkeypatch.setenv("APP_SOURCE_DIRTY", "false")
+    monkeypatch.setenv("APP_IMAGE_DIGEST", "sha256:" + "b" * 64)
+    monkeypatch.setenv("APP_ARTIFACT_DIGEST", "sha256:" + "c" * 64)
+    monkeypatch.setenv("APP_BUILT_AT", "2026-07-15T17:48:00Z")
     monkeypatch.setenv("APP_DEPLOYED_AT", "2026-07-15T17:51:42Z")
     client = TestClient(api_main.app)
 
     release = client.get("/.well-known/release.json")
 
     assert release.json() == {
+        "schemaVersion": "qaz-fund-release-v1",
         "service": "qaz-fund",
         "revision": "a" * 40,
         "deployed_at": "2026-07-15T17:51:42Z",
+        "sourceSha": "a" * 40,
+        "sourceDirty": False,
+        "imageDigest": "sha256:" + "b" * 64,
+        "artifactDigest": "sha256:" + "c" * 64,
+        "builtAt": "2026-07-15T17:48:00Z",
+        "deployedAt": "2026-07-15T17:51:42Z",
     }
 
     monkeypatch.setenv("APP_REVISION", "not-a-release")
     assert client.get("/.well-known/release.json").json()["revision"] == ("development")
+
+    monkeypatch.setenv("APP_REVISION", "d" * 40)
+    monkeypatch.delenv("APP_SOURCE_DIRTY", raising=False)
+    assert client.get("/.well-known/release.json").json()["sourceDirty"] is True
 
 
 def test_marketing_endpoints_prefer_public_base_url(monkeypatch):

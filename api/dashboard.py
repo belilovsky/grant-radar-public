@@ -11,6 +11,7 @@ from api.avds_visual import DASHBOARD_AVDS4_CSS
 from api.branding import BRAND_MARK_IVORY_HTML
 from api.dashboard_copy import dashboard_copy
 from api.dashboard_style import DASHBOARD_CSS
+from api.integration_versions import AVDS_VERSION
 from api.page_primitives import absolute_href as _absolute_href
 from api.public_meta import analytics_head_html, og_image_url
 from core.public_clock import public_time_zone_name
@@ -286,7 +287,7 @@ def render_dashboard(
     data-api-base="{base}"
     data-lang="{escape(active_lang, quote=True)}"
     data-avds-component="admin-shell"
-    data-avds-version="4.6.0"
+    data-avds-version="{AVDS_VERSION}"
   >
     <header class="mobile-app-bar" data-avds-component="mobile-app-bar">
       <a class="mobile-app-brand" href="{canonical_href}" aria-label="QAZ.FUND">
@@ -877,7 +878,8 @@ def render_dashboard(
         </details>
       </div>
     </details>
-    <footer class="site-footer" data-avds-component="site-footer"><a class="footer-contact" href="mailto:contact@qaz.fund">contact@qaz.fund</a>
+    <footer class="site-footer" data-avds-component="site-footer">
+      <a class="footer-contact" href="mailto:contact@qaz.fund">contact@qaz.fund</a>
       <nav class="site-footer-nav" aria-label="{escape(str(copy["views_aria"]), quote=True)}">
         <a href="{terms_href}">{escape(str(copy["terms_link"]))}</a>
         <a href="{data_policy_href}">{escape(str(copy["data_policy_link"]))}</a>

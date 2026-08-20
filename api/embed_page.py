@@ -10,6 +10,7 @@ from urllib.parse import urlparse
 from qazstack.opportunities import public_lifecycle
 
 from api.avds import AVDS_CSS
+from api.integration_versions import AVDS_VERSION
 from core.localization import localize_opportunity
 from core.models import Opportunity
 
@@ -331,7 +332,7 @@ def _base_document(
     *, lang: str, title: str, intro: str, body: str, catalog_url: str
 ) -> str:
     return f"""<!doctype html>
-<html lang="{escape(lang)}" data-avds="qaz-fund-embed" data-avds-version="4.3.2"
+<html lang="{escape(lang)}" data-avds="qaz-fund-embed" data-avds-version="{AVDS_VERSION}"
       data-av-theme="light" data-theme="light">
   <head>
     <meta charset="utf-8">
@@ -344,7 +345,8 @@ def _base_document(
   <body>
     <main class="embed-shell" data-avds-component="embed-widget">
       {body}
-      <footer class="embed-footer"><a class="footer-contact" href="mailto:contact@qaz.fund">contact@qaz.fund</a>
+      <footer class="embed-footer">
+        <a class="footer-contact" href="mailto:contact@qaz.fund">contact@qaz.fund</a>
         <p>{escape(_copy(lang)['disclaimer'])}</p>
         <a href="{escape(catalog_url, quote=True)}" target="_blank"
            rel="noopener noreferrer">{escape(_copy(lang)['catalog'])} ↗</a>

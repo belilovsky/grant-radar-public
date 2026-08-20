@@ -39,6 +39,12 @@ COPY = {
             "Он не подтверждает юридическую актуальность каждой программы."
         ),
         "summary_aria": "Сводка состояния источников",
+        "search": "Поиск по источникам",
+        "filter": "Показать",
+        "attention": "Сначала требующие внимания",
+        "all": "Все источники",
+        "fresh_only": "Только проверенные недавно",
+        "no_results": "По заданным условиям источники не найдены.",
     },
     "en": {
         "title": "Source status – QAZ.FUND",
@@ -66,6 +72,12 @@ COPY = {
             "not confirm the legal validity of every program."
         ),
         "summary_aria": "Source status summary",
+        "search": "Search sources",
+        "filter": "Show",
+        "attention": "Needs attention first",
+        "all": "All sources",
+        "fresh_only": "Recently checked only",
+        "no_results": "No sources match these filters.",
     },
     "kk": {
         "title": "Дереккөздер мәртебесі – QAZ.FUND",
@@ -93,6 +105,12 @@ COPY = {
             "Ол әр бағдарламаның заңдық тұрғыдан өзектілігін растамайды."
         ),
         "summary_aria": "Дереккөздер мәртебесінің қысқаша қорытындысы",
+        "search": "Дереккөздерді іздеу",
+        "filter": "Көрсету",
+        "attention": "Алдымен назар аударатындары",
+        "all": "Барлық дереккөздер",
+        "fresh_only": "Жақында тексерілгендері",
+        "no_results": "Бұл сүзгілерге сәйкес дереккөз табылмады.",
     },
 }
 
@@ -203,8 +221,10 @@ def render_status_page(
         freshness = str(row.get("freshness_status") or "unknown")
         mobile_updated = f'{copy["updated"]}: {last_checked}'
         source_name = _source_display_name(row, active_lang)
+        search_value = f"{source_name} {_host(row.get('base_url'))}".lower()
         rendered_rows.append(f"""
-            <tr>
+            <tr data-source-state="{escape(freshness, quote=True)}"
+              data-source-search="{escape(search_value, quote=True)}">
               <td>
                 <strong>{escape(source_name)}</strong>
                 <span>{escape(_host(row.get("base_url")))}</span>
@@ -340,9 +360,24 @@ def render_status_page(
       .metrics {{ margin-left:64px; }}
     }}
     .empty {{ color:var(--muted); text-align:center; }}
+    .status-controls {{
+      display:grid;
+      grid-template-columns:minmax(220px,1fr) minmax(220px,.45fr);
+      gap:10px;
+      margin:18px 0 10px;
+    }}
+    .status-control {{
+      display:grid; gap:5px; color:var(--muted); font-size:11px; font-weight:750;
+    }}
+    .status-control input,.status-control select {{
+      width:100%; min-height:44px; padding:9px 11px; border:1px solid var(--line);
+      border-radius:var(--av-radius-md); background:var(--panel); color:var(--ink);
+    }}
+    .status-no-results {{ display:none; padding:24px; text-align:center; color:var(--muted); }}
     @media (max-width:860px) {{
       .overview {{ grid-template-columns:1fr; }}
       .metrics {{ margin:0; padding:0; border:0; }}
+      .status-controls {{ grid-template-columns:1fr; }}
     }}
     @media (max-width:860px) {{
       .lang-switch a,
@@ -411,6 +446,19 @@ def render_status_page(
           <strong>{int(coverage.get("unknown_freshness_sources") or 0)}</strong></div>
       </div>
     </section>
+    <div class="status-controls" data-avds-pattern="filter-state-summary">
+      <label class="status-control" for="source-search">{escape(str(copy["search"]))}
+        <input id="source-search" type="search" autocomplete="off"
+          placeholder="{escape(str(copy["search"]), quote=True)}">
+      </label>
+      <label class="status-control" for="source-filter">{escape(str(copy["filter"]))}
+        <select id="source-filter">
+          <option value="attention">{escape(str(copy["attention"]))}</option>
+          <option value="all">{escape(str(copy["all"]))}</option>
+          <option value="fresh">{escape(str(copy["fresh_only"]))}</option>
+        </select>
+      </label>
+    </div>
     <div class="table-wrap" data-avds-component="data-table">
       <table>
         <thead><tr><th>{escape(str(copy["source"]))}</th>
@@ -419,9 +467,13 @@ def render_status_page(
           <th>{escape(str(copy["state"]))}</th></tr></thead>
         <tbody>{rows}</tbody>
       </table>
+      <div class="status-no-results" id="status-no-results">
+        {escape(str(copy["no_results"]))}
+      </div>
     </div>
     <p class="note">{escape(str(copy["disclaimer"]))}</p>
-    <footer class="site-footer"><a class="footer-contact" href="mailto:contact@qaz.fund">contact@qaz.fund</a>
+    <footer class="site-footer">
+      <a class="footer-contact" href="mailto:contact@qaz.fund">contact@qaz.fund</a>
       <nav class="site-footer-nav"
         aria-label="{escape(str(product_copy["views_aria"]), quote=True)}">
         <a href="{escape(catalog_href, quote=True)}"
@@ -441,5 +493,41 @@ def render_status_page(
       </nav>
     </footer>
   </main>
+  <script>
+    (() => {{
+      const search = document.getElementById("source-search");
+      const filter = document.getElementById("source-filter");
+      const rows = [...document.querySelectorAll("tbody tr[data-source-state]")];
+      const body = document.querySelector("tbody");
+      const empty = document.getElementById("status-no-results");
+      rows.forEach((row, index) => {{ row.dataset.sourceIndex = String(index); }});
+      const apply = () => {{
+        const query = String(search.value || "").trim().toLowerCase();
+        const mode = filter.value;
+        let visible = 0;
+        const ordered = [...rows].sort((left, right) => {{
+          if (mode !== "attention") {{
+            return Number(left.dataset.sourceIndex) - Number(right.dataset.sourceIndex);
+          }}
+          const leftAttention = left.dataset.sourceState === "fresh" ? 1 : 0;
+          const rightAttention = right.dataset.sourceState === "fresh" ? 1 : 0;
+          return leftAttention - rightAttention ||
+            Number(left.dataset.sourceIndex) - Number(right.dataset.sourceIndex);
+        }});
+        ordered.forEach((row) => body.appendChild(row));
+        rows.forEach((row) => {{
+          const state = row.dataset.sourceState || "unknown";
+          const stateMatch = mode !== "fresh" || state === "fresh";
+          const searchMatch = !query || (row.dataset.sourceSearch || "").includes(query);
+          row.hidden = !(stateMatch && searchMatch);
+          if (!row.hidden) visible += 1;
+        }});
+        empty.style.display = visible ? "none" : "block";
+      }};
+      search.addEventListener("input", apply);
+      filter.addEventListener("change", apply);
+      apply();
+    }})();
+  </script>
 </body>
 </html>"""
