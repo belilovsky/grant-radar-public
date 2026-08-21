@@ -140,6 +140,17 @@ def test_semantic_catalog_uses_the_public_host_on_the_internal_network() -> None
     assert "${GRANT_RADAR_SEMANTIC_RERANK_MAX_LENGTH:-256}" in production_compose
 
 
+def test_semantic_runtime_is_reaped_and_bounded() -> None:
+    production_compose = (ROOT / "docker-compose.prod.yml").read_text()
+    semantic = production_compose.split("\n  semantic:\n", maxsplit=1)[1]
+
+    assert "    init: true\n" in semantic
+    assert '        "--workers",\n        "1",' in semantic
+    assert '    cpus: "1.0"\n' in semantic
+    assert "    mem_limit: 3g\n" in semantic
+    assert "    pids_limit: 128\n" in semantic
+
+
 def test_worker_does_not_run_migrations_concurrently_with_api() -> None:
     base_compose = (ROOT / "docker-compose.yml").read_text()
 

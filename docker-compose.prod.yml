@@ -87,6 +87,18 @@ services:
       context: .
       dockerfile: Dockerfile.semantic
     restart: unless-stopped
+    init: true
+    command:
+      [
+        "uvicorn",
+        "semantic_service.app:app",
+        "--host",
+        "0.0.0.0",
+        "--port",
+        "8010",
+        "--workers",
+        "1",
+      ]
     environment:
       QDRANT_URL: http://qdrant:6333
       GRANT_RADAR_SEMANTIC_CATALOG_URL: ${GRANT_RADAR_SEMANTIC_CATALOG_URL:-http://api:8000/opportunities.ndjson?compact=true&limit=5000}
@@ -98,9 +110,9 @@ services:
       GRANT_RADAR_SEMANTIC_RERANK_MAX_LENGTH: ${GRANT_RADAR_SEMANTIC_RERANK_MAX_LENGTH:-256}
     volumes:
       - semantic-models:/models
-    cpus: "2.0"
+    cpus: "1.0"
     mem_limit: 3g
-    pids_limit: 384
+    pids_limit: 128
     read_only: true
     tmpfs:
       - /tmp:size=268435456,mode=1777
