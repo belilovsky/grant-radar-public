@@ -1026,7 +1026,8 @@ def render_funder_page(
       </nav>
     </div>
     {fallback_note_markup}
-    <section class="hero" data-avds-component="hero-band">
+    <section class="hero" data-avds-component="hero-band"
+      aria-label="{escape(str(copy["funder_page_eyebrow"]), quote=True)}">
       <div class="hero-copy">
         <h1>{funder_name}</h1>
         <p>{overview}</p>

@@ -324,7 +324,8 @@ def render_dashboard(
       aria-label="{escape(str(copy["mobile_close_filters"]), quote=True)}"
       hidden
     ></button>
-    <section class="hero-band" data-avds-component="hero-band">
+    <section class="hero-band" data-avds-component="hero-band"
+      aria-label="{escape(str(copy["eyebrow"]), quote=True)}">
       {fallback_note_markup}
       <div class="hero-grid">
         <div class="hero-copy">
