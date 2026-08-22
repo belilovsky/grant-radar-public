@@ -274,7 +274,10 @@ async def reindex(state: ServiceState) -> None:
         return
     try:
         documents = await _load_catalog()
-        backend = state.backend or BgeM3QdrantBackend()
+        # Model construction loads the embedding and reranker weights.  It is
+        # CPU- and I/O-bound, so creating it on the event loop makes `/health`
+        # time out throughout cold start even though the service is alive.
+        backend = state.backend or await asyncio.to_thread(BgeM3QdrantBackend)
         count = await asyncio.to_thread(backend.index, documents)
         state.backend = backend
         state.indexed_at = datetime.now(UTC)
