@@ -1027,7 +1027,6 @@ def render_funder_page(
     </div>
     {fallback_note_markup}
     <section class="hero" data-avds-component="hero-band">
-      <span class="eyebrow">{escape(str(copy["funder_page_eyebrow"]))}</span>
       <div class="hero-copy">
         <h1>{funder_name}</h1>
         <p>{overview}</p>

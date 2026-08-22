@@ -128,14 +128,6 @@ DASHBOARD_CSS = r"""    :root {
       display: grid;
       gap: var(--av-spacing-1);
     }
-    .eyebrow {
-      color: color-mix(in oklab, var(--brand), var(--ink) 16%);
-      font-size: var(--av-text-xs);
-      font-family: var(--font-sans);
-      font-weight: 750;
-      letter-spacing: 0.06em;
-      text-transform: uppercase;
-    }
     .brand-row {
       display: flex;
       align-items: center;
@@ -246,14 +238,6 @@ DASHBOARD_CSS = r"""    :root {
       border-radius: 0;
       background: transparent;
       box-shadow: none;
-    }
-    .hero-stage-eyebrow {
-      color: var(--muted);
-      font-family: var(--font-sans);
-      font-size: var(--av-text-xs);
-      font-weight: 650;
-      letter-spacing: 0;
-      text-transform: none;
     }
     .hero-stage-title {
       margin: 0;
@@ -2875,8 +2859,8 @@ DASHBOARD_CSS = r"""    :root {
         display: inline-flex;
         align-items: center;
         justify-content: center;
-        width: 42px;
-        height: 42px;
+        width: var(--avds-mobile-touch-target);
+        height: var(--avds-mobile-touch-target);
         padding: 0;
         border: 1px solid var(--line-subtle);
         border-radius: var(--av-radius-full);
@@ -2920,7 +2904,6 @@ DASHBOARD_CSS = r"""    :root {
         box-shadow: none;
         backdrop-filter: none;
       }
-      .hero-copy > .topbar .eyebrow,
       .hero-copy > .topbar .brand > p,
       .hero-copy > .topbar .focus-row {
         display: none;
@@ -3039,7 +3022,7 @@ DASHBOARD_CSS = r"""    :root {
       }
       .shell {
         width: 100%;
-        padding: calc(66px + env(safe-area-inset-top)) 12px
+        padding: calc(66px + env(safe-area-inset-top)) var(--avds-mobile-page-gutter)
           calc(82px + env(safe-area-inset-bottom));
       }
       .hero-band {

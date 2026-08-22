@@ -1,0 +1,69 @@
+{
+  "schemaVersion": "avds-anti-generative-audit-v1",
+  "cells": [
+    {
+      "route": "/?lang=ru",
+      "role": "public catalog",
+      "state": "loaded",
+      "viewport": "1440x960",
+      "findings": [
+        {
+          "pattern": "decorative eyebrow and duplicated quick-pick label",
+          "selector": ".hero-band .eyebrow, .hero-stage-eyebrow",
+          "screenshot": "output/playwright/qaz-fund-home-desktop-before.png",
+          "semanticTest": "render_dashboard has one h1 and the quick-pick region has an h2 and aria-label",
+          "replacement": "Removed the duplicate overline and retained the product title plus the actionable h2.",
+          "status": "resolved"
+        }
+      ]
+    },
+    {
+      "route": "/media?lang=ru",
+      "role": "public media",
+      "state": "loaded",
+      "viewport": "393x852",
+      "findings": [
+        {
+          "pattern": "repeated decorative section labels",
+          "selector": ".media-hero .eyebrow, .section-eyebrow",
+          "screenshot": "output/playwright/qaz-fund-home-mobile-before.png",
+          "semanticTest": "media sections expose their hierarchy through h1 and h2 elements",
+          "replacement": "Removed label-only overlines; retained source, live-state and article metadata as factual labels.",
+          "status": "resolved"
+        }
+      ]
+    },
+    {
+      "route": "/compare?lang=ru",
+      "role": "comparison",
+      "state": "populated",
+      "viewport": "1440x960",
+      "findings": [
+        {
+          "pattern": "brand eyebrow above an already explicit comparison heading",
+          "selector": ".hero .eyebrow",
+          "screenshot": "output/playwright/qaz-fund-home-desktop-before.png",
+          "semanticTest": "comparison hero begins with its h1 and factual comparison metrics",
+          "replacement": "Removed the redundant brand overline without changing the comparison data or controls.",
+          "status": "resolved"
+        }
+      ]
+    },
+    {
+      "route": "/funder/kazakhstan-domestic-support?lang=ru",
+      "role": "funder profile",
+      "state": "populated",
+      "viewport": "768x1024",
+      "findings": [
+        {
+          "pattern": "section eyebrow duplicated by the funder heading",
+          "selector": ".hero .eyebrow",
+          "screenshot": "output/playwright/qaz-fund-home-desktop-before.png",
+          "semanticTest": "profile keeps its h1, search control and factual source policy labels",
+          "replacement": "Removed decorative pre-heading while preserving the source and program metadata.",
+          "status": "resolved"
+        }
+      ]
+    }
+  ]
+}

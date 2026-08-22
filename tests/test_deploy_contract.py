@@ -161,7 +161,7 @@ def test_production_runtime_has_web_redundancy_and_worker_liveness() -> None:
     base_compose = (ROOT / "docker-compose.yml").read_text()
     production_compose = (ROOT / "docker-compose.prod.yml").read_text()
 
-    assert "WEB_CONCURRENCY: ${WEB_CONCURRENCY:-2}" in production_compose
+    assert "WEB_CONCURRENCY: ${WEB_CONCURRENCY:-1}" in production_compose
     assert "GRANT_RADAR_MAX_SOURCE_CONCURRENCY" in base_compose
     assert (
         "GRANT_RADAR_TIME_ZONE: ${GRANT_RADAR_TIME_ZONE:-Asia/Almaty}" in base_compose

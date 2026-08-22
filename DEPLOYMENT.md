@@ -48,7 +48,10 @@ The worker records one `runs` row per source cycle using the existing schema.
 This is also the freshness evidence for sources that return no records. Do not
 seed or update these rows manually: a successful real fetch cycle is the gate.
 
-Production starts two Uvicorn workers through `WEB_CONCURRENCY=2`. The source
+Production starts one Uvicorn worker through `WEB_CONCURRENCY=1`. This measured
+limit keeps the public catalogue responsive on the shared origin; scale it only
+after a capacity check confirms that another worker can complete startup and
+remain healthy. The source
 scheduler limits simultaneous fetches to four through
 `GRANT_RADAR_MAX_SOURCE_CONCURRENCY` and updates the worker heartbeat used by
 the Compose healthcheck. Override these values only after measuring the same

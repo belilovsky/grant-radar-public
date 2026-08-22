@@ -69,7 +69,10 @@ def _interaction_errors(page: Page, surface: str, *, width: int) -> list[str]:
     if surface.startswith("/funder/"):
         search = page.locator("#funder-program-search")
         if search.count():
-            search.fill("Архивный")
+            query = page.locator(".opportunity-card h3").first.inner_text().strip()
+            if not query:
+                return errors
+            search.fill(query)
             state = page.locator(".opportunity-card").evaluate_all(
                 """cards => cards.map(card => ({
                   title: String(card.querySelector('h3')?.textContent || '').trim(),
@@ -78,8 +81,10 @@ def _interaction_errors(page: Page, surface: str, *, width: int) -> list[str]:
                 }))"""
             )
             visible = [row for row in state if row["display"] != "none"]
-            if not visible or any("Архивный" not in row["title"] for row in visible):
-                errors.append(f"funder search did not isolate archive: {state}")
+            if not visible or any(
+                query.casefold() not in row["title"].casefold() for row in visible
+            ):
+                errors.append(f"funder search did not isolate exact program: {state}")
     elif surface.startswith("/media?"):
         search = page.locator("#media-search")
         if search.count():

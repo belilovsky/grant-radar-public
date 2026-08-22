@@ -63,6 +63,8 @@ AVDS_CSS = """
       --av-control-height-sm: 32px;
       --av-control-height-md: 36px;
       --av-control-height-lg: 44px;
+      --avds-mobile-page-gutter: 0.75rem;
+      --avds-mobile-touch-target: 2.75rem;
       --av-card-padding-sm: 10px;
       --av-card-padding-md: 12px;
       --av-section-gap: 24px;

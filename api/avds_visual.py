@@ -1,10 +1,10 @@
-"""AV DS 4.6 visual composition overrides for public QAZ.FUND pages."""
+"""AV DS 4.7 visual composition adapter for public QAZ.FUND pages."""
 
 from __future__ import annotations
 
 DASHBOARD_AVDS4_CSS = r"""
     /*
-     * AV DS 4.6 public-catalog pass.
+     * AV DS 4.7 public-catalog adapter.
      * One clear starting point, quiet separators and compact controls.
      */
     :root {
@@ -43,11 +43,6 @@ DASHBOARD_AVDS4_CSS = r"""
 
     .hero-band .topbar {
       margin-bottom: 0;
-    }
-
-    .hero-band .eyebrow {
-      color: #b9ddd8;
-      letter-spacing: 0.08em;
     }
 
     .hero-band .brand h1 {
@@ -123,10 +118,6 @@ DASHBOARD_AVDS4_CSS = r"""
       align-items: center;
       justify-content: space-between;
       gap: 12px;
-    }
-
-    .hero-stage-eyebrow {
-      color: var(--qaz-hero-muted);
     }
 
     .hero-stage-title {

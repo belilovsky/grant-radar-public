@@ -330,7 +330,6 @@ def render_dashboard(
         <div class="hero-copy">
           <header class="topbar" data-avds-component="topbar">
             <div class="brand">
-              <span class="eyebrow">{escape(str(copy["eyebrow"]))}</span>
               <div class="brand-row">
                 <span class="brand-mark" aria-hidden="true">{BRAND_MARK_IVORY_HTML}</span>
                 <h1>{escape(str(copy["headline"]))}</h1>
@@ -341,7 +340,6 @@ def render_dashboard(
         </div>
         <aside class="hero-stage" data-avds-component="hero-stage">
           <div class="hero-stage-top">
-            <span class="hero-stage-eyebrow">{escape(str(copy["hero_picks_label"]))}</span>
             <div
               class="lang-switch hero-lang-switch"
               role="group"
@@ -678,7 +676,6 @@ def render_dashboard(
       <div class="discovery-library-body">
         <section class="spotlight-section" aria-labelledby="spotlight-title">
           <div class="spotlight-copy">
-            <span class="eyebrow">{escape(str(copy["spotlight_section_eyebrow"]))}</span>
             <h2 id="spotlight-title">{escape(str(copy["spotlight_section_title"]))}</h2>
             <p>{escape(str(copy["spotlight_section_description"]))}</p>
           </div>
@@ -693,7 +690,6 @@ def render_dashboard(
         <div class="discovery-grid" data-avds-component="discovery-grid">
           <section class="pathways-section" aria-labelledby="pathways-title">
             <div class="spotlight-copy">
-              <span class="eyebrow">{escape(str(copy["pathways_section_eyebrow"]))}</span>
               <h2 id="pathways-title">{escape(str(copy["pathways_section_title"]))}</h2>
               <p>{escape(str(copy["pathways_section_description"]))}</p>
             </div>
@@ -707,7 +703,6 @@ def render_dashboard(
 
           <section class="themes-section" aria-labelledby="themes-title">
             <div class="spotlight-copy">
-              <span class="eyebrow">{escape(str(copy["themes_section_eyebrow"]))}</span>
               <h2 id="themes-title">{escape(str(copy["themes_section_title"]))}</h2>
               <p>{escape(str(copy["themes_section_description"]))}</p>
             </div>
@@ -936,7 +931,6 @@ def render_dashboard(
   >
     <div class="detail-header">
       <div>
-        <span class="eyebrow">{escape(str(copy["detail_shell_title"]))}</span>
         <h2 id="detail-title">{escape(str(copy["detail_title_fallback"]))}</h2>
         <p class="detail-status" id="detail-status">{escape(str(copy["detail_loading"]))}</p>
       </div>

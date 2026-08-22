@@ -430,7 +430,6 @@ def render_status_page(
     </div>
     <section class="overview" data-avds-component="hero-band">
       <div class="hero">
-        <span class="eyebrow">{escape(str(copy["eyebrow"]))}</span>
         <h1>{escape(str(copy["heading"]))}</h1>
         <p>{escape(str(copy["intro"]))}</p>
       </div>
