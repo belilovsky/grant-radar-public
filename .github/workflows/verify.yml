@@ -19,7 +19,7 @@ jobs:
   quality:
     name: Quality and tests
     if: github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository
-    runs-on: [self-hosted, Linux, X64, qdev-ci, 'qdev-job-${{ github.run_id }}-${{ github.run_attempt }}-quality']
+    runs-on: [self-hosted, Linux, X64, qdev-ci, "qdev-job-${{ github.run_id }}-${{ github.run_attempt }}-quality"]
     timeout-minutes: 15
     steps:
       - name: Check out repository
@@ -57,7 +57,7 @@ jobs:
     name: Browser and accessibility matrix
     needs: quality
     if: github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository
-    runs-on: [self-hosted, Linux, X64, qdev-ci-browser, 'qdev-job-${{ github.run_id }}-${{ github.run_attempt }}-browser']
+    runs-on: [self-hosted, Linux, X64, qdev-ci-browser, "qdev-job-${{ github.run_id }}-${{ github.run_attempt }}-browser"]
     timeout-minutes: 20
     steps:
       - name: Check out repository
@@ -108,7 +108,7 @@ jobs:
     name: Production image, vulnerability scan, and SBOM
     needs: quality
     if: github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository
-    runs-on: [self-hosted, Linux, X64, qdev-ci-docker, 'qdev-job-${{ github.run_id }}-${{ github.run_attempt }}-production-image']
+    runs-on: [self-hosted, Linux, X64, qdev-ci-docker, "qdev-job-${{ github.run_id }}-${{ github.run_attempt }}-production-image"]
     timeout-minutes: 30
     steps:
       - name: Check out repository
