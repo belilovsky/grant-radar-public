@@ -4,8 +4,9 @@
 
 - Project and public domain: QAZ.FUND — `https://qaz.fund`
 - Canonical checkout: `/Users/belilovsky/Documents/Codex/2026-05-21/grant-radar-public`
-- Base revision: `c3cb85629bb70342cbbd6f080933f513b5e62eb7`; final audited state is a
-  **dirty local candidate** and has not been committed or deployed.
+- Base revision: `9906676dd9355e9079987ccc36db2d88e7d8808e`; final audited state is a
+  **dirty local candidate** containing the narrow absence-label rewrite. It has
+  not been committed or deployed under this audit scope.
 - Audit timestamp and timezone: 2026-08-23, Asia/Almaty.
 - Mode: rewrite; lifecycle surface: local public-candidate fixture.
 - Content owner: QAZ.FUND product team. Reviewer: Codex under the authorised
@@ -34,13 +35,12 @@
 
 ## Automated candidate scan
 
-- Scan: `edpol-editorial-candidate-scan-v2`; 15 files considered, scanned and
-  skipped: 15 / 15 / 0. Excerpts were redacted.
+- Scan: `edpol-editorial-candidate-scan-v2`; 16 files considered, scanned and
+  skipped: 16 / 16 / 0. Excerpts were redacted.
 - Exact publication gate: `--no-heuristics --fail-on-policy-match` exited 0.
-- The full review scan reports 86 `unknown-value-placeholder` structural
-  candidates and one editorial-risk candidate. They are intentionally retained
-  only where the UI states that source data is absent or unpublished; none is
-  an exact policy match or a claim of AI origin.
+- The final exact scan reports 79 `unknown-value-placeholder` structural
+  candidates. They occur only where the UI explicitly identifies missing source
+  data as unpublished; none is an exact policy match or a claim of AI origin.
 
 ## Confirmed findings and closure
 
@@ -49,13 +49,16 @@
 | `EDPOL-001` | dashboard quick filters | RU/KK/EN | editorial-risk | rewrite | Generic labels implied checks or support while activating a specific filter. They now name the actual action: startups, name search, deadline, Kazakhstan programs and tenders. | product | rewritten + verified |
 | `EDPOL-002` | dashboard heading | RU/KK/EN | editorial-risk | rewrite | Generic “where to start” framing obscured the job. It now asks the visitor to refine the task. | product | rewritten + verified |
 | `EDPOL-003` | topic filter | RU/KK/EN | structural-candidate | review | Topic is a real taxonomy filter, not a decorative label. It is now disclosed on demand, preserving its accessible group name. | product | verified |
+| `EDPOL-004` | absent amount and deadline labels | RU/KK/EN | editorial-risk | rewrite | Ambiguous “not stated” labels could obscure that the source field is absent. They now say that the amount or deadline is not published. QPost keeps those factual labels in its review card but omits them from the short Threads fact block. | product | rewritten + focused tests |
 
 ## Manual verification
 
 - Factual grounding: no deadline, amount, eligibility, source or success claim
   was added. Every changed label maps to the existing `data-hero-*` action.
-- RU/KK/EN parity: the three locale dictionaries were updated together and
-  localization tests pass.
+- RU/KK/EN parity: the three locale dictionaries were updated together; 54
+  focused public/media/QPost/comparison/preparation/localization tests pass
+  after the final rewrite; the full current-candidate suite also passes
+  660/660.
 - Typography: the repository typography gate passes; URLs, source titles, IDs,
   legal text and machine contract values were not rewritten.
 - Desktop and mobile: local browser evidence records no console errors,

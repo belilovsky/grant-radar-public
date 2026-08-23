@@ -33,9 +33,13 @@ CHART_TYPES = {
 
 def _human_date(value: datetime | None, lang: str) -> str:
     if value is None:
-        return "дата проверки не указана" if lang == "ru" else "check date unavailable"
+        return {
+            "ru": "дата проверки не опубликована",
+            "kk": "тексеру күні жарияланбаған",
+            "en": "check date unavailable",
+        }.get(lang, "check date unavailable")
     current = value.date()
-    if lang == "ru":
+    if lang in {"ru", "kk"}:
         return current.strftime("%d.%m.%Y")
     return current.isoformat()
 
@@ -44,12 +48,20 @@ def _deadline(value: OpportunityV1, lang: str) -> str:
     if value.deadline is not None:
         return (
             value.deadline.strftime("%d.%m.%Y")
-            if lang == "ru"
+            if lang in {"ru", "kk"}
             else value.deadline.isoformat()
         )
     if value.deadline_type == "rolling":
-        return "Без фиксированного срока" if lang == "ru" else "Rolling"
-    return "Срок уточняется" if lang == "ru" else "Deadline not stated"
+        return {
+            "ru": "Без фиксированного срока",
+            "kk": "Белгіленген мерзім жоқ",
+            "en": "Rolling",
+        }.get(lang, "Rolling")
+    return {
+        "ru": "Срок не опубликован",
+        "kk": "Мерзімі жарияланбаған",
+        "en": "Deadline not published",
+    }.get(lang, "Deadline not published")
 
 
 def citation_text(
@@ -62,6 +74,9 @@ def citation_text(
     if lang == "ru":
         source_line = f"Источник: {item.source.name}. Проверено: {checked}."
         caution = "Перед подачей сверьте условия на официальной странице."
+    elif lang == "kk":
+        source_line = f"Дереккөз: {item.source.name}. Тексерілген күні: {checked}."
+        caution = "Өтінім берер алдында шарттарды ресми беттен тексеріңіз."
     else:
         source_line = f"Source: {item.source.name}. Checked: {checked}."
         caution = "Check the current terms on the official page before applying."
@@ -82,7 +97,11 @@ def citation_text(
         )
     if style == "press":
         return " ".join([item.title + ".", item.summary, source_line, caution])
-    official_label = "Официальный источник" if lang == "ru" else "Official source"
+    official_label = {
+        "ru": "Официальный источник",
+        "kk": "Ресми дереккөз",
+        "en": "Official source",
+    }.get(lang, "Official source")
     return (
         f"{item.title}. QAZ.FUND, {checked}. {item.links.public_page}. "
         f"{source_line} {official_label}: {item.links.official_source}."
@@ -155,16 +174,16 @@ def render_opportunity_card_svg(
         max_lines=5 if height > width else 3,
     )
     checked = _human_date(item.timestamps.source_checked_at, lang)
-    source_label = (
-        f"Источник: {item.source.name} · проверено {checked}"
-        if lang == "ru"
-        else f"Source: {item.source.name} · checked {checked}"
-    )
-    disclaimer = (
-        "QAZ.FUND – навигатор, не грантодатель"
-        if lang == "ru"
-        else "QAZ.FUND – a navigator, not a funder"
-    )
+    source_label = {
+        "ru": f"Источник: {item.source.name} · проверено {checked}",
+        "kk": f"Дереккөз: {item.source.name} · тексерілді {checked}",
+        "en": f"Source: {item.source.name} · checked {checked}",
+    }.get(lang, f"Source: {item.source.name} · checked {checked}")
+    disclaimer = {
+        "ru": "QAZ.FUND – навигатор, не грантодатель",
+        "kk": "QAZ.FUND – грант беруші емес, навигатор",
+        "en": "QAZ.FUND – a navigator, not a funder",
+    }.get(lang, "QAZ.FUND – a navigator, not a funder")
     deadline = _deadline(item, lang)
     format_label = ", ".join(item.formats[:2]) or "opportunity"
 

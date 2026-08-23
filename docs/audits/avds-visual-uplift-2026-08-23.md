@@ -3,6 +3,11 @@
 Status: **код готов · local-only**. The result has not been deployed or
 presented as live-public evidence.
 
+Follow-up audit evidence was taken from base revision
+`9906676dd9355e9079987ccc36db2d88e7d8808e` plus an uncommitted EdPol-only
+copy rewrite. The follow-up did not alter the visual adapter, shared CSS or
+route composition.
+
 ## Diagnosis
 
 Key route: `/?lang=ru`, anonymous catalogue-ready state, synthetic
@@ -28,6 +33,8 @@ on real filters, and all topic chips competing with the first results.
   320×800 and 1920×1080: 30/30 checks passed. The RU/KK/EN home locale matrix
   also passed 15/15. Neither run found console errors, serious/critical axe
   findings or undeclared horizontal overflow.
+- Follow-up current-candidate matrix: the same six RU surfaces at compact and
+  desktop widths passed 12/12 with the same console, axe and overflow checks.
 - Matched mobile before/after evidence is in
   `output/playwright/qazfund-home-before-393.png` and
   `output/playwright/qazfund-home-after-393.png`.

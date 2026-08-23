@@ -57,10 +57,10 @@ def _amount(detail: OpportunityDetail, lang: str) -> str:
     if amount_raw:
         return amount_raw
     return {
-        "ru": "Не указана",
-        "kk": "Көрсетілмеген",
-        "en": "Not stated",
-    }.get(lang, "Not stated")
+        "ru": "Сумма не опубликована",
+        "kk": "Сома жарияланбаған",
+        "en": "Amount not published",
+    }.get(lang, "Amount not published")
 
 
 def _checklist(detail: OpportunityDetail, lang: str) -> list[str]:

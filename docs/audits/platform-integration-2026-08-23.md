@@ -7,8 +7,8 @@
   `/Users/belilovsky/Documents/Codex/2026-05-21/grant-radar-public`.
 - Repository: `https://github.com/belilovsky/grant-radar-public.git`; default
   branch: `main`.
-- Base SHA: `c3cb85629bb70342cbbd6f080933f513b5e62eb7`, six commits ahead of
-  `origin/main`. The final audited candidate also contains uncommitted local
+- Base SHA: `9906676dd9355e9079987ccc36db2d88e7d8808e`, equal to `origin/main`.
+  The final audited candidate contains uncommitted EdPol absence-label
   remediation; it has no release SHA and must not be confused with the base.
 - Runtime/public URL: `https://qaz.fund`. Evidence cut-off: 2026-08-23
   Asia/Almaty. No VPS, deployment, backup, restart, PR, commit or push was run.
@@ -56,7 +56,7 @@ public route and the accepted release SHA.
 |---|---|---|---|
 | Root manifest | **missing** | Root file absent at base SHA and local candidate. | Platform catalogue owner supplies schema and approved manifest; validation output is closure proof. |
 | Identity/catalogue | **conflicting** | `project_id=qaz-fund`, repo and production route are consistent in executable contracts. | Public `https://avds.digital/platform/ecosystem.generated.json` (generated 2026-08-20) records `id=grant-radar`, `source_path=catalog/projects/grant-radar.md`, QazStack 1.35 and AV DS 4.6. Registry owner must update it to the approved manifest. |
-| Release identity | **conflicting** | Candidate is `c3cb856…` plus uncommitted fixes. | Public release is `4d7e078…`; guarded immutable release and matching public receipt are required. |
+| Release identity | **conflicting** | Candidate is `9906676…` plus uncommitted fixes. | Public release is `4d7e078…`; guarded immutable release and matching public receipt are required. |
 | QazStack | **stale** | `qazstack-consumer-v1`, checksum-pinned 1.41.2 wheel, strict validation and tests. | Public consumer contract currently reports 1.41.2 but belongs to `4d7e078…`; re-observe it at the candidate SHA and obtain registry receipt. |
 | AV DS | **conflicting** | SSR adapter now separates release 4.7.0 from source package `@sgeo/ui-kit` 4.5.1 and pins live AVDS SHA `79342b…`; local visual/a11y evidence passes. | Public QAZ.FUND contract still reports old AVDS SHA `5411…`; public registry reports AV DS 4.6. Registry and deployed contract must adopt the candidate contract. |
 | QazPipe | **documented** | Versioned public pull source with NDJSON, pagination, checkpoint, idempotency and provenance. | Consumer owner must record a pull receipt or explicit inactive registration at the candidate SHA. |
@@ -90,10 +90,10 @@ configuration was changed.
 |---|---|---|
 | Root manifest presence | fail as expected | root `qdev-project.json` absent; no replacement invented |
 | AVDS upstream contracts | pass | release 4.7.0, SHA `79342b…`; source package 4.5.1 |
-| Source tests | pass | 657/657 tests, including 140 dashboard/localization/AVDS/platform regressions, on the final local candidate |
+| Source tests | pass | 660/660 full current-candidate tests and 54 focused public/media/QPost/comparison/preparation/localization tests pass after the final dirty-candidate rewrite |
 | AVDS browser acceptance | pass | local fixture, desktop visual-craft cell, no H1/asset/console/overflow failure |
-| Browser matrix | pass | local six-surface RU matrix: 30/30; RU/KK/EN home × five widths: 15/15; zero serious/critical axe, console and overflow findings |
-| EdPol exact gate | pass | 15 public-copy files, no failing exact policy candidate |
+| Browser matrix | pass | current candidate: six primary RU surfaces × compact/desktop: 12/12; prior wider local matrix: 45/45. Neither found serious/critical axe, console or overflow findings. |
+| EdPol exact gate | pass | 16 public-copy files, 79 manual-review structural candidates and no failing exact policy match |
 | Dependency health | pass | `pip check` and strict no-dependency-resolution `pip-audit` report no broken requirements or known vulnerabilities |
 | Public release/consumer read | pass, stale | safe GETs only; observes deployed SHA `4d7e078…`, not candidate |
 | Platform catalogue read | conflicting | stale `grant-radar` public record at the URL above |

@@ -5,6 +5,7 @@ from datetime import date, datetime, timezone
 from fastapi.testclient import TestClient
 
 from api import main as api_main
+from api.media import citation_text, render_opportunity_card_svg
 from core.models import Opportunity, OpportunityType
 from core.public_contract import to_opportunity_v1
 
@@ -46,6 +47,19 @@ def _sample_opportunity() -> Opportunity:
             "source_checked_at": "2026-07-21T10:00:00+00:00",
         },
     )
+
+
+def test_media_projection_uses_kazakh_labels_for_source_and_deadline() -> None:
+    item = to_opportunity_v1(_sample_opportunity())
+
+    citation = citation_text(item, lang="kk")
+    svg = render_opportunity_card_svg(item, lang="kk")
+
+    assert "Дереккөз: Astana Hub." in citation
+    assert "Ресми дереккөз" in citation
+    assert "31.08.2026" in svg
+    assert "Дереккөз: Astana Hub" in svg
+    assert "грант беруші емес" in svg
 
 
 def test_api_v1_exposes_versioned_public_contract(monkeypatch):

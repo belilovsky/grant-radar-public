@@ -169,6 +169,38 @@ def test_russian_feed_does_not_leak_english_only_audience_text() -> None:
     assert audience == "Команды из Казахстана и Центральной Азии"
 
 
+def test_kazakh_draft_labels_missing_facts_without_promoting_them_to_threads() -> None:
+    opportunity = _opportunity(
+        item_id="12121212-1212-1212-1212-121212121212", deadline=None
+    )
+    opportunity.amount_min = None
+    opportunity.amount_max = None
+    opportunity.raw["i18n"]["kk"] = {
+        "social_title": "Технологиялық жобаларға қолдау",
+        "summary": "Қазақстандағы командаларға арналған қаржыландыру бағдарламасы.",
+        "eligibility": ["Қазақстандағы командалар"],
+        "application_steps": [
+            "Талаптарды тексеру",
+            "Жоба сипаттамасын дайындау",
+            "Ресми арна арқылы өтінім беру",
+        ],
+    }
+
+    payload = build_qpost_draft_feed(
+        [opportunity],
+        base_url="https://qaz.fund",
+        lang="kk",
+        template="grant_day",
+        today=date(2026, 8, 13),
+    )
+
+    source = payload["items"][0]["source_items"][0]
+    assert source["amount"] == "Сома жарияланбаған"
+    assert source["deadline_display"] == "Тұрақты қабылдау"
+    assert "Сома жарияланбаған" in payload["items"][0]["body_text"]
+    assert "Сома жарияланбаған" not in payload["items"][0]["threads"]["body_text"]
+
+
 def test_grant_day_uses_source_grounded_editorial_fields() -> None:
     opportunity = _opportunity(
         item_id="77777777-7777-7777-7777-777777777777",
