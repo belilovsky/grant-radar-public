@@ -9,10 +9,11 @@
 - Default branch: `main`; the baseline was three commits ahead of `origin/main`.
 - Public/runtime address: `https://qaz.fund` (declared by `deploy/nginx/qaz.fund.conf` and project contracts).
 - Evidence cut-off: `2026-08-23T07:29:47Z`.
-- Working-tree boundary: only this checkout was inspected. The follow-up
-  remediation leaves a dirty candidate with tracked Compose, ignore and audit
-  changes; local `node_modules/` and `output/` artifacts were preserved and are
-  now ignored without deletion. No candidate release SHA exists yet.
+- Working-tree boundary: only this checkout was inspected. The authorized
+  follow-up is committed locally as candidate
+  `7f2484ca7f25f33925386bd622ad6e6bb6dd29ec`; local `node_modules/` and
+  `output/` artifacts were preserved and are now ignored without deletion. No
+  accepted production release SHA exists yet.
 
 The public health and release endpoints were read once, without changing
 state. The public runtime answered `/ready` with HTTP 200 and
@@ -140,17 +141,17 @@ The follow-up gates are green: the focused deploy/platform/numbering tests are
 20/20, `make lint` passes, `make ci-fast` passes with 657 tests, `pip check`
 reports no broken requirements, and `pip-audit --strict` reports no known
 vulnerabilities after excluding the locally vendored QazStack wheel from the
-PyPI-only audit. The change is not closed in production: the working tree is
-still dirty, the root manifest is still missing, the public release still
-identifies `4d7e078…`, and no build, backup or deploy was attempted during the
-VPS emergency pause.
+PyPI-only audit. The change is not closed in production: the root manifest is
+still missing, the public release still identifies `4d7e078…`, and no build,
+backup or deploy was attempted during the VPS emergency pause. The candidate
+commit is local only and has not been pushed or promoted.
 
 ## Remediation queue
 
 | Priority | Owner role | Finding | Concrete next action | Closure proof |
 |---|---|---|---|---|
 | P0 | Qdev Platform catalogue owner | Root `qdev-project.json` missing | Supply the approved `qdev-project-manifest-v1` root manifest and register the project. | Schema validation, catalogue record and source ID/repo/owner/lifecycle agree. |
-| P0 | QAZ.FUND release owner | Public runtime is `4d7e078…`; the post-remediation local candidate is dirty and has no accepted release SHA. | After the infrastructure pause is lifted and separately authorised, commit the candidate and run the guarded immutable release path. | Public release JSON source SHA exactly equals the accepted commit SHA; image/artifact digests, timestamps and `sourceDirty=false` agree. |
+| P0 | QAZ.FUND release owner | Public runtime is `4d7e078…`; the post-remediation candidate is local-only and has no accepted release SHA. | After the infrastructure pause is lifted and separately authorised, push the candidate and run the guarded immutable release path. | Public release JSON source SHA exactly equals the accepted commit SHA; image/artifact digests, timestamps and `sourceDirty=false` agree. |
 | P1 | Qdev Platform integration owners | Bidirectional QazStack/AV DS/QazPipe/QazLake/QazCompute/QazGeo evidence unavailable. | Reconcile each public contract with the authoritative Platform/consumer registry. | Dated registry/handshake evidence for every edge at the same release SHA. |
 | P1 | QAZ.FUND product/release owner | Local browser proof is not deployed browser proof. | Run the browser matrix and public smoke after the accepted release is live. | RU/KK/EN, 404/empty/error, desktop/mobile, focus, axe, console and overflow results tied to release SHA. |
 | P2 | QAZ.FUND + QazGeo owner | Deferred QazGeo boundary has a trigger but no dated review exception. | Record a dated review decision or keep it explicitly optional in the approved manifest. | Owner, rationale, boundary and review date in the manifest/registry; no geometry before validation. |
