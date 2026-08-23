@@ -1713,7 +1713,7 @@ COPY = {
         "workspace_action_fit": "Confirm eligibility and the deadline.",
         "workspace_action_preparing": "Assemble the package and record the deadline.",
         "workspace_action_submitted": "Keep the confirmation and monitor the terms.",
-        "workspace_action_result": "Record the outcome for this opportunity.",
+        "workspace_action_result": "Record the outcome for the saved card.",
         "workspace_deadline_today": "Due today",
         "workspace_deadline_days": "Due in {count} days",
         "workspace_deadline_date": "Due: {date}",
@@ -1862,7 +1862,7 @@ COPY = {
         "detail_copy_brief_prompt": "Copy the working brief",
         "detail_share": "Share opportunity",
         "detail_share_done": "The opportunity is ready to share.",
-        "detail_share_prompt": "Copy the link to this opportunity",
+        "detail_share_prompt": "Copy the link to the selected card",
         "detail_brief_heading": "QAZ.FUND – working brief",
         "detail_brief_legacy_heading": "QAZ.FUND – working brief",
         "detail_brief_summary": "Summary",
@@ -1948,7 +1948,7 @@ COPY = {
         "prepare_section_eyebrow": "Before applying",
         "prepare_section_title": "What to prepare",
         "prepare_section_description": (
-            "A checklist for this opportunity. Verify final requirements on the "
+            "A checklist for the selected card. Verify final requirements on the "
             "official source."
         ),
         "prepare_eligibility_title": "Check eligibility",
@@ -2608,7 +2608,7 @@ KK_DASHBOARD_COPY = {
     ),
     "faq_q3": "Сәйкестік дәлдігі нені білдіреді?",
     "faq_a3": (
-        "Бұл бағдарламаны бағалау емес. Шек карточканың таңдалған тақырыпқа, өңірге "
+        "Бағдарламаны бағалау емес. Шек карточканың таңдалған тақырыпқа, өңірге "
         "және форматқа қаншалықты сәйкес келетінін көрсетеді."
     ),
     "faq_q4": "Неге гранттармен қатар қолдау шаралары да көрсетіледі?",
@@ -2963,7 +2963,7 @@ KK_PUBLIC_UI_COPY = {
     "detail_copy_brief": "Қысқаша анықтаманы көшіру",
     "detail_copy_brief_done": "Анықтама көшірілді.",
     "detail_copy_brief_prompt": "Қысқаша анықтама",
-    "detail_empty": "Бұл мүмкіндік бойынша қосымша мәлімет жарияланбаған.",
+    "detail_empty": "Карточка бойынша қосымша мәлімет жарияланбаған.",
     "detail_expand_source": "Мәтінді ашу",
     "detail_meta_title": "Параметрлер",
     "detail_open_application": "Өтінім беруге өту",

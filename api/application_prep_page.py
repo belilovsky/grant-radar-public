@@ -410,7 +410,7 @@ def render_application_prep_page(
             "data_policy": "Деректер саясаты",
             "attribution": "Деректерді пайдалану",
             "closed_notice": (
-                "Бұл бағдарлама бойынша қабылдау аяқталды. Шарттарды тексергеннен "
+                "Қабылдау аяқталды. Шарттарды тексергеннен "
                 "кейін жоба мәтінін келесі қабылдауға негіз ретінде ғана "
                 "пайдаланыңыз."
             ),
@@ -512,7 +512,7 @@ def render_application_prep_page(
             "data_policy": "Data policy",
             "attribution": "Data reuse",
             "closed_notice": (
-                "Applications for this programme are closed. Use the draft only "
+                "Applications are closed. Use the draft only "
                 "as a starting point for a future round after checking its terms."
             ),
             "forecast_notice": (
@@ -567,7 +567,7 @@ def render_application_prep_page(
             ),
             "download": "Add to calendar",
             "unavailable": (
-                "This programme has no confirmed fixed deadline. "
+                "No confirmed fixed deadline is published. "
                 "Monitor the source page."
             ),
             "event_title": "QAZ.FUND: application deadline",

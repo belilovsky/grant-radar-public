@@ -154,9 +154,9 @@ def _audience(item: Opportunity, lang: str) -> str:
         if lang == "en" or re.search(r"[А-Яа-яЁёӘәҒғҚқҢңӨөҰұҮүҺһІі]", audience):
             return audience
     return {
-        "ru": "Критерии участия нужно сверить на официальной странице программы",
-        "kk": "Қатысу талаптарын бағдарламаның ресми парағынан тексеру керек",
-        "en": "Check eligibility on the programme's official page",
+        "ru": "Критерии участия не опубликованы в доступных данных",
+        "kk": "Қатысу талаптары қолжетімді деректерде жарияланбаған",
+        "en": "Eligibility criteria are not published in the available data",
     }[lang]
 
 
