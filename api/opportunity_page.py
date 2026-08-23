@@ -1665,7 +1665,7 @@ def _prepare_markup(
         card_markup.append(
             """
             <article class="prepare-card">
-              <span class="prepare-index">{index:02d}</span>
+              <span class="prepare-index">{index}</span>
               <h3>{title}</h3>
               <p>{text}</p>
             </article>
@@ -1819,7 +1819,7 @@ def _apply_markup(
         step_markup.append(
             """
             <li class="apply-step">
-              <span class="apply-index">{index:02d}</span>
+              <span class="apply-index">{index}</span>
               <div>
                 <h3>{title}</h3>
                 <p>{text}</p>

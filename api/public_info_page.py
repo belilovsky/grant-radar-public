@@ -235,7 +235,7 @@ def render_public_info_page(
     )
     section_rows = cast(list[tuple[str, str]], page["sections"])
     sections = "".join(
-        f'<article class="info-card"><span class="card-index">{index:02d}</span><h2>{escape(title)}</h2><p>{escape(text)}</p></article>'
+        f'<article class="info-card"><span class="card-index">{index}</span><h2>{escape(title)}</h2><p>{escape(text)}</p></article>'
         for index, (title, text) in enumerate(section_rows, 1)
     )
     ru_href = f"{base}/{kind}?lang=ru" if base else f"/{kind}?lang=ru"

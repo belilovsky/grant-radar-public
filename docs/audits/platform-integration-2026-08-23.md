@@ -56,6 +56,7 @@ Platform or public-production proof.
 | `api/main.py` could not compile because an f-string expression contained an escaped quote. | Rewrote the API-documentation language-link composition without an invalid f-string expression. | `compileall`, API documentation route tests and the complete test suite pass. |
 | `api/application_prep_page.py` was not Black-formatted, so `make lint` failed. | Applied Black to that one file. | `make lint` passes. |
 | Deferred QazGeo had rationale but no project owner or explicit reconsideration condition. | Added `product_owner` and `review_trigger` to the executable ecosystem contract and matching documentation. | Contract test asserts both fields. |
+| Decorative sequence labels displayed `01/02/03` on four public surfaces. | Changed application preparation, media, opportunity and public-info renderers to display ordinary integers. | `tests/test_public_numbering.py` prevents the padded format returning. |
 
 No `qdev-project.json` was invented. The Platform Integration Audit requires
 that declaration to come from the authoritative governance contract, not from
@@ -76,10 +77,14 @@ a product-local guess.
 
 The post-remediation source inspection found no active 4.6.0 AV DS claim in
 the corrected documentation, the Python package compiles, all local integration
-and release-contract tests pass, and the full fast CI suite passes. The verdict
-remains **blocked** solely because the required Platform declaration/catalogue
-proof and fresh runtime proof are not available within this repository and
-must not be fabricated.
+and release-contract tests pass, and the full fast CI suite passes. A local
+browser matrix exercised 10 representative public surfaces at 393, 768, 1440,
+320 and 1920 px: all 50 checks had zero console errors, serious/critical axe
+findings, interaction failures and horizontal-overflow findings. This is local
+evidence only; it does not replace public browser proof on the accepted runtime.
+The verdict remains **blocked** solely because the required Platform
+declaration/catalogue proof and fresh runtime proof are not available within
+this repository and must not be fabricated.
 
 ## Commands and results
 
@@ -91,7 +96,10 @@ python -m pip check
 PASS: No broken requirements found.
 
 make ci-fast PYTHON=/Users/belilovsky/Documents/Codex/2026-05-21/grant-radar-public/.venv/bin/python
-PASS: 654 passed in 13.43s; typography finding_count=0
+PASS: 656 passed; typography finding_count=0
+
+python -m scripts.browser_matrix --base-url http://127.0.0.1:8000 ...
+PASS: 50 local viewport/surface checks; zero console, axe, overflow and interaction findings
 ```
 
 The interpreter is the existing project virtual environment; the isolated audit

@@ -709,7 +709,7 @@ def render_application_prep_page(
           {open_attr}
         >
           <summary class="step-summary">
-            <span class="step-number">{number:02d}</span>
+            <span class="step-number">{number}</span>
             <span class="step-copy">
               <h2>{escape(title)}</h2>
               <p>{escape(note)}</p>

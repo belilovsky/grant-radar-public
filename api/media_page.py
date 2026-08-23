@@ -578,7 +578,7 @@ def render_media_page(
             else home
         )
         topic_markup.append(
-            f'<a class="topic-shelf" href="{escape(topic_href, quote=True)}"><span class="topic-shelf-index">{index:02d}</span><span><strong>{escape(str(topic["label"]))}</strong><small>{int(topic["count"])} {escape(copy["programs"])}</small></span><span class="topic-shelf-arrow" aria-hidden="true">↗</span></a>'
+            f'<a class="topic-shelf" href="{escape(topic_href, quote=True)}"><span class="topic-shelf-index">{index}</span><span><strong>{escape(str(topic["label"]))}</strong><small>{int(topic["count"])} {escape(copy["programs"])}</small></span><span class="topic-shelf-arrow" aria-hidden="true">↗</span></a>'
         )
     topics = "".join(topic_markup) or (
         f'<div class="media-empty">{escape(copy["empty"])}</div>'
