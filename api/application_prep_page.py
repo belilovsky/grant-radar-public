@@ -567,8 +567,7 @@ def render_application_prep_page(
             ),
             "download": "Add to calendar",
             "unavailable": (
-                "No confirmed fixed deadline is published. "
-                "Monitor the source page."
+                "No confirmed fixed deadline is published. " "Monitor the source page."
             ),
             "event_title": "QAZ.FUND: application deadline",
         },

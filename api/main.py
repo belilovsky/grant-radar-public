@@ -1992,9 +1992,11 @@ async def swagger_docs(request: Request) -> HTMLResponse:
         swagger_ui_parameters={"deepLinking": False},
     )
     docs_languages = "".join(
-        f'<a href="{escape(docs_hrefs[locale], quote=True)}" lang="{locale}"'
-        f'{" aria-current=\"page\"" if docs_lang == locale else ""}>'
-        f'{"KAZ" if locale == "kk" else locale.upper()}</a>'
+        (
+            f'<a href="{escape(docs_hrefs[locale], quote=True)}" lang="{locale}"'
+            + (' aria-current="page"' if docs_lang == locale else "")
+            + f'>{"KAZ" if locale == "kk" else locale.upper()}</a>'
+        )
         for locale in ("kk", "ru", "en")
     )
     page_header = (

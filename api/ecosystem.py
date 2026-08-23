@@ -553,9 +553,14 @@ def ecosystem_manifest(origin: str) -> dict[str, Any]:
             },
             "qazgeo": {
                 "status": "deferred-no-geometry",
+                "product_owner": "qaz-fund",
                 "reason": (
                     "Current records expose region classes but not verified coordinates. "
                     "A decorative or inferred map is intentionally not published."
+                ),
+                "review_trigger": (
+                    "Verified coordinates or an authoritative region geometry reference "
+                    "becomes available for published records."
                 ),
             },
             "qazcompute": {
