@@ -144,7 +144,9 @@ def test_root_renders_service_landing(monkeypatch):
         "Открытые программы с источником, сроком и условиями, которые можно "
         "проверить до подачи." in response.text
     )
-    assert "Найти поддержку" in response.text
+    assert "Стартапам" in response.text
+    assert "Поиск по названию" in response.text
+    assert "Программы в Казахстане" in response.text
     assert "qaz-fund-ornamental-background-1920x1080.webp" in styles
     assert "radial-gradient(circle at 92% 6%" not in styles
     assert "#F0C64D" not in styles
@@ -561,7 +563,9 @@ def test_root_supports_explicit_english_dashboard(monkeypatch):
     )
     assert "A working navigator for support in Kazakhstan" in response.text
     assert "Find open programs and turn them into a clear next step." in response.text
-    assert "Find support" in response.text
+    assert "For startups" in response.text
+    assert "Search by name" in response.text
+    assert "Kazakhstan programs" in response.text
     assert "Theme" in response.text
     assert "Region" in response.text
     assert "Timing" in response.text
@@ -597,7 +601,9 @@ def test_root_supports_explicit_kazakh_dashboard_route(monkeypatch):
     assert (
         "Ашық бағдарламаларды тауып, келесі қадамды түсінікті етіңіз." in response.text
     )
-    assert "Қолдауды табу" in response.text
+    assert "Стартаптарға" in response.text
+    assert "Атауы бойынша іздеу" in response.text
+    assert "Қазақстандағы бағдарламалар" in response.text
     assert 'data-avds-component="quick-links-rail"' not in response.text
     assert 'data-avds-component="public-summary-strip"' not in response.text
     assert 'data-mobile-view="sources"' not in rendered
@@ -874,8 +880,9 @@ def test_marketing_endpoints_are_exposed(monkeypatch):
     assert avds_contract.json()["avds_source"] == {
         "site": "https://avds.digital",
         "package": "@sgeo/ui-kit",
+        "package_version": "4.5.1",
         "version": "4.7.0",
-        "source_revision": "5411a219f3b8f03d12c23bc1543e268fe355d0ec",
+        "source_revision": "79342b07b061938c14101a213d1dd0c7a412d689",
     }
     assert avds_contract.json()["runtime_neutral_patterns"] == {
         "package": "@av/patterns",
@@ -1857,7 +1864,7 @@ def test_opportunities_use_internal_semantic_order_without_bypassing_filters(
     monkeypatch.setattr(
         api_main,
         "_search_semantic_opportunities",
-        lambda query, items, limit: [
+        lambda query, items, **_kwargs: [
             type("Hit", (), {"opportunity_id": second.id, "score": 0.99})(),
             type("Hit", (), {"opportunity_id": excluded.id, "score": 0.98})(),
             type("Hit", (), {"opportunity_id": first.id, "score": 0.97})(),
@@ -4241,7 +4248,7 @@ def test_operator_health_requires_token_and_returns_actionable_summary(monkeypat
     monkeypatch.setattr(
         api_main,
         "_operator_run_rows",
-        lambda limit=50: [
+        lambda **_kwargs: [
             {
                 "id": 7,
                 "source": "pipeline",
@@ -4271,7 +4278,7 @@ def test_operator_health_clears_recovered_source_failure(monkeypatch):
     monkeypatch.setattr(
         api_main,
         "_operator_run_rows",
-        lambda limit=50: [
+        lambda **_kwargs: [
             {"id": 9, "source": "unicef_kazakhstan", "status": "ok"},
             {
                 "id": 8,

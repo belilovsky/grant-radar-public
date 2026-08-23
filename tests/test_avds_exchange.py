@@ -20,8 +20,9 @@ def test_avds_contract_declares_runtime_neutral_catalog_patterns() -> None:
     assert contract["avds_source"] == {
         "site": "https://avds.digital",
         "package": "@sgeo/ui-kit",
+        "package_version": "4.5.1",
         "version": "4.7.0",
-        "source_revision": "5411a219f3b8f03d12c23bc1543e268fe355d0ec",
+        "source_revision": "79342b07b061938c14101a213d1dd0c7a412d689",
     }
     assert contract["runtime_neutral_patterns"]["source_revision"] == (
         "ea32d93aa05fa6faa4278ccc030c1d3567c1de35"

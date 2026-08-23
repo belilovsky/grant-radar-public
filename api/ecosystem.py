@@ -9,6 +9,7 @@ from qazstack.contracts import validate_consumer_contract
 
 from api.integration_versions import (
     AVDS_PACKAGE,
+    AVDS_PACKAGE_VERSION,
     AVDS_PATTERN_PACKAGE,
     AVDS_PATTERN_SOURCE_REVISION,
     AVDS_PATTERN_VERSION,
@@ -122,6 +123,7 @@ def avds_ui_contract(*, coverage: dict[str, Any] | None = None) -> dict[str, Any
         "avds_source": {
             "site": "https://avds.digital",
             "package": AVDS_PACKAGE,
+            "package_version": AVDS_PACKAGE_VERSION,
             "version": AVDS_VERSION,
             "source_revision": AVDS_SOURCE_REVISION,
         },
@@ -130,7 +132,8 @@ def avds_ui_contract(*, coverage: dict[str, Any] | None = None) -> dict[str, Any
             "public_site_status": "live",
             "reference_release": AVDS_VERSION,
             "note": (
-                f"The official AV DS release contract identifies release {AVDS_VERSION}. "
+                f"The official AV DS release contract identifies release {AVDS_VERSION} "
+                f"and source package {AVDS_PACKAGE}@{AVDS_PACKAGE_VERSION}. "
                 "QAZ.FUND composes its server-rendered adapter from documented "
                 "tokens and component semantics; it does not import the React package."
             ),
@@ -535,6 +538,7 @@ def ecosystem_manifest(origin: str) -> dict[str, Any]:
                 "mode": "server-rendered-local-adapter",
                 "target_package": AVDS_PACKAGE,
                 "target_version": AVDS_VERSION,
+                "target_package_version": AVDS_PACKAGE_VERSION,
                 "direct_package_import": False,
             },
             "qazpipe": {

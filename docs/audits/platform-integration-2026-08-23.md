@@ -1,171 +1,115 @@
-# Platform integration audit — QAZ.FUND — 2026-08-23
+# Platform integration audit + remediation — QAZ.FUND — 2026-08-23
 
-## Scope and identity
+## Scope, authority and cut-off
 
-- Project/site: QAZ.FUND — `https://qaz.fund`
-- Canonical source authority: `/Users/belilovsky/Documents/Codex/2026-05-21/grant-radar-public`
-- Source repository: `https://github.com/belilovsky/grant-radar-public.git`
-- Baseline source SHA: `2421deb52c34995c1c1213148f15d4a7320f6e1c`
-- Default branch: `main`; the baseline was three commits ahead of `origin/main`.
-- Public/runtime address: `https://qaz.fund` (declared by `deploy/nginx/qaz.fund.conf` and project contracts).
-- Evidence cut-off: `2026-08-23T07:50:08Z`.
-- Working-tree boundary: only this checkout was inspected. The authorized
-  follow-up is committed locally as candidate
-  `7f2484ca7f25f33925386bd622ad6e6bb6dd29ec`; local `node_modules/` and
-  `output/` artifacts were preserved and are now ignored without deletion. No
-  accepted production release SHA exists yet.
+- Project/site: QAZ.FUND — `https://qaz.fund`.
+- Canonical source authority:
+  `/Users/belilovsky/Documents/Codex/2026-05-21/grant-radar-public`.
+- Repository: `https://github.com/belilovsky/grant-radar-public.git`; default
+  branch: `main`.
+- Base SHA: `c3cb85629bb70342cbbd6f080933f513b5e62eb7`, six commits ahead of
+  `origin/main`. The final audited candidate also contains uncommitted local
+  remediation; it has no release SHA and must not be confused with the base.
+- Runtime/public URL: `https://qaz.fund`. Evidence cut-off: 2026-08-23
+  Asia/Almaty. No VPS, deployment, backup, restart, PR, commit or push was run.
+- Fresh public observation: `/ready` returned 200; `/well-known/release.json`
+  returned runtime SHA `4d7e078f7bee69656b6b4d39644eb58288ede641`,
+  `sourceDirty=false` and image/artifact digests. It is a healthy **older
+  runtime**, not evidence for the local candidate.
 
-The public health and release endpoints were read once, without changing
-state. The public runtime answered `/ready` with HTTP 200 and
-`{"status":"ok","backend":"database","items":1424}` at
-`2026-08-23T07:50:03Z`. The public release contract answered HTTP 200 at
-`2026-08-23T07:50:03Z`, but identifies deployed SHA
-`4d7e078f7bee69656b6b4d39644eb58288ede641`, not the observed canonical SHA.
-Its internal receipt is coherent (`sourceDirty=false`) with image digest
-`sha256:11fbcb8f5c1aa3ef3062bd5cef6874ae3653d44980dbdc8d5d8a960e470db8b2`,
-artifact digest
-`sha256:420eb8e9720a029e0866714905aa5803f0ec2c222039a63e537f021f804b6be6`,
-and `deployedAt=2026-08-22T11:14:27Z`, but it is not the current source
-release.
-
-## Verdict
+## Verdict and coverage
 
 `blocked`
 
-- Applicable rows: **12**
-- Covered: **0**
-- Documented: **5**
-- Missing: **1**
-- Stale: **0**
-- Conflicting: **1**
-- Not applicable: **0**
-- Unverifiable: **5**
-- Coverage: **0/12 = 0%**
+- Applicable connections: **15**; covered **0**, documented **7**, missing
+  **1**, stale **2**, conflicting **3**, not_applicable **1**, unverifiable
+  **1**.
+- Two-sided current-candidate coverage: **0/15 = 0%**. `covered` requires a
+  fresh source and runtime/registry observation of the same immutable SHA;
+  local tests, fixtures, an old receipt and a public 200 do not qualify.
+- `documented` means the product boundary is implemented and testable locally;
+  `stale` means observed runtime evidence belongs to another SHA; `conflicting`
+  means the observed parties disagree; `missing` means the source file is
+  absent; `unverifiable` means the authoritative schema or external receipt is
+  not accessible in scope; `not_applicable` is an explicit supported boundary.
 
-`covered` is reserved for a fresh two-sided source plus operational proof. Local
-tests, a local browser fixture, an old receipt, and a public 200 without the
-current source identity do not qualify. The blocking conditions are the missing
-root manifest and the source/runtime SHA conflict; Platform registry evidence
-is also not observable in this project-only scope.
+## Root `qdev-project.json`
 
-## Root `qdev-project.json` and manifest migration
+**Status: missing.** The pinned source is available and has no root-level
+`qdev-project.json`; no `.well-known` response, documentation or catalogue
+record was substituted. The canonical `qdev-project-manifest-v1` schema is not
+publicly retrievable in this project-only scope: public Platform URLs return an
+authenticated workspace, and the referenced Platform source repository is not
+available anonymously. Therefore schema validation is **unverifiable** and a
+manifest must not be guessed.
 
-Status: **missing**.
+External owner: Qdev Platform catalogue owner. Required external change:
+publish/provide the approved `qdev-project-manifest-v1` schema and add the
+validated root manifest; reconcile the registry record at
+`catalog/projects/grant-radar.md`. Closure proof: schema-validation output plus
+a registry observation agreeing on `qaz-fund`, repository, owner, lifecycle,
+public route and the accepted release SHA.
 
-The canonical source checkout was observed at the pinned SHA above and has no
-root-level `qdev-project.json`. No nested file, `.well-known` response,
-QazStack contract, or documentation was substituted for it. The Platform Portal
-checkout, `qdev-project-manifest-v1` schema, and authoritative Platform registry
-were not provided or available inside this project scope, so manifest schema
-validation and catalogue reconciliation are **unverifiable**, not inferred.
+## Evidence matrix
 
-This is a required governance gap. Owner role: **Qdev Platform catalogue owner**
-(the responsible individual is not identified by this repository). Closure
-requires an approved manifest at the repository root, validation against the
-canonical `qdev-project-manifest-v1` schema, and a matching Platform catalogue
-record. The project is production, not archived; no deprecated lifecycle
-exception applies.
-
-## Coverage matrix
-
-| Area | Requirement / boundary | State | Project evidence | Missing or closure evidence |
-|---|---|---|---|---|
-| Identity and registry | One project ID, repo, owner, lifecycle, catalogue entry, public route and release SHA | **missing** | Local contracts consistently use `project_id=qaz-fund`; root manifest is absent; public route is `https://qaz.fund`. | Root manifest plus Platform catalogue record and runtime release all agree on ID, repo, owner, lifecycle and accepted SHA. |
-| QazStack | Consumer contract, primitives, version, verification and runtime receipt | **unverifiable** | `qazstack-reuse.json`, `docs/qazstack/consumer-contract.json`, `api/ecosystem.py`, checksum-pinned `vendor/qazstack-1.41.2.sha256`; local QazStack tests pass. | Current public QazStack contract and Platform/QazStack registry observation at the accepted release SHA. |
-| AV DS | Shipped adapter/version, tokens/components, accessibility and responsive proof | **unverifiable** | `api/integration_versions.py` pins `@sgeo/ui-kit` 4.7.0 and `@av/patterns` 0.2.0; `api/avds.py`, `api/ecosystem.py`, AV DS tests and local browser evidence exist. | Current public AV DS contract and browser evidence for the deployed SHA; Platform-side agreement is not observed. |
-| QazPipe | Read-only producer boundary, provenance, pagination and degradation | **unverifiable** | `api/ecosystem.py` and `/.well-known/qazpipe-source.json` contract implementation; NDJSON/checkpoint/idempotency tests. | Consumer/Platform handshake or an authoritative inactive record; current endpoint was not queried during the infrastructure safety window. |
-| QazLake | Archive handoff, retention and no-direct-write boundary | **unverifiable** | QazPipe contract sets `direct_write=false` and requires target schema, retention, dry run, idempotency and rollback. | Named QazLake owner, approved target schema/retention, dry-run artifact and registry evidence. |
-| QazCompute | Safe compute profiles, non-mutation and graceful local fallback | **unverifiable** | Four deterministic public-safe profiles; `remote_execution_active=false`, `decision_ready=false`; `core/qazcompute_bridge.py` and tests. | Current runtime receipt/fixture parity and authorised private server-side wiring if activation is required. |
-| QazGeo | Geographic contract or explicit deferred boundary | **documented** | `api/ecosystem.py` declares `deferred-no-geometry`, `product_owner=qaz-fund`, rationale and review trigger; no inferred map is published. | A dated review exception is absent, and QazGeo registry evidence is unavailable. Add verified geometry only after QazGeo validation. |
-| Identity capability | Accounts, consent, sync and notifications | **documented** | `api/notification_contract.py` explicitly keeps anonymous read-only access, server profiles, sync and delivery disabled; browser-only storage is tested. | If activation is proposed: identity provider, recovery, consent, deletion, retention and delivery receipts. |
-| Data and privacy | Source, provenance, public/private projection and retention | **documented** | `core/provenance.py`, `docs/DATA_PROVENANCE_CONTRACT.md`, `docs/qazstack/language-surface.json`; public projections exclude operator data, credentials and raw protected payloads. | Fresh deployed projection check and owner-approved retention record; no current-SHA public projection was observed. |
-| Routes and UI | Canonical routes, 404/error/empty states, keyboard/focus, RU/KK/EN and responsive proof | **documented** | `api/route_registry.py`, route/CJM tests, `scripts/browser_matrix.py`; local evidence file records 50 checks at 320/393/768/1440/1920 px with zero failures. | Browser evidence against the public runtime at the accepted SHA; the local fixture is not runtime proof. |
-| Delivery and operations | CI, build, health/readiness, release identity, backup and rollback | **conflicting** | `.github/workflows/verify.yml`, `Dockerfile.prod`, deploy/rollback scripts and passing local gates; production Compose now defaults to `https://qaz.fund`, but `/ready` is healthy while public release is SHA `4d7e078…` and the local candidate is dirty after remediation. | Guarded release of an exact accepted SHA, exact public release match, health/readiness, worker/semantic and rollback evidence. |
-| Security | Auth, mutations, CSRF boundary, audit trail, allowlist and secrets | **documented** | Bearer-token/operator tests in `api/runtime_config.py` and `tests/test_api_repository.py`; public writes disabled; `.dockerignore`, non-root Docker runtime and `pip-audit` show no known vulnerabilities. | Deployed-SHA security/route proof and retained CI security artifact; no authenticated runtime session was used. |
-
-## Cross-system consistency
-
-| Claim / edge | Project-side evidence | Platform/runtime-side evidence | Result |
+| Connection / requirement | State | Product-side evidence | Other-side evidence and closure action |
 |---|---|---|---|
-| `qaz-fund` identity | Local contracts and code use `qaz-fund`; source SHA `2421deb…` | Public release says service `qaz-fund` but SHA `4d7e078…`; Platform catalogue not observed | **conflicting** |
-| QAZ.FUND → QazStack | Consumer contract, pinned 1.41.2 wheel, local tests | Platform/QazStack registry and current public consumer contract not observed | **unverifiable** |
-| QAZ.FUND → AV DS | 4.7.0 adapter, tokens, component markers, local browser matrix | Current public AV DS contract and Platform record not observed | **unverifiable** |
-| QAZ.FUND → QazPipe/QazLake | Read-only producer and gated archive boundary | Consumer handshake/registry/receipt not observed | **unverifiable** |
-| QAZ.FUND → QazCompute/QazGeo | Local deterministic fallback and deferred geometry boundary | Current runtime/owner registry not observed | **unverifiable / documented boundary** |
-| QAZ.FUND → public route | Nginx product config declares `qaz.fund` | `HEAD /` returned HTTP 200; release identity differs from source | **conflicting** |
+| Root manifest | **missing** | Root file absent at base SHA and local candidate. | Platform catalogue owner supplies schema and approved manifest; validation output is closure proof. |
+| Identity/catalogue | **conflicting** | `project_id=qaz-fund`, repo and production route are consistent in executable contracts. | Public `https://avds.digital/platform/ecosystem.generated.json` (generated 2026-08-20) records `id=grant-radar`, `source_path=catalog/projects/grant-radar.md`, QazStack 1.35 and AV DS 4.6. Registry owner must update it to the approved manifest. |
+| Release identity | **conflicting** | Candidate is `c3cb856…` plus uncommitted fixes. | Public release is `4d7e078…`; guarded immutable release and matching public receipt are required. |
+| QazStack | **stale** | `qazstack-consumer-v1`, checksum-pinned 1.41.2 wheel, strict validation and tests. | Public consumer contract currently reports 1.41.2 but belongs to `4d7e078…`; re-observe it at the candidate SHA and obtain registry receipt. |
+| AV DS | **conflicting** | SSR adapter now separates release 4.7.0 from source package `@sgeo/ui-kit` 4.5.1 and pins live AVDS SHA `79342b…`; local visual/a11y evidence passes. | Public QAZ.FUND contract still reports old AVDS SHA `5411…`; public registry reports AV DS 4.6. Registry and deployed contract must adopt the candidate contract. |
+| QazPipe | **documented** | Versioned public pull source with NDJSON, pagination, checkpoint, idempotency and provenance. | Consumer owner must record a pull receipt or explicit inactive registration at the candidate SHA. |
+| QazLake | **documented** | Brokered-only handoff, `direct_write=false`; target schema, retention, dry run, idempotency and rollback are activation gates. | QazLake owner must approve target/retention and preserve dry-run and rollback evidence before activation. |
+| QazCompute | **documented** | Four public-safe deterministic profiles; remote execution disabled and no publication/eligibility authority. | QazCompute owner must publish a candidate-SHA runtime receipt if remote activation is requested. |
+| QazGeo | **documented** | `deferred-no-geometry` records owner, reason and review trigger; no inferred map is emitted. | QazGeo owner needs a dated review exception or verified geometry reference before activation. |
+| Identity / notifications | **not_applicable** | Anonymous read-only public access; accounts, server profiles, consent sync and delivery are disabled by contract. | No integration is due. Activation would require identity, consent, deletion, retention and delivery receipts. |
+| Data and privacy | **documented** | Public provenance contracts exclude credentials, operator notes, saved selections and protected raw fields; preparation is browser-only. | Data owner must attach retention approval and deployed projection check to the accepted SHA. |
+| Routes / UI / locales | **documented** | Route registry plus local six-surface RU browser matrix (30/30, 393/768/1440/320/1920), RU/KK/EN home matrix (15/15), focused tests and a verified 44 px compact filter-disclosure target. | Run full public route/browser matrix at the accepted SHA; fixture evidence is not runtime proof. |
+| CI / build / delivery | **stale** | CI defines lint, tests, image, Trivy and SBOM gates; deployment scripts contain capacity/backup/rollback gates. | Green CI and immutable image/SBOM must be retained for the accepted SHA; no build was started in this audit. |
+| Health / readiness / rollback | **unverifiable** | Source has health/readiness and guarded rollback contracts. | Candidate runtime readiness, worker/semantic receipt and rollback snapshot require an authorised guarded release; VPS safety pause remains respected. |
+| Security | **documented** | Public writes disabled; operator auth/authorization tests, non-root image, secret boundaries and dependency audit are present. | Retain CI security artifact and re-check public allowlist/auth boundary at candidate SHA. |
 
-## Data, privacy and security boundary
+## Remediation performed in this checkout
 
-The source contracts preserve public source URLs, discovery timestamps and
-provenance while excluding operator credentials, saved selections, private
-notes and raw protected payloads. Application preparation is browser-only and
-does not submit data. Public mutation routes remain protected by bearer/admin
-checks; no authenticated page or secret was opened during this audit. The
-production Dockerfile uses a non-root runtime, the deployment path pins the
-QazStack wheel hash, and the local `pip-audit` run reported `No known
-vulnerabilities found`.
+1. Corrected the AVDS contract ambiguity: `4.7.0` remains the public release;
+   package provenance is explicitly `@sgeo/ui-kit` `4.5.1`, and the current
+   upstream revision is `79342b07b061938c14101a213d1dd0c7a412d689`.
+2. Added tests and documentation for that split, preserving legacy public
+   `version` fields for compatibility.
+3. Rewrote misleading dashboard filter labels, shortened/rebalanced the hero,
+   and disclosed optional topic filters progressively. See the AVDS and EdPol
+   audits beside this file.
 
-These are source and candidate checks. They do not prove that the currently
-deployed SHA exposes exactly the same projection, auth boundary or asset set.
+No external registry, Platform checkout, service, database or production
+configuration was changed.
 
-## Gates run
+## Checks run
 
-| Gate | Result | Evidence / limitation |
+| Check | Result | Evidence boundary |
 |---|---|---|
-| Source authority | pass | Canonical checkout, SHA, `main`, remote and dirty boundary recorded above. |
-| Root manifest | **missing** | `test -f qdev-project.json` failed because the root manifest is absent; no schema/registry substitute used. |
-| Product lint/types | pass | `make lint`: Black, isort, flake8, mypy (121 files), vulture. |
-| Product tests/typography | pass | `make ci-fast`: 657 passed; typography `finding_count=0`. |
-| Dependency consistency | pass | `pip check`: no broken requirements. |
-| Dependency vulnerability scan | pass | `pip-audit --strict` on production requirements: no known vulnerabilities. |
-| Local browser/accessibility matrix | pass, local only | 50 surface/viewport checks from `output/browser-matrix/platform-local-2026-08-23.json`, observed `2026-08-23T06:16:53Z`; zero console, serious/critical axe, interaction and overflow findings. |
-| Public readiness | pass for observed runtime | `GET https://qaz.fund/ready` → 200, database backend, 1424 items at `2026-08-23T07:50:03Z`. |
-| Public release identity | **conflicting** | `GET /.well-known/release.json` → 200, `sourceDirty=false`, digests present, but deployed SHA `4d7e078…` ≠ source SHA `2421deb…`. |
-| Public root route | pass for observed runtime | `HEAD https://qaz.fund/` → 200 at `2026-08-23T07:50:08Z`; this does not prove current-SHA content. |
-| Production smoke | not run | Full smoke was not run during the active infrastructure safety window; no result was fabricated. |
-| Production image build/SBOM | not run | CI workflow declares the gate, but this audit did not start a local build or alter Docker state. |
-| Production public-origin default | pass locally | `docker-compose.prod.yml` defaults API and worker `PUBLIC_BASE_URL` to `https://qaz.fund`; `tests/test_deploy_contract.py` asserts both substitutions. |
-| Platform Portal gates | unverifiable | No Platform Portal checkout, manifest schema or authoritative registry was in this project-only scope. |
+| Root manifest presence | fail as expected | root `qdev-project.json` absent; no replacement invented |
+| AVDS upstream contracts | pass | release 4.7.0, SHA `79342b…`; source package 4.5.1 |
+| Source tests | pass | 657/657 tests, including 140 dashboard/localization/AVDS/platform regressions, on the final local candidate |
+| AVDS browser acceptance | pass | local fixture, desktop visual-craft cell, no H1/asset/console/overflow failure |
+| Browser matrix | pass | local six-surface RU matrix: 30/30; RU/KK/EN home × five widths: 15/15; zero serious/critical axe, console and overflow findings |
+| EdPol exact gate | pass | 15 public-copy files, no failing exact policy candidate |
+| Dependency health | pass | `pip check` and strict no-dependency-resolution `pip-audit` report no broken requirements or known vulnerabilities |
+| Public release/consumer read | pass, stale | safe GETs only; observes deployed SHA `4d7e078…`, not candidate |
+| Platform catalogue read | conflicting | stale `grant-radar` public record at the URL above |
 
-## Follow-up remediation and re-audit
+## Unclosed connections
 
-The authorized follow-up fixed the confirmed local deployment-contract drift:
+| Priority | Owner | Action | Closure proof |
+|---|---|---|---|
+| P0 | Qdev Platform catalogue owner | Provide the manifest schema, add root `qdev-project.json`, and replace stale `catalog/projects/grant-radar.md` identity/version claims. | Validated manifest and public registry record match `qaz-fund` and accepted SHA. |
+| P0 | QAZ.FUND release owner | After the separate VPS safety pause and release authorization, promote one immutable candidate SHA through guarded CI/release. | Public release receipt, health/readiness, rollback artifact and browser proof match exactly. |
+| P1 | AVDS + Platform registry owner | Reconcile AVDS 4.7.0/package provenance in registry and deployment receipt. | Public QAZ.FUND UI contract and registry carry current AVDS revision at candidate SHA. |
+| P1 | QazPipe/QazLake/QazCompute/QazGeo owners | Attach consumer/activation receipts or owned deferred review records. | Dated record for each edge, with data boundary and candidate SHA where applicable. |
 
-- production API and worker now default `PUBLIC_BASE_URL` to the canonical
-  `https://qaz.fund` origin;
-- the deploy contract test prevents the old `example.org` default returning;
-- generated `node_modules/` and browser-audit output are ignored so they do not
-  become accidental release inputs, while existing files remain untouched.
+## Audit boundary
 
-The follow-up gates are green: the focused deploy/platform/numbering tests are
-20/20, `make lint` passes, `make ci-fast` passes with 657 tests, `pip check`
-reports no broken requirements, and `pip-audit --strict` reports no known
-vulnerabilities after excluding the locally vendored QazStack wheel from the
-PyPI-only audit. The change is not closed in production: the root manifest is
-still missing, the public release still identifies `4d7e078…`, and no build,
-backup or deploy was attempted during the VPS emergency pause. The candidate
-commit is local only and has not been pushed or promoted.
-
-## Remediation queue
-
-| Priority | Owner role | Finding | Concrete next action | Closure proof |
-|---|---|---|---|---|
-| P0 | Qdev Platform catalogue owner | Root `qdev-project.json` missing | Supply the approved `qdev-project-manifest-v1` root manifest and register the project. | Schema validation, catalogue record and source ID/repo/owner/lifecycle agree. |
-| P0 | QAZ.FUND release owner | Public runtime is `4d7e078…`; the post-remediation candidate is local-only and has no accepted release SHA. | After the infrastructure pause is lifted and separately authorised, push the candidate and run the guarded immutable release path. | Public release JSON source SHA exactly equals the accepted commit SHA; image/artifact digests, timestamps and `sourceDirty=false` agree. |
-| P1 | Qdev Platform integration owners | Bidirectional QazStack/AV DS/QazPipe/QazLake/QazCompute/QazGeo evidence unavailable. | Reconcile each public contract with the authoritative Platform/consumer registry. | Dated registry/handshake evidence for every edge at the same release SHA. |
-| P1 | QAZ.FUND product/release owner | Local browser proof is not deployed browser proof. | Run the browser matrix and public smoke after the accepted release is live. | RU/KK/EN, 404/empty/error, desktop/mobile, focus, axe, console and overflow results tied to release SHA. |
-| P2 | QAZ.FUND + QazGeo owner | Deferred QazGeo boundary has a trigger but no dated review exception. | Record a dated review decision or keep it explicitly optional in the approved manifest. | Owner, rationale, boundary and review date in the manifest/registry; no geometry before validation. |
-
-## Boundary notes
-
-- The initial audit was read-only. The authorized follow-up changed only local
-  `docker-compose.prod.yml`, `.gitignore`, the deploy-contract test and this
-  report. No registry, Platform catalogue, PR, database, Docker object, VPS
-  configuration or deployment was changed.
-- The public health/release/root reads were limited to safe GET/HEAD evidence.
-- A public 200 is not treated as proof of the current source release.
-- No Platform registry or schema was guessed, cloned, or reconstructed.
-- The local browser JSON is fixture-based evidence and is explicitly not a
-  production browser proof.
-- The verdict is blocked by missing governance and conflicting release identity;
-  it is not upgraded by the passing local gates.
+This report is an evidence-based local-candidate audit. It deliberately does
+not assert Platform-ready or release-ready while schema/catalogue access and
+same-SHA runtime evidence are absent. The public site was read but not changed;
+the VPS was not contacted.

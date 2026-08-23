@@ -1,0 +1,41 @@
+{
+  "schemaVersion": "avds-browser-acceptance-ledger-v1",
+  "preflight": {
+    "health": "/ready",
+    "requiredPaths": ["/"]
+  },
+  "viewports": [
+    {"id": "desktop", "width": 1440, "height": 960}
+  ],
+  "routes": [
+    {
+      "id": "home",
+      "path": "/?lang=ru",
+      "role": "public-anonymous",
+      "states": [
+        {"id": "catalog-ready", "fixtureKind": "synthetic"}
+      ]
+    }
+  ],
+  "visualCraft": {
+    "required": true,
+    "allowedFontFamilies": ["-apple-system"],
+    "targets": [
+      {"id": "hero", "selector": ".hero-band", "role": "surface"},
+      {"id": "title", "selector": ".brand h1", "role": "text", "typeGroup": "page-title"},
+      {"id": "task-chooser", "selector": ".hero-stage", "role": "container"},
+      {"id": "catalog", "selector": "#opportunities-panel", "role": "surface"}
+    ],
+    "spacing": [
+      {
+        "from": "hero",
+        "to": "catalog",
+        "axis": "vertical",
+        "minGapPx": 8,
+        "maxGapPx": 180,
+        "avdsContract": "AV DS section rhythm: compact adjacent task regions"
+      }
+    ],
+    "voidZones": []
+  }
+}

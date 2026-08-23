@@ -1,0 +1,15 @@
+{
+  "schemaVersion": "avds-visual-craft-audit-v1",
+  "cells": [
+    {
+      "route": "home",
+      "role": "public-anonymous",
+      "state": "catalog-ready",
+      "viewport": "desktop",
+      "geometry": [],
+      "radii": [],
+      "typography": [],
+      "space": []
+    }
+  ]
+}

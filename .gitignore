@@ -218,6 +218,8 @@ tempCodeRunnerFile.py
 node_modules/
 output/browser-matrix/
 output/browser-matrix-live-before.json
+output/browser-matrix-*.json
+output/avds-*/
 output/playwright/
 output/ranking-evaluation/
 
