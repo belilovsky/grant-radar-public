@@ -1,6 +1,6 @@
 # QAZ.FUND — Qdev Platform integration audit
 
-Date: 2026-08-23  
+Date: 2026-08-23
 Scope: this repository only (`qaz-fund`). No Platform registry, adjacent product,
 VPS, deployment, database, or public-runtime mutation was performed.
 
