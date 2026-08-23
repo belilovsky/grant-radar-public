@@ -8,7 +8,7 @@
 - Baseline source SHA: `2421deb52c34995c1c1213148f15d4a7320f6e1c`
 - Default branch: `main`; the baseline was three commits ahead of `origin/main`.
 - Public/runtime address: `https://qaz.fund` (declared by `deploy/nginx/qaz.fund.conf` and project contracts).
-- Evidence cut-off: `2026-08-23T07:29:47Z`.
+- Evidence cut-off: `2026-08-23T07:50:08Z`.
 - Working-tree boundary: only this checkout was inspected. The authorized
   follow-up is committed locally as candidate
   `7f2484ca7f25f33925386bd622ad6e6bb6dd29ec`; local `node_modules/` and
@@ -18,8 +18,8 @@
 The public health and release endpoints were read once, without changing
 state. The public runtime answered `/ready` with HTTP 200 and
 `{"status":"ok","backend":"database","items":1424}` at
-`2026-08-23T07:29:49Z`. The public release contract answered HTTP 200 at
-`2026-08-23T07:29:51Z`, but identifies deployed SHA
+`2026-08-23T07:50:03Z`. The public release contract answered HTTP 200 at
+`2026-08-23T07:50:03Z`, but identifies deployed SHA
 `4d7e078f7bee69656b6b4d39644eb58288ede641`, not the observed canonical SHA.
 Its internal receipt is coherent (`sourceDirty=false`) with image digest
 `sha256:11fbcb8f5c1aa3ef3062bd5cef6874ae3653d44980dbdc8d5d8a960e470db8b2`,
@@ -119,9 +119,9 @@ deployed SHA exposes exactly the same projection, auth boundary or asset set.
 | Dependency consistency | pass | `pip check`: no broken requirements. |
 | Dependency vulnerability scan | pass | `pip-audit --strict` on production requirements: no known vulnerabilities. |
 | Local browser/accessibility matrix | pass, local only | 50 surface/viewport checks from `output/browser-matrix/platform-local-2026-08-23.json`, observed `2026-08-23T06:16:53Z`; zero console, serious/critical axe, interaction and overflow findings. |
-| Public readiness | pass for observed runtime | `GET https://qaz.fund/ready` → 200, database backend, 1424 items at `2026-08-23T07:29:49Z`. |
+| Public readiness | pass for observed runtime | `GET https://qaz.fund/ready` → 200, database backend, 1424 items at `2026-08-23T07:50:03Z`. |
 | Public release identity | **conflicting** | `GET /.well-known/release.json` → 200, `sourceDirty=false`, digests present, but deployed SHA `4d7e078…` ≠ source SHA `2421deb…`. |
-| Public root route | pass for observed runtime | `HEAD https://qaz.fund/` → 200 at `2026-08-23T07:29:52Z`; this does not prove current-SHA content. |
+| Public root route | pass for observed runtime | `HEAD https://qaz.fund/` → 200 at `2026-08-23T07:50:08Z`; this does not prove current-SHA content. |
 | Production smoke | not run | Full smoke was not run during the active infrastructure safety window; no result was fabricated. |
 | Production image build/SBOM | not run | CI workflow declares the gate, but this audit did not start a local build or alter Docker state. |
 | Production public-origin default | pass locally | `docker-compose.prod.yml` defaults API and worker `PUBLIC_BASE_URL` to `https://qaz.fund`; `tests/test_deploy_contract.py` asserts both substitutions. |
