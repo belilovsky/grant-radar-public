@@ -1,0 +1,36 @@
+{
+  "schemaVersion": "avds-anti-generative-audit-v1",
+  "cells": [
+    {
+      "route": "/?lang=ru",
+      "role": "public-anonymous",
+      "state": "catalog-ready",
+      "viewport": "1440x960",
+      "findings": [
+        {
+          "pattern": "quick filters used generic action labels that did not disclose their actual filter",
+          "selector": ".hero-pick-row",
+          "screenshot": "output/playwright/qazfund-home-before-1440.png",
+          "semanticTest": "Each button maps to a data-hero action; before the rewrite, 'Find support' applied the startup audience filter and 'Kazakhstan support' combined format and region filters.",
+          "replacement": "Retained the real AVDS button group, renamed every action to its concrete outcome, and verified the startup action produces the active startup state and two matching cards.",
+          "status": "resolved"
+        },
+        {
+          "pattern": "all topic chips appeared before the first result although topic is an optional refinement",
+          "selector": "#topic-presets",
+          "screenshot": "output/playwright/qazfund-home-before-1440.png",
+          "semanticTest": "Topic is a real taxonomy filter, but it is not required to begin a search and its chip row displaced the first results.",
+          "replacement": "Moved the unchanged taxonomy control into the accessible Topic disclosure, preserving its labelled group and direct button behaviour.",
+          "status": "resolved"
+        }
+      ]
+    },
+    {
+      "route": "/?lang=ru",
+      "role": "public-anonymous",
+      "state": "catalog-ready",
+      "viewport": "393x852",
+      "findings": []
+    }
+  ]
+}

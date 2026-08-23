@@ -1540,25 +1540,17 @@ def _warm_public_sitemap_cache() -> None:
         _cached_sitemap_xml(public_base)
 
 
-def _dashboard_initial_metrics() -> tuple[int, int]:
-    """Read already-prepared dashboard counts without starting a cold rebuild."""
+def _dashboard_initial_source_count() -> int:
+    """Read the prepared source count without starting a cold rebuild."""
     now = datetime.now(UTC)
     with _public_items_cache_lock:
-        current_catalog = _public_current_catalog_cache.get("en")
         coverage = _coverage_cache
 
-    relevant_items = (
-        len(current_catalog[1])
-        if current_catalog is not None
-        and now - current_catalog[0] < _PUBLIC_ITEMS_CACHE_TTL
-        else 0
-    )
-    source_count = (
+    return (
         int(coverage[1].get("enabled_sources") or 0)
         if coverage is not None and now - coverage[0] < _PUBLIC_ITEMS_CACHE_TTL
         else len(PARSERS)
     )
-    return relevant_items, source_count
 
 
 @app.head("/", include_in_schema=False)
@@ -1572,14 +1564,13 @@ async def root(request: Request) -> HTMLResponse:
     site_origin = _site_origin(request, root_path)
     repository = _configured_repository()
     items = repository.size() if repository is not None else len(_cache)
-    relevant_items, source_count = _dashboard_initial_metrics()
+    source_count = _dashboard_initial_source_count()
     lang = str(request.query_params.get("lang") or "").strip().lower()
     dashboard_lang = _public_lang(lang)
     return HTMLResponse(
         render_dashboard(
             root_path=root_path,
             items=items,
-            relevant_items=relevant_items,
             source_count=source_count,
             lang=dashboard_lang,
             site_origin=site_origin,
@@ -1992,9 +1983,11 @@ async def swagger_docs(request: Request) -> HTMLResponse:
         swagger_ui_parameters={"deepLinking": False},
     )
     docs_languages = "".join(
-        f'<a href="{escape(docs_hrefs[locale], quote=True)}" lang="{locale}"'
-        f'{" aria-current=\"page\"" if docs_lang == locale else ""}>'
-        f'{"KAZ" if locale == "kk" else locale.upper()}</a>'
+        (
+            f'<a href="{escape(docs_hrefs[locale], quote=True)}" lang="{locale}"'
+            + (' aria-current="page"' if docs_lang == locale else "")
+            + f'>{"KAZ" if locale == "kk" else locale.upper()}</a>'
+        )
         for locale in ("kk", "ru", "en")
     )
     page_header = (

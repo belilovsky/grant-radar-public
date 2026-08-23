@@ -98,7 +98,6 @@ def render_dashboard(
     *,
     root_path: str,
     items: int,
-    relevant_items: int = 0,
     source_count: int = 0,
     lang: str = "ru",
     site_origin: str = "",
@@ -497,14 +496,16 @@ def render_dashboard(
             data-avds-component="preset-row"
           >{initial_format_presets}</div>
         </div>
-        <div class="preset-group" aria-label="{escape(str(copy["topic_aria"]), quote=True)}">
-          <span class="filter-label">{escape(str(copy["topic_label"]))}</span>
-          <div
-            class="preset-row"
-            id="topic-presets"
-            data-avds-component="preset-row"
-          >{initial_topic_presets}</div>
-        </div>
+        <details class="preset-more" aria-label="{escape(str(copy["topic_aria"]), quote=True)}">
+          <summary>{escape(str(copy["topic_label"]))}</summary>
+          <div class="preset-group">
+            <div
+              class="preset-row"
+              id="topic-presets"
+              data-avds-component="preset-row"
+            >{initial_topic_presets}</div>
+          </div>
+        </details>
       </div>
       <div
         class="filters-shell"

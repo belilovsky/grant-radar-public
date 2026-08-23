@@ -72,7 +72,7 @@ DASHBOARD_CSS = r"""    :root {
     .hero-band {
       position: relative;
       overflow: hidden;
-      padding: 16px 18px 0;
+      padding: 14px 18px;
       margin-bottom: 12px;
       border: 1px solid var(--line-subtle);
       border-radius: var(--av-radius-lg);
@@ -112,7 +112,7 @@ DASHBOARD_CSS = r"""    :root {
     .topbar {
       display: grid;
       gap: var(--av-spacing-1);
-      margin-bottom: 18px;
+      margin-bottom: 0;
     }
     .language-fallback-note {
       margin: 0 0 var(--av-spacing-3);
@@ -136,8 +136,8 @@ DASHBOARD_CSS = r"""    :root {
     }
     .brand h1 {
       margin: 0;
-      font-size: clamp(44px, 4.4vw, 64px);
-      line-height: 0.98;
+      font-size: clamp(40px, 3.8vw, 56px);
+      line-height: 1;
       letter-spacing: -0.045em;
     }
     .brand p {
@@ -172,17 +172,17 @@ DASHBOARD_CSS = r"""    :root {
     }
     .hero-grid {
       display: grid;
-      grid-template-columns: minmax(0, 1fr) minmax(390px, 0.6fr);
-      gap: 34px;
+      grid-template-columns: minmax(0, 1fr) minmax(480px, 0.78fr);
+      gap: 24px;
       align-items: start;
-      margin-bottom: var(--av-spacing-2);
+      margin-bottom: 0;
     }
     .hero-copy {
       display: grid;
       gap: var(--av-spacing-2);
       align-content: start;
       min-width: 0;
-      padding: 4px 0 8px;
+      padding: 4px 0;
     }
     .hero-intro {
       margin: 0;
@@ -232,7 +232,7 @@ DASHBOARD_CSS = r"""    :root {
       gap: var(--av-spacing-2);
       min-width: 0;
       align-content: start;
-      padding: 2px 0 2px 22px;
+      padding: 2px 0 2px 20px;
       border: 0;
       border-left: 1px solid var(--line-subtle);
       border-radius: 0;
@@ -282,7 +282,7 @@ DASHBOARD_CSS = r"""    :root {
     }
     .hero-pick-row {
       display: grid;
-      grid-template-columns: repeat(2, minmax(0, 1fr));
+      grid-template-columns: repeat(3, minmax(0, 1fr));
       gap: 8px;
     }
     .hero-pick {
@@ -297,9 +297,6 @@ DASHBOARD_CSS = r"""    :root {
       text-align: left;
       justify-content: flex-start;
       line-height: 1.25;
-    }
-    .hero-pick:last-child {
-      grid-column: 1 / -1;
     }
     .hero-pick:hover,
     .hero-pick:focus-visible {
@@ -1265,8 +1262,8 @@ DASHBOARD_CSS = r"""    :root {
     }
     .preset-grid {
       display: grid;
-      grid-template-columns: repeat(3, minmax(0, 1fr));
-      gap: 0;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: var(--av-spacing-2);
       margin-bottom: 0;
       padding: 8px;
       border: 1px solid var(--line-subtle);
@@ -1287,6 +1284,32 @@ DASHBOARD_CSS = r"""    :root {
     .preset-group:last-child { padding-inline: 10px; }
     .preset-group + .preset-group {
       border-left: 1px solid var(--line-subtle);
+    }
+    .preset-more {
+      grid-column: 1 / -1;
+      border-top: 1px solid var(--line-subtle);
+    }
+    .preset-more > summary {
+      display: flex;
+      align-items: center;
+      min-height: 36px;
+      color: var(--brand);
+      cursor: pointer;
+      font-size: var(--av-text-sm);
+      font-weight: 700;
+      list-style: none;
+    }
+    .preset-more > summary::-webkit-details-marker { display: none; }
+    .preset-more > summary::after {
+      content: "+";
+      margin-left: var(--av-spacing-1);
+      font-size: 18px;
+      font-weight: 500;
+    }
+    .preset-more[open] > summary::after { content: "−"; }
+    .preset-more > .preset-group {
+      padding: 0 0 var(--av-spacing-2);
+      background: transparent;
     }
     .preset-row {
       display: flex;
@@ -3161,6 +3184,11 @@ DASHBOARD_CSS = r"""    :root {
         border-left: 0;
         border-top: 1px solid var(--line-subtle);
       }
+      .preset-more {
+        border-top: 1px solid var(--line-subtle);
+      }
+      .preset-more > summary { min-height: var(--av-control-height-lg); }
+      .preset-more > .preset-group { padding-bottom: var(--av-spacing-2); }
       .panel {
         padding-top: var(--av-spacing-5);
         margin-top: var(--av-spacing-5);

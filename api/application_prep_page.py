@@ -57,10 +57,10 @@ def _amount(detail: OpportunityDetail, lang: str) -> str:
     if amount_raw:
         return amount_raw
     return {
-        "ru": "Не указана",
-        "kk": "Көрсетілмеген",
-        "en": "Not stated",
-    }.get(lang, "Not stated")
+        "ru": "Сумма не опубликована",
+        "kk": "Сома жарияланбаған",
+        "en": "Amount not published",
+    }.get(lang, "Amount not published")
 
 
 def _checklist(detail: OpportunityDetail, lang: str) -> list[str]:
@@ -239,11 +239,11 @@ def render_application_prep_page(
             "source": "Открыть источник",
             "source_label": "Источник",
             "known": "Известно о программе",
-            "program": "Программа",
+            "program": "Название в источнике",
             "organizer": "Организатор",
             "deadline": "Срок",
             "amount": "Сумма",
-            "eligibility": "Требования",
+            "eligibility": "Требования из источника",
             "unknown": "Нужно проверить у организатора",
             "readiness": "Готовность черновика",
             "required_done": "{done} из {total} обязательных полей",
@@ -340,11 +340,11 @@ def render_application_prep_page(
             "source": "Ресми дереккөзді ашу",
             "source_label": "Дереккөз",
             "known": "Бағдарлама туралы белгілі деректер",
-            "program": "Бағдарлама",
+            "program": "Дереккөздегі атауы",
             "organizer": "Ұйымдастырушы",
             "deadline": "Мерзім",
             "amount": "Сома",
-            "eligibility": "Талаптар",
+            "eligibility": "Дереккөздегі талаптар",
             "unknown": "Ұйымдастырушыдан нақтылау қажет",
             "readiness": "Жоба дайындығы",
             "required_done": "{done}/{total} міндетті өріс",
@@ -410,7 +410,7 @@ def render_application_prep_page(
             "data_policy": "Деректер саясаты",
             "attribution": "Деректерді пайдалану",
             "closed_notice": (
-                "Бұл бағдарлама бойынша қабылдау аяқталды. Шарттарды тексергеннен "
+                "Қабылдау аяқталды. Шарттарды тексергеннен "
                 "кейін жоба мәтінін келесі қабылдауға негіз ретінде ғана "
                 "пайдаланыңыз."
             ),
@@ -448,11 +448,11 @@ def render_application_prep_page(
             "source": "Open official source",
             "source_label": "Source",
             "known": "Known programme facts",
-            "program": "Programme",
+            "program": "Source title",
             "organizer": "Organizer",
             "deadline": "Deadline",
             "amount": "Amount",
-            "eligibility": "Eligibility",
+            "eligibility": "Source requirements",
             "unknown": "Confirm with the organizer",
             "readiness": "Draft readiness",
             "required_done": "{done} of {total} required fields",
@@ -512,7 +512,7 @@ def render_application_prep_page(
             "data_policy": "Data policy",
             "attribution": "Data reuse",
             "closed_notice": (
-                "Applications for this programme are closed. Use the draft only "
+                "Applications are closed. Use the draft only "
                 "as a starting point for a future round after checking its terms."
             ),
             "forecast_notice": (
@@ -567,8 +567,7 @@ def render_application_prep_page(
             ),
             "download": "Add to calendar",
             "unavailable": (
-                "This programme has no confirmed fixed deadline. "
-                "Monitor the source page."
+                "No confirmed fixed deadline is published. " "Monitor the source page."
             ),
             "event_title": "QAZ.FUND: application deadline",
         },
@@ -710,7 +709,7 @@ def render_application_prep_page(
           {open_attr}
         >
           <summary class="step-summary">
-            <span class="step-number">{number:02d}</span>
+            <span class="step-number">{number}</span>
             <span class="step-copy">
               <h2>{escape(title)}</h2>
               <p>{escape(note)}</p>

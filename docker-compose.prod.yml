@@ -26,7 +26,7 @@ services:
       APP_BUILT_AT: ${APP_BUILT_AT:-}
       DATABASE_URL: ${DATABASE_URL:-postgresql+psycopg://grantradar:${POSTGRES_PASSWORD:-changeme}@db:5432/grantradar}
       GRANT_RADAR_DB_URL: ${GRANT_RADAR_DB_URL:-postgresql+psycopg://grantradar:${POSTGRES_PASSWORD:-changeme}@db:5432/grantradar}
-      PUBLIC_BASE_URL: ${PUBLIC_BASE_URL:-https://example.org}
+      PUBLIC_BASE_URL: ${PUBLIC_BASE_URL:-https://qaz.fund}
       WEB_CONCURRENCY: ${WEB_CONCURRENCY:-1}
       GRANT_RADAR_SEMANTIC_SEARCH_ENABLED: ${GRANT_RADAR_SEMANTIC_SEARCH_ENABLED:-1}
       GRANT_RADAR_SEMANTIC_SEARCH_URL: ${GRANT_RADAR_SEMANTIC_SEARCH_URL:-http://semantic:8010}
@@ -60,7 +60,7 @@ services:
       APP_BUILT_AT: ${APP_BUILT_AT:-}
       DATABASE_URL: ${DATABASE_URL:-postgresql+psycopg://grantradar:${POSTGRES_PASSWORD:-changeme}@db:5432/grantradar}
       GRANT_RADAR_DB_URL: ${GRANT_RADAR_DB_URL:-postgresql+psycopg://grantradar:${POSTGRES_PASSWORD:-changeme}@db:5432/grantradar}
-      PUBLIC_BASE_URL: ${PUBLIC_BASE_URL:-https://example.org}
+      PUBLIC_BASE_URL: ${PUBLIC_BASE_URL:-https://qaz.fund}
     cpus: "1.0"
     mem_limit: 1g
     pids_limit: 256

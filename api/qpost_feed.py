@@ -117,7 +117,11 @@ def _amount(item: Opportunity, lang: str) -> str:
         value for value in (item.amount_min, item.amount_max) if value is not None
     ]
     if not values:
-        return {"ru": "Не указана", "kk": "Көрсетілмеген", "en": "Not stated"}[lang]
+        return {
+            "ru": "Сумма не опубликована",
+            "kk": "Сома жарияланбаған",
+            "en": "Amount not published",
+        }[lang]
 
     def display(value: Decimal) -> str:
         return f"{value:,.0f}".replace(",", " ")
@@ -142,7 +146,11 @@ def _deadline(item: Opportunity, lang: str) -> str:
         return {"ru": "Постоянный приём", "kk": "Тұрақты қабылдау", "en": "Rolling"}[
             lang
         ]
-    return {"ru": "Не указан", "kk": "Көрсетілмеген", "en": "Not stated"}[lang]
+    return {
+        "ru": "Срок не опубликован",
+        "kk": "Мерзімі жарияланбаған",
+        "en": "Deadline not published",
+    }[lang]
 
 
 def _audience(item: Opportunity, lang: str) -> str:
@@ -154,9 +162,9 @@ def _audience(item: Opportunity, lang: str) -> str:
         if lang == "en" or re.search(r"[А-Яа-яЁёӘәҒғҚқҢңӨөҰұҮүҺһІі]", audience):
             return audience
     return {
-        "ru": "Критерии участия нужно сверить на официальной странице программы",
-        "kk": "Қатысу талаптарын бағдарламаның ресми парағынан тексеру керек",
-        "en": "Check eligibility on the programme's official page",
+        "ru": "Критерии участия не опубликованы в доступных данных",
+        "kk": "Қатысу талаптары қолжетімді деректерде жарияланбаған",
+        "en": "Eligibility criteria are not published in the available data",
     }[lang]
 
 
@@ -376,8 +384,14 @@ def _single_body(
 _UNKNOWN_SOCIAL_VALUES = {
     "не указан",
     "не указана",
+    "сумма не опубликована",
+    "срок не опубликован",
     "көрсетілмеген",
+    "сома жарияланбаған",
+    "мерзімі жарияланбаған",
     "not stated",
+    "amount not published",
+    "deadline not published",
 }
 
 

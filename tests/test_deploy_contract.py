@@ -111,6 +111,16 @@ def test_deploy_script_verifies_the_public_revision() -> None:
     assert "APP_DEPLOYED_AT: ${APP_DEPLOYED_AT:-}" in production_compose
 
 
+def test_production_compose_defaults_to_the_canonical_public_origin() -> None:
+    production_compose = (ROOT / "docker-compose.prod.yml").read_text()
+
+    assert production_compose.count("${PUBLIC_BASE_URL:-https://qaz.fund}") == 2
+    assert (
+        "PUBLIC_BASE_URL: ${PUBLIC_BASE_URL:-https://example.org}"
+        not in production_compose
+    )
+
+
 def test_remote_release_runs_public_smoke_before_accepting_switch() -> None:
     remote = (ROOT / "scripts" / "remote_release_qaz_fund.sh").read_text()
 

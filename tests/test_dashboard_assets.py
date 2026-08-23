@@ -20,7 +20,6 @@ def test_dashboard_uses_extracted_static_styles() -> None:
     html = dashboard.render_dashboard(
         root_path="",
         items=0,
-        relevant_items=0,
         source_count=0,
         lang="ru",
         site_origin="https://qaz.fund",
@@ -113,3 +112,6 @@ def test_dashboard_secondary_mobile_links_keep_avds_touch_targets() -> None:
     ):
         assert selector in mobile_block
     assert "min-height: var(--av-control-height-lg);" in mobile_block
+    assert ".preset-more > summary { min-height: var(--av-control-height-lg); }" in (
+        mobile_block
+    )

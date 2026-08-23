@@ -43,7 +43,12 @@ jobs:
           python -m pip_audit --strict --requirement /tmp/qaz-fund-audit.txt
 
       - name: Check formatting, imports, lint and types
-        run: make lint
+        run: |
+          python -m black --check api/ core/ sources/ tests/ scripts/ alembic/
+          python -m isort --check-only api/ core/ sources/ tests/ scripts/ alembic/
+          python -m flake8 api/ core/ sources/ tests/ scripts/ alembic/ --max-line-length=100
+          python -m mypy api/ core/ sources/ scripts/ --ignore-missing-imports
+          python -m vulture api/ core/ sources/ tests/ scripts/ alembic/ --min-confidence 80
 
       - name: Run test suite
         run: python -m pytest -q

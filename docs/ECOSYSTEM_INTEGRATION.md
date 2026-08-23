@@ -17,11 +17,11 @@ prove.
 | System | Runtime status | Boundary |
 | --- | --- | --- |
 | QazStack 1.41.2 | `runtime-proven` | QAZ.FUND uses neutral contracts, source and text normalization, lifecycle rules, evidence states, diversified listing, machine exports, the public opportunity schema and expert-reviewed ranking metrics. Product relevance and publication policy stay local. |
-| AV DS 4.6.0 | `adapter-aligned` | FastAPI pages use a local server-side adapter aligned with AV DS component families. No direct React package import is claimed. |
+| AV DS 4.7.0 | `adapter-aligned` | FastAPI pages use a local server-side adapter aligned with AV DS component families. No direct React package import is claimed. |
 | QazPipe | `producer-ready` | QAZ.FUND publishes a versioned read-only pull contract over `/api/v1/opportunities.ndjson`, including pagination, checkpoints, idempotency and required provenance. Connector activation remains consumer-controlled. |
 | QazLake | `brokered-via-qazpipe` | Public records may be archived only through QazPipe after the target schema, retention, dry run, idempotency and rollback gates pass. QAZ.FUND never writes directly into QazLake tables. |
 | EdPol | `query-ready` | Education opportunities are available through the public tag-filtered API. EdPol decides whether and how to consume them. |
-| QazGeo | `deferred-no-geometry` | Region classes exist, but verified coordinates do not. No inferred or decorative map is published. |
+| QazGeo | `deferred-no-geometry` | Region classes exist, but verified coordinates do not. QAZ.FUND owns review when published records receive verified coordinates or authoritative geometry; no inferred or decorative map is published. |
 | QazCompute | `local-runtime-proven` | Four deterministic profiles run locally and publish QazCompute-compatible envelopes. Remote task execution remains disabled until fixture parity and private server-side wiring are ready. |
 
 ## Machine entry points

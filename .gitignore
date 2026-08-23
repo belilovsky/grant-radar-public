@@ -215,6 +215,11 @@ tempCodeRunnerFile.py
 
 # Local browser-audit artifacts
 .playwright-cli/
+node_modules/
+output/browser-matrix/
+output/browser-matrix-live-before.json
+output/browser-matrix-*.json
+output/avds-*/
 output/playwright/
 output/ranking-evaluation/
 
