@@ -4,9 +4,9 @@
 
 - Project and public domain: QAZ.FUND — `https://qaz.fund`
 - Canonical checkout: `/Users/belilovsky/Documents/Codex/2026-05-21/grant-radar-public`
-- Base revision: `9906676dd9355e9079987ccc36db2d88e7d8808e`; final audited state is a
-  **dirty local candidate** containing the narrow absence-label rewrite. It has
-  not been committed or deployed under this audit scope.
+- Base revision: `6160edd5839ecd7387dd565687a939ee3c8bc7a7`; final audited state is a
+  **local candidate** containing the narrow source-wording label rewrite. At
+  the audit evidence cut-off it had not been deployed under this audit scope.
 - Audit timestamp and timezone: 2026-08-23, Asia/Almaty.
 - Mode: rewrite; lifecycle surface: local public-candidate fixture.
 - Content owner: QAZ.FUND product team. Reviewer: Codex under the authorised
@@ -50,6 +50,7 @@
 | `EDPOL-002` | dashboard heading | RU/KK/EN | editorial-risk | rewrite | Generic “where to start” framing obscured the job. It now asks the visitor to refine the task. | product | rewritten + verified |
 | `EDPOL-003` | topic filter | RU/KK/EN | structural-candidate | review | Topic is a real taxonomy filter, not a decorative label. It is now disclosed on demand, preserving its accessible group name. | product | verified |
 | `EDPOL-004` | absent amount and deadline labels | RU/KK/EN | editorial-risk | rewrite | Ambiguous “not stated” labels could obscure that the source field is absent. They now say that the amount or deadline is not published. QPost keeps those factual labels in its review card but omits them from the short Threads fact block. | product | rewritten + focused tests |
+| `EDPOL-005` | application preparation facts | RU/KK/EN | evidence-gap | rewrite | Untranslated official programme names and criteria could read as accidental UI-language leakage. Their labels now explicitly identify source wording without inventing a translation. | product | rewritten + browser proof |
 
 ## Manual verification
 
@@ -57,13 +58,14 @@
   was added. Every changed label maps to the existing `data-hero-*` action.
 - RU/KK/EN parity: the three locale dictionaries were updated together; 54
   focused public/media/QPost/comparison/preparation/localization tests pass
-  after the final rewrite; the full current-candidate suite also passes
-  660/660.
+  after the earlier rewrite. The current source-wording rewrite adds targeted
+  preparation coverage; the full current-candidate suite passes 660/660.
 - Typography: the repository typography gate passes; URLs, source titles, IDs,
   legal text and machine contract values were not rewritten.
-- Desktop and mobile: local browser evidence records no console errors,
-  critical/serious axe findings or horizontal overflow for the home surface at
-  RU/KK/EN × 393/768/1440/320/1920 (15 checks).
+- Desktop and mobile: the local matrix passes 50/50 on ten public RU surfaces
+  at 393/768/1440/320/1920; the KK preparation surface was manually inspected
+  at a compact mobile viewport. Neither check found console errors,
+  critical/serious axe findings or horizontal overflow.
 - The browser fixture is production-like only for layout/content behaviour; it
   is not proof that the local candidate is deployed.
 

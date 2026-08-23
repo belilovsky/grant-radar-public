@@ -239,6 +239,8 @@ def test_application_workspace_supports_kazakh(monkeypatch):
     assert "Деректер осы браузерде қалады" in page.text
     assert "Бағдарлама талаптарына сай өтінім жобасын құрастырыңыз" in page.text
     assert "Жобаның сипаттамасы және күтілетін нәтиже" in page.text
+    assert "Дереккөздегі атауы" in page.text
+    assert "Дереккөздегі талаптар" in page.text
     assert f'href="/opportunity/{item.id}?lang=kk"' in page.text
     assert 'href="/terms?lang=kk"' in page.text
     assert 'href="/data-policy?lang=kk"' in page.text
