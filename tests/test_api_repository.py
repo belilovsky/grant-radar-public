@@ -11,6 +11,7 @@ from fastapi.testclient import TestClient
 
 from api import funder_page as funder_page_module
 from api import main as api_main
+from api import opportunity_og
 from api import opportunity_page as opportunity_page_module
 from api.dashboard import dashboard_copy
 from api.insights_page import _bar_chart, _source_label, build_insights_snapshot
@@ -4209,6 +4210,18 @@ def test_opportunity_og_uses_localized_facts_and_official_source_domain() -> Non
     assert _amount_text(item, "ru") == "1 000 000 USD"
     assert _source_text(item) == "aaiff.ai"
     assert _facts(item, "ru")[0] == ("Призы", "1 000 000 USD")
+
+
+def test_opportunity_og_uses_pillow_font_when_host_fonts_are_unavailable(
+    monkeypatch,
+) -> None:
+    monkeypatch.setattr(opportunity_og, "_FONT_PATHS", {"regular": (), "bold": ()})
+    opportunity_og._font.cache_clear()
+    try:
+        fallback = opportunity_og._font(25, "bold")
+        assert fallback.getbbox("Қазақша кириллица") is not None
+    finally:
+        opportunity_og._font.cache_clear()
 
 
 def test_opportunity_detail_endpoint_returns_404_for_unknown_id(monkeypatch):

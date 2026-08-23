@@ -8,7 +8,7 @@ import json
 import re
 from functools import lru_cache
 from pathlib import Path
-from typing import Any
+from typing import Any, cast
 from urllib.parse import urlencode, urlparse
 
 from PIL import Image, ImageDraw, ImageFont, ImageOps
@@ -127,7 +127,10 @@ def _font(size: int, weight: str = "regular") -> ImageFont.FreeTypeFont:
     for path in _FONT_PATHS[weight]:
         if path.exists():
             return ImageFont.truetype(str(path), size=size)
-    raise RuntimeError("No Cyrillic-capable Open Graph font is available")
+    # The immutable production image installs DejaVu.  Test and constrained
+    # runtime hosts may not have an OS font directory, so retain a Unicode
+    # capable Pillow fallback instead of turning a public image route into 500.
+    return cast(ImageFont.FreeTypeFont, ImageFont.load_default(size=size))
 
 
 def _text_width(
