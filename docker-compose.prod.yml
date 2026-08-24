@@ -111,7 +111,9 @@ services:
     volumes:
       - semantic-models:/models
     cpus: "1.0"
-    mem_limit: 3g
+    # BGE-M3 and the reranker load concurrently during the first full index.
+    # 3 GiB causes a health-timeout/OOM loop on the production corpus.
+    mem_limit: 5g
     pids_limit: 128
     read_only: true
     tmpfs:
