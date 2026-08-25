@@ -4,7 +4,7 @@
   "cutoff": "2026-08-25",
   "candidate": "working tree based on 171d43eaae52382b3ff58d62f89ac3d73a3fc69e",
   "summary": {
-    "closed": 9,
+    "closed": 10,
     "reviewed_no_change": 1,
     "needs_legal_review": 1,
     "external_owner": 4,
@@ -119,6 +119,16 @@
       "owner": "QAZ.FUND operations",
       "fix": "Aligned the test with the existing measured runtime contract; no production resource limit was changed.",
       "proof": "The focused deploy-contract test and repeated full ci-fast gate pass.",
+      "status": "closed"
+    },
+    {
+      "id": "LIVE-001",
+      "cause": "A production detail record with long source content expanded the implicit article grid track to 332 px inside a 300 px mobile shell; public CDN hydration also exceeded the fixture's fixed 400 ms wait.",
+      "route_or_source": "/opportunity/7f87ea76-5371-577d-ba81-c7c905cea448 at 320x800, /docs, and the live catalog",
+      "severity": "P1",
+      "owner": "QAZ.FUND frontend and quality",
+      "fix": "Bound the article grid with minmax(0, 1fr) and zero-width minima; wait for semantic H1 and compare controls instead of assuming fixed hydration time.",
+      "proof": "Injected candidate CSS reduces the same production page from 342 px to 323 px document width; full tests pass and the final live matrix must be repeated after the hotfix release.",
       "status": "closed"
     },
     {

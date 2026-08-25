@@ -71,7 +71,12 @@ _DETAIL_SECTION_ELIGIBILITY_HEADINGS = frozenset(
 OPPORTUNITY_DETAIL_CSS = r"""
     .opportunity-article {
       display: grid;
+      grid-template-columns: minmax(0, 1fr);
       gap: 16px;
+      min-width: 0;
+    }
+    .opportunity-article > * {
+      min-width: 0;
     }
     .opportunity-hero {
       display: grid;

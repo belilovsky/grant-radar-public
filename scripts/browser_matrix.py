@@ -8,7 +8,9 @@ from pathlib import Path
 from typing import Any
 from urllib.parse import urlsplit
 
-from playwright.sync_api import ConsoleMessage, Page, sync_playwright
+from playwright.sync_api import ConsoleMessage, Page
+from playwright.sync_api import TimeoutError as PlaywrightTimeoutError
+from playwright.sync_api import sync_playwright
 
 BASE_SURFACES = (
     "/?lang=ru",
@@ -78,6 +80,10 @@ def _interaction_errors(page: Page, surface: str, *, width: int) -> list[str]:
     errors: list[str] = []
     if surface.startswith("/?") and width == 390:
         compare_buttons = page.locator("[data-compare-opportunity]")
+        try:
+            compare_buttons.nth(1).wait_for(state="attached", timeout=10_000)
+        except PlaywrightTimeoutError:
+            pass
         if compare_buttons.count() < 2:
             errors.append("catalog did not render two comparison controls")
         else:
@@ -227,6 +233,10 @@ def run_matrix(
                     f"{base_url.rstrip('/')}{surface}", wait_until="domcontentloaded"
                 )
                 page.wait_for_timeout(400)
+                try:
+                    page.locator("h1").first.wait_for(state="attached", timeout=10_000)
+                except PlaywrightTimeoutError:
+                    pass
                 status = response.status if response is not None else 0
                 h1_count = page.locator("h1").count()
                 overflow = _overflow_nodes(page)

@@ -8,7 +8,9 @@ from pathlib import Path
 from typing import Any
 from urllib.parse import urlsplit
 
-from playwright.sync_api import Page, sync_playwright
+from playwright.sync_api import Page
+from playwright.sync_api import TimeoutError as PlaywrightTimeoutError
+from playwright.sync_api import sync_playwright
 
 LOCALES = ("ru", "kk", "en")
 VIEWPORTS = ((390, 844), (1440, 960))
@@ -140,6 +142,11 @@ def _focus_and_touch_case(context: Any, base_url: str) -> dict[str, Any]:
     page = context.new_page()
     page.set_viewport_size({"width": 390, "height": 844})
     page.goto(f"{base_url}/?lang=ru", wait_until="domcontentloaded")
+    compare_targets = page.locator("[data-compare-opportunity]")
+    try:
+        compare_targets.first.wait_for(state="attached", timeout=10_000)
+    except PlaywrightTimeoutError:
+        pass
     page.keyboard.press("Tab")
     focus = page.evaluate("""() => {
           const node = document.activeElement;
@@ -153,8 +160,7 @@ def _focus_and_touch_case(context: Any, base_url: str) -> dict[str, Any]:
             outline: style?.outlineStyle || null,
           };
         }""")
-    touch = page.locator("[data-compare-opportunity]").evaluate_all(
-        """nodes => nodes.slice(0, 4).map(node => {
+    touch = compare_targets.evaluate_all("""nodes => nodes.slice(0, 4).map(node => {
           const rect = node.getBoundingClientRect();
           return {
             width: Math.round(rect.width),
@@ -162,8 +168,7 @@ def _focus_and_touch_case(context: Any, base_url: str) -> dict[str, Any]:
             label: String(node.getAttribute('aria-label') || node.textContent || '')
               .trim().slice(0, 120),
           };
-        })"""
-    )
+        })""")
     case = {
         "kind": "focus-and-critical-touch-targets",
         "focus": focus,

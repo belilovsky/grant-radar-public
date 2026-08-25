@@ -60,6 +60,26 @@
         }
       ],
       "space": []
+    },
+    {
+      "route": "opportunity-detail",
+      "role": "public-anonymous",
+      "state": "data-ready-long-content",
+      "viewport": "320x800",
+      "geometry": [
+        {
+          "pattern": "a production record with long source content expanded the implicit article grid column past the compact viewport",
+          "selector": ".opportunity-article",
+          "screenshot": "/tmp/qazfund-live-detail-overflow-320.png",
+          "cause": "The single implicit grid track used its min-content size because the article and direct grid children had no zero minimum.",
+          "avdsContract": "AVDS detail composition must keep source evidence readable without widening the mobile viewport.",
+          "fix": "Declared a minmax(0, 1fr) article track and zero minimum width for the article and direct grid children.",
+          "status": "resolved"
+        }
+      ],
+      "radii": [],
+      "typography": [],
+      "space": []
     }
   ]
 }
