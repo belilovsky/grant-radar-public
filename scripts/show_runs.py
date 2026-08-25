@@ -63,7 +63,7 @@ def _build_parser() -> argparse.ArgumentParser:
     p.add_argument(
         "--status",
         default=None,
-        choices=["running", "ok", "error"],
+        choices=["running", "ok", "partial", "error", "cancelled"],
         help="Filter by run status.",
     )
     p.add_argument("--since", type=_parse_since, default=None, help="e.g. 30m, 24h, 7d")

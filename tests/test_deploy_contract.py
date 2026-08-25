@@ -157,7 +157,7 @@ def test_semantic_runtime_is_reaped_and_bounded() -> None:
     assert "    init: true\n" in semantic
     assert '        "--workers",\n        "1",' in semantic
     assert '    cpus: "1.0"\n' in semantic
-    assert "    mem_limit: 3g\n" in semantic
+    assert "    mem_limit: 5g\n" in semantic
     assert "    pids_limit: 128\n" in semantic
 
 

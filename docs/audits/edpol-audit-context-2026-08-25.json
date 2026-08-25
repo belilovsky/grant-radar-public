@@ -1,0 +1,113 @@
+{
+  "schema_version": "edpol-audit-context-v1",
+  "audit_id": "qazfund-public-copy-20260825",
+  "generated_at": "2026-08-25T16:10:00+05:00",
+  "project": "QAZ.FUND",
+  "source_revision": "171d43eaae52382b3ff58d62f89ac3d73a3fc69e plus the reviewed local candidate",
+  "lifecycle": "public-candidate",
+  "selected_modes": [
+    "copy-localization",
+    "evidence-provenance",
+    "policy-risk",
+    "rendered-experience",
+    "ai-origin"
+  ],
+  "lens_results": {
+    "copy-localization": {
+      "status": "checked",
+      "reason": null,
+      "evidence": [
+        "RU, KK and EN workflow, relevance, policy and attribution copy updated together",
+        "181 focused public, localization, comparison, preparation, media and QPost tests passed",
+        "repository typography gate reported zero findings"
+      ]
+    },
+    "evidence-provenance": {
+      "status": "checked",
+      "reason": null,
+      "evidence": [
+        "Catalog relevance remains explicitly distinct from eligibility and award probability",
+        "Unknown source fields and source-language labels remain visible",
+        "Upstream licensing boundary is linked to the current Kazakhstan compliance evidence bundle"
+      ]
+    },
+    "policy-risk": {
+      "status": "checked",
+      "reason": null,
+      "evidence": [
+        "No exact EdPol policy candidate remained in the 28-file enumerated corpus",
+        "Browser-only draft, personal-data and source-license wording was routed through kz-compliance-evidence",
+        "The one provider-specific analytics legal question remains narrow and named rather than generalized"
+      ]
+    },
+    "rendered-experience": {
+      "status": "checked",
+      "reason": null,
+      "evidence": [
+        "Local browser matrix passed 119 of 119 route and viewport cells at 320, 390, 768, 1024, 1440, 1920 and 2560 px",
+        "No HTTP, horizontal-overflow, console, page-error, serious-accessibility or interaction failure was reported",
+        "Nine targeted checks passed for RU, KK and EN, real 404, focus, touch targets and browser-only preparation privacy"
+      ]
+    },
+    "ai-origin": {
+      "status": "checked",
+      "reason": null,
+      "evidence": [
+        "Current ai-origin policy 1.0.0 and evidence schema were retrieved and digested",
+        "No provenance evidence was supplied that establishes AI or human authorship",
+        "Heuristic style signals were treated only as review candidates and no authorship label was inferred"
+      ]
+    }
+  },
+  "finding_decisions": [
+    {
+      "finding_index": 0,
+      "status": "false-positive",
+      "reason": "The string is a source-summary sanitizer delimiter and is removed from imported text; it is not a rendered QAZ.FUND call to action.",
+      "reviewer": "Codex editorial review"
+    },
+    {
+      "finding_index": 1,
+      "status": "false-positive",
+      "reason": "The string is a source-summary sanitizer delimiter and is removed from imported text; it is not a rendered QAZ.FUND call to action.",
+      "reviewer": "Codex editorial review"
+    },
+    {
+      "finding_index": 2,
+      "status": "false-positive",
+      "reason": "This is the localized label for the external taxonomy value capacity_building, not an unsupported product-benefit claim.",
+      "reviewer": "Codex editorial review"
+    },
+    {
+      "finding_index": 3,
+      "status": "false-positive",
+      "reason": "The sentence is a specific freshness boundary after named verification fields and organizer responsibility; it does not replace missing catalog evidence.",
+      "reviewer": "Codex editorial review"
+    },
+    {
+      "finding_index": 4,
+      "status": "false-positive",
+      "reason": "The Kazakh sentence preserves the same specific freshness boundary and does not launder an unknown value into certainty.",
+      "reviewer": "Codex editorial review"
+    }
+  ],
+  "skipped_files_reviewed_by": null,
+  "evidence_layers": {
+    "source": [
+      "Editorial language policy 1.1.0 sha256:3d2c66102da7f3066b6609581067a838035d7813a73366587a1437f55d2bdb76",
+      "Typography policy 1.1.1 sha256:7d0324ba83f5c5d7ec704963637fd7b1e4c10dcfe3371e48ea929d3fdf81db2d",
+      "AI-origin policy 1.0.0 sha256:0905dbd672a055f752f87424070b632262cbb7bed5bebcbd6bce8ef20bd11295",
+      "Enumerated corpus manifest and exact-policy scan"
+    ],
+    "local": [
+      "181 focused tests passed",
+      "typography gate passed",
+      "119 of 119 browser matrix cells and 9 of 9 targeted checks passed"
+    ],
+    "runtime": [],
+    "public": []
+  },
+  "verdict": "pass",
+  "decision_owner": "QAZ.FUND product owner",
+  "next_action": "Carry this green local editorial and AVDS candidate into the single final guarded release."
+}

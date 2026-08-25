@@ -32,6 +32,7 @@ COPY = {
         "state": "Состояние",
         "fresh_label": "Проверен недавно",
         "stale_label": "Требует внимания",
+        "watch_label": "Проверен частично",
         "unknown_label": "Нет данных",
         "empty": "Подключённых источников пока нет.",
         "disclaimer": (
@@ -65,6 +66,7 @@ COPY = {
         "state": "State",
         "fresh_label": "Fresh",
         "stale_label": "Needs attention",
+        "watch_label": "Partially checked",
         "unknown_label": "No data",
         "empty": "No connected sources are available yet.",
         "disclaimer": (
@@ -98,6 +100,7 @@ COPY = {
         "state": "Мәртебесі",
         "fresh_label": "Жаңартылған",
         "stale_label": "Назар аударуды қажет етеді",
+        "watch_label": "Ішінара тексерілді",
         "unknown_label": "Дерек жоқ",
         "empty": "Қосылған дереккөздер әзірше жоқ.",
         "disclaimer": (
@@ -199,9 +202,12 @@ def render_status_page(
     ru_canonical = f"{origin}{ru_href}" if origin else ru_href
     en_canonical = f"{origin}{en_href}" if origin else en_href
     sources = [row for row in coverage.get("sources", []) if row.get("enabled")]
+    attention_sources = int(coverage.get("stale_sources") or 0) + int(
+        coverage.get("watch_sources") or 0
+    )
     sources.sort(
         key=lambda row: (
-            {"stale": 0, "unknown": 1, "fresh": 2}.get(
+            {"stale": 0, "watch": 1, "unknown": 2, "fresh": 3}.get(
                 str(row.get("freshness_status")), 1
             ),
             -int(row.get("relevant_open_items") or 0),
@@ -211,6 +217,7 @@ def render_status_page(
     state_labels = {
         "fresh": copy["fresh_label"],
         "stale": copy["stale_label"],
+        "watch": copy["watch_label"],
         "unknown": copy["unknown_label"],
     }
     rendered_rows = []
@@ -339,6 +346,7 @@ def render_status_page(
       border-radius:999px; background:var(--panel-subtle); font-size:12px; font-weight:700; }}
     .state--fresh {{ background:var(--good-soft); color:var(--good); }}
     .state--stale {{ background:var(--warn-soft); color:var(--warn); }}
+    .state--watch {{ background:var(--warn-soft); color:var(--warn); }}
     .note {{ margin:14px 4px 0; color:var(--muted); font-size:13px; line-height:1.5; }}
     .site-footer {{ display:grid; gap:8px; margin-top:18px; padding:22px 24px;
       border:1px solid var(--line); border-radius:var(--av-radius-lg);
@@ -440,7 +448,7 @@ def render_status_page(
         <div class="metric"><span>{escape(str(copy["fresh"]))}</span>
           <strong>{int(coverage.get("fresh_sources") or 0)}</strong></div>
         <div class="metric"><span>{escape(str(copy["stale"]))}</span>
-          <strong>{int(coverage.get("stale_sources") or 0)}</strong></div>
+          <strong>{attention_sources}</strong></div>
         <div class="metric"><span>{escape(str(copy["unknown"]))}</span>
           <strong>{int(coverage.get("unknown_freshness_sources") or 0)}</strong></div>
       </div>

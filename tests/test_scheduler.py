@@ -38,7 +38,7 @@ class _Recorder:
             }
         )
 
-    def record_error(self, run_id: int) -> None:
+    def record_error(self, run_id: int, error: str | None = None) -> None:
         self.errors += 1
 
 
@@ -206,6 +206,36 @@ def test_run_once_records_parser_reported_failure() -> None:
         assert recorder.errors == 1
         assert recorder.finished == [
             {"run_id": 1, "processed": 0, "errors": 1, "status": "error"}
+        ]
+
+    asyncio.run(_go())
+
+
+def test_run_once_records_partial_source_batch() -> None:
+    async def _go() -> None:
+        class _PartialParser(_Parser):
+            name = "partial_source"
+            slug = "partial_source"
+
+            async def fetch(self):
+                self.last_fetch_error = "ConnectTimeout: retained detail"
+                yield GrantRecord(
+                    source=self.slug,
+                    external_id="retained",
+                    title="Retained source-grounded record",
+                    url="https://example.org/retained",
+                )
+
+        recorder = _Recorder()
+        scheduler = SourceScheduler(
+            parsers=[_PartialParser()],
+            recorder_factory=lambda _source: recorder,
+        )
+
+        await scheduler.run_once()
+
+        assert recorder.finished == [
+            {"run_id": 1, "processed": 1, "errors": 1, "status": "partial"}
         ]
 
     asyncio.run(_go())

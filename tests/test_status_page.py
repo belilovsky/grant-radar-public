@@ -34,6 +34,33 @@ def test_status_page_keeps_last_check_visible_in_mobile_rows() -> None:
     assert "tbody tr:nth-child(even)" in html
 
 
+def test_status_page_labels_partial_source_check() -> None:
+    html = render_status_page(
+        coverage={
+            "sources": [
+                {
+                    "enabled": True,
+                    "name": "Kazakhstan domestic support",
+                    "slug": "kazakhstan_domestic_support",
+                    "items": 56,
+                    "relevant_open_items": 50,
+                    "freshness_status": "watch",
+                }
+            ],
+            "enabled_sources": 1,
+            "fresh_sources": 0,
+            "stale_sources": 0,
+            "watch_sources": 1,
+            "unknown_freshness_sources": 0,
+        },
+        lang="ru",
+    )
+
+    assert "Проверен частично" in html
+    assert 'class="state state--watch"' in html
+    assert "<strong>1</strong>" in html
+
+
 def test_status_page_has_editorial_kazakh_shell_and_three_language_switch() -> None:
     html = render_status_page(
         coverage={"sources": [], "enabled_sources": 0},

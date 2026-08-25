@@ -130,6 +130,14 @@ def render_dashboard(
         ),
         quote=True,
     )
+    compare_href = escape(
+        (
+            f"{base_raw}/compare?lang={active_lang}"
+            if base_raw
+            else f"/compare?lang={active_lang}"
+        ),
+        quote=True,
+    )
     kk_href = escape(_root_href(base_raw, "kk"), quote=True)
     ru_href = escape(_root_href(base_raw, "ru"), quote=True)
     en_href = escape(_root_href(base_raw, "en"), quote=True)
@@ -476,7 +484,53 @@ def render_dashboard(
           <h2>{escape(str(copy["opportunities_title"]))}</h2>
           <p id="opportunities-description">{escape(str(copy["opportunities_description"]))}</p>
         </div>
+        <div
+          class="catalog-tools"
+          role="group"
+          aria-label="{escape(str(copy["catalog_actions_aria"]), quote=True)}"
+        >
+          <a
+            class="button catalog-compare is-disabled"
+            id="compare-selected"
+            href="{compare_href}"
+            aria-disabled="true"
+          >{escape(str(copy["compare_selected"]).format(count=0))}</a>
+          <details class="catalog-export">
+            <summary class="button">{escape(str(copy["export_results"]))}</summary>
+            <div class="catalog-export-menu">
+              <button class="text-button" type="button" id="export-csv">
+                {escape(str(copy["export_csv"]))}
+              </button>
+              <button class="text-button" type="button" id="export-deadlines">
+                {escape(str(copy["export_deadlines"]))}
+              </button>
+            </div>
+          </details>
+          <button class="button" type="button" id="share-view">
+            {escape(str(copy["share_view"]))}
+          </button>
+        </div>
       </div>
+      <p
+        class="saved-view-notice hidden"
+        id="saved-view-notice"
+        role="status"
+        aria-live="polite"
+      ></p>
+      <nav
+        class="applicant-journey"
+        aria-label="{escape(str(copy["journey_aria"]), quote=True)}"
+        data-avds-component="workflow-steps"
+        data-avds-pattern="applicant-journey"
+      >
+        <ol>
+          <li aria-current="step">{escape(str(copy["journey_find"]))}</li>
+          <li>{escape(str(copy["journey_verify"]))}</li>
+          <li>{escape(str(copy["journey_compare"]))}</li>
+          <li>{escape(str(copy["journey_prepare"]))}</li>
+          <li>{escape(str(copy["journey_export"]))}</li>
+        </ol>
+      </nav>
       <details class="filter-disclosure" id="filter-disclosure" open>
         <summary>{escape(str(copy["mobile_filters_summary"]))}</summary>
         <div class="filter-disclosure-body">
@@ -1057,6 +1111,9 @@ def render_dashboard(
     const SAVED_VIEW_STORAGE_KEY = "grantRadarSavedViews.v1";
     const SAVED_OPPORTUNITY_STORAGE_KEY = "grantRadarSavedOpportunities.v1";
     const WORKFLOW_STORAGE_KEY = "grantRadarOpportunityWorkflow.v1";
+    const COMPARE_STORAGE_KEY = "qazfundCompareSelection.v1";
+    const COMPARE_LIMIT = 4;
+    let compareSelectionFallback = [];
     const WORKSPACE_QUEUE_LIMIT = 3;
     const WORKFLOW_STATUSES = [
       {{ id: "review", label: copy.workflow_review }},
@@ -3032,6 +3089,79 @@ def render_dashboard(
       root.classList.toggle("hidden", !text);
     }}
 
+    function readCompareSelection() {{
+      try {{
+        const stored = window.localStorage.getItem(COMPARE_STORAGE_KEY);
+        const parsed = stored ? JSON.parse(stored) : [];
+        compareSelectionFallback = Array.isArray(parsed)
+          ? Array.from(new Set(parsed.map(String))).slice(0, COMPARE_LIMIT)
+          : [];
+        return compareSelectionFallback;
+      }} catch {{
+        return compareSelectionFallback;
+      }}
+    }}
+
+    function writeCompareSelection(ids) {{
+      compareSelectionFallback = Array.from(new Set(ids.map(String))).slice(
+        0,
+        COMPARE_LIMIT
+      );
+      try {{
+        window.localStorage.setItem(
+          COMPARE_STORAGE_KEY,
+          JSON.stringify(compareSelectionFallback)
+        );
+      }} catch {{
+        // Comparison remains usable through the current page when storage is blocked.
+      }}
+    }}
+
+    function comparisonHref(ids) {{
+      const params = new URLSearchParams();
+      if (ids.length) params.set("ids", ids.join(","));
+      params.set("lang", copy.lang || "ru");
+      return `${{apiBase}}/compare?${{params.toString()}}`;
+    }}
+
+    function renderComparisonControls() {{
+      const selected = readCompareSelection();
+      const selectedIds = new Set(selected);
+      const compareLink = $("#compare-selected");
+      if (compareLink) {{
+        compareLink.textContent = text("compare_selected", {{
+          count: formatNumber.format(selected.length)
+        }});
+        compareLink.setAttribute("href", comparisonHref(selected));
+        compareLink.setAttribute("aria-disabled", String(selected.length < 2));
+        compareLink.classList.toggle("is-disabled", selected.length < 2);
+      }}
+      document.querySelectorAll("[data-compare-opportunity]").forEach((button) => {{
+        const active = selectedIds.has(
+          String(button.getAttribute("data-compare-opportunity") || "")
+        );
+        button.setAttribute("aria-pressed", String(active));
+        button.textContent = active ? copy.remove_from_compare : copy.add_to_compare;
+      }});
+    }}
+
+    function toggleComparison(opportunityId) {{
+      const id = String(opportunityId || "");
+      if (!id) return;
+      const current = readCompareSelection();
+      const active = current.includes(id);
+      if (!active && current.length >= COMPARE_LIMIT) {{
+        setSavedViewNotice(copy.compare_limit);
+        return;
+      }}
+      const next = active
+        ? current.filter((value) => value !== id)
+        : [...current, id];
+      writeCompareSelection(next);
+      renderComparisonControls();
+      setSavedViewNotice(next.length < 2 ? copy.compare_minimum : "");
+    }}
+
     function saveCurrentView() {{
       syncUrlState();
       const currentUrl = new URL(window.location.href);
@@ -4359,6 +4489,7 @@ def render_dashboard(
       renderThemes();
       renderTopicBrief(items);
       renderFilterSummary(items.length);
+      renderComparisonControls();
 
       if (!state.items.length) {{
         message.className = "message";
@@ -4441,6 +4572,12 @@ def render_dashboard(
                   target="_blank"
                   rel="noopener"
                 >${{escapeHtml(copy.open_source_short)}}</a>
+                <button
+                  class="compare-toggle"
+                  type="button"
+                  data-compare-opportunity="${{opportunityId}}"
+                  aria-pressed="false"
+                >${{escapeHtml(copy.add_to_compare)}}</button>
               </div>
             </div>
           </div>
@@ -4455,6 +4592,7 @@ def render_dashboard(
         loadMoreWrap.classList.add("hidden");
       }}
       bindOpportunityCards();
+      renderComparisonControls();
     }}
 
     let searchRenderTimer = 0;
@@ -4496,6 +4634,14 @@ def render_dashboard(
         button.dataset.bound = "true";
         button.addEventListener("click", () => {{
           toggleSavedOpportunity(button.getAttribute("data-save-opportunity"));
+        }});
+      }});
+      const compareButtons = document.querySelectorAll("[data-compare-opportunity]");
+      compareButtons.forEach((button) => {{
+        if (button.dataset.bound === "true") return;
+        button.dataset.bound = "true";
+        button.addEventListener("click", () => {{
+          toggleComparison(button.getAttribute("data-compare-opportunity"));
         }});
       }});
       const workflowControls = document.querySelectorAll("[data-workflow-status]");
@@ -4963,6 +5109,12 @@ def render_dashboard(
     }});
     $("#export-csv")?.addEventListener("click", exportVisibleCsv);
     $("#export-deadlines")?.addEventListener("click", exportVisibleDeadlines);
+    $("#compare-selected")?.addEventListener("click", (event) => {{
+      if (event.currentTarget.getAttribute("aria-disabled") === "true") {{
+        event.preventDefault();
+        setSavedViewNotice(copy.compare_minimum);
+      }}
+    }});
     $("#profile-apply")?.addEventListener("click", applyProfile);
     $("#profile-reset")?.addEventListener("click", resetProfile);
     $("#profile-builder")?.addEventListener("toggle", () => {{

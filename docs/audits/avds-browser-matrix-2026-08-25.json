@@ -1,0 +1,44 @@
+{
+  "schemaVersion": "avds-browser-acceptance-ledger-v1",
+  "preflight": {
+    "health": "/ready",
+    "requiredPaths": ["/", "/status?lang=ru"]
+  },
+  "viewports": [
+    {"id": "mobile", "width": 390, "height": 844},
+    {"id": "desktop", "width": 1440, "height": 960}
+  ],
+  "routes": [
+    {
+      "id": "home",
+      "path": "/?lang=ru",
+      "role": "public-anonymous",
+      "states": [
+        {"id": "catalog-ready", "fixtureKind": "synthetic"}
+      ]
+    }
+  ],
+  "visualCraft": {
+    "required": true,
+    "allowedFontFamilies": ["-apple-system"],
+    "targets": [
+      {
+        "id": "catalog-header",
+        "selector": ".panel-head",
+        "role": "container"
+      },
+      {
+        "id": "journey",
+        "selector": "[data-avds-pattern='applicant-journey']",
+        "role": "container"
+      },
+      {
+        "id": "catalog",
+        "selector": "#opportunities-panel",
+        "role": "surface"
+      }
+    ],
+    "spacing": [],
+    "voidZones": []
+  }
+}

@@ -118,7 +118,7 @@ class RunRecorder:
         try:
             from sqlalchemy import update
 
-            final_status = status if errors == 0 else "error"
+            final_status = status if errors == 0 or status == "partial" else "error"
             stmt = (
                 update(self._table)
                 .where(self._table.c.id == run_id)
@@ -134,10 +134,23 @@ class RunRecorder:
         except Exception:
             logger.exception("run_recorder_finish_failed run_id=%s", run_id)
 
-    def record_error(self, run_id: int) -> None:  # pragma: no cover - thin
-        # Errors are aggregated at finish() time; method exists to satisfy the
-        # PipelineRunner contract and to allow future per-error bookkeeping.
-        return None
+    def record_error(self, run_id: int, error: str | None = None) -> None:
+        """Persist a bounded source or processor error for the operator receipt."""
+
+        if self._engine is None or self._table is None or run_id is None or not error:
+            return
+        try:
+            from sqlalchemy import update
+
+            stmt = (
+                update(self._table)
+                .where(self._table.c.id == run_id)
+                .values(error=str(error).splitlines()[0][:2000])
+            )
+            with self._engine.begin() as conn:
+                conn.execute(stmt)
+        except Exception:
+            logger.exception("run_recorder_error_detail_failed run_id=%s", run_id)
 
 
 __all__ = ["RunRecorder"]

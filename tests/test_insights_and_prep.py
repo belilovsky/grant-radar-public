@@ -196,6 +196,10 @@ def test_application_workspace_is_local_and_exportable(monkeypatch):
     assert ".footer nav a { min-width:44px; justify-content:center; }" in page.text
     assert "fetch(" not in page.text
     assert 'method="post"' not in page.text.lower()
+    assert "googletagmanager.com" not in page.text
+    assert "mc.yandex.ru" not in page.text
+    assert "clarity.ms" not in page.text
+    assert "startAnalytics" not in page.text
     assert "\u2014" not in page.text
 
 

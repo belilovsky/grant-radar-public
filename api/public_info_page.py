@@ -102,8 +102,12 @@ PAGES: dict[str, dict[str, dict[str, object]]] = {
                     "Источники проверяются регулярно. Если сведения устарели или недоступны, это отражается в статусе источника.",
                 ),
                 (
-                    "Публичность",
-                    "Каталог не запрашивает документы и персональные данные и не берёт плату за доступ к спискам и ссылкам.",
+                    "Черновик в браузере",
+                    "На странице подготовки введённый текст хранится только в локальном хранилище текущего браузера. Он не отправляется QAZ.FUND; страница не загружает системы аналитики. Черновик можно удалить кнопкой очистки или средствами браузера.",
+                ),
+                (
+                    "Аналитика каталога",
+                    "На остальных публичных страницах после взаимодействия может загружаться агрегированная веб-аналитика. При включённых Do Not Track или Global Privacy Control она не запускается; содержимое черновика подготовки в аналитику не передаётся.",
                 ),
             ],
         },
@@ -122,8 +126,12 @@ PAGES: dict[str, dict[str, dict[str, object]]] = {
                     "Sources are checked regularly. If information is stale or unavailable, the source status shows it.",
                 ),
                 (
-                    "Public by design",
-                    "The catalog does not ask for documents or personal data or charge for access to listings and links.",
+                    "Browser-only draft",
+                    "Text entered on the preparation page is stored only in this browser's local storage. It is not sent to QAZ.FUND, and the page loads no analytics. Clear it with the page control or your browser settings.",
+                ),
+                (
+                    "Catalog analytics",
+                    "Other public pages may load aggregate web analytics after interaction. Analytics does not start when Do Not Track or Global Privacy Control is enabled, and preparation-draft content is not sent to analytics.",
                 ),
             ],
         },
@@ -142,8 +150,12 @@ PAGES: dict[str, dict[str, dict[str, object]]] = {
                     "Дереккөздер тұрақты түрде тексеріледі. Мәлімет ескірсе немесе қолжетімсіз болса, бұл дереккөз мәртебесінде көрсетіледі.",
                 ),
                 (
-                    "Ашықтық қағидаты",
-                    "Каталог құжаттар мен жеке деректерді сұрамайды және тізімдер мен сілтемелерге қолжетімділік үшін ақы алмайды.",
+                    "Браузердегі жоба",
+                    "Дайындау парағына енгізілген мәтін тек осы браузердің жергілікті сақтау орнында қалады. Ол QAZ.FUND-қа жіберілмейді және бұл парақ аналитика жүйелерін жүктемейді. Жобаны тазалау батырмасымен немесе браузер баптауларында жоюға болады.",
+                ),
+                (
+                    "Каталог аналитикасы",
+                    "Басқа ашық парақтарда әрекеттен кейін жинақталған веб-аналитика жүктелуі мүмкін. Do Not Track немесе Global Privacy Control қосылса, аналитика іске қосылмайды; өтінім жобасының мазмұны аналитикаға берілмейді.",
                 ),
             ],
         },
@@ -153,7 +165,7 @@ PAGES: dict[str, dict[str, dict[str, object]]] = {
             "title": "Использование данных – QAZ.FUND",
             "eyebrow": "Использование данных",
             "heading": "Как ссылаться на QAZ.FUND",
-            "intro": "QAZ.FUND можно цитировать как открытый индекс программ поддержки, если рядом остаётся ссылка на первоисточник.",
+            "intro": "QAZ.FUND можно цитировать как навигатор программ поддержки. Условия использования материалов первоисточника определяет их правообладатель или организатор.",
             "sections": [
                 (
                     "Для публикаций",
@@ -161,7 +173,7 @@ PAGES: dict[str, dict[str, dict[str, object]]] = {
                 ),
                 (
                     "Для исследований",
-                    "Открытые выгрузки и API подходят для анализа. Указывайте дату выгрузки и не выдавайте индекс за официальный реестр.",
+                    "Выгрузки и API можно использовать для анализа. Лицензия MIT относится к программному коду QAZ.FUND и сама по себе не даёт прав на тексты, логотипы или медиа первоисточников. Указывайте дату выгрузки и проверяйте условия источника.",
                 ),
                 (
                     "Для систем искусственного интеллекта",
@@ -173,7 +185,7 @@ PAGES: dict[str, dict[str, dict[str, object]]] = {
             "title": "Data attribution – QAZ.FUND",
             "eyebrow": "Data attribution",
             "heading": "How to cite QAZ.FUND",
-            "intro": "QAZ.FUND can be used as a navigator and open index of support programs when the primary source link remains visible.",
+            "intro": "QAZ.FUND can be cited as a support-program navigator. Use of primary-source material remains subject to the rights holder's or organizer's terms.",
             "sections": [
                 (
                     "For publications",
@@ -181,7 +193,7 @@ PAGES: dict[str, dict[str, dict[str, object]]] = {
                 ),
                 (
                     "For research",
-                    "Public exports and the API can support analysis. Include the extraction date and do not present this index as an official register.",
+                    "Exports and the API can support analysis. The MIT license covers QAZ.FUND software; it does not by itself license source text, logos, or media. Include the extraction date and check the source terms.",
                 ),
                 (
                     "For AI systems",
@@ -193,7 +205,7 @@ PAGES: dict[str, dict[str, dict[str, object]]] = {
             "title": "Деректерді пайдалану – QAZ.FUND",
             "eyebrow": "Деректерді пайдалану",
             "heading": "QAZ.FUND-қа қалай сілтеме жасау керек",
-            "intro": "Бастапқы дереккөзге сілтеме көрініп тұрса, QAZ.FUND-ты навигатор және қолдау бағдарламаларының ашық индексі ретінде пайдалануға болады.",
+            "intro": "QAZ.FUND-қа қолдау бағдарламаларының навигаторы ретінде сілтеме жасауға болады. Бастапқы материалдарды пайдалану шарттарын құқық иесі немесе ұйымдастырушы белгілейді.",
             "sections": [
                 (
                     "Жарияланымдар үшін",
@@ -201,7 +213,7 @@ PAGES: dict[str, dict[str, dict[str, object]]] = {
                 ),
                 (
                     "Зерттеулер үшін",
-                    "Ашық экспорттар мен API талдауға жарайды. Экспорт күнін көрсетіп, бұл индексті ресми тізілім ретінде ұсынбаңыз.",
+                    "Экспорттар мен API талдауға жарайды. MIT лицензиясы QAZ.FUND бағдарламалық кодына қатысты және бастапқы мәтіндерге, логотиптерге немесе медиаға өздігінен құқық бермейді. Экспорт күнін көрсетіп, дереккөз шарттарын тексеріңіз.",
                 ),
                 (
                     "AI жүйелері үшін",

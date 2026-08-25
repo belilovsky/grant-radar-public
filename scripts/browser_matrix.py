@@ -6,6 +6,7 @@ import argparse
 import json
 from pathlib import Path
 from typing import Any
+from urllib.parse import urlsplit
 
 from playwright.sync_api import ConsoleMessage, Page, sync_playwright
 
@@ -16,13 +17,22 @@ BASE_SURFACES = (
     "/compare?lang=ru",
     "/insights?lang=ru",
     "/embed/opportunities?lang=ru",
+    "/embed/coverage?lang=ru",
+    "/terms?lang=ru",
+    "/data-policy?lang=ru",
+    "/attribution?lang=ru",
+    "/data-routes?lang=ru",
+    "/operator?lang=ru",
+    "/docs?lang=ru",
 )
 VIEWPORTS = (
-    (393, 852),
-    (768, 1024),
-    (1440, 960),
     (320, 800),
+    (390, 844),
+    (768, 1024),
+    (1024, 768),
+    (1440, 960),
     (1920, 1080),
+    (2560, 1440),
 )
 
 
@@ -66,7 +76,48 @@ def _surfaces(
 
 def _interaction_errors(page: Page, surface: str, *, width: int) -> list[str]:
     errors: list[str] = []
-    if surface.startswith("/funder/"):
+    if surface.startswith("/?") and width == 390:
+        compare_buttons = page.locator("[data-compare-opportunity]")
+        if compare_buttons.count() < 2:
+            errors.append("catalog did not render two comparison controls")
+        else:
+            compare_buttons.nth(0).click()
+            compare_buttons.nth(1).click()
+            compare_link = page.locator("#compare-selected")
+            compare_href = compare_link.get_attribute("href") or ""
+            if (
+                compare_link.get_attribute("aria-disabled") != "false"
+                or "ids=" not in compare_href
+                or ("," not in compare_href and "%2C" not in compare_href)
+            ):
+                errors.append(
+                    f"comparison selection did not produce a usable link: {compare_href}"
+                )
+            else:
+                page.goto(
+                    f"{urlsplit(page.url).scheme}://{urlsplit(page.url).netloc}{compare_href}",
+                    wait_until="domcontentloaded",
+                )
+                if (
+                    page.locator('[data-avds-component="comparison-table"]').count()
+                    != 1
+                ):
+                    errors.append(
+                        "comparison journey did not reach the comparison table"
+                    )
+            page.evaluate("localStorage.clear()")
+    elif surface.startswith("/?") and width == 1440:
+        export = page.locator(".catalog-export > summary")
+        export.click()
+        with page.expect_download() as csv_download:
+            page.locator("#export-csv").click()
+        if not csv_download.value.suggested_filename.endswith(".csv"):
+            errors.append("CSV export did not produce a CSV download")
+        with page.expect_download() as calendar_download:
+            page.locator("#export-deadlines").click()
+        if not calendar_download.value.suggested_filename.endswith(".ics"):
+            errors.append("deadline export did not produce an ICS download")
+    elif surface.startswith("/funder/"):
         search = page.locator("#funder-program-search")
         if search.count():
             query = page.locator(".opportunity-card h3").first.inner_text().strip()
@@ -102,7 +153,7 @@ def _interaction_errors(page: Page, surface: str, *, width: int) -> list[str]:
             })""")
         if state["total"] != state["visible"]:
             errors.append(f"attention-first status view hid rows: {state}")
-    elif "/prepare?" in surface and width == 393:
+    elif "/prepare?" in surface and width == 390:
         organisation = page.locator('[name="org_name"]')
         if organisation.count():
             organisation.fill("QAZ.FUND browser-only probe")
@@ -127,6 +178,7 @@ def run_matrix(
     axe_source = axe_path.read_text(encoding="utf-8")
     results: list[dict[str, Any]] = []
     failures: list[str] = []
+    base_parts = urlsplit(base_url)
     with sync_playwright() as playwright:
         browser = playwright.chromium.launch()
         for width, height in VIEWPORTS:
@@ -143,6 +195,8 @@ def run_matrix(
                 page = context.new_page()
                 console_errors: list[str] = []
                 page_errors: list[str] = []
+                request_failures: list[str] = []
+                first_party_errors: list[str] = []
 
                 def on_console(message: ConsoleMessage) -> None:
                     if message.type == "error":
@@ -150,11 +204,31 @@ def run_matrix(
 
                 page.on("console", on_console)
                 page.on("pageerror", lambda error: page_errors.append(str(error)))
+                page.on(
+                    "requestfailed",
+                    lambda request: request_failures.append(
+                        f"{request.method} {request.url}: {request.failure}"
+                    ),
+                )
+
+                def on_response(response: Any) -> None:
+                    parts = urlsplit(response.url)
+                    if (
+                        parts.scheme == base_parts.scheme
+                        and parts.netloc == base_parts.netloc
+                        and response.status >= 400
+                    ):
+                        first_party_errors.append(
+                            f"{response.request.method} {response.url}: HTTP {response.status}"
+                        )
+
+                page.on("response", on_response)
                 response = page.goto(
                     f"{base_url.rstrip('/')}{surface}", wait_until="domcontentloaded"
                 )
                 page.wait_for_timeout(400)
                 status = response.status if response is not None else 0
+                h1_count = page.locator("h1").count()
                 overflow = _overflow_nodes(page)
                 page.add_script_tag(content=axe_source)
                 axe = page.evaluate("""async () => await axe.run(document, {
@@ -170,11 +244,18 @@ def run_matrix(
                 key = f"{surface}@{width}x{height}"
                 if status >= 400:
                     failures.append(f"{key}: HTTP {status}")
+                if h1_count != 1:
+                    failures.append(f"{key}: expected one H1, found {h1_count}")
                 if overflow:
                     failures.append(f"{key}: horizontal overflow {overflow}")
                 if console_errors or page_errors:
                     failures.append(
                         f"{key}: console={console_errors} page_errors={page_errors}"
+                    )
+                if request_failures or first_party_errors:
+                    failures.append(
+                        f"{key}: request_failures={request_failures} "
+                        f"first_party_errors={first_party_errors}"
                     )
                 if serious:
                     failures.append(
@@ -188,9 +269,12 @@ def run_matrix(
                         "surface": surface,
                         "viewport": {"width": width, "height": height},
                         "status": status,
+                        "h1_count": h1_count,
                         "overflow": overflow,
                         "console_errors": console_errors,
                         "page_errors": page_errors,
+                        "request_failures": request_failures,
+                        "first_party_errors": first_party_errors,
                         "serious_accessibility": serious,
                         "interaction_errors": interaction_errors,
                     }

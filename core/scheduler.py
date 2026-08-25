@@ -126,13 +126,16 @@ class SourceScheduler:
                 # preserve the worker loop.  Honour their explicit marker so
                 # observability does not publish a false successful run.
                 errors = 1
-                status = "error"
+                # Preserve a usable, source-grounded batch without presenting
+                # the upstream check as a full success. A parser that emitted
+                # no records still represents a failed source check.
+                status = "partial" if count else "error"
                 logger.warning(
                     "parser=%s reported_fetch_error: %s", parser.name, fetch_error
                 )
                 if recorder is not None and run_id is not None:
                     try:
-                        recorder.record_error(run_id)
+                        recorder.record_error(run_id, fetch_error)
                     except Exception:
                         logger.exception(
                             "source_recorder_record_error_failed source=%s",
@@ -141,12 +144,12 @@ class SourceScheduler:
         except asyncio.CancelledError:
             status = "cancelled"
             raise
-        except Exception:
+        except Exception as exc:
             errors = 1
             status = "error"
             if recorder is not None and run_id is not None:
                 try:
-                    recorder.record_error(run_id)
+                    recorder.record_error(run_id, f"{type(exc).__name__}: {exc}")
                 except Exception:
                     logger.exception(
                         "source_recorder_record_error_failed source=%s", source

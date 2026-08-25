@@ -1182,6 +1182,112 @@ DASHBOARD_CSS = r"""    :root {
       gap: var(--av-spacing-2);
       flex-wrap: wrap;
     }
+    .catalog-tools {
+      display: flex;
+      align-items: center;
+      justify-content: flex-end;
+      gap: var(--av-spacing-1);
+      flex-wrap: wrap;
+    }
+    .catalog-tools .button {
+      min-height: var(--av-control-height-md);
+      border-radius: var(--av-radius-md);
+      white-space: nowrap;
+    }
+    .catalog-compare {
+      border-color: color-mix(in oklab, var(--brand), var(--line) 46%);
+      color: var(--brand);
+    }
+    .catalog-compare.is-disabled {
+      border-color: var(--line-subtle);
+      color: var(--muted);
+      background: var(--panel-wash);
+      box-shadow: none;
+      cursor: not-allowed;
+    }
+    .catalog-export {
+      position: relative;
+    }
+    .catalog-export > summary {
+      list-style: none;
+      cursor: pointer;
+    }
+    .catalog-export > summary::-webkit-details-marker { display: none; }
+    .catalog-export-menu {
+      position: absolute;
+      z-index: 26;
+      top: calc(100% + var(--av-spacing-1));
+      right: 0;
+      display: grid;
+      min-width: 190px;
+      padding: var(--av-spacing-1);
+      border: 1px solid var(--line-subtle);
+      border-radius: var(--av-radius-md);
+      background: var(--panel);
+      box-shadow: var(--shadow-md);
+    }
+    .catalog-export-menu .text-button {
+      justify-content: flex-start;
+      min-height: var(--av-control-height-md);
+      padding: 0 var(--av-spacing-2);
+      border-radius: var(--av-radius-sm);
+      cursor: pointer;
+    }
+    .applicant-journey {
+      margin: 0 0 var(--av-spacing-3);
+      padding: 0 0 var(--av-spacing-3);
+      border-bottom: 1px solid var(--line-subtle);
+    }
+    .applicant-journey ol {
+      display: grid;
+      grid-template-columns: repeat(5, minmax(0, 1fr));
+      gap: 0;
+      margin: 0;
+      padding: 0;
+      list-style: none;
+      counter-reset: applicant-journey;
+    }
+    .applicant-journey li {
+      counter-increment: applicant-journey;
+      display: grid;
+      grid-template-columns: 24px minmax(0, 1fr);
+      gap: var(--av-spacing-1);
+      align-items: center;
+      min-width: 0;
+      min-height: 38px;
+      padding: 0 var(--av-spacing-2);
+      border-left: 1px solid var(--line-subtle);
+      color: var(--muted);
+      font-size: var(--av-text-xs);
+      font-weight: 680;
+      line-height: var(--av-leading-snug);
+    }
+    .applicant-journey li:first-child {
+      padding-left: 0;
+      border-left: 0;
+    }
+    .applicant-journey li::before {
+      content: counter(applicant-journey);
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 24px;
+      height: 24px;
+      border: 1px solid var(--line);
+      border-radius: var(--av-radius-full);
+      background: var(--panel);
+      color: var(--ink);
+      font-size: 11px;
+      font-weight: 800;
+    }
+    .applicant-journey li[aria-current="step"] {
+      color: var(--ink);
+    }
+    .applicant-journey li[aria-current="step"]::before {
+      border-color: var(--brand);
+      background: var(--brand);
+      color: var(--color-accent-contrast);
+    }
     .panel-summary {
       color: var(--muted);
       font-size: var(--av-text-sm);
@@ -1618,6 +1724,7 @@ DASHBOARD_CSS = r"""    :root {
     }
     .saved-view-notice {
       min-height: 20px;
+      margin: 0 0 var(--av-spacing-1);
       color: var(--muted);
       font-size: var(--av-text-xs);
       line-height: 1.45;
@@ -2335,6 +2442,24 @@ DASHBOARD_CSS = r"""    :root {
       gap: 8px 14px;
       flex-wrap: wrap;
       margin-top: 2px;
+    }
+    .compare-toggle {
+      display: inline-flex;
+      align-items: center;
+      min-height: 34px;
+      padding: 0;
+      border: 0;
+      background: transparent;
+      color: var(--brand);
+      font-size: var(--av-text-sm);
+      font-weight: 700;
+      cursor: pointer;
+    }
+    .compare-toggle[aria-pressed="true"] {
+      color: var(--ink);
+      text-decoration: underline;
+      text-decoration-color: var(--brand);
+      text-underline-offset: 4px;
     }
     .card-actions-secondary {
       grid-area: actions;
@@ -3408,9 +3533,58 @@ DASHBOARD_CSS = r"""    :root {
       .panel.primary .panel-head p {
         display: none;
       }
+      .catalog-tools {
+        width: 100%;
+        display: grid;
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        justify-content: stretch;
+      }
+      .catalog-tools .button,
+      .catalog-export > summary {
+        width: 100%;
+        min-height: var(--av-control-height-lg);
+        padding-inline: var(--av-spacing-2);
+        white-space: normal;
+        text-align: center;
+      }
+      .catalog-export-menu {
+        right: auto;
+        left: 0;
+      }
+      .applicant-journey {
+        margin-bottom: var(--av-spacing-2);
+        padding-bottom: var(--av-spacing-2);
+      }
+      .applicant-journey ol {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+      }
+      .applicant-journey li {
+        min-height: 44px;
+        padding: 4px var(--av-spacing-1);
+        border-left: 0;
+        border-top: 1px solid var(--line-subtle);
+      }
+      .applicant-journey li:nth-child(odd) {
+        padding-left: 0;
+      }
+      .applicant-journey li:nth-child(even) {
+        border-left: 1px solid var(--line-subtle);
+      }
+      .applicant-journey li:last-child {
+        grid-column: 1 / -1;
+      }
+      .compare-toggle {
+        min-height: var(--av-control-height-lg);
+      }
     }
 
     @media (max-width: 560px) {
+      .catalog-tools {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+      }
+      .catalog-tools #share-view {
+        grid-column: 1 / -1;
+      }
       .hero-grid {
         gap: var(--av-spacing-3);
         margin-bottom: var(--av-spacing-3);

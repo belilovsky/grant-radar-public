@@ -1,0 +1,211 @@
+{
+  "schema": "kz-compliance-evidence.v1",
+  "scope": {
+    "project": "QAZ.FUND public opportunity navigator",
+    "revision_runtime": "source candidate based on 171d43eaae52382b3ff58d62f89ac3d73a3fc69e; production recovery identity verified separately",
+    "audience": "Kazakhstan applicants, teams, companies, NGOs, researchers, organizations, experts and program operators",
+    "languages": [
+      "ru",
+      "kk",
+      "en"
+    ],
+    "data_classes": [
+      "public opportunity facts and source links",
+      "browser-local application draft text",
+      "aggregate public-page analytics telemetry"
+    ],
+    "channels": [
+      "public website",
+      "browser-local draft workspace",
+      "public JSON and feed surfaces"
+    ],
+    "evidence_cutoff": "2026-08-25T09:34:50Z"
+  },
+  "sources": [
+    {
+      "source_id": "kz-personal-data-law",
+      "source_type": "primary_official",
+      "issuing_authority": "Republic of Kazakhstan",
+      "official_host": "adilet.zan.kz",
+      "official_title": "О персональных данных и их защите",
+      "act_article": "Articles 7, 8, 12, 16 and 25",
+      "url": "https://adilet.zan.kz/rus/docs/Z1300000094",
+      "revision_effective_date": "2026-08-20 document-state snapshot displayed by Adilet",
+      "retrieved_at": "2026-08-25T09:31:00Z",
+      "language": "ru",
+      "digest": "sha256:f6fe095715fbecf5c773ab0ead80033c01e7a50f6557d0abe622ace691383165",
+      "paraphrase": "Collection and processing generally require consent, must be limited to a specific lawful purpose and non-excessive data; server-side storage is subject to Kazakhstan location, retention and protection duties."
+    },
+    {
+      "source_id": "kz-personal-data-rules",
+      "source_type": "primary_official",
+      "issuing_authority": "Ministry responsible for digital development of the Republic of Kazakhstan",
+      "official_host": "adilet.zan.kz",
+      "official_title": "Об утверждении Правил сбора, обработки персональных данных",
+      "act_article": "Rules, clauses 4 through 7 and Chapter 3",
+      "url": "https://adilet.zan.kz/rus/docs/V2000021498",
+      "revision_effective_date": "2026-08-20 document-state snapshot displayed by Adilet",
+      "retrieved_at": "2026-08-25T09:31:00Z",
+      "language": "ru",
+      "digest": "sha256:fa843d07986bb41284fe59d5025defd6324a61ac361d4a961716569c920cb45f",
+      "paraphrase": "The rules define collection and processing, consent evidence, necessary-and-sufficient scope, protection measures and cessation when processing is no longer required."
+    },
+    {
+      "source_id": "kz-copyright-law",
+      "source_type": "primary_official",
+      "issuing_authority": "Republic of Kazakhstan",
+      "official_host": "adilet.zan.kz",
+      "official_title": "Об авторском праве и смежных правах",
+      "act_article": "Articles 7 through 9",
+      "url": "https://adilet.zan.kz/rus/docs/Z960000006_",
+      "revision_effective_date": "2026-08-20 document-state snapshot displayed by Adilet",
+      "retrieved_at": "2026-08-25T09:31:00Z",
+      "language": "ru",
+      "digest": "sha256:d708c3f6f2f53f0b0cb0876d646471a8914c5194941aef395916aa053f5ac302",
+      "paraphrase": "Official documents and factual event reports are excluded from copyright, while other source text, logos, media and original materials are not automatically licensed by that exclusion."
+    }
+  ],
+  "behaviors": [
+    {
+      "behavior_id": "prep-browser-only",
+      "description": "Application preparation stores free text in localStorage and offers local Markdown, clipboard and calendar exports without POST, fetch, beacon or analytics loaders.",
+      "evidence": "api/application_prep_page.py plus tests/test_insights_and_prep.py::test_application_workspace_renders_and_persists_locally",
+      "observed_at": "2026-08-25T09:34:50Z"
+    },
+    {
+      "behavior_id": "prep-delete",
+      "description": "The applicant can clear the local draft; the data policy names both the page control and browser storage settings as deletion paths.",
+      "evidence": "localStorage.removeItem paths in api/application_prep_page.py and localized data-policy copy",
+      "observed_at": "2026-08-25T09:34:50Z"
+    },
+    {
+      "behavior_id": "public-analytics",
+      "description": "Ordinary public pages may start GA4, Yandex Metrica and Clarity after interaction or timeout, unless DNT or GPC is enabled; the preparation page is excluded.",
+      "evidence": "api/public_meta.py, analytics exclusion assertions for the preparation route, and localized data-policy disclosure",
+      "observed_at": "2026-08-25T09:34:50Z"
+    },
+    {
+      "behavior_id": "source-reuse",
+      "description": "QAZ.FUND exposes normalized facts and links but now distinguishes the repository MIT license from rights in upstream text, logos and media.",
+      "evidence": "LICENSE and localized /attribution page contract tests",
+      "observed_at": "2026-08-25T09:34:50Z"
+    },
+    {
+      "behavior_id": "no-server-profile",
+      "description": "The public preparation workflow has no account, document upload, personal profile, application submission endpoint or server-side draft persistence.",
+      "evidence": "route and form inspection plus no-POST/no-fetch tests in tests/test_insights_and_prep.py",
+      "observed_at": "2026-08-25T09:34:50Z"
+    }
+  ],
+  "matrix": [
+    {
+      "behavior": "prep-browser-only",
+      "requirement": "Do not collect or transmit applicant draft content when the product promise is browser-only.",
+      "source_ids": [
+        "kz-personal-data-law",
+        "kz-personal-data-rules"
+      ],
+      "applicability": "applicable",
+      "implementation_status": "covered",
+      "risk": "low after removal of third-party analytics from the preparation page",
+      "owner": "QAZ.FUND product and engineering",
+      "required_proof": "Rendered preparation page has local persistence but no POST, fetch, beacon or third-party analytics request.",
+      "review_state": "covered"
+    },
+    {
+      "behavior": "prep-delete",
+      "requirement": "Keep browser-local data controllable and explain the deletion path.",
+      "source_ids": [
+        "kz-personal-data-law",
+        "kz-personal-data-rules"
+      ],
+      "applicability": "applicable",
+      "implementation_status": "covered",
+      "risk": "low",
+      "owner": "QAZ.FUND product and engineering",
+      "required_proof": "Clear control removes the namespaced draft key and the public policy describes the same behavior.",
+      "review_state": "covered"
+    },
+    {
+      "behavior": "public-analytics",
+      "requirement": "Determine whether the configured third-party telemetry constitutes personal-data processing requiring a distinct consent mechanism and provider-specific disclosures.",
+      "source_ids": [
+        "kz-personal-data-law",
+        "kz-personal-data-rules"
+      ],
+      "applicability": "needs_legal_review",
+      "implementation_status": "needs_legal_review",
+      "risk": "narrow legal classification question; preparation content is technically excluded",
+      "owner": "QAZ.FUND owner with Kazakhstan privacy counsel",
+      "required_proof": "Written classification of enabled GA4, Yandex Metrica and Clarity fields/configuration, controller roles, transfer path and consent basis.",
+      "review_state": "needs_legal_review"
+    },
+    {
+      "behavior": "source-reuse",
+      "requirement": "Do not imply that the QAZ.FUND software license grants reuse rights in all upstream materials.",
+      "source_ids": [
+        "kz-copyright-law"
+      ],
+      "applicability": "applicable",
+      "implementation_status": "covered",
+      "risk": "low after attribution clarification; source-specific restrictions still govern",
+      "owner": "QAZ.FUND editorial and data owners",
+      "required_proof": "Attribution page distinguishes code license, factual index use and upstream rights while preserving source links.",
+      "review_state": "covered"
+    },
+    {
+      "behavior": "no-server-profile",
+      "requirement": "Keep personal application preparation outside server-side collection, storage and submission scope.",
+      "source_ids": [
+        "kz-personal-data-law",
+        "kz-personal-data-rules"
+      ],
+      "applicability": "applicable",
+      "implementation_status": "covered",
+      "risk": "low within the approved product boundary",
+      "owner": "QAZ.FUND product and engineering",
+      "required_proof": "Route inventory and browser network evidence show no account, upload, profile, draft or submission endpoint.",
+      "review_state": "covered"
+    }
+  ],
+  "remediation": [
+    {
+      "canonical_owner": "api/application_prep_page.py",
+      "change": "Removed all shared third-party analytics markup from the browser-only preparation page.",
+      "tests": "Preparation route asserts no GA4, Yandex Metrica, Clarity, startAnalytics, fetch or POST markup.",
+      "release_boundary": "Included in the single functional release after all planned audits.",
+      "rollback": "Restore the removed analytics helper import and head interpolation only if the browser-only product promise is also changed and approved.",
+      "after_evidence": "Focused preparation and public-contract tests pass."
+    },
+    {
+      "canonical_owner": "api/public_info_page.py",
+      "change": "Corrected RU, KK and EN data-policy and attribution language for local drafts, analytics boundaries and upstream licensing.",
+      "tests": "Localized policy tests assert the browser-only and MIT/upstream-rights distinctions.",
+      "release_boundary": "Included in the single functional release after all planned audits.",
+      "rollback": "Revert localized copy and matching assertions as one scoped change.",
+      "after_evidence": "Focused public policy tests pass in all affected modules."
+    }
+  ],
+  "legal_questions": [
+    {
+      "question": "For the exact production configurations of GA4, Yandex Metrica with Webvisor, and Microsoft Clarity on ordinary public pages, which fields are personal data under Kazakhstan law and what consent, notice, controller, transfer and retention controls are required?",
+      "decision_owner": "QAZ.FUND owner with Kazakhstan privacy counsel",
+      "affected_release": "Does not reopen the browser-only preparation fix; resolve before expanding telemetry or treating current analytics coverage as compliance-complete."
+    }
+  ],
+  "result_receipt": {
+    "task": "Kazakhstan compliance evidence and bounded remediation for QAZ.FUND",
+    "outcome": "Browser-only preparation and source-license boundaries repaired; one provider-specific analytics question remains for legal review.",
+    "checked_behaviors": [
+      "prep-browser-only",
+      "prep-delete",
+      "public-analytics",
+      "source-reuse",
+      "no-server-profile"
+    ],
+    "evidence_freshness": "Official Adilet documents retrieved 2026-08-25 against the displayed 2026-08-20 document state.",
+    "limitations": "This is technical and editorial compliance evidence, not a legal opinion; source-specific licensing and analytics-provider configurations require their own current terms and counsel review.",
+    "next_action": "Keep the preparation page analytics-free, verify its browser network trace in final acceptance, and route only the named analytics classification question to counsel.",
+    "review_owner": "QAZ.FUND owner"
+  }
+}

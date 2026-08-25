@@ -1,0 +1,165 @@
+{
+  "schema": "qazdata-integrity-ledger.v1",
+  "scope": {
+    "dataset": "QAZ.FUND public opportunities and source-run evidence",
+    "period": "current public projection observed on 2026-08-25",
+    "geography": "Kazakhstan applicability with international programmes retained when explicitly relevant",
+    "tenant": "public QAZ.FUND",
+    "consumer": "catalog, opportunity card, comparison, preparation, status, media feeds, and public API",
+    "canonical_source": "official programme pages configured in the parser registry",
+    "evidence_cutoff": "2026-08-25T14:00:00+05:00"
+  },
+  "lineage": {
+    "nodes": [
+      {
+        "id": "official-source",
+        "role": "canonical upstream evidence",
+        "owner": "programme operator",
+        "identity": "official source URL and observation timestamp",
+        "privacy_class": "public"
+      },
+      {
+        "id": "parser",
+        "role": "capture and extraction",
+        "owner": "QAZ.FUND source adapter",
+        "identity": "registered source slug and parser revision",
+        "privacy_class": "public"
+      },
+      {
+        "id": "normalized-store",
+        "role": "normalized current records and observation history",
+        "owner": "QAZ.FUND PostgreSQL repository",
+        "identity": "opportunity UUID, source, source URL, observation time",
+        "privacy_class": "public"
+      },
+      {
+        "id": "public-projection",
+        "role": "API and rendered consumer projection",
+        "owner": "QAZ.FUND API",
+        "identity": "public opportunity schema and release identity",
+        "privacy_class": "public"
+      }
+    ],
+    "edges": [
+      {
+        "from": "official-source",
+        "to": "parser",
+        "owner": "source adapter",
+        "schema_version": "source-specific HTML or JSON contract",
+        "keys": "official URL and source-native identifier when available",
+        "timestamp_semantics": "fetched_at is the observation time; upstream dates remain attributed fields",
+        "privacy_class": "public",
+        "verification": "parser tests, source-run status, and bounded error detail"
+      },
+      {
+        "from": "parser",
+        "to": "normalized-store",
+        "owner": "normalizer and repository",
+        "schema_version": "Opportunity model plus observation history",
+        "keys": "UUID, source, source URL, normalized title",
+        "timestamp_semantics": "first_seen_at and last_seen_at describe QAZ.FUND observations, not programme publication",
+        "privacy_class": "public",
+        "verification": "content and data-quality tests, schema digest, and aggregate reconciliation"
+      },
+      {
+        "from": "normalized-store",
+        "to": "public-projection",
+        "owner": "API repository and SSR projection",
+        "schema_version": "backward-compatible public opportunity contract",
+        "keys": "opportunity UUID and source evidence URL",
+        "timestamp_semantics": "freshness derives from record observation and latest usable full or partial source check",
+        "privacy_class": "public",
+        "verification": "API tests, browser matrix, coverage endpoint, status page, and schema digest"
+      }
+    ]
+  },
+  "before": {
+    "identity": "main@171d43eaae52382b3ff58d62f89ac3d73a3fc69e",
+    "record_count": 304,
+    "schema_digest": "sha256:0c938f88091c635bcf33185a8b2ec29c0e97ea8dfef2c719fc5c2e3717f797e5",
+    "quality_summary": "A source run that emitted 56 usable records was labelled error when three detail pages timed out, hiding a valid partial projection from freshness consumers.",
+    "code_revision": "171d43eaae52382b3ff58d62f89ac3d73a3fc69e"
+  },
+  "candidate": {
+    "identity": "2026-08-25 local candidate",
+    "record_count": 304,
+    "schema_digest": "sha256:0c938f88091c635bcf33185a8b2ec29c0e97ea8dfef2c719fc5c2e3717f797e5",
+    "quality_summary": "The earliest broken edge is repaired: non-zero parser output with bounded fetch errors is partial, remains usable, and is visibly marked watch/attention without inventing missing values.",
+    "code_revision": "working tree based on 171d43eaae52382b3ff58d62f89ac3d73a3fc69e"
+  },
+  "checks": {
+    "provenance": {
+      "status": "covered",
+      "evidence": "All 304 projected records retain source evidence; public cards expose the official source route."
+    },
+    "schema": {
+      "status": "covered",
+      "evidence": "Before and candidate schema digests match; changes add run-state fields without removing public fields."
+    },
+    "freshness": {
+      "status": "partial",
+      "evidence": "The affected Kazakhstan domestic-support run emitted 56 rows while three detail fetches timed out; it is now honestly represented as partial/watch."
+    },
+    "completeness": {
+      "status": "covered",
+      "evidence": "Unknowns remain explicit: deadline 78, amount_min 303, amount_max 283, eligibility 252, top-level application_url 304, and funder 133 records absent."
+    },
+    "uniqueness": {
+      "status": "covered",
+      "evidence": "Fifty URL duplicate excess rows are explained by distinct UNDP/EBRD notices sharing listing pages; eleven same-source normalized-title excess rows were reviewed and not silently merged."
+    },
+    "referential": {
+      "status": "covered",
+      "evidence": "Opportunity identifiers, source slugs, source URLs, and rendered detail/comparison/preparation routes reconcile in focused API and browser tests."
+    },
+    "semantic": {
+      "status": "covered",
+      "evidence": "Lifecycle aggregate is closing 72, rolling 57, open 68, closed 93, forecast 14; relevance is labelled as ranking support rather than eligibility confirmation."
+    },
+    "reproducibility": {
+      "status": "covered",
+      "evidence": "Run classification is derived from parser count plus bounded last_fetch_error and is covered by scheduler, recorder, API, and status tests."
+    },
+    "privacy": {
+      "status": "covered",
+      "evidence": "The opportunity pipeline is public-only; browser preparation remains localStorage-only and sends no request after an edit in targeted browser acceptance."
+    },
+    "consumer_compatibility": {
+      "status": "covered",
+      "evidence": "Catalog, status, operator, comparison, preparation, media, and API consumers retain their routes; new fields and partial labels are additive."
+    }
+  },
+  "mutations": [
+    {
+      "target": "scheduler, run recorder, coverage/status/operator projections, and tests",
+      "authorization": "owner-approved QAZ.FUND remediation plan dated 2026-08-25",
+      "replay_key": "source slug plus scheduler run identifier",
+      "result": "partial output is preserved and exposed as watch/attention with a bounded error reason",
+      "rollback": "revert the scoped source-run classification commit; no database rows or generated exports were hand-edited"
+    }
+  ],
+  "publication": {
+    "status": "candidate",
+    "candidate_identity": "2026-08-25 local candidate",
+    "approval": "owner approved one guarded release after all gates",
+    "activated_projection": "pending final guarded deployment",
+    "previous_valid_projection": "171d43eaae52382b3ff58d62f89ac3d73a3fc69e",
+    "public_verification": "pending final release identity and browser acceptance"
+  },
+  "result_receipt": {
+    "task": "audit and repair official-source to public-projection integrity",
+    "outcome": "earliest run-state defect fixed without downstream data edits or inferred values",
+    "checks": [
+      "aggregate count and schema digest",
+      "null and lifecycle distributions",
+      "duplicate review",
+      "scheduler and recorder tests",
+      "API/status/operator consumer tests"
+    ],
+    "freshness": "one source remains honestly partial until its next complete upstream cycle",
+    "privacy_boundary": "public source data only; no applicant data enters this pipeline",
+    "limitations": "shared listing URLs do not prove duplicate programmes and missing upstream fields are not inferred",
+    "next_action": "deploy the green candidate and verify a real source cycle plus public coverage projection"
+  },
+  "blocked": []
+}

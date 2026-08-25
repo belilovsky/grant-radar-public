@@ -75,3 +75,23 @@ def test_finish_keeps_replacement_run_auditable():
     assert row["items_seen"] == 7
     assert row["items_new"] == 7
     assert row["finished_at"] is not None
+
+
+def test_partial_run_keeps_error_detail_and_usable_count():
+    engine = create_engine("sqlite+pysqlite:///:memory:")
+    runs = _runs_table(engine)
+    recorder = RunRecorder(engine=engine, source="source-a")
+    run_id = recorder.start()
+
+    assert run_id is not None
+    recorder.record_error(run_id, "ConnectTimeout: retained official page")
+    recorder.finish(run_id, processed=4, errors=1, status="partial")
+
+    with engine.connect() as connection:
+        row = (
+            connection.execute(select(runs).where(runs.c.id == run_id)).mappings().one()
+        )
+
+    assert row["status"] == "partial"
+    assert row["items_seen"] == 4
+    assert row["error"] == "ConnectTimeout: retained official page"

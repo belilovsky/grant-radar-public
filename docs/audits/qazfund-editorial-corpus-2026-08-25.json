@@ -1,0 +1,131 @@
+{
+  "contract": "edpol-public-editorial-corpus-v1",
+  "corpus_version": "qazfund-public-candidate-2026-08-25-v1",
+  "units": [
+    {
+      "id": "home-catalog",
+      "route": "/?lang={ru|kk|en}",
+      "sources": [
+        "api/dashboard.py",
+        "api/dashboard_copy.py",
+        "api/public_meta.py"
+      ]
+    },
+    {
+      "id": "opportunity-detail",
+      "route": "/opportunity/{id}?lang={ru|kk|en}",
+      "sources": [
+        "api/opportunity_page.py",
+        "api/opportunity_detail.py",
+        "api/opportunity_mapping.py",
+        "api/opportunity_og.py",
+        "api/dashboard_copy.py"
+      ]
+    },
+    {
+      "id": "application-preparation",
+      "route": "/opportunity/{id}/prepare?lang={ru|kk|en}",
+      "sources": [
+        "api/application_prep_page.py"
+      ]
+    },
+    {
+      "id": "comparison",
+      "route": "/compare?ids={ids}&lang={ru|kk|en}",
+      "sources": [
+        "api/comparison_page.py",
+        "api/comparison.py"
+      ]
+    },
+    {
+      "id": "funder-directory",
+      "route": "/funders and /funder/{slug}",
+      "sources": [
+        "api/funder_page.py"
+      ]
+    },
+    {
+      "id": "media",
+      "route": "/media?lang={ru|kk|en}",
+      "sources": [
+        "api/media_page.py",
+        "api/media.py"
+      ]
+    },
+    {
+      "id": "insights",
+      "route": "/insights?lang={ru|kk|en}",
+      "sources": [
+        "api/insights_page.py",
+        "api/insights.py",
+        "api/presentation.py"
+      ]
+    },
+    {
+      "id": "status",
+      "route": "/status?lang={ru|kk|en}",
+      "sources": [
+        "api/status_page.py"
+      ]
+    },
+    {
+      "id": "public-information",
+      "route": "/terms, /data-policy and /attribution",
+      "sources": [
+        "api/public_info_page.py"
+      ]
+    },
+    {
+      "id": "official-data-routes",
+      "route": "/data-routes?lang={ru|kk|en}",
+      "sources": [
+        "api/data_routes_page.py",
+        "core/kazakhstan_data_routes.json"
+      ]
+    },
+    {
+      "id": "embed",
+      "route": "/embed?lang={ru|kk|en}",
+      "sources": [
+        "api/embed_page.py"
+      ]
+    },
+    {
+      "id": "errors",
+      "route": "404 and public error states",
+      "sources": [
+        "api/error_page.py"
+      ]
+    },
+    {
+      "id": "operator",
+      "route": "/operator?lang={ru|kk|en}",
+      "sources": [
+        "api/operator_page.py"
+      ]
+    },
+    {
+      "id": "notifications",
+      "route": "/v1/notifications/* and notification contract",
+      "sources": [
+        "api/notification_contract.py"
+      ]
+    },
+    {
+      "id": "qpost-drafts",
+      "route": "/qpost/v1/* and draft feeds",
+      "sources": [
+        "api/qpost_feed.py",
+        "api/daily_digest.py"
+      ]
+    },
+    {
+      "id": "ecosystem-contract",
+      "route": "/ecosystem.json and public machine contracts",
+      "sources": [
+        "api/ecosystem.py",
+        "api/main.py"
+      ]
+    }
+  ]
+}

@@ -455,15 +455,15 @@ COPY = {
             "Источники и индекс регулярно перепроверяются. Текущее состояние видно "
             "в блоке «Статус данных»."
         ),
-        "faq_q3": "Что означает точность совпадения?",
+        "faq_q3": "Что означает релевантность карточки?",
         "faq_a3": (
             "Это не оценка программы. Порог показывает, насколько карточка совпадает "
             "с выбранными темой, регионом и форматом."
         ),
         "faq_q4": "Почему в выдаче бывают меры поддержки рядом с грантами?",
         "faq_a4": (
-            "Некоторые меры поддержки не являются грантами, но подходят той же "
-            "аудитории. Мы оставляем их при совпадении с задачей."
+            "Некоторые меры поддержки не являются грантами, но относятся к тем же "
+            "задачам. Мы оставляем их при совпадении с выбранными фильтрами."
         ),
         "collections_label": "Сохранённые подборки",
         "collections_aria": "Сохранённые фильтры для повторной работы",
@@ -504,6 +504,19 @@ COPY = {
         "mobile_open_filters": "Открыть фильтры каталога",
         "mobile_close_filters": "Закрыть фильтры",
         "mobile_show_results": "Показать результаты",
+        "journey_aria": "Путь соискателя в QAZ.FUND",
+        "journey_find": "Найти",
+        "journey_verify": "Проверить источник",
+        "journey_compare": "Сравнить",
+        "journey_prepare": "Подготовить",
+        "journey_export": "Экспортировать",
+        "catalog_actions_aria": "Действия с текущей выдачей",
+        "compare_selected": "Сравнить: {count}",
+        "compare_minimum": "Выберите минимум две карточки для сравнения.",
+        "compare_limit": "Можно сравнить не больше четырёх карточек.",
+        "add_to_compare": "В сравнение",
+        "remove_from_compare": "Убрать из сравнения",
+        "export_results": "Экспорт",
         "export_csv": "Таблица CSV",
         "export_deadlines": "Сроки в календарь",
         "saved_opportunity_saved": "Карточка сохранена в этом браузере.",
@@ -515,7 +528,7 @@ COPY = {
         "workspace_filter_empty": "Сначала сохраните карточку.",
         "workflow_label": "Этап работы",
         "workflow_review": "На проверке",
-        "workflow_fit": "Подходит",
+        "workflow_fit": "В коротком списке",
         "workflow_preparing": "Готовим заявку",
         "workflow_submitted": "Отправлено",
         "workflow_result": "Получен результат",
@@ -526,7 +539,7 @@ COPY = {
         "workspace_queue_empty": "Нет сохранённых открытых карточек.",
         "workspace_queue_more": "Ещё карточек: {count}",
         "workspace_action_review": "Проверьте критерии на официальном источнике.",
-        "workspace_action_fit": "Подтвердите соответствие требованиям и срок.",
+        "workspace_action_fit": "Сверьте требования и срок на странице организатора.",
         "workspace_action_preparing": "Соберите пакет и зафиксируйте срок подачи.",
         "workspace_action_submitted": "Сохраните подтверждение и следите за условиями.",
         "workspace_action_result": "Зафиксируйте результат по этой программе.",
@@ -569,8 +582,7 @@ COPY = {
             "развития."
         ),
         "signal_business": (
-            "Карточка может подойти бизнесу: проверьте условия, документы и путь "
-            "подачи."
+            "Для бизнес-задач: проверьте условия, документы и путь подачи."
         ),
         "signal_startup": (
             "Для продуктовых и ИИ-команд, которым нужны акселерация, пилоты или "
@@ -586,7 +598,7 @@ COPY = {
             "В условиях прямо указан Казахстан или местный порядок подачи."
         ),
         "signal_central_asia": (
-            "Подходит проектам из Центральной Азии без узкой привязки к одной стране."
+            "Для проектов из Центральной Азии без узкой привязки к одной стране."
         ),
         "signal_global": (
             "Международная возможность – проверьте критерии для своей команды."
@@ -1639,15 +1651,15 @@ COPY = {
             "Sources and the index are rechecked regularly. See Data status for the "
             "current state."
         ),
-        "faq_q3": "What does match precision mean?",
+        "faq_q3": "What does catalog relevance mean?",
         "faq_a3": (
             "It is not a program rating. The threshold shows how closely a card "
             "matches the selected theme, region, and format."
         ),
         "faq_q4": "Why do support measures sometimes appear near grants?",
         "faq_a4": (
-            "Some support measures are not grants but serve the same audience. We "
-            "keep them when they match the use case."
+            "Some support measures are not grants but address the same tasks. We "
+            "keep them when they match the selected filters."
         ),
         "collections_label": "Saved selections",
         "collections_aria": "Saved filters for repeat work",
@@ -1688,6 +1700,19 @@ COPY = {
         "mobile_open_filters": "Open catalogue filters",
         "mobile_close_filters": "Close filters",
         "mobile_show_results": "Show results",
+        "journey_aria": "Applicant journey in QAZ.FUND",
+        "journey_find": "Find",
+        "journey_verify": "Verify the source",
+        "journey_compare": "Compare",
+        "journey_prepare": "Prepare",
+        "journey_export": "Export",
+        "catalog_actions_aria": "Actions for the current results",
+        "compare_selected": "Compare: {count}",
+        "compare_minimum": "Choose at least two cards to compare.",
+        "compare_limit": "You can compare up to four cards.",
+        "add_to_compare": "Add to comparison",
+        "remove_from_compare": "Remove from comparison",
+        "export_results": "Export",
         "export_csv": "CSV table",
         "export_deadlines": "Deadlines to calendar",
         "saved_opportunity_saved": "Card saved locally.",
@@ -1699,7 +1724,7 @@ COPY = {
         "workspace_filter_empty": "Save a relevant card first.",
         "workflow_label": "Work stage",
         "workflow_review": "Under review",
-        "workflow_fit": "Good fit",
+        "workflow_fit": "Shortlisted",
         "workflow_preparing": "Preparing application",
         "workflow_submitted": "Submitted",
         "workflow_result": "Result received",
@@ -1710,7 +1735,7 @@ COPY = {
         "workspace_queue_empty": "There are no active saved cards in the current catalogue.",
         "workspace_queue_more": "Still in progress: {count}",
         "workspace_action_review": "Check the criteria on the official source.",
-        "workspace_action_fit": "Confirm eligibility and the deadline.",
+        "workspace_action_fit": "Check the requirements and deadline on the organizer's page.",
         "workspace_action_preparing": "Assemble the package and record the deadline.",
         "workspace_action_submitted": "Keep the confirmation and monitor the terms.",
         "workspace_action_result": "Record the outcome for the saved card.",
@@ -1753,7 +1778,7 @@ COPY = {
             "development programs."
         ),
         "signal_business": (
-            "For businesses where terms, documents, and application steps matter."
+            "For business tasks: check the terms, documents, and application steps."
         ),
         "signal_startup": (
             "For product and AI teams looking for acceleration, pilots, or cloud "
@@ -1769,7 +1794,7 @@ COPY = {
             "The terms name Kazakhstan or local application conditions."
         ),
         "signal_central_asia": (
-            "Works for Central Asia teams without being tied to a single country."
+            "For Central Asia teams without a narrow single-country focus."
         ),
         "signal_global": (
             "A global opportunity – check the eligibility rules for your team."
@@ -2490,6 +2515,19 @@ KK_DASHBOARD_COPY = {
     "workspace_backup": "Жүктеп алу",
     "export_csv": "CSV кестесі",
     "export_deadlines": "Мерзімдерді күнтізбеге",
+    "journey_aria": "QAZ.FUND ішіндегі өтінім беруші жолы",
+    "journey_find": "Табу",
+    "journey_verify": "Дереккөзді тексеру",
+    "journey_compare": "Салыстыру",
+    "journey_prepare": "Дайындау",
+    "journey_export": "Экспорттау",
+    "catalog_actions_aria": "Ағымдағы нәтижелермен әрекеттер",
+    "compare_selected": "Салыстыру: {count}",
+    "compare_minimum": "Салыстыру үшін кемінде екі карточка таңдаңыз.",
+    "compare_limit": "Төрт карточкаға дейін салыстыруға болады.",
+    "add_to_compare": "Салыстыруға қосу",
+    "remove_from_compare": "Салыстырудан алып тастау",
+    "export_results": "Экспорт",
     "workspace_export": "Резервтік көшірме",
     "workspace_import": "Көшірмені қалпына келтіру",
     "save_view": "Сүзгілерді сақтау",
@@ -2606,15 +2644,15 @@ KK_DASHBOARD_COPY = {
         "Дереккөздер мен индекс тұрақты түрде қайта тексеріледі. Ағымдағы күй "
         "«Деректер мәртебесі» бөлімінде көрінеді."
     ),
-    "faq_q3": "Сәйкестік дәлдігі нені білдіреді?",
+    "faq_q3": "Каталог сәйкестігі нені білдіреді?",
     "faq_a3": (
         "Бағдарламаны бағалау емес. Шек карточканың таңдалған тақырыпқа, өңірге "
         "және форматқа қаншалықты сәйкес келетінін көрсетеді."
     ),
     "faq_q4": "Неге гранттармен қатар қолдау шаралары да көрсетіледі?",
     "faq_a4": (
-        "Кейбір қолдау шаралары грант емес, бірақ сол аудиторияға сәйкес келеді. "
-        "Міндетпен үйлессе, оларды да қалдырамыз."
+        "Кейбір қолдау шаралары грант емес, бірақ сол міндеттерге қатысты. "
+        "Таңдалған сүзгілерге сәйкес келсе, оларды да қалдырамыз."
     ),
     "footer_support": "Кері байланыс",
     "footer_terms": "Шарттар",
@@ -2855,13 +2893,13 @@ KK_DASHBOARD_COPY = {
     "workspace_filter_empty": "Алдымен карточканы сақтаңыз.",
     "workflow_label": "Жұмыс кезеңі",
     "workflow_review": "Тексеруде",
-    "workflow_fit": "Сәйкес келеді",
+    "workflow_fit": "Қысқа тізімде",
     "workflow_preparing": "Өтінім дайындалуда",
     "workflow_submitted": "Жіберілді",
     "workflow_result": "Нәтиже алынды",
     "workflow_updated": "Карточка кезеңі жаңартылды.",
     "workspace_action_review": "Талаптарды ресми дереккөзден тексеріңіз.",
-    "workspace_action_fit": "Талаптарға және мерзімге сәйкестікті растаңыз.",
+    "workspace_action_fit": "Талаптар мен мерзімді ұйымдастырушы парағында тексеріңіз.",
     "workspace_action_preparing": (
         "Құжаттар топтамасын жинап, өтінім беру мерзімін белгілеңіз."
     ),
@@ -2891,7 +2929,10 @@ KK_DASHBOARD_COPY = {
         "Мемлекеттік сектор, инфрақұрылым және даму бағдарламаларымен жұмыс істейтін "
         "командаларға."
     ),
-    "signal_business": "Шарттар, құжаттар және өтінім беру тәртібі маңызды бизнеске сәйкес келеді.",
+    "signal_business": (
+        "Бизнес міндеттері үшін: шарттарды, құжаттарды және өтінім беру тәртібін "
+        "тексеріңіз."
+    ),
     "signal_startup": (
         "Акселерация, пилот немесе бұлттық кредит қажет өнімдік және ЖИ-командаларға."
     ),
@@ -2904,7 +2945,7 @@ KK_DASHBOARD_COPY = {
     "signal_kazakhstan": (
         "Шарттарда Қазақстан немесе жергілікті өтінім беру тәртібі тікелей көрсетілген."
     ),
-    "signal_central_asia": "Бір елмен шектелмей, Орталық Азия жобаларына сәйкес келеді.",
+    "signal_central_asia": "Бір елмен шектелмейтін Орталық Азия жобаларына арналған.",
     "signal_global": "Халықаралық мүмкіндік – командаңызға қойылатын талаптарды тексеріңіз.",
     "meta_format_label": "Формат",
     "meta_region_label": "Өңір",

@@ -157,6 +157,14 @@ def test_root_renders_service_landing(monkeypatch):
     assert '<strong id="metric-strong"' not in response.text
     assert 'id="workspace-filter"' not in response.text
     assert 'id="profile-builder"' not in response.text
+    assert 'data-avds-pattern="applicant-journey"' in response.text
+    assert 'id="compare-selected"' in response.text
+    assert 'id="export-csv"' in response.text
+    assert 'id="export-deadlines"' in response.text
+    assert 'id="share-view"' in response.text
+    assert 'data-compare-opportunity="${opportunityId}"' in rendered
+    assert "const COMPARE_LIMIT = 4;" in rendered
+    assert "function renderComparisonControls()" in rendered
     assert 'data-avds-component="discovery-library"\n      hidden' in response.text
     assert 'data-avds-component="trust-library"\n      hidden' in response.text
     assert 'id="filter-disclosure"' in response.text
@@ -1585,6 +1593,22 @@ def test_source_coverage_prefers_newer_successful_check(monkeypatch):
     assert source["freshness_status"] == "fresh"
 
 
+def test_source_coverage_marks_partial_check_for_review(monkeypatch):
+    _reset_api_state(monkeypatch)
+    checked_at = datetime.now(timezone.utc) - timedelta(minutes=5)
+
+    rows = api_main._source_coverage(
+        [],
+        {"kazakhstan_domestic_support": checked_at},
+        {"kazakhstan_domestic_support": "partial"},
+    )
+    source = next(row for row in rows if row["slug"] == "kazakhstan_domestic_support")
+
+    assert source["last_checked_at"] == checked_at.isoformat()
+    assert source["last_check_status"] == "partial"
+    assert source["freshness_status"] == "watch"
+
+
 def test_funders_endpoint_aggregates_lifecycle(monkeypatch):
     _reset_api_state(monkeypatch)
     api_main._cache.extend(
@@ -2688,10 +2712,11 @@ def test_coverage_cache_reuses_source_aggregation(monkeypatch):
         score=0.8,
     )
 
-    def fake_coverage(items, source_checks):
+    def fake_coverage(items, source_checks, source_check_statuses):
         calls["count"] += 1
         assert items == [item]
         assert source_checks == {}
+        assert source_check_statuses == {}
         return [
             {
                 "slug": "grants_gov",
@@ -4312,6 +4337,34 @@ def test_operator_health_clears_recovered_source_failure(monkeypatch):
     assert data["status"] == "ok"
     assert data["failed_runs"] == []
     assert len(data["recent_runs"]) == 2
+
+
+def test_operator_health_exposes_latest_partial_source_run(monkeypatch):
+    _reset_api_state(monkeypatch)
+    monkeypatch.setenv("GRANT_RADAR_ADMIN_TOKEN", "secret")
+    monkeypatch.setattr(
+        api_main,
+        "_operator_run_rows",
+        lambda **_kwargs: [
+            {
+                "id": 10,
+                "source": "kazakhstan_domestic_support",
+                "status": "partial",
+                "error": "ConnectTimeout: retained official page",
+            }
+        ],
+    )
+    client = TestClient(api_main.app)
+
+    response = client.get(
+        "/operator/health", headers={"Authorization": "Bearer secret"}
+    )
+
+    assert response.status_code == 200
+    data = response.json()
+    assert data["status"] == "attention"
+    assert data["failed_runs"] == []
+    assert data["partial_runs"][0]["source"] == "kazakhstan_domestic_support"
 
 
 def test_operator_run_rows_accepts_success_without_error_text(monkeypatch):

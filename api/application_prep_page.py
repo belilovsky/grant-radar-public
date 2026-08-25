@@ -11,7 +11,6 @@ from typing import Any
 from api.avds import AVDS_CSS, AVDS_FONT_HEAD
 from api.dashboard_copy import dashboard_copy
 from api.integration_versions import AVDS_VERSION
-from api.public_meta import analytics_head_html
 from core.decision_support import program_truth
 from core.models import OpportunityDetail
 
@@ -640,7 +639,6 @@ def render_application_prep_page(
         if base
         else f"/attribution?lang={active_lang}"
     )
-    analytics_head = analytics_head_html()
     state_notice = ""
     if lifecycle in {"closed", "awarded"}:
         state_notice = copy["closed_notice"]
@@ -801,7 +799,6 @@ def render_application_prep_page(
   <title>{escape(copy["page_title"])} – {escape(detail.title)} – QAZ.FUND</title>
   <meta name="description" content="{escape(copy["lead"], quote=True)}">
   <link rel="canonical" href="{escape(canonical, quote=True)}">
-{analytics_head}
 {AVDS_FONT_HEAD}
   <style>
 {AVDS_CSS}

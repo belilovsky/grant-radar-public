@@ -1067,9 +1067,11 @@ def _related_opportunities(
 def _source_coverage(
     items: list[Opportunity],
     source_checks: Mapping[str, datetime] | None = None,
+    source_check_statuses: Mapping[str, str] | None = None,
 ) -> list[dict[str, Any]]:
     today = public_today()
     source_checks = source_checks or {}
+    source_check_statuses = source_check_statuses or {}
     by_source: dict[str, list[Opportunity]] = {}
     for item in items:
         by_source.setdefault(item.source, []).append(item)
@@ -1100,6 +1102,9 @@ def _source_coverage(
             normalized_last_seen is None
             or normalized_last_checked >= normalized_last_seen
         )
+        last_check_status = source_check_statuses.get(slug)
+        if uses_source_check and last_check_status == "partial":
+            freshness["freshness_status"] = "watch"
         rows.append(
             {
                 "slug": slug,
@@ -1112,6 +1117,7 @@ def _source_coverage(
                 "relevant_open_items": len(relevant_open_items),
                 "last_discovered_at": last_seen.isoformat() if last_seen else None,
                 "last_checked_at": (last_checked.isoformat() if last_checked else None),
+                "last_check_status": last_check_status,
                 "freshness_basis": (
                     "source_check"
                     if uses_source_check
@@ -1146,6 +1152,7 @@ def _source_coverage(
                 "relevant_open_items": len(relevant_open_items),
                 "last_discovered_at": last_seen.isoformat() if last_seen else None,
                 "last_checked_at": None,
+                "last_check_status": None,
                 "freshness_basis": "discovered_record" if last_seen else "unknown",
                 **freshness,
             }
@@ -1200,31 +1207,46 @@ def _source_freshness(
     }
 
 
-def _latest_successful_source_checks() -> dict[str, datetime]:
-    """Return latest successful parser checks without exposing run errors."""
+def _latest_usable_source_checks() -> tuple[dict[str, datetime], dict[str, str]]:
+    """Return latest full or partial parser checks and their evidence state."""
 
     repository = _configured_repository()
     engine = getattr(repository, "engine", None)
     if engine is None:
-        return {}
+        return {}, {}
     try:
-        from sqlalchemy import MetaData, Table, func, select
+        from sqlalchemy import MetaData, Table, select
 
         runs = Table("runs", MetaData(), autoload_with=engine)
         statement = (
-            select(runs.c.source, func.max(runs.c.finished_at).label("checked_at"))
-            .where(runs.c.status == "ok", runs.c.source.in_(tuple(PARSERS)))
-            .group_by(runs.c.source)
+            select(runs.c.source, runs.c.status, runs.c.finished_at)
+            .where(
+                runs.c.status.in_(("ok", "partial")),
+                runs.c.source.in_(tuple(PARSERS)),
+                runs.c.finished_at.is_not(None),
+            )
+            .order_by(runs.c.finished_at.desc(), runs.c.id.desc())
         )
         with engine.connect() as connection:
             rows = connection.execute(statement).mappings().all()
     except Exception:
-        return {}
-    return {
-        str(row["source"]): row["checked_at"]
-        for row in rows
-        if isinstance(row.get("checked_at"), datetime)
-    }
+        return {}, {}
+    checks: dict[str, datetime] = {}
+    statuses: dict[str, str] = {}
+    for row in rows:
+        source = str(row.get("source") or "")
+        checked_at = row.get("finished_at")
+        if source in checks or not isinstance(checked_at, datetime):
+            continue
+        checks[source] = checked_at
+        statuses[source] = str(row.get("status") or "unknown")
+    return checks, statuses
+
+
+def _latest_successful_source_checks() -> dict[str, datetime]:
+    """Compatibility view of latest usable parser checks."""
+
+    return _latest_usable_source_checks()[0]
 
 
 def _cached_coverage_payload() -> dict[str, Any]:
@@ -1237,7 +1259,12 @@ def _cached_coverage_payload() -> dict[str, Any]:
             return dict(cached[1])
 
     public_items = _cached_public_items()
-    source_rows = _source_coverage(public_items, _latest_successful_source_checks())
+    source_checks, source_check_statuses = _latest_usable_source_checks()
+    source_rows = _source_coverage(
+        public_items,
+        source_checks,
+        source_check_statuses,
+    )
     payload = {
         "status": "ok",
         "items": len(public_items),
@@ -1257,6 +1284,11 @@ def _cached_coverage_payload() -> dict[str, Any]:
             1
             for row in source_rows
             if row.get("enabled") and row.get("freshness_status") == "stale"
+        ),
+        "watch_sources": sum(
+            1
+            for row in source_rows
+            if row.get("enabled") and row.get("freshness_status") == "watch"
         ),
         "unknown_freshness_sources": sum(
             1
@@ -2007,9 +2039,7 @@ async def swagger_docs(request: Request) -> HTMLResponse:
     html, body {{
       margin: 0;
       overflow-x: clip;
-      background:
-        radial-gradient(circle at 12% 0%, var(--color-accent-subtle), transparent 28rem),
-        var(--color-bg);
+      background: var(--color-bg);
       color: var(--color-text);
       font-family: var(--av-font-sans);
     }}
@@ -2027,9 +2057,8 @@ async def swagger_docs(request: Request) -> HTMLResponse:
       gap: 16px;
       border: 1px solid var(--color-border);
       border-radius: var(--av-radius-lg);
-      background: color-mix(in oklab, var(--color-surface), transparent 7%);
+      background: var(--color-surface);
       box-shadow: var(--av-shadow-sm);
-      backdrop-filter: blur(16px);
     }}
     .qazfund-docs-header a {{
       color: inherit;
@@ -2097,12 +2126,19 @@ async def swagger_docs(request: Request) -> HTMLResponse:
       border-block: 1px solid var(--color-border);
     }}
     .swagger-ui .opblock-tag {{ border-bottom-color: var(--color-border); }}
+    .swagger-ui .info .title small,
+    .swagger-ui .info .title .version-stamp {{
+      border: 1px solid var(--color-border);
+      background: var(--color-surface);
+      color: var(--color-text);
+    }}
     .swagger-ui .info .title small pre,
     .swagger-ui .info .title .version-stamp pre,
     .swagger-ui .info .url,
     .swagger-ui .info .base-url,
     .swagger-ui .info .base-url a,
     .swagger-ui .json-schema-2020-12-expand-deep-button {{
+      background: transparent;
       color: var(--color-text);
     }}
     .swagger-ui .opblock.opblock-get .opblock-summary-method {{
@@ -3122,8 +3158,14 @@ async def operator_health(_: None = Depends(require_admin_token)) -> dict[str, A
         if row.get("status") == "error"
         and latest_run_by_source.get(str(row.get("source") or "").strip()) is row
     ]
+    partial_runs = [
+        row
+        for row in recent_runs
+        if row.get("status") == "partial"
+        and latest_run_by_source.get(str(row.get("source") or "").strip()) is row
+    ]
     return {
-        "status": "attention" if stale_sources or failed_runs else "ok",
+        "status": "attention" if stale_sources or failed_runs or partial_runs else "ok",
         "generated_at": datetime.now(UTC).isoformat(),
         "catalog_items": coverage_payload.get("items", 0),
         "relevant_open_items": coverage_payload.get("relevant_open_items", 0),
@@ -3134,6 +3176,7 @@ async def operator_health(_: None = Depends(require_admin_token)) -> dict[str, A
             "unknown_freshness_sources", 0
         ),
         "failed_runs": failed_runs[:10],
+        "partial_runs": partial_runs[:10],
         "recent_runs": recent_runs[:20],
     }
 

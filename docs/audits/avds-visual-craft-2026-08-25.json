@@ -1,0 +1,65 @@
+{
+  "schemaVersion": "avds-visual-craft-audit-v1",
+  "cells": [
+    {
+      "route": "home",
+      "role": "public-anonymous",
+      "state": "catalog-ready",
+      "viewport": "mobile",
+      "geometry": [],
+      "radii": [],
+      "typography": [],
+      "space": []
+    },
+    {
+      "route": "home",
+      "role": "public-anonymous",
+      "state": "catalog-ready",
+      "viewport": "desktop",
+      "geometry": [],
+      "radii": [],
+      "typography": [],
+      "space": []
+    },
+    {
+      "route": "data-routes",
+      "role": "public-anonymous",
+      "state": "route-directory",
+      "viewport": "320x800",
+      "geometry": [
+        {
+          "pattern": "long route metadata forced the card past the 320 px viewport",
+          "selector": ".route-card",
+          "screenshot": "output/playwright/qazfund-data-routes-after-20260825-320.png",
+          "cause": "Grid children retained their min-content width and long route labels could not wrap.",
+          "avdsContract": "AVDS compact cards must remain within the viewport and preserve readable source identifiers.",
+          "fix": "Allowed grid children and metadata to shrink, wrapped long identifiers, and let the card header wrap at compact widths.",
+          "status": "resolved"
+        }
+      ],
+      "radii": [],
+      "typography": [],
+      "space": []
+    },
+    {
+      "route": "docs",
+      "role": "public-anonymous",
+      "state": "api-documentation",
+      "viewport": "1440x960",
+      "geometry": [],
+      "radii": [],
+      "typography": [
+        {
+          "pattern": "the Swagger version badge rendered below the required text contrast",
+          "selector": ".swagger-ui .info .title .version-stamp",
+          "screenshot": "output/playwright/qazfund-docs-after-20260825-1440.png",
+          "cause": "Swagger's badge background inherited a muted combination outside the product token contract.",
+          "avdsContract": "AVDS text and metadata must retain WCAG AA contrast on product surfaces.",
+          "fix": "Applied the opaque surface, text, and border tokens to Swagger version metadata.",
+          "status": "resolved"
+        }
+      ],
+      "space": []
+    }
+  ]
+}

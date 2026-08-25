@@ -1,0 +1,52 @@
+{
+  "schemaVersion": "avds-anti-generative-audit-v1",
+  "cells": [
+    {
+      "route": "/?lang=ru",
+      "role": "public-anonymous",
+      "state": "catalog-ready",
+      "viewport": "1440x960",
+      "findings": [
+        {
+          "pattern": "the applicant journey was implicit and the primary task read as a generic catalog",
+          "selector": "[data-avds-pattern='applicant-journey']",
+          "screenshot": "output/playwright/qazfund-home-after-20260825-1440.png",
+          "semanticTest": "Every visible step maps to an existing user action: find, verify at source, compare, prepare locally, and export or share.",
+          "replacement": "Added one compact semantic workflow navigation using the existing AVDS adapter instead of decorative feature cards.",
+          "status": "resolved"
+        },
+        {
+          "pattern": "comparison and export capabilities existed without an owned action group in the catalog",
+          "selector": ".catalog-tools",
+          "screenshot": "output/playwright/qazfund-home-after-20260825-1440.png",
+          "semanticTest": "The group owns three concrete outcomes: open a selected comparison, export the current result set, or share the current view.",
+          "replacement": "Placed the existing comparison, CSV, ICS, and share functions in one compact task-owned action group; no decorative controls were added.",
+          "status": "resolved"
+        }
+      ]
+    },
+    {
+      "route": "/?lang=ru",
+      "role": "public-anonymous",
+      "state": "catalog-ready",
+      "viewport": "390x844",
+      "findings": []
+    },
+    {
+      "route": "/docs?lang=ru",
+      "role": "public-anonymous",
+      "state": "api-documentation",
+      "viewport": "1440x960",
+      "findings": [
+        {
+          "pattern": "a radial glow and translucent blurred header added generic premium chrome to a technical reference page",
+          "selector": ".qazfund-docs-header",
+          "screenshot": "output/playwright/qazfund-docs-after-20260825-1440.png",
+          "semanticTest": "The header only owns navigation, title context, and language selection; it does not represent a layered or floating object.",
+          "replacement": "Returned the page and header to opaque AVDS surfaces and borders, preserving the Swagger documentation hierarchy.",
+          "status": "resolved"
+        }
+      ]
+    }
+  ]
+}

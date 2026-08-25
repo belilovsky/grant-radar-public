@@ -1,0 +1,193 @@
+{
+  "schema_version": "edpol-editorial-audit-receipt-v1",
+  "audit_id": "qazfund-public-copy-20260825",
+  "generated_at": "2026-08-25T16:10:00+05:00",
+  "project": "QAZ.FUND",
+  "source_revision": "171d43eaae52382b3ff58d62f89ac3d73a3fc69e plus the reviewed local candidate",
+  "lifecycle": "public-candidate",
+  "authority": {
+    "policy": {
+      "contract": "edpol-editorial-language-policy-v1",
+      "version": "1.1.0",
+      "source": "/private/tmp/qazfund-edpol.DsqZi1/editorial-language-policy.json",
+      "sha256": "3d2c66102da7f3066b6609581067a838035d7813a73366587a1437f55d2bdb76"
+    },
+    "signals": {
+      "schema_version": "edpol-anti-generative-signals-v1",
+      "status": "review-candidates-only",
+      "enabled": true,
+      "source": "/Users/belilovsky/.codex/skills/edpol-editorial-audit/references/anti-generative-signals.json",
+      "sha256": "dec36974208b9574544cdd34cb066216e6e7152d013e9a44e2b557eb6474f545"
+    }
+  },
+  "scope": {
+    "candidate_scan_schema": "edpol-editorial-candidate-scan-v3",
+    "corpus": {
+      "source": "/Users/belilovsky/Documents/Codex/2026-05-21/grant-radar-public/docs/audits/qazfund-editorial-corpus-2026-08-25.json",
+      "version": "qazfund-public-candidate-2026-08-25-v1",
+      "sha256": "f5683f6bd4201ac1e44d2edce66754d526cfa7f2e49114c278cb197a45f718a8",
+      "units": 16
+    },
+    "files_considered": 28,
+    "files_scanned": 28,
+    "files_skipped": 0,
+    "skipped_files_reviewed_by": null
+  },
+  "lenses": [
+    {
+      "id": "copy-localization",
+      "status": "checked",
+      "reason": null,
+      "evidence": [
+        "RU, KK and EN workflow, relevance, policy and attribution copy updated together",
+        "181 focused public, localization, comparison, preparation, media and QPost tests passed",
+        "repository typography gate reported zero findings"
+      ]
+    },
+    {
+      "id": "evidence-provenance",
+      "status": "checked",
+      "reason": null,
+      "evidence": [
+        "Catalog relevance remains explicitly distinct from eligibility and award probability",
+        "Unknown source fields and source-language labels remain visible",
+        "Upstream licensing boundary is linked to the current Kazakhstan compliance evidence bundle"
+      ]
+    },
+    {
+      "id": "policy-risk",
+      "status": "checked",
+      "reason": null,
+      "evidence": [
+        "No exact EdPol policy candidate remained in the 28-file enumerated corpus",
+        "Browser-only draft, personal-data and source-license wording was routed through kz-compliance-evidence",
+        "The one provider-specific analytics legal question remains narrow and named rather than generalized"
+      ]
+    },
+    {
+      "id": "rendered-experience",
+      "status": "checked",
+      "reason": null,
+      "evidence": [
+        "Local browser matrix passed 119 of 119 route and viewport cells at 320, 390, 768, 1024, 1440, 1920 and 2560 px",
+        "No HTTP, horizontal-overflow, console, page-error, serious-accessibility or interaction failure was reported",
+        "Nine targeted checks passed for RU, KK and EN, real 404, focus, touch targets and browser-only preparation privacy"
+      ]
+    },
+    {
+      "id": "ai-origin",
+      "status": "checked",
+      "reason": null,
+      "evidence": [
+        "Current ai-origin policy 1.0.0 and evidence schema were retrieved and digested",
+        "No provenance evidence was supplied that establishes AI or human authorship",
+        "Heuristic style signals were treated only as review candidates and no authorship label was inferred"
+      ]
+    }
+  ],
+  "findings": [
+    {
+      "id": "EDPOL-2428E9C69F57",
+      "file": "api/dashboard.py",
+      "line": 3588,
+      "finding_class": "editorial-risk",
+      "severity": "review",
+      "rule_id": "generic-cta",
+      "decision": {
+        "status": "false-positive",
+        "reason": "The string is a source-summary sanitizer delimiter and is removed from imported text; it is not a rendered QAZ.FUND call to action.",
+        "reviewer": "Codex editorial review"
+      }
+    },
+    {
+      "id": "EDPOL-AE886815618B",
+      "file": "api/dashboard.py",
+      "line": 3588,
+      "finding_class": "editorial-risk",
+      "severity": "review",
+      "rule_id": "generic-cta",
+      "decision": {
+        "status": "false-positive",
+        "reason": "The string is a source-summary sanitizer delimiter and is removed from imported text; it is not a rendered QAZ.FUND call to action.",
+        "reviewer": "Codex editorial review"
+      }
+    },
+    {
+      "id": "EDPOL-4616639A9554",
+      "file": "api/dashboard_copy.py",
+      "line": 1026,
+      "finding_class": "editorial-risk",
+      "severity": "review",
+      "rule_id": "abstract-noun-fog",
+      "decision": {
+        "status": "false-positive",
+        "reason": "This is the localized label for the external taxonomy value capacity_building, not an unsupported product-benefit claim.",
+        "reviewer": "Codex editorial review"
+      }
+    },
+    {
+      "id": "EDPOL-18448D0992DC",
+      "file": "api/public_info_page.py",
+      "line": 44,
+      "finding_class": "editorial-risk",
+      "severity": "review",
+      "rule_id": "empty-source-disclaimer",
+      "decision": {
+        "status": "false-positive",
+        "reason": "The sentence is a specific freshness boundary after named verification fields and organizer responsibility; it does not replace missing catalog evidence.",
+        "reviewer": "Codex editorial review"
+      }
+    },
+    {
+      "id": "EDPOL-38F90AD3A972",
+      "file": "api/public_info_page.py",
+      "line": 84,
+      "finding_class": "editorial-risk",
+      "severity": "review",
+      "rule_id": "empty-source-disclaimer",
+      "decision": {
+        "status": "false-positive",
+        "reason": "The Kazakh sentence preserves the same specific freshness boundary and does not launder an unknown value into certainty.",
+        "reviewer": "Codex editorial review"
+      }
+    }
+  ],
+  "review_feedback": {
+    "accepted": 0,
+    "false_positive": 5,
+    "fixed": 0,
+    "exception_approved": 0,
+    "blocked": 0,
+    "needs_human": 0
+  },
+  "evidence_layers": {
+    "source": {
+      "status": "provided",
+      "items": [
+        "Editorial language policy 1.1.0 sha256:3d2c66102da7f3066b6609581067a838035d7813a73366587a1437f55d2bdb76",
+        "Typography policy 1.1.1 sha256:7d0324ba83f5c5d7ec704963637fd7b1e4c10dcfe3371e48ea929d3fdf81db2d",
+        "AI-origin policy 1.0.0 sha256:0905dbd672a055f752f87424070b632262cbb7bed5bebcbd6bce8ef20bd11295",
+        "Enumerated corpus manifest and exact-policy scan"
+      ]
+    },
+    "local": {
+      "status": "provided",
+      "items": [
+        "181 focused tests passed",
+        "typography gate passed",
+        "119 of 119 browser matrix cells and 9 of 9 targeted checks passed"
+      ]
+    },
+    "runtime": {
+      "status": "not-provided",
+      "items": []
+    },
+    "public": {
+      "status": "not-provided",
+      "items": []
+    }
+  },
+  "verdict": "pass",
+  "decision_owner": "QAZ.FUND product owner",
+  "next_action": "Carry this green local editorial and AVDS candidate into the single final guarded release."
+}
