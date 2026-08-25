@@ -66,6 +66,14 @@ def test_production_context_excludes_runtime_and_browser_artifacts() -> None:
         assert path in dockerignore
 
 
+def test_browser_ci_uses_the_prebuilt_browser_runner_without_root_escalation() -> None:
+    workflow = (ROOT / ".github" / "workflows" / "verify.yml").read_text()
+
+    assert "runs-on: [self-hosted, Linux, X64, qdev-ci-browser" in workflow
+    assert "python -m playwright install chromium" in workflow
+    assert "playwright install --with-deps" not in workflow
+
+
 def test_deploy_script_waits_for_ready_endpoint() -> None:
     script = (ROOT / "scripts" / "deploy_qaz_fund.sh").read_text()
     remote = (ROOT / "scripts" / "remote_release_qaz_fund.sh").read_text()

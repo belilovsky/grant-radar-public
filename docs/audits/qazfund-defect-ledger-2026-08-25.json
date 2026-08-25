@@ -2,9 +2,9 @@
   "schema_version": "qazfund-defect-ledger-v1",
   "project": "QAZ.FUND",
   "cutoff": "2026-08-25",
-  "candidate": "working tree based on 669b37d4e0f7377425244ac0146b118723c1461b",
+  "candidate": "final release candidate; exact source SHA is recorded by the public release receipt",
   "summary": {
-    "closed": 16,
+    "closed": 17,
     "reviewed_no_change": 1,
     "needs_legal_review": 0,
     "external_owner": 0,
@@ -169,6 +169,16 @@
       "owner": "QAZ.FUND and Qdev CI",
       "fix": "Preserved the unique qdev-job label contract, verified broker/worker health, and allowed the canonical ephemeral runner to execute the final exact-SHA workflow without a hosted fallback.",
       "proof": "The final Verify run is green for the deployed SHA and retains browser, image, security and SBOM artifacts.",
+      "status": "closed"
+    },
+    {
+      "id": "CI-002",
+      "cause": "The browser workflow asked Playwright to install operating-system packages with root escalation inside the isolated qdev-ci-browser runner, which has no interactive su password.",
+      "route_or_source": ".github/workflows/verify.yml -> Browser and accessibility matrix -> Install browser dependencies",
+      "severity": "P1",
+      "owner": "QAZ.FUND CI",
+      "fix": "Use the dedicated prebuilt browser runner for system libraries and install only the revision-matched Chromium binary without --with-deps; lock the non-root contract with a repository test.",
+      "proof": "The final Verify run reaches and passes the 119-cell browser matrix on qdev-ci-browser without root escalation.",
       "status": "closed"
     },
     {
