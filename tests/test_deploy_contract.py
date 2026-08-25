@@ -70,8 +70,17 @@ def test_browser_ci_uses_the_prebuilt_browser_runner_without_root_escalation() -
     workflow = (ROOT / ".github" / "workflows" / "verify.yml").read_text()
 
     assert "runs-on: [self-hosted, Linux, X64, qdev-ci-browser" in workflow
+    assert "actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020" in workflow
+    assert 'node-version: "22"' in workflow
     assert "python -m playwright install chromium" in workflow
     assert "playwright install --with-deps" not in workflow
+
+
+def test_runner_smoke_has_qdev_concurrency_and_cancellation() -> None:
+    workflow = (ROOT / ".github" / "workflows" / "runner-smoke.yml").read_text()
+
+    assert "group: runner-smoke-${{ github.workflow }}-${{ github.ref }}" in workflow
+    assert "cancel-in-progress: true" in workflow
 
 
 def test_deploy_script_waits_for_ready_endpoint() -> None:

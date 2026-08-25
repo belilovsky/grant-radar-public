@@ -7,6 +7,10 @@ on:
       - .github/qdev-runner.yml
       - .github/workflows/runner-smoke.yml
 
+concurrency:
+  group: runner-smoke-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
 permissions:
   contents: read
 
