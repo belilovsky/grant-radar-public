@@ -80,7 +80,9 @@ OPPORTUNITY_DETAIL_CSS = r"""
     }
     .opportunity-hero {
       display: grid;
+      grid-template-columns: minmax(0, 1fr);
       gap: clamp(16px, 2vw, 22px);
+      min-width: 0;
       padding: clamp(22px, 3vw, 36px);
       border: 1px solid var(--line);
       border-radius: var(--av-radius-lg);
@@ -89,8 +91,14 @@ OPPORTUNITY_DETAIL_CSS = r"""
     }
     .opportunity-head {
       display: grid;
+      grid-template-columns: minmax(0, 1fr);
       gap: 12px;
+      min-width: 0;
       max-width: 1080px;
+    }
+    .opportunity-hero > *,
+    .opportunity-head > * {
+      min-width: 0;
     }
     .opportunity-kicker {
       color: var(--brand);
@@ -106,6 +114,7 @@ OPPORTUNITY_DETAIL_CSS = r"""
       font-size: clamp(30px, 3.25vw, 50px);
       line-height: 1.08;
       letter-spacing: -0.035em;
+      overflow-wrap: anywhere;
       text-wrap: balance;
     }
     .opportunity-summary {

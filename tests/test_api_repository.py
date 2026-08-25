@@ -3106,6 +3106,8 @@ def test_opportunity_page_renders_public_permalink(monkeypatch):
 
     assert response.status_code == 200
     assert "grid-template-columns: minmax(0, 1fr)" in response.text
+    assert ".opportunity-head > *" in response.text
+    assert "overflow-wrap: anywhere" in response.text
     assert "public, max-age=60" in response.headers["cache-control"]
     assert '<html lang="ru"' in response.text
     assert 'data-avds-component="opportunity-page"' in response.text
