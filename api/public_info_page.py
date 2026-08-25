@@ -106,8 +106,8 @@ PAGES: dict[str, dict[str, dict[str, object]]] = {
                     "На странице подготовки введённый текст хранится только в локальном хранилище текущего браузера. Он не отправляется QAZ.FUND; страница не загружает системы аналитики. Черновик можно удалить кнопкой очистки или средствами браузера.",
                 ),
                 (
-                    "Аналитика каталога",
-                    "На остальных публичных страницах после взаимодействия может загружаться агрегированная веб-аналитика. При включённых Do Not Track или Global Privacy Control она не запускается; содержимое черновика подготовки в аналитику не передаётся.",
+                    "Телеметрия сайта",
+                    "Публичные страницы QAZ.FUND не загружают GA4, Яндекс Метрику, Microsoft Clarity или другие сторонние системы аналитики. Для безопасности и надёжности сервер ведёт ограниченные технические журналы запросов; доступ к ним закрыт, ежедневные журналы хранятся не более 14 ротаций.",
                 ),
             ],
         },
@@ -130,8 +130,8 @@ PAGES: dict[str, dict[str, dict[str, object]]] = {
                     "Text entered on the preparation page is stored only in this browser's local storage. It is not sent to QAZ.FUND, and the page loads no analytics. Clear it with the page control or your browser settings.",
                 ),
                 (
-                    "Catalog analytics",
-                    "Other public pages may load aggregate web analytics after interaction. Analytics does not start when Do Not Track or Global Privacy Control is enabled, and preparation-draft content is not sent to analytics.",
+                    "Site telemetry",
+                    "Public QAZ.FUND pages do not load GA4, Yandex Metrica, Microsoft Clarity, or other third-party analytics. The server keeps limited request logs for security and reliability; access is restricted and daily logs are retained for no more than 14 rotations.",
                 ),
             ],
         },
@@ -154,8 +154,8 @@ PAGES: dict[str, dict[str, dict[str, object]]] = {
                     "Дайындау парағына енгізілген мәтін тек осы браузердің жергілікті сақтау орнында қалады. Ол QAZ.FUND-қа жіберілмейді және бұл парақ аналитика жүйелерін жүктемейді. Жобаны тазалау батырмасымен немесе браузер баптауларында жоюға болады.",
                 ),
                 (
-                    "Каталог аналитикасы",
-                    "Басқа ашық парақтарда әрекеттен кейін жинақталған веб-аналитика жүктелуі мүмкін. Do Not Track немесе Global Privacy Control қосылса, аналитика іске қосылмайды; өтінім жобасының мазмұны аналитикаға берілмейді.",
+                    "Сайт телеметриясы",
+                    "QAZ.FUND ашық парақтары GA4, Яндекс Метрика, Microsoft Clarity немесе басқа сыртқы аналитика жүйелерін жүктемейді. Қауіпсіздік пен сенімділік үшін сервер сұраулардың шектеулі техникалық журналдарын жүргізеді; оларға қолжетімділік жабық, күнделікті журналдар 14 ротациядан артық сақталмайды.",
                 ),
             ],
         },

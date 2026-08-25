@@ -131,8 +131,6 @@ def main() -> int:
     os.environ.setdefault("PUBLIC_BASE_URL", f"http://{args.host}:{args.port}")
     os.environ.setdefault("GRANT_RADAR_ALLOWED_HOSTS", f"{args.host},localhost")
     os.environ.setdefault("GRANT_RADAR_SEMANTIC_SEARCH_ENABLED", "0")
-    os.environ.setdefault("PUBLIC_ANALYTICS_ENABLED", "0")
-
     from api import main as api_main
 
     api_main._cache[:] = browser_seed_items()

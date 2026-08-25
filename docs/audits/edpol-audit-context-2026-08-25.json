@@ -1,9 +1,9 @@
 {
   "schema_version": "edpol-audit-context-v1",
   "audit_id": "qazfund-public-copy-20260825",
-  "generated_at": "2026-08-25T16:10:00+05:00",
+  "generated_at": "2026-08-25T16:27:14+05:00",
   "project": "QAZ.FUND",
-  "source_revision": "171d43eaae52382b3ff58d62f89ac3d73a3fc69e plus the reviewed local candidate",
+  "source_revision": "669b37d4e0f7377425244ac0146b118723c1461b plus the reviewed local candidate",
   "lifecycle": "public-candidate",
   "selected_modes": [
     "copy-localization",
@@ -37,7 +37,7 @@
       "evidence": [
         "No exact EdPol policy candidate remained in the 28-file enumerated corpus",
         "Browser-only draft, personal-data and source-license wording was routed through kz-compliance-evidence",
-        "The one provider-specific analytics legal question remains narrow and named rather than generalized"
+        "All public telemetry was removed, so no provider-specific analytics legal question remains in this release"
       ]
     },
     "rendered-experience": {

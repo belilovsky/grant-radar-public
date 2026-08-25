@@ -184,7 +184,8 @@ def test_public_policy_pages_are_localized(monkeypatch):
     assert en_policy.status_code == 200
     assert "Data policy" in en_policy.text
     assert "Browser-only draft" in en_policy.text
-    assert "preparation-draft content is not sent to analytics" in en_policy.text
+    assert "do not load GA4, Yandex Metrica, Microsoft Clarity" in en_policy.text
+    assert "retained for no more than 14 rotations" in en_policy.text
     assert attribution.status_code == 200
     assert "систем искусственного интеллекта" in attribution.text
     assert "Лицензия MIT относится к программному коду QAZ.FUND" in attribution.text

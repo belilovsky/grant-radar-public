@@ -1,15 +1,15 @@
 {
   "schema_version": "edpol-editorial-audit-receipt-v1",
   "audit_id": "qazfund-public-copy-20260825",
-  "generated_at": "2026-08-25T16:10:00+05:00",
+  "generated_at": "2026-08-25T16:27:14+05:00",
   "project": "QAZ.FUND",
-  "source_revision": "171d43eaae52382b3ff58d62f89ac3d73a3fc69e plus the reviewed local candidate",
+  "source_revision": "669b37d4e0f7377425244ac0146b118723c1461b plus the reviewed local candidate",
   "lifecycle": "public-candidate",
   "authority": {
     "policy": {
       "contract": "edpol-editorial-language-policy-v1",
       "version": "1.1.0",
-      "source": "/private/tmp/qazfund-edpol.DsqZi1/editorial-language-policy.json",
+      "source": "/Users/belilovsky/Documents/ChatGPT/Комментарий/evidence/cmnt-edpol-20260825/editorial-language-policy.json",
       "sha256": "3d2c66102da7f3066b6609581067a838035d7813a73366587a1437f55d2bdb76"
     },
     "signals": {
@@ -61,7 +61,7 @@
       "evidence": [
         "No exact EdPol policy candidate remained in the 28-file enumerated corpus",
         "Browser-only draft, personal-data and source-license wording was routed through kz-compliance-evidence",
-        "The one provider-specific analytics legal question remains narrow and named rather than generalized"
+        "All public telemetry was removed, so no provider-specific analytics legal question remains in this release"
       ]
     },
     {

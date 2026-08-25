@@ -2,7 +2,7 @@
   "schema": "kz-compliance-evidence.v1",
   "scope": {
     "project": "QAZ.FUND public opportunity navigator",
-    "revision_runtime": "source candidate based on 171d43eaae52382b3ff58d62f89ac3d73a3fc69e; production recovery identity verified separately",
+    "revision_runtime": "source candidate after production revision 669b37d4e0f7377425244ac0146b118723c1461b; final release identity is verified separately after deployment",
     "audience": "Kazakhstan applicants, teams, companies, NGOs, researchers, organizations, experts and program operators",
     "languages": [
       "ru",
@@ -12,14 +12,14 @@
     "data_classes": [
       "public opportunity facts and source links",
       "browser-local application draft text",
-      "aggregate public-page analytics telemetry"
+      "restricted server request logs used for security and reliability"
     ],
     "channels": [
       "public website",
       "browser-local draft workspace",
       "public JSON and feed surfaces"
     ],
-    "evidence_cutoff": "2026-08-25T09:34:50Z"
+    "evidence_cutoff": "2026-08-25T11:27:14Z"
   },
   "sources": [
     {
@@ -70,31 +70,31 @@
       "behavior_id": "prep-browser-only",
       "description": "Application preparation stores free text in localStorage and offers local Markdown, clipboard and calendar exports without POST, fetch, beacon or analytics loaders.",
       "evidence": "api/application_prep_page.py plus tests/test_insights_and_prep.py::test_application_workspace_renders_and_persists_locally",
-      "observed_at": "2026-08-25T09:34:50Z"
+      "observed_at": "2026-08-25T11:27:14Z"
     },
     {
       "behavior_id": "prep-delete",
       "description": "The applicant can clear the local draft; the data policy names both the page control and browser storage settings as deletion paths.",
       "evidence": "localStorage.removeItem paths in api/application_prep_page.py and localized data-policy copy",
-      "observed_at": "2026-08-25T09:34:50Z"
+      "observed_at": "2026-08-25T11:27:14Z"
     },
     {
-      "behavior_id": "public-analytics",
-      "description": "Ordinary public pages may start GA4, Yandex Metrica and Clarity after interaction or timeout, unless DNT or GPC is enabled; the preparation page is excluded.",
-      "evidence": "api/public_meta.py, analytics exclusion assertions for the preparation route, and localized data-policy disclosure",
-      "observed_at": "2026-08-25T09:34:50Z"
+      "behavior_id": "third-party-telemetry-disabled",
+      "description": "All public pages return an empty telemetry fragment and load no GA4, Yandex Metrica, Microsoft Clarity or other third-party analytics markup.",
+      "evidence": "api/public_meta.py, representative public-route assertions, and localized data-policy disclosure",
+      "observed_at": "2026-08-25T11:27:14Z"
     },
     {
       "behavior_id": "source-reuse",
       "description": "QAZ.FUND exposes normalized facts and links but now distinguishes the repository MIT license from rights in upstream text, logos and media.",
       "evidence": "LICENSE and localized /attribution page contract tests",
-      "observed_at": "2026-08-25T09:34:50Z"
+      "observed_at": "2026-08-25T11:27:14Z"
     },
     {
       "behavior_id": "no-server-profile",
       "description": "The public preparation workflow has no account, document upload, personal profile, application submission endpoint or server-side draft persistence.",
       "evidence": "route and form inspection plus no-POST/no-fetch tests in tests/test_insights_and_prep.py",
-      "observed_at": "2026-08-25T09:34:50Z"
+      "observed_at": "2026-08-25T11:27:14Z"
     }
   ],
   "matrix": [
@@ -127,18 +127,18 @@
       "review_state": "covered"
     },
     {
-      "behavior": "public-analytics",
-      "requirement": "Determine whether the configured third-party telemetry constitutes personal-data processing requiring a distinct consent mechanism and provider-specific disclosures.",
+      "behavior": "third-party-telemetry-disabled",
+      "requirement": "Keep applicant and visitor activity outside third-party analytics processing unless a separately reviewed telemetry boundary is approved.",
       "source_ids": [
         "kz-personal-data-law",
         "kz-personal-data-rules"
       ],
-      "applicability": "needs_legal_review",
-      "implementation_status": "needs_legal_review",
-      "risk": "narrow legal classification question; preparation content is technically excluded",
-      "owner": "QAZ.FUND owner with Kazakhstan privacy counsel",
-      "required_proof": "Written classification of enabled GA4, Yandex Metrica and Clarity fields/configuration, controller roles, transfer path and consent basis.",
-      "review_state": "needs_legal_review"
+      "applicability": "applicable",
+      "implementation_status": "covered",
+      "risk": "low while the public runtime remains free of third-party telemetry",
+      "owner": "QAZ.FUND product and engineering",
+      "required_proof": "Source tests and final browser network traces contain no GA4, Yandex Metrica, Microsoft Clarity or other third-party analytics requests.",
+      "review_state": "covered"
     },
     {
       "behavior": "source-reuse",
@@ -170,6 +170,14 @@
   ],
   "remediation": [
     {
+      "canonical_owner": "api/public_meta.py",
+      "change": "Removed third-party analytics markup from every public QAZ.FUND page and made the shared telemetry helper fail closed.",
+      "tests": "Shared helper and representative opportunity, funder and preparation routes assert no GA4, Yandex Metrica or Microsoft Clarity markup.",
+      "release_boundary": "Included in the single functional release after all planned audits.",
+      "rollback": "Do not restore telemetry without a separate product, privacy, retention and provider review plus matching public disclosure.",
+      "after_evidence": "Focused source tests pass; final browser network evidence is required after deployment."
+    },
+    {
       "canonical_owner": "api/application_prep_page.py",
       "change": "Removed all shared third-party analytics markup from the browser-only preparation page.",
       "tests": "Preparation route asserts no GA4, Yandex Metrica, Clarity, startAnalytics, fetch or POST markup.",
@@ -186,26 +194,20 @@
       "after_evidence": "Focused public policy tests pass in all affected modules."
     }
   ],
-  "legal_questions": [
-    {
-      "question": "For the exact production configurations of GA4, Yandex Metrica with Webvisor, and Microsoft Clarity on ordinary public pages, which fields are personal data under Kazakhstan law and what consent, notice, controller, transfer and retention controls are required?",
-      "decision_owner": "QAZ.FUND owner with Kazakhstan privacy counsel",
-      "affected_release": "Does not reopen the browser-only preparation fix; resolve before expanding telemetry or treating current analytics coverage as compliance-complete."
-    }
-  ],
+  "legal_questions": [],
   "result_receipt": {
     "task": "Kazakhstan compliance evidence and bounded remediation for QAZ.FUND",
-    "outcome": "Browser-only preparation and source-license boundaries repaired; one provider-specific analytics question remains for legal review.",
+    "outcome": "Browser-only preparation, source-license boundaries and the public telemetry boundary are covered without an open release-blocking legal question.",
     "checked_behaviors": [
       "prep-browser-only",
       "prep-delete",
-      "public-analytics",
+      "third-party-telemetry-disabled",
       "source-reuse",
       "no-server-profile"
     ],
     "evidence_freshness": "Official Adilet documents retrieved 2026-08-25 against the displayed 2026-08-20 document state.",
-    "limitations": "This is technical and editorial compliance evidence, not a legal opinion; source-specific licensing and analytics-provider configurations require their own current terms and counsel review.",
-    "next_action": "Keep the preparation page analytics-free, verify its browser network trace in final acceptance, and route only the named analytics classification question to counsel.",
+    "limitations": "This is technical and editorial compliance evidence, not a legal opinion; source-specific licensing still follows each rights holder's current terms. Any future telemetry activation requires a new review.",
+    "next_action": "Verify all public browser network traces remain free of third-party telemetry during final acceptance.",
     "review_owner": "QAZ.FUND owner"
   }
 }

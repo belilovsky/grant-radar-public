@@ -2,16 +2,11 @@
 
 from __future__ import annotations
 
-import json
-import os
 import struct
 import zlib
 
 from api.page_primitives import absolute_href as _absolute_href
 
-DEFAULT_GA4_ID = "G-9EF720PSER"
-DEFAULT_YANDEX_METRICA_ID = "109803011"
-DEFAULT_CLARITY_PROJECT_ID = "x5ualin2jv"
 OG_FONT_FAMILY = "Arial, Helvetica, sans-serif"
 OG_IMAGE_SVG = "\n".join(
     [
@@ -194,10 +189,6 @@ def _build_og_image_png() -> bytes:
 OG_IMAGE_PNG = _build_og_image_png()
 
 
-def _env_value(name: str, default: str) -> str:
-    return os.environ.get(name, "").strip() or default
-
-
 def og_image_url(site_origin: str, root_path: str = "") -> str:
     base = root_path.rstrip("/")
     path = f"{base}/og-image.png" if base else "/og-image.png"
@@ -205,70 +196,6 @@ def og_image_url(site_origin: str, root_path: str = "") -> str:
 
 
 def analytics_head_html() -> str:
-    analytics_enabled = os.environ.get("PUBLIC_ANALYTICS_ENABLED", "1").strip().lower()
-    if analytics_enabled in {"0", "false", "no", "off"}:
-        return ""
-    ga4_id = _env_value("PUBLIC_GA4_MEASUREMENT_ID", DEFAULT_GA4_ID)
-    yandex_id = _env_value("PUBLIC_YANDEX_METRICA_ID", DEFAULT_YANDEX_METRICA_ID)
-    clarity_id = _env_value("PUBLIC_CLARITY_PROJECT_ID", DEFAULT_CLARITY_PROJECT_ID)
-    loaders: list[str] = []
-    if ga4_id:
-        ga4_json = json.dumps(ga4_id).replace("<", "\\u003c")
-        ga4_src_json = json.dumps(
-            f"https://www.googletagmanager.com/gtag/js?id={ga4_id}"
-        ).replace("<", "\\u003c")
-        loaders.append(
-            "window.dataLayer=window.dataLayer||[];"
-            "window.gtag=window.gtag||function(){window.dataLayer.push(arguments);};"
-            'window.gtag("js",new Date());'
-            f'window.gtag("config",{ga4_json});'
-            f"loadScript({ga4_src_json});"
-        )
-    if yandex_id:
-        yandex_json = json.dumps(yandex_id).replace("<", "\\u003c")
-        yandex_src_json = json.dumps(
-            f"https://mc.yandex.ru/metrika/tag.js?id={yandex_id}"
-        ).replace("<", "\\u003c")
-        loaders.append(
-            "window.ym=window.ym||function(){"
-            "(window.ym.a=window.ym.a||[]).push(arguments);};"
-            "window.ym.l=Date.now();"
-            f"loadScript({yandex_src_json});"
-            f'window.ym({yandex_json},"init",'
-            "{ssr:true,webvisor:true,clickmap:true,"
-            'ecommerce:"dataLayer",accurateTrackBounce:true,'
-            "trackLinks:true});"
-        )
-    if clarity_id:
-        clarity_src_json = json.dumps(
-            f"https://www.clarity.ms/tag/{clarity_id}"
-        ).replace("<", "\\u003c")
-        loaders.append(
-            "window.clarity=window.clarity||function(){"
-            "(window.clarity.q=window.clarity.q||[]).push(arguments);};"
-            f"loadScript({clarity_src_json});"
-        )
-    if not loaders:
-        return ""
-    loader_body = "".join(loaders)
-    return f"""  <script>
-  (() => {{
-    let analyticsStarted = false;
-    const loadScript = (src) => {{
-      const script = document.createElement("script");
-      script.async = true;
-      script.src = src;
-      document.head.appendChild(script);
-    }};
-    const startAnalytics = () => {{
-      if (analyticsStarted) return;
-      if (navigator.doNotTrack === "1" || navigator.globalPrivacyControl === true) return;
-      analyticsStarted = true;
-      {loader_body}
-    }};
-    ["pointerdown", "keydown", "touchstart"].forEach((eventName) => {{
-      window.addEventListener(eventName, startAnalytics, {{ once: true, passive: true }});
-    }});
-    window.setTimeout(startAnalytics, 20000);
-  }})();
-  </script>"""
+    """Return no telemetry markup; QAZ.FUND public pages are tracker-free."""
+
+    return ""

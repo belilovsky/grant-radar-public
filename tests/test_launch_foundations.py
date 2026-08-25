@@ -70,9 +70,7 @@ def test_route_registry_covers_all_fastapi_surfaces_and_head_contracts() -> None
     }.issubset(states)
 
 
-def test_browser_proof_can_disable_existing_analytics(monkeypatch) -> None:
-    monkeypatch.setenv("PUBLIC_ANALYTICS_ENABLED", "false")
-
+def test_public_pages_have_no_third_party_analytics_markup() -> None:
     assert analytics_head_html() == ""
 
 

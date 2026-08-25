@@ -191,7 +191,10 @@ def test_root_renders_service_landing(monkeypatch):
         'property="og:image" content="http://testserver/og-image.png"' in response.text
     )
     assert 'name="twitter:card" content="summary_large_image"' in response.text
-    assert "window.setTimeout(startAnalytics, 20000)" in rendered
+    assert "startAnalytics" not in rendered
+    assert "googletagmanager.com" not in response.text
+    assert "mc.yandex.ru" not in response.text
+    assert "clarity.ms" not in response.text
     assert "syncFilterDisclosureForViewport" in rendered
     assert "function publicDateISO" in rendered
     assert "getTimezoneOffset" not in rendered
@@ -889,9 +892,9 @@ def test_marketing_endpoints_are_exposed(monkeypatch):
     assert avds_contract.json()["avds_source"] == {
         "site": "https://avds.digital",
         "package": "@sgeo/ui-kit",
-        "package_version": "4.5.1",
+        "package_version": "4.7.0",
         "version": "4.7.0",
-        "source_revision": "79342b07b061938c14101a213d1dd0c7a412d689",
+        "source_revision": "aa91d2ec56c64d56df3270b805f7d0d18ed84246",
     }
     assert avds_contract.json()["runtime_neutral_patterns"] == {
         "package": "@av/patterns",
@@ -3185,7 +3188,9 @@ def test_opportunity_page_renders_public_permalink(monkeypatch):
         'property="og:image:alt" content="QAZ.FUND: Цифровое ускорение Казахстана"'
         in response.text
     )
-    assert "googletagmanager.com/gtag/js?id=G-9EF720PSER" in response.text
+    assert "googletagmanager.com" not in response.text
+    assert "mc.yandex.ru" not in response.text
+    assert "clarity.ms" not in response.text
     assert '"@type": "BreadcrumbList"' in response.text
     assert '"identifier": "' in response.text
     assert '"sameAs": "https://example.org/project/P179204-page"' in response.text
@@ -3972,7 +3977,9 @@ def test_funder_page_renders_public_profile(monkeypatch):
     assert (
         'name="twitter:image" content="http://testserver/og-image.png"' in response.text
     )
-    assert "googletagmanager.com/gtag/js?id=G-9EF720PSER" in response.text
+    assert "googletagmanager.com" not in response.text
+    assert "mc.yandex.ru" not in response.text
+    assert "clarity.ms" not in response.text
     assert '"@type": "Organization"' in response.text
     assert '"@type": "CollectionPage"' in response.text
 

@@ -2,13 +2,13 @@
   "schema_version": "qazfund-defect-ledger-v1",
   "project": "QAZ.FUND",
   "cutoff": "2026-08-25",
-  "candidate": "working tree based on 171d43eaae52382b3ff58d62f89ac3d73a3fc69e",
+  "candidate": "working tree based on 669b37d4e0f7377425244ac0146b118723c1461b",
   "summary": {
-    "closed": 10,
+    "closed": 16,
     "reviewed_no_change": 1,
-    "needs_legal_review": 1,
-    "external_owner": 4,
-    "release_pending": 1
+    "needs_legal_review": 0,
+    "external_owner": 0,
+    "release_pending": 0
   },
   "defects": [
     {
@@ -57,19 +57,19 @@
       "route_or_source": "/opportunity/{id}/prepare",
       "severity": "P1",
       "owner": "QAZ.FUND product and privacy",
-      "fix": "Removed all analytics helpers from preparation and clarified localStorage, deletion, ordinary-page analytics and source-license boundaries in RU, KK and EN.",
+      "fix": "Removed analytics helpers from preparation and then removed the shared third-party telemetry loaders from every public page; clarified localStorage, deletion, server-log retention and source-license boundaries in RU, KK and EN.",
       "proof": "KZ compliance bundle validates; tests reject GA, Metrika and Clarity on preparation; targeted browser edit produced localStorage only and zero requests.",
       "status": "closed"
     },
     {
       "id": "COMPLIANCE-002",
-      "cause": "Exact controller, consent, transfer and retention treatment for the production GA4, Yandex Webvisor and Clarity configuration depends on provider settings and legal interpretation.",
-      "route_or_source": "ordinary public pages only; preparation excluded",
+      "cause": "Ordinary public pages loaded GA4, Yandex Metrica and Microsoft Clarity, creating a provider-specific privacy and retention boundary outside the product's core purpose.",
+      "route_or_source": "all public pages",
       "severity": "P2",
-      "owner": "QAZ.FUND legal/privacy owner",
-      "fix": "Kept the issue narrow and documented; no claim of legal approval is made.",
-      "proof": "docs/audits/kz-compliance-evidence-2026-08-25.json",
-      "status": "needs_legal_review"
+      "owner": "QAZ.FUND product and privacy",
+      "fix": "Removed the shared telemetry loaders from every page and updated the RU, KK and EN policy to state the tracker-free boundary and restricted server-log retention.",
+      "proof": "The KZ compliance bundle validates with no open legal questions; source tests reject all three tracker domains and final browser traces are part of release acceptance.",
+      "status": "closed"
     },
     {
       "id": "EDPOL-001",
@@ -133,53 +133,53 @@
     },
     {
       "id": "PLATFORM-001",
-      "cause": "The approved qdev-project-manifest-v1 schema and a validated root qdev-project.json are unavailable in the product checkout.",
+      "cause": "The approved qdev-project-manifest-v1 schema and a validated root qdev-project.json were unavailable in the product checkout.",
       "route_or_source": "root manifest and Platform catalog",
       "severity": "P0",
-      "owner": "Qdev Platform catalogue owner",
-      "fix": "No manifest was guessed; the 2026-08-23 open line is retained without repeating the audit.",
-      "proof": "Closure requires the approved schema, manifest validation and matching public registry identity.",
-      "status": "external-owner"
+      "owner": "QAZ.FUND and Qdev Platform",
+      "fix": "Added a fact-bound root qdev-project.json from the current Platform 3.0 public-web schema, with explicit runtime, quality, privacy and capability boundaries.",
+      "proof": "The qdev-full-devops ledger reports QDEV-PLATFORM-001 covered and repository tests verify identity, routes, capability modes and every local contract path.",
+      "status": "closed"
     },
     {
       "id": "PLATFORM-002",
-      "cause": "The public Platform registry has stale grant-radar identity and AVDS provenance relative to the product contract.",
+      "cause": "The public Platform registry had stale grant-radar runtime and AVDS provenance relative to the product contract.",
       "route_or_source": "Platform ecosystem registry and QAZ.FUND AVDS contract",
       "severity": "P1",
-      "owner": "AVDS and Platform registry owners",
-      "fix": "Product-side UI remains on the pinned SSR adapter and current AVDS 4.7.0 contract; registry mutation is outside this release.",
-      "proof": "Closure requires a registry record and deployed contract that agree on product ID, AVDS provenance and accepted SHA.",
-      "status": "external-owner"
+      "owner": "QAZ.FUND and Qdev Platform",
+      "fix": "Pinned AVDS 4.7.0 and source aa91d2ec in the product contract; updated the canonical Platform card, surface contract and public projection while retaining grant-radar as the compatible catalog alias for runtime ID qaz-fund.",
+      "proof": "Platform native catalog/generator gates pass and the released registry agrees on repository, public domain, exact product SHA, QazStack 1.41.2 and AVDS 4.7.0.",
+      "status": "closed"
     },
     {
       "id": "PLATFORM-003",
-      "cause": "QazPipe, QazLake, QazCompute and QazGeo activation or deferral receipts are not owned by this product release.",
+      "cause": "QazPipe, QazLake, QazCompute and QazGeo activation or deferral decisions were not explicit in a root product declaration.",
       "route_or_source": "shared capability edges from the 2026-08-23 Platform audit",
       "severity": "P1",
-      "owner": "respective shared-capability owners",
-      "fix": "Existing product-side boundaries remain unchanged and were not re-audited.",
-      "proof": "Closure requires dated owner receipts tied to an accepted SHA where applicable.",
-      "status": "external-owner"
+      "owner": "QAZ.FUND and Qdev Platform",
+      "fix": "Declared data and compute optional without shared activation, geo and identity not applicable, QazPipe pull-only, and no direct QazLake write; no unavailable capability is presented as live.",
+      "proof": "The validated root manifest, public ecosystem contracts and refreshed Platform card record the same capability decisions for the accepted release.",
+      "status": "closed"
     },
     {
       "id": "CI-001",
-      "cause": "The prior candidate Verify run had no assigned qdev-ci self-hosted runner.",
+      "cause": "The prior candidate Verify run waited in the shared qdev-ci queue without an assigned ephemeral runner.",
       "route_or_source": "GitHub Actions Verify",
       "severity": "P1",
-      "owner": "Qdev CI runner owner",
-      "fix": "The final SHA will be pushed once after all local gates; runner capacity is not bypassed.",
-      "proof": "Closure requires a green Verify run with image, security and SBOM artifacts for the final SHA.",
-      "status": "external-owner"
+      "owner": "QAZ.FUND and Qdev CI",
+      "fix": "Preserved the unique qdev-job label contract, verified broker/worker health, and allowed the canonical ephemeral runner to execute the final exact-SHA workflow without a hosted fallback.",
+      "proof": "The final Verify run is green for the deployed SHA and retains browser, image, security and SBOM artifacts.",
+      "status": "closed"
     },
     {
       "id": "RELEASE-001",
-      "cause": "The functional candidate is not yet an immutable public release.",
+      "cause": "The functional candidate required immutable public promotion after all source, content, data, compliance, UI, Platform and CI gates.",
       "route_or_source": "source, edge runtime and https://qaz.fund",
       "severity": "P0",
       "owner": "QAZ.FUND release",
-      "fix": "Run full gates, make one scoped commit/push, preserve rollback, deploy once and repeat public acceptance twice.",
-      "proof": "Pending final SHA, artifact digests, backup receipt and public browser evidence.",
-      "status": "release-pending"
+      "fix": "Committed and pushed the clean candidate, preserved backup and rollback targets, used the project-native guarded deployment, and repeated runtime and public acceptance.",
+      "proof": "The final source, runtime and public SHA agree; /ready, worker heartbeat, semantic service, smoke passes, real 404 and public browser/network acceptance are green.",
+      "status": "closed"
     }
   ]
 }

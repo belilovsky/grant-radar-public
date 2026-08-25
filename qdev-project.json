@@ -1,0 +1,113 @@
+{
+  "$schema": "https://platform.qdev.run/schemas/qdev-project-manifest-v1.json",
+  "schema_version": "qdev-project-manifest-v1",
+  "project_id": "qaz-fund",
+  "repository": {
+    "url": "https://github.com/belilovsky/grant-radar-public",
+    "default_branch": "main"
+  },
+  "entrypoints": {
+    "public": "https://qaz.fund",
+    "health": "https://qaz.fund/health",
+    "readiness": "https://qaz.fund/ready",
+    "release_identity": "https://qaz.fund/.well-known/release.json",
+    "oidc_discovery": null
+  },
+  "profile": "public-web",
+  "lifecycle": "production",
+  "owners": {
+    "product": "QDev",
+    "technical": "QDev",
+    "data": "QDev"
+  },
+  "runtime": {
+    "kind": "container",
+    "language": "Python 3.12 and FastAPI",
+    "version": "production-marker-managed"
+  },
+  "capabilities": {
+    "qazstack": {
+      "mode": "required",
+      "version": "1.41.2",
+      "contracts": [
+        "docs/qazstack/consumer-contract.json",
+        "qazstack-reuse.json",
+        "https://qaz.fund/.well-known/qazstack-consumer.json"
+      ]
+    },
+    "avds": {
+      "mode": "required",
+      "version": "4.7.0",
+      "contracts": [
+        "docs/AVDS_INTEGRATION.md",
+        "api/avds.py",
+        "https://qaz.fund/.well-known/avds-ui-contract.json"
+      ]
+    },
+    "data": {
+      "mode": "optional",
+      "version": null,
+      "contracts": [
+        "docs/DATA_PROVENANCE_CONTRACT.md",
+        "docs/ECOSYSTEM_INTEGRATION.md",
+        "https://qaz.fund/.well-known/qazpipe-source.json"
+      ],
+      "qazpipe": false,
+      "qazlake": false
+    },
+    "compute": {
+      "mode": "optional",
+      "version": null,
+      "contracts": [
+        "docs/ECOSYSTEM_INTEGRATION.md",
+        "https://qaz.fund/.well-known/qazcompute-profiles.json"
+      ]
+    },
+    "geo": {
+      "mode": "not-applicable",
+      "version": null,
+      "contracts": [
+        "docs/ECOSYSTEM_INTEGRATION.md"
+      ]
+    },
+    "identity": {
+      "mode": "not-applicable",
+      "version": null,
+      "contracts": [
+        "docs/NOTIFICATION_CONTRACT.md",
+        "https://qaz.fund/.well-known/notification-contract.json"
+      ]
+    }
+  },
+  "quality": {
+    "state": "configured",
+    "workflow": ".github/workflows/verify.yml",
+    "coverage_minimum": 0,
+    "commands": {
+      "install": "make bootstrap",
+      "lint": "make lint",
+      "typecheck": ".venv/bin/python -m mypy api core sources scripts --ignore-missing-imports",
+      "test": "make ci-fast",
+      "build": "make build-prod",
+      "security": ".venv/bin/python -m pip_audit -r requirements.txt"
+    },
+    "required_documents": [
+      "README.md",
+      "docs/DATA_PROVENANCE_CONTRACT.md",
+      "docs/ECOSYSTEM_INTEGRATION.md",
+      "docs/AVDS_INTEGRATION.md"
+    ]
+  },
+  "operations": {
+    "health_path": "/health",
+    "readiness_path": "/ready",
+    "release_revision_path": "/.well-known/release.json",
+    "deploy_mode": "container"
+  },
+  "data_privacy": {
+    "public_projection": "Only normalized public opportunity data and aggregate catalogue facts are published.",
+    "private_boundary": "Application drafts and saved selections remain in browser storage; QAZ.FUND has no account, upload, profile or submission endpoint.",
+    "retention_and_access": "Public pages load no third-party analytics. Restricted server request logs rotate daily and are retained for no more than 14 rotations."
+  },
+  "exceptions": []
+}
