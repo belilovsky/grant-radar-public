@@ -109,5 +109,12 @@
     "private_boundary": "Application drafts and saved selections remain in browser storage; QAZ.FUND has no account, upload, profile or submission endpoint.",
     "retention_and_access": "Public pages load no third-party analytics. Restricted server request logs rotate daily and are retained for no more than 14 rotations."
   },
-  "exceptions": []
+  "exceptions": [
+    {
+      "gate": "identity",
+      "reason": "The public runtime is anonymous and read-only, with no account, profile, upload, personal notification, or application-submission surface.",
+      "owner": "QDev",
+      "expires": "2026-12-31"
+    }
+  ]
 }

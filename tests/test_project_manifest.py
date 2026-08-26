@@ -27,7 +27,18 @@ def test_qdev_project_manifest_describes_the_public_runtime() -> None:
     assert manifest["capabilities"]["qazstack"]["version"] == "1.41.2"
     assert manifest["capabilities"]["avds"]["version"] == "4.7.0"
     assert manifest["capabilities"]["identity"]["mode"] == "not-applicable"
-    assert manifest["exceptions"] == []
+    assert manifest["exceptions"] == [
+        {
+            "gate": "identity",
+            "reason": (
+                "The public runtime is anonymous and read-only, with no account, "
+                "profile, upload, personal notification, or application-submission "
+                "surface."
+            ),
+            "owner": "QDev",
+            "expires": "2026-12-31",
+        }
+    ]
 
 
 def test_qdev_project_manifest_references_existing_local_contracts() -> None:

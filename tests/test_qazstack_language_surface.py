@@ -3,6 +3,8 @@ from __future__ import annotations
 import json
 from pathlib import Path
 
+from qazstack.contracts import validate_consumer_contract
+
 from api.ecosystem import qazstack_consumer_contract
 from api.error_page import render_not_found_page
 from api.operator_page import render_operator_page
@@ -99,6 +101,7 @@ def test_checked_in_qazstack_contract_matches_runtime_evidence() -> None:
     )
     runtime = qazstack_consumer_contract("https://qaz.fund")
 
+    validate_consumer_contract(checked_in, strict=True)
     assert checked_in["qazstack_version"] == runtime["qazstack_version"]
     assert checked_in["source_revision"] == runtime["source_revision"]
     assert checked_in["primitives"] == runtime["primitives"]

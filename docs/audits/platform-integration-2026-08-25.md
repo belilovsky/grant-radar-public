@@ -28,12 +28,12 @@ the product accurately and would break existing Platform consumers.
 | QazPipe / QazLake | optional / not activated | QAZ.FUND publishes a read-only pull source and provenance contract. It does not push directly to QazLake and no private dataset or shared ingestion activation is claimed. |
 | QazCompute | optional / not activated | Product-local deterministic ranking and semantic service remain owned by QAZ.FUND. No remote QazCompute execution receipt is claimed. |
 | QazGeo | not applicable | The public opportunity contract has no verified geometry; region labels are not promoted to coordinates. |
-| Identity / notifications | not applicable | The product is anonymous and read-only; browser drafts and saved selections remain local, and there are no accounts, uploads, profiles, personal notifications, or submission endpoints. |
+| Identity / notifications | not applicable / time-bounded exception | The product is anonymous and read-only; browser drafts and saved selections remain local, and there are no accounts, uploads, profiles, personal notifications, or submission endpoints. The root manifest records owner `QDev` and review expiry `2026-12-31` for the Platform `identity` gate. |
 
 ## Candidate evidence
 
 - `make lint`: pass.
-- `make ci-fast`: 667/667 tests pass; typography findings: 0.
+- `make ci-fast`: 669/669 tests pass; typography findings: 0.
 - QazData integrity ledger: valid; the one partial source state remains visible
   rather than being promoted to success.
 - KZ compliance bundle: valid, with no open legal question after all

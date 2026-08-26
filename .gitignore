@@ -218,6 +218,9 @@ tempCodeRunnerFile.py
 node_modules/
 output/browser-matrix/
 output/browser-matrix-live-before.json
+
+# macOS Finder metadata
+.DS_Store
 output/browser-matrix-*.json
 output/avds-*/
 output/playwright/

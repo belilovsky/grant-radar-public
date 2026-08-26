@@ -54,35 +54,38 @@ def _states_for(path: str) -> tuple[str, ...]:
 def build_route_registry(app: FastAPI) -> tuple[RouteSurface, ...]:
     """Build deterministic route metadata from the running FastAPI application."""
 
-    surfaces: list[RouteSurface] = []
+    surfaces: dict[tuple[str, str], RouteSurface] = {}
     for route in app.routes:
         if not isinstance(route, APIRoute):
             continue
         path = str(route.path)
+        name = str(route.name)
         methods = tuple(
             sorted(method for method in route.methods if method != "OPTIONS")
         )
         machine = is_machine_route(path) or path.endswith((".json", ".xml", ".txt"))
         html = not machine and not path.startswith("/assets/")
-        surfaces.append(
-            RouteSurface(
-                path=path,
-                name=str(route.name),
-                methods=methods,
-                content_type="text/html" if html else "machine",
-                cache_policy=cache_control_for(path) or "endpoint-defined",
-                authentication=(
-                    "admin-token"
-                    if path.startswith("/operator/") or path.startswith("/refresh")
-                    else "public-shell" if path == "/operator" else "public"
-                ),
-                languages=PUBLIC_LANGUAGES if html else (),
-                viewports=PUBLIC_VIEWPORTS if html else (),
-                states=_states_for(path),
-            )
+        key = (path, name)
+        previous = surfaces.get(key)
+        if previous is not None:
+            methods = tuple(sorted(set(previous.methods).union(methods)))
+        surfaces[key] = RouteSurface(
+            path=path,
+            name=name,
+            methods=methods,
+            content_type="text/html" if html else "machine",
+            cache_policy=cache_control_for(path) or "endpoint-defined",
+            authentication=(
+                "admin-token"
+                if path.startswith("/operator/") or path.startswith("/refresh")
+                else "public-shell" if path == "/operator" else "public"
+            ),
+            languages=PUBLIC_LANGUAGES if html else (),
+            viewports=PUBLIC_VIEWPORTS if html else (),
+            states=_states_for(path),
         )
     return tuple(
-        sorted(surfaces, key=lambda item: (item.path, item.methods, item.name))
+        sorted(surfaces.values(), key=lambda item: (item.path, item.methods, item.name))
     )
 
 

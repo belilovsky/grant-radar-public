@@ -805,14 +805,16 @@ def test_marketing_endpoints_are_exposed(monkeypatch):
     assert "Prefer compact Opportunities NDJSON for bulk discovery reads" in llms.text
     assert "Opportunity detail JSON: /opportunities/{id}?lang=kk|ru|en" in llms.text
     assert (
-        "Opportunity history JSON: http://testserver/opportunities/{id}/history.json"
-        in llms.text
-    )
+        "Opportunity history JSON: "
+        "/opportunities/{id}/history.json?lang=kk|ru|en&limit={n}"
+    ) in llms.text
     assert "Digest JSON: http://testserver/digest" in llms.text
     assert (
-        "Comparison JSON: http://testserver/compare.json?ids={id},{id}&lang=ru|kk|en"
+        "Comparison JSON template: /compare.json?ids={id},{id}&lang=ru|kk|en"
         in llms.text
     )
+    assert "http://testserver/opportunities/{id}" not in llms.text
+    assert "http://testserver/compare.json?ids={id}" not in llms.text
     assert "Opportunity page: /opportunity/{id}?lang=kk|ru|en" in llms.text
     assert "Funder page: /funder/{slug}?lang=kk|ru|en" in llms.text
     assert "Insights page: /insights?lang=kk|ru|en" in llms.text
@@ -826,6 +828,18 @@ def test_marketing_endpoints_are_exposed(monkeypatch):
     assert llms_head.status_code == 200
     assert llms_head.headers["content-type"].startswith("text/plain")
     assert llms_head.headers["cache-control"].startswith("public, max-age=300")
+
+    openapi = client.get("/openapi.json")
+    assert openapi.status_code == 200
+    openapi_paths = openapi.json()["paths"]
+    assert "/refresh" not in openapi_paths
+    operation_ids = [
+        operation["operationId"]
+        for path_item in openapi_paths.values()
+        for method, operation in path_item.items()
+        if method in {"get", "post", "put", "patch", "delete"}
+    ]
+    assert len(operation_ids) == len(set(operation_ids))
 
     discovery = client.get("/site-discovery.json")
     assert discovery.status_code == 200

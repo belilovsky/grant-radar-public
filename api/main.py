@@ -2423,14 +2423,10 @@ async def llms_txt(request: Request) -> Response:
     media_json = _public_url(request, root_path, "/media.json")
     media_feed = _public_url(request, root_path, "/media/feed.json")
     media_rss = _public_url(request, root_path, "/media/rss.xml")
-    compare_json = _public_url(request, root_path, "/compare.json")
     opportunities = _public_url(request, root_path, "/opportunities")
     opportunities_ndjson = _public_url(request, root_path, "/opportunities.ndjson")
     opportunities_ndjson_compact = _public_url(
         request, root_path, "/opportunities.ndjson?compact=true"
-    )
-    history_template = _public_url(
-        request, root_path, "/opportunities/{id}/history.json"
     )
     digest = _public_url(request, root_path, "/digest")
     return Response(
@@ -2465,7 +2461,7 @@ async def llms_txt(request: Request) -> Response:
                 f"- Media JSON: {media_json}",
                 f"- Media JSON Feed: {media_feed}",
                 f"- Media RSS: {media_rss}",
-                f"- Comparison JSON: {compare_json}?ids={{id}},{{id}}&lang=ru|kk|en",
+                "- Comparison JSON template: /compare.json?ids={id},{id}&lang=ru|kk|en",
                 f"- Terms of use: {terms}",
                 f"- Data policy: {data_policy}",
                 f"- Official Kazakhstan data routes: {data_routes}",
@@ -2477,10 +2473,13 @@ async def llms_txt(request: Request) -> Response:
                 f"- Opportunities NDJSON: {opportunities_ndjson}",
                 f"- Compact Opportunities NDJSON: {opportunities_ndjson_compact}",
                 "- Opportunity detail JSON: /opportunities/{id}?lang=kk|ru|en",
-                f"- Opportunity history JSON: {history_template}?lang=kk|ru|en&limit={{n}}",
+                (
+                    "- Opportunity history JSON: /opportunities/{id}/history.json"
+                    "?lang=kk|ru|en&limit={n}"
+                ),
                 f"- Digest JSON: {digest}",
                 f"- Insights JSON: {insights_json}?lang=ru|kk|en",
-                f"- Comparison JSON: {compare_json}?ids={{id}},{{id}}&lang=ru|kk|en",
+                "- Comparison JSON: /compare.json?ids={id},{id}&lang=ru|kk|en",
                 f"- Notification contract JSON: {notification_contract_url}",
                 f"- Source onboarding contract JSON: {source_onboarding_url}",
                 f"- Kazakhstan data-route contract JSON: {data_routes_contract_url}",
@@ -3255,7 +3254,7 @@ def _persist_items(items: list[Opportunity]) -> None:
         repository.upsert(item)
 
 
-@app.post("/refresh")
+@app.post("/refresh", include_in_schema=False)
 async def refresh(_: None = Depends(require_admin_token)) -> dict:
     global _cache
     sources = [source_cls() for source_cls in PARSERS.values()]  # type: ignore[abstract]
@@ -3876,11 +3875,11 @@ async def export_opportunities_v1_ndjson(
     )
 
 
-@app.api_route(
+@app.get(
     "/api/v1/opportunities/{opportunity_id}",
-    methods=["GET", "HEAD"],
     response_model=OpportunityV1,
 )
+@app.head("/api/v1/opportunities/{opportunity_id}", include_in_schema=False)
 async def get_opportunity_v1(
     request: Request,
     opportunity_id: UUID,
@@ -3889,8 +3888,10 @@ async def get_opportunity_v1(
     return _find_opportunity_v1(request, opportunity_id, lang=lang)
 
 
-@app.api_route(
-    "/media/v1/opportunities/{opportunity_id}/content.json", methods=["GET", "HEAD"]
+@app.get("/media/v1/opportunities/{opportunity_id}/content.json")
+@app.head(
+    "/media/v1/opportunities/{opportunity_id}/content.json",
+    include_in_schema=False,
 )
 async def opportunity_media_content(
     request: Request,
@@ -3903,8 +3904,10 @@ async def opportunity_media_content(
     )
 
 
-@app.api_route(
-    "/media/v1/opportunities/{opportunity_id}/citation.txt", methods=["GET", "HEAD"]
+@app.get("/media/v1/opportunities/{opportunity_id}/citation.txt")
+@app.head(
+    "/media/v1/opportunities/{opportunity_id}/citation.txt",
+    include_in_schema=False,
 )
 async def opportunity_media_citation(
     request: Request,
@@ -3917,8 +3920,10 @@ async def opportunity_media_citation(
     return Response(text, media_type="text/plain; charset=utf-8")
 
 
-@app.api_route(
-    "/media/v1/opportunities/{opportunity_id}/card.svg", methods=["GET", "HEAD"]
+@app.get("/media/v1/opportunities/{opportunity_id}/card.svg")
+@app.head(
+    "/media/v1/opportunities/{opportunity_id}/card.svg",
+    include_in_schema=False,
 )
 async def opportunity_media_card(
     request: Request,
@@ -3939,7 +3944,8 @@ async def opportunity_media_card(
     )
 
 
-@app.api_route("/media/v1/charts/{chart_type}.json", methods=["GET", "HEAD"])
+@app.get("/media/v1/charts/{chart_type}.json")
+@app.head("/media/v1/charts/{chart_type}.json", include_in_schema=False)
 async def media_chart_json(
     request: Request,
     chart_type: str,
@@ -3968,7 +3974,8 @@ async def media_chart_json(
     )
 
 
-@app.api_route("/media/v1/charts/{chart_type}.csv", methods=["GET", "HEAD"])
+@app.get("/media/v1/charts/{chart_type}.csv")
+@app.head("/media/v1/charts/{chart_type}.csv", include_in_schema=False)
 async def media_chart_csv(
     request: Request,
     chart_type: str,
@@ -3987,7 +3994,8 @@ async def media_chart_csv(
     return Response(chart_csv(rows), media_type="text/csv; charset=utf-8")
 
 
-@app.api_route("/media/v1/charts/{chart_type}.svg", methods=["GET", "HEAD"])
+@app.get("/media/v1/charts/{chart_type}.svg")
+@app.head("/media/v1/charts/{chart_type}.svg", include_in_schema=False)
 async def media_chart_svg(
     request: Request,
     chart_type: str,
@@ -4014,7 +4022,8 @@ async def media_chart_svg(
     )
 
 
-@app.api_route("/media/v1/feed.json", methods=["GET", "HEAD"])
+@app.get("/media/v1/feed.json")
+@app.head("/media/v1/feed.json", include_in_schema=False)
 async def media_feed_json(
     request: Request,
     lang: str | None = Query(None),
@@ -4034,7 +4043,8 @@ async def media_feed_json(
     )
 
 
-@app.api_route("/media/v1/feed.rss", methods=["GET", "HEAD"])
+@app.get("/media/v1/feed.rss")
+@app.head("/media/v1/feed.rss", include_in_schema=False)
 async def media_feed_rss(
     request: Request,
     lang: str | None = Query(None),
@@ -4054,7 +4064,8 @@ async def media_feed_rss(
     )
 
 
-@app.api_route("/media/v1/digest/daily.json", methods=["GET", "HEAD"])
+@app.get("/media/v1/digest/daily.json")
+@app.head("/media/v1/digest/daily.json", include_in_schema=False)
 async def media_daily_digest_json(
     request: Request,
     lang: str | None = Query(None),
@@ -4072,7 +4083,8 @@ async def media_daily_digest_json(
     return _versioned_json_response(payload)
 
 
-@app.api_route("/media/v1/digest/daily.txt", methods=["GET", "HEAD"])
+@app.get("/media/v1/digest/daily.txt")
+@app.head("/media/v1/digest/daily.txt", include_in_schema=False)
 async def media_daily_digest_text(
     request: Request,
     lang: str | None = Query(None),
@@ -4092,7 +4104,8 @@ async def media_daily_digest_text(
     )
 
 
-@app.api_route("/media/v1/qpost/drafts.json", methods=["GET", "HEAD"])
+@app.get("/media/v1/qpost/drafts.json")
+@app.head("/media/v1/qpost/drafts.json", include_in_schema=False)
 async def media_qpost_drafts(
     request: Request,
     lang: str | None = Query(None),
@@ -4170,7 +4183,8 @@ async def list_opportunities(
     return _opportunities_json_response(results, total_count=total_count)
 
 
-@app.api_route("/opportunities/duplicate-candidates", methods=["GET", "HEAD"])
+@app.get("/opportunities/duplicate-candidates")
+@app.head("/opportunities/duplicate-candidates", include_in_schema=False)
 async def duplicate_candidates(
     min_score: float = Query(0.3, ge=0.0, le=1.0),
     limit: int = Query(200, ge=2, le=500),

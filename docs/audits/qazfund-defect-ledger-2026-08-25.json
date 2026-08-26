@@ -1,10 +1,10 @@
 {
   "schema_version": "qazfund-defect-ledger-v1",
   "project": "QAZ.FUND",
-  "cutoff": "2026-08-25",
+  "cutoff": "2026-08-26",
   "candidate": "final release candidate; exact source SHA is recorded by the public release receipt",
   "summary": {
-    "closed": 17,
+    "closed": 18,
     "reviewed_no_change": 1,
     "needs_legal_review": 0,
     "external_owner": 0,
@@ -159,6 +159,16 @@
       "owner": "QAZ.FUND and Qdev Platform",
       "fix": "Declared data and compute optional without shared activation, geo and identity not applicable, QazPipe pull-only, and no direct QazLake write; no unavailable capability is presented as live.",
       "proof": "The validated root manifest, public ecosystem contracts and refreshed Platform card record the same capability decisions for the accepted release.",
+      "status": "closed"
+    },
+    {
+      "id": "PLATFORM-004",
+      "cause": "The checked-in QazStack consumer contract contained a product-local language_surface field rejected by the strict qazstack-consumer-v1 validator, while the public-web profile's Identity deferral had no owned review expiry.",
+      "route_or_source": "docs/qazstack/consumer-contract.json and qdev-project.json",
+      "severity": "P1",
+      "owner": "QAZ.FUND and Qdev Platform",
+      "fix": "Kept the language surface as a standalone product contract, restored strict consumer-schema compatibility, and recorded an owned Identity exception through 2026-12-31 without adding accounts or submission behavior.",
+      "proof": "Repository tests strictly validate the checked-in and runtime QazStack contracts; the root manifest validates against the Platform schema and records the same anonymous read-only boundary used by the Platform card.",
       "status": "closed"
     },
     {

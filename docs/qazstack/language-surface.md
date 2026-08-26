@@ -22,8 +22,9 @@ charts. Opportunity descriptions and source excerpts remain in their published
 language until a native-language editorial pass approves the corresponding
 `raw.i18n.kk` fields.
 
-The machine-readable contract is [`language-surface.json`](language-surface.json)
-and is referenced from `docs/qazstack/consumer-contract.json`.
+The machine-readable contract is [`language-surface.json`](language-surface.json).
+It is a standalone QAZ.FUND observability contract rather than a field in the
+strict `qazstack-consumer-v1` payload.
 
 Every public opportunity also carries the separate
 [`provenance.v1`](../DATA_PROVENANCE_CONTRACT.md) profile under
