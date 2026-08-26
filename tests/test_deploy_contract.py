@@ -101,6 +101,8 @@ def test_remote_release_has_capacity_backup_lock_identity_and_rollback_gates() -
 
     assert 'MIN_FREE_BYTES="${MIN_FREE_BYTES:-21474836480}"' in remote
     assert "2 * (current_bytes + current_bytes)" in remote
+    assert "platform-portal-deploy.lock" in remote
+    assert "flock -n 8" in remote
     assert "flock -n 9" in remote
     assert "QAZ.FUND rollback gate failed" in remote
     assert "scripts/backup_postgres.sh" in remote

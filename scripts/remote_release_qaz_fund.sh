@@ -25,6 +25,7 @@ RECONCILE_EXPECTED_TARGET_COUNT="${RECONCILE_EXPECTED_TARGET_COUNT:-}"
 INSTALL_NGINX_CONFIG="${INSTALL_NGINX_CONFIG:-1}"
 RESTORE_DB_ON_ROLLBACK="${RESTORE_DB_ON_ROLLBACK:-1}"
 LOCK_FILE="${LOCK_FILE:-/var/lock/qaz-fund-deploy.lock}"
+PLATFORM_LOCK_FILE="${PLATFORM_LOCK_FILE:-/run/lock/platform-portal/platform-portal-deploy.lock}"
 BACKUP_ROOT="${BACKUP_ROOT:-/var/backups/grant-radar/releases}"
 
 if ! [[ "$REVISION" =~ ^[0-9a-f]{40}$ ]]; then
@@ -59,6 +60,11 @@ if [[ -n "$RECONCILE_SOURCE_DUMP" ]]; then
 fi
 
 cd "$ROOT_DIR"
+exec 8>"$PLATFORM_LOCK_FILE"
+if ! flock -n 8; then
+  echo "Another platform release or Docker maintenance run holds $PLATFORM_LOCK_FILE." >&2
+  exit 75
+fi
 exec 9>"$LOCK_FILE"
 if ! flock -n 9; then
   echo "Another QAZ.FUND release holds $LOCK_FILE." >&2
