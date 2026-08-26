@@ -6,7 +6,7 @@ from html import escape
 from typing import cast
 
 from api.avds import AVDS_CSS, AVDS_FONT_HEAD
-from api.public_meta import analytics_head_html, og_image_url
+from api.public_meta import analytics_head_html, og_image_url, social_image_alt
 from core.kazakhstan_data_routes import data_routes, data_routes_page_copy
 from core.localization import normalize_content_lang
 
@@ -326,6 +326,10 @@ def render_data_routes_page(
     origin = site_origin.rstrip("/") if site_origin else ""
     title = escape(str(copy.get("title") or "QAZ.FUND"))
     description = escape(str(copy.get("description") or ""), quote=True)
+    social_image = escape(
+        og_image_url(site_origin, root_path, lang=active_lang), quote=True
+    )
+    social_alt = escape(social_image_alt(active_lang), quote=True)
     style = f"{AVDS_CSS}\n{ROUTE_PAGE_CSS}"
 
     return f"""<!doctype html>
@@ -341,7 +345,8 @@ def render_data_routes_page(
   <link rel="alternate" hreflang="en" href="{escape(origin + en_href, quote=True)}">
   <meta property="og:title" content="{title}">
   <meta property="og:description" content="{description}">
-  <meta property="og:image" content="{escape(og_image_url(site_origin, root_path), quote=True)}">
+  <meta property="og:image" content="{social_image}">
+  <meta property="og:image:alt" content="{social_alt}">
   {analytics_head_html()}{AVDS_FONT_HEAD}
   <style>{style}</style>
 </head>

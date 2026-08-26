@@ -13,7 +13,7 @@ from api.dashboard_copy import dashboard_copy
 from api.dashboard_style import DASHBOARD_CSS
 from api.integration_versions import AVDS_VERSION
 from api.page_primitives import absolute_href as _absolute_href
-from api.public_meta import analytics_head_html, og_image_url
+from api.public_meta import analytics_head_html, og_image_url, social_image_alt
 from core.public_clock import public_time_zone_name
 
 GOOGLE_SITE_VERIFICATION_FILENAME = "google6ce0cb641d438c0c.html"
@@ -167,7 +167,10 @@ def render_dashboard(
     public_time_zone_json = json.dumps(public_time_zone_name())
     html_lang = escape(active_lang, quote=True)
     og_locale = escape(active_lang.replace("-", "_") + "_KZ", quote=True)
-    social_image = escape(og_image_url(site_origin, base_raw), quote=True)
+    social_image = escape(
+        og_image_url(site_origin, base_raw, lang=active_lang), quote=True
+    )
+    social_alt = escape(social_image_alt(active_lang), quote=True)
     analytics_head = analytics_head_html()
     html_theme_attrs = (
         'data-avds="grant-radar" data-av-theme="light" data-theme="light"'
@@ -273,6 +276,7 @@ def render_dashboard(
   <meta property="og:description" content="{escape(str(copy["meta_description"]), quote=True)}">
   <meta property="og:url" content="{canonical_href}">
   <meta property="og:image" content="{social_image}">
+  <meta property="og:image:alt" content="{social_alt}">
   <meta property="og:image:width" content="1200">
   <meta property="og:image:height" content="630">
   <meta property="og:locale" content="{og_locale}">
@@ -280,6 +284,7 @@ def render_dashboard(
   <meta name="twitter:title" content="{escape(str(copy["title"]), quote=True)}">
   <meta name="twitter:description" content="{escape(str(copy["meta_description"]), quote=True)}">
   <meta name="twitter:image" content="{social_image}">
+  <meta name="twitter:image:alt" content="{social_alt}">
   <script type="application/ld+json">{schema_json}</script>
 {analytics_head}
 {AVDS_FONT_HEAD}

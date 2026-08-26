@@ -17,7 +17,7 @@ from qazstack.opportunities import public_lifecycle
 from api.avds import AVDS_CSS, AVDS_FONT_HEAD
 from api.dashboard_copy import dashboard_copy
 from api.integration_versions import AVDS_VERSION
-from api.public_meta import analytics_head_html, og_image_url
+from api.public_meta import analytics_head_html, og_image_url, social_image_alt
 from core.models import Opportunity
 
 COPY: dict[str, dict[str, str]] = {
@@ -563,8 +563,9 @@ def render_insights_page(
   <link rel="alternate" type="application/json" href="{escape((site_origin.rstrip('/') if site_origin else '') + insights_json_href, quote=True)}">
   <meta property="og:title" content="{escape(copy["title"], quote=True)}"><meta property="og:description" content="{escape(copy["description"], quote=True)}">
   <meta property="og:type" content="website"><meta property="og:url" content="{escape(canonical, quote=True)}">
-  <meta property="og:image" content="{escape(og_image_url(site_origin, root_path), quote=True)}">
-  <meta name="twitter:card" content="summary_large_image"><meta name="twitter:title" content="{escape(copy["title"], quote=True)}"><meta name="twitter:description" content="{escape(copy["description"], quote=True)}"><meta name="twitter:image" content="{escape(og_image_url(site_origin, root_path), quote=True)}">
+  <meta property="og:image" content="{escape(og_image_url(site_origin, root_path, lang=lang), quote=True)}">
+  <meta property="og:image:alt" content="{escape(social_image_alt(lang), quote=True)}">
+  <meta name="twitter:card" content="summary_large_image"><meta name="twitter:title" content="{escape(copy["title"], quote=True)}"><meta name="twitter:description" content="{escape(copy["description"], quote=True)}"><meta name="twitter:image" content="{escape(og_image_url(site_origin, root_path, lang=lang), quote=True)}"><meta name="twitter:image:alt" content="{escape(social_image_alt(lang), quote=True)}">
   {analytics_head_html()}{AVDS_FONT_HEAD}
   <style>
     {AVDS_CSS}

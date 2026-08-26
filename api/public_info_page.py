@@ -6,7 +6,7 @@ from html import escape
 from typing import cast
 
 from api.avds import AVDS_CSS, AVDS_FONT_HEAD
-from api.public_meta import analytics_head_html, og_image_url
+from api.public_meta import analytics_head_html, og_image_url, social_image_alt
 from core.localization import normalize_content_lang
 
 INFO_COMPACT_CSS = """
@@ -265,7 +265,7 @@ def render_public_info_page(
     }[active_lang]
     return f"""<!doctype html>
 <html lang="{active_lang}" data-avds="grant-radar" data-av-theme="light" data-theme="light"><head>
-<meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>{escape(str(page["title"]))}</title><meta name="description" content="{escape(str(page["intro"]), quote=True)}"><link rel="canonical" href="{escape(canonical, quote=True)}"><link rel="alternate" hreflang="ru" href="{escape((site_origin.rstrip('/') if site_origin else '') + ru_href, quote=True)}"><link rel="alternate" hreflang="kk" href="{escape((site_origin.rstrip('/') if site_origin else '') + kk_href, quote=True)}"><link rel="alternate" hreflang="en" href="{escape((site_origin.rstrip('/') if site_origin else '') + en_href, quote=True)}"><meta property="og:title" content="{escape(str(page["title"]), quote=True)}"><meta property="og:image" content="{escape(og_image_url(site_origin, root_path), quote=True)}">{analytics_head_html()}{AVDS_FONT_HEAD}<style>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>{escape(str(page["title"]))}</title><meta name="description" content="{escape(str(page["intro"]), quote=True)}"><link rel="canonical" href="{escape(canonical, quote=True)}"><link rel="alternate" hreflang="ru" href="{escape((site_origin.rstrip('/') if site_origin else '') + ru_href, quote=True)}"><link rel="alternate" hreflang="kk" href="{escape((site_origin.rstrip('/') if site_origin else '') + kk_href, quote=True)}"><link rel="alternate" hreflang="en" href="{escape((site_origin.rstrip('/') if site_origin else '') + en_href, quote=True)}"><meta property="og:title" content="{escape(str(page["title"]), quote=True)}"><meta property="og:image" content="{escape(og_image_url(site_origin, root_path, lang=active_lang), quote=True)}"><meta property="og:image:alt" content="{escape(social_image_alt(active_lang), quote=True)}">{analytics_head_html()}{AVDS_FONT_HEAD}<style>
 {AVDS_CSS}
 {INFO_COMPACT_CSS}
 .back:hover{{color:var(--color-accent)}}.langs a:not(.active):hover{{color:var(--color-accent)}}.footer a:hover{{color:var(--color-accent)}}.shell{{min-height:auto!important;grid-template-rows:auto auto auto!important}}.info-layout{{align-self:start!important;min-height:0!important}}.hero{{height:auto!important;background:color-mix(in oklab,var(--color-surface),var(--color-accent-subtle) 28%)!important}}.cards{{height:auto!important;grid-template-rows:none!important}}.info-card{{min-height:0!important;background:var(--color-surface-raised)!important}}

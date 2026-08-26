@@ -9,7 +9,7 @@ from typing import Any
 from api.avds import AVDS_CSS, AVDS_FONT_HEAD
 from api.comparison import comparison_copy, comparison_field_labels
 from api.presentation import format_public_date, localized_public_label
-from api.public_meta import analytics_head_html, og_image_url
+from api.public_meta import analytics_head_html, og_image_url, social_image_alt
 
 _VALUE_LABELS: dict[str, dict[str, dict[str, str]]] = {
     "type": {
@@ -226,7 +226,8 @@ def render_comparison_page(
   <link rel="alternate" hreflang="ru" href="{escape((site_origin.rstrip('/') if site_origin else '') + language_hrefs['ru'], quote=True)}">
   <link rel="alternate" hreflang="en" href="{escape((site_origin.rstrip('/') if site_origin else '') + language_hrefs['en'], quote=True)}">
   <meta property="og:title" content="{escape(copy["title"], quote=True)}"><meta property="og:description" content="{escape(copy["intro"], quote=True)}">
-  <meta property="og:image" content="{escape(og_image_url(site_origin, root_path), quote=True)}">
+  <meta property="og:image" content="{escape(og_image_url(site_origin, root_path, lang=lang), quote=True)}">
+  <meta property="og:image:alt" content="{escape(social_image_alt(lang), quote=True)}">
   {analytics_head_html()}{AVDS_FONT_HEAD}
   <style>
     {AVDS_CSS}

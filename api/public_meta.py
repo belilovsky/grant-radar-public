@@ -2,9 +2,14 @@
 
 from __future__ import annotations
 
-import struct
-import zlib
+import io
+from functools import lru_cache
+from pathlib import Path
+from typing import TypedDict, cast
 
+from PIL import Image, ImageDraw, ImageFont, ImageOps
+
+from api.branding import BRANDING_ASSET_DIR
 from api.page_primitives import absolute_href as _absolute_href
 
 OG_FONT_FAMILY = "Arial, Helvetica, sans-serif"
@@ -82,117 +87,140 @@ OG_IMAGE_SVG = "\n".join(
 )
 
 
-def _png_chunk(kind: bytes, payload: bytes) -> bytes:
-    """Return one standards-compliant PNG chunk without extra dependencies."""
-
-    return (
-        struct.pack(">I", len(payload))
-        + kind
-        + payload
-        + struct.pack(">I", zlib.crc32(kind + payload) & 0xFFFFFFFF)
-    )
-
-
-_OG_GLYPHS = {
-    "A": ("01110", "10001", "10001", "11111", "10001", "10001", "10001"),
-    "D": ("11110", "10001", "10001", "10001", "10001", "10001", "11110"),
-    "F": ("11111", "10000", "10000", "11110", "10000", "10000", "10000"),
-    "N": ("10001", "11001", "10101", "10011", "10001", "10001", "10001"),
-    "Q": ("01110", "10001", "10001", "10001", "10101", "10010", "01101"),
-    "U": ("10001", "10001", "10001", "10001", "10001", "10001", "01110"),
-    "Z": ("11111", "00001", "00010", "00100", "01000", "10000", "11111"),
+_OG_IMAGE_SIZE = (1200, 630)
+_OG_BACKGROUND = BRANDING_ASSET_DIR / "qaz-fund-ornamental-background-1920x1080.webp"
+_FONT_PATHS = {
+    "regular": (
+        Path("/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf"),
+        Path("/System/Library/Fonts/Supplemental/Arial.ttf"),
+    ),
+    "bold": (
+        Path("/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf"),
+        Path("/System/Library/Fonts/Supplemental/Arial Bold.ttf"),
+    ),
 }
 
 
-def _build_og_image_png() -> bytes:
-    """Create a crawler-safe raster social card without optional dependencies."""
+class _SocialCopy(TypedDict):
+    eyebrow: str
+    title: tuple[str, str]
+    subtitle: str
+    steps: tuple[str, str, str]
+    country: str
+    alt: str
 
-    width, height = 1200, 630
-    pixels = bytearray(width * height * 3)
 
-    def put(x: int, y: int, color: tuple[int, int, int]) -> None:
-        if not (0 <= x < width and 0 <= y < height):
-            return
-        offset = (y * width + x) * 3
-        pixels[offset : offset + 3] = bytes(color)
+_OG_COPY: dict[str, _SocialCopy] = {
+    "ru": {
+        "eyebrow": "НАВИГАТОР ПОДДЕРЖКИ",
+        "title": ("Найти. Проверить.", "Сравнить. Подготовить."),
+        "subtitle": "Открытые программы, источники и сроки",
+        "steps": ("Источник", "Срок", "Условия"),
+        "country": "Казахстан",
+        "alt": "QAZ.FUND: найти, проверить, сравнить и подготовить программу поддержки",
+    },
+    "kk": {
+        "eyebrow": "ҚОЛДАУ НАВИГАТОРЫ",
+        "title": ("Табу. Тексеру.", "Салыстыру. Дайындау."),
+        "subtitle": "Ашық бағдарламалар, дереккөздер және мерзімдер",
+        "steps": ("Дереккөз", "Мерзім", "Шарттар"),
+        "country": "Қазақстан",
+        "alt": "QAZ.FUND: қолдау бағдарламасын табу, тексеру, салыстыру және дайындау",
+    },
+    "en": {
+        "eyebrow": "SUPPORT NAVIGATOR",
+        "title": ("Find. Verify.", "Compare. Prepare."),
+        "subtitle": "Open programmes, sources and deadlines",
+        "steps": ("Source", "Deadline", "Terms"),
+        "country": "Kazakhstan",
+        "alt": "QAZ.FUND: find, verify, compare and prepare a support programme",
+    },
+}
 
-    def rect(x: int, y: int, w: int, h: int, color: tuple[int, int, int]) -> None:
-        for row in range(max(0, y), min(height, y + h)):
-            start = (row * width + max(0, x)) * 3
-            end = (row * width + min(width, x + w)) * 3
-            pixels[start:end] = bytes(color) * max(0, min(width, x + w) - max(0, x))
 
-    for y in range(height):
-        for x in range(width):
-            progress = (x + y * 0.42) / (width + height * 0.42)
-            put(
-                x,
-                y,
-                (
-                    0,
-                    int(52 + 18 * progress),
-                    int(59 + 18 * progress),
-                ),
-            )
+@lru_cache(maxsize=16)
+def _font(size: int, weight: str = "regular") -> ImageFont.FreeTypeFont:
+    for path in _FONT_PATHS[weight]:
+        if path.exists():
+            return ImageFont.truetype(str(path), size=size)
+    return cast(ImageFont.FreeTypeFont, ImageFont.load_default(size=size))
 
-    rect(72, 72, 188, 10, (143, 200, 193))
-    rect(72, 102, 320, 16, (217, 232, 229))
 
-    def word(text: str, x: int, y: int, scale: int) -> None:
-        cursor = x
-        for character in text:
-            if character == ".":
-                rect(cursor + scale * 2, y + scale * 6, scale, scale, (255, 253, 252))
-                cursor += scale * 3
-                continue
-            glyph = _OG_GLYPHS[character]
-            for row, row_bits in enumerate(glyph):
-                for column, bit in enumerate(row_bits):
-                    if bit == "1":
-                        rect(
-                            cursor + column * scale,
-                            y + row * scale,
-                            scale,
-                            scale,
-                            (255, 253, 252),
-                        )
-            cursor += scale * 6
+@lru_cache(maxsize=3)
+def social_image_png(lang: str = "ru") -> bytes:
+    """Render one localized, fact-led social preview in approved brand art."""
 
-    word("QAZ.FUND", 72, 164, 16)
-    rect(72, 340, 566, 14, (217, 232, 229))
-    rect(72, 374, 462, 14, (138, 190, 186))
-    rect(72, 422, 150, 44, (143, 200, 193))
-    rect(238, 422, 196, 44, (0, 84, 91))
-    rect(810, 72, 318, 486, (0, 45, 52))
-    rect(844, 112, 172, 22, (143, 200, 193))
-    rect(844, 170, 242, 108, (255, 253, 252))
-    rect(870, 204, 190, 16, (0, 52, 59))
-    rect(870, 236, 126, 14, (98, 132, 128))
-    rect(844, 314, 242, 14, (138, 190, 186))
-    rect(844, 348, 170, 14, (98, 132, 128))
-    rect(844, 418, 242, 84, (0, 84, 91))
-    rect(870, 448, 190, 14, (230, 242, 240))
-    rect(870, 478, 134, 12, (138, 190, 186))
+    active_lang = lang if lang in _OG_COPY else "ru"
+    copy = _OG_COPY[active_lang]
+    with Image.open(_OG_BACKGROUND) as source:
+        image = ImageOps.fit(
+            source.convert("RGB"),
+            _OG_IMAGE_SIZE,
+            method=Image.Resampling.LANCZOS,
+            centering=(0.72, 0.5),
+        ).convert("RGBA")
+    draw = ImageDraw.Draw(image, "RGBA")
+    draw.rectangle((0, 0, 755, _OG_IMAGE_SIZE[1]), fill=(0, 52, 59, 255))
+    draw.rectangle((755, 0, 763, _OG_IMAGE_SIZE[1]), fill=(8, 116, 123, 255))
+    draw.rectangle((763, 0, 1200, 630), fill=(0, 52, 59, 86))
 
-    raw = b"".join(
-        b"\x00" + bytes(pixels[row * width * 3 : (row + 1) * width * 3])
-        for row in range(height)
-    )
-    return (
-        b"\x89PNG\r\n\x1a\n"
-        + _png_chunk(b"IHDR", struct.pack(">IIBBBBB", width, height, 8, 2, 0, 0, 0))
-        + _png_chunk(b"IDAT", zlib.compress(raw, level=9))
-        + _png_chunk(b"IEND", b"")
+    draw.text((64, 52), "QAZ.FUND", fill="#FFFDFC", font=_font(27, "bold"))
+    draw.text((64, 94), copy["eyebrow"], fill="#B9DDD8", font=_font(17, "bold"))
+    title_font = _font(51, "bold")
+    draw.text((64, 164), copy["title"][0], fill="#FFFDFC", font=title_font)
+    draw.text((64, 226), copy["title"][1], fill="#FFFDFC", font=title_font)
+    draw.text((64, 326), copy["subtitle"], fill="#D9ECE9", font=_font(23))
+    draw.line((64, 550, 696, 550), fill=(185, 221, 216, 190), width=2)
+    draw.text(
+        (64, 570),
+        f'{copy["country"]} · qaz.fund',
+        fill="#D9ECE9",
+        font=_font(18, "bold"),
     )
 
+    card_x = 812
+    for index, label in enumerate(copy["steps"], start=1):
+        y = 86 + (index - 1) * 154
+        draw.rounded_rectangle(
+            (card_x, y, 1140, y + 124),
+            radius=18,
+            fill=(255, 253, 252, 244),
+            outline=(185, 221, 216, 255),
+            width=2,
+        )
+        draw.ellipse((card_x + 24, y + 33, card_x + 82, y + 91), fill="#00545B")
+        number = str(index)
+        number_font = _font(24, "bold")
+        bbox = draw.textbbox((0, 0), number, font=number_font)
+        draw.text(
+            (
+                card_x + 53 - (bbox[2] - bbox[0]) / 2,
+                y + 62 - (bbox[3] - bbox[1]) / 2 - bbox[1],
+            ),
+            number,
+            fill="#FFFDFC",
+            font=number_font,
+        )
+        draw.text((card_x + 104, y + 45), label, fill="#00343B", font=_font(25, "bold"))
 
-OG_IMAGE_PNG = _build_og_image_png()
+    output = io.BytesIO()
+    image.convert("RGB").save(output, format="PNG", optimize=True)
+    return output.getvalue()
 
 
-def og_image_url(site_origin: str, root_path: str = "") -> str:
+OG_IMAGE_PNG = social_image_png("ru")
+
+
+def social_image_alt(lang: str = "ru") -> str:
+    active_lang = lang if lang in _OG_COPY else "ru"
+    return str(_OG_COPY[active_lang]["alt"])
+
+
+def og_image_url(site_origin: str, root_path: str = "", *, lang: str = "ru") -> str:
     base = root_path.rstrip("/")
     path = f"{base}/og-image.png" if base else "/og-image.png"
-    return _absolute_href(site_origin, path)
+    active_lang = lang if lang in _OG_COPY else "ru"
+    return _absolute_href(site_origin, f"{path}?lang={active_lang}")
 
 
 def analytics_head_html() -> str:

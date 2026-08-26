@@ -10,7 +10,7 @@ from urllib.parse import urlparse
 from api.avds import AVDS_CSS, AVDS_FONT_HEAD
 from api.dashboard_copy import dashboard_copy
 from api.insights_page import _source_label
-from api.public_meta import og_image_url
+from api.public_meta import og_image_url, social_image_alt
 
 COPY = {
     "ru": {
@@ -248,6 +248,10 @@ def render_status_page(
         rows = (
             f'<tr><td colspan="4" class="empty">{escape(str(copy["empty"]))}</td></tr>'
         )
+    social_image = escape(
+        og_image_url(site_origin, root_path, lang=active_lang), quote=True
+    )
+    social_alt = escape(social_image_alt(active_lang), quote=True)
 
     return f"""<!doctype html>
 <html lang="{active_lang}" data-avds="grant-radar" data-av-theme="light" data-theme="light">
@@ -260,11 +264,13 @@ def render_status_page(
   <meta property="og:title" content="{escape(str(copy["title"]), quote=True)}">
   <meta property="og:description" content="{escape(str(copy["intro"]), quote=True)}">
   <meta property="og:url" content="{escape(canonical, quote=True)}">
-  <meta property="og:image" content="{escape(og_image_url(site_origin, root_path), quote=True)}">
+  <meta property="og:image" content="{social_image}">
+  <meta property="og:image:alt" content="{social_alt}">
   <meta name="twitter:card" content="summary_large_image">
   <meta name="twitter:title" content="{escape(str(copy["title"]), quote=True)}">
   <meta name="twitter:description" content="{escape(str(copy["intro"]), quote=True)}">
-  <meta name="twitter:image" content="{escape(og_image_url(site_origin, root_path), quote=True)}">
+  <meta name="twitter:image" content="{social_image}">
+  <meta name="twitter:image:alt" content="{social_alt}">
   <link rel="canonical" href="{escape(canonical, quote=True)}">
   <link rel="alternate" hreflang="kk" href="{escape(kk_canonical, quote=True)}">
   <link rel="alternate" hreflang="ru" href="{escape(ru_canonical, quote=True)}">

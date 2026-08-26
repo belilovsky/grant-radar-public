@@ -124,7 +124,7 @@ from api.opportunity_og import (
 from api.opportunity_page import render_opportunity_page
 from api.presentation import release_evidence_from_env
 from api.public_info_page import render_public_info_page
-from api.public_meta import OG_IMAGE_PNG, OG_IMAGE_SVG
+from api.public_meta import OG_IMAGE_SVG, social_image_png
 from api.qpost_feed import QPOST_TEMPLATES, build_qpost_draft_feed
 from api.route_registry import build_route_registry, route_coverage
 from api.runtime_config import admin_token as _admin_token
@@ -3008,8 +3008,8 @@ async def og_image() -> Response:
 
 
 @app.api_route("/og-image.png", methods=["GET", "HEAD"], include_in_schema=False)
-async def og_image_png() -> Response:
-    return Response(OG_IMAGE_PNG, media_type="image/png")
+async def og_image_png(lang: str = "ru") -> Response:
+    return Response(social_image_png(_public_lang(lang)), media_type="image/png")
 
 
 @app.api_route(

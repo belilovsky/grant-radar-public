@@ -17,7 +17,7 @@ from api.dashboard import dashboard_copy
 from api.page_primitives import absolute_href as _absolute_href
 from api.page_primitives import catalog_path as _catalog_path
 from api.page_primitives import format_deadline as _format_deadline
-from api.public_meta import analytics_head_html, og_image_url
+from api.public_meta import analytics_head_html, og_image_url, social_image_alt
 from core.models import Opportunity
 from core.nlp import clean_source_summary
 
@@ -497,7 +497,10 @@ def render_funder_page(
     html_theme_attrs = (
         'data-avds="grant-radar" data-av-theme="light" data-theme="light"'
     )
-    social_image = escape(og_image_url(site_origin, root_path), quote=True)
+    social_image = escape(
+        og_image_url(site_origin, root_path, lang=active_lang), quote=True
+    )
+    social_alt = escape(social_image_alt(active_lang), quote=True)
     analytics_head = analytics_head_html()
     search_label = {
         "ru": "Поиск по программам фонда",
@@ -540,6 +543,7 @@ def render_funder_page(
   <meta property="og:description" content="{overview}">
   <meta property="og:url" content="{canonical_href}">
   <meta property="og:image" content="{social_image}">
+  <meta property="og:image:alt" content="{social_alt}">
   <meta property="og:image:width" content="1200">
   <meta property="og:image:height" content="630">
   <meta property="og:locale" content="{og_locale}">
@@ -547,6 +551,7 @@ def render_funder_page(
   <meta name="twitter:title" content="{funder_name} – QAZ.FUND">
   <meta name="twitter:description" content="{overview}">
   <meta name="twitter:image" content="{social_image}">
+  <meta name="twitter:image:alt" content="{social_alt}">
   <script type="application/ld+json">{schema_json}</script>
   {analytics_head}
   {AVDS_FONT_HEAD}

@@ -188,7 +188,12 @@ def test_root_renders_service_landing(monkeypatch):
     assert '"@type": "CollectionPage"' in response.text
     assert '"@type": "FAQPage"' not in response.text
     assert (
-        'property="og:image" content="http://testserver/og-image.png"' in response.text
+        'property="og:image" content="http://testserver/og-image.png?lang=ru"'
+        in response.text
+    )
+    assert (
+        'property="og:image:alt" content="QAZ.FUND: найти, проверить, сравнить '
+        'и подготовить программу поддержки"' in response.text
     )
     assert 'name="twitter:card" content="summary_large_image"' in response.text
     assert "startAnalytics" not in rendered
@@ -3675,7 +3680,8 @@ def test_public_insights_page_renders_avds_charts(monkeypatch):
     )
     assert 'name="twitter:card" content="summary_large_image"' in response.text
     assert (
-        'name="twitter:image" content="http://testserver/og-image.png"' in response.text
+        'name="twitter:image" content="http://testserver/og-image.png?lang=ru"'
+        in response.text
     )
     assert 'href="/insights?lang=kk"' in response.text
     assert (
@@ -3972,10 +3978,12 @@ def test_funder_page_renders_public_profile(monkeypatch):
         'aria-current="page">RU</a>' in response.text
     )
     assert (
-        'property="og:image" content="http://testserver/og-image.png"' in response.text
+        'property="og:image" content="http://testserver/og-image.png?lang=ru"'
+        in response.text
     )
     assert (
-        'name="twitter:image" content="http://testserver/og-image.png"' in response.text
+        'name="twitter:image" content="http://testserver/og-image.png?lang=ru"'
+        in response.text
     )
     assert "googletagmanager.com" not in response.text
     assert "mc.yandex.ru" not in response.text
@@ -4167,6 +4175,19 @@ def test_og_image_route_supports_get_and_head() -> None:
     png_head_response = client.head("/og-image.png")
     assert png_head_response.status_code == 200
     assert png_head_response.headers["content-type"].startswith("image/png")
+
+    localized = {
+        lang: client.get("/og-image.png", params={"lang": lang}).content
+        for lang in ("ru", "kk", "en")
+    }
+    assert all(
+        payload.startswith(b"\x89PNG\r\n\x1a\n") for payload in localized.values()
+    )
+    assert len(set(localized.values())) == 3
+    assert (
+        client.get("/og-image.png", params={"lang": "invalid"}).content
+        == localized["ru"]
+    )
 
 
 def test_opportunity_open_graph_cards_are_unique_raster_assets(monkeypatch) -> None:

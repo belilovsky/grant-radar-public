@@ -83,9 +83,15 @@ def test_status_page_has_share_preview_metadata() -> None:
 
     assert 'property="og:type" content="website"' in html
     assert 'property="og:url" content="https://qaz.fund/status?lang=en"' in html
-    assert 'property="og:image" content="https://qaz.fund/og-image.png"' in html
+    assert 'property="og:image" content="https://qaz.fund/og-image.png?lang=en"' in html
+    assert (
+        'property="og:image:alt" content="QAZ.FUND: find, verify, compare and '
+        'prepare a support programme"' in html
+    )
     assert 'name="twitter:card" content="summary_large_image"' in html
-    assert 'name="twitter:image" content="https://qaz.fund/og-image.png"' in html
+    assert (
+        'name="twitter:image" content="https://qaz.fund/og-image.png?lang=en"' in html
+    )
 
 
 def test_status_page_localizes_source_names_in_kazakh() -> None:
