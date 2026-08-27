@@ -56,6 +56,8 @@ services:
       QAZLAKE_PRODUCT_FEED_TOKEN: ${QAZLAKE_PRODUCT_FEED_TOKEN:-}
     extra_hosts:
       - "host.docker.internal:host-gateway"
+    volumes:
+      - qazlake_cursor:/var/lib/grant-radar
     command: ["python", "-m", "scripts.sync_qazlake_opportunities", "--loop-seconds", "900"]
     healthcheck:
       test:
@@ -70,3 +72,4 @@ services:
 
 volumes:
   pgdata: {}
+  qazlake_cursor: {}
