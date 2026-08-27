@@ -27,7 +27,9 @@ RUN sha256sum -c vendor/qazstack-1.41.2.sha256 \
 
 COPY --chown=qazfund:qazfund . .
 
-RUN chmod +x scripts/entrypoint.sh
+RUN mkdir -p /var/lib/grant-radar \
+    && chown qazfund:qazfund /var/lib/grant-radar \
+    && chmod +x scripts/entrypoint.sh
 
 EXPOSE 8000
 
