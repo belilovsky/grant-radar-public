@@ -9,6 +9,8 @@ from __future__ import annotations
 
 import argparse
 import asyncio
+import contextlib
+import io
 import json
 import logging
 import sys
@@ -45,21 +47,33 @@ async def run(selected: set[str] | None) -> int:
             continue
         parser = parser_type()
         try:
-            async with parser:
-                async for record in parser.fetch():
-                    payload = _jsonable(record)
-                    if not payload["source_id"]:
-                        payload["source_id"] = source_id
-                    print(
-                        json.dumps(
-                            payload,
-                            ensure_ascii=False,
-                            separators=(",", ":"),
-                            default=str,
-                        ),
-                        flush=True,
-                    )
-                    emitted += 1
+            # A few legacy parsers write progress/debugging text directly to
+            # stdout.  The adapter boundary is JSONL-only, so keep that
+            # unstructured output in the diagnostic channel rather than
+            # allowing it to corrupt QazPipe's transport stream.
+            parser_stdout = io.StringIO()
+            payloads: list[dict[str, Any]] = []
+            with contextlib.redirect_stdout(parser_stdout):
+                async with parser:
+                    async for record in parser.fetch():
+                        payload = _jsonable(record)
+                        if not payload["source_id"]:
+                            payload["source_id"] = source_id
+                        payloads.append(payload)
+            diagnostic = parser_stdout.getvalue().strip()
+            if diagnostic:
+                print(f"adapter source stdout redirected: {source_id}: {diagnostic[-1000:]}", file=sys.stderr)
+            for payload in payloads:
+                print(
+                    json.dumps(
+                        payload,
+                        ensure_ascii=False,
+                        separators=(",", ":"),
+                        default=str,
+                    ),
+                    flush=True,
+                )
+                emitted += 1
         except Exception as exc:  # The owning QazPipe run must fail visibly.
             print(f"adapter source failed: {source_id}: {type(exc).__name__}", file=sys.stderr)
             return 1
