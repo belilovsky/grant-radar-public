@@ -52,6 +52,10 @@ services:
       GRANT_RADAR_MAX_SOURCE_CONCURRENCY: ${GRANT_RADAR_MAX_SOURCE_CONCURRENCY:-4}
       GRANT_RADAR_WORKER_HEARTBEAT_PATH: /tmp/grant-radar-worker-heartbeat
       GRANT_RADAR_WORKER_HEARTBEAT_INTERVAL_SECONDS: "15"
+      QAZLAKE_QAZFUND_FEED_URL: ${QAZLAKE_QAZFUND_FEED_URL:-}
+      QAZLAKE_PRODUCT_FEED_TOKEN: ${QAZLAKE_PRODUCT_FEED_TOKEN:-}
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
     command: ["python", "-m", "scripts.sync_qazlake_opportunities", "--loop-seconds", "900"]
     healthcheck:
       test:

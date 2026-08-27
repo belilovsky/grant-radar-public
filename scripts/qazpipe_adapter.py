@@ -50,7 +50,15 @@ async def run(selected: set[str] | None) -> int:
                     payload = _jsonable(record)
                     if not payload["source_id"]:
                         payload["source_id"] = source_id
-                    print(json.dumps(payload, ensure_ascii=False, separators=(",", ":")), flush=True)
+                    print(
+                        json.dumps(
+                            payload,
+                            ensure_ascii=False,
+                            separators=(",", ":"),
+                            default=str,
+                        ),
+                        flush=True,
+                    )
                     emitted += 1
         except Exception as exc:  # The owning QazPipe run must fail visibly.
             print(f"adapter source failed: {source_id}: {type(exc).__name__}", file=sys.stderr)
