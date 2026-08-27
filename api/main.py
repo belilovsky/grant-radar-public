@@ -2428,6 +2428,10 @@ async def llms_txt(request: Request) -> Response:
     opportunities_ndjson_compact = _public_url(
         request, root_path, "/opportunities.ndjson?compact=true"
     )
+    comparison_json = _public_url(request, root_path, "/compare.json")
+    opportunity_history_json = _public_url(
+        request, root_path, "/opportunities/{id}/history.json"
+    )
     digest = _public_url(request, root_path, "/digest")
     return Response(
         "\n".join(
@@ -2461,7 +2465,10 @@ async def llms_txt(request: Request) -> Response:
                 f"- Media JSON: {media_json}",
                 f"- Media JSON Feed: {media_feed}",
                 f"- Media RSS: {media_rss}",
-                "- Comparison JSON template: /compare.json?ids={id},{id}&lang=ru|kk|en",
+                (
+                    f"- Comparison JSON template: {comparison_json}"
+                    "?ids={id},{id}&lang=ru|kk|en"
+                ),
                 f"- Terms of use: {terms}",
                 f"- Data policy: {data_policy}",
                 f"- Official Kazakhstan data routes: {data_routes}",
@@ -2474,12 +2481,15 @@ async def llms_txt(request: Request) -> Response:
                 f"- Compact Opportunities NDJSON: {opportunities_ndjson_compact}",
                 "- Opportunity detail JSON: /opportunities/{id}?lang=kk|ru|en",
                 (
-                    "- Opportunity history JSON: /opportunities/{id}/history.json"
+                    f"- Opportunity history JSON: {opportunity_history_json}"
                     "?lang=kk|ru|en&limit={n}"
                 ),
                 f"- Digest JSON: {digest}",
                 f"- Insights JSON: {insights_json}?lang=ru|kk|en",
-                "- Comparison JSON: /compare.json?ids={id},{id}&lang=ru|kk|en",
+                (
+                    f"- Comparison JSON: {comparison_json}"
+                    "?ids={id},{id}&lang=ru|kk|en"
+                ),
                 f"- Notification contract JSON: {notification_contract_url}",
                 f"- Source onboarding contract JSON: {source_onboarding_url}",
                 f"- Kazakhstan data-route contract JSON: {data_routes_contract_url}",

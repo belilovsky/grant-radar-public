@@ -5,6 +5,7 @@ This program has no scheduler, database writes or network policy of its own.
 QazPipe invokes it through its locked runner and owns retries, delivery and
 run evidence. Stdout is strictly JSONL so it is safe as an adapter boundary.
 """
+
 from __future__ import annotations
 
 import argparse
@@ -12,13 +13,18 @@ import asyncio
 import json
 import logging
 import sys
-from typing import Any
+from collections.abc import Callable
+from typing import Any, cast
 
-from sources import PARSERS
+from sources import PARSERS, BaseSourceParser
 
 
 def _jsonable(record: Any) -> dict[str, Any]:
-    dump = record.model_dump(mode="json") if hasattr(record, "model_dump") else dict(record.__dict__)
+    dump = (
+        record.model_dump(mode="json")
+        if hasattr(record, "model_dump")
+        else dict(record.__dict__)
+    )
     # Queue-oriented GrantRecord adapters and rich Opportunity adapters share
     # one transport contract without changing their product-local classes.
     dump.setdefault("source", str(getattr(record, "source", "")))
@@ -30,17 +36,26 @@ def _jsonable(record: Any) -> dict[str, Any]:
     dump.setdefault("tags", [])
     dump.setdefault("languages", [])
     raw = dump.get("raw") if isinstance(dump.get("raw"), dict) else {}
-    external_id = str(raw.get("external_id") or raw.get("reference") or getattr(record, "external_id", "")).strip()
+    external_id = str(
+        raw.get("external_id")
+        or raw.get("reference")
+        or getattr(record, "external_id", "")
+    ).strip()
     if not external_id:
         external_id = str(getattr(record, "url", "")).strip()
     if not external_id:
         raise ValueError("source record has no stable external identity")
-    return {"source_id": str(getattr(record, "source", "")).strip(), "external_id": external_id, "opportunity": dump}
+    return {
+        "source_id": str(getattr(record, "source", "")).strip(),
+        "external_id": external_id,
+        "opportunity": dump,
+    }
 
 
 async def run(selected: set[str] | None) -> int:
     emitted = 0
-    for source_id, parser_type in PARSERS.items():
+    parser_factories = cast(dict[str, Callable[[], BaseSourceParser]], PARSERS)
+    for source_id, parser_type in parser_factories.items():
         if selected and source_id not in selected:
             continue
         parser = parser_type()
@@ -61,7 +76,10 @@ async def run(selected: set[str] | None) -> int:
                     )
                     emitted += 1
         except Exception as exc:  # The owning QazPipe run must fail visibly.
-            print(f"adapter source failed: {source_id}: {type(exc).__name__}", file=sys.stderr)
+            print(
+                f"adapter source failed: {source_id}: {type(exc).__name__}",
+                file=sys.stderr,
+            )
             return 1
     print(f"adapter emitted={emitted}", file=sys.stderr)
     return 0

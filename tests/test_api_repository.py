@@ -806,15 +806,13 @@ def test_marketing_endpoints_are_exposed(monkeypatch):
     assert "Opportunity detail JSON: /opportunities/{id}?lang=kk|ru|en" in llms.text
     assert (
         "Opportunity history JSON: "
-        "/opportunities/{id}/history.json?lang=kk|ru|en&limit={n}"
+        "http://testserver/opportunities/{id}/history.json?lang=kk|ru|en&limit={n}"
     ) in llms.text
     assert "Digest JSON: http://testserver/digest" in llms.text
     assert (
-        "Comparison JSON template: /compare.json?ids={id},{id}&lang=ru|kk|en"
-        in llms.text
+        "Comparison JSON template: "
+        "http://testserver/compare.json?ids={id},{id}&lang=ru|kk|en" in llms.text
     )
-    assert "http://testserver/opportunities/{id}" not in llms.text
-    assert "http://testserver/compare.json?ids={id}" not in llms.text
     assert "Opportunity page: /opportunity/{id}?lang=kk|ru|en" in llms.text
     assert "Funder page: /funder/{slug}?lang=kk|ru|en" in llms.text
     assert "Insights page: /insights?lang=kk|ru|en" in llms.text
