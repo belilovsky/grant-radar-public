@@ -52,8 +52,8 @@
         "docs/ECOSYSTEM_INTEGRATION.md",
         "https://qaz.fund/.well-known/qazpipe-source.json"
       ],
-      "qazpipe": false,
-      "qazlake": false
+      "qazpipe": true,
+      "qazlake": true
     },
     "compute": {
       "mode": "optional",
