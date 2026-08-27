@@ -71,14 +71,21 @@ def main() -> int:
     args = parser.parse_args()
     if args.loop_seconds < 0:
         raise RuntimeError("--loop-seconds must be non-negative")
+    heartbeat = os.environ.get("GRANT_RADAR_WORKER_HEARTBEAT_PATH", "").strip()
+    heartbeat_interval = max(1, int(os.getenv("GRANT_RADAR_WORKER_HEARTBEAT_INTERVAL_SECONDS", "15")))
     while True:
         sync_once()
-        heartbeat = os.environ.get("GRANT_RADAR_WORKER_HEARTBEAT_PATH", "").strip()
         if heartbeat:
             Path(heartbeat).touch()
         if not args.loop_seconds:
             return 0
-        time.sleep(args.loop_seconds)
+        remaining = args.loop_seconds
+        while remaining > 0:
+            delay = min(heartbeat_interval, remaining)
+            time.sleep(delay)
+            remaining -= delay
+            if heartbeat:
+                Path(heartbeat).touch()
 
 
 if __name__ == "__main__":
