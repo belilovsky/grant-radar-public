@@ -1,10 +1,11 @@
 #!/usr/bin/env python3
 """Idempotently consume the protected QazLake QAZ.FUND projection."""
+
 from __future__ import annotations
 
+import argparse
 import json
 import os
-import argparse
 import time
 from datetime import date, datetime
 from pathlib import Path
@@ -30,16 +31,49 @@ def _cursor(path: Path) -> int:
 def _store_cursor(path: Path, cursor: int) -> None:
     path.parent.mkdir(parents=True, exist_ok=True)
     temporary = path.with_suffix(".tmp")
-    temporary.write_text(json.dumps({"schema_version": "qazfund-qazlake-cursor/v1", "cursor": cursor}) + "\n", encoding="utf-8")
+    temporary.write_text(
+        json.dumps({"schema_version": "qazfund-qazlake-cursor/v1", "cursor": cursor})
+        + "\n",
+        encoding="utf-8",
+    )
     temporary.replace(path)
 
 
 def _record(item: dict) -> dict:
-    result = {key: item.get(key) for key in ("source", "source_url", "type", "title", "summary", "funder", "amount_min", "amount_max", "currency", "eligibility", "tags", "languages", "score", "opportunity_status", "lifecycle")}
-    result["raw"] = {"external_id": item["external_id"], "qazlake_content_hash": item["content_hash_sha256"], "qazlake_ingested_at": item["ingested_at"]}
+    result = {
+        key: item.get(key)
+        for key in (
+            "source",
+            "source_url",
+            "type",
+            "title",
+            "summary",
+            "funder",
+            "amount_min",
+            "amount_max",
+            "currency",
+            "eligibility",
+            "tags",
+            "languages",
+            "score",
+            "opportunity_status",
+            "lifecycle",
+        )
+    }
+    result["raw"] = {
+        "external_id": item["external_id"],
+        "qazlake_content_hash": item["content_hash_sha256"],
+        "qazlake_ingested_at": item["ingested_at"],
+    }
     if item.get("deadline"):
         result["deadline"] = date.fromisoformat(str(item["deadline"]))
-    result["discovered_at"] = datetime.fromisoformat(str(item["discovered_at"]).replace("Z", "+00:00")).replace(tzinfo=None) if item.get("discovered_at") else datetime.utcnow()
+    result["discovered_at"] = (
+        datetime.fromisoformat(
+            str(item["discovered_at"]).replace("Z", "+00:00")
+        ).replace(tzinfo=None)
+        if item.get("discovered_at")
+        else datetime.utcnow()
+    )
     return result
 
 
@@ -47,11 +81,19 @@ def sync_once() -> int:
     endpoint = _env("QAZLAKE_QAZFUND_FEED_URL").rstrip("/")
     token = _env("QAZLAKE_PRODUCT_FEED_TOKEN")
     database_url = _env("GRANT_RADAR_DB_URL")
-    cursor_path = Path(os.getenv("QAZFUND_QAZLAKE_CURSOR_PATH", "/var/lib/grant-radar/qazlake-opportunities.cursor.json"))
+    cursor_path = Path(
+        os.getenv(
+            "QAZFUND_QAZLAKE_CURSOR_PATH",
+            "/var/lib/grant-radar/qazlake-opportunities.cursor.json",
+        )
+    )
     cursor = _cursor(cursor_path)
     repository = SqlRepository(database_url)
     while True:
-        request = Request(f"{endpoint}?cursor={cursor}&limit=200", headers={"X-QazLake-Feed-Token": token, "Accept": "application/json"})
+        request = Request(
+            f"{endpoint}?cursor={cursor}&limit=200",
+            headers={"X-QazLake-Feed-Token": token, "Accept": "application/json"},
+        )
         with urlopen(request, timeout=20) as response:
             payload = json.loads(response.read().decode("utf-8"))
         if payload.get("schema_version") != "qazlake.qazfund-opportunity-feed/v1":
@@ -72,7 +114,9 @@ def main() -> int:
     if args.loop_seconds < 0:
         raise RuntimeError("--loop-seconds must be non-negative")
     heartbeat = os.environ.get("GRANT_RADAR_WORKER_HEARTBEAT_PATH", "").strip()
-    heartbeat_interval = max(1, int(os.getenv("GRANT_RADAR_WORKER_HEARTBEAT_INTERVAL_SECONDS", "15")))
+    heartbeat_interval = max(
+        1, int(os.getenv("GRANT_RADAR_WORKER_HEARTBEAT_INTERVAL_SECONDS", "15"))
+    )
     while True:
         sync_once()
         if heartbeat:
