@@ -2428,6 +2428,10 @@ async def llms_txt(request: Request) -> Response:
     opportunities_ndjson_compact = _public_url(
         request, root_path, "/opportunities.ndjson?compact=true"
     )
+    comparison_json = _public_url(request, root_path, "/compare.json")
+    opportunity_history_json = _public_url(
+        request, root_path, "/opportunities/{id}/history.json"
+    )
     digest = _public_url(request, root_path, "/digest")
     return Response(
         "\n".join(
@@ -2461,7 +2465,7 @@ async def llms_txt(request: Request) -> Response:
                 f"- Media JSON: {media_json}",
                 f"- Media JSON Feed: {media_feed}",
                 f"- Media RSS: {media_rss}",
-                "- Comparison JSON template: /compare.json?ids={id},{id}&lang=ru|kk|en",
+                f"- Comparison JSON: {comparison_json}?ids={{id}},{{id}}&lang=ru|kk|en",
                 f"- Terms of use: {terms}",
                 f"- Data policy: {data_policy}",
                 f"- Official Kazakhstan data routes: {data_routes}",
@@ -2473,6 +2477,7 @@ async def llms_txt(request: Request) -> Response:
                 f"- Opportunities NDJSON: {opportunities_ndjson}",
                 f"- Compact Opportunities NDJSON: {opportunities_ndjson_compact}",
                 "- Opportunity detail JSON: /opportunities/{id}?lang=kk|ru|en",
+                f"- Opportunity history JSON: {opportunity_history_json}?lang=kk|ru|en&limit={{n}}",
                 (
                     "- Opportunity history JSON: /opportunities/{id}/history.json"
                     "?lang=kk|ru|en&limit={n}"
