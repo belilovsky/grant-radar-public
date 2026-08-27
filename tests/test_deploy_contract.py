@@ -76,6 +76,14 @@ def test_browser_ci_uses_the_prebuilt_browser_runner_without_root_escalation() -
     assert "playwright install --with-deps" not in workflow
 
 
+def test_qdev_artifact_upload_uses_broker_scoped_head_identity() -> None:
+    uploader = (ROOT / ".github" / "scripts" / "qdev-upload-artifact.sh").read_text()
+
+    assert "${QDEV_REPOSITORY:?}/${QDEV_HEAD_SHA:?}/${QDEV_JOB_ID:?}" in uploader
+    assert "${GITHUB_REPOSITORY:?}/${GITHUB_SHA:?}/${QDEV_JOB_ID:?}" not in uploader
+    assert "invalid qdev artifact name" in uploader
+
+
 def test_runner_smoke_has_qdev_concurrency_and_cancellation() -> None:
     workflow = (ROOT / ".github" / "workflows" / "runner-smoke.yml").read_text()
 
