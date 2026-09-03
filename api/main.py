@@ -134,6 +134,12 @@ from api.runtime_config import database_url as _database_url
 from api.runtime_config import public_base_url as _public_base_url
 from api.source_onboarding import source_onboarding_contract
 from api.status_page import render_status_page
+from api.zh_hans import (
+    canonical_redirect_path as _zh_hans_canonical_redirect_path,
+    render_landing as _render_zh_hans_landing,
+    zh_hans_enabled as _zh_hans_enabled,
+    zh_hans_readiness as _zh_hans_readiness,
+)
 from core.content_safety import is_publication_blocked
 from core.decision_support import assess_profile, program_truth
 from core.geofit import (
@@ -194,6 +200,11 @@ log = logging.getLogger(__name__)
 
 @asynccontextmanager
 async def _lifespan(app: FastAPI):
+    # A dark deployment is intentionally allowed without an owner receipt.
+    # Enabling the public namespace is not: validate the immutable inputs before
+    # accepting a single request, rather than consulting QMT while rendering.
+    if _zh_hans_enabled():
+        _zh_hans_readiness(require_owner_receipt=True)
     refresh_task = asyncio.create_task(_periodic_public_cache_refresh())
     try:
         yield
@@ -352,6 +363,13 @@ async def add_security_headers(
     request: Request,
     call_next: Callable[[Request], Awaitable[Response]],
 ) -> Response:
+    if _zh_hans_enabled():
+        redirect_path = _zh_hans_canonical_redirect_path(
+            request.url.path,
+            request.query_params.get("lang"),
+        )
+        if redirect_path and request.url.path != redirect_path:
+            return RedirectResponse(url=redirect_path, status_code=status.HTTP_308_PERMANENT_REDIRECT)
     response = await call_next(request)
     response = await externalize_html_response(request, response)
     return apply_public_headers(request, response)
@@ -1434,17 +1452,20 @@ def _render_sitemap_xml(base_url: str) -> str:
     )
     funders = _build_funder_index(opportunities)
 
+    root_alternates = {
+        "kk": root_kk,
+        "ru": root_ru,
+        "en": root_en,
+        "x-default": root_ru,
+    }
+    if _zh_hans_enabled():
+        root_alternates["zh-Hans"] = _public_url_from_base(base_url, "/zh-hans/")
     rows: list[str] = [
         _sitemap_entry(
             root_ru,
             changefreq="daily",
             priority="1.0",
-            alternates={
-                "kk": root_kk,
-                "ru": root_ru,
-                "en": root_en,
-                "x-default": root_ru,
-            },
+            alternates=root_alternates,
         ),
     ]
     # Keep the static story pages here only once. Insights and the policy
@@ -1607,6 +1628,20 @@ async def root(request: Request) -> HTMLResponse:
             lang=dashboard_lang,
             site_origin=site_origin,
         )
+    )
+
+
+@app.api_route(
+    "/zh-hans/",
+    methods=["GET", "HEAD"],
+    response_class=HTMLResponse,
+    include_in_schema=False,
+)
+async def zh_hans_landing(request: Request) -> HTMLResponse:
+    if not _zh_hans_enabled():
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND)
+    return HTMLResponse(
+        _render_zh_hans_landing(site_origin=_site_origin(request, _root_path(request)))
     )
 
 

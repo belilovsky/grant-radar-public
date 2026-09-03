@@ -47,8 +47,8 @@ def test_root_externalizes_large_assets_and_keeps_html_below_budget(
 def test_route_registry_covers_all_fastapi_surfaces_and_head_contracts() -> None:
     coverage = route_coverage(build_route_registry(app))
 
-    assert coverage["route_count"] == 90
-    assert coverage["covered"] == coverage["total"] == 146
+    assert coverage["route_count"] == 91
+    assert coverage["covered"] == coverage["total"] == 148
     assert coverage["percent"] == 100.0
     assert coverage["gaps"] == []
     assert coverage["languages"] == ["ru", "kk", "en"]

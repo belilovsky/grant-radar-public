@@ -1,0 +1,14 @@
+{
+  "schema_version": "qaz-fund.zh-hans-manifest.v1",
+  "project": "qaz-fund",
+  "source_sha": "pending-release-commit",
+  "source_lang": "ru",
+  "target_lang": "zh-Hans",
+  "catalog_sha256": "bc41aca948216211ef38bebe5a9af34b442390d8367f0a3f8cb4443870056893",
+  "bundle_sha256": "bc41aca948216211ef38bebe5a9af34b442390d8367f0a3f8cb4443870056893",
+  "qazstack_version": "1.53.6",
+  "qazstack_contract_sha256": "c309401ed21a2488ab61478d6db7380544b07bf83b8cf35399f128b0888af031",
+  "coverage": {"required": 6, "translated": 6},
+  "review_state": "pending-owner-receipt",
+  "owner_receipt": null
+}

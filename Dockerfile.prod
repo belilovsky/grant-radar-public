@@ -15,9 +15,9 @@ RUN apt-get update && apt-get upgrade -y \
     && useradd --uid 10001 --gid qazfund --create-home --shell /usr/sbin/nologin qazfund
 
 COPY requirements-prod.txt ./
-COPY vendor/qazstack-1.41.2-py3-none-any.whl vendor/qazstack-1.41.2-py3-none-any.whl
-COPY vendor/qazstack-1.41.2.sha256 vendor/qazstack-1.41.2.sha256
-RUN sha256sum -c vendor/qazstack-1.41.2.sha256 \
+COPY vendor/qazstack-1.53.6-py3-none-any.whl vendor/qazstack-1.53.6-py3-none-any.whl
+COPY vendor/qazstack-1.53.6.sha256 vendor/qazstack-1.53.6.sha256
+RUN sha256sum -c vendor/qazstack-1.53.6.sha256 \
     && pip install --upgrade pip \
     && pip install setuptools==80.9.0 \
     && pip install -r requirements-prod.txt \
