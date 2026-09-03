@@ -7,7 +7,7 @@ ENV PYTHONUNBUFFERED=1 \
 WORKDIR /app
 
 RUN apt-get update && apt-get install -y --no-install-recommends \
-        build-essential curl ca-certificates \
+        build-essential curl ca-certificates gnupg \
     && rm -rf /var/lib/apt/lists/* \
     && groupadd --gid 10001 qazfund \
     && useradd --uid 10001 --gid qazfund --create-home --shell /usr/sbin/nologin qazfund

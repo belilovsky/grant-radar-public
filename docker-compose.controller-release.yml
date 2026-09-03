@@ -1,0 +1,17 @@
+# Controller-only overlay.  The controller host agent supplies only immutable
+# digest references and never invokes a local build.
+services:
+  api:
+    image: ${QAZ_FUND_IMAGE:?QAZ_FUND_IMAGE must be an immutable digest reference}
+    environment:
+      APP_REVISION: ${QDEV_RELEASE_SOURCE_SHA:?QDEV_RELEASE_SOURCE_SHA is required}
+      APP_SOURCE_DIRTY: "false"
+      APP_IMAGE_DIGEST: ${QDEV_RELEASE_ARTIFACT_DIGEST:?QDEV_RELEASE_ARTIFACT_DIGEST is required}
+      APP_ARTIFACT_DIGEST: ${QDEV_RELEASE_ARTIFACT_DIGEST:?QDEV_RELEASE_ARTIFACT_DIGEST is required}
+  worker:
+    image: ${QAZ_FUND_IMAGE:?QAZ_FUND_IMAGE must be an immutable digest reference}
+    environment:
+      APP_REVISION: ${QDEV_RELEASE_SOURCE_SHA:?QDEV_RELEASE_SOURCE_SHA is required}
+      APP_SOURCE_DIRTY: "false"
+      APP_IMAGE_DIGEST: ${QDEV_RELEASE_ARTIFACT_DIGEST:?QDEV_RELEASE_ARTIFACT_DIGEST is required}
+      APP_ARTIFACT_DIGEST: ${QDEV_RELEASE_ARTIFACT_DIGEST:?QDEV_RELEASE_ARTIFACT_DIGEST is required}
