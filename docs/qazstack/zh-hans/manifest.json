@@ -1,7 +1,7 @@
 {
   "schema_version": "qaz-fund.zh-hans-manifest.v1",
   "project": "qaz-fund",
-  "source_sha": "pending-release-commit",
+  "source_sha": "d03bfe87a7207d34ab22dcc869073b87bc96b95a",
   "source_lang": "ru",
   "target_lang": "zh-Hans",
   "catalog_sha256": "bc41aca948216211ef38bebe5a9af34b442390d8367f0a3f8cb4443870056893",
