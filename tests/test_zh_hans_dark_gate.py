@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+from pathlib import Path
 
 import pytest
 from fastapi.testclient import TestClient
@@ -17,6 +18,19 @@ def test_dark_catalog_is_complete_but_not_owner_approved(monkeypatch) -> None:
     assert readiness["owner_receipt_verified"] is False
     with pytest.raises(RuntimeError, match="owner receipt"):
         zh_hans.zh_hans_readiness(require_owner_receipt=True)
+
+
+def test_canonical_json_matches_shared_cross_language_golden_vectors() -> None:
+    fixture_path = (
+        Path(__file__).parents[1]
+        / "docs/contracts/qmt-canonical-json-golden-vectors.json"
+    )
+    fixture = json.loads(fixture_path.read_text(encoding="utf-8"))
+
+    assert fixture["schemaVersion"] == "qmt.canonical-json-golden-v1"
+    for vector in fixture["vectors"]:
+        assert zh_hans._canonical_json(vector["value"]) == vector["canonical"]
+        assert zh_hans._canonical_digest(vector["value"]) == vector["sha256"]
 
 
 def test_zh_hans_route_stays_dark_when_flag_is_false(monkeypatch) -> None:

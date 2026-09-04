@@ -24,6 +24,10 @@ CATALOG_PATH = ROOT / "docs/qazstack/zh-hans/catalog.json"
 MANIFEST_PATH = ROOT / "docs/qazstack/zh-hans/manifest.json"
 OWNER_RECEIPT_PATH = ROOT / "docs/qazstack/zh-hans/owner-receipt.json"
 OWNER_RECEIPT_SIGNATURE_PATH = ROOT / "docs/qazstack/zh-hans/owner-receipt.json.asc"
+AUTHORIZATION_RECORD_PATH = ROOT / "docs/qazstack/zh-hans/controller-authorization.json"
+AUTHORIZATION_SIGNATURE_PATH = (
+    ROOT / "docs/qazstack/zh-hans/controller-authorization.json.asc"
+)
 QDEV_PUBLIC_KEY_PATH = ROOT / "docs/qazstack/qdev-release-signing-key.asc"
 QAZSTACK_CONTRACT_SHA256 = (
     "c309401ed21a2488ab61478d6db7380544b07bf83b8cf35399f128b0888af031"
@@ -45,16 +49,30 @@ def _sha256(path: Path) -> str:
     return hashlib.sha256(path.read_bytes()).hexdigest()
 
 
+def _utf16_sort_key(value: str) -> bytes:
+    """Return the ECMAScript property-order key used by QMT.
+
+    JavaScript's default string ordering compares UTF-16 code units, while
+    Python orders Unicode code points.  The distinction matters for a catalog
+    key containing a non-BMP character, so encode with surrogatepass and sort
+    the resulting big-endian code units explicitly.
+    """
+
+    return value.encode("utf-16-be", "surrogatepass")
+
+
 def _canonical_json(value: Any) -> str:
     """Match QMT's recursive, UTF-8 canonical JSON representation."""
 
     if isinstance(value, dict):
+        keys = list(value)
+        keys.sort(key=lambda key: _utf16_sort_key(str(key)))
         return (
             "{"
             + ",".join(
                 f"{json.dumps(str(key), ensure_ascii=False, separators=(',', ':'))}:"
                 f"{_canonical_json(value[key])}"
-                for key in sorted(value)
+                for key in keys
             )
             + "}"
         )
@@ -117,11 +135,15 @@ def _parse_expiry(value: object) -> datetime:
     return parsed.astimezone(UTC)
 
 
-def _verify_detached_receipt_signature() -> str:
-    """Verify the pinned QDev signature without loading a user keyring."""
+def _verify_detached_signature(data_path: Path, signature_path: Path) -> str:
+    """Verify a QDev detached signature without loading a user keyring."""
 
-    if not QDEV_PUBLIC_KEY_PATH.is_file() or not OWNER_RECEIPT_SIGNATURE_PATH.is_file():
-        raise RuntimeError("zh-Hans signed owner receipt or QDev public key is missing")
+    if (
+        not QDEV_PUBLIC_KEY_PATH.is_file()
+        or not data_path.is_file()
+        or not signature_path.is_file()
+    ):
+        raise RuntimeError("zh-Hans signed release input or QDev public key is missing")
     with tempfile.TemporaryDirectory(prefix="qazfund-zh-hans-gpg-") as tmpdir:
         keyring = Path(tmpdir) / "trustedkeys.gpg"
         show = subprocess.run(
@@ -168,8 +190,8 @@ def _verify_detached_receipt_signature() -> str:
                 "1",
                 "--keyring",
                 str(keyring),
-                str(OWNER_RECEIPT_SIGNATURE_PATH),
-                str(OWNER_RECEIPT_PATH),
+                str(signature_path),
+                str(data_path),
             ],
             check=False,
             capture_output=True,
@@ -188,6 +210,85 @@ def _verify_detached_receipt_signature() -> str:
         if verified.returncode or not valid:
             raise RuntimeError("zh-Hans owner receipt signature is invalid")
     return QDEV_SIGNING_FINGERPRINT
+
+
+def _verify_detached_receipt_signature() -> str:
+    return _verify_detached_signature(OWNER_RECEIPT_PATH, OWNER_RECEIPT_SIGNATURE_PATH)
+
+
+_FORBIDDEN_RELEASE_FIELDS = {
+    "catalog",
+    "sourcecatalog",
+    "translatedcatalog",
+    "rawtext",
+    "text",
+    "translation",
+    "translations",
+    "secret",
+    "secrets",
+    "credential",
+    "credentials",
+    "token",
+    "tokens",
+    "password",
+    "passwords",
+    "cookie",
+    "cookies",
+}
+
+
+def _contains_forbidden_release_field(value: Any) -> bool:
+    if isinstance(value, dict):
+        return any(
+            str(key).lower() in _FORBIDDEN_RELEASE_FIELDS
+            or _contains_forbidden_release_field(item)
+            for key, item in value.items()
+        )
+    if isinstance(value, list):
+        return any(_contains_forbidden_release_field(item) for item in value)
+    return False
+
+
+def _verify_controller_authorization(
+    approval: dict[str, Any], expiry: datetime
+) -> bool:
+    """Bind and cryptographically verify the controller authorization record."""
+
+    signature_digest = approval.get("authorizationSignatureDigest")
+    authorization_digest = approval.get("authorizationDigest")
+    if (
+        not AUTHORIZATION_RECORD_PATH.is_file()
+        or not AUTHORIZATION_SIGNATURE_PATH.is_file()
+        or not isinstance(signature_digest, str)
+        or not isinstance(authorization_digest, str)
+        or not _is_sha256(signature_digest)
+        or not _is_digest(authorization_digest)
+    ):
+        return False
+    try:
+        authorization = _load_json(AUTHORIZATION_RECORD_PATH)
+        if _contains_forbidden_release_field(authorization):
+            return False
+        if authorization.get("reviewHead") != approval.get("reviewHead"):
+            return False
+        authorization_expiry = _parse_expiry(authorization.get("expiresAt"))
+        if authorization_expiry != expiry:
+            return False
+        if _canonical_digest(authorization) != authorization_digest.removeprefix(
+            "sha256:"
+        ):
+            return False
+        if _sha256(AUTHORIZATION_SIGNATURE_PATH) != signature_digest:
+            return False
+        return (
+            _verify_detached_signature(
+                AUTHORIZATION_RECORD_PATH,
+                AUTHORIZATION_SIGNATURE_PATH,
+            )
+            == QDEV_SIGNING_FINGERPRINT
+        )
+    except (OSError, RuntimeError, json.JSONDecodeError):
+        return False
 
 
 def _verify_v2_receipt(manifest: dict[str, Any]) -> bool:
@@ -257,6 +358,7 @@ def _verify_v2_receipt(manifest: dict[str, Any]) -> bool:
         or not isinstance(approval.get("url"), str)
         or not approval["url"].startswith("https://")
         or not _is_digest(authorization_digest)
+        or not _is_sha256(approval.get("authorizationSignatureDigest"))
     ):
         return False
     runtime_source = os.environ.get("QDEV_SOURCE_SHA", "").strip().lower()
@@ -266,6 +368,8 @@ def _verify_v2_receipt(manifest: dict[str, Any]) -> bool:
         now = datetime.now(UTC)
         expiry = _parse_expiry(approval.get("expiresAt"))
         if expiry <= now or expiry > now + timedelta(hours=24):
+            return False
+        if not _verify_controller_authorization(approval, expiry):
             return False
         return _verify_detached_receipt_signature() == QDEV_SIGNING_FINGERPRINT
     except (OSError, RuntimeError):
