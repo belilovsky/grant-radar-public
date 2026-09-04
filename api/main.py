@@ -134,12 +134,10 @@ from api.runtime_config import database_url as _database_url
 from api.runtime_config import public_base_url as _public_base_url
 from api.source_onboarding import source_onboarding_contract
 from api.status_page import render_status_page
-from api.zh_hans import (
-    canonical_redirect_path as _zh_hans_canonical_redirect_path,
-    render_landing as _render_zh_hans_landing,
-    zh_hans_enabled as _zh_hans_enabled,
-    zh_hans_readiness as _zh_hans_readiness,
-)
+from api.zh_hans import canonical_redirect_path as _zh_hans_canonical_redirect_path
+from api.zh_hans import render_landing as _render_zh_hans_landing
+from api.zh_hans import zh_hans_enabled as _zh_hans_enabled
+from api.zh_hans import zh_hans_readiness as _zh_hans_readiness
 from core.content_safety import is_publication_blocked
 from core.decision_support import assess_profile, program_truth
 from core.geofit import (
@@ -369,7 +367,9 @@ async def add_security_headers(
             request.query_params.get("lang"),
         )
         if redirect_path and request.url.path != redirect_path:
-            return RedirectResponse(url=redirect_path, status_code=status.HTTP_308_PERMANENT_REDIRECT)
+            return RedirectResponse(
+                url=redirect_path, status_code=status.HTTP_308_PERMANENT_REDIRECT
+            )
     response = await call_next(request)
     response = await externalize_html_response(request, response)
     return apply_public_headers(request, response)

@@ -2,8 +2,8 @@ from __future__ import annotations
 
 import json
 
-from fastapi.testclient import TestClient
 import pytest
+from fastapi.testclient import TestClient
 
 from api import main as api_main
 from api import zh_hans
@@ -32,6 +32,27 @@ def test_alias_normalization_has_one_safe_destination() -> None:
     assert zh_hans.canonical_redirect_path("/", "zh-SG") == "/zh-hans/"
     assert zh_hans.canonical_redirect_path("/", "zh-TW") is None
     assert zh_hans.canonical_redirect_path("/media", "zh") is None
+
+
+def test_landing_escapes_catalog_copy_and_json_ld(monkeypatch) -> None:
+    """A sealed catalog cannot turn into executable markup at render time."""
+
+    unsafe = {
+        "title": "Title <img src=x onerror=alert(1)>",
+        "description": "Description & details",
+        "eyebrow": "Eyebrow",
+        "headline": '</script><script>alert("x")</script>',
+        "body": "Body",
+        "cta": "Open",
+    }
+    monkeypatch.setattr(zh_hans, "_load_json", lambda _path: unsafe)
+
+    page = zh_hans.render_landing(site_origin="https://qaz.fund")
+
+    assert "<img src=x onerror=alert(1)>" not in page
+    assert "&lt;img src=x onerror=alert(1)&gt;" in page
+    assert "</script><script>alert" not in page
+    assert "\\u003c/script\\u003e" in page
 
 
 def test_v2_receipt_rejects_a_manifest_with_divergent_source_binding(
@@ -71,7 +92,9 @@ def test_v2_receipt_rejects_a_manifest_with_divergent_source_binding(
         encoding="utf-8",
     )
     monkeypatch.setattr(zh_hans, "OWNER_RECEIPT_PATH", receipt_path)
-    monkeypatch.setattr(zh_hans, "OWNER_RECEIPT_SIGNATURE_PATH", tmp_path / "owner-receipt.json.asc")
+    monkeypatch.setattr(
+        zh_hans, "OWNER_RECEIPT_SIGNATURE_PATH", tmp_path / "owner-receipt.json.asc"
+    )
     monkeypatch.setenv("QDEV_SOURCE_SHA", "c" * 40)
 
     manifest = {

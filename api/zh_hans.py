@@ -13,10 +13,10 @@ import os
 import subprocess
 import tempfile
 from datetime import datetime, timedelta, timezone
+from html import escape
 from importlib.resources import files
 from pathlib import Path
 from typing import Any
-
 
 ROOT = Path(__file__).resolve().parents[1]
 CATALOG_PATH = ROOT / "docs/qazstack/zh-hans/catalog.json"
@@ -80,7 +80,15 @@ def _verify_detached_receipt_signature() -> str:
     with tempfile.TemporaryDirectory(prefix="qazfund-zh-hans-gpg-") as tmpdir:
         keyring = Path(tmpdir) / "trustedkeys.gpg"
         show = subprocess.run(
-            ["gpg", "--batch", "--with-colons", "--import-options", "show-only", "--import", str(QDEV_PUBLIC_KEY_PATH)],
+            [
+                "gpg",
+                "--batch",
+                "--with-colons",
+                "--import-options",
+                "show-only",
+                "--import",
+                str(QDEV_PUBLIC_KEY_PATH),
+            ],
             check=False,
             capture_output=True,
             text=True,
@@ -93,7 +101,15 @@ def _verify_detached_receipt_signature() -> str:
         if show.returncode or QDEV_SIGNING_FINGERPRINT not in fingerprints:
             raise RuntimeError("pinned QDev public key fingerprint is invalid")
         imported = subprocess.run(
-            ["gpg", "--batch", "--no-default-keyring", "--keyring", str(keyring), "--import", str(QDEV_PUBLIC_KEY_PATH)],
+            [
+                "gpg",
+                "--batch",
+                "--no-default-keyring",
+                "--keyring",
+                str(keyring),
+                "--import",
+                str(QDEV_PUBLIC_KEY_PATH),
+            ],
             check=False,
             capture_output=True,
             text=True,
@@ -102,8 +118,13 @@ def _verify_detached_receipt_signature() -> str:
             raise RuntimeError("pinned QDev public key could not be imported")
         verified = subprocess.run(
             [
-                "gpgv", "--status-fd", "1", "--keyring", str(keyring),
-                str(OWNER_RECEIPT_SIGNATURE_PATH), str(OWNER_RECEIPT_PATH),
+                "gpgv",
+                "--status-fd",
+                "1",
+                "--keyring",
+                str(keyring),
+                str(OWNER_RECEIPT_SIGNATURE_PATH),
+                str(OWNER_RECEIPT_PATH),
             ],
             check=False,
             capture_output=True,
@@ -150,13 +171,18 @@ def _verify_v2_receipt(manifest: dict[str, Any]) -> bool:
     }
     if any(receipt.get(key) != value for key, value in required.items()):
         return False
-    if approval.get("mode") != "controller-authorization" or not isinstance(approval.get("url"), str):
+    if approval.get("mode") != "controller-authorization" or not isinstance(
+        approval.get("url"), str
+    ):
         return False
     authorization_digest = approval.get("authorizationDigest")
-    if not isinstance(authorization_digest, str) or not authorization_digest.startswith("sha256:"):
+    if not isinstance(authorization_digest, str) or not authorization_digest.startswith(
+        "sha256:"
+    ):
         return False
     if len(authorization_digest) != len("sha256:") + 64 or any(
-        character not in "0123456789abcdef" for character in authorization_digest[len("sha256:") :].lower()
+        character not in "0123456789abcdef"
+        for character in authorization_digest[len("sha256:") :].lower()
     ):
         return False
     if (
@@ -165,7 +191,10 @@ def _verify_v2_receipt(manifest: dict[str, Any]) -> bool:
         or approval.get("reviewHead") != binding.get("sourceSha")
     ):
         return False
-    if binding.get("contractDigest") != QAZSTACK_CONTRACT_SHA256 or binding.get("wheelDigest") != QAZSTACK_WHEEL_SHA256:
+    if (
+        binding.get("contractDigest") != QAZSTACK_CONTRACT_SHA256
+        or binding.get("wheelDigest") != QAZSTACK_WHEEL_SHA256
+    ):
         return False
     if (
         qmt_release.get("tag") != QMT_RELEASE_TAG
@@ -175,7 +204,10 @@ def _verify_v2_receipt(manifest: dict[str, Any]) -> bool:
         or not all(
             str(qmt_release[key]).startswith("sha256:")
             and len(str(qmt_release[key])) == 71
-            and all(character in "0123456789abcdef" for character in str(qmt_release[key])[7:].lower())
+            and all(
+                character in "0123456789abcdef"
+                for character in str(qmt_release[key])[7:].lower()
+            )
             for key in ("runtimeReceiptDigest", "migrationReceiptDigest")
         )
     ):
@@ -201,15 +233,23 @@ def zh_hans_readiness(*, require_owner_receipt: bool) -> dict[str, str | bool]:
     manifest = _load_json(MANIFEST_PATH)
     catalog = _load_json(CATALOG_PATH)
     required_keys = {"title", "description", "eyebrow", "headline", "body", "cta"}
-    if set(catalog) != required_keys or any(not str(catalog[key]).strip() for key in required_keys):
+    if set(catalog) != required_keys or any(
+        not str(catalog[key]).strip() for key in required_keys
+    ):
         raise RuntimeError("zh-Hans catalog coverage is incomplete")
     legacy_manifest = manifest.get("schema_version") == "qaz-fund.zh-hans-manifest.v1"
     canonical_manifest = manifest.get("schemaVersion") == "qmt.catalog-manifest.v1"
     if not legacy_manifest and not canonical_manifest:
         raise RuntimeError("zh-Hans manifest schema is invalid")
     project = manifest.get("project")
-    target = manifest.get("target_lang") if legacy_manifest else manifest.get("targetLang")
-    digest = manifest.get("catalog_sha256") if legacy_manifest else manifest.get("catalogDigest")
+    target = (
+        manifest.get("target_lang") if legacy_manifest else manifest.get("targetLang")
+    )
+    digest = (
+        manifest.get("catalog_sha256")
+        if legacy_manifest
+        else manifest.get("catalogDigest")
+    )
     if project != "qaz-fund" or target != "zh-Hans":
         raise RuntimeError("zh-Hans manifest project or target is invalid")
     if digest != _sha256(CATALOG_PATH):
@@ -217,7 +257,14 @@ def zh_hans_readiness(*, require_owner_receipt: bool) -> dict[str, str | bool]:
     binding = manifest.get("productBinding")
     if canonical_manifest and not isinstance(binding, dict):
         raise RuntimeError("zh-Hans canonical manifest is missing a product binding")
-    contract = manifest.get("qazstack_contract_sha256") if legacy_manifest else binding.get("contractDigest")
+    if canonical_manifest:
+        if not isinstance(binding, dict):
+            raise RuntimeError(
+                "zh-Hans canonical manifest is missing a product binding"
+            )
+        contract = binding.get("contractDigest")
+    else:
+        contract = manifest.get("qazstack_contract_sha256")
     if contract != QAZSTACK_CONTRACT_SHA256:
         raise RuntimeError("zh-Hans manifest has an unexpected QazStack contract")
     if _wheel_contract_sha256() != QAZSTACK_CONTRACT_SHA256:
@@ -225,11 +272,17 @@ def zh_hans_readiness(*, require_owner_receipt: bool) -> dict[str, str | bool]:
     coverage = manifest.get("coverage")
     if legacy_manifest and coverage != {"required": 6, "translated": 6}:
         raise RuntimeError("zh-Hans manifest does not prove full public coverage")
-    if canonical_manifest and coverage != {"required": 6, "present": 6, "complete": True}:
+    if canonical_manifest and coverage != {
+        "required": 6,
+        "present": 6,
+        "complete": True,
+    }:
         raise RuntimeError("zh-Hans manifest does not prove full public coverage")
     receipt_ok = canonical_manifest and _verify_v2_receipt(manifest)
     if require_owner_receipt and not receipt_ok:
-        raise RuntimeError("zh-Hans owner receipt is missing or does not match the catalog")
+        raise RuntimeError(
+            "zh-Hans owner receipt is missing or does not match the catalog"
+        )
     return {
         "enabled": zh_hans_enabled(),
         "catalog_sha256": str(digest),
@@ -256,10 +309,34 @@ def canonical_redirect_path(path: str, query_lang: str | None) -> str | None:
 
 def render_landing(*, site_origin: str) -> str:
     copy = _load_json(CATALOG_PATH)
-    canonical = f"{site_origin.rstrip('/')}/zh-hans/"
-    ru = f"{site_origin.rstrip('/')}/?lang=ru"
-    kk = f"{site_origin.rstrip('/')}/?lang=kk"
-    en = f"{site_origin.rstrip('/')}/?lang=en"
+    origin = site_origin.rstrip("/")
+    canonical_url = f"{origin}/zh-hans/"
+    ru_url = f"{origin}/?lang=ru"
+    kk_url = f"{origin}/?lang=kk"
+    en_url = f"{origin}/?lang=en"
+    raw_copy = {key: str(value) for key, value in copy.items()}
+    safe_copy = {key: escape(value, quote=True) for key, value in raw_copy.items()}
+    schema = (
+        json.dumps(
+            {
+                "@context": "https://schema.org",
+                "@type": "WebPage",
+                "name": raw_copy["headline"],
+                "url": canonical_url,
+                "inLanguage": "zh-Hans",
+                "isPartOf": {
+                    "@type": "WebSite",
+                    "name": "QAZ.FUND",
+                    "url": origin,
+                },
+            },
+            ensure_ascii=False,
+            separators=(",", ":"),
+        )
+        .replace("&", "\\u0026")
+        .replace("<", "\\u003c")
+        .replace(">", "\\u003e")
+    )
     return """<!doctype html>
 <html lang="zh-Hans">
 <head>
@@ -278,7 +355,7 @@ def render_landing(*, site_origin: str) -> str:
   <meta property="og:title" content="{title}">
   <meta property="og:description" content="{description}">
   <meta property="og:url" content="{canonical}">
-  <script type="application/ld+json">{{"@context":"https://schema.org","@type":"WebPage","name":"{headline}","url":"{canonical}","inLanguage":"zh-Hans","isPartOf":{{"@type":"WebSite","name":"QAZ.FUND","url":"{site_origin}"}}}}</script>
+  <script type="application/ld+json">{schema}</script>
 </head>
 <body>
   <main>
@@ -289,10 +366,10 @@ def render_landing(*, site_origin: str) -> str:
   </main>
 </body>
 </html>""".format(
-        **{key: str(value) for key, value in copy.items()},
-        canonical=canonical,
-        ru=ru,
-        kk=kk,
-        en=en,
-        site_origin=site_origin.rstrip("/"),
+        **safe_copy,
+        canonical=escape(canonical_url, quote=True),
+        ru=escape(ru_url, quote=True),
+        kk=escape(kk_url, quote=True),
+        en=escape(en_url, quote=True),
+        schema=schema,
     )
