@@ -135,6 +135,8 @@ from api.runtime_config import public_base_url as _public_base_url
 from api.source_onboarding import source_onboarding_contract
 from api.status_page import render_status_page
 from api.zh_hans import canonical_redirect_path as _zh_hans_canonical_redirect_path
+from api.zh_hans import is_zh_hans_namespace_path as _is_zh_hans_namespace_path
+from api.zh_hans import render_catalog_page as _render_zh_hans_catalog_page
 from api.zh_hans import render_landing as _render_zh_hans_landing
 from api.zh_hans import zh_hans_enabled as _zh_hans_enabled
 from api.zh_hans import zh_hans_readiness as _zh_hans_readiness
@@ -361,15 +363,25 @@ async def add_security_headers(
     request: Request,
     call_next: Callable[[Request], Awaitable[Response]],
 ) -> Response:
-    if _zh_hans_enabled():
-        redirect_path = _zh_hans_canonical_redirect_path(
-            request.url.path,
-            request.query_params.get("lang"),
+    redirect_path = _zh_hans_canonical_redirect_path(
+        request.url.path,
+        request.query_params.get("lang"),
+    )
+    # Dark mode must not leak a Chinese route through the SPA/root fallback.
+    # Conversely, enabled mode normalises aliases before any route handler and
+    # intentionally drops the landing's unsupported query parameters.
+    if not _zh_hans_enabled() and (
+        redirect_path is not None or _is_zh_hans_namespace_path(request.url.path)
+    ):
+        return Response(status_code=status.HTTP_404_NOT_FOUND)
+    if (
+        _zh_hans_enabled()
+        and redirect_path
+        and (request.url.path != redirect_path or bool(request.url.query))
+    ):
+        return RedirectResponse(
+            url=redirect_path, status_code=status.HTTP_308_PERMANENT_REDIRECT
         )
-        if redirect_path and request.url.path != redirect_path:
-            return RedirectResponse(
-                url=redirect_path, status_code=status.HTTP_308_PERMANENT_REDIRECT
-            )
     response = await call_next(request)
     response = await externalize_html_response(request, response)
     return apply_public_headers(request, response)
@@ -1458,8 +1470,6 @@ def _render_sitemap_xml(base_url: str) -> str:
         "en": root_en,
         "x-default": root_ru,
     }
-    if _zh_hans_enabled():
-        root_alternates["zh-Hans"] = _public_url_from_base(base_url, "/zh-hans/")
     rows: list[str] = [
         _sitemap_entry(
             root_ru,
@@ -1468,6 +1478,22 @@ def _render_sitemap_xml(base_url: str) -> str:
             alternates=root_alternates,
         ),
     ]
+    if _zh_hans_enabled():
+        intro_urls = {
+            "ru": _public_url_from_base(base_url, "/ru/intro/"),
+            "kk": _public_url_from_base(base_url, "/kk/intro/"),
+            "en": _public_url_from_base(base_url, "/en/intro/"),
+            "zh-Hans": _public_url_from_base(base_url, "/zh-hans/"),
+        }
+        for lang in ("ru", "kk", "en", "zh-Hans"):
+            rows.append(
+                _sitemap_entry(
+                    intro_urls[lang],
+                    changefreq="weekly",
+                    priority="0.9",
+                    alternates={**intro_urls, "x-default": intro_urls["ru"]},
+                )
+            )
     # Keep the static story pages here only once. Insights and the policy
     # pages receive their canonical entries below with their own cadence.
     for path, priority in (
@@ -1606,6 +1632,141 @@ def _dashboard_initial_source_count() -> int:
     )
 
 
+_INTRO_COPY: dict[str, dict[str, str]] = {
+    "ru": {
+        "title": "QAZ.FUND – открытый каталог поддержки",
+        "description": (
+            "Открытый каталог программ поддержки в Казахстане с официальными источниками "
+            "и условиями."
+        ),
+        "headline": "Найдите подходящую программу поддержки",
+        "body": "Сверяйте условия, сроки и ссылки с официальными источниками перед подачей заявки.",
+        "cta": "Открыть каталог",
+    },
+    "kk": {
+        "title": "QAZ.FUND – ашық қолдау каталогы",
+        "description": (
+            "Қазақстандағы қолдау бағдарламаларының ресми дереккөздері мен шарттары "
+            "көрсетілген ашық каталог."
+        ),
+        "headline": "Өзіңізге сай қолдау бағдарламасын табыңыз",
+        "body": "Өтінім бермес бұрын шарттарды, мерзімдерді және ресми сілтемелерді тексеріңіз.",
+        "cta": "Каталогты ашу",
+    },
+    "en": {
+        "title": "QAZ.FUND – open support catalogue",
+        "description": (
+            "An open catalogue of support programmes in Kazakhstan with official sources "
+            "and eligibility details."
+        ),
+        "headline": "Find a support programme that fits",
+        "body": "Check conditions, deadlines, and official links before submitting an application.",
+        "cta": "Open the catalogue",
+    },
+}
+
+
+def _render_intro_landing(*, lang: str, request: Request) -> str:
+    """Render the source-backed intro quartet without querying translation services."""
+
+    normalized = lang if lang in _INTRO_COPY else "ru"
+    copy = _INTRO_COPY[normalized]
+    root_path = _root_path(request)
+    origin = _public_root_base(request, root_path).rstrip("/")
+    paths = {key: f"/{key}/intro/" for key in ("ru", "kk", "en")}
+    canonical_path = paths[normalized]
+    alternatives = dict(paths)
+    if _zh_hans_enabled():
+        alternatives["zh-Hans"] = "/zh-hans/"
+    alternates = "\n".join(
+        (
+            f'  <link rel="alternate" hreflang="{escape(key, quote=True)}" '
+            f'href="{escape(origin + path, quote=True)}">'
+        )
+        for key, path in (*alternatives.items(), ("x-default", paths["ru"]))
+    )
+    schema = (
+        json.dumps(
+            {
+                "@context": "https://schema.org",
+                "@type": "WebPage",
+                "name": copy["headline"],
+                "url": origin + canonical_path,
+                "inLanguage": normalized,
+                "isPartOf": {"@type": "WebSite", "name": "QAZ.FUND", "url": origin},
+            },
+            ensure_ascii=False,
+            separators=(",", ":"),
+        )
+        .replace("&", "\\u0026")
+        .replace("<", "\\u003c")
+        .replace(">", "\\u003e")
+    )
+    values = {key: escape(value, quote=True) for key, value in copy.items()}
+    return """<!doctype html>
+<html lang="{lang}">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{title}</title>
+  <meta name="description" content="{description}">
+  <link rel="canonical" href="{canonical}">
+{alternates}
+  <meta property="og:type" content="website">
+  <meta property="og:locale" content="{og_locale}">
+  <meta property="og:title" content="{title}">
+  <meta property="og:description" content="{description}">
+  <meta property="og:url" content="{canonical}">
+  <script type="application/ld+json">{schema}</script>
+</head>
+<body>
+  <main>
+    <h1>{headline}</h1>
+    <p>{body}</p>
+    <p><a href="{catalog}">{cta}</a></p>
+  </main>
+</body>
+</html>""".format(
+        **values,
+        lang=normalized,
+        canonical=escape(origin + canonical_path, quote=True),
+        catalog=escape(origin + "/?lang=" + normalized + "#opportunities", quote=True),
+        og_locale={"ru": "ru_RU", "kk": "kk_KZ", "en": "en_US"}[normalized],
+        alternates=alternates,
+        schema=schema,
+    )
+
+
+@app.api_route(
+    "/ru/intro/",
+    methods=["GET", "HEAD"],
+    response_class=HTMLResponse,
+    include_in_schema=False,
+)
+async def ru_intro(request: Request) -> HTMLResponse:
+    return HTMLResponse(_render_intro_landing(lang="ru", request=request))
+
+
+@app.api_route(
+    "/kk/intro/",
+    methods=["GET", "HEAD"],
+    response_class=HTMLResponse,
+    include_in_schema=False,
+)
+async def kk_intro(request: Request) -> HTMLResponse:
+    return HTMLResponse(_render_intro_landing(lang="kk", request=request))
+
+
+@app.api_route(
+    "/en/intro/",
+    methods=["GET", "HEAD"],
+    response_class=HTMLResponse,
+    include_in_schema=False,
+)
+async def en_intro(request: Request) -> HTMLResponse:
+    return HTMLResponse(_render_intro_landing(lang="en", request=request))
+
+
 @app.head("/", include_in_schema=False)
 async def root_head() -> Response:
     return Response(status_code=200)
@@ -1643,6 +1804,24 @@ async def zh_hans_landing(request: Request) -> HTMLResponse:
     return HTMLResponse(
         _render_zh_hans_landing(site_origin=_site_origin(request, _root_path(request)))
     )
+
+
+@app.api_route(
+    "/zh-hans/catalog/",
+    methods=["GET", "HEAD"],
+    response_class=HTMLResponse,
+    include_in_schema=False,
+)
+async def zh_hans_catalog(request: Request) -> HTMLResponse:
+    if not _zh_hans_enabled():
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND)
+    response = HTMLResponse(
+        _render_zh_hans_catalog_page(
+            site_origin=_site_origin(request, _root_path(request))
+        )
+    )
+    response.headers["X-Robots-Tag"] = "noindex, follow"
+    return response
 
 
 @app.api_route(
@@ -3003,7 +3182,7 @@ async def public_release_metadata() -> Response:
     """Expose the immutable revision needed for end-to-end deploy proof."""
 
     evidence = release_evidence_from_env()
-    payload = {
+    payload: dict[str, Any] = {
         "schemaVersion": "qaz-fund-release-v1",
         "service": "qaz-fund",
         # ``revision`` and ``deployed_at`` stay for existing consumers.
@@ -3016,6 +3195,54 @@ async def public_release_metadata() -> Response:
         "builtAt": evidence.built_at,
         "deployedAt": evidence.deployed_at,
     }
+    # Keep the long-standing release contract stable for existing consumers;
+    # append the translation identity only when a release has supplied its
+    # immutable QMT/catalog inputs.  No catalog text is exposed here.
+    if os.environ.get("QMT_RELEASE_SOURCE_SHA", "").strip():
+        qmt_image = os.environ.get("QMT_IMAGE_DIGEST", "").strip().lower()
+        qmt_runtime = os.environ.get("QMT_RUNTIME_RECEIPT_DIGEST", "").strip().lower()
+        qmt_migration = (
+            os.environ.get("QMT_MIGRATION_RECEIPT_DIGEST", "").strip().lower()
+        )
+        catalog_digest = os.environ.get("ZH_HANS_CATALOG_DIGEST", "").strip().lower()
+        bundle_digest = os.environ.get("ZH_HANS_BUNDLE_DIGEST", "").strip().lower()
+        try:
+            zh_readiness = _zh_hans_readiness(require_owner_receipt=False)
+        except (OSError, RuntimeError, ValueError):
+            zh_readiness = {"owner_receipt_verified": False}
+        digest_ok = all(
+            len(value) == 71
+            and value.startswith("sha256:")
+            and all(char in "0123456789abcdef" for char in value[7:])
+            for value in (qmt_image, qmt_runtime, qmt_migration)
+        ) and all(
+            len(value) == 64 and all(char in "0123456789abcdef" for char in value)
+            for value in (catalog_digest, bundle_digest)
+        )
+        payload["zhHans"] = {
+            "enabled": _zh_hans_enabled(),
+            "qmt": {
+                "tag": "v4.4.2",
+                "sourceSha": os.environ.get("QMT_RELEASE_SOURCE_SHA", "")
+                .strip()
+                .lower(),
+                "imageDigest": qmt_image or None,
+                "runtimeReceiptDigest": qmt_runtime or None,
+                "migrationReceiptDigest": qmt_migration or None,
+            },
+            "contractDigest": os.environ.get("QAZSTACK_CONTRACT_DIGEST", "")
+            .strip()
+            .lower()
+            or None,
+            "catalogDigest": catalog_digest or None,
+            "bundleDigest": bundle_digest or None,
+            "ownerReceiptVerified": bool(zh_readiness.get("owner_receipt_verified")),
+            "identityStatus": (
+                "verified"
+                if digest_ok and bool(zh_readiness.get("owner_receipt_verified"))
+                else "unverified"
+            ),
+        }
     return JSONResponse(payload, headers={"Cache-Control": "no-store"})
 
 

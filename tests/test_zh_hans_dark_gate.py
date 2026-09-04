@@ -25,6 +25,18 @@ def test_zh_hans_route_stays_dark_when_flag_is_false(monkeypatch) -> None:
 
     assert client.get("/zh-hans/").status_code == 404
     assert client.get("/zh-cn/", follow_redirects=False).status_code == 404
+    assert client.get("/zh-hans/catalog", follow_redirects=False).status_code == 404
+
+
+def test_catalog_query_is_dropped_when_enabled(monkeypatch) -> None:
+    monkeypatch.setenv("QAZ_FUND_ZH_HANS_ENABLED", "true")
+    monkeypatch.setattr(api_main, "_zh_hans_enabled", lambda: True)
+    client = TestClient(api_main.app)
+
+    response = client.get("/zh-hans/catalog?utm_source=unsafe", follow_redirects=False)
+
+    assert response.status_code == 308
+    assert response.headers["location"] == "/zh-hans/catalog/"
 
 
 def test_alias_normalization_has_one_safe_destination() -> None:
@@ -32,6 +44,9 @@ def test_alias_normalization_has_one_safe_destination() -> None:
     assert zh_hans.canonical_redirect_path("/", "zh-SG") == "/zh-hans/"
     assert zh_hans.canonical_redirect_path("/", "zh-TW") is None
     assert zh_hans.canonical_redirect_path("/media", "zh") is None
+    assert (
+        zh_hans.canonical_redirect_path("/zh-hans/catalog", None) == "/zh-hans/catalog/"
+    )
 
 
 def test_landing_escapes_catalog_copy_and_json_ld(monkeypatch) -> None:
