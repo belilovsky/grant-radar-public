@@ -250,7 +250,9 @@ def _contains_forbidden_release_field(value: Any) -> bool:
 
 
 def _verify_controller_authorization(
-    approval: dict[str, Any], expiry: datetime
+    approval: dict[str, Any],
+    expiry: datetime,
+    expected_binding: dict[str, Any],
 ) -> bool:
     """Bind and cryptographically verify the controller authorization record."""
 
@@ -268,6 +270,12 @@ def _verify_controller_authorization(
     try:
         authorization = _load_json(AUTHORIZATION_RECORD_PATH)
         if _contains_forbidden_release_field(authorization):
+            return False
+        if (
+            authorization.get("schemaVersion") != "qdev.controller-authorization.v1"
+            or authorization.get("action") != "catalog-owner-receipt"
+            or authorization.get("binding") != expected_binding
+        ):
             return False
         if authorization.get("reviewHead") != approval.get("reviewHead"):
             return False
@@ -369,7 +377,23 @@ def _verify_v2_receipt(manifest: dict[str, Any]) -> bool:
         expiry = _parse_expiry(approval.get("expiresAt"))
         if expiry <= now or expiry > now + timedelta(hours=24):
             return False
-        if not _verify_controller_authorization(approval, expiry):
+        expected_authorization_binding = {
+            "project": manifest.get("project"),
+            "productSourceSha": product_source,
+            "sourceLang": manifest.get("sourceLang"),
+            "targetLang": manifest.get("targetLang"),
+            "catalogDigest": manifest.get("catalogDigest"),
+            "bundleDigest": manifest.get("bundleDigest"),
+            "contractDigest": binding.get("contractDigest"),
+            "wheelDigest": binding.get("wheelDigest"),
+            "qmtRelease": qmt_release,
+            "candidateImageDigest": receipt.get("candidateImageDigest"),
+            "approvalReviewHead": receipt.get("approvalReviewHead"),
+            "signerSourceSha": receipt.get("signerSourceSha"),
+        }
+        if not _verify_controller_authorization(
+            approval, expiry, expected_authorization_binding
+        ):
             return False
         return _verify_detached_receipt_signature() == QDEV_SIGNING_FINGERPRINT
     except (OSError, RuntimeError):
