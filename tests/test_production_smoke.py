@@ -582,7 +582,7 @@ def _transport(
                 200,
                 json={
                     "schema_version": "qazstack-consumer-v1",
-                    "qazstack_version": "1.41.2",
+                    "qazstack_version": "1.53.6",
                     "integration_mode": "python-package",
                     "primitives": [
                         "opportunity-public-contract",

@@ -28,7 +28,7 @@
   "capabilities": {
     "qazstack": {
       "mode": "required",
-      "version": "1.41.2",
+      "version": "1.53.6",
       "contracts": [
         "docs/qazstack/consumer-contract.json",
         "qazstack-reuse.json",

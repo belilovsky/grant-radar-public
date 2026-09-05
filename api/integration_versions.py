@@ -1,6 +1,6 @@
 """Single source of product integration versions and verified upstream evidence."""
 
-QAZSTACK_VERSION = "1.41.2"
+QAZSTACK_VERSION = "1.53.6"
 
 AVDS_PACKAGE = "@sgeo/ui-kit"
 # The showcase release and the package have independent versioning. Keep the

@@ -1,0 +1,17 @@
+{
+  "schemaVersion": "qmt.canonical-json-golden-v1",
+  "vectors": [
+    {
+      "name": "nested-ascii",
+      "value": {"z": 1, "a": [true, null, "x"]},
+      "canonical": "{\"a\":[true,null,\"x\"],\"z\":1}",
+      "sha256": "cc31fc728ab32ccfd6543dd8cce686b9633b3c47fbec82c88a466688f3a8cb81"
+    },
+    {
+      "name": "utf16-non-bmp-key-order",
+      "value": {"": 2, "𐀀": 1},
+      "canonical": "{\"𐀀\":1,\"\":2}",
+      "sha256": "4045c21a23c8ae8f8d9add81f54bd506bee65885099876fb4afb378b1f2c3516"
+    }
+  ]
+}
