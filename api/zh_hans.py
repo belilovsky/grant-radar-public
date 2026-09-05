@@ -13,21 +13,28 @@ import os
 import re
 import subprocess
 import tempfile
+from collections.abc import Sequence
 from datetime import datetime, timedelta, timezone
 from html import escape
 from importlib.resources import files
 from pathlib import Path
 from typing import Any
+from urllib.parse import urlencode, urlsplit
+
+from api.avds import AVDS_CSS
+from core.models import Opportunity, OpportunityType
+from core.provenance import provenance_profile
 
 ROOT = Path(__file__).resolve().parents[1]
 CATALOG_PATH = ROOT / "docs/qazstack/zh-hans/catalog.json"
 MANIFEST_PATH = ROOT / "docs/qazstack/zh-hans/manifest.json"
-OWNER_RECEIPT_PATH = ROOT / "docs/qazstack/zh-hans/owner-receipt.json"
-OWNER_RECEIPT_SIGNATURE_PATH = ROOT / "docs/qazstack/zh-hans/owner-receipt.json.asc"
-AUTHORIZATION_RECORD_PATH = ROOT / "docs/qazstack/zh-hans/controller-authorization.json"
-AUTHORIZATION_SIGNATURE_PATH = (
-    ROOT / "docs/qazstack/zh-hans/controller-authorization.json.asc"
+APPROVAL_ROOT = Path(
+    os.environ.get("ZH_HANS_APPROVAL_DIR", str(ROOT / "docs/qazstack/zh-hans"))
 )
+OWNER_RECEIPT_PATH = APPROVAL_ROOT / "owner-receipt.json"
+OWNER_RECEIPT_SIGNATURE_PATH = APPROVAL_ROOT / "owner-receipt.json.asc"
+AUTHORIZATION_RECORD_PATH = APPROVAL_ROOT / "controller-authorization.json"
+AUTHORIZATION_SIGNATURE_PATH = APPROVAL_ROOT / "controller-authorization.json.asc"
 QDEV_PUBLIC_KEY_PATH = ROOT / "docs/qazstack/qdev-release-signing-key.asc"
 QAZSTACK_CONTRACT_SHA256 = (
     "c309401ed21a2488ab61478d6db7380544b07bf83b8cf35399f128b0888af031"
@@ -43,6 +50,41 @@ QMT_RELEASE_TAG = "v4.4.2"
 # real, immutable value.
 QMT_RELEASE_SOURCE_SHA = os.environ.get("QMT_RELEASE_SOURCE_SHA", "")
 UTC = timezone.utc
+CATALOG_PAGE_SIZE = 12
+_MESSAGE_PLACEHOLDER_RE = re.compile(r"\{([A-Za-z][A-Za-z0-9_]*)\}")
+_CATALOG_QUERY_KEYS = {"q", "type", "page"}
+_CATALOG_TYPES = {member.value for member in OpportunityType}
+ZH_HANS_LANDING_KEYS = frozenset(
+    {"title", "description", "eyebrow", "headline", "body", "cta"}
+)
+ZH_HANS_CATALOG_KEYS = frozenset(
+    {
+        "catalog.title",
+        "catalog.description",
+        "catalog.heading",
+        "catalog.intro",
+        "catalog.search_label",
+        "catalog.search_placeholder",
+        "catalog.type_label",
+        "catalog.type_all",
+        *{f"catalog.type.{value}" for value in _CATALOG_TYPES},
+        "catalog.filter_apply",
+        "catalog.results_count",
+        "catalog.empty_title",
+        "catalog.empty_body",
+        "catalog.load_error",
+        "catalog.source_language",
+        "catalog.unknown_language",
+        "catalog.official_source",
+        "catalog.previous",
+        "catalog.next",
+        "catalog.page_label",
+        "catalog.verification_note",
+        "catalog.landing_link",
+    }
+)
+ZH_HANS_REQUIRED_KEYS = ZH_HANS_LANDING_KEYS | ZH_HANS_CATALOG_KEYS
+ZH_HANS_PUBLIC_ROUTES = ("/zh-hans/", "/zh-hans/catalog/")
 
 
 def _sha256(path: Path) -> str:
@@ -207,7 +249,18 @@ def _verify_detached_signature(data_path: Path, signature_path: Path) -> str:
             in {token.upper() for token in line.split()[2:]}
             for line in verified.stdout.splitlines()
         )
-        if verified.returncode or not valid:
+        invalid_statuses = (
+            "[GNUPG:] BADSIG ",
+            "[GNUPG:] ERRSIG ",
+            "[GNUPG:] EXPSIG ",
+            "[GNUPG:] EXPKEYSIG ",
+            "[GNUPG:] REVKEYSIG ",
+            "[GNUPG:] KEYREVOKED",
+        )
+        explicitly_invalid = any(
+            line.startswith(invalid_statuses) for line in verified.stdout.splitlines()
+        )
+        if verified.returncode or not valid or explicitly_invalid:
             raise RuntimeError("zh-Hans owner receipt signature is invalid")
     return QDEV_SIGNING_FINGERPRINT
 
@@ -311,6 +364,18 @@ def _verify_v2_receipt(manifest: dict[str, Any]) -> bool:
     approval = receipt.get("approval")
     binding = manifest.get("productBinding")
     qmt_release = manifest.get("qmtRelease")
+    product_image_digest = os.environ.get("APP_IMAGE_DIGEST", "").strip().lower()
+    runtime_qmt_release = {
+        "tag": os.environ.get("QMT_RELEASE_TAG", "").strip(),
+        "sourceSha": os.environ.get("QMT_RELEASE_SOURCE_SHA", "").strip().lower(),
+        "imageDigest": os.environ.get("QMT_IMAGE_DIGEST", "").strip().lower(),
+        "runtimeReceiptDigest": os.environ.get("QMT_RUNTIME_RECEIPT_DIGEST", "")
+        .strip()
+        .lower(),
+        "migrationReceiptDigest": os.environ.get("QMT_MIGRATION_RECEIPT_DIGEST", "")
+        .strip()
+        .lower(),
+    }
     if (
         not isinstance(approval, dict)
         or not isinstance(binding, dict)
@@ -341,7 +406,7 @@ def _verify_v2_receipt(manifest: dict[str, Any]) -> bool:
         or not _is_sha(receipt.get("approvalReviewHead"))
         or not _is_sha(receipt.get("signerSourceSha"))
         or not _is_digest(receipt.get("candidateImageDigest"))
-        or receipt.get("candidateImageDigest") != qmt_release.get("imageDigest")
+        or receipt.get("candidateImageDigest") != product_image_digest
         or receipt.get("manifestSha256") != _sha256(MANIFEST_PATH)
     ):
         return False
@@ -358,6 +423,7 @@ def _verify_v2_receipt(manifest: dict[str, Any]) -> bool:
         or not _is_digest(qmt_release.get("imageDigest"))
         or not _is_digest(qmt_release.get("runtimeReceiptDigest"))
         or not _is_digest(qmt_release.get("migrationReceiptDigest"))
+        or runtime_qmt_release != qmt_release
     ):
         return False
     authorization_digest = approval.get("authorizationDigest")
@@ -433,30 +499,64 @@ def zh_hans_readiness(*, require_owner_receipt: bool) -> dict[str, str | bool]:
         required_keys = manifest.get("requiredKeys")
         public_routes = manifest.get("publicRoutes")
         coverage = manifest.get("coverage")
+        profile = manifest.get("profile")
+        quorum = manifest.get("quorum")
+        qmt_release = manifest.get("qmtRelease")
+        binding = manifest.get("productBinding")
+        expected_keys = sorted(ZH_HANS_REQUIRED_KEYS, key=_utf16_sort_key)
         if (
-            not isinstance(required_keys, list)
-            or not required_keys
-            or any(not isinstance(key, str) or not key.strip() for key in required_keys)
-            or len(set(required_keys)) != len(required_keys)
-            or set(catalog) != set(required_keys)
+            _contains_forbidden_release_field(manifest)
+            or required_keys != expected_keys
+            or set(catalog) != ZH_HANS_REQUIRED_KEYS
             or any(
                 not isinstance(catalog[key], str) or not catalog[key].strip()
-                for key in required_keys
+                for key in expected_keys
             )
-            or not isinstance(public_routes, list)
-            or not public_routes
-            or any(
-                not isinstance(route, str) or not route.startswith("/zh-hans/")
-                for route in public_routes
-            )
+            or public_routes != list(ZH_HANS_PUBLIC_ROUTES)
             or coverage
             != {
-                "required": len(required_keys),
-                "present": len(required_keys),
+                "required": len(expected_keys),
+                "present": len(expected_keys),
                 "complete": True,
             }
         ):
             raise RuntimeError("zh-Hans catalog coverage is incomplete")
+        if (
+            not _is_sha(manifest.get("sourceSha"))
+            or manifest.get("reviewState") != "approved"
+            or manifest.get("ownerReceipt") is not None
+            or not isinstance(profile, dict)
+            or profile.get("id") != "qaz-fund:ru:zh-Hans"
+            or not isinstance(profile.get("modelRoutes"), list)
+            or not profile["modelRoutes"]
+            or any(
+                not isinstance(route, str) or not route.strip()
+                for route in profile["modelRoutes"]
+            )
+            or any(
+                not isinstance(profile.get(field), str) or not profile[field].strip()
+                for field in ("promptVersion", "glossaryVersion", "tmVersion")
+            )
+            or not isinstance(quorum, dict)
+            or quorum.get("required") != "2/3"
+            or not isinstance(quorum.get("positive"), int)
+            or not 2 <= quorum["positive"] <= 3
+            or not isinstance(quorum.get("routes"), list)
+            or len(quorum["routes"]) != 3
+            or len(set(quorum["routes"])) != 3
+            or quorum.get("criticalMqmCount") != 0
+            or not isinstance(qmt_release, dict)
+            or qmt_release.get("tag") != QMT_RELEASE_TAG
+            or not _is_sha(qmt_release.get("sourceSha"))
+            or not _is_digest(qmt_release.get("imageDigest"))
+            or not _is_digest(qmt_release.get("runtimeReceiptDigest"))
+            or not _is_digest(qmt_release.get("migrationReceiptDigest"))
+            or not isinstance(binding, dict)
+            or binding.get("sourceSha") != manifest.get("sourceSha")
+            or binding.get("contractDigest") != QAZSTACK_CONTRACT_SHA256
+            or binding.get("wheelDigest") != QAZSTACK_WHEEL_SHA256
+        ):
+            raise RuntimeError("zh-Hans canonical release evidence is invalid")
         if digest != _canonical_digest(catalog):
             raise RuntimeError(
                 "zh-Hans catalog canonical digest does not match its manifest"
@@ -470,7 +570,7 @@ def zh_hans_readiness(*, require_owner_receipt: bool) -> dict[str, str | bool]:
                 "zh-Hans catalog bundle digest does not match its manifest"
             )
     else:
-        required_keys = {"title", "description", "eyebrow", "headline", "body", "cta"}
+        required_keys = ZH_HANS_LANDING_KEYS
         if set(catalog) != required_keys or any(
             not isinstance(catalog[key], str) or not catalog[key].strip()
             for key in required_keys
@@ -507,7 +607,36 @@ def zh_hans_readiness(*, require_owner_receipt: bool) -> dict[str, str | bool]:
     }
 
 
-def canonical_redirect_path(path: str, query_lang: str | None) -> str | None:
+def _canonical_catalog_query(
+    query_items: Sequence[tuple[str, str]],
+) -> str:
+    """Keep only one valid value for each public catalog query field."""
+
+    accepted: dict[str, str] = {}
+    for raw_key, raw_value in query_items:
+        key = str(raw_key).strip()
+        if key not in _CATALOG_QUERY_KEYS or key in accepted:
+            continue
+        value = str(raw_value).strip()
+        if key == "q":
+            if value:
+                accepted[key] = value[:120]
+        elif key == "type":
+            normalized = value.lower()
+            if normalized in _CATALOG_TYPES:
+                accepted[key] = normalized
+        elif key == "page" and value.isascii() and value.isdigit():
+            page = int(value)
+            if 1 <= page <= 10_000:
+                accepted[key] = str(page)
+    return urlencode(accepted, doseq=False)
+
+
+def canonical_redirect_path(
+    path: str,
+    query_lang: str | None,
+    query_items: Sequence[tuple[str, str]] = (),
+) -> str | None:
     """Return the sole safe Chinese public destination, or ``None``.
 
     Traditional Chinese is intentionally not an alias.  The landing has no
@@ -518,12 +647,9 @@ def canonical_redirect_path(path: str, query_lang: str | None) -> str | None:
     normalized_lang = str(query_lang or "").strip().lower().replace("_", "-")
     if normalized_path in {"/zh", "/zh-cn", "/zh-sg", "/zh-hans"}:
         return "/zh-hans/"
-    # The data catalogue is a public UI route, but it has no query schema.
-    # Normalise its no-slash spelling and drop arbitrary query parameters in
-    # the same way as the landing route.  The middleware still keeps the
-    # entire namespace dark while the feature flag is disabled.
     if normalized_path == "/zh-hans/catalog":
-        return "/zh-hans/catalog/"
+        query = _canonical_catalog_query(query_items)
+        return "/zh-hans/catalog/" + (f"?{query}" if query else "")
     if normalized_path == "/" and normalized_lang in {"zh", "zh-cn", "zh-sg"}:
         return "/zh-hans/"
     return None
@@ -546,8 +672,16 @@ def is_zh_hans_namespace_path(path: str) -> bool:
 
 def render_landing(*, site_origin: str) -> str:
     copy = _load_json(CATALOG_PATH)
+    missing = sorted(
+        key
+        for key in ZH_HANS_LANDING_KEYS
+        if not isinstance(copy.get(key), str) or not copy[key].strip()
+    )
+    if missing:
+        raise RuntimeError("zh-Hans landing copy is incomplete")
     origin = site_origin.rstrip("/")
     canonical_url = f"{origin}/zh-hans/"
+    catalog_url = f"{origin}/zh-hans/catalog/"
     ru_url = f"{origin}/ru/intro/"
     kk_url = f"{origin}/kk/intro/"
     en_url = f"{origin}/en/intro/"
@@ -599,12 +733,13 @@ def render_landing(*, site_origin: str) -> str:
     <p>{eyebrow}</p>
     <h1>{headline}</h1>
     <p>{body}</p>
-    <p><a href="{ru}">{cta}</a></p>
+    <p><a href="{catalog}">{cta}</a></p>
   </main>
 </body>
 </html>""".format(
         **safe_copy,
         canonical=escape(canonical_url, quote=True),
+        catalog=escape(catalog_url, quote=True),
         ru=escape(ru_url, quote=True),
         kk=escape(kk_url, quote=True),
         en=escape(en_url, quote=True),
@@ -612,36 +747,202 @@ def render_landing(*, site_origin: str) -> str:
     )
 
 
-def render_catalog_page(*, site_origin: str) -> str:
-    """Render the public Chinese UI shell around source-language cards.
+def render_catalog_page(
+    *,
+    site_origin: str,
+    items: Sequence[Opportunity],
+    query: str = "",
+    kind: str = "",
+    page: int = 1,
+    load_error: bool = False,
+) -> str:
+    """Render a local Chinese UI around source-language opportunity data."""
 
-    Card and opportunity text is intentionally not machine-translated in this
-    release.  The page therefore carries an explicit source-language notice
-    and is excluded from indexing by the route handler.
-    """
+    copy = _load_json(CATALOG_PATH)
+    missing = sorted(
+        key
+        for key in ZH_HANS_CATALOG_KEYS
+        if not isinstance(copy.get(key), str) or not copy[key].strip()
+    )
+    if missing:
+        raise RuntimeError("zh-Hans catalog UI copy is incomplete")
+
+    normalized_query = query.strip()[:120]
+    normalized_kind = kind.strip().lower()
+    if normalized_kind not in _CATALOG_TYPES:
+        normalized_kind = ""
+    needle = normalized_query.casefold()
+    filtered = [
+        item
+        for item in items
+        if (not normalized_kind or item.type.value == normalized_kind)
+        and (
+            not needle
+            or needle
+            in " ".join((item.title, item.summary, item.funder or "")).casefold()
+        )
+    ]
+    total_pages = max(1, (len(filtered) + CATALOG_PAGE_SIZE - 1) // CATALOG_PAGE_SIZE)
+    current_page = min(max(int(page), 1), total_pages)
+    start = (current_page - 1) * CATALOG_PAGE_SIZE
+    visible = filtered[start : start + CATALOG_PAGE_SIZE]
 
     origin = site_origin.rstrip("/")
     catalog_url = f"{origin}/zh-hans/catalog/"
     landing_url = f"{origin}/zh-hans/"
-    return """<!doctype html>
+
+    def c(key: str, **values: object) -> str:
+        message = str(copy[key])
+        placeholders = set(_MESSAGE_PLACEHOLDER_RE.findall(message))
+        if placeholders != set(values):
+            raise RuntimeError(f"zh-Hans catalog placeholder mismatch for {key}")
+        for name, value in values.items():
+            message = message.replace("{" + name + "}", str(value))
+        return escape(message, quote=True)
+
+    def query_url(target_page: int) -> str:
+        values: list[tuple[str, str]] = []
+        if normalized_query:
+            values.append(("q", normalized_query))
+        if normalized_kind:
+            values.append(("type", normalized_kind))
+        if target_page > 1:
+            values.append(("page", str(target_page)))
+        suffix = urlencode(values)
+        return "/zh-hans/catalog/" + (f"?{suffix}" if suffix else "")
+
+    cards: list[str] = []
+    for item in visible:
+        profile = provenance_profile(item)
+        source_language = str(profile.get("source_language") or "").strip()
+        display_language = source_language or str(copy["catalog.unknown_language"])
+        lang_attr = (
+            source_language
+            if re.fullmatch(r"[A-Za-z]{2,8}(?:-[A-Za-z0-9]{1,8})*", source_language)
+            else "und"
+        )
+        source_url = str(item.source_url)
+        parsed_url = urlsplit(source_url)
+        source_link = ""
+        if parsed_url.scheme == "https" and parsed_url.netloc:
+            source_link = (
+                '<p class="zh-catalog__source"><a rel="noopener noreferrer" '
+                f'href="{escape(source_url, quote=True)}">{c("catalog.official_source")}</a></p>'
+            )
+        summary = (
+            f'<p class="zh-catalog__summary" lang="{escape(lang_attr, quote=True)}">'
+            f"{escape(item.summary)}</p>"
+            if item.summary.strip()
+            else ""
+        )
+        cards.append(
+            '<article class="zh-catalog__card">'
+            f'<p class="zh-catalog__kind">{c(f"catalog.type.{item.type.value}")}</p>'
+            f'<h2 lang="{escape(lang_attr, quote=True)}">{escape(item.title)}</h2>'
+            f"{summary}"
+            f'<p class="zh-catalog__language">'
+            f'{c("catalog.source_language", language=display_language)}</p>'
+            f"{source_link}"
+            "</article>"
+        )
+
+    if load_error:
+        result_markup = (
+            f'<section role="alert"><h2>{c("catalog.load_error")}</h2></section>'
+        )
+    elif not cards:
+        result_markup = (
+            '<section class="zh-catalog__empty">'
+            f'<h2>{c("catalog.empty_title")}</h2>'
+            f'<p>{c("catalog.empty_body")}</p>'
+            "</section>"
+        )
+    else:
+        result_markup = (
+            '<section class="zh-catalog__grid">' + "".join(cards) + "</section>"
+        )
+
+    pagination: list[str] = []
+    if current_page > 1:
+        previous_url = escape(query_url(current_page - 1), quote=True)
+        pagination.append(
+            f'<a rel="prev" href="{previous_url}">{c("catalog.previous")}</a>'
+        )
+    pagination.append(
+        f'<span>{c("catalog.page_label", current=current_page, total=total_pages)}</span>'
+    )
+    if current_page < total_pages:
+        next_url = escape(query_url(current_page + 1), quote=True)
+        pagination.append(f'<a rel="next" href="{next_url}">{c("catalog.next")}</a>')
+
+    options = [
+        f'<option value="">{c("catalog.type_all")}</option>',
+        *[
+            '<option value="{value}"{selected}>{label}</option>'.format(
+                value=escape(value, quote=True),
+                selected=" selected" if normalized_kind == value else "",
+                label=c(f"catalog.type.{value}"),
+            )
+            for value in sorted(_CATALOG_TYPES)
+        ],
+    ]
+    escaped_query = escape(normalized_query, quote=True)
+    filter_options = "".join(options)
+    pagination_links = "".join(pagination)
+    pagination_label = c("catalog.page_label", current=current_page, total=total_pages)
+    style = AVDS_CSS + """
+.zh-catalog { max-width: 76rem; margin: 0 auto; padding: clamp(1rem, 3vw, 3rem); }
+.zh-catalog__header { max-width: 52rem; }
+.zh-catalog__filters { display: grid; gap: .75rem; align-items: end; margin: 2rem 0;
+  grid-template-columns: minmax(0, 2fr) minmax(10rem, 1fr) auto; }
+.zh-catalog__field { display: grid; gap: .35rem; }
+.zh-catalog__field input, .zh-catalog__field select, .zh-catalog__filters button {
+  min-height: 2.75rem; font: inherit; }
+.zh-catalog__grid { display: grid; gap: 1rem;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 19rem), 1fr)); }
+.zh-catalog__card { min-width: 0; padding: 1rem; overflow-wrap: anywhere;
+  border: 1px solid var(--avds-border-subtle, #d8dde6); border-radius: .75rem; }
+.zh-catalog__card h2 { font-size: 1.125rem; }
+.zh-catalog__kind, .zh-catalog__language {
+  color: var(--avds-text-muted, #596273); font-size: .875rem; }
+.zh-catalog__pagination { display: flex; flex-wrap: wrap; justify-content: center;
+  gap: 1rem; margin-top: 2rem; }
+@media (max-width: 42rem) { .zh-catalog__filters { grid-template-columns: 1fr; } }
+"""
+    return f"""<!doctype html>
 <html lang="zh-Hans">
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>QAZ.FUND – 项目目录</title>
-  <meta name="description" content="公开支持项目目录。项目卡片正文保留原始语言。">
+  <title>{c("catalog.title")}</title>
+  <meta name="description" content="{c("catalog.description")}">
   <meta name="robots" content="noindex,follow">
-  <link rel="canonical" href="{catalog}">
+  <link rel="canonical" href="{escape(catalog_url, quote=True)}">
+  <style>{style}</style>
 </head>
 <body>
-  <main>
-    <p><a href="{landing}">QAZ.FUND</a></p>
-    <h1>公开支持项目目录</h1>
-    <p lang="ru">Основной текст карточек показывается на языке источника.</p>
-    <p>卡片正文保留来源语言；请打开官方来源核对条件和截止日期。</p>
+  <main class="zh-catalog" id="main-content">
+    <header class="zh-catalog__header">
+      <p><a href="{escape(landing_url, quote=True)}">{c("catalog.landing_link")}</a></p>
+      <h1>{c("catalog.heading")}</h1>
+      <p>{c("catalog.intro")}</p>
+      <p>{c("catalog.verification_note")}</p>
+    </header>
+    <form class="zh-catalog__filters" method="get" action="/zh-hans/catalog/">
+      <label class="zh-catalog__field">{c("catalog.search_label")}
+        <input name="q" type="search" maxlength="120" value="{escaped_query}"
+          placeholder="{c("catalog.search_placeholder")}">
+      </label>
+      <label class="zh-catalog__field">{c("catalog.type_label")}
+        <select name="type">{filter_options}</select>
+      </label>
+      <button type="submit">{c("catalog.filter_apply")}</button>
+    </form>
+    <p aria-live="polite">{c("catalog.results_count", count=len(filtered))}</p>
+    {result_markup}
+    <nav class="zh-catalog__pagination" aria-label="{pagination_label}">
+      {pagination_links}
+    </nav>
   </main>
 </body>
-</html>""".format(
-        catalog=escape(catalog_url, quote=True),
-        landing=escape(landing_url, quote=True),
-    )
+</html>"""

@@ -366,6 +366,7 @@ async def add_security_headers(
     redirect_path = _zh_hans_canonical_redirect_path(
         request.url.path,
         request.query_params.get("lang"),
+        request.query_params.multi_items(),
     )
     # Dark mode must not leak a Chinese route through the SPA/root fallback.
     # Conversely, enabled mode normalises aliases before any route handler and
@@ -374,11 +375,10 @@ async def add_security_headers(
         redirect_path is not None or _is_zh_hans_namespace_path(request.url.path)
     ):
         return Response(status_code=status.HTTP_404_NOT_FOUND)
-    if (
-        _zh_hans_enabled()
-        and redirect_path
-        and (request.url.path != redirect_path or bool(request.url.query))
-    ):
+    request_target = request.url.path + (
+        f"?{request.url.query}" if request.url.query else ""
+    )
+    if _zh_hans_enabled() and redirect_path and request_target != redirect_path:
         return RedirectResponse(
             url=redirect_path, status_code=status.HTTP_308_PERMANENT_REDIRECT
         )
@@ -960,6 +960,30 @@ def _cached_current_catalog_items(content_lang: str = "en") -> list[Opportunity]
     with _public_items_cache_lock:
         _public_current_catalog_cache[normalized_lang] = (now, current_items)
     return list(current_items)
+
+
+def _current_source_language_catalog_items() -> list[Opportunity]:
+    """Return current cards without applying a requested-language projection.
+
+    The Chinese interface localizes only its controls. Opportunity titles and
+    summaries remain the source record, with provenance rendered beside them.
+    """
+
+    today = public_today()
+    items = [
+        _with_decision_readiness(item, ranking_subject=item)
+        for item in _cached_public_scope_items(content_lang="ru")
+        if _is_open(item, today) and item.score >= PUBLIC_RELEVANCE_THRESHOLD
+    ]
+    items.sort(
+        key=lambda item: (
+            priority_score(item, today=today),
+            item.score,
+            item.discovered_at,
+        ),
+        reverse=True,
+    )
+    return items
 
 
 def _find_opportunity(
@@ -1815,9 +1839,30 @@ async def zh_hans_landing(request: Request) -> HTMLResponse:
 async def zh_hans_catalog(request: Request) -> HTMLResponse:
     if not _zh_hans_enabled():
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND)
+    query = str(request.query_params.get("q") or "").strip()[:120]
+    kind = str(request.query_params.get("type") or "").strip().lower()
+    raw_page = str(request.query_params.get("page") or "1").strip()
+    page = int(raw_page) if raw_page.isascii() and raw_page.isdigit() else 1
+    load_error = False
+    try:
+        items = _current_source_language_catalog_items()
+    except Exception:
+        # Keep public telemetry aggregate-only: repository exceptions can carry
+        # source payloads or private topology and must not enter this log lane.
+        log.error(
+            "zh-Hans local catalog data unavailable",
+            extra={"event": "zh_hans_catalog_load_error"},
+        )
+        items = []
+        load_error = True
     response = HTMLResponse(
         _render_zh_hans_catalog_page(
-            site_origin=_site_origin(request, _root_path(request))
+            site_origin=_site_origin(request, _root_path(request)),
+            items=items,
+            query=query,
+            kind=kind,
+            page=page,
+            load_error=load_error,
         )
     )
     response.headers["X-Robots-Tag"] = "noindex, follow"
