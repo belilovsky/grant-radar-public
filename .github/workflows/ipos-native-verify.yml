@@ -1,0 +1,883 @@
+# Native QDev self-hosted execution of the IPOS verification contract.
+#
+# GitHub Actions is blocked for every private QDev repository by the account's
+# billing state (startup_failure, zero jobs, every private repository, since
+# 2026-09-13). This public carrier repository runs on the same self-hosted QDev
+# runners and executes the real IPOS verification steps against an exact private
+# IPOS revision fetched with a read-only deploy key. Private source and private
+# build inputs are never published by this workflow.
+#
+# Private sources are fetched with an explicit key file plus GIT_SSH_COMMAND,
+# which is the transport already proven on these runners by the qazgeo and
+# qazcompute lanes; actions/checkout ssh-key is deliberately not used so the
+# private key never enters the checkout action's key handling.
+#
+# This is NOT the IPOS release lane. The managed lane `qdev-release-rp` requires
+# canonical_repository=belilovsky/ipos plus a controller-signed CI claim, so no
+# release receipt, release admission or registry publish is produced here.
+name: IPOS native carrier verify
+
+on:
+  workflow_dispatch:
+    inputs:
+      head_sha:
+        description: "Exact 40-character commit SHA in belilovsky/ipos"
+        required: true
+        type: string
+      mode:
+        description: "Lane to run on the carrier self-hosted runner"
+        required: true
+        default: probe
+        type: choice
+        options:
+          - probe
+          - qa
+          - production
+          - reports
+          - all
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ipos-native-carrier
+  cancel-in-progress: false
+
+env:
+  IPOS_SOURCE_DIR: .qdev/ipos
+  CARRIER_INPUTS_DIR: .qdev/inputs
+  VERIFIED_SOURCE_SHA: ${{ github.event.inputs.head_sha }}
+  QAZSTACK_VERSION: "1.53.0"
+  QAZSTACK_WHEEL_SHA256: "sha256:ff360fe3cec81c9a67a9800874e22a1f635b07b9cd04682d11f634245c71bef3"
+  QAZSTACK_WHEEL_PATH: artifacts/private/qazstack-1.53.0-py3-none-any.whl
+  POSTGRES_IMAGE: postgres:16.10-bookworm@sha256:94f23d40fdaf5e60cb2fd8a98c22f02a7b8724949f310d95a0ddf075e8c8b208
+  POSTGRES_DB: ipos
+  POSTGRES_USER: ipos_ci
+  POSTGRES_PASSWORD: ipos_ci_password
+  POSTGRES_PORT: "5432"
+  PYTHON_IMAGE: python:3.12.14-slim-bookworm@sha256:a116514e19457bcb7af7efe9c3dd0b9b71e85b317694e7882a1c52aa15a78134
+  CARRIER_NOTE: carrier-run-identity.txt
+  CARRIER_PROBE_LOG: carrier-probe.log
+
+jobs:
+  probe:
+    name: Carrier lane probe
+    if: github.event.inputs.mode == 'probe' || github.event.inputs.mode == 'all'
+    runs-on:
+      - self-hosted
+      - Linux
+      - X64
+      - qdev-ci-docker
+      - 'qdev-job-${{ github.run_id }}-${{ github.run_attempt }}-ipos-probe'
+    timeout-minutes: 40
+    concurrency:
+      group: ipos-native-carrier-lane
+      cancel-in-progress: false
+    env:
+      CARRIER_LANE: probe
+    services:
+      postgres:
+        image: postgres:16.10-bookworm@sha256:94f23d40fdaf5e60cb2fd8a98c22f02a7b8724949f310d95a0ddf075e8c8b208
+        env:
+          POSTGRES_DB: ipos
+          POSTGRES_USER: ipos_ci
+          POSTGRES_PASSWORD: ipos_ci_password
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U ipos_ci -d ipos"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 12
+    steps:
+      - name: Check out the carrier repository
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
+        with:
+          persist-credentials: false
+          fetch-depth: 1
+
+      - name: Check out the exact private IPOS revision
+        env:
+          IPOS_DEPLOY_KEY: ${{ secrets.IPOS_DEPLOY_KEY }}
+        run: |
+          set -euo pipefail
+          key_file="${RUNNER_TEMP:?}/qdev-ipos-deploy-key"
+          (umask 077; printf '%s\n' "${IPOS_DEPLOY_KEY}" > "${key_file}")
+          test -s "${key_file}"
+          ssh_command="ssh -i ${key_file} -o IdentitiesOnly=yes -o StrictHostKeyChecking=accept-new -o UserKnownHostsFile=${RUNNER_TEMP}/qdev-known-hosts"
+          printf 'GIT_SSH_COMMAND=%s\n' "${ssh_command}" >> "${GITHUB_ENV}"
+          export GIT_SSH_COMMAND="${ssh_command}"
+          mkdir -p .qdev
+          git clone --quiet --no-tags git@github.com:belilovsky/ipos.git "${IPOS_SOURCE_DIR}"
+          cd "${IPOS_SOURCE_DIR}"
+          if ! git cat-file -e "${VERIFIED_SOURCE_SHA}^{commit}" 2>/dev/null; then
+            git fetch --quiet origin "${VERIFIED_SOURCE_SHA}"
+          fi
+          git checkout --quiet --detach "${VERIFIED_SOURCE_SHA}"
+          test "$(git rev-parse HEAD)" = "${VERIFIED_SOURCE_SHA}"
+          test -z "$(git status --porcelain --untracked-files=all)"
+          git fetch --quiet origin main
+          ancestor=false
+          if git merge-base --is-ancestor HEAD origin/main; then ancestor=true; fi
+          printf 'SOURCE_ANCESTOR_OF_MAIN=%s\n' "${ancestor}" >> "${GITHUB_ENV}"
+          printf 'ipos_source_sha=%s ancestor_of_origin_main=%s\n' "$(git rev-parse HEAD)" "${ancestor}"
+
+      - name: Check out the pinned carrier inputs
+        env:
+          QDEV_INPUTS_DEPLOY_KEY: ${{ secrets.QDEV_INPUTS_DEPLOY_KEY }}
+        run: |
+          set -euo pipefail
+          key_file="${RUNNER_TEMP:?}/qdev-inputs-deploy-key"
+          (umask 077; printf '%s\n' "${QDEV_INPUTS_DEPLOY_KEY}" > "${key_file}")
+          test -s "${key_file}"
+          export GIT_SSH_COMMAND="ssh -i ${key_file} -o IdentitiesOnly=yes -o StrictHostKeyChecking=accept-new -o UserKnownHostsFile=${RUNNER_TEMP}/qdev-known-hosts"
+          git clone --quiet --depth 1 git@github.com:belilovsky/qdev-ci-carrier-inputs.git "${CARRIER_INPUTS_DIR}"
+          cd "${CARRIER_INPUTS_DIR}"
+          inputs_commit="$(git rev-parse HEAD)"
+          printf 'INPUTS_COMMIT=%s\n' "${inputs_commit}" >> "${GITHUB_ENV}"
+          printf 'inputs_commit=%s\n' "${inputs_commit}"
+
+      - name: Probe the runner toolchain and lane identity
+        id: toolchain
+        continue-on-error: true
+        run: |
+          set -uo pipefail
+          failures=0
+          {
+            printf 'runner=%s environment=%s repository=%s workflow=%s\n' \
+              "${RUNNER_NAME}" "${RUNNER_ENVIRONMENT}" "${GITHUB_REPOSITORY}" "${GITHUB_WORKFLOW}"
+            printf 'qdev_job_id=%s qdev_repository=%s qdev_head_sha=%s\n' \
+              "${QDEV_JOB_ID:-unset}" "${QDEV_REPOSITORY:-unset}" "${QDEV_HEAD_SHA:-unset}"
+            printf 'qdev_artifact_url=%s qdev_registry_url=%s artifact_token_set=%s\n' \
+              "${QDEV_ARTIFACT_URL:-unset}" "${QDEV_REGISTRY_URL:-unset}" \
+              "$([ -n "${QDEV_ARTIFACT_TOKEN:-}" ] && printf yes || printf no)"
+            printf 'job_hostname=%s job_netns_hostname=%s\n' "$(hostname)" "$(cat /etc/hostname)"
+            printf 'cpus=%s\n' "$(nproc)"
+            free -m | head -2 || true
+            df -h / | tail -1 || true
+          } >> "${CARRIER_PROBE_LOG}" 2>&1
+          for tool in python3 git ssh curl jq sha256sum ar xz tar install bash docker; do
+            if command -v "${tool}" >/dev/null 2>&1; then
+              printf 'PASS tool_present=%s path=%s\n' "${tool}" "$(command -v "${tool}")" | tee -a "${CARRIER_PROBE_LOG}"
+            else
+              printf 'FAIL tool_missing=%s\n' "${tool}" | tee -a "${CARRIER_PROBE_LOG}"
+              failures=$((failures + 1))
+            fi
+          done
+          for tool in ssh-agent shred; do
+            printf 'note optional_tool=%s path=%s\n' "${tool}" "$(command -v "${tool}" || printf MISSING)" | tee -a "${CARRIER_PROBE_LOG}"
+          done
+          {
+            docker version --format 'docker_client={{.Client.Version}} docker_server={{.Server.Version}}'
+            printf 'containers_at_probe_start:\n'
+            docker ps -a --format '{{.Names}} | {{.Image}} | {{.Ports}} | {{.Status}}'
+            printf 'networks:\n'
+            docker network ls
+            python3 --version
+            git --version
+          } >> "${CARRIER_PROBE_LOG}" 2>&1 || {
+            printf 'FAIL lane_runtime_introspection\n' | tee -a "${CARRIER_PROBE_LOG}"
+            failures=$((failures + 1))
+          }
+          test "${failures}" -eq 0
+
+      - name: Probe Python 3.12.14 provisioning
+        id: python_probe
+        continue-on-error: true
+        uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065 # v5.6.0
+        with:
+          python-version: "3.12.14"
+
+      - name: Record the Python 3.12.14 provisioning outcome
+        id: python_record
+        continue-on-error: true
+        run: |
+          set -uo pipefail
+          python_bin="$(command -v python3.12 || command -v python || true)"
+          {
+            printf 'setup_python_outcome=%s python_bin=%s\n' '${{ steps.python_probe.outcome }}' "${python_bin:-MISSING}"
+            "${python_bin:-false}" --version 2>&1 || printf 'python_version_probe_failed\n'
+          } | tee -a "${CARRIER_PROBE_LOG}"
+          test -n "${python_bin}"
+          "${python_bin}" -c 'import sys; raise SystemExit(0 if sys.version_info[:2] == (3, 12) else 1)'
+          printf 'PASS python_3_12_available\n' | tee -a "${CARRIER_PROBE_LOG}"
+
+      - name: Probe the pinned base images
+        id: images
+        continue-on-error: true
+        run: |
+          set -euo pipefail
+          {
+            docker pull "${POSTGRES_IMAGE}"
+            docker pull "${PYTHON_IMAGE}"
+            docker image inspect --format 'postgres_image_id={{.Id}}' "${POSTGRES_IMAGE}"
+            docker image inspect --format 'python_image_id={{.Id}}' "${PYTHON_IMAGE}"
+          } 2>&1 | tee -a "${CARRIER_PROBE_LOG}"
+          printf 'PASS pinned_base_images_present\n' | tee -a "${CARRIER_PROBE_LOG}"
+
+      - name: Probe the PostgreSQL service topology
+        id: postgres_probe
+        continue-on-error: true
+        run: |
+          set -uo pipefail
+          log="${CARRIER_PROBE_LOG}"
+          reachable() { (exec 3<>/dev/tcp/127.0.0.1/"${POSTGRES_PORT}") 2>/dev/null; }
+          wait_reachable() {
+            local attempt
+            for attempt in $(seq 1 30); do
+              reachable && return 0
+              sleep 2
+            done
+            return 1
+          }
+          {
+            printf 'service_containers:\n'
+            docker ps -a --filter "ancestor=${POSTGRES_IMAGE}" --format '{{.Names}} | {{.Status}} | {{.Ports}}'
+          } >> "${log}" 2>&1
+          if wait_reachable; then
+            topology=github_service_shared_netns
+            printf 'PASS github_service_reachable_at_127.0.0.1:%s\n' "${POSTGRES_PORT}" | tee -a "${log}"
+          else
+            printf 'FAIL github_service_unreachable_at_127.0.0.1:%s\n' "${POSTGRES_PORT}" | tee -a "${log}"
+            topology=manual_postgres_runner_netns
+            docker rm -f ipos-probe-postgres >/dev/null 2>&1 || true
+            started=false
+            for target in "$(hostname)" "$(cat /etc/hostname)"; do
+              if docker run -d --name ipos-probe-postgres --network "container:${target}" \
+                --env "POSTGRES_DB=${POSTGRES_DB}" --env "POSTGRES_USER=${POSTGRES_USER}" \
+                --env "POSTGRES_PASSWORD=${POSTGRES_PASSWORD}" "${POSTGRES_IMAGE}" >> "${log}" 2>&1; then
+                printf 'manual_netns_target=%s\n' "${target}" | tee -a "${log}"
+                started=true
+                break
+              fi
+            done
+            if [ "${started}" = true ] && wait_reachable; then
+              printf 'PASS manual_postgres_reachable_in_runner_netns\n' | tee -a "${log}"
+            else
+              printf 'FAIL no_postgres_reachable_in_runner_netns\n' | tee -a "${log}"
+              exit 1
+            fi
+          fi
+          printf 'POSTGRES_TOPOLOGY=%s\n' "${topology}" >> "${GITHUB_ENV}"
+          if docker run --rm --network "container:$(cat /etc/hostname)" "${POSTGRES_IMAGE}" \
+            pg_isready -h 127.0.0.1 -p "${POSTGRES_PORT}" -U "${POSTGRES_USER}" -d "${POSTGRES_DB}" 2>&1 | tee -a "${log}"; then
+            printf 'PASS postgres_protocol_probe\n' | tee -a "${log}"
+          else
+            printf 'FAIL postgres_protocol_probe\n' | tee -a "${log}"
+            exit 1
+          fi
+          docker rm -f ipos-probe-postgres >/dev/null 2>&1 || true
+
+      - name: Verify and stage the pinned private QazStack wheel
+        run: |
+          set -euo pipefail
+          cd "${GITHUB_WORKSPACE}/${CARRIER_INPUTS_DIR}"
+          sha256sum --check --strict SHA256SUMS
+          cd "${GITHUB_WORKSPACE}/${IPOS_SOURCE_DIR}"
+          install -d -m 0750 artifacts/private
+          install -m 0644 \
+            "${GITHUB_WORKSPACE}/${CARRIER_INPUTS_DIR}/qazstack-${QAZSTACK_VERSION}-py3-none-any.whl" \
+            "${QAZSTACK_WHEEL_PATH}"
+          deploy/verify-qazstack-wheel.sh "${QAZSTACK_WHEEL_PATH}" "${QAZSTACK_VERSION}" "${QAZSTACK_WHEEL_SHA256}"
+          printf 'PASS pinned_private_wheel_staged sha256=%s\n' "${QAZSTACK_WHEEL_SHA256}" | tee -a "${CARRIER_PROBE_LOG}"
+
+      - name: Carrier lane verdict
+        run: |
+          set -euo pipefail
+          {
+            printf 'probe_toolchain=%s\n' '${{ steps.toolchain.outcome }}'
+            printf 'probe_python_3_12_14=%s\n' '${{ steps.python_record.outcome }}'
+            printf 'probe_pinned_base_images=%s\n' '${{ steps.images.outcome }}'
+            printf 'probe_postgres_topology=%s\n' '${{ steps.postgres_probe.outcome }}'
+          } | tee -a "${CARRIER_PROBE_LOG}"
+          test '${{ steps.toolchain.outcome }}' = success
+          test '${{ steps.python_record.outcome }}' = success
+          test '${{ steps.images.outcome }}' = success
+          test '${{ steps.postgres_probe.outcome }}' = success
+          printf 'carrier_lane_probe=pass\n' | tee -a "${CARRIER_PROBE_LOG}"
+
+      - name: Record carrier run identity (never a release receipt)
+        if: always()
+        run: |
+          {
+            printf 'carrier_repository=%s\n' "${GITHUB_REPOSITORY}"
+            printf 'carrier_head_sha=%s\n' "${GITHUB_SHA}"
+            printf 'carrier_run_id=%s\n' "${GITHUB_RUN_ID}"
+            printf 'carrier_run_attempt=%s\n' "${GITHUB_RUN_ATTEMPT}"
+            printf 'carrier_job=%s\n' "${GITHUB_JOB}"
+            printf 'carrier_workflow=%s\n' "${GITHUB_WORKFLOW}"
+            printf 'carrier_lane=%s\n' "${CARRIER_LANE}"
+            printf 'verified_source_repository=belilovsky/ipos\n'
+            printf 'verified_source_sha=%s\n' "${VERIFIED_SOURCE_SHA}"
+            printf 'verified_source_ancestor_of_origin_main=%s\n' "${SOURCE_ANCESTOR_OF_MAIN:-unknown}"
+            printf 'verified_inputs_repository=belilovsky/qdev-ci-carrier-inputs\n'
+            printf 'verified_inputs_commit=%s\n' "${INPUTS_COMMIT:-unknown}"
+            printf 'postgres_topology=%s\n' "${POSTGRES_TOPOLOGY:-none}"
+            printf 'qazstack_wheel_sha256=%s\n' "${QAZSTACK_WHEEL_SHA256}"
+            printf 'qazstack_wheel_source=mirror of the immutable private release asset; the GitHub Release API digest equals this sha256\n'
+            printf 'execution=native QDev self-hosted qdev-ci-docker lane, real IPOS steps, carrier repository\n'
+            printf 'release_receipt=false: the managed lane requires canonical_repository=belilovsky/ipos and a controller-signed CI claim\n'
+          } | tee "${CARRIER_NOTE}"
+
+      - name: Upload carrier probe evidence
+        if: always()
+        env:
+          QDEV_IF_NO_FILES: warn
+        run: |
+          set -euo pipefail
+          test -x .github/scripts/qdev-upload-artifact.sh
+          .github/scripts/qdev-upload-artifact.sh ipos-carrier-probe "${CARRIER_PROBE_LOG}" "${CARRIER_NOTE}"
+
+      - name: Remove the deploy keys from the runner
+        if: always()
+        run: rm -f "${RUNNER_TEMP}/qdev-ipos-deploy-key" "${RUNNER_TEMP}/qdev-inputs-deploy-key"
+
+  qa:
+    name: IPOS QA, contract gates and PostgreSQL migration gate
+    if: github.event.inputs.mode == 'qa' || github.event.inputs.mode == 'all'
+    runs-on:
+      - self-hosted
+      - Linux
+      - X64
+      - qdev-ci-docker
+      - 'qdev-job-${{ github.run_id }}-${{ github.run_attempt }}-ipos-qa'
+    timeout-minutes: 80
+    concurrency:
+      group: ipos-native-carrier-lane
+      cancel-in-progress: false
+    env:
+      CARRIER_LANE: qa
+    services:
+      postgres:
+        image: postgres:16.10-bookworm@sha256:94f23d40fdaf5e60cb2fd8a98c22f02a7b8724949f310d95a0ddf075e8c8b208
+        env:
+          POSTGRES_DB: ipos
+          POSTGRES_USER: ipos_ci
+          POSTGRES_PASSWORD: ipos_ci_password
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U ipos_ci -d ipos"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 12
+    steps:
+      - name: Check out the carrier repository
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
+        with:
+          persist-credentials: false
+          fetch-depth: 1
+
+      - name: Check out the exact private IPOS revision
+        env:
+          IPOS_DEPLOY_KEY: ${{ secrets.IPOS_DEPLOY_KEY }}
+        run: |
+          set -euo pipefail
+          key_file="${RUNNER_TEMP:?}/qdev-ipos-deploy-key"
+          (umask 077; printf '%s\n' "${IPOS_DEPLOY_KEY}" > "${key_file}")
+          test -s "${key_file}"
+          ssh_command="ssh -i ${key_file} -o IdentitiesOnly=yes -o StrictHostKeyChecking=accept-new -o UserKnownHostsFile=${RUNNER_TEMP}/qdev-known-hosts"
+          printf 'GIT_SSH_COMMAND=%s\n' "${ssh_command}" >> "${GITHUB_ENV}"
+          export GIT_SSH_COMMAND="${ssh_command}"
+          mkdir -p .qdev
+          git clone --quiet --no-tags git@github.com:belilovsky/ipos.git "${IPOS_SOURCE_DIR}"
+          cd "${IPOS_SOURCE_DIR}"
+          if ! git cat-file -e "${VERIFIED_SOURCE_SHA}^{commit}" 2>/dev/null; then
+            git fetch --quiet origin "${VERIFIED_SOURCE_SHA}"
+          fi
+          git checkout --quiet --detach "${VERIFIED_SOURCE_SHA}"
+          test "$(git rev-parse HEAD)" = "${VERIFIED_SOURCE_SHA}"
+          test -z "$(git status --porcelain --untracked-files=all)"
+          git fetch --quiet origin main
+          ancestor=false
+          if git merge-base --is-ancestor HEAD origin/main; then ancestor=true; fi
+          printf 'SOURCE_ANCESTOR_OF_MAIN=%s\n' "${ancestor}" >> "${GITHUB_ENV}"
+          printf 'ipos_source_sha=%s ancestor_of_origin_main=%s\n' "$(git rev-parse HEAD)" "${ancestor}"
+
+      - name: Check out the pinned carrier inputs
+        env:
+          QDEV_INPUTS_DEPLOY_KEY: ${{ secrets.QDEV_INPUTS_DEPLOY_KEY }}
+        run: |
+          set -euo pipefail
+          key_file="${RUNNER_TEMP:?}/qdev-inputs-deploy-key"
+          (umask 077; printf '%s\n' "${QDEV_INPUTS_DEPLOY_KEY}" > "${key_file}")
+          test -s "${key_file}"
+          export GIT_SSH_COMMAND="ssh -i ${key_file} -o IdentitiesOnly=yes -o StrictHostKeyChecking=accept-new -o UserKnownHostsFile=${RUNNER_TEMP}/qdev-known-hosts"
+          git clone --quiet --depth 1 git@github.com:belilovsky/qdev-ci-carrier-inputs.git "${CARRIER_INPUTS_DIR}"
+          cd "${CARRIER_INPUTS_DIR}"
+          inputs_commit="$(git rev-parse HEAD)"
+          printf 'INPUTS_COMMIT=%s\n' "${inputs_commit}" >> "${GITHUB_ENV}"
+          printf 'inputs_commit=%s\n' "${inputs_commit}"
+
+      - name: Set up Python 3.12.14
+        uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065 # v5.6.0
+        with:
+          python-version: "3.12.14"
+
+      - name: Verify and stage the pinned private QazStack wheel
+        run: |
+          set -euo pipefail
+          cd "${GITHUB_WORKSPACE}/${CARRIER_INPUTS_DIR}"
+          sha256sum --check --strict SHA256SUMS
+          cd "${GITHUB_WORKSPACE}/${IPOS_SOURCE_DIR}"
+          install -d -m 0750 artifacts/private
+          install -m 0644 \
+            "${GITHUB_WORKSPACE}/${CARRIER_INPUTS_DIR}/qazstack-${QAZSTACK_VERSION}-py3-none-any.whl" \
+            "${QAZSTACK_WHEEL_PATH}"
+          deploy/verify-qazstack-wheel.sh "${QAZSTACK_WHEEL_PATH}" "${QAZSTACK_VERSION}" "${QAZSTACK_WHEEL_SHA256}"
+
+      - name: Ensure a reachable PostgreSQL for the migration gate
+        run: |
+          set -euo pipefail
+          reachable() { (exec 3<>/dev/tcp/127.0.0.1/"${POSTGRES_PORT}") 2>/dev/null; }
+          wait_reachable() {
+            local attempt
+            for attempt in $(seq 1 30); do
+              reachable && return 0
+              sleep 2
+            done
+            return 1
+          }
+          if wait_reachable; then
+            printf 'postgres_topology=github_service_shared_netns\n'
+          else
+            printf 'github_service_unreachable: starting the pinned PostgreSQL in the runner network namespace\n'
+            docker rm -f ipos-ci-postgres >/dev/null 2>&1 || true
+            started=false
+            for target in "$(hostname)" "$(cat /etc/hostname)"; do
+              if docker run -d --name ipos-ci-postgres --network "container:${target}" \
+                --env "POSTGRES_DB=${POSTGRES_DB}" --env "POSTGRES_USER=${POSTGRES_USER}" \
+                --env "POSTGRES_PASSWORD=${POSTGRES_PASSWORD}" "${POSTGRES_IMAGE}"; then
+                started=true
+                break
+              fi
+            done
+            test "${started}" = true
+            wait_reachable
+            printf 'postgres_topology=manual_postgres_runner_netns\n'
+          fi
+          docker run --rm --network "container:$(cat /etc/hostname)" "${POSTGRES_IMAGE}" \
+            pg_isready -h 127.0.0.1 -p "${POSTGRES_PORT}" -U "${POSTGRES_USER}" -d "${POSTGRES_DB}"
+
+      - name: Install the locked QA environment
+        working-directory: .qdev/ipos
+        run: |
+          set -euo pipefail
+          python -m pip install --upgrade pip
+          python -m pip install --requirement requirements-dev.lock --requirement requirements-reports.lock
+          python -m pip install --no-deps "${QAZSTACK_WHEEL_PATH}"
+          python -m pip install --no-deps --editable .
+          python -m pip check
+          python --version
+          test "$(python -c 'import sys; print(f"{sys.version_info[0]}.{sys.version_info[1]}")')" = "3.12"
+
+      - name: Static, unit, contract and security gates
+        working-directory: .qdev/ipos
+        run: scripts/qa.sh
+
+      - name: PostgreSQL migration gate
+        working-directory: .qdev/ipos
+        env:
+          IPOS_DATABASE_URL: postgresql+psycopg://ipos_ci:ipos_ci_password@127.0.0.1:5432/ipos
+        run: |
+          set -euo pipefail
+          alembic upgrade head
+          alembic check
+          alembic current
+          alembic downgrade base
+          alembic upgrade head
+          alembic current
+
+      - name: Record carrier run identity (never a release receipt)
+        if: always()
+        run: |
+          {
+            printf 'carrier_repository=%s\n' "${GITHUB_REPOSITORY}"
+            printf 'carrier_head_sha=%s\n' "${GITHUB_SHA}"
+            printf 'carrier_run_id=%s\n' "${GITHUB_RUN_ID}"
+            printf 'carrier_run_attempt=%s\n' "${GITHUB_RUN_ATTEMPT}"
+            printf 'carrier_job=%s\n' "${GITHUB_JOB}"
+            printf 'carrier_workflow=%s\n' "${GITHUB_WORKFLOW}"
+            printf 'carrier_lane=%s\n' "${CARRIER_LANE}"
+            printf 'verified_source_repository=belilovsky/ipos\n'
+            printf 'verified_source_sha=%s\n' "${VERIFIED_SOURCE_SHA}"
+            printf 'verified_source_ancestor_of_origin_main=%s\n' "${SOURCE_ANCESTOR_OF_MAIN:-unknown}"
+            printf 'verified_inputs_repository=belilovsky/qdev-ci-carrier-inputs\n'
+            printf 'verified_inputs_commit=%s\n' "${INPUTS_COMMIT:-unknown}"
+            printf 'qazstack_wheel_sha256=%s\n' "${QAZSTACK_WHEEL_SHA256}"
+            printf 'qazstack_wheel_source=mirror of the immutable private release asset; the GitHub Release API digest equals this sha256\n'
+            printf 'execution=native QDev self-hosted qdev-ci-docker lane, real IPOS steps, carrier repository\n'
+            printf 'release_receipt=false: the managed lane requires canonical_repository=belilovsky/ipos and a controller-signed CI claim\n'
+          } | tee "${CARRIER_NOTE}"
+
+      - name: Upload IPOS QA evidence
+        if: always()
+        env:
+          QDEV_IF_NO_FILES: warn
+        run: |
+          set -euo pipefail
+          test -x .github/scripts/qdev-upload-artifact.sh
+          .github/scripts/qdev-upload-artifact.sh ipos-qa-evidence .qdev/ipos/artifacts/qa "${CARRIER_NOTE}"
+
+      - name: Remove the deploy keys from the runner
+        if: always()
+        run: rm -f "${RUNNER_TEMP}/qdev-ipos-deploy-key" "${RUNNER_TEMP}/qdev-inputs-deploy-key"
+
+  production-containers:
+    name: IPOS production containers, vulnerability scans and image SBOM
+    if: github.event.inputs.mode == 'production' || github.event.inputs.mode == 'all'
+    runs-on:
+      - self-hosted
+      - Linux
+      - X64
+      - qdev-ci-docker
+      - 'qdev-job-${{ github.run_id }}-${{ github.run_attempt }}-ipos-production'
+    timeout-minutes: 80
+    concurrency:
+      group: ipos-native-carrier-lane
+      cancel-in-progress: false
+    env:
+      CARRIER_LANE: production
+    steps:
+      - name: Check out the carrier repository
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
+        with:
+          persist-credentials: false
+          fetch-depth: 1
+
+      - name: Check out the exact private IPOS revision
+        env:
+          IPOS_DEPLOY_KEY: ${{ secrets.IPOS_DEPLOY_KEY }}
+        run: |
+          set -euo pipefail
+          key_file="${RUNNER_TEMP:?}/qdev-ipos-deploy-key"
+          (umask 077; printf '%s\n' "${IPOS_DEPLOY_KEY}" > "${key_file}")
+          test -s "${key_file}"
+          ssh_command="ssh -i ${key_file} -o IdentitiesOnly=yes -o StrictHostKeyChecking=accept-new -o UserKnownHostsFile=${RUNNER_TEMP}/qdev-known-hosts"
+          printf 'GIT_SSH_COMMAND=%s\n' "${ssh_command}" >> "${GITHUB_ENV}"
+          export GIT_SSH_COMMAND="${ssh_command}"
+          mkdir -p .qdev
+          git clone --quiet --no-tags git@github.com:belilovsky/ipos.git "${IPOS_SOURCE_DIR}"
+          cd "${IPOS_SOURCE_DIR}"
+          if ! git cat-file -e "${VERIFIED_SOURCE_SHA}^{commit}" 2>/dev/null; then
+            git fetch --quiet origin "${VERIFIED_SOURCE_SHA}"
+          fi
+          git checkout --quiet --detach "${VERIFIED_SOURCE_SHA}"
+          test "$(git rev-parse HEAD)" = "${VERIFIED_SOURCE_SHA}"
+          test -z "$(git status --porcelain --untracked-files=all)"
+          git fetch --quiet origin main
+          ancestor=false
+          if git merge-base --is-ancestor HEAD origin/main; then ancestor=true; fi
+          printf 'SOURCE_ANCESTOR_OF_MAIN=%s\n' "${ancestor}" >> "${GITHUB_ENV}"
+          printf 'ipos_source_sha=%s ancestor_of_origin_main=%s\n' "$(git rev-parse HEAD)" "${ancestor}"
+
+      - name: Check out the pinned carrier inputs
+        env:
+          QDEV_INPUTS_DEPLOY_KEY: ${{ secrets.QDEV_INPUTS_DEPLOY_KEY }}
+        run: |
+          set -euo pipefail
+          key_file="${RUNNER_TEMP:?}/qdev-inputs-deploy-key"
+          (umask 077; printf '%s\n' "${QDEV_INPUTS_DEPLOY_KEY}" > "${key_file}")
+          test -s "${key_file}"
+          export GIT_SSH_COMMAND="ssh -i ${key_file} -o IdentitiesOnly=yes -o StrictHostKeyChecking=accept-new -o UserKnownHostsFile=${RUNNER_TEMP}/qdev-known-hosts"
+          git clone --quiet --depth 1 git@github.com:belilovsky/qdev-ci-carrier-inputs.git "${CARRIER_INPUTS_DIR}"
+          cd "${CARRIER_INPUTS_DIR}"
+          inputs_commit="$(git rev-parse HEAD)"
+          printf 'INPUTS_COMMIT=%s\n' "${inputs_commit}" >> "${GITHUB_ENV}"
+          printf 'inputs_commit=%s\n' "${inputs_commit}"
+
+      - name: Set up Python 3.12.14
+        uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065 # v5.6.0
+        with:
+          python-version: "3.12.14"
+
+      - name: Verify and stage the pinned private QazStack wheel
+        run: |
+          set -euo pipefail
+          cd "${GITHUB_WORKSPACE}/${CARRIER_INPUTS_DIR}"
+          sha256sum --check --strict SHA256SUMS
+          cd "${GITHUB_WORKSPACE}/${IPOS_SOURCE_DIR}"
+          install -d -m 0750 artifacts/private
+          install -m 0644 \
+            "${GITHUB_WORKSPACE}/${CARRIER_INPUTS_DIR}/qazstack-${QAZSTACK_VERSION}-py3-none-any.whl" \
+            "${QAZSTACK_WHEEL_PATH}"
+          deploy/verify-qazstack-wheel.sh "${QAZSTACK_WHEEL_PATH}" "${QAZSTACK_VERSION}" "${QAZSTACK_WHEEL_SHA256}"
+
+      - name: Build immutable candidate images from pinned inputs
+        working-directory: .qdev/ipos
+        run: |
+          set -euo pipefail
+          mkdir -p artifacts/release
+          python -m pip install --requirement requirements.lock
+          python -m pip install --no-deps "${QAZSTACK_WHEEL_PATH}"
+          python -m pip install --no-deps --editable .
+          python -m pip check
+          IPOS_QAZSTACK_VERSION="${QAZSTACK_VERSION}" \
+            IPOS_QAZSTACK_WHEEL_SHA256="${QAZSTACK_WHEEL_SHA256}" \
+            ipos-release-manifest --output artifacts/release-manifest.json
+          test "$(jq -r '.source_worktree_dirty' artifacts/release-manifest.json)" = false
+          test "$(jq -er '.source_sha' artifacts/release-manifest.json)" = "${VERIFIED_SOURCE_SHA}"
+          test "sha256:$(jq -r '.qazstack.wheel_sha256' artifacts/release-manifest.json)" = "${QAZSTACK_WHEEL_SHA256}"
+          lock_sha256="$(jq -r '.dependency_lock_sha256' artifacts/release-manifest.json)"
+          artifact_tree_sha256="$(jq -r '.artifact_tree_sha256' artifacts/release-manifest.json)"
+          release_manifest_sha256="$(sha256sum artifacts/release-manifest.json | awk '{print $1}')"
+          project_id="$(jq -r '.project.project_id' artifacts/release-manifest.json)"
+          project_manifest_sha256="$(jq -r '.project.manifest_sha256' artifacts/release-manifest.json)"
+          docker build --pull=false --tag ipos-app:ci \
+            --build-arg "IPOS_SOURCE_SHA=${VERIFIED_SOURCE_SHA}" \
+            --build-arg "IPOS_LOCK_SHA256=${lock_sha256}" \
+            --build-arg "IPOS_ARTIFACT_TREE_SHA256=${artifact_tree_sha256}" \
+            --build-arg "IPOS_RELEASE_MANIFEST_SHA256=${release_manifest_sha256}" \
+            --build-arg "IPOS_PROJECT_ID=${project_id}" \
+            --build-arg "IPOS_PROJECT_MANIFEST_SHA256=${project_manifest_sha256}" \
+            --build-arg "QAZSTACK_WHEEL_PATH=${QAZSTACK_WHEEL_PATH}" \
+            --build-arg "QAZSTACK_VERSION=${QAZSTACK_VERSION}" \
+            --build-arg "QAZSTACK_WHEEL_SHA256=${QAZSTACK_WHEEL_SHA256}" .
+          docker build --pull=false --tag ipos-worker:ci --file Dockerfile.worker \
+            --build-arg "IPOS_SOURCE_SHA=${VERIFIED_SOURCE_SHA}" \
+            --build-arg "IPOS_LOCK_SHA256=${lock_sha256}" \
+            --build-arg "IPOS_ARTIFACT_TREE_SHA256=${artifact_tree_sha256}" \
+            --build-arg "IPOS_RELEASE_MANIFEST_SHA256=${release_manifest_sha256}" \
+            --build-arg "IPOS_PROJECT_ID=${project_id}" \
+            --build-arg "IPOS_PROJECT_MANIFEST_SHA256=${project_manifest_sha256}" \
+            --build-arg "QAZSTACK_WHEEL_PATH=${QAZSTACK_WHEEL_PATH}" \
+            --build-arg "QAZSTACK_VERSION=${QAZSTACK_VERSION}" \
+            --build-arg "QAZSTACK_WHEEL_SHA256=${QAZSTACK_WHEEL_SHA256}" .
+          for image in ipos-app:ci ipos-worker:ci; do
+            test "$(docker image inspect --format '{{index .Config.Labels "run.qdev.ipos.release-manifest-sha256"}}' "${image}")" \
+              = "${release_manifest_sha256}"
+            test "$(docker image inspect --format '{{index .Config.Labels "org.opencontainers.image.revision"}}' "${image}")" \
+              = "${VERIFIED_SOURCE_SHA}"
+          done
+          for image in ipos-app:ci ipos-worker:ci; do
+            docker image inspect "${image}" > "artifacts/release/image-inspect-${image%%:*}.json"
+            docker image inspect --format '{{.Id}}' "${image}" >> artifacts/release/image-ids.txt
+          done
+          printf 'release_manifest_sha256=%s\n' "${release_manifest_sha256}" > artifacts/release/manifest-digests.txt
+          printf 'dependency_lock_sha256=%s\nartifact_tree_sha256=%s\n' \
+            "${lock_sha256}" "${artifact_tree_sha256}" >> artifacts/release/manifest-digests.txt
+          printf 'local_image_ids\n'
+          cat artifacts/release/image-ids.txt
+
+      - name: Scan the app image (CRITICAL/HIGH, fixed only)
+        uses: aquasecurity/trivy-action@57a97c7e7821a5776cebc9bb87c984fa69cba8f1 # 0.35.0
+        with:
+          image-ref: ipos-app:ci
+          format: table
+          exit-code: "1"
+          severity: CRITICAL,HIGH
+          ignore-unfixed: true
+          output: .qdev/ipos/artifacts/release/trivy-app.txt
+
+      - name: Scan the worker image (CRITICAL/HIGH, fixed only)
+        uses: aquasecurity/trivy-action@57a97c7e7821a5776cebc9bb87c984fa69cba8f1 # 0.35.0
+        with:
+          image-ref: ipos-worker:ci
+          format: table
+          exit-code: "1"
+          severity: CRITICAL,HIGH
+          ignore-unfixed: true
+          output: .qdev/ipos/artifacts/release/trivy-worker.txt
+
+      - name: Generate CycloneDX image SBOMs (carrier evidence)
+        uses: anchore/sbom-action@e22c389904149dbc22b58101806040fa8d37a610 # v0.24.0
+        with:
+          image: ipos-app:ci
+          format: cyclonedx-json
+          artifact-name: ipos-app-image.cdx.json
+          output-file: .qdev/ipos/artifacts/release/ipos-app-image.cdx.json
+          upload-artifact: false
+
+      - name: Generate CycloneDX worker SBOM (carrier evidence)
+        uses: anchore/sbom-action@e22c389904149dbc22b58101806040fa8d37a610 # v0.24.0
+        with:
+          image: ipos-worker:ci
+          format: cyclonedx-json
+          artifact-name: ipos-worker-image.cdx.json
+          output-file: .qdev/ipos/artifacts/release/ipos-worker-image.cdx.json
+          upload-artifact: false
+
+      - name: Record carrier run identity (never a release receipt)
+        if: always()
+        run: |
+          {
+            printf 'carrier_repository=%s\n' "${GITHUB_REPOSITORY}"
+            printf 'carrier_head_sha=%s\n' "${GITHUB_SHA}"
+            printf 'carrier_run_id=%s\n' "${GITHUB_RUN_ID}"
+            printf 'carrier_run_attempt=%s\n' "${GITHUB_RUN_ATTEMPT}"
+            printf 'carrier_job=%s\n' "${GITHUB_JOB}"
+            printf 'carrier_workflow=%s\n' "${GITHUB_WORKFLOW}"
+            printf 'carrier_lane=%s\n' "${CARRIER_LANE}"
+            printf 'verified_source_repository=belilovsky/ipos\n'
+            printf 'verified_source_sha=%s\n' "${VERIFIED_SOURCE_SHA}"
+            printf 'verified_source_ancestor_of_origin_main=%s\n' "${SOURCE_ANCESTOR_OF_MAIN:-unknown}"
+            printf 'verified_inputs_repository=belilovsky/qdev-ci-carrier-inputs\n'
+            printf 'verified_inputs_commit=%s\n' "${INPUTS_COMMIT:-unknown}"
+            printf 'qazstack_wheel_sha256=%s\n' "${QAZSTACK_WHEEL_SHA256}"
+            printf 'qazstack_wheel_source=mirror of the immutable private release asset; the GitHub Release API digest equals this sha256\n'
+            printf 'execution=native QDev self-hosted qdev-ci-docker lane, real IPOS steps, carrier repository\n'
+            printf 'registry_publish=withheld: no registry candidate is produced by the carrier lane\n'
+            printf 'release_receipt=false: the managed lane requires canonical_repository=belilovsky/ipos and a controller-signed CI claim\n'
+          } | tee "${CARRIER_NOTE}"
+
+      - name: Upload IPOS production image evidence
+        if: always()
+        env:
+          QDEV_IF_NO_FILES: warn
+        run: |
+          set -euo pipefail
+          test -x .github/scripts/qdev-upload-artifact.sh
+          .github/scripts/qdev-upload-artifact.sh ipos-production-evidence .qdev/ipos/artifacts/release "${CARRIER_NOTE}"
+
+      - name: Remove the deploy keys from the runner
+        if: always()
+        run: rm -f "${RUNNER_TEMP}/qdev-ipos-deploy-key" "${RUNNER_TEMP}/qdev-inputs-deploy-key"
+
+  reports-container:
+    name: IPOS isolated reports-private image
+    if: >-
+      always() &&
+      (github.event.inputs.mode == 'reports' || github.event.inputs.mode == 'all') &&
+      (needs.qa.result == 'success' || needs.qa.result == 'skipped')
+    needs: qa
+    runs-on:
+      - self-hosted
+      - Linux
+      - X64
+      - qdev-ci-docker
+      - 'qdev-job-${{ github.run_id }}-${{ github.run_attempt }}-ipos-reports'
+    timeout-minutes: 80
+    concurrency:
+      group: ipos-native-carrier-lane
+      cancel-in-progress: false
+    env:
+      CARRIER_LANE: reports
+    steps:
+      - name: Check out the carrier repository
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
+        with:
+          persist-credentials: false
+          fetch-depth: 1
+
+      - name: Check out the exact private IPOS revision
+        env:
+          IPOS_DEPLOY_KEY: ${{ secrets.IPOS_DEPLOY_KEY }}
+        run: |
+          set -euo pipefail
+          key_file="${RUNNER_TEMP:?}/qdev-ipos-deploy-key"
+          (umask 077; printf '%s\n' "${IPOS_DEPLOY_KEY}" > "${key_file}")
+          test -s "${key_file}"
+          ssh_command="ssh -i ${key_file} -o IdentitiesOnly=yes -o StrictHostKeyChecking=accept-new -o UserKnownHostsFile=${RUNNER_TEMP}/qdev-known-hosts"
+          printf 'GIT_SSH_COMMAND=%s\n' "${ssh_command}" >> "${GITHUB_ENV}"
+          export GIT_SSH_COMMAND="${ssh_command}"
+          mkdir -p .qdev
+          git clone --quiet --no-tags git@github.com:belilovsky/ipos.git "${IPOS_SOURCE_DIR}"
+          cd "${IPOS_SOURCE_DIR}"
+          if ! git cat-file -e "${VERIFIED_SOURCE_SHA}^{commit}" 2>/dev/null; then
+            git fetch --quiet origin "${VERIFIED_SOURCE_SHA}"
+          fi
+          git checkout --quiet --detach "${VERIFIED_SOURCE_SHA}"
+          test "$(git rev-parse HEAD)" = "${VERIFIED_SOURCE_SHA}"
+          test -z "$(git status --porcelain --untracked-files=all)"
+          git fetch --quiet origin main
+          ancestor=false
+          if git merge-base --is-ancestor HEAD origin/main; then ancestor=true; fi
+          printf 'SOURCE_ANCESTOR_OF_MAIN=%s\n' "${ancestor}" >> "${GITHUB_ENV}"
+          printf 'ipos_source_sha=%s ancestor_of_origin_main=%s\n' "$(git rev-parse HEAD)" "${ancestor}"
+
+      - name: Check out the pinned carrier inputs
+        env:
+          QDEV_INPUTS_DEPLOY_KEY: ${{ secrets.QDEV_INPUTS_DEPLOY_KEY }}
+        run: |
+          set -euo pipefail
+          key_file="${RUNNER_TEMP:?}/qdev-inputs-deploy-key"
+          (umask 077; printf '%s\n' "${QDEV_INPUTS_DEPLOY_KEY}" > "${key_file}")
+          test -s "${key_file}"
+          export GIT_SSH_COMMAND="ssh -i ${key_file} -o IdentitiesOnly=yes -o StrictHostKeyChecking=accept-new -o UserKnownHostsFile=${RUNNER_TEMP}/qdev-known-hosts"
+          git clone --quiet --depth 1 git@github.com:belilovsky/qdev-ci-carrier-inputs.git "${CARRIER_INPUTS_DIR}"
+          cd "${CARRIER_INPUTS_DIR}"
+          inputs_commit="$(git rev-parse HEAD)"
+          printf 'INPUTS_COMMIT=%s\n' "${inputs_commit}" >> "${GITHUB_ENV}"
+          printf 'inputs_commit=%s\n' "${inputs_commit}"
+
+      - name: Set up Python 3.12.14
+        uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065 # v5.6.0
+        with:
+          python-version: "3.12.14"
+
+      - name: Verify and stage the pinned private QazStack wheel
+        run: |
+          set -euo pipefail
+          cd "${GITHUB_WORKSPACE}/${CARRIER_INPUTS_DIR}"
+          sha256sum --check --strict SHA256SUMS
+          cd "${GITHUB_WORKSPACE}/${IPOS_SOURCE_DIR}"
+          install -d -m 0750 artifacts/private
+          install -m 0644 \
+            "${GITHUB_WORKSPACE}/${CARRIER_INPUTS_DIR}/qazstack-${QAZSTACK_VERSION}-py3-none-any.whl" \
+            "${QAZSTACK_WHEEL_PATH}"
+          deploy/verify-qazstack-wheel.sh "${QAZSTACK_WHEEL_PATH}" "${QAZSTACK_VERSION}" "${QAZSTACK_WHEEL_SHA256}"
+
+      - name: Install the locked reports environment
+        working-directory: .qdev/ipos
+        run: |
+          set -euo pipefail
+          python -m pip install --upgrade pip
+          python -m pip install --requirement requirements-reports.lock
+          python -m pip install --no-deps "${QAZSTACK_WHEEL_PATH}" --editable .
+          python -m pip check
+
+      - name: Build and check the isolated private reports profile
+        working-directory: .qdev/ipos
+        run: deploy/build-reports.sh
+
+      - name: Scan the reports image (CRITICAL/HIGH, fixed only)
+        uses: aquasecurity/trivy-action@57a97c7e7821a5776cebc9bb87c984fa69cba8f1 # 0.35.0
+        with:
+          image-ref: ipos-reports:ci
+          format: table
+          exit-code: "1"
+          severity: CRITICAL,HIGH
+          ignore-unfixed: true
+          output: .qdev/ipos/artifacts/reports/trivy-reports.txt
+
+      - name: Registry publish is intentionally withheld
+        run: |
+          printf 'publish_reports_image=withheld\n'
+          printf 'reason=deploy/publish-reports-image.sh requires GITHUB_REPOSITORY=belilovsky/ipos and a registry candidate bound to canonical main\n'
+          printf 'note=this carrier run produces build and scan evidence only; no registry candidate and no release receipt\n'
+
+      - name: Record carrier run identity (never a release receipt)
+        if: always()
+        run: |
+          {
+            printf 'carrier_repository=%s\n' "${GITHUB_REPOSITORY}"
+            printf 'carrier_head_sha=%s\n' "${GITHUB_SHA}"
+            printf 'carrier_run_id=%s\n' "${GITHUB_RUN_ID}"
+            printf 'carrier_run_attempt=%s\n' "${GITHUB_RUN_ATTEMPT}"
+            printf 'carrier_job=%s\n' "${GITHUB_JOB}"
+            printf 'carrier_workflow=%s\n' "${GITHUB_WORKFLOW}"
+            printf 'carrier_lane=%s\n' "${CARRIER_LANE}"
+            printf 'verified_source_repository=belilovsky/ipos\n'
+            printf 'verified_source_sha=%s\n' "${VERIFIED_SOURCE_SHA}"
+            printf 'verified_source_ancestor_of_origin_main=%s\n' "${SOURCE_ANCESTOR_OF_MAIN:-unknown}"
+            printf 'verified_inputs_repository=belilovsky/qdev-ci-carrier-inputs\n'
+            printf 'verified_inputs_commit=%s\n' "${INPUTS_COMMIT:-unknown}"
+            printf 'qazstack_wheel_sha256=%s\n' "${QAZSTACK_WHEEL_SHA256}"
+            printf 'qazstack_wheel_source=mirror of the immutable private release asset; the GitHub Release API digest equals this sha256\n'
+            printf 'execution=native QDev self-hosted qdev-ci-docker lane, real IPOS steps, carrier repository\n'
+            printf 'registry_publish=withheld: no registry candidate is produced by the carrier lane\n'
+            printf 'release_receipt=false: the managed lane requires canonical_repository=belilovsky/ipos and a controller-signed CI claim\n'
+          } | tee "${CARRIER_NOTE}"
+
+      - name: Upload IPOS reports image evidence
+        if: always()
+        env:
+          QDEV_IF_NO_FILES: warn
+        run: |
+          set -euo pipefail
+          test -x .github/scripts/qdev-upload-artifact.sh
+          .github/scripts/qdev-upload-artifact.sh ipos-reports-evidence .qdev/ipos/artifacts/reports "${CARRIER_NOTE}"
+
+      - name: Remove the deploy keys from the runner
+        if: always()
+        run: rm -f "${RUNNER_TEMP}/qdev-ipos-deploy-key" "${RUNNER_TEMP}/qdev-inputs-deploy-key"
