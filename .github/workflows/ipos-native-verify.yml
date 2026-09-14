@@ -239,27 +239,24 @@ jobs:
             printf 'PASS github_service_reachable_at_127.0.0.1:%s\n' "${POSTGRES_PORT}" | tee -a "${log}"
           else
             printf 'FAIL github_service_unreachable_at_127.0.0.1:%s\n' "${POSTGRES_PORT}" | tee -a "${log}"
-            topology=manual_postgres_runner_netns
+            topology=manual_postgres_published_port
             docker rm -f ipos-probe-postgres >/dev/null 2>&1 || true
             started=false
-            for target in "$(hostname)" "$(cat /etc/hostname)"; do
-              if docker run -d --name ipos-probe-postgres --network "container:${target}" \
-                --env "POSTGRES_DB=${POSTGRES_DB}" --env "POSTGRES_USER=${POSTGRES_USER}" \
-                --env "POSTGRES_PASSWORD=${POSTGRES_PASSWORD}" "${POSTGRES_IMAGE}" >> "${log}" 2>&1; then
-                printf 'manual_netns_target=%s\n' "${target}" | tee -a "${log}"
-                started=true
-                break
-              fi
-            done
+            if docker run -d --name ipos-probe-postgres -p "${POSTGRES_PORT}:5432" \
+              --env "POSTGRES_DB=${POSTGRES_DB}" --env "POSTGRES_USER=${POSTGRES_USER}" \
+              --env "POSTGRES_PASSWORD=${POSTGRES_PASSWORD}" "${POSTGRES_IMAGE}" >> "${log}" 2>&1; then
+              printf 'manual_container=ipos-probe-postgres published_port=%s\n' "${POSTGRES_PORT}" | tee -a "${log}"
+              started=true
+            fi
             if [ "${started}" = true ] && wait_reachable; then
-              printf 'PASS manual_postgres_reachable_in_runner_netns\n' | tee -a "${log}"
+              printf 'PASS manual_postgres_reachable_at_127.0.0.1:%s\n' "${POSTGRES_PORT}" | tee -a "${log}"
             else
-              printf 'FAIL no_postgres_reachable_in_runner_netns\n' | tee -a "${log}"
+              printf 'FAIL no_postgres_reachable_from_runner\n' | tee -a "${log}"
               exit 1
             fi
           fi
           printf 'POSTGRES_TOPOLOGY=%s\n' "${topology}" >> "${GITHUB_ENV}"
-          if docker run --rm --network "container:$(cat /etc/hostname)" "${POSTGRES_IMAGE}" \
+          if docker run --rm --network host "${POSTGRES_IMAGE}" \
             pg_isready -h 127.0.0.1 -p "${POSTGRES_PORT}" -U "${POSTGRES_USER}" -d "${POSTGRES_DB}" 2>&1 | tee -a "${log}"; then
             printf 'PASS postgres_protocol_probe\n' | tee -a "${log}"
           else
@@ -441,22 +438,15 @@ jobs:
           if wait_reachable; then
             printf 'postgres_topology=github_service_shared_netns\n'
           else
-            printf 'github_service_unreachable: starting the pinned PostgreSQL in the runner network namespace\n'
+            printf 'github_service_unreachable: starting the pinned PostgreSQL on a published port\n'
             docker rm -f ipos-ci-postgres >/dev/null 2>&1 || true
-            started=false
-            for target in "$(hostname)" "$(cat /etc/hostname)"; do
-              if docker run -d --name ipos-ci-postgres --network "container:${target}" \
-                --env "POSTGRES_DB=${POSTGRES_DB}" --env "POSTGRES_USER=${POSTGRES_USER}" \
-                --env "POSTGRES_PASSWORD=${POSTGRES_PASSWORD}" "${POSTGRES_IMAGE}"; then
-                started=true
-                break
-              fi
-            done
-            test "${started}" = true
+            docker run -d --name ipos-ci-postgres -p "${POSTGRES_PORT}:5432" \
+              --env "POSTGRES_DB=${POSTGRES_DB}" --env "POSTGRES_USER=${POSTGRES_USER}" \
+              --env "POSTGRES_PASSWORD=${POSTGRES_PASSWORD}" "${POSTGRES_IMAGE}"
             wait_reachable
-            printf 'postgres_topology=manual_postgres_runner_netns\n'
+            printf 'postgres_topology=manual_postgres_published_port\n'
           fi
-          docker run --rm --network "container:$(cat /etc/hostname)" "${POSTGRES_IMAGE}" \
+          docker run --rm --network host "${POSTGRES_IMAGE}" \
             pg_isready -h 127.0.0.1 -p "${POSTGRES_PORT}" -U "${POSTGRES_USER}" -d "${POSTGRES_DB}"
 
       - name: Install the locked QA environment
