@@ -15,6 +15,13 @@
 # This is NOT the IPOS release lane. The managed lane `qdev-release-rp` requires
 # canonical_repository=belilovsky/ipos plus a controller-signed CI claim, so no
 # release receipt, release admission or registry publish is produced here.
+#
+# Scan reporting note: the native lane runs trivy with exit-code 1 and no
+# report file, so a finding there is one silent job failure. The carrier lanes
+# additionally write a machine-readable report, print every fixed CRITICAL/HIGH
+# finding into the run log and then fail in an explicit gate step that applies
+# the identical filter (CRITICAL/HIGH, fixed only). A finding still fails the
+# lane; it only becomes readable here instead of invisible.
 name: IPOS native carrier verify
 
 on:
@@ -645,20 +652,44 @@ jobs:
         with:
           image-ref: ipos-app:ci
           format: table
-          exit-code: "1"
+          exit-code: "0"
           severity: CRITICAL,HIGH
           ignore-unfixed: true
           output: .qdev/ipos/artifacts/release/trivy-app.txt
+
+      # The native lane fails on the first finding without printing anything,
+      # so the carrier lane always writes the machine-readable report and fails
+      # in the explicit gate step below. Filtering is identical to the native
+      # lane (CRITICAL/HIGH, fixed only); only the reporting channel differs.
+      - name: Scan the app image (machine-readable carrier report)
+        uses: aquasecurity/trivy-action@57a97c7e7821a5776cebc9bb87c984fa69cba8f1 # 0.35.0
+        with:
+          image-ref: ipos-app:ci
+          format: json
+          exit-code: "0"
+          severity: CRITICAL,HIGH
+          ignore-unfixed: true
+          output: .qdev/ipos/artifacts/release/trivy-app.json
 
       - name: Scan the worker image (CRITICAL/HIGH, fixed only)
         uses: aquasecurity/trivy-action@57a97c7e7821a5776cebc9bb87c984fa69cba8f1 # 0.35.0
         with:
           image-ref: ipos-worker:ci
           format: table
-          exit-code: "1"
+          exit-code: "0"
           severity: CRITICAL,HIGH
           ignore-unfixed: true
           output: .qdev/ipos/artifacts/release/trivy-worker.txt
+
+      - name: Scan the worker image (machine-readable carrier report)
+        uses: aquasecurity/trivy-action@57a97c7e7821a5776cebc9bb87c984fa69cba8f1 # 0.35.0
+        with:
+          image-ref: ipos-worker:ci
+          format: json
+          exit-code: "0"
+          severity: CRITICAL,HIGH
+          ignore-unfixed: true
+          output: .qdev/ipos/artifacts/release/trivy-worker.json
 
       - name: Generate CycloneDX image SBOMs (carrier evidence)
         uses: anchore/sbom-action@e22c389904149dbc22b58101806040fa8d37a610 # v0.24.0
@@ -677,6 +708,13 @@ jobs:
           artifact-name: ipos-worker-image.cdx.json
           output-file: .qdev/ipos/artifacts/release/ipos-worker-image.cdx.json
           upload-artifact: false
+
+      - name: Publish and enforce the fixed CRITICAL/HIGH gate for the app and worker images
+        run: |
+          set -euo pipefail
+          python3 .github/scripts/qdev-trivy-gate.py \
+            .qdev/ipos/artifacts/release/trivy-app.json \
+            .qdev/ipos/artifacts/release/trivy-worker.json
 
       - name: Record carrier run identity (never a release receipt)
         if: always()
@@ -813,10 +851,26 @@ jobs:
         with:
           image-ref: ipos-reports:ci
           format: table
-          exit-code: "1"
+          exit-code: "0"
           severity: CRITICAL,HIGH
           ignore-unfixed: true
           output: .qdev/ipos/artifacts/reports/trivy-reports.txt
+
+      - name: Scan the reports image (machine-readable carrier report)
+        uses: aquasecurity/trivy-action@57a97c7e7821a5776cebc9bb87c984fa69cba8f1 # 0.35.0
+        with:
+          image-ref: ipos-reports:ci
+          format: json
+          exit-code: "0"
+          severity: CRITICAL,HIGH
+          ignore-unfixed: true
+          output: .qdev/ipos/artifacts/reports/trivy-reports.json
+
+      - name: Publish and enforce the fixed CRITICAL/HIGH gate for the reports image
+        run: |
+          set -euo pipefail
+          python3 .github/scripts/qdev-trivy-gate.py \
+            .qdev/ipos/artifacts/reports/trivy-reports.json
 
       - name: Registry publish is intentionally withheld
         run: |
