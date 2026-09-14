@@ -70,9 +70,6 @@ jobs:
       - qdev-ci-docker
       - 'qdev-job-${{ github.run_id }}-${{ github.run_attempt }}-ipos-probe'
     timeout-minutes: 40
-    concurrency:
-      group: ipos-native-carrier-lane
-      cancel-in-progress: false
     env:
       CARRIER_LANE: probe
     services:
@@ -339,9 +336,6 @@ jobs:
       - qdev-ci-docker
       - 'qdev-job-${{ github.run_id }}-${{ github.run_attempt }}-ipos-qa'
     timeout-minutes: 80
-    concurrency:
-      group: ipos-native-carrier-lane
-      cancel-in-progress: false
     env:
       CARRIER_LANE: qa
     services:
@@ -523,9 +517,6 @@ jobs:
       - qdev-ci-docker
       - 'qdev-job-${{ github.run_id }}-${{ github.run_attempt }}-ipos-production'
     timeout-minutes: 80
-    concurrency:
-      group: ipos-native-carrier-lane
-      cancel-in-progress: false
     env:
       CARRIER_LANE: production
     steps:
@@ -737,9 +728,6 @@ jobs:
       - qdev-ci-docker
       - 'qdev-job-${{ github.run_id }}-${{ github.run_attempt }}-ipos-reports'
     timeout-minutes: 80
-    concurrency:
-      group: ipos-native-carrier-lane
-      cancel-in-progress: false
     env:
       CARRIER_LANE: reports
     steps:
