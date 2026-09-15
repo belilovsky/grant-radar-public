@@ -516,7 +516,7 @@ jobs:
           archive_bytes="$(wc -c < "${archive}" | tr -d ' ')"
           {
             printf 'image_id=%s\n' "${image_id}"
-            printf 'image_repo_digests=%s\n' "${repo_digests:-none: the image exists only in this runner's local docker store}"
+            printf 'image_repo_digests=%s\n' "${repo_digests:-none: the image exists only in the local docker store}"
             printf 'archive=%s bytes=%s sha256=%s\n' "${archive}" "${archive_bytes}" "${archive_sha256}"
             printf 'SHASUMS=%s\n' "$(tr '\n' ';' < release-artifact/SHA256SUMS)"
             printf 'build_finished_at=%s\n' "$(date -u +%Y-%m-%dT%H:%M:%SZ)"
