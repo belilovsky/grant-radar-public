@@ -1,0 +1,320 @@
+# Native QDev self-hosted execution of the Qazaqstan.Space quality gate.
+#
+# GitHub Actions is blocked for every private QDev repository by the account's
+# billing state (startup_failure, zero jobs, every private repository, since
+# 2026-09-13), so belilovsky/qazaqstan-space/.github/workflows/quality.yml
+# cannot start at all: it delegates to the shared ecosystem quality-v3 reusable
+# workflow, which never receives a runner while the account is suspended.
+#
+# This public carrier repository is admitted by the QDev runner broker and runs
+# the real Qazaqstan.Space quality steps against an exact private revision
+# fetched with a read-only deploy key, on the same self-hosted runner profile the
+# private workflow requests (qdev-ci, declared in .github/qdev-runner.yml).
+#
+# Private sources are fetched with an explicit key file plus GIT_SSH_COMMAND;
+# actions/checkout ssh-key is deliberately not used so the private key never
+# enters the checkout action's key handling.
+#
+# This is exact-SHA execution evidence, not a provider CI status for
+# belilovsky/qazaqstan-space, and not the Qazaqstan.Space release lane: the real
+# release path is deploy/publish-vps.sh, which builds dist/public, ships it to
+# the nginx host and switches the release symlink. This carrier lane performs no
+# registry publish, no deploy and no release receipt. One deliberate scope
+# narrowing is recorded in the evidence: `npm run sources:verify` re-probes 152
+# external primary sources over the public internet, so it is reported with its
+# own outcome instead of gating the lane.
+name: Qazaqstan.Space native carrier verify
+
+on:
+  workflow_dispatch:
+    inputs:
+      head_sha:
+        description: "Exact 40-character commit SHA in belilovsky/qazaqstan-space"
+        required: true
+        type: string
+      expect_release:
+        description: "Optional: require the live qazaqstan.space release id to equal this value"
+        required: false
+        default: ""
+        type: string
+      expect_commit:
+        description: "Optional: require the live qazaqstan.space RELEASE_COMMIT to equal this SHA"
+        required: false
+        default: ""
+        type: string
+
+permissions:
+  contents: read
+
+concurrency:
+  group: qazaqstan-space-native-carrier
+  cancel-in-progress: false
+
+env:
+  QAZAQSTAN_SPACE_SOURCE_DIR: .qdev/qazaqstan-space
+  VERIFIED_SOURCE_SHA: ${{ github.event.inputs.head_sha }}
+  EXPECT_RELEASE: ${{ github.event.inputs.expect_release }}
+  EXPECT_COMMIT: ${{ github.event.inputs.expect_commit }}
+  QAZAQSTAN_SPACE_BASE_URL: https://qazaqstan.space
+  QAZAQSTAN_SPACE_EXPECTED_RELEASE: ${{ github.event.inputs.expect_release }}
+  QAZAQSTAN_SPACE_EXPECTED_COMMIT: ${{ github.event.inputs.expect_commit }}
+  NODE_VERSION: "22"
+  PYTHON_VERSION: "3.12"
+  CARRIER_NOTE: carrier-run-identity.txt
+  CARRIER_PROBE_LOG: carrier-probe.log
+  CARRIER_QUALITY_LOG: carrier-quality-gate.log
+  CARRIER_PUBLIC_LOG: carrier-public-observation.txt
+
+jobs:
+  quality:
+    name: Qazaqstan.Space static release gate
+    runs-on:
+      - self-hosted
+      - Linux
+      - X64
+      - qdev-ci
+      - 'qdev-job-${{ github.run_id }}-${{ github.run_attempt }}-qazaqstan-space-quality'
+    timeout-minutes: 90
+    steps:
+      - name: Check out the carrier repository
+        uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5
+        with:
+          persist-credentials: false
+          fetch-depth: 1
+
+      - name: Check out the exact private Qazaqstan.Space revision
+        env:
+          QAZAQSTAN_SPACE_DEPLOY_KEY: ${{ secrets.QAZAQSTAN_SPACE_DEPLOY_KEY }}
+        run: |
+          set -euo pipefail
+          key_file="${RUNNER_TEMP:?}/qdev-qazaqstan-space-deploy-key"
+          (umask 077; printf '%s\n' "${QAZAQSTAN_SPACE_DEPLOY_KEY}" > "${key_file}")
+          test -s "${key_file}"
+          ssh_command="ssh -i ${key_file} -o IdentitiesOnly=yes -o StrictHostKeyChecking=accept-new -o UserKnownHostsFile=${RUNNER_TEMP}/qdev-known-hosts"
+          printf 'GIT_SSH_COMMAND=%s\n' "${ssh_command}" >> "${GITHUB_ENV}"
+          export GIT_SSH_COMMAND="${ssh_command}"
+          mkdir -p .qdev
+          git clone --quiet --no-tags git@github.com:belilovsky/qazaqstan-space.git "${QAZAQSTAN_SPACE_SOURCE_DIR}"
+          cd "${QAZAQSTAN_SPACE_SOURCE_DIR}"
+          if ! git cat-file -e "${VERIFIED_SOURCE_SHA}^{commit}" 2>/dev/null; then
+            git fetch --quiet origin "${VERIFIED_SOURCE_SHA}"
+          fi
+          git checkout --quiet --detach "${VERIFIED_SOURCE_SHA}"
+          test "$(git rev-parse HEAD)" = "${VERIFIED_SOURCE_SHA}"
+          test -z "$(git status --porcelain --untracked-files=all)"
+          git fetch --quiet origin main
+          ancestor=false
+          if git merge-base --is-ancestor HEAD origin/main; then ancestor=true; fi
+          printf 'SOURCE_ANCESTOR_OF_MAIN=%s\n' "${ancestor}" >> "${GITHUB_ENV}"
+          printf 'qazaqstan_space_source_sha=%s ancestor_of_origin_main=%s origin_main=%s\n' \
+            "$(git rev-parse HEAD)" "${ancestor}" "$(git rev-parse origin/main)"
+
+      - name: Probe the runner toolchain and lane identity
+        id: toolchain
+        continue-on-error: true
+        run: |
+          set -uo pipefail
+          {
+            printf 'runner=%s environment=%s repository=%s workflow=%s\n' \
+              "${RUNNER_NAME}" "${RUNNER_ENVIRONMENT}" "${GITHUB_REPOSITORY}" "${GITHUB_WORKFLOW}"
+            printf 'qdev_job_id=%s qdev_repository=%s qdev_head_sha=%s\n' \
+              "${QDEV_JOB_ID:-unset}" "${QDEV_REPOSITORY:-unset}" "${QDEV_HEAD_SHA:-unset}"
+            printf 'qdev_artifact_url=%s artifact_token_set=%s\n' \
+              "${QDEV_ARTIFACT_URL:-unset}" \
+              "$([ -n "${QDEV_ARTIFACT_TOKEN:-}" ] && printf yes || printf no)"
+            printf 'job_hostname=%s cpus=%s\n' "$(hostname)" "$(nproc)"
+            free -m | head -2 || true
+            df -h / "${GITHUB_WORKSPACE}" | tail -2 || true
+            test ! -S /var/run/docker.sock && printf 'PASS docker_socket_absent\n'
+          } >> "${CARRIER_PROBE_LOG}" 2>&1
+          for tool in python3 git ssh curl jq sha256sum tar bash node npm; do
+            if command -v "${tool}" >/dev/null 2>&1; then
+              printf 'PASS tool_present=%s path=%s\n' "${tool}" "$(command -v "${tool}")" \
+                | tee -a "${CARRIER_PROBE_LOG}"
+            else
+              printf 'note tool_absent_before_setup=%s\n' "${tool}" | tee -a "${CARRIER_PROBE_LOG}"
+            fi
+          done
+
+      - name: Set up Node.js
+        uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+
+      - name: Set up Python for the science-link gate
+        uses: actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1 # v6
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+
+      - name: Install dependencies
+        id: install
+        working-directory: .qdev/qazaqstan-space
+        run: |
+          set -euo pipefail
+          node --version
+          npm --version
+          python3 --version
+          npm ci
+
+      - name: Run the exact Qazaqstan.Space quality steps
+        id: quality_gate
+        working-directory: .qdev/qazaqstan-space
+        run: |
+          set -euo pipefail
+          {
+            printf 'step=manifest_check\n'
+            npm run manifest:check
+            printf 'step=avds_adapter_check\n'
+            npm run avds:adapter:check
+            printf 'step=lint\n'
+            npm run lint
+            printf 'step=data_build\n'
+            npm run data:build
+            printf 'step=typecheck\n'
+            npm run typecheck
+            printf 'step=build\n'
+            npm run build
+            printf 'step=export_static\n'
+            npm run export:static
+            printf 'step=release_freshness\n'
+            npm run release:freshness
+            printf 'step=current_check\n'
+            npm run current:check
+            printf 'step=cjm_routes\n'
+            npm run cjm:routes
+            printf 'step=editorial_surface\n'
+            npm run editorial:surface
+            printf 'step=kk_coverage\n'
+            npm run kk:coverage
+            printf 'step=repo_hygiene\n'
+            npm run repo:hygiene
+            printf 'step=security_secrets\n'
+            npm run security:secrets
+            printf 'step=test_render\n'
+            npm run test:render
+            printf 'step=test_science_foundation\n'
+            npm run test:science-foundation
+            printf 'step=test_science_link\n'
+            npm run test:science-link
+            printf 'step=test_source_policy\n'
+            npm run test:source-policy
+            printf 'step=test_qazgeo_snapshot\n'
+            npm run test:qazgeo-snapshot
+            printf 'step=none\n'
+          } 2>&1 | tee "${GITHUB_WORKSPACE}/${CARRIER_QUALITY_LOG}"
+
+      - name: Record the release artifact inventory
+        id: inventory
+        if: always()
+        working-directory: .qdev/qazaqstan-space
+        continue-on-error: true
+        run: |
+          set -uo pipefail
+          {
+            printf 'html_routes=%s\n' "$(find dist/public -name 'index.html' | wc -l)"
+            printf 'recovery_404_present=%s\n' "$([ -f dist/public/404.html ] && printf yes || printf no)"
+            printf 'release_id=%s\n' "$(jq -r '.release_id // empty' dist/public/thematic-release.json 2>/dev/null)"
+            printf 'data_index_counts=%s\n' "$(jq -c '.counts' dist/public/data/v1/index.json 2>/dev/null)"
+            printf 'dist_public_bytes=%s\n' "$(du -sb dist/public | awk '{print $1}')"
+            printf 'dist_public_sha256=%s\n' \
+              "$(find dist/public -type f -print0 | sort -z | xargs -0 sha256sum | sha256sum | awk '{print $1}')"
+          } | tee -a "${GITHUB_WORKSPACE}/${CARRIER_QUALITY_LOG}"
+
+      - name: Probe external primary sources (reported, not gating)
+        id: sources_verify
+        if: always()
+        working-directory: .qdev/qazaqstan-space
+        continue-on-error: true
+        run: |
+          set -uo pipefail
+          npm run sources:verify 2>&1 | tee -a "${GITHUB_WORKSPACE}/${CARRIER_QUALITY_LOG}"
+
+      - name: Observe the live public runtime identity
+        id: public_observe
+        if: always()
+        continue-on-error: true
+        run: |
+          set -uo pipefail
+          {
+            printf 'base_url=%s\n' "${QAZAQSTAN_SPACE_BASE_URL}"
+            printf 'observed_at=%s\n' "$(date -u +%Y-%m-%dT%H:%M:%SZ)"
+            release_json="$(curl -fsS -L --http1.1 --max-time 30 "${QAZAQSTAN_SPACE_BASE_URL}/thematic-release.json" || printf '')"
+            printf 'release_identity=%s\n' "${release_json}"
+            printf 'release_id=%s\n' "$(printf '%s' "${release_json}" | jq -r '.release_id // empty' 2>/dev/null)"
+            printf 'release_commit=%s\n' \
+              "$(printf '%s' "${release_json}" | jq -r '.build.commit // empty' 2>/dev/null)"
+            printf 'deployed_release_commit=%s\n' \
+              "$(curl -fsS -L --http1.1 --max-time 30 "${QAZAQSTAN_SPACE_BASE_URL}/RELEASE_COMMIT" 2>/dev/null || printf '')"
+            printf 'index_http=%s\n' \
+              "$(curl -o /dev/null -sS -w '%{http_code}' -L --http1.1 --max-time 30 "${QAZAQSTAN_SPACE_BASE_URL}/data/v1/index.json" || printf '')"
+            printf 'science_http=%s\n' \
+              "$(curl -o /dev/null -sS -w '%{http_code}' -L --http1.1 --max-time 30 "${QAZAQSTAN_SPACE_BASE_URL}/science" || printf '')"
+          } | tee "${CARRIER_PUBLIC_LOG}"
+          observed_release="$(awk -F= '$1 == "release_id" {print $2; exit}' "${CARRIER_PUBLIC_LOG}")"
+          observed_commit="$(awk -F= '$1 == "deployed_release_commit" {print $2; exit}' "${CARRIER_PUBLIC_LOG}")"
+          if [ -n "${EXPECT_RELEASE}" ]; then
+            test "${observed_release}" = "${EXPECT_RELEASE}"
+            printf 'PASS runtime_release_matches=%s\n' "${observed_release}" \
+              | tee -a "${CARRIER_PUBLIC_LOG}"
+          else
+            printf 'note runtime_release_binding_not_requested\n' | tee -a "${CARRIER_PUBLIC_LOG}"
+          fi
+          if [ -n "${EXPECT_COMMIT}" ]; then
+            test "${observed_commit}" = "${EXPECT_COMMIT}"
+            printf 'PASS runtime_commit_matches=%s\n' "${observed_commit}" \
+              | tee -a "${CARRIER_PUBLIC_LOG}"
+          else
+            printf 'note runtime_commit_binding_not_requested\n' | tee -a "${CARRIER_PUBLIC_LOG}"
+          fi
+
+      - name: Run the live public smoke against qazaqstan.space
+        id: live_smoke
+        if: always()
+        continue-on-error: true
+        working-directory: .qdev/qazaqstan-space
+        run: |
+          set -uo pipefail
+          bash deploy/monitor-public.sh 2>&1 | tee -a "${GITHUB_WORKSPACE}/${CARRIER_PUBLIC_LOG}"
+
+      - name: Record carrier run identity (never a release receipt)
+        if: always()
+        run: |
+          set -uo pipefail
+          {
+            printf 'carrier_repository=%s\n' "${GITHUB_REPOSITORY}"
+            printf 'carrier_head_sha=%s\n' "${GITHUB_SHA}"
+            printf 'carrier_run_id=%s\n' "${GITHUB_RUN_ID}"
+            printf 'carrier_run_attempt=%s\n' "${GITHUB_RUN_ATTEMPT}"
+            printf 'carrier_job=%s\n' "${GITHUB_JOB}"
+            printf 'carrier_workflow=%s\n' "${GITHUB_WORKFLOW}"
+            printf 'runner_name=%s\n' "${RUNNER_NAME}"
+            printf 'verified_source_repository=belilovsky/qazaqstan-space\n'
+            printf 'verified_source_sha=%s\n' "${VERIFIED_SOURCE_SHA}"
+            printf 'verified_source_ancestor_of_origin_main=%s\n' "${SOURCE_ANCESTOR_OF_MAIN:-unknown}"
+            printf 'executor_profile=qdev-ci\n'
+            printf 'execution=native QDev self-hosted qdev-ci lane, real Qazaqstan.Space quality gate, carrier repository\n'
+            printf 'check_install=%s check_quality_gate=%s check_inventory=%s\n' \
+              '${{ steps.install.outcome }}' '${{ steps.quality_gate.outcome }}' '${{ steps.inventory.outcome }}'
+            printf 'check_live_smoke=%s check_public_observe=%s\n' \
+              '${{ steps.live_smoke.outcome }}' '${{ steps.public_observe.outcome }}'
+            printf 'reported_not_gating[sources_verify]=%s\n' '${{ steps.sources_verify.outcome }}'
+            printf 'provider_ci_status=unavailable: private-repository Actions is blocked by account billing; this is execution evidence, not a provider status\n'
+            printf 'registry_publish=withheld: this carrier lane never publishes\n'
+            printf 'deploy=withheld: the private deploy/publish-vps.sh release path owns deployment\n'
+            printf 'release_receipt=false\n'
+          } | tee "${CARRIER_NOTE}"
+
+      - name: Upload the carrier evidence bundle
+        if: always()
+        env:
+          QDEV_IF_NO_FILES: warn
+        run: |
+          set -euo pipefail
+          test -x .github/scripts/qdev-upload-artifact.sh
+          .github/scripts/qdev-upload-artifact.sh \
+            qazaqstan-space-carrier-evidence \
+            "${CARRIER_NOTE}" "${CARRIER_PROBE_LOG}" "${CARRIER_QUALITY_LOG}" "${CARRIER_PUBLIC_LOG}"
+
+      - name: Remove the deploy key from the runner
+        if: always()
+        run: rm -f "${RUNNER_TEMP}/qdev-qazaqstan-space-deploy-key"
