@@ -1,0 +1,269 @@
+# Native QDev self-hosted execution of the belilovsky/qazagents control-plane
+# checks referenced by item 10 of the regulatory-evidence-closure package.
+#
+# GitHub Actions is blocked for every private QDev repository by the account's
+# billing state (provider annotation "account is locked due to a billing
+# issue", startup_failure with zero jobs since 2026-09-13), so
+# belilovsky/qazagents cannot start any of its own workflows. This public
+# carrier repository is admitted by the QDev runner broker and executes the
+# real native steps against an exact private revision fetched with a
+# read-only deploy key (id 163365301), on the same self-hosted runner profile
+# (qdev-ci).
+#
+# Reproduced verbatim, one native job per step group, at the exact input SHA:
+#   - .github/workflows/lint-agents.yml   job `lint`      -> check_lint_agents
+#       python 3.11; `python scripts/lint_agents.py`
+#   - .github/workflows/qdev-runner-contract.yml job `qdev-runner-contract`
+#       -> check_runner_contract
+#       `python3 .github/scripts/qdev-runner-policy.py --root .`
+#   - .github/workflows/runner-smoke.yml  job `runner-smoke`
+#       -> check_runner_smoke
+#       the four RUNNER_ENVIRONMENT/RUNNER_NAME/GITHUB_SHA/docker.sock
+#       assertions and the `runner_smoke_ok` line
+#
+# Deliberately not reproduced here, each recorded in the run-identity note:
+#   - .github/workflows/ci.yml job `check` (and its ci-recovery.yml twin):
+#     needs `npm ci` (node 22), `npx playwright install --with-deps chromium`
+#     and `bash scripts/ci_check.sh` (lint+bench+build). That is a browser and
+#     build lane, not a contract lane, and it is deferred to a dedicated
+#     browser lane instead of loading the shared pool here.
+#   - .github/workflows/ci.yml job `qdev-devops-linux-sandbox` (and its
+#     ci-recovery.yml twin): builds and runs `--privileged` docker containers
+#     and builds the QazCompute MCP image, which needs the qdev-ci-docker
+#     profile whose single slot is capacity-constrained.
+#   - .github/workflows/ci-recovery.yml itself: a workflow_dispatch recovery
+#     variant of ci.yml with the same two jobs and no additional check.
+#
+# Private sources are fetched with an explicit key file plus GIT_SSH_COMMAND,
+# the transport already proven on these runners by the qazcompute, IPOS,
+# qazgeo, qazlake, qazpipe, QPhoto, PSSR, Janus and Crisis-Monitor lanes.
+# Private source is never published; only logs and the identity note leave the
+# runner, through the QDev artifact store and never public GitHub Artifacts.
+#
+# Each native check step carries `continue-on-error: true` so that a defect in
+# an early check cannot mask the later ones: the native workflows are separate
+# jobs, and here every check still executes, its true result is written to the
+# gate log and to the run-identity note as `check_<name>`, and the final
+# `Aggregate the native check outcomes` step fails the job when any of them did
+# not succeed. The aggregate step is what decides the run conclusion; no check
+# is softened.
+#
+# This is exact-SHA execution evidence, not a provider CI status for
+# belilovsky/qazagents, and it does not exercise the three item-10 skill
+# packages: they are not present in this repository revision, so their
+# promotion gate stays blocking.
+name: QazAgents native carrier verify
+
+on:
+  workflow_dispatch:
+    inputs:
+      head_sha:
+        description: "Exact 40-character commit SHA in belilovsky/qazagents"
+        required: true
+        type: string
+
+permissions:
+  contents: read
+
+concurrency:
+  group: qazagents-native-carrier-${{ github.event.inputs.head_sha }}
+  cancel-in-progress: false
+
+env:
+  SOURCE_DIR: .qdev/qazagents
+  VERIFIED_SOURCE_SHA: ${{ github.event.inputs.head_sha }}
+  CARRIER_NOTE: carrier-run-identity-qazagents.txt
+  CARRIER_GATE_LOG: carrier-qazagents-gate.log
+  SOURCE_REPOSITORY: belilovsky/qazagents
+
+jobs:
+  verify:
+    name: QazAgents control-plane checks
+    runs-on:
+      - self-hosted
+      - Linux
+      - X64
+      - qdev-ci
+      - 'qdev-job-${{ github.run_id }}-${{ github.run_attempt }}-qazagents-verify'
+    timeout-minutes: 30
+    steps:
+      - name: Check out the carrier repository
+        uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5
+        with:
+          persist-credentials: false
+          fetch-depth: 1
+
+      - name: Check out the exact private qazagents revision
+        env:
+          QAZAGENTS_DEPLOY_KEY: ${{ secrets.QAZAGENTS_DEPLOY_KEY }}
+        run: |
+          set -euo pipefail
+          key_file="${RUNNER_TEMP:?}/qdev-qazagents-key"
+          (umask 077; printf '%s\n' "${QAZAGENTS_DEPLOY_KEY}" > "${key_file}")
+          test -s "${key_file}"
+          ssh_command="ssh -i ${key_file} -o IdentitiesOnly=yes -o StrictHostKeyChecking=accept-new -o UserKnownHostsFile=${RUNNER_TEMP}/qdev-known-hosts"
+          export GIT_SSH_COMMAND="${ssh_command}"
+          mkdir -p .qdev
+          git clone --quiet --no-tags git@github.com:belilovsky/qazagents.git "${SOURCE_DIR}"
+          cd "${SOURCE_DIR}"
+          if ! git cat-file -e "${VERIFIED_SOURCE_SHA}^{commit}" 2>/dev/null; then
+            git fetch --quiet origin "${VERIFIED_SOURCE_SHA}"
+          fi
+          git checkout --quiet --detach "${VERIFIED_SOURCE_SHA}"
+          test "$(git rev-parse HEAD)" = "${VERIFIED_SOURCE_SHA}"
+          test -z "$(git status --porcelain --untracked-files=all)"
+          git fetch --quiet origin main
+          ancestor=false
+          if git merge-base --is-ancestor HEAD origin/main; then ancestor=true; fi
+          printf 'SOURCE_ANCESTOR_OF_MAIN=%s\n' "${ancestor}" >> "${GITHUB_ENV}"
+          printf 'qazagents_source_sha=%s ancestor_of_origin_main=%s origin_main=%s\n' \
+            "$(git rev-parse HEAD)" "${ancestor}" "$(git rev-parse origin/main)"
+          for f in .github/workflows/lint-agents.yml .github/workflows/qdev-runner-contract.yml .github/workflows/runner-smoke.yml; do
+            printf 'qazagents_native_%s_sha256=%s\n' \
+              "$(basename "${f}" .yml)" "$(sha256sum "${f}" | awk '{print $1}')"
+          done
+          printf 'qazagents_registry_codex_skills_sha256=%s\n' \
+            "$(sha256sum registry/codex-skills.json | awk '{print $1}')"
+          printf 'qazagents_registry_runtime_allowlist_sha256=%s\n' \
+            "$(sha256sum registry/runtime-allowlist.v1.json | awk '{print $1}')"
+
+      - name: Set up Python 3.11
+        uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065 # v5
+        with:
+          python-version: "3.11"
+
+      - name: Run the native lint-agents job steps (python 3.11)
+        id: lint_agents
+        continue-on-error: true
+        working-directory: .qdev/qazagents
+        run: |
+          set -uo pipefail
+          log="${GITHUB_WORKSPACE}/${CARRIER_GATE_LOG}"
+          {
+            printf 'native_job=lint-agents native_workflow=.github/workflows/lint-agents.yml source_sha=%s\n' "$(git rev-parse HEAD)"
+            printf 'check_started_at=%s\n' "$(date -u +%Y-%m-%dT%H:%M:%SZ)"
+          } | tee -a "${log}"
+          status=0
+          printf '\n$ python scripts/lint_agents.py\n' | tee -a "${log}"
+          if python scripts/lint_agents.py 2>&1 | tee -a "${log}"; then
+            printf 'PASS python scripts/lint_agents.py\n' | tee -a "${log}"
+          else
+            printf 'FAIL python scripts/lint_agents.py\n' | tee -a "${log}"
+            status=1
+          fi
+          printf 'check_lint_agents=%s\n' "${status}" | tee -a "${log}"
+          exit "${status}"
+
+      - name: Run the native qdev-runner-contract job steps
+        id: runner_contract
+        continue-on-error: true
+        working-directory: .qdev/qazagents
+        run: |
+          set -uo pipefail
+          log="${GITHUB_WORKSPACE}/${CARRIER_GATE_LOG}"
+          {
+            printf '\nnative_job=qdev-runner-contract native_workflow=.github/workflows/qdev-runner-contract.yml source_sha=%s\n' "$(git rev-parse HEAD)"
+            printf 'check_started_at=%s\n' "$(date -u +%Y-%m-%dT%H:%M:%SZ)"
+          } | tee -a "${log}"
+          status=0
+          printf '\n$ python3 .github/scripts/qdev-runner-policy.py --root .\n' | tee -a "${log}"
+          if python3 .github/scripts/qdev-runner-policy.py --root . 2>&1 | tee -a "${log}"; then
+            printf 'PASS python3 .github/scripts/qdev-runner-policy.py --root .\n' | tee -a "${log}"
+          else
+            printf 'FAIL python3 .github/scripts/qdev-runner-policy.py --root .\n' | tee -a "${log}"
+            status=1
+          fi
+          printf 'check_runner_contract=%s\n' "${status}" | tee -a "${log}"
+          exit "${status}"
+
+      - name: Run the native runner-smoke job steps
+        id: runner_smoke
+        continue-on-error: true
+        run: |
+          set -uo pipefail
+          log="${GITHUB_WORKSPACE}/${CARRIER_GATE_LOG}"
+          {
+            printf '\nnative_job=runner-smoke native_workflow=.github/workflows/runner-smoke.yml source_sha=%s\n' "${VERIFIED_SOURCE_SHA}"
+            printf 'check_started_at=%s\n' "$(date -u +%Y-%m-%dT%H:%M:%SZ)"
+          } | tee -a "${log}"
+          status=0
+          if set -euo pipefail
+          then
+            test "${RUNNER_ENVIRONMENT}" = "self-hosted"
+            test -n "${RUNNER_NAME}"
+            test -n "${GITHUB_SHA}"
+            test ! -S /var/run/docker.sock
+            printf 'runner_smoke_ok repo=%s sha=%s runner=%s\n' \
+              "${GITHUB_REPOSITORY}" "${GITHUB_SHA}" "${RUNNER_NAME}" | tee -a "${log}"
+          else
+            printf 'FAIL runner-smoke assertions\n' | tee -a "${log}"
+            status=1
+          fi
+          printf 'check_runner_smoke=%s\n' "${status}" | tee -a "${log}"
+          exit "${status}"
+
+      - name: Aggregate the native check outcomes
+        run: |
+          set -euo pipefail
+          log="${GITHUB_WORKSPACE}/${CARRIER_GATE_LOG}"
+          failed=0
+          for outcome in \
+            "check_lint_agents=${{ steps.lint_agents.outcome }}" \
+            "check_runner_contract=${{ steps.runner_contract.outcome }}" \
+            "check_runner_smoke=${{ steps.runner_smoke.outcome }}"
+          do
+            name="${outcome%%=*}"
+            value="${outcome#*=}"
+            printf '%s_outcome=%s\n' "${name}" "${value}" | tee -a "${log}"
+            [ "${value}" = "success" ] || failed=1
+          done
+          printf 'aggregate_finished_at=%s aggregate_failed=%s\n' \
+            "$(date -u +%Y-%m-%dT%H:%M:%SZ)" "${failed}" | tee -a "${log}"
+          test "${failed}" -eq 0
+
+      - name: Record carrier run identity (never a provider status)
+        if: always()
+        run: |
+          set -uo pipefail
+          {
+            printf 'carrier_repository=%s\n' "${GITHUB_REPOSITORY}"
+            printf 'carrier_head_sha=%s\n' "${GITHUB_SHA}"
+            printf 'carrier_run_id=%s\n' "${GITHUB_RUN_ID}"
+            printf 'carrier_run_attempt=%s\n' "${GITHUB_RUN_ATTEMPT}"
+            printf 'carrier_workflow=%s\n' "${GITHUB_WORKFLOW}"
+            printf 'runner_name=%s\n' "${RUNNER_NAME}"
+            printf 'verified_source_repository=%s\n' "${SOURCE_REPOSITORY}"
+            printf 'verified_source_sha=%s\n' "${VERIFIED_SOURCE_SHA}"
+            printf 'verified_source_ancestor_of_origin_main=%s\n' "${SOURCE_ANCESTOR_OF_MAIN:-unknown}"
+            printf 'executor_profile=qdev-ci\n'
+            printf 'check_lint_agents=%s check_runner_contract=%s check_runner_smoke=%s\n' \
+              '${{ steps.lint_agents.outcome }}' '${{ steps.runner_contract.outcome }}' '${{ steps.runner_smoke.outcome }}'
+            printf 'provider_ci_status=unavailable: private-repository Actions is blocked by account billing; this is execution evidence, not a provider status\n'
+            printf 'native_deviation=checks from three native workflows (lint-agents, qdev-runner-contract, runner-smoke) run as three steps of one carrier job instead of three native jobs\n'
+            printf 'native_deviation=runner-smoke asserts the runner contract under the carrier job label qdev-job-<run_id>-<run_attempt>-qazagents-verify instead of the native -smoke suffix\n'
+            printf 'native_deviation=the carrier uses its own pinned actions/checkout revision; the verified steps themselves are verbatim\n'
+            printf 'native_not_reproduced=ci.yml check job (npm ci, playwright chromium, scripts/ci_check.sh) deferred to a dedicated browser lane\n'
+            printf 'native_not_reproduced=ci.yml and ci-recovery.yml qdev-devops-linux-sandbox job (privileged docker, QazCompute MCP image) needs the capacity-constrained qdev-ci-docker profile\n'
+            printf 'native_not_reproduced=ci-recovery.yml (workflow_dispatch recovery twin of ci.yml with the same two jobs)\n'
+            printf 'item10_packages_in_source_tree=false promotion_gate=still_blocking registry_publish=withheld deploy=withheld\n'
+            printf 'gate_finished_at=%s\n' "$(date -u +%Y-%m-%dT%H:%M:%SZ)"
+          } | tee "${CARRIER_NOTE}"
+
+      - name: Upload the carrier evidence bundle
+        if: always()
+        env:
+          QDEV_IF_NO_FILES: warn
+        run: |
+          set -euo pipefail
+          test -x .github/scripts/qdev-upload-artifact.sh
+          bundle=()
+          for f in "${CARRIER_NOTE}" "${CARRIER_GATE_LOG}"; do
+            [ -f "${f}" ] && bundle+=("${f}")
+          done
+          .github/scripts/qdev-upload-artifact.sh qazagents-carrier-evidence "${bundle[@]}"
+
+      - name: Remove the deploy key from the runner
+        if: always()
+        run: |
+          set -uo pipefail
+          rm -f "${RUNNER_TEMP}/qdev-qazagents-key"
