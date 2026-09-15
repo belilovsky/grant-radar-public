@@ -1,0 +1,188 @@
+# Carrier execution of the warning-only regulatory release gate
+# (.github/workflows/regulatory-release-warning.yml) that is merged in five
+# private QDev repositories but has never executed: private-repository Actions
+# is blocked by the account's billing state (provider annotation "account is
+# locked due to a billing issue", startup_failure with zero jobs since
+# 2026-09-13), so the gate's workflow_dispatch lane cannot start in any of the
+# five repositories.
+#
+# This public carrier repository is admitted by the QDev runner broker and
+# executes the real gate steps against each exact merged private revision,
+# fetched with a read-only deploy key. The receipt semantics are reproduced
+# verbatim: the gate never blocks anything, every emit/upload step keeps
+# `if: always()`, and the deliverable is one receipt per product:
+#   regulatory-release-warning-<product>-<merge_sha>.json
+#
+# Two deliberate, recorded deviations from the native gate:
+#   - workflow_run_ref points at this carrier run, because no private provider
+#     run exists to reference; the receipt keeps the exact private source SHA.
+#   - the receipt bundle leaves the runner through the QDev artifact store
+#     (qdev-upload-artifact.sh), never through public GitHub Artifacts, so no
+#     private metadata is published.
+#
+# Private source is never published. This is exact-SHA execution evidence,
+# not a provider CI status for any of the five repositories.
+name: Regulatory warning gate carrier
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: regulatory-warning-gate-carrier
+  cancel-in-progress: false
+
+jobs:
+  warn:
+    name: regulatory warning (non-blocking) — ${{ matrix.product }}
+    runs-on:
+      - self-hosted
+      - Linux
+      - X64
+      - qdev-ci
+      - 'qdev-job-${{ github.run_id }}-${{ github.run_attempt }}-regulatory-warning-gate'
+    timeout-minutes: 30
+    continue-on-error: true
+    strategy:
+      fail-fast: false
+      max-parallel: 1
+      matrix:
+        include:
+          - product: qazstack
+            repository: belilovsky/qazstack
+            merge_sha: 111a2ac24d75eb035f3aff5a23c7aca7d555b587
+            secret_name: QAZSTACK_DEPLOY_KEY
+          - product: qazlake
+            repository: belilovsky/qazlake-api
+            merge_sha: a5bacea7444940e76e5fd75525c77d8d625ea254
+            secret_name: QAZLAKE_API_DEPLOY_KEY
+          - product: qazpet
+            repository: belilovsky/shelter-kz
+            merge_sha: aa1849a8b2045f39cc7b30e579d93172fd2b3c21
+            secret_name: SHELTER_KZ_DEPLOY_KEY
+          - product: janus
+            repository: belilovsky/constitution-rag
+            merge_sha: 2553b04a64fdf52c9fa26ef2b15f3c45cf351c4c
+            secret_name: JANUS_DEPLOY_KEY
+          - product: crisis-monitor
+            repository: belilovsky/Crisis-Monitor
+            merge_sha: fcc640868f120d17c398044e1e08a7669c89177f
+            secret_name: CRISIS_MONITOR_DEPLOY_KEY
+    env:
+      SOURCE_DIR: .qdev/gate-source
+      VERIFIED_SOURCE_SHA: ${{ matrix.merge_sha }}
+      PRODUCT: ${{ matrix.product }}
+    steps:
+      - name: Check out the carrier repository
+        uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5
+        with:
+          persist-credentials: false
+          fetch-depth: 1
+
+      - name: Check out the exact private gate revision
+        env:
+          GATE_SOURCE_DEPLOY_KEY: ${{ secrets[matrix.secret_name] }}
+        run: |
+          set -euo pipefail
+          key_file="${RUNNER_TEMP:?}/qdev-gate-source-key"
+          (umask 077; printf '%s\n' "${GATE_SOURCE_DEPLOY_KEY}" > "${key_file}")
+          test -s "${key_file}"
+          ssh_command="ssh -i ${key_file} -o IdentitiesOnly=yes -o StrictHostKeyChecking=accept-new -o UserKnownHostsFile=${RUNNER_TEMP}/qdev-known-hosts"
+          export GIT_SSH_COMMAND="${ssh_command}"
+          mkdir -p .qdev
+          git clone --quiet --no-tags "git@github.com:${{ matrix.repository }}.git" "${SOURCE_DIR}"
+          cd "${SOURCE_DIR}"
+          if ! git cat-file -e "${VERIFIED_SOURCE_SHA}^{commit}" 2>/dev/null; then
+            git fetch --quiet origin "${VERIFIED_SOURCE_SHA}"
+          fi
+          git checkout --quiet --detach "${VERIFIED_SOURCE_SHA}"
+          test "$(git rev-parse HEAD)" = "${VERIFIED_SOURCE_SHA}"
+          grep -E '^[0-9a-f]{40}$' <<< "${VERIFIED_SOURCE_SHA}" >/dev/null
+          test -f .github/regulatory/write_regulatory_release_warning.py
+          test -f .github/regulatory/validate_regulatory_release_warning.py
+          printf 'gate_source=%s product=%s sha=%s\n' \
+            "${{ matrix.repository }}" "${PRODUCT}" "$(git rev-parse HEAD)"
+
+      - name: Collect changed paths (native gate logic)
+        id: paths
+        if: always()
+        working-directory: .qdev/gate-source
+        run: |
+          set -euo pipefail
+          # Native logic: event base SHA, falling back to the first parent.
+          # A carrier dispatch has no event base, so the first parent of the
+          # exact merge SHA is the documented base.
+          BASE="$(git rev-list --max-count=1 HEAD^ 2>/dev/null || echo HEAD)"
+          git diff --name-only "${BASE}" "${VERIFIED_SOURCE_SHA}" > changed-paths.txt || true
+          echo "base=${BASE}"
+          echo "paths counted: $(wc -l < changed-paths.txt)"
+
+      - name: Emit and validate the warning receipt (native gate logic)
+        id: emit
+        if: always()
+        working-directory: .qdev/gate-source
+        env:
+          RUN_REF: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+        run: |
+          set -euo pipefail
+          python3 .github/regulatory/write_regulatory_release_warning.py \
+            --product "${PRODUCT}" \
+            --source-sha "${VERIFIED_SOURCE_SHA}" \
+            --changed-paths-file changed-paths.txt \
+            --workflow-run-ref "${RUN_REF}" \
+            --workflow-status completed \
+            --output "regulatory-release-warning.json"
+          receipt="regulatory-release-warning-${PRODUCT}-${VERIFIED_SOURCE_SHA}.json"
+          cp regulatory-release-warning.json "${receipt}"
+          python3 .github/regulatory/validate_regulatory_release_warning.py "${receipt}"
+          cp "${receipt}" "${GITHUB_WORKSPACE}/${receipt}"
+          cp regulatory-release-warning.json \
+             "${GITHUB_WORKSPACE}/regulatory-release-warning-${PRODUCT}.json"
+
+      - name: Record carrier run identity (never a provider status)
+        if: always()
+        run: |
+          set -uo pipefail
+          {
+            printf 'carrier_repository=%s\n' "${GITHUB_REPOSITORY}"
+            printf 'carrier_head_sha=%s\n' "${GITHUB_SHA}"
+            printf 'carrier_run_id=%s\n' "${GITHUB_RUN_ID}"
+            printf 'carrier_run_attempt=%s\n' "${GITHUB_RUN_ATTEMPT}"
+            printf 'carrier_workflow=%s\n' "${GITHUB_WORKFLOW}"
+            printf 'runner_name=%s\n' "${RUNNER_NAME}"
+            printf 'gate_product=%s\n' "${PRODUCT}"
+            printf 'verified_source_repository=%s\n' "${{ matrix.repository }}"
+            printf 'verified_source_sha=%s\n' "${VERIFIED_SOURCE_SHA}"
+            printf 'executor_profile=qdev-ci\n'
+            printf 'reproduced_native_gate=regulatory-release-warning.yml (workflow_dispatch lane)\n'
+            printf 'deviations=workflow_run_ref names this carrier run because no private provider run exists; receipts leave the runner only through the QDev artifact store, never public GitHub Artifacts\n'
+            printf 'check_paths=%s check_emit=%s\n' \
+              '${{ steps.paths.outcome }}' '${{ steps.emit.outcome }}'
+            printf 'provider_ci_status=unavailable: private-repository Actions is blocked by account billing; this is execution evidence, not a provider status\n'
+            printf 'blocks_release=false (warning-only gate, unchanged)\n'
+          } | tee "carrier-run-identity-${PRODUCT}.txt"
+
+      - name: Upload the carrier evidence bundle
+        if: always()
+        env:
+          QDEV_IF_NO_FILES: warn
+        run: |
+          set -euo pipefail
+          test -x .github/scripts/qdev-upload-artifact.sh
+          bundle=()
+          for f in \
+            "carrier-run-identity-${PRODUCT}.txt" \
+            "regulatory-release-warning-${PRODUCT}-${VERIFIED_SOURCE_SHA}.json" \
+            "regulatory-release-warning-${PRODUCT}.json"; do
+            [ -f "${f}" ] && bundle+=("${f}")
+          done
+          .github/scripts/qdev-upload-artifact.sh \
+            "regulatory-warning-gate-${PRODUCT}-evidence" "${bundle[@]}"
+
+      - name: Remove the deploy key from the runner
+        if: always()
+        run: |
+          set -uo pipefail
+          rm -f "${RUNNER_TEMP}/qdev-gate-source-key"

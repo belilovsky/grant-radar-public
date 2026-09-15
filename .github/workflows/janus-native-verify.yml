@@ -1,0 +1,175 @@
+# Native QDev self-hosted execution of the belilovsky/constitution-rag
+# advisory-validation.yml job (the Janus legal-RAG repository verification),
+# including the exact-SHA legal-RAG CI receipt of item 6.
+#
+# GitHub Actions is blocked for every private QDev repository by the account's
+# billing state (provider annotation "account is locked due to a billing
+# issue", startup_failure with zero jobs since 2026-09-13), so
+# belilovsky/constitution-rag/.github/workflows/advisory-validation.yml
+# cannot start at all and scripts/write_legal_rag_ci_receipt.py could not be
+# bound to a real runner at the Janus worktree HEAD. This public carrier
+# repository executes the same steps against the exact private revision
+# fetched with a read-only deploy key on the same qdev-ci profile.
+#
+# Private sources are never published; only logs and the receipt leave the
+# runner through the QDev artifact store. This is exact-SHA execution
+# evidence, not a provider CI status for belilovsky/constitution-rag, and not
+# the runtime staging activation / rollback half of item 6.
+name: Janus native carrier verify
+
+on:
+  workflow_dispatch:
+    inputs:
+      head_sha:
+        description: "Exact 40-character commit SHA in belilovsky/constitution-rag"
+        required: true
+        type: string
+
+permissions:
+  contents: read
+
+concurrency:
+  group: janus-native-carrier
+  cancel-in-progress: false
+
+env:
+  SOURCE_DIR: .qdev/constitution-rag
+  VERIFIED_SOURCE_SHA: ${{ github.event.inputs.head_sha }}
+  CARRIER_NOTE: carrier-run-identity.txt
+  CARRIER_GATE_LOG: carrier-janus-gate.log
+  SOURCE_REPOSITORY: belilovsky/constitution-rag
+
+jobs:
+  verify:
+    name: Janus repository verification and legal-RAG receipt
+    runs-on:
+      - self-hosted
+      - Linux
+      - X64
+      - qdev-ci
+      - 'qdev-job-${{ github.run_id }}-${{ github.run_attempt }}-janus-verify'
+    timeout-minutes: 45
+    steps:
+      - name: Check out the carrier repository
+        uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5
+        with:
+          persist-credentials: false
+          fetch-depth: 1
+
+      - name: Check out the exact private Janus revision
+        env:
+          JANUS_DEPLOY_KEY: ${{ secrets.JANUS_DEPLOY_KEY }}
+        run: |
+          set -euo pipefail
+          key_file="${RUNNER_TEMP:?}/qdev-janus-key"
+          (umask 077; printf '%s\n' "${JANUS_DEPLOY_KEY}" > "${key_file}")
+          test -s "${key_file}"
+          ssh_command="ssh -i ${key_file} -o IdentitiesOnly=yes -o StrictHostKeyChecking=accept-new -o UserKnownHostsFile=${RUNNER_TEMP}/qdev-known-hosts"
+          export GIT_SSH_COMMAND="${ssh_command}"
+          mkdir -p .qdev
+          git clone --quiet --no-tags git@github.com:belilovsky/constitution-rag.git "${SOURCE_DIR}"
+          cd "${SOURCE_DIR}"
+          if ! git cat-file -e "${VERIFIED_SOURCE_SHA}^{commit}" 2>/dev/null; then
+            git fetch --quiet origin "${VERIFIED_SOURCE_SHA}"
+          fi
+          git checkout --quiet --detach "${VERIFIED_SOURCE_SHA}"
+          test "$(git rev-parse HEAD)" = "${VERIFIED_SOURCE_SHA}"
+          test -z "$(git status --porcelain --untracked-files=all)"
+          git fetch --quiet origin main
+          ancestor=false
+          if git merge-base --is-ancestor HEAD origin/main; then ancestor=true; fi
+          printf 'SOURCE_ANCESTOR_OF_MAIN=%s\n' "${ancestor}" >> "${GITHUB_ENV}"
+          printf 'janus_source_sha=%s ancestor_of_origin_main=%s origin_main=%s\n' \
+            "$(git rev-parse HEAD)" "${ancestor}" "$(git rev-parse origin/main)"
+          printf 'janus_advisory_validation_yml_sha256=%s\n' \
+            "$(sha256sum .github/workflows/advisory-validation.yml | awk '{print $1}')"
+
+      - name: Set up Python 3.12
+        uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065 # v5
+        with:
+          python-version: "3.12"
+
+      - name: Set up Node.js 22
+        uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
+        with:
+          node-version: "22"
+
+      - name: Install verification dependencies
+        working-directory: .qdev/constitution-rag
+        run: python -m pip install -r requirements.txt pytest httpx ruff
+
+      - name: Run the native repository verification
+        id: gate
+        working-directory: .qdev/constitution-rag
+        run: |
+          set -uo pipefail
+          log="${GITHUB_WORKSPACE}/${CARRIER_GATE_LOG}"
+          : > "${log}"
+          {
+            printf 'native_job=verify source_sha=%s\n' "$(git rev-parse HEAD)"
+            printf 'gate_started_at=%s\n' "$(date -u +%Y-%m-%dT%H:%M:%SZ)"
+          } | tee -a "${log}"
+          status=0
+          printf '\n$ bash ./scripts/verify_repo.sh\n' | tee -a "${log}"
+          if bash ./scripts/verify_repo.sh 2>&1 | tee -a "${log}"; then
+            printf 'PASS bash ./scripts/verify_repo.sh\n' | tee -a "${log}"
+          else
+            printf 'FAIL bash ./scripts/verify_repo.sh\n' | tee -a "${log}"
+            status=1
+          fi
+          printf '\ngate_finished_at=%s gate_status=%s\n' \
+            "$(date -u +%Y-%m-%dT%H:%M:%SZ)" "${status}" | tee -a "${log}"
+          exit "${status}"
+
+      - name: Bind the legal-RAG receipt to the checked-out source
+        id: receipt
+        working-directory: .qdev/constitution-rag
+        run: |
+          set -euo pipefail
+          python scripts/write_legal_rag_ci_receipt.py \
+            --expected-sha "${VERIFIED_SOURCE_SHA}" \
+            --output "${GITHUB_WORKSPACE}/janus-legal-rag-ci-receipt.json"
+          test -s "${GITHUB_WORKSPACE}/janus-legal-rag-ci-receipt.json"
+
+      - name: Record carrier run identity (never a provider status)
+        if: always()
+        run: |
+          set -uo pipefail
+          {
+            printf 'carrier_repository=%s\n' "${GITHUB_REPOSITORY}"
+            printf 'carrier_head_sha=%s\n' "${GITHUB_SHA}"
+            printf 'carrier_run_id=%s\n' "${GITHUB_RUN_ID}"
+            printf 'carrier_run_attempt=%s\n' "${GITHUB_RUN_ATTEMPT}"
+            printf 'carrier_workflow=%s\n' "${GITHUB_WORKFLOW}"
+            printf 'runner_name=%s\n' "${RUNNER_NAME}"
+            printf 'verified_source_repository=%s\n' "${SOURCE_REPOSITORY}"
+            printf 'verified_source_sha=%s\n' "${VERIFIED_SOURCE_SHA}"
+            printf 'verified_source_ancestor_of_origin_main=%s\n' "${SOURCE_ANCESTOR_OF_MAIN:-unknown}"
+            printf 'verified_source_advisory_validation_yml_sha256=%s\n' \
+              "$(sha256sum "${SOURCE_DIR}/.github/workflows/advisory-validation.yml" 2>/dev/null | awk '{print $1}')"
+            printf 'executor_profile=qdev-ci\n'
+            printf 'check_gate=%s check_receipt=%s\n' \
+              '${{ steps.gate.outcome }}' '${{ steps.receipt.outcome }}'
+            printf 'provider_ci_status=unavailable: private-repository Actions is blocked by account billing; this is execution evidence, not a provider status\n'
+            printf 'runtime_staging_activation=not_claimed rollback=untouched npa_latest=review_only\n'
+            printf 'deploy=withheld migration=none registry_publish=withheld\n'
+          } | tee "${CARRIER_NOTE}"
+
+      - name: Upload the carrier evidence bundle
+        if: always()
+        env:
+          QDEV_IF_NO_FILES: warn
+        run: |
+          set -euo pipefail
+          test -x .github/scripts/qdev-upload-artifact.sh
+          bundle=()
+          for f in "${CARRIER_NOTE}" "${CARRIER_GATE_LOG}" janus-legal-rag-ci-receipt.json; do
+            [ -f "${f}" ] && bundle+=("${f}")
+          done
+          .github/scripts/qdev-upload-artifact.sh janus-carrier-evidence "${bundle[@]}"
+
+      - name: Remove the deploy key from the runner
+        if: always()
+        run: |
+          set -uo pipefail
+          rm -f "${RUNNER_TEMP}/qdev-janus-key"

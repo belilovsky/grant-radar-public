@@ -1,0 +1,157 @@
+# Native QDev self-hosted execution of the belilovsky/platform-portal
+# runner-contract checks (scripts/verify_ci_execution.py and
+# .github/scripts/qdev-runner-policy.py, the exact steps of its
+# runner-smoke.yml and qdev-runner-contract.yml workflows).
+#
+# GitHub Actions is blocked for every private QDev repository by the account's
+# billing state (provider annotation "account is locked due to a billing
+# issue", startup_failure with zero jobs since 2026-09-13), so neither
+# platform-portal workflow can start at all. This public carrier repository
+# executes the same steps against an exact private revision fetched with a
+# read-only deploy key on the qdev-ci self-hosted profile.
+#
+# This is exact-SHA execution evidence, not a provider CI status for
+# belilovsky/platform-portal. The QazConsent public line (DNS/ACME/edge) is a
+# separate lane and is not claimed here.
+name: Platform Portal native carrier verify
+
+on:
+  workflow_dispatch:
+    inputs:
+      head_sha:
+        description: "Exact 40-character commit SHA in belilovsky/platform-portal"
+        required: true
+        type: string
+
+permissions:
+  contents: read
+
+concurrency:
+  group: platform-portal-native-carrier
+  cancel-in-progress: false
+
+env:
+  SOURCE_DIR: .qdev/platform-portal
+  VERIFIED_SOURCE_SHA: ${{ github.event.inputs.head_sha }}
+  CARRIER_NOTE: carrier-run-identity.txt
+  CARRIER_GATE_LOG: carrier-platform-portal-gate.log
+  SOURCE_REPOSITORY: belilovsky/platform-portal
+
+jobs:
+  contract:
+    name: Platform Portal runner contract checks
+    runs-on:
+      - self-hosted
+      - Linux
+      - X64
+      - qdev-ci
+      - 'qdev-job-${{ github.run_id }}-${{ github.run_attempt }}-platform-portal-contract'
+    timeout-minutes: 20
+    steps:
+      - name: Check out the carrier repository
+        uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5
+        with:
+          persist-credentials: false
+          fetch-depth: 1
+
+      - name: Check out the exact private Platform Portal revision
+        env:
+          PLATFORM_PORTAL_DEPLOY_KEY: ${{ secrets.PLATFORM_PORTAL_DEPLOY_KEY }}
+        run: |
+          set -euo pipefail
+          key_file="${RUNNER_TEMP:?}/qdev-platform-portal-key"
+          (umask 077; printf '%s\n' "${PLATFORM_PORTAL_DEPLOY_KEY}" > "${key_file}")
+          test -s "${key_file}"
+          ssh_command="ssh -i ${key_file} -o IdentitiesOnly=yes -o StrictHostKeyChecking=accept-new -o UserKnownHostsFile=${RUNNER_TEMP}/qdev-known-hosts"
+          export GIT_SSH_COMMAND="${ssh_command}"
+          mkdir -p .qdev
+          git clone --quiet --no-tags git@github.com:belilovsky/platform-portal.git "${SOURCE_DIR}"
+          cd "${SOURCE_DIR}"
+          if ! git cat-file -e "${VERIFIED_SOURCE_SHA}^{commit}" 2>/dev/null; then
+            git fetch --quiet origin "${VERIFIED_SOURCE_SHA}"
+          fi
+          git checkout --quiet --detach "${VERIFIED_SOURCE_SHA}"
+          test "$(git rev-parse HEAD)" = "${VERIFIED_SOURCE_SHA}"
+          test -z "$(git status --porcelain --untracked-files=all)"
+          git fetch --quiet origin master
+          ancestor=false
+          if git merge-base --is-ancestor HEAD origin/master; then ancestor=true; fi
+          printf 'SOURCE_ANCESTOR_OF_MAIN=%s\n' "${ancestor}" >> "${GITHUB_ENV}"
+          printf 'platform_portal_source_sha=%s ancestor_of_origin_master=%s origin_master=%s\n' \
+            "$(git rev-parse HEAD)" "${ancestor}" "$(git rev-parse origin/master)"
+
+      - name: Set up Python 3.12
+        uses: actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1 # v6
+        with:
+          python-version: "3.12"
+
+      - name: Run the native runner-smoke and runner-contract steps
+        id: gate
+        working-directory: .qdev/platform-portal
+        run: |
+          set -uo pipefail
+          log="${GITHUB_WORKSPACE}/${CARRIER_GATE_LOG}"
+          : > "${log}"
+          {
+            printf 'native_workflows=runner-smoke.yml,qdev-runner-contract.yml\n'
+            printf 'source_sha=%s\n' "$(git rev-parse HEAD)"
+            printf 'gate_started_at=%s\n' "$(date -u +%Y-%m-%dT%H:%M:%SZ)"
+          } | tee -a "${log}"
+          status=0
+          for command in \
+            'python scripts/verify_ci_execution.py' \
+            'python .github/scripts/qdev-runner-policy.py --root .'
+          do
+            printf '\n$ %s\n' "${command}" | tee -a "${log}"
+            if eval "${command}" 2>&1 | tee -a "${log}"; then
+              printf 'PASS %s\n' "${command}" | tee -a "${log}"
+            else
+              printf 'FAIL %s\n' "${command}" | tee -a "${log}"
+              status=1
+            fi
+          done
+          printf 'runner_smoke_ok repo=%s sha=%s runner=%s\n' \
+            "${SOURCE_REPOSITORY}" "${VERIFIED_SOURCE_SHA}" "${RUNNER_NAME}" | tee -a "${log}"
+          printf '\ngate_finished_at=%s gate_status=%s\n' \
+            "$(date -u +%Y-%m-%dT%H:%M:%SZ)" "${status}" | tee -a "${log}"
+          exit "${status}"
+
+      - name: Record carrier run identity (never a provider status)
+        if: always()
+        run: |
+          set -uo pipefail
+          {
+            printf 'carrier_repository=%s\n' "${GITHUB_REPOSITORY}"
+            printf 'carrier_head_sha=%s\n' "${GITHUB_SHA}"
+            printf 'carrier_run_id=%s\n' "${GITHUB_RUN_ID}"
+            printf 'carrier_run_attempt=%s\n' "${GITHUB_RUN_ATTEMPT}"
+            printf 'carrier_workflow=%s\n' "${GITHUB_WORKFLOW}"
+            printf 'runner_name=%s\n' "${RUNNER_NAME}"
+            printf 'verified_source_repository=%s\n' "${SOURCE_REPOSITORY}"
+            printf 'verified_source_sha=%s\n' "${VERIFIED_SOURCE_SHA}"
+            printf 'verified_source_ancestor_of_origin_master=%s\n' "${SOURCE_ANCESTOR_OF_MAIN:-unknown}"
+            printf 'executor_profile=qdev-ci\n'
+            printf 'check_gate=%s\n' '${{ steps.gate.outcome }}'
+            printf 'provider_ci_status=unavailable: private-repository Actions is blocked by account billing; this is execution evidence, not a provider status\n'
+            printf 'qazconsent_public_line=not_claimed: consent.qdev.run DNS/ACME/edge is a separate owner lane\n'
+            printf 'deploy=withheld migration=none registry_publish=withheld\n'
+          } | tee "${CARRIER_NOTE}"
+
+      - name: Upload the carrier evidence bundle
+        if: always()
+        env:
+          QDEV_IF_NO_FILES: warn
+        run: |
+          set -euo pipefail
+          test -x .github/scripts/qdev-upload-artifact.sh
+          bundle=()
+          for f in "${CARRIER_NOTE}" "${CARRIER_GATE_LOG}"; do
+            [ -f "${f}" ] && bundle+=("${f}")
+          done
+          .github/scripts/qdev-upload-artifact.sh platform-portal-carrier-evidence "${bundle[@]}"
+
+      - name: Remove the deploy key from the runner
+        if: always()
+        run: |
+          set -uo pipefail
+          rm -f "${RUNNER_TEMP}/qdev-platform-portal-key"

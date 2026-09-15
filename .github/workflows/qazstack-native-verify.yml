@@ -1,0 +1,239 @@
+# Native QDev self-hosted execution of the belilovsky/qazstack ci.yml checks.
+#
+# GitHub Actions is blocked for every private QDev repository by the account's
+# billing state (provider annotation "account is locked due to a billing
+# issue", startup_failure with zero jobs since 2026-09-13), so
+# belilovsky/qazstack/.github/workflows/ci.yml cannot start at all. This
+# public carrier repository is admitted by the QDev runner broker and executes
+# the real ci.yml steps against an exact private revision fetched with a
+# read-only deploy key, on the same self-hosted runner profile (qdev-ci).
+#
+# Private sources are fetched with an explicit key file plus GIT_SSH_COMMAND,
+# the transport already proven on these runners by the qazcompute, IPOS,
+# qazgeo, qazlake, qazpipe, QPhoto and PSSR lanes. Private source and private
+# build inputs are never published; only logs and the exact-SHA regulatory
+# receipt leave the runner through the QDev artifact store.
+#
+# The native oidc-assurance job is deliberately not reproduced: it proves the
+# GitHub OIDC identity of the workflow run, and a carrier run can only prove
+# the identity of belilovsky/grant-radar-public, never of belilovsky/qazstack.
+# Reproducing it here would produce a false result in both directions.
+#
+# This is exact-SHA execution evidence, not a provider CI status for
+# belilovsky/qazstack.
+name: QazStack native carrier verify
+
+on:
+  workflow_dispatch:
+    inputs:
+      head_sha:
+        description: "Exact 40-character commit SHA in belilovsky/qazstack"
+        required: true
+        type: string
+
+permissions:
+  contents: read
+
+concurrency:
+  group: qazstack-native-carrier
+  cancel-in-progress: false
+
+env:
+  SOURCE_DIR: .qdev/qazstack
+  VERIFIED_SOURCE_SHA: ${{ github.event.inputs.head_sha }}
+  CARRIER_NOTE: carrier-run-identity.txt
+  CARRIER_PROBE_LOG: carrier-qazstack-probe.log
+  CARRIER_GATE_LOG: carrier-qazstack-gate.log
+  SOURCE_REPOSITORY: belilovsky/qazstack
+
+jobs:
+  ci:
+    name: QazStack ci.yml lint, test and regulatory-evidence
+    runs-on:
+      - self-hosted
+      - Linux
+      - X64
+      - qdev-ci
+      - 'qdev-job-${{ github.run_id }}-${{ github.run_attempt }}-qazstack-ci'
+    timeout-minutes: 60
+    steps:
+      - name: Check out the carrier repository
+        uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5
+        with:
+          persist-credentials: false
+          fetch-depth: 1
+
+      - name: Check out the exact private QazStack revision
+        env:
+          QAZSTACK_SOURCE_DEPLOY_KEY: ${{ secrets.QAZSTACK_DEPLOY_KEY }}
+        run: |
+          set -euo pipefail
+          key_file="${RUNNER_TEMP:?}/qdev-qazstack-source-key"
+          (umask 077; printf '%s\n' "${QAZSTACK_SOURCE_DEPLOY_KEY}" > "${key_file}")
+          test -s "${key_file}"
+          ssh_command="ssh -i ${key_file} -o IdentitiesOnly=yes -o StrictHostKeyChecking=accept-new -o UserKnownHostsFile=${RUNNER_TEMP}/qdev-known-hosts"
+          export GIT_SSH_COMMAND="${ssh_command}"
+          mkdir -p .qdev
+          git clone --quiet --no-tags git@github.com:belilovsky/qazstack.git "${SOURCE_DIR}"
+          cd "${SOURCE_DIR}"
+          if ! git cat-file -e "${VERIFIED_SOURCE_SHA}^{commit}" 2>/dev/null; then
+            git fetch --quiet origin "${VERIFIED_SOURCE_SHA}"
+          fi
+          git checkout --quiet --detach "${VERIFIED_SOURCE_SHA}"
+          test "$(git rev-parse HEAD)" = "${VERIFIED_SOURCE_SHA}"
+          test -z "$(git status --porcelain --untracked-files=all)"
+          git fetch --quiet origin main
+          ancestor=false
+          if git merge-base --is-ancestor HEAD origin/main; then ancestor=true; fi
+          printf 'SOURCE_ANCESTOR_OF_MAIN=%s\n' "${ancestor}" >> "${GITHUB_ENV}"
+          printf 'qazstack_source_sha=%s ancestor_of_origin_main=%s origin_main=%s\n' \
+            "$(git rev-parse HEAD)" "${ancestor}" "$(git rev-parse origin/main)"
+          printf 'qazstack_ci_yml_sha256=%s\n' \
+            "$(sha256sum .github/workflows/ci.yml | awk '{print $1}')"
+
+      - name: Probe the runner toolchain and lane identity
+        id: toolchain
+        continue-on-error: true
+        run: |
+          set -uo pipefail
+          {
+            printf 'runner=%s environment=%s repository=%s workflow=%s\n' \
+              "${RUNNER_NAME}" "${RUNNER_ENVIRONMENT}" "${GITHUB_REPOSITORY}" "${GITHUB_WORKFLOW}"
+            printf 'job_hostname=%s cpus=%s\n' "$(hostname)" "$(nproc)"
+            free -m | head -2 || true
+            df -h / | tail -1 || true
+          } >> "${CARRIER_PROBE_LOG}" 2>&1
+          for tool in python3 git ssh curl awk sha256sum tar bash pip; do
+            if command -v "${tool}" >/dev/null 2>&1; then
+              printf 'PASS tool_present=%s path=%s\n' "${tool}" "$(command -v "${tool}")" \
+                | tee -a "${CARRIER_PROBE_LOG}"
+            else
+              printf 'note tool_absent_before_setup=%s\n' "${tool}" | tee -a "${CARRIER_PROBE_LOG}"
+            fi
+          done
+
+      - name: Set up Python 3.12
+        uses: actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1 # v6
+        with:
+          python-version: "3.12"
+
+      - name: Run the native lint job steps (ruff 0.16.5)
+        id: lint
+        working-directory: .qdev/qazstack
+        run: |
+          set -uo pipefail
+          log="${GITHUB_WORKSPACE}/${CARRIER_GATE_LOG}"
+          : > "${log}"
+          {
+            printf 'native_job=lint source_sha=%s\n' "$(git rev-parse HEAD)"
+            printf 'lint_started_at=%s\n' "$(date -u +%Y-%m-%dT%H:%M:%SZ)"
+          } | tee -a "${log}"
+          status=0
+          for command in \
+            'python -m venv .venv-lint' \
+            '.venv-lint/bin/python -m pip install ruff==0.16.5' \
+            '.venv-lint/bin/ruff check src/ tests/ scripts/' \
+            '.venv-lint/bin/ruff format --check src/ tests/ scripts/'
+          do
+            printf '\n$ %s\n' "${command}" | tee -a "${log}"
+            if eval "${command}" 2>&1 | tee -a "${log}"; then
+              printf 'PASS %s\n' "${command}" | tee -a "${log}"
+            else
+              printf 'FAIL %s\n' "${command}" | tee -a "${log}"
+              status=1
+            fi
+          done
+          printf '\nlint_finished_at=%s lint_status=%s\n' \
+            "$(date -u +%Y-%m-%dT%H:%M:%SZ)" "${status}" | tee -a "${log}"
+          exit "${status}"
+
+      - name: Install the native test job dependencies
+        working-directory: .qdev/qazstack
+        run: |
+          set -euo pipefail
+          python -m venv .venv
+          .venv/bin/python -m pip install -e ".[dev,nlp,monitor,auth,admin,seo,enricher]"
+
+      - name: Run the native test job steps
+        id: test
+        working-directory: .qdev/qazstack
+        run: |
+          set -uo pipefail
+          log="${GITHUB_WORKSPACE}/${CARRIER_GATE_LOG}"
+          status=0
+          for command in \
+            'PYTHONPATH=src:. .venv/bin/python scripts/run_quality_gate.py' \
+            'PYTHONPATH=src:. .venv/bin/python -m pytest tests/ --tb=short -q'
+          do
+            printf '\n$ %s\n' "${command}" | tee -a "${log}"
+            if eval "${command}" 2>&1 | tee -a "${log}"; then
+              printf 'PASS %s\n' "${command}" | tee -a "${log}"
+            else
+              printf 'FAIL %s\n' "${command}" | tee -a "${log}"
+              status=1
+            fi
+          done
+          printf '\ntest_finished_at=%s test_status=%s\n' \
+            "$(date -u +%Y-%m-%dT%H:%M:%SZ)" "${status}" | tee -a "${log}"
+          exit "${status}"
+
+      - name: Run the native regulatory-evidence job steps
+        id: regulatory
+        working-directory: .qdev/qazstack
+        run: |
+          set -euo pipefail
+          log="${GITHUB_WORKSPACE}/${CARRIER_GATE_LOG}"
+          {
+            printf '\n$ PYTHONPATH=src:. .venv/bin/python -m pytest -q tests/test_regulatory_intelligence.py tests/test_data_record_profiles.py\n'
+          } | tee -a "${log}"
+          PYTHONPATH=src:. .venv/bin/python -m pytest -q \
+            tests/test_regulatory_intelligence.py \
+            tests/test_data_record_profiles.py 2>&1 | tee -a "${log}"
+          .venv/bin/python scripts/write_regulatory_ci_receipt.py \
+            --expected-sha "${VERIFIED_SOURCE_SHA}" \
+            --output "${GITHUB_WORKSPACE}/regulatory-ci-receipt.json" 2>&1 | tee -a "${log}"
+          test -s "${GITHUB_WORKSPACE}/regulatory-ci-receipt.json"
+
+      - name: Record carrier run identity (never a provider status)
+        if: always()
+        run: |
+          set -uo pipefail
+          {
+            printf 'carrier_repository=%s\n' "${GITHUB_REPOSITORY}"
+            printf 'carrier_head_sha=%s\n' "${GITHUB_SHA}"
+            printf 'carrier_run_id=%s\n' "${GITHUB_RUN_ID}"
+            printf 'carrier_run_attempt=%s\n' "${GITHUB_RUN_ATTEMPT}"
+            printf 'carrier_workflow=%s\n' "${GITHUB_WORKFLOW}"
+            printf 'runner_name=%s\n' "${RUNNER_NAME}"
+            printf 'verified_source_repository=%s\n' "${SOURCE_REPOSITORY}"
+            printf 'verified_source_sha=%s\n' "${VERIFIED_SOURCE_SHA}"
+            printf 'verified_source_ancestor_of_origin_main=%s\n' "${SOURCE_ANCESTOR_OF_MAIN:-unknown}"
+            printf 'verified_source_ci_yml_sha256=%s\n' \
+              "$(sha256sum "${SOURCE_DIR}/.github/workflows/ci.yml" 2>/dev/null | awk '{print $1}')"
+            printf 'executor_profile=qdev-ci\n'
+            printf 'reproduced_native_jobs=lint,test,regulatory-evidence\n'
+            printf 'skipped_native_jobs=oidc-assurance: the job proves the OIDC identity of the run; a carrier run can only prove the identity of belilovsky/grant-radar-public, never of belilovsky/qazstack\n'
+            printf 'check_lint=%s check_test=%s check_regulatory=%s\n' \
+              '${{ steps.lint.outcome }}' '${{ steps.test.outcome }}' '${{ steps.regulatory.outcome }}'
+            printf 'provider_ci_status=unavailable: private-repository Actions is blocked by account billing; this is execution evidence, not a provider status\n'
+            printf 'deploy=withheld migration=none registry_publish=withheld\n'
+          } | tee "${CARRIER_NOTE}"
+
+      - name: Upload the carrier evidence bundle
+        if: always()
+        env:
+          QDEV_IF_NO_FILES: warn
+        run: |
+          set -euo pipefail
+          test -x .github/scripts/qdev-upload-artifact.sh
+          bundle=()
+          for f in "${CARRIER_NOTE}" "${CARRIER_PROBE_LOG}" "${CARRIER_GATE_LOG}" regulatory-ci-receipt.json; do
+            [ -f "${f}" ] && bundle+=("${f}")
+          done
+          .github/scripts/qdev-upload-artifact.sh qazstack-carrier-evidence "${bundle[@]}"
+
+      - name: Remove the deploy key from the runner
+        if: always()
+        run: |
+          set -uo pipefail
+          rm -f "${RUNNER_TEMP}/qdev-qazstack-source-key"

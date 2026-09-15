@@ -1,0 +1,231 @@
+# Native QDev self-hosted execution of the belilovsky/shelter-kz lint.yml job
+# (the QazPet quality lane), including the closed regulatory pilot receipt
+# binding of item 5.
+#
+# GitHub Actions is blocked for every private QDev repository by the account's
+# billing state (provider annotation "account is locked due to a billing
+# issue", startup_failure with zero jobs since 2026-09-13), so
+# belilovsky/shelter-kz/.github/workflows/lint.yml cannot start at all. This
+# public carrier repository executes the same steps against an exact private
+# revision fetched with a read-only deploy key, on the same qdev-ci-docker
+# profile and with the same pinned pgvector postgres service the native job
+# declares.
+#
+# The native "Sync pinned QazStack source" step reads the narrowly scoped
+# read-only QAZSTACK_DEPLOY_KEY; the carrier reuses the pre-existing secret of
+# the same scope. Private sources and pilot payloads are never published: the
+# evidence bundle carries logs and the aggregate-only regulatory pilot CI
+# receipt, exactly what the native job uploads.
+#
+# This is exact-SHA execution evidence, not a provider CI status for
+# belilovsky/shelter-kz. Dispatch with the pilot revision to bind the item 5
+# receipt (scripts/write_regulatory_pilot_ci_receipt.py --expected-sha).
+name: QazPet native carrier verify
+
+on:
+  workflow_dispatch:
+    inputs:
+      head_sha:
+        description: "Exact 40-character commit SHA in belilovsky/shelter-kz"
+        required: true
+        type: string
+
+permissions:
+  contents: read
+
+concurrency:
+  group: shelter-kz-native-carrier
+  cancel-in-progress: false
+
+env:
+  SOURCE_DIR: .qdev/shelter-kz
+  VERIFIED_SOURCE_SHA: ${{ github.event.inputs.head_sha }}
+  CARRIER_NOTE: carrier-run-identity.txt
+  CARRIER_GATE_LOG: carrier-shelter-kz-gate.log
+  SOURCE_REPOSITORY: belilovsky/shelter-kz
+  SECRET_KEY: ci-secret-key
+  DASHBOARD_PASSWORD: ci-dashboard-password
+  SYNC_DATABASE_URL_OVERRIDE: postgresql+psycopg2://shelter_kz:test-password@127.0.0.1:5432/shelter_kz_test
+
+jobs:
+  lint:
+    name: QazPet lint, tests and regulatory pilot receipt
+    runs-on:
+      - self-hosted
+      - Linux
+      - X64
+      - qdev-ci-docker
+      - 'qdev-job-${{ github.run_id }}-${{ github.run_attempt }}-shelter-kz-lint'
+    timeout-minutes: 45
+    services:
+      postgres:
+        image: pgvector/pgvector@sha256:ccc6e83d6e35e931dc7c5def2022729d5a6c370318d099181995567ff1fb4d6b
+        env:
+          POSTGRES_DB: shelter_kz_test
+          POSTGRES_USER: shelter_kz
+          POSTGRES_PASSWORD: test-password
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U shelter_kz -d shelter_kz_test"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+    steps:
+      - name: Check out the carrier repository
+        uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5
+        with:
+          persist-credentials: false
+          fetch-depth: 1
+
+      - name: Check out the exact private QazPet revision
+        env:
+          SHELTER_KZ_DEPLOY_KEY: ${{ secrets.SHELTER_KZ_DEPLOY_KEY }}
+        run: |
+          set -euo pipefail
+          key_file="${RUNNER_TEMP:?}/qdev-shelter-kz-key"
+          (umask 077; printf '%s\n' "${SHELTER_KZ_DEPLOY_KEY}" > "${key_file}")
+          test -s "${key_file}"
+          ssh_command="ssh -i ${key_file} -o IdentitiesOnly=yes -o StrictHostKeyChecking=accept-new -o UserKnownHostsFile=${RUNNER_TEMP}/qdev-known-hosts"
+          export GIT_SSH_COMMAND="${ssh_command}"
+          mkdir -p .qdev
+          git clone --quiet --no-tags git@github.com:belilovsky/shelter-kz.git "${SOURCE_DIR}"
+          cd "${SOURCE_DIR}"
+          if ! git cat-file -e "${VERIFIED_SOURCE_SHA}^{commit}" 2>/dev/null; then
+            git fetch --quiet origin "${VERIFIED_SOURCE_SHA}"
+          fi
+          git checkout --quiet --detach "${VERIFIED_SOURCE_SHA}"
+          test "$(git rev-parse HEAD)" = "${VERIFIED_SOURCE_SHA}"
+          test -z "$(git status --porcelain --untracked-files=all)"
+          git fetch --quiet origin main
+          ancestor=false
+          if git merge-base --is-ancestor HEAD origin/main; then ancestor=true; fi
+          printf 'SOURCE_ANCESTOR_OF_MAIN=%s\n' "${ancestor}" >> "${GITHUB_ENV}"
+          printf 'shelter_kz_source_sha=%s ancestor_of_origin_main=%s origin_main=%s\n' \
+            "$(git rev-parse HEAD)" "${ancestor}" "$(git rev-parse origin/main)"
+          printf 'shelter_kz_lint_yml_sha256=%s\n' \
+            "$(sha256sum .github/workflows/lint.yml | awk '{print $1}')"
+
+      - name: Set up Python 3.12
+        uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065
+        with:
+          python-version: "3.12"
+
+      - name: Sync pinned QazStack source
+        id: vendor
+        working-directory: .qdev/shelter-kz
+        env:
+          QAZSTACK_DEPLOY_KEY: ${{ secrets.QAZSTACK_DEPLOY_KEY }}
+        run: bash scripts/sync_qazstack_vendor.sh
+
+      - name: Install hash-verified project and verification dependencies
+        working-directory: .qdev/shelter-kz
+        run: |
+          set -euo pipefail
+          python -m pip install --upgrade pip==26.1.2
+          python -m pip install --require-hashes -r requirements-dev.lock
+          python -m pip install --no-deps -e qazstack_src
+
+      - name: Run the native lint job check steps
+        id: gate
+        working-directory: .qdev/shelter-kz
+        run: |
+          set -uo pipefail
+          log="${GITHUB_WORKSPACE}/${CARRIER_GATE_LOG}"
+          : > "${log}"
+          {
+            printf 'native_job=lint source_sha=%s\n' "$(git rev-parse HEAD)"
+            printf 'gate_started_at=%s\n' "$(date -u +%Y-%m-%dT%H:%M:%SZ)"
+          } | tee -a "${log}"
+          status=0
+          for command in \
+            'python scripts/repo_hygiene_check.py' \
+            'python scripts/audit_public_dependencies.py --lock requirements.lock' \
+            'bandit -q -r app scripts -ll' \
+            'ruff check app/ scripts/ alembic/ tests/' \
+            'ruff format --check app/ scripts/ alembic/ tests/' \
+            'mypy app/ --ignore-missing-imports' \
+            'alembic upgrade head' \
+            'pytest -q'
+          do
+            printf '\n$ %s\n' "${command}" | tee -a "${log}"
+            if eval "${command}" 2>&1 | tee -a "${log}"; then
+              printf 'PASS %s\n' "${command}" | tee -a "${log}"
+            else
+              printf 'FAIL %s\n' "${command}" | tee -a "${log}"
+              status=1
+            fi
+          done
+          printf '\ngate_finished_at=%s gate_status=%s\n' \
+            "$(date -u +%Y-%m-%dT%H:%M:%SZ)" "${status}" | tee -a "${log}"
+          exit "${status}"
+
+      - name: Generate the CycloneDX SBOM
+        id: sbom
+        continue-on-error: true
+        working-directory: .qdev/shelter-kz
+        run: |
+          set -euo pipefail
+          mkdir -p output/security
+          cyclonedx-py requirements requirements.lock --output-reproducible \
+            --output-format JSON --output-file output/security/qpet-sbom.cdx.json
+          cp output/security/qpet-sbom.cdx.json "${GITHUB_WORKSPACE}/qpet-sbom.cdx.json"
+
+      - name: Verify closed regulatory pilot receipts
+        id: pilots
+        working-directory: .qdev/shelter-kz
+        run: |
+          set -euo pipefail
+          log="${GITHUB_WORKSPACE}/${CARRIER_GATE_LOG}"
+          pytest -q tests/test_analytics_contract.py \
+            tests/test_personal_data_intake_gate.py \
+            tests/test_regulatory_pilot_receipts.py 2>&1 | tee -a "${log}"
+          python scripts/write_regulatory_pilot_ci_receipt.py \
+            --expected-sha "${VERIFIED_SOURCE_SHA}" \
+            --output output/regulatory/qazpet-regulatory-pilot-ci-receipt.json 2>&1 | tee -a "${log}"
+          test -s output/regulatory/qazpet-regulatory-pilot-ci-receipt.json
+          cp output/regulatory/qazpet-regulatory-pilot-ci-receipt.json "${GITHUB_WORKSPACE}/"
+
+      - name: Record carrier run identity (never a provider status)
+        if: always()
+        run: |
+          set -uo pipefail
+          {
+            printf 'carrier_repository=%s\n' "${GITHUB_REPOSITORY}"
+            printf 'carrier_head_sha=%s\n' "${GITHUB_SHA}"
+            printf 'carrier_run_id=%s\n' "${GITHUB_RUN_ID}"
+            printf 'carrier_run_attempt=%s\n' "${GITHUB_RUN_ATTEMPT}"
+            printf 'carrier_workflow=%s\n' "${GITHUB_WORKFLOW}"
+            printf 'runner_name=%s\n' "${RUNNER_NAME}"
+            printf 'verified_source_repository=%s\n' "${SOURCE_REPOSITORY}"
+            printf 'verified_source_sha=%s\n' "${VERIFIED_SOURCE_SHA}"
+            printf 'verified_source_ancestor_of_origin_main=%s\n' "${SOURCE_ANCESTOR_OF_MAIN:-unknown}"
+            printf 'verified_source_lint_yml_sha256=%s\n' \
+              "$(sha256sum "${SOURCE_DIR}/.github/workflows/lint.yml" 2>/dev/null | awk '{print $1}')"
+            printf 'executor_profile=qdev-ci-docker\n'
+            printf 'check_vendor=%s check_gate=%s check_sbom=%s check_pilots=%s\n' \
+              '${{ steps.vendor.outcome }}' '${{ steps.gate.outcome }}' \
+              '${{ steps.sbom.outcome }}' '${{ steps.pilots.outcome }}'
+            printf 'pilot_receipt=aggregate-only: the receipt carries statuses and digests, no personal values or pilot payloads\n'
+            printf 'provider_ci_status=unavailable: private-repository Actions is blocked by account billing; this is execution evidence, not a provider status\n'
+            printf 'deploy=withheld migration=none registry_publish=withheld\n'
+          } | tee "${CARRIER_NOTE}"
+
+      - name: Upload the carrier evidence bundle
+        if: always()
+        env:
+          QDEV_IF_NO_FILES: warn
+        run: |
+          set -euo pipefail
+          test -x .github/scripts/qdev-upload-artifact.sh
+          bundle=()
+          for f in "${CARRIER_NOTE}" "${CARRIER_GATE_LOG}" qpet-sbom.cdx.json qazpet-regulatory-pilot-ci-receipt.json; do
+            [ -f "${f}" ] && bundle+=("${f}")
+          done
+          .github/scripts/qdev-upload-artifact.sh qazpet-carrier-evidence "${bundle[@]}"
+
+      - name: Remove the deploy keys from the runner
+        if: always()
+        run: |
+          set -uo pipefail
+          rm -f "${RUNNER_TEMP}/qdev-shelter-kz-key"
