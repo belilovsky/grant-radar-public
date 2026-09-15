@@ -132,6 +132,8 @@ jobs:
           mkdir -p .qdev
           git clone --quiet --no-tags git@github.com:belilovsky/qazagents.git "${SOURCE_DIR}"
           cd "${SOURCE_DIR}"
+          git fetch --quiet origin "${VERIFIED_SOURCE_SHA}"
+          git checkout --quiet --detach "${VERIFIED_SOURCE_SHA}"
           test "$(git rev-parse HEAD)" = "${VERIFIED_SOURCE_SHA}"
           test -z "$(git status --porcelain --untracked-files=all)"
           git fetch --quiet origin main
@@ -294,6 +296,8 @@ jobs:
           mkdir -p .qdev
           git clone --quiet --no-tags git@github.com:belilovsky/qazagents.git "${SOURCE_DIR}"
           cd "${SOURCE_DIR}"
+          git fetch --quiet origin "${VERIFIED_SOURCE_SHA}"
+          git checkout --quiet --detach "${VERIFIED_SOURCE_SHA}"
           test "$(git rev-parse HEAD)" = "${VERIFIED_SOURCE_SHA}"
           test -z "$(git status --porcelain --untracked-files=all)"
           git fetch --quiet origin main
@@ -585,6 +589,8 @@ jobs:
           mkdir -p .qdev
           git clone --quiet --no-tags git@github.com:belilovsky/qazagents.git "${SOURCE_DIR}"
           cd "${SOURCE_DIR}"
+          git fetch --quiet origin "${VERIFIED_SOURCE_SHA}"
+          git checkout --quiet --detach "${VERIFIED_SOURCE_SHA}"
           test "$(git rev-parse HEAD)" = "${VERIFIED_SOURCE_SHA}"
           test -z "$(git status --porcelain --untracked-files=all)"
           git fetch --quiet origin main
