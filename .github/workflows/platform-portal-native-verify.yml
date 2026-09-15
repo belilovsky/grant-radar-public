@@ -176,8 +176,11 @@ jobs:
           # outcome is recorded as not_reproducible, never as passed; any
           # other non-zero exit stays a hard failure.
           printf '\n$ python scripts/verify_ci_execution.py\n' | tee -a "${log}"
-          identity_out="$(python scripts/verify_ci_execution.py 2>&1)"
-          identity_rc=$?
+          # `bash -e` (the Actions default shell) aborts on a bare
+          # `var="$(cmd)"` whose command fails, so the status must be captured
+          # through `||` or the lane dies before recording anything.
+          identity_rc=0
+          identity_out="$(python scripts/verify_ci_execution.py 2>&1)" || identity_rc=$?
           printf '%s\n' "${identity_out}" | tee -a "${log}"
           if [ "${identity_rc}" -eq 0 ]; then
             printf 'PASS scripts/verify_ci_execution.py\n' | tee -a "${log}"
