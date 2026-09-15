@@ -17,13 +17,21 @@
 # key handling. Private source and private build inputs are never published.
 #
 # This is exact-SHA execution evidence, not a provider CI status for
-# belilovsky/pssr-regime-engine and not the Population Lab release lane. The
-# private contract sets release_runner: null, so this lane never publishes an
-# image, never deploys, never migrates and never writes a release receipt. The
-# docker profile (qdev-ci-docker) that the private release-image job needs is
-# not claimable from this carrier contract, so that job is deliberately absent
-# here and the blockage is recorded in the run identity note instead of being
-# claimed as green.
+# belilovsky/pssr-regime-engine and not the Population Lab release record. The
+# private contract sets release_runner: null in .github/qdev-runner.yml, so
+# this lane never deploys, never migrates and never writes that release record.
+#
+# The docker profile (qdev-ci-docker) that the private release-image job needs
+# is admitted for this carrier repository: /etc/qdev-runner/repos.json declares
+# the profiles [qdev-ci, qdev-ci-browser, qdev-ci-docker] for
+# belilovsky/grant-radar-public, the same repository already runs a
+# qdev-ci-docker job in .github/workflows/verify.yml, and the fleet broker
+# history records successful docker claims for it. The private release-image
+# steps are therefore reproduced in the `image` mode below with the same runner
+# labels, the same 40-minute timeout, the same build arguments and the same
+# artifact name, so an exact-SHA image archive with provenance can exist while
+# private Actions stays blocked. That archive is build evidence for the source
+# revision: this lane never publishes it to a registry and never deploys it.
 #
 # Public evidence stays inside the synthetic_demonstrator boundary. The lane
 # observes the anonymous public surface read-only and asserts only the honest
@@ -34,6 +42,11 @@
 # The native lane reports a finding as one silent job failure; this carrier lane
 # always tees the full gate log into an uploaded artifact, so every failure
 # stays readable instead of invisible.
+#
+# mode=quality and mode=quality-public run the quality job. mode=image runs only
+# the release-image job: the docker worker's admission depends on live free space
+# on the same disk, and a second job installing a full dependency tree beside the
+# image build would compete for that headroom in the same claim window.
 name: PSSR native carrier verify
 
 on:
@@ -51,6 +64,7 @@ on:
         options:
           - quality
           - quality-public
+          - image
 
 permissions:
   contents: read
@@ -68,10 +82,14 @@ env:
   CARRIER_PROBE_LOG: carrier-pssr-probe.log
   CARRIER_GATE_LOG: carrier-pssr-gate.log
   CARRIER_PUBLIC_LOG: carrier-pssr-public-observation.txt
+  CARRIER_IMAGE_LOG: carrier-pssr-image.log
+  CARRIER_IMAGE_NOTE: carrier-pssr-image-identity.txt
+  PSSR_SOURCE_REPOSITORY: belilovsky/pssr-regime-engine
 
 jobs:
   quality:
     name: PSSR Population Lab Python 3.12 quality gate
+    if: github.event.inputs.mode != 'image'
     runs-on:
       - self-hosted
       - Linux
@@ -336,11 +354,16 @@ jobs:
             printf 'check_policy=%s check_gate=%s check_migrations=%s check_public_observe=%s check_live_smoke=%s\n' \
               '${{ steps.policy.outcome }}' '${{ steps.gate.outcome }}' '${{ steps.migrations.outcome }}' \
               '${{ steps.public_observe.outcome }}' '${{ steps.live_smoke.outcome }}'
-            printf 'release_receipt=false: the private contract sets release_runner: null and no image or provenance was produced here\n'
-            printf 'registry_publish=withheld: this carrier lane never publishes an image\n'
+            mode='${{ github.event.inputs.mode }}'
+            case "${mode}" in
+              image) docker_lane="dispatched: this run also queues the private release-image steps on qdev-ci-docker; that job records the image outcome in its own log and artifact" ;;
+              *) docker_lane="not_dispatched: mode=${mode} selects the quality lane only; dispatch mode=image to reproduce the private release-image job" ;;
+            esac
+            printf 'release_receipt=false: the private contract declares release_runner: null; a carrier image archive is build evidence for the source revision, not the private release record\n'
+            printf 'registry_publish=withheld: this carrier lane holds no registry credential and the private contract publishes no registry image\n'
             printf 'deploy=withheld: this carrier lane never deploys and never changes the live runtime\n'
             printf 'migration=none: this carrier lane never touches a database\n'
-            printf 'docker_lane=not_run: the private release-image job needs qdev-ci-docker, which this carrier contract cannot claim, so the image artifact stays unproduced\n'
+            printf 'docker_lane=%s\n' "${docker_lane}"
             printf 'release_state=synthetic_demonstrator\n'
             printf 'data_classification=synthetic_demonstrator\n'
             printf 'od_signatures=none: OD-01 to OD-10 carry no signed answers\n'
@@ -358,6 +381,200 @@ jobs:
           .github/scripts/qdev-upload-artifact.sh \
             pssr-carrier-evidence \
             "${CARRIER_NOTE}" "${CARRIER_PROBE_LOG}" "${CARRIER_GATE_LOG}" "${CARRIER_PUBLIC_LOG}"
+
+      - name: Remove the deploy keys from the runner
+        if: always()
+        run: |
+          set -uo pipefail
+          rm -f "${RUNNER_TEMP}/qdev-pssr-deploy-key" "${RUNNER_TEMP}/qdev-qazstack-deploy-key"
+
+  release-image:
+    name: PSSR Population Lab immutable Engine image
+    if: github.event.inputs.mode == 'image'
+    runs-on:
+      - self-hosted
+      - Linux
+      - X64
+      - qdev-ci-docker
+      - 'qdev-job-${{ github.run_id }}-${{ github.run_attempt }}-release-image'
+    timeout-minutes: 40
+    env:
+      CARRIER_LANE: image
+    steps:
+      - name: Check out the carrier repository
+        uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5
+        with:
+          persist-credentials: false
+          fetch-depth: 1
+
+      - name: Check out the exact private PSSR revision
+        env:
+          PSSR_DEPLOY_KEY: ${{ secrets.PSSR_DEPLOY_KEY }}
+        run: |
+          set -euo pipefail
+          key_file="${RUNNER_TEMP:?}/qdev-pssr-deploy-key"
+          (umask 077; printf '%s\n' "${PSSR_DEPLOY_KEY}" > "${key_file}")
+          test -s "${key_file}"
+          ssh_command="ssh -i ${key_file} -o IdentitiesOnly=yes -o StrictHostKeyChecking=accept-new -o UserKnownHostsFile=${RUNNER_TEMP}/qdev-known-hosts"
+          printf 'GIT_SSH_COMMAND=%s\n' "${ssh_command}" >> "${GITHUB_ENV}"
+          export GIT_SSH_COMMAND="${ssh_command}"
+          mkdir -p .qdev
+          git clone --quiet --no-tags git@github.com:belilovsky/pssr-regime-engine.git "${PSSR_SOURCE_DIR}"
+          cd "${PSSR_SOURCE_DIR}"
+          if ! git cat-file -e "${VERIFIED_SOURCE_SHA}^{commit}" 2>/dev/null; then
+            git fetch --quiet origin "${VERIFIED_SOURCE_SHA}"
+          fi
+          git checkout --quiet --detach "${VERIFIED_SOURCE_SHA}"
+          test "$(git rev-parse HEAD)" = "${VERIFIED_SOURCE_SHA}"
+          test -z "$(git status --porcelain --untracked-files=all)"
+          git fetch --quiet origin main
+          ancestor=false
+          if git merge-base --is-ancestor HEAD origin/main; then ancestor=true; fi
+          printf 'SOURCE_ANCESTOR_OF_MAIN=%s\n' "${ancestor}" >> "${GITHUB_ENV}"
+          printf 'pssr_source_sha=%s ancestor_of_origin_main=%s origin_main=%s\n' \
+            "$(git rev-parse HEAD)" "${ancestor}" "$(git rev-parse origin/main)"
+          printf 'pssr_ci_yml_sha256=%s\n' \
+            "$(sha256sum .github/workflows/ci.yml | awk '{print $1}')"
+          printf 'pssr_dockerfile_sha256=%s\n' \
+            "$(sha256sum Dockerfile | awk '{print $1}')"
+
+      - name: Set up Python 3.12
+        uses: actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1 # v6
+        with:
+          python-version: "3.12"
+
+      - name: Prepare the pinned QazStack source inside the build context
+        env:
+          QAZSTACK_DEPLOY_KEY: ${{ secrets.QAZSTACK_DEPLOY_KEY }}
+        working-directory: .qdev/pssr
+        run: |
+          set -euo pipefail
+          key_file="${RUNNER_TEMP:?}/qdev-qazstack-deploy-key"
+          (umask 077; printf '%s\n' "${QAZSTACK_DEPLOY_KEY}" > "${key_file}")
+          test -s "${key_file}"
+          ssh_command="ssh -i ${key_file} -o IdentitiesOnly=yes -o StrictHostKeyChecking=accept-new -o UserKnownHostsFile=${RUNNER_TEMP}/qdev-known-hosts"
+          export GIT_SSH_COMMAND="${ssh_command}"
+          QAZSTACK_REPO=git@github.com:belilovsky/qazstack.git ./scripts/prepare_qazstack.sh
+          printf 'qazstack_version=%s\n' \
+            "$(sed -n 's/^version = "\(.*\)"/\1/p' qazstack_local/pyproject.toml | head -1)"
+
+      - name: Build the immutable Engine image
+        id: build
+        working-directory: .qdev/pssr
+        run: |
+          set -euo pipefail
+          image="pssr-regime-engine:${VERIFIED_SOURCE_SHA}"
+          log="${GITHUB_WORKSPACE}/${CARRIER_IMAGE_LOG}"
+          mkdir -p release-artifact
+          {
+            printf 'lane=image\n'
+            printf 'image=%s\n' "${image}"
+            printf 'verified_source_sha=%s\n' "${VERIFIED_SOURCE_SHA}"
+            printf 'verified_source_ancestor_of_origin_main=%s\n' "${SOURCE_ANCESTOR_OF_MAIN:-unknown}"
+            printf 'runner_name=%s executor_profile=qdev-ci-docker\n' "${RUNNER_NAME}"
+            printf 'build_started_at=%s\n' "$(date -u +%Y-%m-%dT%H:%M:%SZ)"
+            df -h / | tail -1
+          } | tee "${log}"
+          docker build --pull=false \
+            --build-arg "PSSR_SOURCE_COMMIT=${VERIFIED_SOURCE_SHA}" \
+            --build-arg "QAZSTACK_VERSION=1.30.0" \
+            -t "${image}" . 2>&1 | tee -a "${log}"
+          docker image inspect "${image}" > release-artifact/image-inspect.json
+          docker save "${image}" | gzip -1 > "release-artifact/pssr-regime-engine-${VERIFIED_SOURCE_SHA}.tar.gz"
+          python - <<'PY'
+          import json, os, pathlib
+          pathlib.Path("release-artifact/provenance.json").write_text(json.dumps({
+              "schema_version": "qdev-immutable-image-provenance-v1",
+              "repository": os.environ["PSSR_SOURCE_REPOSITORY"],
+              "source_sha": os.environ["VERIFIED_SOURCE_SHA"],
+              "workflow_run_id": os.environ["GITHUB_RUN_ID"],
+              "image": f"pssr-regime-engine:{os.environ['VERIFIED_SOURCE_SHA']}",
+              "qazstack_version": "1.30.0",
+              "qazstack_ref": os.environ["QAZSTACK_REF"],
+              "lane": "carrier reproduction of the private release-image job",
+              "release_state": "synthetic_demonstrator",
+              "registry_publish": "withheld",
+              "deploy": "withheld",
+              "carrier": {
+                  "repository": os.environ["GITHUB_REPOSITORY"],
+                  "head_sha": os.environ["GITHUB_SHA"],
+                  "run_id": os.environ["GITHUB_RUN_ID"],
+                  "run_attempt": os.environ["GITHUB_RUN_ATTEMPT"],
+                  "job": os.environ["GITHUB_JOB"],
+                  "workflow": os.environ["GITHUB_WORKFLOW"],
+                  "runner_name": os.environ["RUNNER_NAME"],
+                  "executor_profile": "qdev-ci-docker",
+                  "provider_ci_status": "unavailable: private-repository Actions is blocked by account billing; this is execution evidence, not a provider status",
+              },
+          }, indent=2) + "\n", encoding="utf-8")
+          PY
+          (cd release-artifact && sha256sum * > SHA256SUMS)
+          image_id="$(docker image inspect --format '{{.Id}}' "${image}")"
+          repo_digests="$(docker image inspect --format '{{join .RepoDigests ","}}' "${image}")"
+          archive="release-artifact/pssr-regime-engine-${VERIFIED_SOURCE_SHA}.tar.gz"
+          archive_sha256="$(sha256sum "${archive}" | awk '{print $1}')"
+          archive_bytes="$(wc -c < "${archive}" | tr -d ' ')"
+          {
+            printf 'image_id=%s\n' "${image_id}"
+            printf 'image_repo_digests=%s\n' "${repo_digests:-none: the image exists only in this runner's local docker store}"
+            printf 'archive=%s bytes=%s sha256=%s\n' "${archive}" "${archive_bytes}" "${archive_sha256}"
+            printf 'SHASUMS=%s\n' "$(tr '\n' ';' < release-artifact/SHA256SUMS)"
+            printf 'build_finished_at=%s\n' "$(date -u +%Y-%m-%dT%H:%M:%SZ)"
+          } | tee -a "${log}"
+
+      - name: Record the image lane identity
+        if: always()
+        run: |
+          set -uo pipefail
+          {
+            printf 'carrier_repository=%s\n' "${GITHUB_REPOSITORY}"
+            printf 'carrier_head_sha=%s\n' "${GITHUB_SHA}"
+            printf 'carrier_run_id=%s\n' "${GITHUB_RUN_ID}"
+            printf 'carrier_run_attempt=%s\n' "${GITHUB_RUN_ATTEMPT}"
+            printf 'carrier_job=%s\n' "${GITHUB_JOB}"
+            printf 'carrier_workflow=%s\n' "${GITHUB_WORKFLOW}"
+            printf 'carrier_lane=%s\n' "${CARRIER_LANE}"
+            printf 'runner_name=%s\n' "${RUNNER_NAME}"
+            printf 'executor_profile=qdev-ci-docker\n'
+            printf 'execution=native QDev self-hosted qdev-ci-docker lane, real private release-image steps, carrier repository\n'
+            printf 'verified_source_repository=%s\n' "${PSSR_SOURCE_REPOSITORY}"
+            printf 'verified_source_sha=%s\n' "${VERIFIED_SOURCE_SHA}"
+            printf 'verified_source_ancestor_of_origin_main=%s\n' "${SOURCE_ANCESTOR_OF_MAIN:-unknown}"
+            printf 'qazstack_ref=%s\n' "${QAZSTACK_REF}"
+            printf 'qazstack_version=1.30.0\n'
+            printf 'artifact_name=pssr-engine-image-%s\n' "${VERIFIED_SOURCE_SHA}"
+            printf 'check_build=%s\n' '${{ steps.build.outcome }}'
+            printf 'provider_ci_status=unavailable: private-repository Actions is blocked by account billing; this is execution evidence, not a provider status\n'
+            printf 'release_receipt=false: the private contract declares release_runner: null; this archive is build evidence for the source revision, not the private release record\n'
+            printf 'registry_publish=withheld: no registry credential is available to this lane and the private contract publishes no registry image\n'
+            printf 'deploy=withheld: this lane produces an archive only and never changes the live runtime\n'
+            printf 'migration=none: this lane never touches a database\n'
+            printf 'release_state=synthetic_demonstrator\n'
+            printf 'data_classification=synthetic_demonstrator\n'
+            printf 'od_signatures=none: OD-01 to OD-10 carry no signed answers\n'
+            printf 'real_data_admission=not_granted: no families, payments, budget or behaviour data is admitted\n'
+            printf 'rollback=untouched: the live revision and its rollback pair are not modified by this lane\n'
+          } | tee "${CARRIER_IMAGE_NOTE}"
+
+      - name: Upload the immutable Engine image
+        if: always()
+        env:
+          QDEV_IF_NO_FILES: warn
+        working-directory: .qdev/pssr
+        run: |
+          set -euo pipefail
+          test -x "${GITHUB_WORKSPACE}/.github/scripts/qdev-upload-artifact.sh"
+          "${GITHUB_WORKSPACE}/.github/scripts/qdev-upload-artifact.sh" \
+            "pssr-engine-image-${VERIFIED_SOURCE_SHA}" release-artifact
+
+      - name: Upload the image lane log and identity
+        if: always()
+        env:
+          QDEV_IF_NO_FILES: warn
+        run: |
+          set -euo pipefail
+          .github/scripts/qdev-upload-artifact.sh \
+            pssr-image-lane-evidence "${CARRIER_IMAGE_NOTE}" "${CARRIER_IMAGE_LOG}"
 
       - name: Remove the deploy keys from the runner
         if: always()
