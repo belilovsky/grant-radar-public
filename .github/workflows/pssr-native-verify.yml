@@ -1,0 +1,366 @@
+# Native QDev self-hosted execution of the Population Lab quality gate.
+#
+# GitHub Actions is blocked for every private QDev repository by the account's
+# billing state (startup_failure, zero jobs, every private repository, since
+# 2026-09-13), so belilovsky/pssr-regime-engine/.github/workflows/ci.yml cannot
+# start at all and no candidate revision of the Population Lab carries provider
+# CI status. This public carrier repository is admitted by the QDev runner
+# broker and executes the real Population Lab quality steps against an exact
+# private revision fetched with a read-only deploy key, on the same self-hosted
+# runner profile (qdev-ci) and against the same pinned QazStack ref the private
+# workflow requests.
+#
+# Private sources are fetched with an explicit key file plus GIT_SSH_COMMAND,
+# the transport already proven on these runners by the qazcompute, IPOS,
+# qazgeo, qazlake, qazpipe and QPhoto lanes; actions/checkout ssh-key is
+# deliberately not used so the private key never enters the checkout action's
+# key handling. Private source and private build inputs are never published.
+#
+# This is exact-SHA execution evidence, not a provider CI status for
+# belilovsky/pssr-regime-engine and not the Population Lab release lane. The
+# private contract sets release_runner: null, so this lane never publishes an
+# image, never deploys, never migrates and never writes a release receipt. The
+# docker profile (qdev-ci-docker) that the private release-image job needs is
+# not claimable from this carrier contract, so that job is deliberately absent
+# here and the blockage is recorded in the run identity note instead of being
+# claimed as green.
+#
+# Public evidence stays inside the synthetic_demonstrator boundary. The lane
+# observes the anonymous public surface read-only and asserts only the honest
+# empty state: the dashboard answers and the public brief carries no snapshot.
+# No runtime revision binding is claimed anywhere, because the public ingress
+# exposes no release identity route.
+#
+# The native lane reports a finding as one silent job failure; this carrier lane
+# always tees the full gate log into an uploaded artifact, so every failure
+# stays readable instead of invisible.
+name: PSSR native carrier verify
+
+on:
+  workflow_dispatch:
+    inputs:
+      head_sha:
+        description: "Exact 40-character commit SHA in belilovsky/pssr-regime-engine"
+        required: true
+        type: string
+      mode:
+        description: "Lane scope on the carrier self-hosted runner"
+        required: true
+        default: quality
+        type: choice
+        options:
+          - quality
+          - quality-public
+
+permissions:
+  contents: read
+
+concurrency:
+  group: pssr-native-carrier
+  cancel-in-progress: false
+
+env:
+  PSSR_SOURCE_DIR: .qdev/pssr
+  VERIFIED_SOURCE_SHA: ${{ github.event.inputs.head_sha }}
+  QAZSTACK_REF: 7766bc57eabdf0b2c514c17c365ecf33e24c0c03
+  PSSR_BASE_URL: https://pssr.site
+  CARRIER_NOTE: carrier-run-identity.txt
+  CARRIER_PROBE_LOG: carrier-pssr-probe.log
+  CARRIER_GATE_LOG: carrier-pssr-gate.log
+  CARRIER_PUBLIC_LOG: carrier-pssr-public-observation.txt
+
+jobs:
+  quality:
+    name: PSSR Population Lab Python 3.12 quality gate
+    runs-on:
+      - self-hosted
+      - Linux
+      - X64
+      - qdev-ci
+      - 'qdev-job-${{ github.run_id }}-${{ github.run_attempt }}-pssr-quality'
+    timeout-minutes: 45
+    env:
+      CARRIER_LANE: quality
+    steps:
+      - name: Check out the carrier repository
+        uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5
+        with:
+          persist-credentials: false
+          fetch-depth: 1
+
+      - name: Check out the exact private PSSR revision
+        env:
+          PSSR_DEPLOY_KEY: ${{ secrets.PSSR_DEPLOY_KEY }}
+        run: |
+          set -euo pipefail
+          key_file="${RUNNER_TEMP:?}/qdev-pssr-deploy-key"
+          (umask 077; printf '%s\n' "${PSSR_DEPLOY_KEY}" > "${key_file}")
+          test -s "${key_file}"
+          ssh_command="ssh -i ${key_file} -o IdentitiesOnly=yes -o StrictHostKeyChecking=accept-new -o UserKnownHostsFile=${RUNNER_TEMP}/qdev-known-hosts"
+          printf 'GIT_SSH_COMMAND=%s\n' "${ssh_command}" >> "${GITHUB_ENV}"
+          export GIT_SSH_COMMAND="${ssh_command}"
+          mkdir -p .qdev
+          git clone --quiet --no-tags git@github.com:belilovsky/pssr-regime-engine.git "${PSSR_SOURCE_DIR}"
+          cd "${PSSR_SOURCE_DIR}"
+          if ! git cat-file -e "${VERIFIED_SOURCE_SHA}^{commit}" 2>/dev/null; then
+            git fetch --quiet origin "${VERIFIED_SOURCE_SHA}"
+          fi
+          git checkout --quiet --detach "${VERIFIED_SOURCE_SHA}"
+          test "$(git rev-parse HEAD)" = "${VERIFIED_SOURCE_SHA}"
+          test -z "$(git status --porcelain --untracked-files=all)"
+          git fetch --quiet origin main
+          ancestor=false
+          if git merge-base --is-ancestor HEAD origin/main; then ancestor=true; fi
+          printf 'SOURCE_ANCESTOR_OF_MAIN=%s\n' "${ancestor}" >> "${GITHUB_ENV}"
+          printf 'pssr_source_sha=%s ancestor_of_origin_main=%s origin_main=%s\n' \
+            "$(git rev-parse HEAD)" "${ancestor}" "$(git rev-parse origin/main)"
+          printf 'pssr_ci_yml_sha256=%s\n' \
+            "$(sha256sum .github/workflows/ci.yml | awk '{print $1}')"
+
+      - name: Check out the pinned QazStack source
+        env:
+          QAZSTACK_DEPLOY_KEY: ${{ secrets.QAZSTACK_DEPLOY_KEY }}
+        run: |
+          set -euo pipefail
+          key_file="${RUNNER_TEMP:?}/qdev-qazstack-deploy-key"
+          (umask 077; printf '%s\n' "${QAZSTACK_DEPLOY_KEY}" > "${key_file}")
+          test -s "${key_file}"
+          ssh_command="ssh -i ${key_file} -o IdentitiesOnly=yes -o StrictHostKeyChecking=accept-new -o UserKnownHostsFile=${RUNNER_TEMP}/qdev-known-hosts"
+          export GIT_SSH_COMMAND="${ssh_command}"
+          cd "${PSSR_SOURCE_DIR}"
+          git clone --quiet --filter=blob:none --no-checkout git@github.com:belilovsky/qazstack.git vendor/qazstack
+          git -C vendor/qazstack fetch --quiet --depth 1 origin "${QAZSTACK_REF}"
+          git -C vendor/qazstack checkout --quiet --detach FETCH_HEAD
+          printf 'qazstack_source_sha=%s\n' "$(git -C vendor/qazstack rev-parse HEAD)"
+
+      - name: Probe the runner toolchain and lane identity
+        id: toolchain
+        continue-on-error: true
+        run: |
+          set -uo pipefail
+          {
+            printf 'runner=%s environment=%s repository=%s workflow=%s\n' \
+              "${RUNNER_NAME}" "${RUNNER_ENVIRONMENT}" "${GITHUB_REPOSITORY}" "${GITHUB_WORKFLOW}"
+            printf 'qdev_job_id=%s qdev_repository=%s qdev_head_sha=%s\n' \
+              "${QDEV_JOB_ID:-unset}" "${QDEV_REPOSITORY:-unset}" "${QDEV_HEAD_SHA:-unset}"
+            printf 'qdev_artifact_url=%s artifact_token_set=%s\n' \
+              "${QDEV_ARTIFACT_URL:-unset}" \
+              "$([ -n "${QDEV_ARTIFACT_TOKEN:-}" ] && printf yes || printf no)"
+            printf 'job_hostname=%s cpus=%s\n' "$(hostname)" "$(nproc)"
+            free -m | head -2 || true
+            df -h / | tail -1 || true
+          } >> "${CARRIER_PROBE_LOG}" 2>&1
+          for tool in python3 git ssh curl awk sha256sum tar bash pip; do
+            if command -v "${tool}" >/dev/null 2>&1; then
+              printf 'PASS tool_present=%s path=%s\n' "${tool}" "$(command -v "${tool}")" \
+                | tee -a "${CARRIER_PROBE_LOG}"
+            else
+              printf 'note tool_absent_before_setup=%s\n' "${tool}" | tee -a "${CARRIER_PROBE_LOG}"
+            fi
+          done
+
+      - name: Set up Python 3.12
+        uses: actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1 # v6
+        with:
+          python-version: "3.12"
+
+      - name: Install dependencies
+        working-directory: .qdev/pssr
+        run: |
+          set -euo pipefail
+          pip install -e "./vendor/qazstack[geo,observability,export]"
+          pip install -e ".[dev]"
+          python -m pip check
+          python --version
+          ruff --version
+          python -m pip show qazstack | sed -n '1,3p'
+
+      - name: Validate the private repository QDev runner contract
+        id: policy
+        continue-on-error: true
+        run: |
+          set -uo pipefail
+          python3 .qdev/pssr/.github/scripts/qdev-runner-policy.py --root .qdev/pssr
+
+      - name: Run the exact Population Lab verification gate
+        id: gate
+        working-directory: .qdev/pssr
+        run: |
+          set -uo pipefail
+          log="${GITHUB_WORKSPACE}/${CARRIER_GATE_LOG}"
+          : > "${log}"
+          {
+            printf 'gate=ruff,compileall,pip_check,pytest\n'
+            printf 'source_sha=%s\n' "$(git rev-parse HEAD)"
+            printf 'gate_started_at=%s\n' "$(date -u +%Y-%m-%dT%H:%M:%SZ)"
+          } | tee -a "${log}"
+          status=0
+          for command in \
+            'ruff check src scripts tests' \
+            'python -m compileall -q src scripts tests' \
+            'python -m pip check' \
+            'python -m pytest -q'
+          do
+            printf '\n$ %s\n' "${command}" | tee -a "${log}"
+            if eval "${command}" 2>&1 | tee -a "${log}"; then
+              printf 'PASS %s\n' "${command}" | tee -a "${log}"
+            else
+              printf 'FAIL %s\n' "${command}" | tee -a "${log}"
+              status=1
+            fi
+          done
+          printf '\ngate_finished_at=%s gate_status=%s\n' \
+            "$(date -u +%Y-%m-%dT%H:%M:%SZ)" "${status}" | tee -a "${log}"
+          exit "${status}"
+
+      - name: Record the source migration head (no database contact)
+        id: migrations
+        continue-on-error: true
+        working-directory: .qdev/pssr
+        run: |
+          set -uo pipefail
+          log="${GITHUB_WORKSPACE}/${CARRIER_GATE_LOG}"
+          {
+            printf '\n$ python - alembic ScriptDirectory heads (offline, no database contact)\n'
+            python - <<'PY'
+          from pathlib import Path
+
+          from alembic.config import Config
+          from alembic.script import ScriptDirectory
+
+          script = ScriptDirectory.from_config(Config("alembic.ini"))
+          heads = script.get_heads()
+          revisions = list(script.walk_revisions())
+          print(f"alembic_head_count={len(heads)}")
+          for head in heads:
+              revision = script.get_revision(head)
+              path = Path(revision.path)
+              try:
+                  path = path.relative_to(Path.cwd())
+              except ValueError:
+                  path = Path(path.name)
+              print(f"alembic_head={head} path={path.as_posix()}")
+          print(f"alembic_revision_count={len(revisions)}")
+          print("alembic_database_contact=none")
+          PY
+          } 2>&1 | tee -a "${log}"
+
+      - name: Observe the live public surface read-only
+        id: public_observe
+        if: always()
+        continue-on-error: true
+        run: |
+          set -uo pipefail
+          body="${RUNNER_TEMP:?}/qdev-pssr-public-body"
+          {
+            printf 'base_url=%s\n' "${PSSR_BASE_URL}"
+            printf 'observed_at=%s\n' "$(date -u +%Y-%m-%dT%H:%M:%SZ)"
+            printf 'carrier_run_id=%s\n' "${GITHUB_RUN_ID}"
+            for path in / /app.js /styles.css /api/v1/public/brief /.well-known/qdev-edge-receipt.json /api/v1/public/release; do
+              status="$(curl -sS -o "${body}" -w '%{http_code}' --max-time 30 "${PSSR_BASE_URL}${path}" 2>/dev/null || printf 'error')"
+              size="$(wc -c < "${body}" 2>/dev/null | tr -d ' ' || printf '0')"
+              digest="$(sha256sum "${body}" 2>/dev/null | awk '{print $1}')"
+              printf 'route[%s]=status:%s bytes:%s body_sha256:%s\n' \
+                "${path}" "${status}" "${size}" "${digest:-none}"
+            done
+            head_status="$(curl -sS -o /dev/null -w '%{http_code}' --max-time 30 -I "${PSSR_BASE_URL}/" 2>/dev/null || printf 'error')"
+            printf 'route[HEAD /]=status:%s\n' "${head_status}"
+            source_index=".qdev/pssr/src/public/index.html"
+            index_body="${RUNNER_TEMP:?}/qdev-pssr-public-index.html"
+            index_status="$(curl -sS -o "${index_body}" -w '%{http_code}' --max-time 30 "${PSSR_BASE_URL}/" 2>/dev/null || printf 'error')"
+            live_digest="$(sha256sum "${index_body}" 2>/dev/null | awk '{print $1}')"
+            printf 'live_index_status=%s live_index_sha256=%s\n' "${index_status}" "${live_digest:-none}"
+            if [ -f "${source_index}" ]; then
+              source_digest="$(sha256sum "${source_index}" | awk '{print $1}')"
+              printf 'source_index_sha256=%s\n' "${source_digest}"
+              if [ "${index_status}" = "200" ] && [ "${live_digest}" = "${source_digest}" ]; then
+                printf 'public_index_binding=equal\n'
+              else
+                printf 'public_index_binding=differs\n'
+              fi
+            else
+              printf 'source_index_sha256=unavailable\npublic_index_binding=not_evaluated\n'
+            fi
+            printf 'runtime_binding=unreadable_via_public_ingress: the public ingress exposes no release identity route\n'
+            printf 'data_classification=synthetic_demonstrator\n'
+            printf 'observation_scope=anonymous read-only GET/HEAD, no credentials, no data extraction\n'
+          } | tee "${CARRIER_PUBLIC_LOG}"
+
+      - name: Run the live public smoke against pssr.site
+        id: live_smoke
+        if: github.event.inputs.mode == 'quality-public'
+        run: |
+          set -euo pipefail
+          root_status="$(curl -sS -o /dev/null -w '%{http_code}' --max-time 30 "${PSSR_BASE_URL}/")"
+          root_bytes="$(curl -sS --max-time 30 "${PSSR_BASE_URL}/" | wc -c | tr -d ' ')"
+          test "${root_status}" = "200"
+          test "${root_bytes}" -gt 0
+          brief_status="$(curl -sS -o /dev/null -w '%{http_code}' --max-time 30 "${PSSR_BASE_URL}/api/v1/public/brief")"
+          case "${brief_status}" in
+            204) snapshot_state="no_public_snapshot" ;;
+            200) snapshot_state="snapshot_present" ;;
+            *) snapshot_state="unexpected_status" ;;
+          esac
+          test "${snapshot_state}" != "unexpected_status"
+          release_status="$(curl -sS -o /dev/null -w '%{http_code}' --max-time 30 "${PSSR_BASE_URL}/api/v1/public/release")"
+          test "${release_status}" = "404"
+          {
+            printf 'smoke_root_status=%s smoke_root_bytes=%s\n' "${root_status}" "${root_bytes}"
+            printf 'smoke_brief_status=%s public_snapshot_state=%s\n' "${brief_status}" "${snapshot_state}"
+            printf 'smoke_release_status=%s note:absence_enforces_the_withheld_release_identity_boundary\n' "${release_status}"
+            printf 'smoke_real_data_claims=none: no family, payment, budget or behaviour output is published\n'
+          } | tee -a "${CARRIER_PUBLIC_LOG}"
+
+      - name: Record carrier run identity (never a release receipt)
+        if: always()
+        run: |
+          set -uo pipefail
+          {
+            printf 'carrier_repository=%s\n' "${GITHUB_REPOSITORY}"
+            printf 'carrier_head_sha=%s\n' "${GITHUB_SHA}"
+            printf 'carrier_run_id=%s\n' "${GITHUB_RUN_ID}"
+            printf 'carrier_run_attempt=%s\n' "${GITHUB_RUN_ATTEMPT}"
+            printf 'carrier_job=%s\n' "${GITHUB_JOB}"
+            printf 'carrier_workflow=%s\n' "${GITHUB_WORKFLOW}"
+            printf 'carrier_lane=%s\n' "${CARRIER_LANE}"
+            printf 'runner_name=%s\n' "${RUNNER_NAME}"
+            printf 'verified_source_repository=belilovsky/pssr-regime-engine\n'
+            printf 'verified_source_sha=%s\n' "${VERIFIED_SOURCE_SHA}"
+            printf 'verified_source_ancestor_of_origin_main=%s\n' "${SOURCE_ANCESTOR_OF_MAIN:-unknown}"
+            printf 'verified_source_ci_yml_sha256=%s\n' \
+              "$(sha256sum ".qdev/pssr/.github/workflows/ci.yml" 2>/dev/null | awk '{print $1}')"
+            printf 'qazstack_ref=%s\n' "${QAZSTACK_REF}"
+            printf 'executor_profile=qdev-ci\n'
+            printf 'execution=native QDev self-hosted qdev-ci lane, real Population Lab quality steps, carrier repository\n'
+            printf 'provider_ci_status=unavailable: private-repository Actions is blocked by account billing; this is execution evidence, not a provider status\n'
+            printf 'check_policy=%s check_gate=%s check_migrations=%s check_public_observe=%s check_live_smoke=%s\n' \
+              '${{ steps.policy.outcome }}' '${{ steps.gate.outcome }}' '${{ steps.migrations.outcome }}' \
+              '${{ steps.public_observe.outcome }}' '${{ steps.live_smoke.outcome }}'
+            printf 'release_receipt=false: the private contract sets release_runner: null and no image or provenance was produced here\n'
+            printf 'registry_publish=withheld: this carrier lane never publishes an image\n'
+            printf 'deploy=withheld: this carrier lane never deploys and never changes the live runtime\n'
+            printf 'migration=none: this carrier lane never touches a database\n'
+            printf 'docker_lane=not_run: the private release-image job needs qdev-ci-docker, which this carrier contract cannot claim, so the image artifact stays unproduced\n'
+            printf 'release_state=synthetic_demonstrator\n'
+            printf 'data_classification=synthetic_demonstrator\n'
+            printf 'od_signatures=none: OD-01 to OD-10 carry no signed answers\n'
+            printf 'real_data_admission=not_granted: no families, payments, budget or behaviour data is admitted\n'
+            printf 'rollback=untouched: the live revision and its rollback pair are not modified by this lane\n'
+          } | tee "${CARRIER_NOTE}"
+
+      - name: Upload the carrier evidence bundle
+        if: always()
+        env:
+          QDEV_IF_NO_FILES: warn
+        run: |
+          set -euo pipefail
+          test -x .github/scripts/qdev-upload-artifact.sh
+          .github/scripts/qdev-upload-artifact.sh \
+            pssr-carrier-evidence \
+            "${CARRIER_NOTE}" "${CARRIER_PROBE_LOG}" "${CARRIER_GATE_LOG}" "${CARRIER_PUBLIC_LOG}"
+
+      - name: Remove the deploy keys from the runner
+        if: always()
+        run: |
+          set -uo pipefail
+          rm -f "${RUNNER_TEMP}/qdev-pssr-deploy-key" "${RUNNER_TEMP}/qdev-qazstack-deploy-key"
