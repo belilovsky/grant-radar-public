@@ -464,7 +464,13 @@ jobs:
           for f in "${CARRIER_NOTE}" "${CARRIER_PROBE_LOG}" "${CARRIER_GATE_LOG}" crisis-monitor-gitleaks.sarif; do
             [ -f "${f}" ] && bundle+=("${f}")
           done
-          .github/scripts/qdev-upload-artifact.sh crisis-monitor-carrier-evidence "${bundle[@]}"
+          # The two matrix legs share one runner job identity (same runner
+          # label), so the QDev artifact store path is identical for both and
+          # a repeated artifact name is rejected with HTTP 409. Name each leg's
+          # bundle explicitly instead of letting the second leg fail.
+          .github/scripts/qdev-upload-artifact.sh \
+            "crisis-monitor-carrier-evidence-py${{ matrix.python-version }}" \
+            "${bundle[@]}"
 
       - name: Remove the deploy key from the runner
         if: always()
