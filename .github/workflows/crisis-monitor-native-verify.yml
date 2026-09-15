@@ -32,6 +32,15 @@
 # at the end if any check failed. Step order, tool pins and commands are
 # verbatim from main.yml.
 #
+# Each per-check step carries `continue-on-error: true` so that a defect in an
+# early check cannot mask the later ones: the native pipeline chains its jobs
+# with `needs:`, so a single ruff finding there silences type-check, security
+# and every downstream job. Here every native check still executes, its true
+# result is written to the gate log and to the run-identity note as
+# `check_<name>`, and the final `Aggregate the native check outcomes` step
+# fails the job when any of them did not succeed. The aggregate step is what
+# decides the run conclusion; no check is softened.
+#
 # This is exact-SHA execution evidence, not a provider CI status for
 # belilovsky/Crisis-Monitor.
 name: Crisis-Monitor native carrier verify
@@ -138,6 +147,7 @@ jobs:
 
       - name: Run the native regulatory-report-evidence job steps
         id: canary
+        continue-on-error: true
         working-directory: .qdev/crisis-monitor
         run: |
           set -uo pipefail
@@ -158,6 +168,7 @@ jobs:
 
       - name: Run the native lint job steps (ruff 0.15.21)
         id: lint
+        continue-on-error: true
         working-directory: .qdev/crisis-monitor
         run: |
           set -uo pipefail
@@ -183,6 +194,7 @@ jobs:
       - name: Run the native commit-message gate (commitizen, py3.12 only)
         id: commit-message
         if: matrix.python-version == '3.12'
+        continue-on-error: true
         working-directory: .qdev/crisis-monitor
         run: |
           set -uo pipefail
@@ -206,6 +218,7 @@ jobs:
 
       - name: Run the native type-check job steps (mypy 1.18.2)
         id: typecheck
+        continue-on-error: true
         working-directory: .qdev/crisis-monitor
         run: |
           set -uo pipefail
@@ -231,6 +244,7 @@ jobs:
 
       - name: Run the native security job steps (bandit, pip-audit)
         id: security
+        continue-on-error: true
         working-directory: .qdev/crisis-monitor
         run: |
           set -uo pipefail
@@ -257,9 +271,47 @@ jobs:
 
       - name: Run the native gitleaks step (no-git scan of the source tree)
         id: gitleaks
+        continue-on-error: true
         uses: gitleaks/gitleaks-action@ff98106e4c7b2bc287b24eaf42907196329070c7
         with:
           args: detect --source="${{ github.workspace }}/.qdev/crisis-monitor" --no-git --no-banner --redact
+
+      - name: Aggregate the native check outcomes
+        if: always()
+        working-directory: .qdev/crisis-monitor
+        env:
+          OUTCOME_CANARY: ${{ steps.canary.outcome }}
+          OUTCOME_LINT: ${{ steps.lint.outcome }}
+          OUTCOME_COMMIT_MESSAGE: ${{ steps.commit-message.outcome }}
+          OUTCOME_TYPECHECK: ${{ steps.typecheck.outcome }}
+          OUTCOME_SECURITY: ${{ steps.security.outcome }}
+          OUTCOME_GITLEAKS: ${{ steps.gitleaks.outcome }}
+        run: |
+          set -uo pipefail
+          log="${GITHUB_WORKSPACE}/${CARRIER_GATE_LOG}"
+          status=0
+          {
+            printf '\nnative_check_outcomes python=%s\n' "${{ matrix.python-version }}"
+          } | tee -a "${log}"
+          for pair in \
+            "canary:${OUTCOME_CANARY}" \
+            "lint:${OUTCOME_LINT}" \
+            "commit-message:${OUTCOME_COMMIT_MESSAGE}" \
+            "typecheck:${OUTCOME_TYPECHECK}" \
+            "security:${OUTCOME_SECURITY}" \
+            "gitleaks:${OUTCOME_GITLEAKS}"
+          do
+            name="${pair%%:*}"
+            outcome="${pair#*:}"
+            case "${outcome}" in
+              success|skipped) ;;
+              *) status=1 ;;
+            esac
+            printf 'check_%s=%s\n' "${name}" "${outcome}" | tee -a "${log}"
+          done
+          printf 'aggregate_finished_at=%s aggregate_status=%s\n' \
+            "$(date -u +%Y-%m-%dT%H:%M:%SZ)" "${status}" | tee -a "${log}"
+          exit "${status}"
 
       - name: Record carrier run identity (never a provider status)
         if: always()

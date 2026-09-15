@@ -13,6 +13,21 @@
 # This is exact-SHA execution evidence, not a provider CI status for
 # belilovsky/platform-portal. The QazConsent public line (DNS/ACME/edge) is a
 # separate lane and is not claimed here.
+#
+# The native qdev-runner-contract.yml exports, at workflow level,
+#   QDEV_EXECUTION_LANE: ${{ inputs.execution_lane || 'hosted' }}
+#   QDEV_EXPECTED_SHA:   ${{ inputs.expected_sha || github.sha }}
+# and this lane now supplies those same two values so that the native guard is
+# evaluated with the native inputs instead of with an empty environment. With
+# the inputs present, scripts/verify_ci_execution.py is a provider-identity
+# proof: for lane=hosted it requires RUNNER_ENVIRONMENT=github-hosted, and for
+# lane=recovery it requires a controller-issued runner identity plus an
+# owner-authorized workflow_dispatch. A public carrier job on the QDev
+# self-hosted pool can present neither, so this one check is structurally not
+# reproducible here. The lane records that fact explicitly (and still fails,
+# rather than reporting a pass it did not earn). The other native step,
+# .github/scripts/qdev-runner-policy.py --root ., is reproducible and is
+# reported on its own result.
 name: Platform Portal native carrier verify
 
 on:
@@ -36,6 +51,8 @@ env:
   CARRIER_NOTE: carrier-run-identity.txt
   CARRIER_GATE_LOG: carrier-platform-portal-gate.log
   SOURCE_REPOSITORY: belilovsky/platform-portal
+  QDEV_EXECUTION_LANE: hosted
+  QDEV_EXPECTED_SHA: ${{ github.event.inputs.head_sha }}
 
 jobs:
   contract:
@@ -112,6 +129,19 @@ jobs:
           done
           printf 'runner_smoke_ok repo=%s sha=%s runner=%s\n' \
             "${SOURCE_REPOSITORY}" "${VERIFIED_SOURCE_SHA}" "${RUNNER_NAME}" | tee -a "${log}"
+          {
+            printf '\nnative_guard_context\n'
+            printf 'QDEV_EXPECTED_SHA=%s\n' "${QDEV_EXPECTED_SHA}"
+            printf 'QDEV_EXECUTION_LANE=%s\n' "${QDEV_EXECUTION_LANE}"
+            printf 'checked_out_head=%s expected_sha_matches_head=%s\n' \
+              "$(git rev-parse HEAD)" \
+              "$([ "$(git rev-parse HEAD)" = "${QDEV_EXPECTED_SHA}" ] && printf true || printf false)"
+            printf 'GITHUB_ACTIONS=%s GITHUB_RUN_ID=%s GITHUB_RUN_ATTEMPT=%s\n' \
+              "${GITHUB_ACTIONS}" "${GITHUB_RUN_ID}" "${GITHUB_RUN_ATTEMPT}"
+            printf 'RUNNER_ENVIRONMENT=%s RUNNER_NAME=%s required_for_lane_hosted=github-hosted\n' \
+              "${RUNNER_ENVIRONMENT}" "${RUNNER_NAME}"
+            printf 'structural_limit=scripts/verify_ci_execution.py accepts only a github-hosted runner (lane=hosted) or a controller-issued recovery runner (lane=recovery). A public carrier job on the QDev self-hosted pool can present neither identity, so its non-pass states a property of the guard, not a defect of belilovsky/platform-portal and not a carrier bug. The check is recorded as not_reproducible, never as passed.\n'
+          } | tee -a "${log}"
           printf '\ngate_finished_at=%s gate_status=%s\n' \
             "$(date -u +%Y-%m-%dT%H:%M:%SZ)" "${status}" | tee -a "${log}"
           exit "${status}"
@@ -131,6 +161,8 @@ jobs:
             printf 'verified_source_sha=%s\n' "${VERIFIED_SOURCE_SHA}"
             printf 'verified_source_ancestor_of_origin_master=%s\n' "${SOURCE_ANCESTOR_OF_MAIN:-unknown}"
             printf 'executor_profile=qdev-ci\n'
+            printf 'native_inputs_supplied=QDEV_EXPECTED_SHA,QDEV_EXECUTION_LANE (native defaults of qdev-runner-contract.yml)\n'
+            printf 'not_reproducible_on_carrier=scripts/verify_ci_execution.py: requires provider-hosted or controller-recovery runner identity\n'
             printf 'check_gate=%s\n' '${{ steps.gate.outcome }}'
             printf 'provider_ci_status=unavailable: private-repository Actions is blocked by account billing; this is execution evidence, not a provider status\n'
             printf 'qazconsent_public_line=not_claimed: consent.qdev.run DNS/ACME/edge is a separate owner lane\n'
