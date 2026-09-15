@@ -41,6 +41,21 @@
 # fails the job when any of them did not succeed. The aggregate step is what
 # decides the run conclusion; no check is softened.
 #
+# One measured deviation from main.yml, recorded in the run-identity note as
+# `native_deviation=`: main.yml runs the gitleaks check through
+# `gitleaks/gitleaks-action@ff98106e4c7b2bc287b24eaf42907196329070c7` with
+# `args: detect --source=... --no-git ...`. That wrapper revision declares no
+# `inputs:` at all and does not read an `args` input, so it ignores the
+# configured source and scans the checkout it runs in. On this carrier that
+# means the carrier tree, not the verified private revision: the first run
+# (34965673808) reported carrier false positives
+# (`tests/test_api_repository.py:1320`, `docs/archive/releases/PROD_CLOSEOUT_2026-07-27.md`)
+# and then failed its own SARIF upload with "Artifact storage quota has been
+# hit". This lane therefore runs the identical pinned gitleaks 8.24.3 CLI
+# directly, with the same flags, against the verified private tree. The tool,
+# its version and its flags are unchanged; only the wrapper is bypassed so the
+# scan target is the one main.yml intends.
+#
 # This is exact-SHA execution evidence, not a provider CI status for
 # belilovsky/Crisis-Monitor.
 name: Crisis-Monitor native carrier verify
@@ -269,12 +284,108 @@ jobs:
             "$(date -u +%Y-%m-%dT%H:%M:%SZ)" "${status}" | tee -a "${log}"
           exit "${status}"
 
-      - name: Run the native gitleaks step (no-git scan of the source tree)
+      # main.yml uses gitleaks/gitleaks-action@ff98106e..., whose revision
+      # declares no inputs and ignores `args:`, so on the carrier it scanned
+      # the carrier tree and then failed its own artifact upload against the
+      # exhausted GitHub Artifact quota. The wrapper is bypassed here: the
+      # pinned gitleaks 8.24.3 release binary is fetched with the published
+      # checksum, verified, and run with the same flags and the same intended
+      # target (the verified private revision), so the check is about
+      # belilovsky/Crisis-Monitor and nothing else.
+      - name: Run the native gitleaks step (pinned 8.24.3 CLI, no-git scan of the private tree)
         id: gitleaks
         continue-on-error: true
-        uses: gitleaks/gitleaks-action@ff98106e4c7b2bc287b24eaf42907196329070c7
-        with:
-          args: detect --source="${{ github.workspace }}/.qdev/crisis-monitor" --no-git --no-banner --redact
+        env:
+          GITLEAKS_PIN: "8.24.3"
+          GITLEAKS_LINUX_X64_SHA256: 9991e0b2903da4c8f6122b5c3186448b927a5da4deef1fe45271c3793f4ee29c
+        run: |
+          set -uo pipefail
+          log="${GITHUB_WORKSPACE}/${CARRIER_GATE_LOG}"
+          install_dir="${RUNNER_TEMP}/gitleaks-${GITLEAKS_PIN}"
+          gitleaks_bin="${install_dir}/gitleaks"
+          tarball="${RUNNER_TEMP}/gitleaks_${GITLEAKS_PIN}_linux_x64.tar.gz"
+          url="https://github.com/gitleaks/gitleaks/releases/download/v${GITLEAKS_PIN}/gitleaks_${GITLEAKS_PIN}_linux_x64.tar.gz"
+          install_status=0
+          {
+            printf '\nnative_job=secret-scan implementation=pinned-gitleaks-cli version=%s target=%s/%s\n' \
+              "${GITLEAKS_PIN}" "${GITHUB_WORKSPACE}" "${SOURCE_DIR}"
+            printf 'install_started_at=%s\n' "$(date -u +%Y-%m-%dT%H:%M:%SZ)"
+            printf '\n$ curl -fsSL %s\n' "${url}"
+          } | tee -a "${log}"
+          if ! mkdir -p "${install_dir}"; then install_status=1; fi
+          if [ "${install_status}" -eq 0 ] && ! curl -fsSL -o "${tarball}" "${url}"; then
+            install_status=1
+          fi
+          if [ "${install_status}" -eq 0 ]; then
+            printf '%s  %s\n' "${GITLEAKS_LINUX_X64_SHA256}" "${tarball}" > "${install_dir}/checksum.txt"
+            printf '\n$ sha256sum -c <pinned sha256 for gitleaks_%s_linux_x64.tar.gz>\n' "${GITLEAKS_PIN}" \
+              | tee -a "${log}"
+            if sha256sum -c "${install_dir}/checksum.txt" 2>&1 | tee -a "${log}"; then
+              printf 'PASS gitleaks_checksum_verified sha256=%s\n' "${GITLEAKS_LINUX_X64_SHA256}" | tee -a "${log}"
+            else
+              printf 'FAIL gitleaks_checksum_verified expected=%s\n' "${GITLEAKS_LINUX_X64_SHA256}" | tee -a "${log}"
+              install_status=1
+            fi
+          fi
+          if [ "${install_status}" -eq 0 ] && ! tar -xzf "${tarball}" -C "${install_dir}" gitleaks; then
+            printf 'FAIL gitleaks_extract\n' | tee -a "${log}"
+            install_status=1
+          fi
+          if [ "${install_status}" -eq 0 ]; then
+            printf '\n$ %s version\n' "${gitleaks_bin}" | tee -a "${log}"
+            if "${gitleaks_bin}" version 2>&1 | tee -a "${log}"; then
+              printf 'PASS gitleaks_cli_ready version=%s\n' "$("${gitleaks_bin}" version 2>/dev/null)" | tee -a "${log}"
+            else
+              printf 'FAIL gitleaks_cli_ready\n' | tee -a "${log}"
+              install_status=1
+            fi
+          fi
+          printf 'gitleaks_install_finished_at=%s gitleaks_install_status=%s\n' \
+            "$(date -u +%Y-%m-%dT%H:%M:%SZ)" "${install_status}" | tee -a "${log}"
+          if [ "${install_status}" -ne 0 ]; then
+            printf 'gitleaks_finished_at=%s gitleaks_status=%s gitleaks_findings=not_measured\n' \
+              "$(date -u +%Y-%m-%dT%H:%M:%SZ)" "${install_status}" | tee -a "${log}"
+            exit "${install_status}"
+          fi
+          scan_status=0
+          report="${GITHUB_WORKSPACE}/crisis-monitor-gitleaks.sarif"
+          {
+            printf '\n$ gitleaks detect --source=%s/%s --no-git --no-banner --redact --exit-code=2 --report-format=sarif --report-path=%s\n' \
+              "${GITHUB_WORKSPACE}" "${SOURCE_DIR}" "${report}"
+          } | tee -a "${log}"
+          # --exit-code=2 returns 2 when findings exist, 0 when the tree is
+          # clean. Both are real outcomes of the native check.
+          # The runner shell already runs with `-e`; it is disabled around the
+          # scan so that a non-zero gitleaks exit is recorded and classified
+          # instead of aborting the step before the outcome is written.
+          set +e
+          "${gitleaks_bin}" detect \
+            --source="${GITHUB_WORKSPACE}/${SOURCE_DIR}" \
+            --no-git \
+            --no-banner \
+            --redact \
+            --exit-code=2 \
+            --report-format=sarif \
+            --report-path="${report}" 2>&1 | tee -a "${log}"
+          scan_status="${PIPESTATUS[0]}"
+          set -e
+          if [ "${scan_status}" -eq 0 ]; then
+            printf 'PASS gitleaks detect (no leaks found in the verified private tree)\n' | tee -a "${log}"
+          elif [ "${scan_status}" -eq 2 ]; then
+            printf 'FAIL gitleaks detect (findings present in the verified private tree)\n' | tee -a "${log}"
+          else
+            printf 'FAIL gitleaks detect (tool error, exit=%s)\n' "${scan_status}" | tee -a "${log}"
+          fi
+          findings=not_measured
+          if [ -f "${report}" ]; then
+            findings="$(python3 -c 'import json,sys;print(len(json.load(open(sys.argv[1]))["runs"][0]["results"]))' "${report}" 2>/dev/null || printf 'unparsed')"
+            printf 'gitleaks_report=%s\n' "${report##*/}" | tee -a "${log}"
+            printf 'gitleaks_report_sha256=%s\n' "$(sha256sum "${report}" | awk '{print $1}')" | tee -a "${log}"
+          fi
+          printf 'gitleaks_report_findings=%s\n' "${findings}" | tee -a "${log}"
+          printf 'gitleaks_finished_at=%s gitleaks_status=%s\n' \
+            "$(date -u +%Y-%m-%dT%H:%M:%SZ)" "${scan_status}" | tee -a "${log}"
+          exit "${scan_status}"
 
       - name: Aggregate the native check outcomes
         if: always()
@@ -332,6 +443,7 @@ jobs:
               "$(sha256sum "${SOURCE_DIR}/.github/workflows/main.yml" 2>/dev/null | awk '{print $1}')"
             printf 'executor_profile=qdev-ci\n'
             printf 'reproduced_native_jobs=regulatory-report-evidence,lint,type-check,security\n'
+            printf 'native_deviation=secret-scan: gitleaks/gitleaks-action@ff98106e... declares no inputs and ignores args:, so it scanned the carrier tree instead of the verified private revision; this lane runs the identical pinned gitleaks 8.24.3 CLI with the same flags against the verified private tree\n'
             printf 'skipped_native_jobs=tests,e2e: docker profile with PostGIS service deferred to a dedicated docker lane; publish-container: registry push withheld by the carrier; release-notes: tag-only private release publish withheld; docs,sbom: deferred, not release-gating\n'
             printf 'check_canary=%s check_lint=%s check_commit_message=%s check_typecheck=%s check_security=%s check_gitleaks=%s\n' \
               '${{ steps.canary.outcome }}' '${{ steps.lint.outcome }}' \
@@ -349,7 +461,7 @@ jobs:
           set -euo pipefail
           test -x .github/scripts/qdev-upload-artifact.sh
           bundle=()
-          for f in "${CARRIER_NOTE}" "${CARRIER_PROBE_LOG}" "${CARRIER_GATE_LOG}"; do
+          for f in "${CARRIER_NOTE}" "${CARRIER_PROBE_LOG}" "${CARRIER_GATE_LOG}" crisis-monitor-gitleaks.sarif; do
             [ -f "${f}" ] && bundle+=("${f}")
           done
           .github/scripts/qdev-upload-artifact.sh crisis-monitor-carrier-evidence "${bundle[@]}"
