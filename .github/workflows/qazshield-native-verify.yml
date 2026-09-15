@@ -1,0 +1,388 @@
+# Native QDev self-hosted execution of the QazShield CI gate.
+#
+# GitHub Actions is blocked for every private QDev repository by the account's
+# billing state (startup_failure, zero jobs, every private repository, since
+# 2026-09-13), so belilovsky/qazshield/.github/workflows/ci.yml cannot start at
+# all: all four of its jobs request `ubuntu-latest` GitHub-hosted runners.
+#
+# This public carrier repository is admitted by the QDev runner broker and runs
+# the real QazShield gate steps against an exact private revision fetched with a
+# read-only deploy key on the self-hosted QDev runner profiles.
+#
+# The private gate entry point is not faked: the same commands from
+# belilovsky/qazshield/.github/workflows/ci.yml are executed one by one, and the
+# run records `provider_ci_status=unavailable` instead of claiming a provider
+# status for the private repository.
+#
+# This is exact-SHA execution evidence, not the QazShield release lane. No
+# registry publish, no deploy, no release receipt, no migration happens here.
+name: QazShield native carrier verify
+
+on:
+  workflow_dispatch:
+    inputs:
+      head_sha:
+        description: "Exact 40-character commit SHA in belilovsky/qazshield"
+        required: true
+        type: string
+
+permissions:
+  contents: read
+
+concurrency:
+  group: qazshield-native-carrier
+  cancel-in-progress: false
+
+env:
+  QAZSHIELD_SOURCE_DIR: .qdev/qazshield
+  VERIFIED_SOURCE_SHA: ${{ github.event.inputs.head_sha }}
+  CARRIER_NOTE: carrier-run-identity.txt
+  CARRIER_PROBE_LOG: carrier-probe.log
+  CARRIER_BACKEND_LOG: carrier-qazshield-backend.log
+  CARRIER_FRONTEND_LOG: carrier-qazshield-frontend.log
+  CARRIER_DOCS_LOG: carrier-qazshield-docs-gates.log
+
+jobs:
+  backend:
+    name: QazShield backend gate (Python 3.12)
+    runs-on:
+      - self-hosted
+      - Linux
+      - X64
+      - qdev-ci
+      - 'qdev-job-${{ github.run_id }}-${{ github.run_attempt }}-qazshield-backend'
+    timeout-minutes: 45
+    steps:
+      - name: Check out the carrier repository
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          persist-credentials: false
+          fetch-depth: 1
+
+      - name: Check out the exact private QazShield revision
+        env:
+          QAZSHIELD_DEPLOY_KEY: ${{ secrets.QAZSHIELD_DEPLOY_KEY }}
+        run: |
+          set -euo pipefail
+          key_file="${RUNNER_TEMP:?}/qdev-qazshield-deploy-key"
+          (umask 077; printf '%s\n' "${QAZSHIELD_DEPLOY_KEY}" > "${key_file}")
+          test -s "${key_file}"
+          ssh_command="ssh -i ${key_file} -o IdentitiesOnly=yes -o StrictHostKeyChecking=accept-new -o UserKnownHostsFile=${RUNNER_TEMP}/qdev-known-hosts"
+          printf 'GIT_SSH_COMMAND=%s\n' "${ssh_command}" >> "${GITHUB_ENV}"
+          export GIT_SSH_COMMAND="${ssh_command}"
+          mkdir -p .qdev
+          git clone --quiet --no-tags git@github.com:belilovsky/qazshield.git "${QAZSHIELD_SOURCE_DIR}"
+          cd "${QAZSHIELD_SOURCE_DIR}"
+          if ! git cat-file -e "${VERIFIED_SOURCE_SHA}^{commit}" 2>/dev/null; then
+            git fetch --quiet origin "${VERIFIED_SOURCE_SHA}"
+          fi
+          git checkout --quiet --detach "${VERIFIED_SOURCE_SHA}"
+          test "$(git rev-parse HEAD)" = "${VERIFIED_SOURCE_SHA}"
+          test -z "$(git status --porcelain --untracked-files=all)"
+          git fetch --quiet origin main
+          ancestor=false
+          if git merge-base --is-ancestor HEAD origin/main; then ancestor=true; fi
+          printf 'SOURCE_ANCESTOR_OF_MAIN=%s\n' "${ancestor}" >> "${GITHUB_ENV}"
+          printf 'qazshield_source_sha=%s ancestor_of_origin_main=%s origin_main=%s\n' \
+            "$(git rev-parse HEAD)" "${ancestor}" "$(git rev-parse origin/main)"
+
+      - name: Probe the runner toolchain and lane identity
+        id: toolchain
+        continue-on-error: true
+        run: |
+          set -uo pipefail
+          {
+            printf 'runner=%s environment=%s repository=%s workflow=%s\n' \
+              "${RUNNER_NAME}" "${RUNNER_ENVIRONMENT}" "${GITHUB_REPOSITORY}" "${GITHUB_WORKFLOW}"
+            printf 'qdev_job_id=%s qdev_repository=%s qdev_head_sha=%s\n' \
+              "${QDEV_JOB_ID:-unset}" "${QDEV_REPOSITORY:-unset}" "${QDEV_HEAD_SHA:-unset}"
+            printf 'job_hostname=%s cpus=%s\n' "$(hostname)" "$(nproc)"
+            free -m | head -2 || true
+            df -h / | tail -1 || true
+          } >> "${CARRIER_PROBE_LOG}" 2>&1
+          for tool in python3 git ssh curl jq sha256sum tar bash; do
+            if command -v "${tool}" >/dev/null 2>&1; then
+              printf 'PASS tool_present=%s path=%s\n' "${tool}" "$(command -v "${tool}")" \
+                | tee -a "${CARRIER_PROBE_LOG}"
+            else
+              printf 'note tool_absent_before_setup=%s\n' "${tool}" | tee -a "${CARRIER_PROBE_LOG}"
+            fi
+          done
+
+      - name: Set up Python 3.12
+        uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065 # v5
+        with:
+          python-version: "3.12"
+
+      - name: Install backend dependencies (mirrors ci.yml)
+        working-directory: .qdev/qazshield
+        run: |
+          set -euo pipefail
+          python3 -m venv .venv-ci
+          .venv-ci/bin/python -m pip install --require-hashes -r requirements-dev.lock
+          .venv-ci/bin/python -m pip install --no-deps --no-build-isolation -e .
+
+      - name: Backend gate (mirrors ci.yml)
+        id: backend_gate
+        working-directory: .qdev/qazshield
+        run: |
+          set -euo pipefail
+          {
+            printf 'step=ruff\n'
+            .venv-ci/bin/python -m ruff check src/qazshield tests
+            printf 'step=mypy_strict\n'
+            .venv-ci/bin/python -m mypy src/qazshield --strict --no-error-summary
+            printf 'step=pip_check\n'
+            .venv-ci/bin/python -m pip check
+            printf 'step=pinned_qazstack_dependency\n'
+            .venv-ci/bin/python scripts/verify_qazstack_artifact.py
+            printf 'step=p0_egress_policy\n'
+            .venv-ci/bin/python scripts/check_p0_egress_policy.py
+            printf 'step=pytest\n'
+            .venv-ci/bin/python -m pytest --tb=short -q
+            printf 'step=production_feature_contract\n'
+            .venv-ci/bin/python test_production_features.py
+            printf 'step=qazcontext_contract_issuer_routes\n'
+            .venv-ci/bin/python -m pytest -q tests/test_qazcontext_privacy_receipts.py
+            printf 'step=none\n'
+          } 2>&1 | tee "${GITHUB_WORKSPACE}/${CARRIER_BACKEND_LOG}"
+
+      - name: Record the backend-gate carrier run identity
+        if: always()
+        run: |
+          set -uo pipefail
+          {
+            printf 'carrier_repository=%s\n' "${GITHUB_REPOSITORY}"
+            printf 'carrier_head_sha=%s\n' "${GITHUB_SHA}"
+            printf 'carrier_run_id=%s\n' "${GITHUB_RUN_ID}"
+            printf 'carrier_run_attempt=%s\n' "${GITHUB_RUN_ATTEMPT}"
+            printf 'carrier_job=%s\n' "${GITHUB_JOB}"
+            printf 'carrier_workflow=%s\n' "${GITHUB_WORKFLOW}"
+            printf 'runner_name=%s\n' "${RUNNER_NAME}"
+            printf 'verified_source_repository=belilovsky/qazshield\n'
+            printf 'verified_source_sha=%s\n' "${VERIFIED_SOURCE_SHA}"
+            printf 'verified_source_ancestor_of_origin_main=%s\n' "${SOURCE_ANCESTOR_OF_MAIN:-unknown}"
+            printf 'executor_profile=qdev-ci\n'
+            printf 'execution=native QDev self-hosted qdev-ci lane, mirrored QazShield backend CI steps, carrier repository\n'
+            printf 'provider_ci_status=unavailable: private-repository Actions is blocked by account billing; this is execution evidence, not a provider status\n'
+            printf 'check_backend_gate=%s\n' '${{ steps.backend_gate.outcome }}'
+            printf 'release_receipt=false\n'
+            printf 'registry_publish=withheld: this carrier lane never publishes\n'
+            printf 'deploy=withheld: this carrier lane never deploys\n'
+          } | tee "${CARRIER_NOTE}"
+
+      - name: Upload the carrier evidence bundle
+        if: always()
+        env:
+          QDEV_IF_NO_FILES: warn
+        run: |
+          set -euo pipefail
+          test -x .github/scripts/qdev-upload-artifact.sh
+          .github/scripts/qdev-upload-artifact.sh \
+            qazshield-carrier-backend-evidence \
+            "${CARRIER_NOTE}" "${CARRIER_PROBE_LOG}" "${CARRIER_BACKEND_LOG}"
+
+      - name: Remove the deploy key from the runner
+        if: always()
+        run: rm -f "${RUNNER_TEMP}/qdev-qazshield-deploy-key"
+
+  frontend:
+    name: QazShield frontend gate (Node 22)
+    runs-on:
+      - self-hosted
+      - Linux
+      - X64
+      - qdev-ci
+      - 'qdev-job-${{ github.run_id }}-${{ github.run_attempt }}-qazshield-frontend'
+    timeout-minutes: 30
+    steps:
+      - name: Check out the carrier repository
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          persist-credentials: false
+          fetch-depth: 1
+
+      - name: Check out the exact private QazShield revision
+        env:
+          QAZSHIELD_DEPLOY_KEY: ${{ secrets.QAZSHIELD_DEPLOY_KEY }}
+        run: |
+          set -euo pipefail
+          key_file="${RUNNER_TEMP:?}/qdev-qazshield-deploy-key"
+          (umask 077; printf '%s\n' "${QAZSHIELD_DEPLOY_KEY}" > "${key_file}")
+          test -s "${key_file}"
+          ssh_command="ssh -i ${key_file} -o IdentitiesOnly=yes -o StrictHostKeyChecking=accept-new -o UserKnownHostsFile=${RUNNER_TEMP}/qdev-known-hosts"
+          printf 'GIT_SSH_COMMAND=%s\n' "${ssh_command}" >> "${GITHUB_ENV}"
+          export GIT_SSH_COMMAND="${ssh_command}"
+          mkdir -p .qdev
+          git clone --quiet --no-tags git@github.com:belilovsky/qazshield.git "${QAZSHIELD_SOURCE_DIR}"
+          cd "${QAZSHIELD_SOURCE_DIR}"
+          if ! git cat-file -e "${VERIFIED_SOURCE_SHA}^{commit}" 2>/dev/null; then
+            git fetch --quiet origin "${VERIFIED_SOURCE_SHA}"
+          fi
+          git checkout --quiet --detach "${VERIFIED_SOURCE_SHA}"
+          test "$(git rev-parse HEAD)" = "${VERIFIED_SOURCE_SHA}"
+          test -z "$(git status --porcelain --untracked-files=all)"
+          git fetch --quiet origin main
+          ancestor=false
+          if git merge-base --is-ancestor HEAD origin/main; then ancestor=true; fi
+          printf 'SOURCE_ANCESTOR_OF_MAIN=%s\n' "${ancestor}" >> "${GITHUB_ENV}"
+
+      - name: Set up Node 22
+        uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
+        with:
+          node-version: "22"
+
+      - name: Frontend gate (mirrors ci.yml)
+        id: frontend_gate
+        working-directory: .qdev/qazshield
+        run: |
+          set -euo pipefail
+          {
+            printf 'step=npm_ci\n'
+            npm --prefix frontend ci
+            printf 'step=ui_kit_node_modules_link\n'
+            ln -s ../../frontend/node_modules packages/ui-kit/node_modules
+            printf 'step=lint\n'
+            npm --prefix frontend run lint
+            printf 'step=build_check\n'
+            npm --prefix frontend run build:check
+            printf 'step=npm_audit_runtime\n'
+            npm --prefix frontend audit --omit=dev --audit-level=high
+            printf 'step=none\n'
+          } 2>&1 | tee "${GITHUB_WORKSPACE}/${CARRIER_FRONTEND_LOG}"
+
+      - name: Record the frontend-gate carrier run identity
+        if: always()
+        run: |
+          set -uo pipefail
+          {
+            printf 'carrier_repository=%s\n' "${GITHUB_REPOSITORY}"
+            printf 'carrier_run_id=%s\n' "${GITHUB_RUN_ID}"
+            printf 'carrier_job=%s\n' "${GITHUB_JOB}"
+            printf 'runner_name=%s\n' "${RUNNER_NAME}"
+            printf 'verified_source_repository=belilovsky/qazshield\n'
+            printf 'verified_source_sha=%s\n' "${VERIFIED_SOURCE_SHA}"
+            printf 'verified_source_ancestor_of_origin_main=%s\n' "${SOURCE_ANCESTOR_OF_MAIN:-unknown}"
+            printf 'executor_profile=qdev-ci\n'
+            printf 'execution=native QDev self-hosted qdev-ci lane, mirrored QazShield frontend CI steps, carrier repository\n'
+            printf 'provider_ci_status=unavailable: private-repository Actions is blocked by account billing; this is execution evidence, not a provider status\n'
+            printf 'check_frontend_gate=%s\n' '${{ steps.frontend_gate.outcome }}'
+            printf 'release_receipt=false\n'
+            printf 'registry_publish=withheld: this carrier lane never publishes\n'
+            printf 'deploy=withheld: this carrier lane never deploys\n'
+          } | tee "${CARRIER_NOTE}.frontend"
+
+      - name: Upload the carrier evidence bundle
+        if: always()
+        env:
+          QDEV_IF_NO_FILES: warn
+        run: |
+          set -euo pipefail
+          test -x .github/scripts/qdev-upload-artifact.sh
+          .github/scripts/qdev-upload-artifact.sh \
+            qazshield-carrier-frontend-evidence \
+            "${CARRIER_NOTE}.frontend" "${CARRIER_FRONTEND_LOG}"
+
+      - name: Remove the deploy key from the runner
+        if: always()
+        run: rm -f "${RUNNER_TEMP}/qdev-qazshield-deploy-key"
+
+  contract-docs:
+    name: QazShield contract and documentation gates
+    runs-on:
+      - self-hosted
+      - Linux
+      - X64
+      - qdev-ci
+      - 'qdev-job-${{ github.run_id }}-${{ github.run_attempt }}-qazshield-contract-docs'
+    timeout-minutes: 15
+    steps:
+      - name: Check out the carrier repository
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          persist-credentials: false
+          fetch-depth: 1
+
+      - name: Check out the exact private QazShield revision
+        env:
+          QAZSHIELD_DEPLOY_KEY: ${{ secrets.QAZSHIELD_DEPLOY_KEY }}
+        run: |
+          set -euo pipefail
+          key_file="${RUNNER_TEMP:?}/qdev-qazshield-deploy-key"
+          (umask 077; printf '%s\n' "${QAZSHIELD_DEPLOY_KEY}" > "${key_file}")
+          test -s "${key_file}"
+          ssh_command="ssh -i ${key_file} -o IdentitiesOnly=yes -o StrictHostKeyChecking=accept-new -o UserKnownHostsFile=${RUNNER_TEMP}/qdev-known-hosts"
+          printf 'GIT_SSH_COMMAND=%s\n' "${ssh_command}" >> "${GITHUB_ENV}"
+          export GIT_SSH_COMMAND="${ssh_command}"
+          mkdir -p .qdev
+          git clone --quiet --no-tags git@github.com:belilovsky/qazshield.git "${QAZSHIELD_SOURCE_DIR}"
+          cd "${QAZSHIELD_SOURCE_DIR}"
+          if ! git cat-file -e "${VERIFIED_SOURCE_SHA}^{commit}" 2>/dev/null; then
+            git fetch --quiet origin "${VERIFIED_SOURCE_SHA}"
+          fi
+          git checkout --quiet --detach "${VERIFIED_SOURCE_SHA}"
+          test "$(git rev-parse HEAD)" = "${VERIFIED_SOURCE_SHA}"
+          test -z "$(git status --porcelain --untracked-files=all)"
+          git fetch --quiet origin main
+          ancestor=false
+          if git merge-base --is-ancestor HEAD origin/main; then ancestor=true; fi
+          printf 'SOURCE_ANCESTOR_OF_MAIN=%s\n' "${ancestor}" >> "${GITHUB_ENV}"
+
+      - name: Set up Python 3.12
+        uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065 # v5
+        with:
+          python-version: "3.12"
+
+      - name: Contract and documentation gates (mirrors ci.yml)
+        id: docs_gate
+        working-directory: .qdev/qazshield
+        run: |
+          set -euo pipefail
+          {
+            printf 'step=rag_eval_seed\n'
+            python3 scripts/validate_rag_eval.py docs/fixtures/rag-eval-seed-ru-kk.jsonl
+            printf 'step=scientific_foundation_bundle\n'
+            python3 scripts/check_scientific_foundation_bundle.py
+            printf 'step=avds_adapter_provenance\n'
+            python3 -m venv .venv-ci
+            .venv-ci/bin/python -m pip install --require-hashes -r requirements-dev.lock
+            .venv-ci/bin/python -m pip install --no-deps --no-build-isolation -e .
+            .venv-ci/bin/python -m pytest -q tests/test_avds_adapter_provenance.py
+            printf 'step=none\n'
+          } 2>&1 | tee "${GITHUB_WORKSPACE}/${CARRIER_DOCS_LOG}"
+
+      - name: Record the contract-gate carrier run identity
+        if: always()
+        run: |
+          set -uo pipefail
+          {
+            printf 'carrier_repository=%s\n' "${GITHUB_REPOSITORY}"
+            printf 'carrier_run_id=%s\n' "${GITHUB_RUN_ID}"
+            printf 'carrier_job=%s\n' "${GITHUB_JOB}"
+            printf 'runner_name=%s\n' "${RUNNER_NAME}"
+            printf 'verified_source_repository=belilovsky/qazshield\n'
+            printf 'verified_source_sha=%s\n' "${VERIFIED_SOURCE_SHA}"
+            printf 'verified_source_ancestor_of_origin_main=%s\n' "${SOURCE_ANCESTOR_OF_MAIN:-unknown}"
+            printf 'executor_profile=qdev-ci\n'
+            printf 'execution=native QDev self-hosted qdev-ci lane, mirrored QazShield contract/documentation CI steps, carrier repository\n'
+            printf 'provider_ci_status=unavailable: private-repository Actions is blocked by account billing; this is execution evidence, not a provider status\n'
+            printf 'check_docs_gate=%s\n' '${{ steps.docs_gate.outcome }}'
+            printf 'release_receipt=false\n'
+            printf 'registry_publish=withheld: this carrier lane never publishes\n'
+            printf 'deploy=withheld: this carrier lane never deploys\n'
+          } | tee "${CARRIER_NOTE}.contract"
+
+      - name: Upload the carrier evidence bundle
+        if: always()
+        env:
+          QDEV_IF_NO_FILES: warn
+        run: |
+          set -euo pipefail
+          test -x .github/scripts/qdev-upload-artifact.sh
+          .github/scripts/qdev-upload-artifact.sh \
+            qazshield-carrier-contract-evidence \
+            "${CARRIER_NOTE}.contract" "${CARRIER_DOCS_LOG}"
+
+      - name: Remove the deploy key from the runner
+        if: always()
+        run: rm -f "${RUNNER_TEMP}/qdev-qazshield-deploy-key"
