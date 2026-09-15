@@ -1,0 +1,300 @@
+# Native QDev self-hosted execution of the QPhoto quality gate.
+#
+# GitHub Actions is blocked for every private QDev repository by the account's
+# billing state (startup_failure, zero jobs, every private repository, since
+# 2026-09-13), so the private QPhoto workflow files in belilovsky/photo-finder
+# cannot start at all. This public carrier repository is admitted by the QDev
+# runner broker and runs on the same self-hosted QDev runners, so it executes the
+# real QPhoto gate against an exact private revision fetched with a read-only
+# deploy key. Private source and private build inputs are never published by this
+# workflow.
+#
+# Private sources are fetched with an explicit key file plus GIT_SSH_COMMAND,
+# which is the transport already proven on these runners by the qazgeo,
+# qazcompute and IPOS lanes; actions/checkout ssh-key is deliberately not used so
+# the private key never enters the checkout action's key handling.
+#
+# This is NOT the QPhoto release lane. The managed release runner
+# `qdev-photo-finder-production` from the private contract is the only release
+# runner, so this lane produces build, test and scan evidence only: no registry
+# publish, no deploy, no release receipt, no migration.
+#
+# The native lane reports a finding as one silent job failure; this carrier lane
+# always tees the full gate log into an uploaded artifact, so every failure stays
+# readable instead of invisible.
+name: QPhoto native carrier verify
+
+on:
+  workflow_dispatch:
+    inputs:
+      head_sha:
+        description: "Exact 40-character commit SHA in belilovsky/photo-finder"
+        required: true
+        type: string
+      mode:
+        description: "Lane scope on the carrier self-hosted runner"
+        required: true
+        default: quality
+        type: choice
+        options:
+          - quality
+          - quality-public
+      expect_runtime_sha:
+        description: "Optional: require the live qphoto.pro release identity to equal this SHA"
+        required: false
+        default: ""
+        type: string
+
+permissions:
+  contents: read
+
+concurrency:
+  group: qphoto-native-carrier
+  cancel-in-progress: false
+
+env:
+  QPHOTO_SOURCE_DIR: .qdev/qphoto
+  VERIFIED_SOURCE_SHA: ${{ github.event.inputs.head_sha }}
+  EXPECT_RUNTIME_SHA: ${{ github.event.inputs.expect_runtime_sha }}
+  QPHOTO_BASE_URL: https://qphoto.pro
+  CARRIER_NOTE: carrier-run-identity.txt
+  CARRIER_GATE_LOG: carrier-qphoto-gate.log
+  CARRIER_PROBE_LOG: carrier-qphoto-probe.log
+  CARRIER_PUBLIC_LOG: carrier-public-observation.txt
+
+jobs:
+  quality:
+    name: QPhoto Python 3.12 release gate
+    runs-on:
+      - self-hosted
+      - Linux
+      - X64
+      - qdev-ci
+      - 'qdev-job-${{ github.run_id }}-${{ github.run_attempt }}-qphoto-quality'
+    timeout-minutes: 45
+    env:
+      CARRIER_LANE: quality
+    steps:
+      - name: Check out the carrier repository
+        uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5
+        with:
+          persist-credentials: false
+          fetch-depth: 1
+
+      - name: Check out the exact private QPhoto revision
+        env:
+          QPHOTO_DEPLOY_KEY: ${{ secrets.QPHOTO_DEPLOY_KEY }}
+        run: |
+          set -euo pipefail
+          key_file="${RUNNER_TEMP:?}/qdev-qphoto-deploy-key"
+          (umask 077; printf '%s\n' "${QPHOTO_DEPLOY_KEY}" > "${key_file}")
+          test -s "${key_file}"
+          ssh_command="ssh -i ${key_file} -o IdentitiesOnly=yes -o StrictHostKeyChecking=accept-new -o UserKnownHostsFile=${RUNNER_TEMP}/qdev-known-hosts"
+          printf 'GIT_SSH_COMMAND=%s\n' "${ssh_command}" >> "${GITHUB_ENV}"
+          export GIT_SSH_COMMAND="${ssh_command}"
+          mkdir -p .qdev
+          git clone --quiet --no-tags git@github.com:belilovsky/photo-finder.git "${QPHOTO_SOURCE_DIR}"
+          cd "${QPHOTO_SOURCE_DIR}"
+          if ! git cat-file -e "${VERIFIED_SOURCE_SHA}^{commit}" 2>/dev/null; then
+            git fetch --quiet origin "${VERIFIED_SOURCE_SHA}"
+          fi
+          git checkout --quiet --detach "${VERIFIED_SOURCE_SHA}"
+          test "$(git rev-parse HEAD)" = "${VERIFIED_SOURCE_SHA}"
+          test -z "$(git status --porcelain --untracked-files=all)"
+          git fetch --quiet origin main
+          ancestor=false
+          if git merge-base --is-ancestor HEAD origin/main; then ancestor=true; fi
+          printf 'SOURCE_ANCESTOR_OF_MAIN=%s\n' "${ancestor}" >> "${GITHUB_ENV}"
+          printf 'qphoto_source_sha=%s ancestor_of_origin_main=%s\n' "$(git rev-parse HEAD)" "${ancestor}"
+
+      - name: Probe the runner toolchain and lane identity
+        id: toolchain
+        continue-on-error: true
+        run: |
+          set -uo pipefail
+          {
+            printf 'runner=%s environment=%s repository=%s workflow=%s\n' \
+              "${RUNNER_NAME}" "${RUNNER_ENVIRONMENT}" "${GITHUB_REPOSITORY}" "${GITHUB_WORKFLOW}"
+            printf 'qdev_job_id=%s qdev_repository=%s qdev_head_sha=%s\n' \
+              "${QDEV_JOB_ID:-unset}" "${QDEV_REPOSITORY:-unset}" "${QDEV_HEAD_SHA:-unset}"
+            printf 'qdev_artifact_url=%s artifact_token_set=%s\n' \
+              "${QDEV_ARTIFACT_URL:-unset}" \
+              "$([ -n "${QDEV_ARTIFACT_TOKEN:-}" ] && printf yes || printf no)"
+            printf 'job_hostname=%s cpus=%s\n' "$(hostname)" "$(nproc)"
+            free -m | head -2 || true
+            df -h / | tail -1 || true
+          } >> "${CARRIER_PROBE_LOG}" 2>&1
+          for tool in python3 git ssh curl jq sha256sum tar bash node npm; do
+            if command -v "${tool}" >/dev/null 2>&1; then
+              printf 'PASS tool_present=%s path=%s\n' "${tool}" "$(command -v "${tool}")" \
+                | tee -a "${CARRIER_PROBE_LOG}"
+            else
+              printf 'note tool_absent_before_setup=%s\n' "${tool}" | tee -a "${CARRIER_PROBE_LOG}"
+            fi
+          done
+
+      - name: Set up Python 3.12
+        uses: actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1 # v6
+        with:
+          python-version: "3.12"
+
+      - name: Set up Node.js for the JavaScript contract tests
+        uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
+        with:
+          node-version: "22"
+
+      - name: Install runtime and test dependencies
+        working-directory: .qdev/qphoto
+        run: |
+          set -euo pipefail
+          python -m venv .venv
+          .venv/bin/python -m pip install --upgrade pip
+          .venv/bin/python -m pip install -r requirements.txt
+          .venv/bin/python -m pip install -r requirements-security.txt
+          .venv/bin/python -m pip check
+          .venv/bin/python --version
+          node --version
+
+      - name: Validate runner and workflow policy
+        id: policy
+        working-directory: .qdev/qphoto
+        run: .venv/bin/python .github/scripts/qdev-runner-policy.py --root .
+
+      - name: Audit Python dependencies
+        id: pip_audit
+        working-directory: .qdev/qphoto
+        run: .venv/bin/python -m pip_audit -r requirements.txt --progress-spinner off
+
+      - name: Run Python SAST
+        id: bandit
+        working-directory: .qdev/qphoto
+        run: .venv/bin/python -m bandit -q -r app host_collector_api.py
+
+      - name: Generate validated reproducible requirements SBOM
+        id: sbom
+        working-directory: .qdev/qphoto
+        run: |
+          set -euo pipefail
+          mkdir -p output/security
+          .venv/bin/cyclonedx-py requirements requirements.txt \
+            --pyproject pyproject.toml \
+            --output-reproducible \
+            --output-format JSON \
+            --output-file output/security/qphoto-requirements.cdx.json \
+            --validate
+          printf 'sbom_sha256=%s\n' \
+            "$(sha256sum output/security/qphoto-requirements.cdx.json | awk '{print $1}')"
+
+      - name: Run the protected QPhoto release gate
+        id: gate
+        working-directory: .qdev/qphoto
+        run: |
+          set -euo pipefail
+          bash scripts/release_gate.sh 2>&1 | tee "${GITHUB_WORKSPACE}/${CARRIER_GATE_LOG}"
+
+      - name: Build the typed source, CI and artifact receipt
+        id: evidence
+        working-directory: .qdev/qphoto
+        run: |
+          set -euo pipefail
+          .venv/bin/python scripts/build_ci_evidence.py \
+            --sbom output/security/qphoto-requirements.cdx.json \
+            --output output/security/qphoto-platform-evidence.json
+          .venv/bin/python scripts/validate_platform_evidence.py \
+            output/security/qphoto-platform-evidence.json
+          printf 'platform_evidence_sha256=%s\n' \
+            "$(sha256sum output/security/qphoto-platform-evidence.json | awk '{print $1}')"
+
+      - name: Observe the live public runtime identity
+        id: public_observe
+        if: always()
+        continue-on-error: true
+        run: |
+          set -uo pipefail
+          {
+            printf 'base_url=%s\n' "${QPHOTO_BASE_URL}"
+            printf 'observed_at=%s\n' "$(date -u +%Y-%m-%dT%H:%M:%SZ)"
+            release_json="$(curl -fsS -L --http1.1 --max-time 30 "${QPHOTO_BASE_URL}/.well-known/qphoto-release.json" || printf '')"
+            printf 'release_identity=%s\n' "${release_json}"
+            printf 'runtime_sha=%s\n' \
+              "$(printf '%s' "${release_json}" | jq -r '.source.sha // empty' 2>/dev/null)"
+            printf 'runtime_verified=%s\n' \
+              "$(printf '%s' "${release_json}" | jq -r '.source.verified // empty' 2>/dev/null)"
+            printf 'static_sha256=%s\n' \
+              "$(curl -fsS -L --http1.1 --max-time 30 -o /dev/null -D - "${QPHOTO_BASE_URL}/" 2>/dev/null | tr -d '\r' | awk -F': ' 'tolower($1) == "x-qphoto-static-sha256" {print $2}')"
+          } | tee "${CARRIER_PUBLIC_LOG}"
+          if [ -n "${EXPECT_RUNTIME_SHA}" ]; then
+            observed="$(awk -F= '$1 == "runtime_sha" {print $2; exit}' "${CARRIER_PUBLIC_LOG}")"
+            test "${observed}" = "${EXPECT_RUNTIME_SHA}"
+            printf 'PASS runtime_identity_matches_expected_sha=%s\n' "${observed}" \
+              | tee -a "${CARRIER_PUBLIC_LOG}"
+          else
+            printf 'note runtime_binding_not_requested\n' | tee -a "${CARRIER_PUBLIC_LOG}"
+          fi
+
+      - name: Run the live public smoke against qphoto.pro
+        id: live_smoke
+        if: github.event.inputs.mode == 'quality-public'
+        working-directory: .qdev/qphoto
+        run: |
+          set -euo pipefail
+          bash scripts/smoke-live.sh "${QPHOTO_BASE_URL}" 2>&1 \
+            | tee -a "${GITHUB_WORKSPACE}/${CARRIER_PUBLIC_LOG}"
+
+      - name: Record carrier run identity (never a release receipt)
+        if: always()
+        run: |
+          set -uo pipefail
+          {
+            printf 'carrier_repository=%s\n' "${GITHUB_REPOSITORY}"
+            printf 'carrier_head_sha=%s\n' "${GITHUB_SHA}"
+            printf 'carrier_run_id=%s\n' "${GITHUB_RUN_ID}"
+            printf 'carrier_run_attempt=%s\n' "${GITHUB_RUN_ATTEMPT}"
+            printf 'carrier_job=%s\n' "${GITHUB_JOB}"
+            printf 'carrier_workflow=%s\n' "${GITHUB_WORKFLOW}"
+            printf 'carrier_lane=%s\n' "${CARRIER_LANE}"
+            printf 'runner_name=%s\n' "${RUNNER_NAME}"
+            printf 'verified_source_repository=belilovsky/photo-finder\n'
+            printf 'verified_source_sha=%s\n' "${VERIFIED_SOURCE_SHA}"
+            printf 'verified_source_ancestor_of_origin_main=%s\n' "${SOURCE_ANCESTOR_OF_MAIN:-unknown}"
+            printf 'executor_profile=qdev-ci\n'
+            printf 'execution=native QDev self-hosted qdev-ci lane, real QPhoto gate, carrier repository\n'
+            printf 'check_policy=%s check_pip_audit=%s check_bandit=%s\n' \
+              '${{ steps.policy.outcome }}' '${{ steps.pip_audit.outcome }}' '${{ steps.bandit.outcome }}'
+            printf 'check_sbom=%s check_release_gate=%s check_evidence=%s\n' \
+              '${{ steps.sbom.outcome }}' '${{ steps.gate.outcome }}' '${{ steps.evidence.outcome }}'
+            printf 'check_live_smoke=%s\n' '${{ steps.live_smoke.outcome }}'
+            for artifact in output/security/qphoto-requirements.cdx.json \
+              output/security/qphoto-platform-evidence.json; do
+              printf 'artifact_sha256[%s]=%s\n' "${artifact}" \
+                "$(sha256sum ".qdev/qphoto/${artifact}" 2>/dev/null | awk '{print $1}')"
+            done
+            printf 'release_receipt=false: the managed release runner is qdev-photo-finder-production\n'
+            printf 'registry_publish=withheld: this carrier lane never publishes\n'
+            printf 'deploy=withheld: this carrier lane never deploys\n'
+          } | tee "${CARRIER_NOTE}"
+
+      - name: Upload the QPhoto Platform evidence
+        if: always()
+        env:
+          QDEV_IF_NO_FILES: warn
+        run: |
+          set -euo pipefail
+          test -x .github/scripts/qdev-upload-artifact.sh
+          .github/scripts/qdev-upload-artifact.sh \
+            qphoto-platform-evidence .qdev/qphoto/output/security
+
+      - name: Upload the carrier evidence bundle
+        if: always()
+        env:
+          QDEV_IF_NO_FILES: warn
+        run: |
+          set -euo pipefail
+          test -x .github/scripts/qdev-upload-artifact.sh
+          .github/scripts/qdev-upload-artifact.sh \
+            qphoto-carrier-evidence \
+            "${CARRIER_NOTE}" "${CARRIER_PROBE_LOG}" "${CARRIER_GATE_LOG}" "${CARRIER_PUBLIC_LOG}"
+
+      - name: Remove the deploy key from the runner
+        if: always()
+        run: rm -f "${RUNNER_TEMP}/qdev-qphoto-deploy-key"
