@@ -1,0 +1,202 @@
+# Native QDev self-hosted execution of the QazPipe quality gate.
+#
+# GitHub Actions is blocked for every private QDev repository by the account's
+# billing state (startup_failure, zero jobs, every private repository, since
+# 2026-09-13), so belilovsky/qazpipe/.github/workflows/ci.yml cannot start at
+# all. This public carrier repository is admitted by the QDev runner broker and
+# executes the real QazPipe quality steps against an exact private revision
+# fetched with a read-only deploy key, on the same self-hosted runner profile
+# (qdev-ci) the private workflow requests.
+#
+# Private sources are fetched with an explicit key file plus GIT_SSH_COMMAND,
+# which is the transport already proven on these runners by the qazgeo,
+# qazcompute, IPOS and QPhoto lanes; actions/checkout ssh-key is deliberately
+# not used so the private key never enters the checkout action's key handling.
+#
+# This is exact-SHA execution evidence, not a provider CI status for
+# belilovsky/qazpipe, and not the QazPipe release lane. No registry publish, no
+# deploy, no release receipt, no migration happens here.
+#
+# The native lane reports a finding as one silent job failure; this carrier lane
+# always tees the full gate log into an uploaded artifact, so every failure
+# stays readable instead of invisible.
+name: QazPipe native carrier verify
+
+on:
+  workflow_dispatch:
+    inputs:
+      head_sha:
+        description: "Exact 40-character commit SHA in belilovsky/qazpipe"
+        required: true
+        type: string
+
+permissions:
+  contents: read
+
+concurrency:
+  group: qazpipe-native-carrier
+  cancel-in-progress: false
+
+env:
+  QAZPIPE_SOURCE_DIR: .qdev/qazpipe
+  VERIFIED_SOURCE_SHA: ${{ github.event.inputs.head_sha }}
+  QAZSTACK_REF: 915809dc6e1e4a7aee10e80ac668eae9a8ef4621
+  CARRIER_NOTE: carrier-run-identity.txt
+  CARRIER_PROBE_LOG: carrier-probe.log
+  CARRIER_QAZPIPE_LOG: carrier-qazpipe-gate.log
+
+jobs:
+  quality:
+    name: QazPipe Python 3.12 quality gate
+    runs-on:
+      - self-hosted
+      - Linux
+      - X64
+      - qdev-ci
+      - 'qdev-job-${{ github.run_id }}-${{ github.run_attempt }}-qazpipe-quality'
+    timeout-minutes: 45
+    steps:
+      - name: Check out the carrier repository
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
+        with:
+          persist-credentials: false
+          fetch-depth: 1
+
+      - name: Check out the exact private QazPipe revision
+        env:
+          QAZPIPE_DEPLOY_KEY: ${{ secrets.QAZPIPE_DEPLOY_KEY }}
+        run: |
+          set -euo pipefail
+          key_file="${RUNNER_TEMP:?}/qdev-qazpipe-deploy-key"
+          (umask 077; printf '%s\n' "${QAZPIPE_DEPLOY_KEY}" > "${key_file}")
+          test -s "${key_file}"
+          ssh_command="ssh -i ${key_file} -o IdentitiesOnly=yes -o StrictHostKeyChecking=accept-new -o UserKnownHostsFile=${RUNNER_TEMP}/qdev-known-hosts"
+          printf 'GIT_SSH_COMMAND=%s\n' "${ssh_command}" >> "${GITHUB_ENV}"
+          export GIT_SSH_COMMAND="${ssh_command}"
+          mkdir -p .qdev
+          git clone --quiet --no-tags git@github.com:belilovsky/qazpipe.git "${QAZPIPE_SOURCE_DIR}"
+          cd "${QAZPIPE_SOURCE_DIR}"
+          if ! git cat-file -e "${VERIFIED_SOURCE_SHA}^{commit}" 2>/dev/null; then
+            git fetch --quiet origin "${VERIFIED_SOURCE_SHA}"
+          fi
+          git checkout --quiet --detach "${VERIFIED_SOURCE_SHA}"
+          test "$(git rev-parse HEAD)" = "${VERIFIED_SOURCE_SHA}"
+          test -z "$(git status --porcelain --untracked-files=all)"
+          git fetch --quiet origin main
+          ancestor=false
+          if git merge-base --is-ancestor HEAD origin/main; then ancestor=true; fi
+          printf 'SOURCE_ANCESTOR_OF_MAIN=%s\n' "${ancestor}" >> "${GITHUB_ENV}"
+          printf 'qazpipe_source_sha=%s ancestor_of_origin_main=%s origin_main=%s\n' \
+            "$(git rev-parse HEAD)" "${ancestor}" "$(git rev-parse origin/main)"
+
+      - name: Check out the pinned QazStack source
+        env:
+          QAZSTACK_DEPLOY_KEY: ${{ secrets.QAZSTACK_DEPLOY_KEY }}
+        run: |
+          set -euo pipefail
+          key_file="${RUNNER_TEMP:?}/qdev-qazstack-deploy-key"
+          (umask 077; printf '%s\n' "${QAZSTACK_DEPLOY_KEY}" > "${key_file}")
+          test -s "${key_file}"
+          ssh_command="ssh -i ${key_file} -o IdentitiesOnly=yes -o StrictHostKeyChecking=accept-new -o UserKnownHostsFile=${RUNNER_TEMP}/qdev-known-hosts"
+          export GIT_SSH_COMMAND="${ssh_command}"
+          cd "${QAZPIPE_SOURCE_DIR}"
+          git clone --quiet --filter=blob:none --no-checkout git@github.com:belilovsky/qazstack.git vendor/qazstack
+          git -C vendor/qazstack fetch --quiet --depth 1 origin "${QAZSTACK_REF}"
+          git -C vendor/qazstack checkout --quiet --detach FETCH_HEAD
+          printf 'qazstack_source_sha=%s\n' "$(git -C vendor/qazstack rev-parse HEAD)"
+
+      - name: Probe the runner toolchain and lane identity
+        id: toolchain
+        continue-on-error: true
+        run: |
+          set -uo pipefail
+          {
+            printf 'runner=%s environment=%s repository=%s workflow=%s\n' \
+              "${RUNNER_NAME}" "${RUNNER_ENVIRONMENT}" "${GITHUB_REPOSITORY}" "${GITHUB_WORKFLOW}"
+            printf 'qdev_job_id=%s qdev_repository=%s qdev_head_sha=%s\n' \
+              "${QDEV_JOB_ID:-unset}" "${QDEV_REPOSITORY:-unset}" "${QDEV_HEAD_SHA:-unset}"
+            printf 'job_hostname=%s cpus=%s\n' "$(hostname)" "$(nproc)"
+            free -m | head -2 || true
+            df -h / | tail -1 || true
+          } >> "${CARRIER_PROBE_LOG}" 2>&1
+          for tool in python3 git ssh curl jq sha256sum tar bash; do
+            if command -v "${tool}" >/dev/null 2>&1; then
+              printf 'PASS tool_present=%s path=%s\n' "${tool}" "$(command -v "${tool}")" \
+                | tee -a "${CARRIER_PROBE_LOG}"
+            else
+              printf 'note tool_absent_before_setup=%s\n' "${tool}" | tee -a "${CARRIER_PROBE_LOG}"
+            fi
+          done
+
+      - name: Set up Python 3.12
+        uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065 # v5.6.0
+        with:
+          python-version: "3.12"
+
+      - name: Install dependencies
+        working-directory: .qdev/qazpipe
+        run: |
+          set -euo pipefail
+          pip install -e "./vendor/qazstack[finance,tasks]"
+          grep -v '^qazstack @' requirements.txt > "${RUNNER_TEMP}/qazpipe-requirements.txt"
+          pip install -r "${RUNNER_TEMP}/qazpipe-requirements.txt"
+          pip install 'pre-commit>=3.7' 'ruff>=0.6' 'black>=24.0' 'pytest>=8.0'
+          pip install -e ".[dev,parliament-pilot]" --no-deps
+          python --version
+
+      - name: Run the exact QazPipe verification steps
+        id: verify
+        working-directory: .qdev/qazpipe
+        run: |
+          set -euo pipefail
+          {
+            printf 'step=compileall\n'
+            python -m compileall -q collectors scripts tests
+            printf 'step=ruff\n'
+            ruff check . --select E9,F63,F7,F82
+            printf 'step=pytest\n'
+            python -m pytest -q
+            printf 'step=none\n'
+          } 2>&1 | tee "${GITHUB_WORKSPACE}/${CARRIER_QAZPIPE_LOG}"
+
+      - name: Record carrier run identity (never a release receipt)
+        if: always()
+        run: |
+          set -uo pipefail
+          {
+            printf 'carrier_repository=%s\n' "${GITHUB_REPOSITORY}"
+            printf 'carrier_head_sha=%s\n' "${GITHUB_SHA}"
+            printf 'carrier_run_id=%s\n' "${GITHUB_RUN_ID}"
+            printf 'carrier_run_attempt=%s\n' "${GITHUB_RUN_ATTEMPT}"
+            printf 'carrier_job=%s\n' "${GITHUB_JOB}"
+            printf 'carrier_workflow=%s\n' "${GITHUB_WORKFLOW}"
+            printf 'runner_name=%s\n' "${RUNNER_NAME}"
+            printf 'verified_source_repository=belilovsky/qazpipe\n'
+            printf 'verified_source_sha=%s\n' "${VERIFIED_SOURCE_SHA}"
+            printf 'verified_source_ancestor_of_origin_main=%s\n' "${SOURCE_ANCESTOR_OF_MAIN:-unknown}"
+            printf 'qazstack_ref=%s\n' "${QAZSTACK_REF}"
+            printf 'executor_profile=qdev-ci\n'
+            printf 'execution=native QDev self-hosted qdev-ci lane, real QazPipe quality steps, carrier repository\n'
+            printf 'provider_ci_status=unavailable: private-repository Actions is blocked by account billing; this is execution evidence, not a provider status\n'
+            printf 'check_verify=%s\n' '${{ steps.verify.outcome }}'
+            printf 'release_receipt=false\n'
+            printf 'registry_publish=withheld: this carrier lane never publishes\n'
+            printf 'deploy=withheld: this carrier lane never deploys\n'
+          } | tee "${CARRIER_NOTE}"
+
+      - name: Upload the carrier evidence bundle
+        if: always()
+        env:
+          QDEV_IF_NO_FILES: warn
+        run: |
+          set -euo pipefail
+          test -x .github/scripts/qdev-upload-artifact.sh
+          .github/scripts/qdev-upload-artifact.sh \
+            qazpipe-carrier-evidence \
+            "${CARRIER_NOTE}" "${CARRIER_PROBE_LOG}" "${CARRIER_QAZPIPE_LOG}"
+
+      - name: Remove the deploy keys from the runner
+        if: always()
+        run: |
+          set -uo pipefail
+          rm -f "${RUNNER_TEMP}/qdev-qazpipe-deploy-key" "${RUNNER_TEMP}/qdev-qazstack-deploy-key"
