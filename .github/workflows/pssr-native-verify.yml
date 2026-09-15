@@ -65,6 +65,11 @@ on:
           - quality
           - quality-public
           - image
+      publish_registry:
+        description: "mode=image only: push the built image to the QDev registry and record its digest"
+        required: false
+        default: false
+        type: boolean
 
 permissions:
   contents: read
@@ -85,6 +90,7 @@ env:
   CARRIER_IMAGE_LOG: carrier-pssr-image.log
   CARRIER_IMAGE_NOTE: carrier-pssr-image-identity.txt
   PSSR_SOURCE_REPOSITORY: belilovsky/pssr-regime-engine
+  QDEV_REGISTRY_URL: registry.ci.qdev.run
 
 jobs:
   quality:
@@ -400,6 +406,7 @@ jobs:
     timeout-minutes: 40
     env:
       CARRIER_LANE: image
+      PUBLISH_REGISTRY: ${{ github.event.inputs.publish_registry }}
     steps:
       - name: Check out the carrier repository
         uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5
@@ -493,7 +500,14 @@ jobs:
               "qazstack_ref": os.environ["QAZSTACK_REF"],
               "lane": "carrier reproduction of the private release-image job",
               "release_state": "synthetic_demonstrator",
-              "registry_publish": "withheld",
+              "registry_publish": (
+                  "requested: the carrier lane pushes this exact image to "
+                  + os.environ.get("QDEV_REGISTRY_URL", "registry.ci.qdev.run")
+                  + "/" + os.environ["PSSR_SOURCE_REPOSITORY"]
+                  + " and records the digest in release-artifact/registry-publish.json"
+                  if os.environ.get("PUBLISH_REGISTRY") == "true"
+                  else "withheld: the carrier lane publishes nothing unless publish_registry=true"
+              ),
               "deploy": "withheld",
               "carrier": {
                   "repository": os.environ["GITHUB_REPOSITORY"],
@@ -522,6 +536,69 @@ jobs:
             printf 'build_finished_at=%s\n' "$(date -u +%Y-%m-%dT%H:%M:%SZ)"
           } | tee -a "${log}"
 
+      - name: Publish the immutable Engine image to the QDev registry
+        id: publish
+        if: github.event.inputs.publish_registry == 'true'
+        working-directory: .qdev/pssr
+        env:
+          QDEV_REGISTRY_USERNAME: ${{ secrets.QDEV_REGISTRY_USERNAME }}
+          QDEV_REGISTRY_PASSWORD: ${{ secrets.QDEV_REGISTRY_PASSWORD }}
+        run: |
+          set -euo pipefail
+          log="${GITHUB_WORKSPACE}/${CARRIER_IMAGE_LOG}"
+          test -n "${QDEV_REGISTRY_USERNAME:-}" && test -n "${QDEV_REGISTRY_PASSWORD:-}"
+          remote="${QDEV_REGISTRY_URL}/${PSSR_SOURCE_REPOSITORY}"
+          local_image="pssr-regime-engine:${VERIFIED_SOURCE_SHA}"
+          local_image_id="$(docker image inspect --format '{{.Id}}' "${local_image}")"
+          printf '%s\n' "${QDEV_REGISTRY_PASSWORD}" | docker login "${QDEV_REGISTRY_URL}" \
+            --username "${QDEV_REGISTRY_USERNAME}" --password-stdin 2>&1 | tee -a "${log}"
+          docker tag "${local_image}" "${remote}:${VERIFIED_SOURCE_SHA}"
+          docker push "${remote}:${VERIFIED_SOURCE_SHA}" 2>&1 | tee -a "${log}"
+          repo_digest="$(docker image inspect --format '{{index .RepoDigests 0}}' "${remote}:${VERIFIED_SOURCE_SHA}")"
+          test -n "${repo_digest}"
+          test "${repo_digest}" != "${local_image}"
+          digest="${repo_digest##*@}"
+          pulled_image_id="$(docker pull "${remote}@${digest}" >/dev/null 2>&1; docker image inspect --format '{{.Id}}' "${remote}@${digest}")"
+          test "${pulled_image_id}" = "${local_image_id}"
+          printf 'registry_image=%s:%s\n' "${remote}" "${VERIFIED_SOURCE_SHA}"
+          printf 'registry_repo_digest=%s\n' "${repo_digest}"
+          printf 'registry_pull_back_image_id=%s\n' "${pulled_image_id}"
+          LOCAL_IMAGE_ID="${local_image_id}" REPO_DIGEST="${repo_digest}" LOCAL_IMAGE="${local_image}" \
+          python - <<'PY'
+          import json, os, pathlib
+          pathlib.Path("release-artifact/registry-publish.json").write_text(json.dumps({
+              "schema_version": "qdev-registry-publish-v1",
+              "repository": os.environ["PSSR_SOURCE_REPOSITORY"],
+              "source_sha": os.environ["VERIFIED_SOURCE_SHA"],
+              "registry_remote": f"{os.environ['QDEV_REGISTRY_URL']}/{os.environ['PSSR_SOURCE_REPOSITORY']}",
+              "registry_repo_digest": os.environ["REPO_DIGEST"],
+              "local_image": os.environ["LOCAL_IMAGE"],
+              "local_image_id": os.environ["LOCAL_IMAGE_ID"],
+              "pull_back_image_id": os.environ["LOCAL_IMAGE_ID"],
+              "pull_back_verified": True,
+              "pushed_by": {
+                  "carrier_repository": os.environ["GITHUB_REPOSITORY"],
+                  "carrier_head_sha": os.environ["GITHUB_SHA"],
+                  "run_id": os.environ["GITHUB_RUN_ID"],
+                  "run_attempt": os.environ["GITHUB_RUN_ATTEMPT"],
+                  "job": os.environ["GITHUB_JOB"],
+                  "runner_name": os.environ["RUNNER_NAME"],
+                  "executor_profile": "qdev-ci-docker",
+              },
+              "release_state": "synthetic_demonstrator",
+              "data_classification": "synthetic_demonstrator",
+              "provider_ci_status": "unavailable: private-repository Actions is blocked by account billing",
+          }, indent=2) + "\n", encoding="utf-8")
+          PY
+          (cd release-artifact && sha256sum * > SHA256SUMS)
+          {
+            printf 'registry_publish=published\n'
+            printf 'registry_repo_digest=%s\n' "${repo_digest}"
+            printf 'registry_pull_back_verified=true image_id=%s\n' "${pulled_image_id}"
+            printf 'publish_finished_at=%s\n' "$(date -u +%Y-%m-%dT%H:%M:%SZ)"
+          } | tee -a "${log}"
+          printf 'REGISTRY_REPO_DIGEST=%s\n' "${repo_digest}" >> "${GITHUB_ENV}"
+
       - name: Record the image lane identity
         if: always()
         run: |
@@ -544,9 +621,14 @@ jobs:
             printf 'qazstack_version=1.30.0\n'
             printf 'artifact_name=pssr-engine-image-%s\n' "${VERIFIED_SOURCE_SHA}"
             printf 'check_build=%s\n' '${{ steps.build.outcome }}'
+            printf 'check_publish=%s\n' '${{ steps.publish.outcome }}'
             printf 'provider_ci_status=unavailable: private-repository Actions is blocked by account billing; this is execution evidence, not a provider status\n'
             printf 'release_receipt=false: the private contract declares release_runner: null; this archive is build evidence for the source revision, not the private release record\n'
-            printf 'registry_publish=withheld: no registry credential is available to this lane and the private contract publishes no registry image\n'
+            if [ "${REGISTRY_REPO_DIGEST:-}" != "" ]; then
+              printf 'registry_publish=published repo_digest=%s pull_back_verified=true\n' "${REGISTRY_REPO_DIGEST}"
+            else
+              printf 'registry_publish=withheld: publish_registry was not requested or the publish step did not run\n'
+            fi
             printf 'deploy=withheld: this lane produces an archive only and never changes the live runtime\n'
             printf 'migration=none: this lane never touches a database\n'
             printf 'release_state=synthetic_demonstrator\n'
@@ -580,4 +662,5 @@ jobs:
         if: always()
         run: |
           set -uo pipefail
+          docker logout "${QDEV_REGISTRY_URL}" >/dev/null 2>&1 || true
           rm -f "${RUNNER_TEMP}/qdev-pssr-deploy-key" "${RUNNER_TEMP}/qdev-qazstack-deploy-key"
