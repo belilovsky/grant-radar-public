@@ -1,0 +1,388 @@
+# Native QDev self-hosted execution of the GG (gg.echolot.zone) verification and
+# authenticated-browser lanes.
+#
+# GitHub Actions is blocked for every private QDev repository by the account's
+# billing state (startup_failure, zero jobs, every private repository, since
+# 2026-09-13); belilovsky/gg-echolot run 34875999487 on the push of de84df7
+# finished in 0s with no jobs. This public carrier repository is admitted by the
+# QDev runner broker and executes the real GG steps against an exact private
+# revision fetched with a read-only deploy key, on the same self-hosted runner
+# profiles (qdev-ci, qdev-ci-browser) the private workflow requests.
+#
+# Private sources are fetched with an explicit key file plus GIT_SSH_COMMAND,
+# the transport already proven on these runners by the qazgeo, qazcompute, IPOS,
+# QPhoto, QazPipe and PSSR lanes; actions/checkout ssh-key is deliberately not
+# used so the private key never enters the checkout action's key handling.
+#
+# This is exact-SHA execution evidence, not a provider CI status for
+# belilovsky/gg-echolot, and not the GG release lane. No registry publish, no
+# deploy, no release receipt, no migration happens here: the GG release is
+# deploy/bin/release-production, which the owner runs by hand.
+#
+# The authenticated-browser lane drives the real server/app.py handler through
+# the build_handler(config, oidc) seam with an in-process OIDC stand-in. The
+# production IdP is never contacted and no operator credential is involved, so a
+# green browser job proves the application side of the boundary only.
+#
+# The native lane reports a finding as one silent job failure; this carrier lane
+# always tees the full gate log into an uploaded artifact, so every failure stays
+# readable instead of invisible.
+name: GG Echolot native carrier verify
+
+on:
+  workflow_dispatch:
+    inputs:
+      head_sha:
+        description: "Exact 40-character commit SHA in belilovsky/gg-echolot"
+        required: true
+        type: string
+
+permissions:
+  contents: read
+
+concurrency:
+  group: gg-echolot-native-carrier
+  cancel-in-progress: false
+
+env:
+  GG_SOURCE_DIR: .qdev/gg-echolot
+  VERIFIED_SOURCE_SHA: ${{ github.event.inputs.head_sha }}
+  NODE_VERSION: 24.14.0
+  CARRIER_NOTE: carrier-run-identity.txt
+  CARRIER_PROBE_LOG: carrier-probe.log
+  CARRIER_VERIFY_LOG: carrier-verify.log
+  CARRIER_BROWSER_LOG: carrier-browser.log
+
+jobs:
+  verify:
+    name: GG frontend, Python, type and build gate
+    runs-on:
+      - self-hosted
+      - Linux
+      - X64
+      - qdev-ci
+      - 'qdev-job-${{ github.run_id }}-${{ github.run_attempt }}-gg-verify'
+    timeout-minutes: 30
+    steps:
+      - name: Check out the carrier repository
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
+        with:
+          persist-credentials: false
+          fetch-depth: 1
+
+      - name: Check out the exact private GG revision
+        env:
+          GG_ECHOLOT_DEPLOY_KEY: ${{ secrets.GG_ECHOLOT_DEPLOY_KEY }}
+        run: |
+          set -euo pipefail
+          key_file="${RUNNER_TEMP:?}/qdev-gg-echolot-deploy-key"
+          (umask 077; printf '%s\n' "${GG_ECHOLOT_DEPLOY_KEY}" > "${key_file}")
+          test -s "${key_file}"
+          ssh_command="ssh -i ${key_file} -o IdentitiesOnly=yes -o StrictHostKeyChecking=accept-new -o UserKnownHostsFile=${RUNNER_TEMP}/qdev-known-hosts"
+          printf 'GIT_SSH_COMMAND=%s\n' "${ssh_command}" >> "${GITHUB_ENV}"
+          export GIT_SSH_COMMAND="${ssh_command}"
+          mkdir -p .qdev
+          git clone --quiet --no-tags git@github.com:belilovsky/gg-echolot.git "${GG_SOURCE_DIR}"
+          cd "${GG_SOURCE_DIR}"
+          if ! git cat-file -e "${VERIFIED_SOURCE_SHA}^{commit}" 2>/dev/null; then
+            git fetch --quiet origin "${VERIFIED_SOURCE_SHA}"
+          fi
+          git checkout --quiet --detach "${VERIFIED_SOURCE_SHA}"
+          test "$(git rev-parse HEAD)" = "${VERIFIED_SOURCE_SHA}"
+          test -z "$(git status --porcelain --untracked-files=all)"
+          git fetch --quiet origin main
+          ancestor=false
+          if git merge-base --is-ancestor HEAD origin/main; then ancestor=true; fi
+          printf 'SOURCE_ANCESTOR_OF_MAIN=%s\n' "${ancestor}" >> "${GITHUB_ENV}"
+          printf 'gg_source_sha=%s ancestor_of_origin_main=%s origin_main=%s\n' \
+            "$(git rev-parse HEAD)" "${ancestor}" "$(git rev-parse origin/main)"
+
+      - name: Probe the runner toolchain and lane identity
+        id: toolchain
+        continue-on-error: true
+        run: |
+          set -uo pipefail
+          log="${GITHUB_WORKSPACE}/${CARRIER_PROBE_LOG}"
+          {
+            printf 'runner=%s environment=%s repository=%s workflow=%s\n' \
+              "${RUNNER_NAME}" "${RUNNER_ENVIRONMENT}" "${GITHUB_REPOSITORY}" "${GITHUB_WORKFLOW}"
+            printf 'qdev_job_id=%s qdev_repository=%s qdev_head_sha=%s\n' \
+              "${QDEV_JOB_ID:-unset}" "${QDEV_REPOSITORY:-unset}" "${QDEV_HEAD_SHA:-unset}"
+            printf 'job_hostname=%s cpus=%s\n' "$(hostname)" "$(nproc)"
+            free -m | head -2 || true
+            df -h / | tail -1 || true
+          } >> "${log}" 2>&1
+          for tool in python3 git ssh curl jq sha256sum tar bash node npm npx; do
+            if command -v "${tool}" >/dev/null 2>&1; then
+              printf 'PASS tool_present=%s path=%s\n' "${tool}" "$(command -v "${tool}")" \
+                | tee -a "${log}"
+            else
+              printf 'note tool_absent_before_setup=%s\n' "${tool}" | tee -a "${log}"
+            fi
+          done
+
+      - name: Set up Node.js 24.14.0
+        uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
+        with:
+          node-version: "24.14.0"
+
+      - name: Set up Python 3.12
+        uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065 # v5.6.0
+        with:
+          python-version: "3.12"
+
+      - name: Install locked dependencies
+        working-directory: .qdev/gg-echolot
+        run: |
+          set -euo pipefail
+          npm ci
+          python -m pip install --disable-pip-version-check -r requirements-ci.txt
+          python --version
+          node --version
+
+      - name: Check production dependency advisories
+        working-directory: .qdev/gg-echolot
+        run: npm audit --omit=dev --audit-level=high
+
+      - name: Check QZ contract consumer and producer failure boundaries
+        working-directory: .qdev/gg-echolot
+        run: python -m unittest tests.python.test_qz_coverage_query tests.python.test_tokayev_raw_cache -v
+
+      - name: Run frontend, Python, type and build gates
+        id: gate
+        working-directory: .qdev/gg-echolot
+        run: |
+          set -euo pipefail
+          npm test 2>&1 | tee "${GITHUB_WORKSPACE}/${CARRIER_VERIFY_LOG}"
+
+      - name: Record carrier run identity (never a release receipt)
+        if: always()
+        run: |
+          set -uo pipefail
+          {
+            printf 'carrier_repository=%s\n' "${GITHUB_REPOSITORY}"
+            printf 'carrier_head_sha=%s\n' "${GITHUB_SHA}"
+            printf 'carrier_run_id=%s\n' "${GITHUB_RUN_ID}"
+            printf 'carrier_run_attempt=%s\n' "${GITHUB_RUN_ATTEMPT}"
+            printf 'carrier_job=%s\n' "${GITHUB_JOB}"
+            printf 'carrier_workflow=%s\n' "${GITHUB_WORKFLOW}"
+            printf 'runner_name=%s\n' "${RUNNER_NAME}"
+            printf 'verified_source_repository=belilovsky/gg-echolot\n'
+            printf 'verified_source_sha=%s\n' "${VERIFIED_SOURCE_SHA}"
+            printf 'verified_source_ancestor_of_origin_main=%s\n' "${SOURCE_ANCESTOR_OF_MAIN:-unknown}"
+            printf 'executor_profile=qdev-ci\n'
+            printf 'execution=native QDev self-hosted qdev-ci lane, real GG gates, carrier repository\n'
+            printf 'provider_ci_status=unavailable: private-repository Actions is blocked by account billing; this is execution evidence, not a provider status\n'
+            printf 'check_gate=%s\n' '${{ steps.gate.outcome }}'
+            printf 'release_receipt=false\n'
+            printf 'registry_publish=withheld: this carrier lane never publishes\n'
+            printf 'deploy=withheld: this carrier lane never deploys\n'
+          } | tee "${CARRIER_NOTE}"
+
+      - name: Upload the carrier evidence bundle
+        if: always()
+        env:
+          QDEV_IF_NO_FILES: warn
+        run: |
+          set -euo pipefail
+          uploader="${GITHUB_WORKSPACE}/.github/scripts/qdev-upload-artifact.sh"
+          test -x "${uploader}"
+          "${uploader}" \
+            gg-echolot-carrier-verify \
+            "${GITHUB_WORKSPACE}/${CARRIER_NOTE}" "${GITHUB_WORKSPACE}/${CARRIER_PROBE_LOG}" "${GITHUB_WORKSPACE}/${CARRIER_VERIFY_LOG}"
+
+      - name: Remove the deploy key from the runner
+        if: always()
+        run: |
+          set -uo pipefail
+          rm -f "${RUNNER_TEMP}/qdev-gg-echolot-deploy-key"
+
+  browser:
+    name: GG authenticated browser acceptance
+    runs-on:
+      - self-hosted
+      - Linux
+      - X64
+      - qdev-ci-browser
+      - 'qdev-job-${{ github.run_id }}-${{ github.run_attempt }}-gg-browser'
+    timeout-minutes: 40
+    steps:
+      - name: Check out the carrier repository
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
+        with:
+          persist-credentials: false
+          fetch-depth: 1
+
+      - name: Check out the exact private GG revision
+        env:
+          GG_ECHOLOT_DEPLOY_KEY: ${{ secrets.GG_ECHOLOT_DEPLOY_KEY }}
+        run: |
+          set -euo pipefail
+          key_file="${RUNNER_TEMP:?}/qdev-gg-echolot-deploy-key"
+          (umask 077; printf '%s\n' "${GG_ECHOLOT_DEPLOY_KEY}" > "${key_file}")
+          test -s "${key_file}"
+          ssh_command="ssh -i ${key_file} -o IdentitiesOnly=yes -o StrictHostKeyChecking=accept-new -o UserKnownHostsFile=${RUNNER_TEMP}/qdev-known-hosts"
+          printf 'GIT_SSH_COMMAND=%s\n' "${ssh_command}" >> "${GITHUB_ENV}"
+          export GIT_SSH_COMMAND="${ssh_command}"
+          mkdir -p .qdev
+          git clone --quiet --no-tags git@github.com:belilovsky/gg-echolot.git "${GG_SOURCE_DIR}"
+          cd "${GG_SOURCE_DIR}"
+          if ! git cat-file -e "${VERIFIED_SOURCE_SHA}^{commit}" 2>/dev/null; then
+            git fetch --quiet origin "${VERIFIED_SOURCE_SHA}"
+          fi
+          git checkout --quiet --detach "${VERIFIED_SOURCE_SHA}"
+          test "$(git rev-parse HEAD)" = "${VERIFIED_SOURCE_SHA}"
+          test -z "$(git status --porcelain --untracked-files=all)"
+          git fetch --quiet origin main
+          ancestor=false
+          if git merge-base --is-ancestor HEAD origin/main; then ancestor=true; fi
+          printf 'SOURCE_ANCESTOR_OF_MAIN=%s\n' "${ancestor}" >> "${GITHUB_ENV}"
+          printf 'gg_source_sha=%s ancestor_of_origin_main=%s origin_main=%s\n' \
+            "$(git rev-parse HEAD)" "${ancestor}" "$(git rev-parse origin/main)"
+
+      - name: Probe the runner toolchain and lane identity
+        id: toolchain
+        continue-on-error: true
+        run: |
+          set -uo pipefail
+          log="${GITHUB_WORKSPACE}/${CARRIER_PROBE_LOG}"
+          {
+            printf 'runner=%s environment=%s repository=%s workflow=%s\n' \
+              "${RUNNER_NAME}" "${RUNNER_ENVIRONMENT}" "${GITHUB_REPOSITORY}" "${GITHUB_WORKFLOW}"
+            printf 'qdev_job_id=%s qdev_repository=%s qdev_head_sha=%s\n' \
+              "${QDEV_JOB_ID:-unset}" "${QDEV_REPOSITORY:-unset}" "${QDEV_HEAD_SHA:-unset}"
+            printf 'job_hostname=%s cpus=%s\n' "$(hostname)" "$(nproc)"
+            free -m | head -2 || true
+            df -h / | tail -1 || true
+          } >> "${log}" 2>&1
+          for tool in python3 git ssh curl jq sha256sum tar bash node npm npx; do
+            if command -v "${tool}" >/dev/null 2>&1; then
+              printf 'PASS tool_present=%s path=%s\n' "${tool}" "$(command -v "${tool}")" \
+                | tee -a "${log}"
+            else
+              printf 'note tool_absent_before_setup=%s\n' "${tool}" | tee -a "${log}"
+            fi
+          done
+
+      - name: Set up Node.js 24.14.0
+        uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
+        with:
+          node-version: "24.14.0"
+
+      - name: Set up Python 3.12
+        uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065 # v5.6.0
+        with:
+          python-version: "3.12"
+
+      - name: Install locked dependencies and browser
+        working-directory: .qdev/gg-echolot
+        run: |
+          set -euo pipefail
+          npm ci
+          npx --yes --package @playwright/cli@0.1.18 playwright install chromium
+          npx --yes --package @playwright/cli@0.1.18 playwright --version
+          python --version
+          node --version
+
+      - name: Build current candidate
+        working-directory: .qdev/gg-echolot
+        run: npm run build
+
+      - name: Regenerate browser evidence for this SHA
+        id: browser
+        working-directory: .qdev/gg-echolot
+        env:
+          GG_PLAYWRIGHT_CLI: ${{ github.workspace }}/.qdev/gg-echolot/.github/scripts/playwright-cli.sh
+          PLAYWRIGHT_MCP_BROWSER: chromium
+        run: |
+          set -euo pipefail
+          mkdir -p output/ci
+          {
+            python tests/runtime/run_authenticated_browser_acceptance.py \
+              --source-sha "$VERIFIED_SOURCE_SHA" \
+              --out output/ci/acceptance.json \
+              --craft-audit output/ci/craft.json \
+              --screenshots output/ci/screenshots
+            python - <<'PY'
+          import json
+          import sys
+
+          evidence = json.load(open("output/ci/acceptance.json", encoding="utf-8"))
+          expected = __import__("os").environ["VERIFIED_SOURCE_SHA"]
+          problems = []
+          if evidence.get("sourceSha") != expected:
+              problems.append(f"sourceSha={evidence.get('sourceSha')!r} != {expected!r}")
+          if evidence.get("status") != "pass":
+              problems.append(f"status={evidence.get('status')!r}")
+          if evidence.get("failure"):
+              problems.append(f"failure={evidence.get('failure')!r}")
+          runtime = evidence.get("runtime") or {}
+          if runtime.get("release_identity_matches_candidate") is not True:
+              problems.append(f"release_identity_matches_candidate={runtime.get('release_identity_matches_candidate')!r}")
+          if evidence.get("unexpectedConsole") or evidence.get("unexpectedResponses"):
+              problems.append(
+                  f"unexpected console={evidence.get('unexpectedConsole')!r} responses={evidence.get('unexpectedResponses')!r}"
+              )
+          craft = json.load(open("output/ci/craft.json", encoding="utf-8"))
+          if craft.get("schemaVersion") != "avds-visual-craft-audit-v1":
+              problems.append(f"craft schemaVersion={craft.get('schemaVersion')!r}")
+          print(json.dumps({
+              "sourceSha": evidence.get("sourceSha"),
+              "status": evidence.get("status"),
+              "cells": len(evidence.get("cells") or []),
+              "cells_ok": all(cell.get("ok") for cell in evidence.get("cells") or []),
+              "readiness_release_sha_matches": runtime.get("release_identity_matches_candidate"),
+              "craft_cells": len(craft.get("cells") or []),
+              "problems": problems,
+          }, ensure_ascii=False))
+          if problems:
+              sys.exit(3)
+          PY
+          printf 'step=none\n'
+          } 2>&1 | tee "${GITHUB_WORKSPACE}/${CARRIER_BROWSER_LOG}"
+
+      - name: Record carrier run identity (never a release receipt)
+        if: always()
+        run: |
+          set -uo pipefail
+          {
+            printf 'carrier_repository=%s\n' "${GITHUB_REPOSITORY}"
+            printf 'carrier_head_sha=%s\n' "${GITHUB_SHA}"
+            printf 'carrier_run_id=%s\n' "${GITHUB_RUN_ID}"
+            printf 'carrier_run_attempt=%s\n' "${GITHUB_RUN_ATTEMPT}"
+            printf 'carrier_job=%s\n' "${GITHUB_JOB}"
+            printf 'carrier_workflow=%s\n' "${GITHUB_WORKFLOW}"
+            printf 'runner_name=%s\n' "${RUNNER_NAME}"
+            printf 'verified_source_repository=belilovsky/gg-echolot\n'
+            printf 'verified_source_sha=%s\n' "${VERIFIED_SOURCE_SHA}"
+            printf 'verified_source_ancestor_of_origin_main=%s\n' "${SOURCE_ANCESTOR_OF_MAIN:-unknown}"
+            printf 'executor_profile=qdev-ci-browser\n'
+            printf 'execution=native QDev self-hosted qdev-ci-browser lane, real GG authenticated browser acceptance, carrier repository\n'
+            printf 'browser_identity=in-process QDev OIDC stand-in; the production IdP is never contacted and no operator credential is used\n'
+            printf 'provider_ci_status=unavailable: private-repository Actions is blocked by account billing; this is execution evidence, not a provider status\n'
+            printf 'check_browser=%s\n' '${{ steps.browser.outcome }}'
+            printf 'release_receipt=false\n'
+            printf 'registry_publish=withheld: this carrier lane never publishes\n'
+            printf 'deploy=withheld: this carrier lane never deploys\n'
+          } | tee "${GITHUB_WORKSPACE}/${CARRIER_NOTE}"
+
+      - name: Upload the browser evidence bundle
+        if: always()
+        working-directory: .qdev/gg-echolot
+        env:
+          QDEV_IF_NO_FILES: warn
+        run: |
+          set -euo pipefail
+          uploader="${GITHUB_WORKSPACE}/.github/scripts/qdev-upload-artifact.sh"
+          test -x "${uploader}"
+          "${uploader}" \
+            gg-echolot-carrier-browser \
+            "${GITHUB_WORKSPACE}/${CARRIER_NOTE}" "${GITHUB_WORKSPACE}/${CARRIER_PROBE_LOG}" \
+            "${GITHUB_WORKSPACE}/${CARRIER_BROWSER_LOG}" \
+            output/ci/acceptance.json output/ci/craft.json output/ci/screenshots
+
+      - name: Remove the deploy key from the runner
+        if: always()
+        run: |
+          set -uo pipefail
+          rm -f "${RUNNER_TEMP}/qdev-gg-echolot-deploy-key"
