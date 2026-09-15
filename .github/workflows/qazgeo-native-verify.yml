@@ -1,0 +1,469 @@
+# Native QDev self-hosted execution of the QazGeo CI gate.
+#
+# GitHub Actions is blocked for every private QDev repository by the account's
+# billing state (startup_failure, zero jobs, every private repository, since
+# 2026-09-13), so belilovsky/qazgeo/.github/workflows/ci.yml cannot start at
+# all: its jobs request GitHub-hosted-routed self-hosted labels that the broker
+# will not admit while the account is suspended.
+#
+# This public carrier repository is admitted by the QDev runner broker and runs
+# the real QazGeo lint, exact-source security and test steps against an exact
+# private revision fetched with a read-only deploy key, on the same self-hosted
+# runner profiles the private workflow requests (qdev-ci, qdev-ci-docker).
+#
+# Private sources are fetched with an explicit key file plus GIT_SSH_COMMAND;
+# actions/checkout ssh-key is deliberately not used so the private key never
+# enters the checkout action's key handling.
+#
+# This is exact-SHA execution evidence, not a provider CI status for
+# belilovsky/qazgeo, and not the QazGeo release lane: the private docker-build
+# job publishes an immutable image to registry.ci.qdev.run, and this carrier lane
+# deliberately performs no registry login, no push, no deploy and no release
+# receipt.
+name: QazGeo native carrier verify
+
+on:
+  workflow_dispatch:
+    inputs:
+      head_sha:
+        description: "Exact 40-character commit SHA in belilovsky/qazgeo"
+        required: true
+        type: string
+
+permissions:
+  contents: read
+
+concurrency:
+  group: qazgeo-native-carrier
+  cancel-in-progress: false
+
+env:
+  QAZGEO_SOURCE_DIR: .qdev/qazgeo
+  VERIFIED_SOURCE_SHA: ${{ github.event.inputs.head_sha }}
+  PYTHON_VERSION: "3.12"
+  NODE_VERSION: "22"
+  QAZSTACK_REF: 631da62d223f0afb393d14b48f81a3e9cbd322d6
+  CARRIER_NOTE: carrier-run-identity.txt
+  CARRIER_PROBE_LOG: carrier-probe.log
+  CARRIER_LINT_LOG: carrier-qazgeo-lint.log
+  CARRIER_SECURITY_LOG: carrier-qazgeo-security.log
+  CARRIER_TEST_LOG: carrier-qazgeo-test.log
+
+jobs:
+  lint:
+    name: QazGeo lint and public contracts
+    runs-on:
+      - self-hosted
+      - Linux
+      - X64
+      - qdev-ci
+      - 'qdev-job-${{ github.run_id }}-${{ github.run_attempt }}-qazgeo-lint'
+    timeout-minutes: 30
+    steps:
+      - name: Check out the carrier repository
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
+        with:
+          persist-credentials: false
+          fetch-depth: 1
+
+      - name: Check out the exact private QazGeo revision
+        env:
+          QAZGEO_DEPLOY_KEY: ${{ secrets.QAZGEO_DEPLOY_KEY }}
+        run: |
+          set -euo pipefail
+          key_file="${RUNNER_TEMP:?}/qdev-qazgeo-deploy-key"
+          (umask 077; printf '%s\n' "${QAZGEO_DEPLOY_KEY}" > "${key_file}")
+          test -s "${key_file}"
+          ssh_command="ssh -i ${key_file} -o IdentitiesOnly=yes -o StrictHostKeyChecking=accept-new -o UserKnownHostsFile=${RUNNER_TEMP}/qdev-known-hosts"
+          printf 'GIT_SSH_COMMAND=%s\n' "${ssh_command}" >> "${GITHUB_ENV}"
+          export GIT_SSH_COMMAND="${ssh_command}"
+          mkdir -p .qdev
+          git clone --quiet --no-tags git@github.com:belilovsky/qazgeo.git "${QAZGEO_SOURCE_DIR}"
+          cd "${QAZGEO_SOURCE_DIR}"
+          if ! git cat-file -e "${VERIFIED_SOURCE_SHA}^{commit}" 2>/dev/null; then
+            git fetch --quiet origin "${VERIFIED_SOURCE_SHA}"
+          fi
+          git checkout --quiet --detach "${VERIFIED_SOURCE_SHA}"
+          test "$(git rev-parse HEAD)" = "${VERIFIED_SOURCE_SHA}"
+          test -z "$(git status --porcelain --untracked-files=all)"
+          git fetch --quiet origin main
+          ancestor=false
+          if git merge-base --is-ancestor HEAD origin/main; then ancestor=true; fi
+          printf 'SOURCE_ANCESTOR_OF_MAIN=%s\n' "${ancestor}" >> "${GITHUB_ENV}"
+          printf 'qazgeo_source_sha=%s ancestor_of_origin_main=%s origin_main=%s\n' \
+            "$(git rev-parse HEAD)" "${ancestor}" "$(git rev-parse origin/main)"
+
+      - name: Probe the runner toolchain and lane identity
+        id: toolchain
+        continue-on-error: true
+        run: |
+          set -uo pipefail
+          {
+            printf 'runner=%s environment=%s repository=%s workflow=%s\n' \
+              "${RUNNER_NAME}" "${RUNNER_ENVIRONMENT}" "${GITHUB_REPOSITORY}" "${GITHUB_WORKFLOW}"
+            printf 'qdev_job_id=%s qdev_repository=%s qdev_head_sha=%s\n' \
+              "${QDEV_JOB_ID:-unset}" "${QDEV_REPOSITORY:-unset}" "${QDEV_HEAD_SHA:-unset}"
+            printf 'job_hostname=%s cpus=%s\n' "$(hostname)" "$(nproc)"
+            free -m | head -2 || true
+            df -h / | tail -1 || true
+          } >> "${CARRIER_PROBE_LOG}" 2>&1
+          for tool in python3 git ssh curl jq sha256sum tar bash; do
+            if command -v "${tool}" >/dev/null 2>&1; then
+              printf 'PASS tool_present=%s path=%s\n' "${tool}" "$(command -v "${tool}")" \
+                | tee -a "${CARRIER_PROBE_LOG}"
+            else
+              printf 'note tool_absent_before_setup=%s\n' "${tool}" | tee -a "${CARRIER_PROBE_LOG}"
+            fi
+          done
+
+      - name: Set up Python 3.12
+        uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065 # v5.6.0
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+
+      - name: Install ruff
+        run: pip install "ruff==0.15.21" "packaging==25.0"
+
+      - name: Run the exact QazGeo lint contract steps
+        id: lint_contracts
+        working-directory: .qdev/qazgeo
+        run: |
+          set -euo pipefail
+          {
+            printf 'step=ruff_check\n'
+            ruff check .
+            printf 'step=ruff_format_check\n'
+            ruff format --check .
+            printf 'step=public_copy\n'
+            python scripts/validate_public_copy.py
+            printf 'step=dependency_contract\n'
+            python scripts/validate_dependency_contract.py
+            printf 'step=documentation_links\n'
+            python scripts/validate_documentation_links.py
+            printf 'step=typography\n'
+            python scripts/check_typography.py
+            printf 'step=layer_catalog\n'
+            python scripts/lint_layer_catalog.py
+            printf 'step=center_contracts\n'
+            python scripts/validate_qazgeo_center_contracts.py
+            printf 'step=region_visuals\n'
+            python scripts/validate_region_visuals.py
+            printf 'step=source_discovery\n'
+            python scripts/qazgeo_source_discovery.py --check
+            printf 'step=none\n'
+          } 2>&1 | tee "${GITHUB_WORKSPACE}/${CARRIER_LINT_LOG}"
+
+      - name: Record the lint-lane carrier run identity
+        if: always()
+        run: |
+          set -uo pipefail
+          {
+            printf 'lane=lint\n'
+            printf 'carrier_repository=%s\n' "${GITHUB_REPOSITORY}"
+            printf 'carrier_run_id=%s carrier_run_attempt=%s carrier_job=%s\n' \
+              "${GITHUB_RUN_ID}" "${GITHUB_RUN_ATTEMPT}" "${GITHUB_JOB}"
+            printf 'runner_name=%s executor_profile=qdev-ci\n' "${RUNNER_NAME}"
+            printf 'verified_source_repository=belilovsky/qazgeo\n'
+            printf 'verified_source_sha=%s\n' "${VERIFIED_SOURCE_SHA}"
+            printf 'verified_source_ancestor_of_origin_main=%s\n' "${SOURCE_ANCESTOR_OF_MAIN:-unknown}"
+            printf 'check_lint_contracts=%s\n' '${{ steps.lint_contracts.outcome }}'
+            printf 'provider_ci_status=unavailable: private-repository Actions is blocked by account billing; this is execution evidence, not a provider status\n'
+            printf 'registry_publish=withheld deploy=withheld release_receipt=false\n'
+          } | tee "${CARRIER_NOTE}"
+
+      - name: Upload the lint-lane evidence
+        if: always()
+        env:
+          QDEV_IF_NO_FILES: warn
+        run: |
+          set -euo pipefail
+          .github/scripts/qdev-upload-artifact.sh \
+            qazgeo-carrier-lint-evidence "${CARRIER_NOTE}" "${CARRIER_PROBE_LOG}" "${CARRIER_LINT_LOG}"
+
+      - name: Remove the deploy key from the runner
+        if: always()
+        run: rm -f "${RUNNER_TEMP}/qdev-qazgeo-deploy-key"
+
+  security-source:
+    name: QazGeo exact-source security scan
+    needs: lint
+    runs-on:
+      - self-hosted
+      - Linux
+      - X64
+      - qdev-ci
+      - 'qdev-job-${{ github.run_id }}-${{ github.run_attempt }}-qazgeo-security'
+    timeout-minutes: 40
+    steps:
+      - name: Check out the carrier repository
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
+        with:
+          persist-credentials: false
+          fetch-depth: 1
+
+      - name: Check out the exact private QazGeo revision
+        env:
+          QAZGEO_DEPLOY_KEY: ${{ secrets.QAZGEO_DEPLOY_KEY }}
+        run: |
+          set -euo pipefail
+          key_file="${RUNNER_TEMP:?}/qdev-qazgeo-deploy-key"
+          (umask 077; printf '%s\n' "${QAZGEO_DEPLOY_KEY}" > "${key_file}")
+          test -s "${key_file}"
+          ssh_command="ssh -i ${key_file} -o IdentitiesOnly=yes -o StrictHostKeyChecking=accept-new -o UserKnownHostsFile=${RUNNER_TEMP}/qdev-known-hosts"
+          printf 'GIT_SSH_COMMAND=%s\n' "${ssh_command}" >> "${GITHUB_ENV}"
+          export GIT_SSH_COMMAND="${ssh_command}"
+          mkdir -p .qdev
+          git clone --quiet --no-tags git@github.com:belilovsky/qazgeo.git "${QAZGEO_SOURCE_DIR}"
+          cd "${QAZGEO_SOURCE_DIR}"
+          if ! git cat-file -e "${VERIFIED_SOURCE_SHA}^{commit}" 2>/dev/null; then
+            git fetch --quiet origin "${VERIFIED_SOURCE_SHA}"
+          fi
+          git checkout --quiet --detach "${VERIFIED_SOURCE_SHA}"
+          test "$(git rev-parse HEAD)" = "${VERIFIED_SOURCE_SHA}"
+          test -z "$(git status --porcelain --untracked-files=all)"
+          mkdir -p evidence
+
+      - name: Set up Python 3.12
+        uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065 # v5.6.0
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+
+      - name: Pinned Trivy repository scan
+        id: trivy
+        continue-on-error: true
+        uses: aquasecurity/trivy-action@ed142fd0673e97e23eac54620cfb913e5ce36c25 # v0.36.0
+        with:
+          version: v0.70.0
+          cache: false
+          scan-type: fs
+          scan-ref: .qdev/qazgeo
+          scanners: vuln,secret,misconfig,license
+          severity: UNKNOWN,LOW,MEDIUM,HIGH,CRITICAL
+          ignore-unfixed: false
+          format: json
+          output: .qdev/qazgeo/evidence/trivy-source.json
+          exit-code: 0
+
+      - name: Enforce source security findings policy
+        id: security_policy
+        working-directory: .qdev/qazgeo
+        run: |
+          set -euo pipefail
+          python3 scripts/validate_security_scan.py --scope source \
+            --report evidence/trivy-source.json \
+            --output evidence/trivy-source-policy.json 2>&1 \
+            | tee "${GITHUB_WORKSPACE}/${CARRIER_SECURITY_LOG}"
+
+      - name: Record the security-lane carrier run identity
+        if: always()
+        run: |
+          set -uo pipefail
+          {
+            printf 'lane=security-source\n'
+            printf 'carrier_repository=%s\n' "${GITHUB_REPOSITORY}"
+            printf 'carrier_run_id=%s carrier_run_attempt=%s carrier_job=%s\n' \
+              "${GITHUB_RUN_ID}" "${GITHUB_RUN_ATTEMPT}" "${GITHUB_JOB}"
+            printf 'runner_name=%s executor_profile=qdev-ci\n' "${RUNNER_NAME}"
+            printf 'verified_source_repository=belilovsky/qazgeo\n'
+            printf 'verified_source_sha=%s\n' "${VERIFIED_SOURCE_SHA}"
+            printf 'check_trivy=%s check_security_policy=%s\n' \
+              '${{ steps.trivy.outcome }}' '${{ steps.security_policy.outcome }}'
+            printf 'provider_ci_status=unavailable: private-repository Actions is blocked by account billing\n'
+          } >> "${CARRIER_NOTE}"
+
+      - name: Upload the security-lane evidence
+        if: always()
+        env:
+          QDEV_IF_NO_FILES: warn
+        run: |
+          set -euo pipefail
+          .github/scripts/qdev-upload-artifact.sh \
+            qazgeo-carrier-security-evidence "${CARRIER_NOTE}" "${CARRIER_SECURITY_LOG}" \
+            .qdev/qazgeo/evidence
+
+      - name: Remove the deploy key from the runner
+        if: always()
+        run: rm -f "${RUNNER_TEMP}/qdev-qazgeo-deploy-key"
+
+  test:
+    name: QazGeo tests against isolated PostGIS
+    needs: lint
+    runs-on:
+      - self-hosted
+      - Linux
+      - X64
+      - qdev-ci-docker
+      - 'qdev-job-${{ github.run_id }}-${{ github.run_attempt }}-qazgeo-test'
+    timeout-minutes: 60
+    services:
+      postgres:
+        image: postgis/postgis:16-3.4@sha256:44126d872ac91993766c341e369c539e8196614321765d36a6f1bab0419a5fa5
+        env:
+          POSTGRES_DB: qazgeo
+          POSTGRES_USER: qazgeo
+          POSTGRES_PASSWORD: qazgeo-ci
+        ports:
+          - 55432:5432
+        options: >-
+          --health-cmd "pg_isready -U qazgeo -d qazgeo"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+    env:
+      DATABASE_URL: postgresql+asyncpg://qazgeo:qazgeo-ci@localhost:55432/qazgeo
+      API_KEY: test-key-ci
+      QAZGEO_RELEASE_GATE: "1"
+    steps:
+      - name: Check out the carrier repository
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
+        with:
+          persist-credentials: false
+          fetch-depth: 1
+
+      - name: Check out the exact private QazGeo revision
+        env:
+          QAZGEO_DEPLOY_KEY: ${{ secrets.QAZGEO_DEPLOY_KEY }}
+        run: |
+          set -euo pipefail
+          key_file="${RUNNER_TEMP:?}/qdev-qazgeo-deploy-key"
+          (umask 077; printf '%s\n' "${QAZGEO_DEPLOY_KEY}" > "${key_file}")
+          test -s "${key_file}"
+          ssh_command="ssh -i ${key_file} -o IdentitiesOnly=yes -o StrictHostKeyChecking=accept-new -o UserKnownHostsFile=${RUNNER_TEMP}/qdev-known-hosts"
+          printf 'GIT_SSH_COMMAND=%s\n' "${ssh_command}" >> "${GITHUB_ENV}"
+          export GIT_SSH_COMMAND="${ssh_command}"
+          mkdir -p .qdev
+          git clone --quiet --no-tags git@github.com:belilovsky/qazgeo.git "${QAZGEO_SOURCE_DIR}"
+          cd "${QAZGEO_SOURCE_DIR}"
+          if ! git cat-file -e "${VERIFIED_SOURCE_SHA}^{commit}" 2>/dev/null; then
+            git fetch --quiet origin "${VERIFIED_SOURCE_SHA}"
+          fi
+          git checkout --quiet --detach "${VERIFIED_SOURCE_SHA}"
+          test "$(git rev-parse HEAD)" = "${VERIFIED_SOURCE_SHA}"
+          test -z "$(git status --porcelain --untracked-files=all)"
+
+      - name: Check out the pinned QazStack source
+        env:
+          QAZSTACK_DEPLOY_KEY: ${{ secrets.QAZSTACK_DEPLOY_KEY }}
+        run: |
+          set -euo pipefail
+          key_file="${RUNNER_TEMP:?}/qdev-qazstack-deploy-key"
+          (umask 077; printf '%s\n' "${QAZSTACK_DEPLOY_KEY}" > "${key_file}")
+          test -s "${key_file}"
+          ssh_command="ssh -i ${key_file} -o IdentitiesOnly=yes -o StrictHostKeyChecking=accept-new -o UserKnownHostsFile=${RUNNER_TEMP}/qdev-known-hosts"
+          export GIT_SSH_COMMAND="${ssh_command}"
+          cd "${QAZGEO_SOURCE_DIR}"
+          git clone --quiet --filter=blob:none --no-checkout git@github.com:belilovsky/qazstack.git vendor/qazstack
+          git -C vendor/qazstack fetch --quiet --depth 1 origin "${QAZSTACK_REF}"
+          git -C vendor/qazstack checkout --quiet --detach FETCH_HEAD
+          printf 'qazstack_source_sha=%s\n' "$(git -C vendor/qazstack rev-parse HEAD)"
+
+      - name: Set up Python 3.12
+        uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065 # v5.6.0
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+
+      - name: Set up Node.js
+        uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+
+      - name: Install dependencies
+        working-directory: .qdev/qazgeo
+        run: |
+          set -euo pipefail
+          pip install --upgrade pip
+          pip install -e "./vendor/qazstack"
+          pip install -e ".[dev]"
+
+      - name: Verify geospatial runtime
+        working-directory: .qdev/qazgeo
+        run: |
+          python - <<'PY'
+          import asyncpg
+          import shapely
+
+          print(f"asyncpg={asyncpg.__version__}")
+          print(f"shapely={shapely.__version__}")
+          PY
+
+      - name: Initialize database extensions
+        working-directory: .qdev/qazgeo
+        run: |
+          python - <<'PY'
+          import asyncio
+          from pathlib import Path
+
+          import asyncpg
+
+
+          async def initialize() -> None:
+              connection = await asyncpg.connect(
+                  host="localhost",
+                  port=55432,
+                  user="qazgeo",
+                  password="qazgeo-ci",
+                  database="qazgeo",
+              )
+              try:
+                  await connection.execute(
+                      Path("scripts/init-extensions.sql").read_text(encoding="utf-8")
+                  )
+              finally:
+                  await connection.close()
+
+
+          asyncio.run(initialize())
+          PY
+
+      - name: Run the exact QazGeo test steps
+        id: tests
+        working-directory: .qdev/qazgeo
+        run: |
+          set -euo pipefail
+          {
+            printf 'step=seed_data\n'
+            python scripts/seed_data.py
+            printf 'step=migration_tests\n'
+            QAZGEO_MIGRATION_TESTS=1 python -m pytest tests/test_migrations_postgis.py -q
+            printf 'step=local_release_gate\n'
+            python scripts/local_release_gate.py
+            printf 'step=pytest\n'
+            python -m pytest tests/ -v --tb=short --cov=app --cov-report=term --cov-fail-under=80
+            printf 'step=typecheck_strict\n'
+            python scripts/typecheck_strict_baseline.py
+            printf 'step=mypy_debt_baseline\n'
+            python scripts/validate_mypy_debt_baseline.py
+            printf 'step=none\n'
+          } 2>&1 | tee "${GITHUB_WORKSPACE}/${CARRIER_TEST_LOG}"
+
+      - name: Record the test-lane carrier run identity
+        if: always()
+        run: |
+          set -uo pipefail
+          {
+            printf 'lane=test\n'
+            printf 'carrier_repository=%s\n' "${GITHUB_REPOSITORY}"
+            printf 'carrier_run_id=%s carrier_run_attempt=%s carrier_job=%s\n' \
+              "${GITHUB_RUN_ID}" "${GITHUB_RUN_ATTEMPT}" "${GITHUB_JOB}"
+            printf 'runner_name=%s executor_profile=qdev-ci-docker\n' "${RUNNER_NAME}"
+            printf 'verified_source_repository=belilovsky/qazgeo\n'
+            printf 'verified_source_sha=%s\n' "${VERIFIED_SOURCE_SHA}"
+            printf 'qazstack_ref=%s\n' "${QAZSTACK_REF}"
+            printf 'check_tests=%s\n' '${{ steps.tests.outcome }}'
+            printf 'provider_ci_status=unavailable: private-repository Actions is blocked by account billing; this is execution evidence, not a provider status\n'
+            printf 'registry_publish=withheld deploy=withheld release_receipt=false\n'
+          } | tee "${CARRIER_NOTE}"
+
+      - name: Upload the test-lane evidence
+        if: always()
+        env:
+          QDEV_IF_NO_FILES: warn
+        run: |
+          set -euo pipefail
+          .github/scripts/qdev-upload-artifact.sh \
+            qazgeo-carrier-test-evidence "${CARRIER_NOTE}" "${CARRIER_TEST_LOG}"
+
+      - name: Remove the deploy keys from the runner
+        if: always()
+        run: |
+          rm -f "${RUNNER_TEMP}/qdev-qazgeo-deploy-key" "${RUNNER_TEMP}/qdev-qazstack-deploy-key"
