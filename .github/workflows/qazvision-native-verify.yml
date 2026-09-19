@@ -233,7 +233,7 @@ jobs:
           revision="$(docker image inspect "${remote}@${digest}" --format '{{index .Config.Labels "org.opencontainers.image.revision"}}')"
           test "${revision}" = "${VERIFIED_SOURCE_SHA}"
           REGISTRY_REPO_DIGEST="${repo_digest}" LOCAL_IMAGE_ID="${local_image_id}" PULLED_IMAGE_ID="${pulled_image_id}" \
-          python - <<'PY'
+          python3 - <<'PY'
           import json
           import os
           from pathlib import Path
