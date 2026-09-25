@@ -1,0 +1,118 @@
+# Run Qalam's unchanged private CI script on the existing QDev self-hosted
+# carrier lane when private-repository Actions cannot materialize jobs.
+# This is exact-SHA execution evidence, not a native Qalam Actions check and
+# never a release/deployment receipt.
+name: Qalam native carrier verify
+
+on:
+  workflow_dispatch:
+    inputs:
+      head_sha:
+        description: "Exact 40-character commit SHA in belilovsky/qalam"
+        required: true
+        type: string
+
+permissions:
+  contents: read
+
+concurrency:
+  group: qalam-native-carrier
+  cancel-in-progress: false
+
+env:
+  SOURCE_DIR: .qdev/qalam
+  SOURCE_REPOSITORY: belilovsky/qalam
+  VERIFIED_SOURCE_SHA: ${{ github.event.inputs.head_sha }}
+  CARRIER_NOTE: carrier-qalam-run-identity.txt
+  CARRIER_GATE_LOG: carrier-qalam-gate.log
+
+jobs:
+  verify:
+    name: Qalam ops/ci-check.sh on qdev-ci-browser
+    runs-on:
+      - self-hosted
+      - Linux
+      - X64
+      - qdev-ci-browser
+      - 'qdev-job-${{ github.run_id }}-${{ github.run_attempt }}-qalam-verify'
+    timeout-minutes: 60
+    steps:
+      - name: Check out the carrier repository
+        uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5
+        with:
+          persist-credentials: false
+          fetch-depth: 1
+
+      - name: Check out the exact private Qalam revision
+        env:
+          QALAM_DEPLOY_KEY: ${{ secrets.QALAM_DEPLOY_KEY }}
+        run: |
+          set -euo pipefail
+          [[ "${VERIFIED_SOURCE_SHA}" =~ ^[0-9a-f]{40}$ ]]
+          key_file="${RUNNER_TEMP:?}/qdev-qalam-source-key"
+          (umask 077; printf '%s\n' "${QALAM_DEPLOY_KEY}" > "${key_file}")
+          test -s "${key_file}"
+          export GIT_SSH_COMMAND="ssh -i ${key_file} -o IdentitiesOnly=yes -o StrictHostKeyChecking=accept-new -o UserKnownHostsFile=${RUNNER_TEMP}/qdev-known-hosts"
+          mkdir -p .qdev
+          git clone --quiet --no-tags "git@github.com:${SOURCE_REPOSITORY}.git" "${SOURCE_DIR}"
+          cd "${SOURCE_DIR}"
+          if ! git cat-file -e "${VERIFIED_SOURCE_SHA}^{commit}" 2>/dev/null; then
+            git fetch --quiet origin "${VERIFIED_SOURCE_SHA}"
+          fi
+          git checkout --quiet --detach "${VERIFIED_SOURCE_SHA}"
+          test "$(git rev-parse HEAD)" = "${VERIFIED_SOURCE_SHA}"
+          test -z "$(git status --porcelain --untracked-files=all)"
+          printf 'qalam_source_sha=%s\n' "$(git rev-parse HEAD)"
+          printf 'qalam_ci_script_sha256=%s\n' "$(sha256sum ops/ci-check.sh | awk '{print $1}')"
+          git fetch --quiet origin main
+          if git merge-base --is-ancestor HEAD origin/main; then
+            printf 'qalam_source_ancestor_of_main=true\n' >> "${GITHUB_ENV}"
+          else
+            printf 'qalam_source_ancestor_of_main=false\n' >> "${GITHUB_ENV}"
+          fi
+
+      - name: Set up Node.js 24
+        uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
+        with:
+          node-version: "24"
+
+      - name: Run the unchanged native Qalam CI gate
+        id: native_gate
+        working-directory: .qdev/qalam
+        run: |
+          set -o pipefail
+          ./ops/ci-check.sh 2>&1 | tee "${GITHUB_WORKSPACE}/${CARRIER_GATE_LOG}"
+
+      - name: Record exact-source carrier identity
+        if: always()
+        run: |
+          set -uo pipefail
+          {
+            printf 'carrier_repository=%s\n' "${GITHUB_REPOSITORY}"
+            printf 'carrier_head_sha=%s\n' "${GITHUB_SHA}"
+            printf 'carrier_run_id=%s\n' "${GITHUB_RUN_ID}"
+            printf 'carrier_run_attempt=%s\n' "${GITHUB_RUN_ATTEMPT}"
+            printf 'carrier_workflow=%s\n' "${GITHUB_WORKFLOW}"
+            printf 'runner_name=%s\n' "${RUNNER_NAME}"
+            printf 'executor_profile=qdev-ci-browser\n'
+            printf 'verified_source_repository=%s\n' "${SOURCE_REPOSITORY}"
+            printf 'verified_source_sha=%s\n' "${VERIFIED_SOURCE_SHA}"
+            printf 'verified_source_ancestor_of_main=%s\n' "${qalam_source_ancestor_of_main:-unknown}"
+            printf 'native_gate_outcome=%s\n' '${{ steps.native_gate.outcome }}'
+            printf 'execution=evidence for the unchanged private ops/ci-check.sh at the exact source SHA\n'
+            printf 'provider_ci_status=unavailable: this carrier run does not create a private-repository check\n'
+            printf 'release_receipt=false deploy=withheld migration=none registry_publish=withheld\n'
+          } | tee "${CARRIER_NOTE}"
+
+      - name: Upload carrier evidence
+        if: always()
+        env:
+          QDEV_IF_NO_FILES: warn
+        run: |
+          set -euo pipefail
+          .github/scripts/qdev-upload-artifact.sh qalam-carrier-evidence \
+            "${CARRIER_NOTE}" "${CARRIER_GATE_LOG}"
+
+      - name: Remove the read-only source key
+        if: always()
+        run: rm -f "${RUNNER_TEMP}/qdev-qalam-source-key"
