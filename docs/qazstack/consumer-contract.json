@@ -4,8 +4,8 @@
   "product_name": "QAZ.FUND",
   "lifecycle": "production",
   "integration_mode": "python-package",
-  "qazstack_version": "1.41.2",
-  "source_revision": "986cfca3779f74c0f734ed174e7a28c944fd30f7",
+  "qazstack_version": "1.53.6",
+  "source_revision": "553b78e54de11beefc2c4e01739bc28a2c0979a8",
   "primitives": [
     "collectors-and-entity-pipeline",
     "content-api",
@@ -48,7 +48,7 @@
     ],
     "verified_at": "2026-08-04T00:47:27Z",
     "environment": "production",
-    "source_revision": "986cfca3779f74c0f734ed174e7a28c944fd30f7",
+    "source_revision": "553b78e54de11beefc2c4e01739bc28a2c0979a8",
     "schema_digest": "sha256:6ca8e38c09315d02993e3600b7a05dc23d695cd152545f8a970566e303fc158c",
     "checked_by": "qazfund-release-gate"
   },

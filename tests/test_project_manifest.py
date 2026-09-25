@@ -24,7 +24,7 @@ def test_qdev_project_manifest_describes_the_public_runtime() -> None:
     assert manifest["operations"]["release_revision_path"] == (
         "/.well-known/release.json"
     )
-    assert manifest["capabilities"]["qazstack"]["version"] == "1.41.2"
+    assert manifest["capabilities"]["qazstack"]["version"] == "1.53.6"
     assert manifest["capabilities"]["avds"]["version"] == "4.7.0"
     assert manifest["capabilities"]["identity"]["mode"] == "not-applicable"
     assert manifest["exceptions"] == [

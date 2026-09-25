@@ -1,7 +1,7 @@
 {
   "schema_version": "qazstack-reuse-v1",
   "project_id": "qaz-fund",
-  "qazstack_version": "1.41.2",
+  "qazstack_version": "1.53.6",
   "owner": "qdev-platform",
   "consumer_contract_path": "docs/qazstack/consumer-contract.json",
   "adoptions": [

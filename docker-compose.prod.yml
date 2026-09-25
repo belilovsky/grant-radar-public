@@ -24,6 +24,13 @@ services:
       APP_IMAGE_DIGEST: ${APP_IMAGE_DIGEST:-}
       APP_ARTIFACT_DIGEST: ${APP_ARTIFACT_DIGEST:-}
       APP_BUILT_AT: ${APP_BUILT_AT:-}
+      QAZ_FUND_ZH_HANS_ENABLED: ${QAZ_FUND_ZH_HANS_ENABLED:-false}
+      QMT_RELEASE_TAG: ${QMT_RELEASE_TAG:-}
+      QMT_RELEASE_SOURCE_SHA: ${QMT_RELEASE_SOURCE_SHA:-}
+      QMT_IMAGE_DIGEST: ${QMT_IMAGE_DIGEST:-}
+      QMT_RUNTIME_RECEIPT_DIGEST: ${QMT_RUNTIME_RECEIPT_DIGEST:-}
+      QMT_MIGRATION_RECEIPT_DIGEST: ${QMT_MIGRATION_RECEIPT_DIGEST:-}
+      ZH_HANS_APPROVAL_DIR: ${ZH_HANS_APPROVAL_DIR:-/app/docs/qazstack/zh-hans}
       DATABASE_URL: ${DATABASE_URL:-postgresql+psycopg://grantradar:${POSTGRES_PASSWORD:-changeme}@db:5432/grantradar}
       GRANT_RADAR_DB_URL: ${GRANT_RADAR_DB_URL:-postgresql+psycopg://grantradar:${POSTGRES_PASSWORD:-changeme}@db:5432/grantradar}
       PUBLIC_BASE_URL: ${PUBLIC_BASE_URL:-https://qaz.fund}
@@ -58,6 +65,7 @@ services:
       APP_IMAGE_DIGEST: ${APP_IMAGE_DIGEST:-}
       APP_ARTIFACT_DIGEST: ${APP_ARTIFACT_DIGEST:-}
       APP_BUILT_AT: ${APP_BUILT_AT:-}
+      QAZ_FUND_ZH_HANS_ENABLED: "false"
       DATABASE_URL: ${DATABASE_URL:-postgresql+psycopg://grantradar:${POSTGRES_PASSWORD:-changeme}@db:5432/grantradar}
       GRANT_RADAR_DB_URL: ${GRANT_RADAR_DB_URL:-postgresql+psycopg://grantradar:${POSTGRES_PASSWORD:-changeme}@db:5432/grantradar}
       PUBLIC_BASE_URL: ${PUBLIC_BASE_URL:-https://qaz.fund}
