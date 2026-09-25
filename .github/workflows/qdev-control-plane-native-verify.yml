@@ -81,6 +81,12 @@ jobs:
           set -euo pipefail
           log="${GITHUB_WORKSPACE}/${CARRIER_GATE_LOG}"
           : > "${log}"
+          # The QDev self-hosted runner injects its own short-lived artifact
+          # identity into every job (QDEV_ARTIFACT_URL/TOKEN, QDEV_JOB_ID,
+          # QDEV_REPOSITORY, QDEV_HEAD_SHA). The unchanged native CI assumes
+          # the GitHub-hosted environment where those variables are absent, so
+          # each exact command runs with that carrier-injected identity
+          # removed. The carrier's own evidence upload below keeps its env.
           for command in \
             'python -m ruff check .' \
             'python -m ruff format --check .' \
@@ -89,7 +95,11 @@ jobs:
             'python .github/scripts/qdev-runner-policy.py --root .' \
             'python scripts/verify_runtime_install.py'; do
             printf '\n$ %s\n' "${command}" | tee -a "${log}"
-            eval "${command}" 2>&1 | tee -a "${log}"
+            (
+              unset QDEV_ARTIFACT_URL QDEV_ARTIFACT_TOKEN QDEV_JOB_ID \
+                QDEV_REPOSITORY QDEV_HEAD_SHA
+              eval "${command}"
+            ) 2>&1 | tee -a "${log}"
           done
 
       - name: Record exact-source carrier identity

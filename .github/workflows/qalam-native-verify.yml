@@ -20,7 +20,11 @@ concurrency:
   cancel-in-progress: false
 
 env:
-  SOURCE_DIR: .qdev/qalam
+  # The private source must not live under a hidden path segment: the native
+  # Qalam CI asserts the conventional /favicon.ico route through Express
+  # sendFile, whose default dotfiles policy returns 404 when any path segment
+  # is hidden.
+  SOURCE_DIR: qdev-src/qalam
   SOURCE_REPOSITORY: belilovsky/qalam
   VERIFIED_SOURCE_SHA: ${{ github.event.inputs.head_sha }}
   CARRIER_NOTE: carrier-qalam-run-identity.txt
@@ -53,7 +57,7 @@ jobs:
           (umask 077; printf '%s\n' "${QALAM_DEPLOY_KEY}" > "${key_file}")
           test -s "${key_file}"
           export GIT_SSH_COMMAND="ssh -i ${key_file} -o IdentitiesOnly=yes -o StrictHostKeyChecking=accept-new -o UserKnownHostsFile=${RUNNER_TEMP}/qdev-known-hosts"
-          mkdir -p .qdev
+          mkdir -p qdev-src
           git clone --quiet --no-tags "git@github.com:${SOURCE_REPOSITORY}.git" "${SOURCE_DIR}"
           cd "${SOURCE_DIR}"
           if ! git cat-file -e "${VERIFIED_SOURCE_SHA}^{commit}" 2>/dev/null; then
@@ -82,12 +86,12 @@ jobs:
           python-version: "3.12"
 
       - name: Validate the exact-source QDev runner contract
-        working-directory: .qdev/qalam
+        working-directory: qdev-src/qalam
         run: python3 .github/scripts/qdev-runner-policy.py --root .
 
       - name: Run the unchanged native Qalam CI gate
         id: native_gate
-        working-directory: .qdev/qalam
+        working-directory: qdev-src/qalam
         run: |
           set -o pipefail
           ./ops/ci-check.sh 2>&1 | tee "${GITHUB_WORKSPACE}/${CARRIER_GATE_LOG}"
