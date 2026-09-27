@@ -78,6 +78,7 @@ _GENERIC_RUSSIAN_SUMMARY = (
 
 _QAZINDUSTRY_REIMBURSEMENT_ID = "1684ec38-c20f-5844-9e69-140b4a595c28"
 _QAZINDUSTRY_PROCESS_IMPROVEMENT_ID = "ed3308cc-e250-5235-89f3-b825146e5c1f"
+_LIVESTOCK_SUBSIDY_CRITERIA_ID = "73636485-4e9c-54c7-9881-1f294cc2dd29"
 _QAZINDUSTRY_PROCESS_IMPROVEMENT_TITLES = {
     "ru": "Возмещение затрат на совершенствование технологических процессов",
     "kk": "Технологиялық процестерді жетілдіруге жұмсалған шығындарды өтеу",
@@ -2993,6 +2994,8 @@ def _source_panel_markup(
     *,
     copy: dict[str, object],
     lang: str,
+    source_lang: str,
+    source_language_handoff: bool,
     source_label: str,
     source_host: str,
     source_href: str,
@@ -3044,7 +3047,10 @@ def _source_panel_markup(
     source_button_class = "button slim" if application_action else "button primary"
     source_link_rows: list[str] = []
     allowed_source_hosts = {"qazindustry.gov.kz"}
-    if str(detail.id) == _QAZINDUSTRY_PROCESS_IMPROVEMENT_ID:
+    if str(detail.id) in {
+        _QAZINDUSTRY_PROCESS_IMPROVEMENT_ID,
+        _LIVESTOCK_SUBSIDY_CRITERIA_ID,
+    }:
         allowed_source_hosts.add("old.adilet.zan.kz")
     source_links = raw.get("official_source_links")
     if isinstance(source_links, list):
@@ -3071,6 +3077,14 @@ def _source_panel_markup(
                 )
             )
     additional_source_actions = "".join(source_link_rows)
+    handoff_attributes = (
+        'hreflang="{source_lang}" data-language-handoff="{from_lang}-to-{source_lang}"'.format(
+            source_lang=escape(source_lang, quote=True),
+            from_lang=escape(lang, quote=True),
+        )
+        if source_language_handoff
+        else ""
+    )
     return """
     <aside class="source-panel" aria-labelledby="source-title">
       <div class="source-panel-head">
@@ -3080,7 +3094,7 @@ def _source_panel_markup(
       </div>
       <div class="source-actions">
         {application_action}
-        <a class="{source_button_class}" href="{source_href}" target="_blank" rel="noopener" lang="{source_lang}">{source_button_label}</a>
+        <a class="{source_button_class}" href="{source_href}" target="_blank" rel="noopener" lang="{source_lang}" {handoff_attributes}>{source_button_label}</a>
         {additional_source_actions}
       </div>
       {reference_markup}
@@ -3092,7 +3106,8 @@ def _source_panel_markup(
         application_action=application_action,
         source_button_class=source_button_class,
         source_href=source_href,
-        source_lang=escape(str(raw.get("source_lang") or lang), quote=True),
+        source_lang=escape(source_lang, quote=True),
+        handoff_attributes=handoff_attributes,
         source_button_label=escape(str(copy["detail_open_source"])),
         additional_source_actions=additional_source_actions,
         reference_markup=reference_markup,
@@ -3245,6 +3260,27 @@ def render_opportunity_page(
 ) -> str:
     copy = dashboard_copy(lang)
     active_lang = str(copy["lang"])
+    if str(detail.id) == _LIVESTOCK_SUBSIDY_CRITERIA_ID:
+        localized_source_url = _localized_item_value(
+            detail, "source_url", active_lang, ""
+        )
+        localized_source_lang = _localized_item_value(
+            detail, "source_lang", active_lang, active_lang
+        )
+        parsed_source_url = urlparse(localized_source_url)
+        if (
+            parsed_source_url.scheme == "https"
+            and parsed_source_url.hostname == "old.adilet.zan.kz"
+            and parsed_source_url.path.endswith("/V1900018404")
+            and localized_source_lang in {"ru", "kk", "en"}
+        ):
+            localized_raw = dict(detail.raw) if isinstance(detail.raw, dict) else {}
+            localized_raw["source_lang"] = localized_source_lang
+            detail = detail.model_copy(
+                update={"source_url": localized_source_url, "raw": localized_raw}
+            )
+        copy["language_fallback_note"] = ""
+        copy["related_section_description"] = ""
     if str(detail.id) == _QAZINDUSTRY_PROCESS_IMPROVEMENT_ID:
         # This route now has a fully localized detail and related-card projection;
         # the generic site fallback notice and related-section filler do not apply.
@@ -3283,6 +3319,12 @@ def render_opportunity_page(
             update={"summary": "", "detail_text": "", "detail_sections": []}
         )
         summary = ""
+    elif str(detail.id) == _LIVESTOCK_SUBSIDY_CRITERIA_ID:
+        # Render the verified localized criteria and application steps below,
+        # not a machine-extracted copy of the full legal instrument.
+        content_detail = detail.model_copy(
+            update={"detail_text": "", "detail_sections": []}
+        )
     elif not summary:
         summary = str(copy["detail_empty"])
     seo_summary = _seo_excerpt(summary) or summary
@@ -3341,14 +3383,18 @@ def render_opportunity_page(
         ),
         quote=True,
     )
-    related_markup = _related_markup(
-        related_items or [],
-        lang=active_lang,
-        root_path=root_path,
-        copy=copy,
-        suppress_generic_source_content=(
-            str(detail.id) == _QAZINDUSTRY_REIMBURSEMENT_ID
-        ),
+    related_markup = (
+        ""
+        if str(detail.id) == _LIVESTOCK_SUBSIDY_CRITERIA_ID
+        else _related_markup(
+            related_items or [],
+            lang=active_lang,
+            root_path=root_path,
+            copy=copy,
+            suppress_generic_source_content=(
+                str(detail.id) == _QAZINDUSTRY_REIMBURSEMENT_ID
+            ),
+        )
     )
     source_text = detail.funder or _label_value(detail.source, copy)
     format_text = _detail_format_label(detail, copy)
@@ -3489,6 +3535,11 @@ def render_opportunity_page(
         detail,
         copy=copy,
         lang=active_lang,
+        source_lang=localized_source_lang,
+        source_language_handoff=(
+            str(detail.id) == _LIVESTOCK_SUBSIDY_CRITERIA_ID
+            and active_lang != localized_source_lang
+        ),
         source_label=source_text,
         source_host=source_host,
         source_href=source_href,

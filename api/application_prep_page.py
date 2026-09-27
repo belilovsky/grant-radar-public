@@ -3,7 +3,6 @@
 from __future__ import annotations
 
 import json
-from datetime import date
 from enum import Enum
 from html import escape
 from typing import Any
@@ -34,14 +33,22 @@ def _public_label(value: object, lang: str) -> str:
     return raw.replace("_", " ")
 
 
-def _deadline(value: date | None, lang: str) -> str:
-    if value is None:
+def _deadline(detail: OpportunityDetail, lang: str) -> str:
+    raw = detail.raw if isinstance(detail.raw, dict) else {}
+    application_deadline = str(raw.get("application_deadline_display") or "").strip()
+    if application_deadline:
+        return application_deadline
+    if detail.deadline is None:
         return {
             "ru": "Без фиксированного срока",
             "kk": "Белгіленген мерзім жоқ",
             "en": "No fixed deadline",
         }.get(lang, "No fixed deadline")
-    return value.strftime("%d.%m.%Y") if lang in {"ru", "kk"} else value.isoformat()
+    return (
+        detail.deadline.strftime("%d.%m.%Y")
+        if lang in {"ru", "kk"}
+        else detail.deadline.isoformat()
+    )
 
 
 def _amount(detail: OpportunityDetail, lang: str) -> str:
@@ -586,7 +593,7 @@ def render_application_prep_page(
         )
         or copy["unknown"]
     )
-    deadline = _deadline(detail.deadline, active_lang)
+    deadline = _deadline(detail, active_lang)
     amount = _amount(detail, active_lang)
     checklist = _checklist(detail, active_lang)
     truth = program_truth(detail, lifecycle=lifecycle)

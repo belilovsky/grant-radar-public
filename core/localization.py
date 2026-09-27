@@ -331,6 +331,10 @@ def localize_opportunity(item: Opportunity, lang: str) -> Opportunity:
     content_lang = normalize_content_lang(lang)
     if content_lang == "en":
         raw = item.raw if isinstance(item.raw, dict) else {}
+        localized_raw = dict(raw)
+        localized_country = localized_text(raw, content_lang, "country", fallback="")
+        if localized_country:
+            localized_raw["country"] = localized_country
         title = localized_text(raw, content_lang, "title", fallback=item.title)
         summary = localized_text(raw, content_lang, "summary", fallback=item.summary)
         title, summary = _english_source_fallback(item, title, summary)
@@ -338,6 +342,13 @@ def localize_opportunity(item: Opportunity, lang: str) -> Opportunity:
             update={
                 "title": title,
                 "summary": _remove_repeated_title_prefix(summary, title),
+                "raw": localized_raw,
+                "funder": (
+                    localized_text(
+                        raw, content_lang, "funder", fallback=item.funder or ""
+                    )
+                    or None
+                ),
                 "eligibility": localized_string_list(
                     raw,
                     content_lang,
@@ -348,6 +359,10 @@ def localize_opportunity(item: Opportunity, lang: str) -> Opportunity:
         )
         return normalize_public_opportunity(localized)
     raw = item.raw if isinstance(item.raw, dict) else {}
+    localized_raw = dict(raw)
+    localized_country = localized_text(raw, content_lang, "country", fallback="")
+    if localized_country:
+        localized_raw["country"] = localized_country
     summary = localized_text(
         raw,
         content_lang,
@@ -363,6 +378,11 @@ def localize_opportunity(item: Opportunity, lang: str) -> Opportunity:
         update={
             "title": title,
             "summary": _remove_repeated_title_prefix(public_summary, title),
+            "raw": localized_raw,
+            "funder": (
+                localized_text(raw, content_lang, "funder", fallback=item.funder or "")
+                or None
+            ),
             "eligibility": localized_string_list(
                 raw,
                 content_lang,

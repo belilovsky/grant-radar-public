@@ -142,6 +142,8 @@ class DomesticProgram:
     taxonomy_deadline_model: str = ""
     application_windows: tuple[tuple[str, str], ...] = ()
     source_aliases: tuple[str, ...] = ()
+    identity_url: str | None = None
+    editorial_i18n: dict[str, dict[str, Any]] | None = None
 
 
 DOMESTIC_PROGRAMS = (
@@ -940,13 +942,290 @@ DOMESTIC_PROGRAMS = (
         tags=("subsidy", "vettech", "livestock", "animal_health", "egov"),
     ),
     DomesticProgram(
-        url="https://egov.kz/cms/ru/articles/livestock/demands_for_subsidies",
-        title="Criteria for producers applying for subsidies",
+        url="https://old.adilet.zan.kz/rus/docs/V1900018404",
+        title="Livestock subsidies: eligibility and applications",
         summary=(
-            "Official eGov guide to eligibility criteria and verification methods "
-            "for agricultural subsidy applicants."
+            "Rules No. 108 govern subsidies for breeding livestock, livestock "
+            "productivity and product quality. Eligibility criteria, subsidy "
+            "rates and application windows depend on the subsidy type and "
+            "available local-budget funds."
         ),
-        tags=("subsidy", "agrotech", "vettech", "agriculture", "egov"),
+        tags=("subsidy", "agrotech", "vettech", "agriculture", "livestock", "adilet"),
+        rolling=False,
+        eligibility=(
+            "Individuals and legal entities producing agricultural products",
+            "Individuals and legal entities engaged in reproducing, preserving "
+            "and breeding animals with high genetic potential",
+            "Breeding centres, distribution centres for breeding-animal semen and "
+            "embryos, and inseminator technicians providing artificial insemination "
+            "services for breeding stock",
+            "Additional requirements vary by subsidy type; the specific criteria "
+            "are listed in Annex 2",
+        ),
+        funder="Local executive bodies",
+        country="kazakhstan",
+        application_url="https://gosagro.kz",
+        taxonomy_instrument="subsidy",
+        taxonomy_application_mode="digital",
+        taxonomy_deadline_model="route_specific",
+        source_aliases=(
+            "https://old.adilet.zan.kz/kaz/docs/V1900018404",
+            "https://old.adilet.zan.kz/eng/docs/V1900018404",
+            "https://egov.kz/cms/ru/articles/livestock/demands_for_subsidies",
+        ),
+        identity_url="https://egov.kz/cms/ru/articles/livestock/demands_for_subsidies",
+        editorial_i18n={
+            "ru": {
+                "title": "Субсидии на животноводство: критерии и подача заявки",
+                "summary": (
+                    "Правила № 108 регулируют субсидии на развитие племенного "
+                    "животноводства, продуктивность и качество животноводческой "
+                    "продукции. Критерии, нормативы и периоды подачи зависят от "
+                    "вида субсидии и средств местного бюджета."
+                ),
+                "funder": "Местные исполнительные органы",
+                "country": "Казахстан",
+                "source_url": "https://old.adilet.zan.kz/rus/docs/V1900018404",
+                "source_lang": "ru",
+                "format_label": "Государственная субсидия",
+                "amount_label": "Норматив субсидии",
+                "amount": (
+                    "Устанавливается отдельно по каждому направлению; выплаты "
+                    "ограничены средствами местного бюджета текущего финансового года."
+                ),
+                "deadline_label": "Срок подачи",
+                "deadline_display": (
+                    "Зависит от вида субсидии; периоды указаны в приложении 2."
+                ),
+                "primary_source_button_label": "Открыть Правила № 108 в Әділет",
+                "application_button_label": "Перейти на портал Gosagro.kz",
+                "prepare_application_label": "Сверить требования к заявке",
+                "eligibility_section_title": "Кто может претендовать",
+                "eligibility": [
+                    (
+                        "Физические и юридические лица, производящие "
+                        "сельскохозяйственную продукцию."
+                    ),
+                    (
+                        "Физические и юридические лица, занимающиеся "
+                        "воспроизводством, сохранением и разведением животных "
+                        "с высоким генетическим потенциалом."
+                    ),
+                    (
+                        "Племенные центры, дистрибьютерные центры по реализации "
+                        "семени и эмбрионов племенных животных, а также "
+                        "техники-осеменаторы, оказывающие услуги искусственного "
+                        "осеменения маточного поголовья."
+                    ),
+                    (
+                        "Дополнительные требования зависят от вида субсидии; "
+                        "конкретные критерии перечислены в приложении 2."
+                    ),
+                ],
+                "highlights_label": "Как устроены условия",
+                "highlights": [
+                    (
+                        "Приложение 2 устанавливает критерии заявителей и способы "
+                        "их проверки отдельно по каждому виду субсидии."
+                    ),
+                    (
+                        "Нормативы и расчётные единицы указаны по направлениям "
+                        "в приложении 1."
+                    ),
+                    (
+                        "Выплаты производятся в пределах средств местного бюджета "
+                        "на соответствующий финансовый год."
+                    ),
+                    (
+                        "Периоды подачи различаются по направлениям; общего "
+                        "бессрочного приёма для всей программы нет."
+                    ),
+                ],
+                "application_step_titles": [
+                    "Выберите вид субсидии",
+                    "Войдите в Gosagro",
+                    "Заполните и подпишите заявку",
+                ],
+                "application_steps": [
+                    (
+                        "Сверьте ситуацию с критериями и периодом подачи для "
+                        "выбранного направления в приложении 2 Правил № 108."
+                    ),
+                    (
+                        "Официальная карточка государственной услуги ведёт на "
+                        "Gosagro.kz; вход выполняется с электронной цифровой подписью."
+                    ),
+                    (
+                        "Заполните электронную заявку и подпишите её электронной "
+                        "цифровой подписью. Результат услуги: уведомление о "
+                        "регистрации заявки или мотивированный отказ."
+                    ),
+                ],
+            },
+            "kk": {
+                "title": "Мал шаруашылығына субсидиялар: талаптар мен өтінім беру",
+                "summary": (
+                    "№ 108 қағидалары асыл тұқымды мал шаруашылығын дамытуға, мал "
+                    "өнімділігі мен өнім сапасын арттыруға арналған субсидияны "
+                    "реттейді. Қатысу өлшемдері, субсидия нормативі және өтінім "
+                    "беру кезеңі субсидия түріне әрі жергілікті бюджетте бөлінген "
+                    "қаражатқа байланысты."
+                ),
+                "funder": "Жергілікті атқарушы органдар",
+                "country": "Қазақстан",
+                "source_url": "https://old.adilet.zan.kz/kaz/docs/V1900018404",
+                "source_lang": "kk",
+                "format_label": "Мемлекеттік субсидия",
+                "amount_label": "Субсидия нормативі",
+                "amount": (
+                    "Әр бағыт бойынша бөлек белгіленеді; төлемдер тиісті қаржы "
+                    "жылына жергілікті бюджеттен бөлінген қаражат шегінде жүргізіледі."
+                ),
+                "deadline_label": "Өтінім беру кезеңі",
+                "deadline_display": (
+                    "Субсидия түріне байланысты; кезеңдер 2-қосымшада көрсетілген."
+                ),
+                "primary_source_button_label": "Әділеттегі № 108 қағиданы ашу",
+                "application_button_label": "Gosagro.kz порталына өту",
+                "prepare_application_label": "Өтінім талаптарын тексеру",
+                "eligibility_section_title": "Кім өтінім бере алады",
+                "eligibility": [
+                    ("Ауыл шаруашылығы өнімін өндіретін жеке және заңды тұлғалар."),
+                    (
+                        "Генетикалық әлеуеті жоғары жануарларды өсімін молайту, "
+                        "сақтау және өсірумен айналысатын жеке және заңды тұлғалар."
+                    ),
+                    (
+                        "Асыл тұқымды жануарлардың ұрығы мен эмбриондарын өткізетін "
+                        "дистрибьютерлік орталықтар және аналық малды қолдан "
+                        "ұрықтандыру қызметін көрсететін техниктер-ұрықтандырушылар."
+                    ),
+                    (
+                        "Қосымша талаптар субсидия түріне қарай өзгереді; нақты "
+                        "өлшемдер 2-қосымшада берілген."
+                    ),
+                ],
+                "highlights_label": "Шарттар қалай белгіленеді",
+                "highlights": [
+                    (
+                        "2-қосымшада субсидияның әр түрі бойынша өтінім берушілерге "
+                        "қойылатын талаптар мен оларды тексеру тәсілдері көрсетілген."
+                    ),
+                    (
+                        "Субсидия нормативі мен есептеу бірлігі 1-қосымшада әр "
+                        "бағыт бойынша бөлек белгіленеді."
+                    ),
+                    (
+                        "Төлемдер тиісті қаржы жылына жергілікті бюджеттен бөлінген "
+                        "қаражат шегінде жүргізіледі."
+                    ),
+                    (
+                        "Өтінім қабылдау кезеңдері бағытқа қарай өзгереді; бүкіл "
+                        "бағдарламаға ортақ мерзімсіз қабылдау қарастырылмаған."
+                    ),
+                ],
+                "application_step_titles": [
+                    "Субсидия түрін таңдаңыз",
+                    "Gosagro-ға кіріңіз",
+                    "Өтінімді толтырып, қол қойыңыз",
+                ],
+                "application_steps": [
+                    (
+                        "Таңдалған бағыттың талаптары мен өтінім беру кезеңін "
+                        "№ 108 қағидалардың 2-қосымшасынан тексеріңіз."
+                    ),
+                    (
+                        "Мемлекеттік қызметтің ресми беті Gosagro.kz порталына "
+                        "өткізеді; жүйеге электрондық цифрлық қолтаңба арқылы кіріңіз."
+                    ),
+                    (
+                        "Электрондық өтінімді толтырып, электрондық цифрлық "
+                        "қолтаңбамен қол қойыңыз. Қызмет нәтижесі: өтінімнің "
+                        "тіркелгені туралы хабарлама немесе дәлелді бас тарту."
+                    ),
+                ],
+            },
+            "en": {
+                "title": "Livestock subsidies: eligibility and applications",
+                "summary": (
+                    "Rules No. 108 govern subsidies for breeding livestock, "
+                    "livestock productivity and product quality. Eligibility "
+                    "criteria, subsidy rates and application windows depend on "
+                    "the subsidy type and available local-budget funds."
+                ),
+                "funder": "Local executive bodies",
+                "country": "Kazakhstan",
+                "source_url": "https://old.adilet.zan.kz/rus/docs/V1900018404",
+                "source_lang": "ru",
+                "format_label": "State subsidy",
+                "amount_label": "Subsidy rate",
+                "amount": (
+                    "Set separately for each type; payments are limited to local "
+                    "budget funds for the current financial year."
+                ),
+                "deadline_label": "Application window",
+                "deadline_display": (
+                    "Varies by subsidy type; periods are listed in Annex 2."
+                ),
+                "primary_source_button_label": "Open Rule No. 108 in Russian on Adilet",
+                "application_button_label": "Open the Gosagro.kz application portal",
+                "prepare_application_label": "Check application requirements",
+                "eligibility_section_title": "Who may apply",
+                "eligibility": [
+                    "Individuals and legal entities producing agricultural products.",
+                    (
+                        "Individuals and legal entities engaged in reproducing, "
+                        "preserving and breeding animals with high genetic potential."
+                    ),
+                    (
+                        "Breeding centres, distribution centres for breeding-animal "
+                        "semen and embryos, and inseminator technicians providing "
+                        "artificial insemination services for breeding stock."
+                    ),
+                    (
+                        "Additional requirements vary by subsidy type; the specific "
+                        "criteria are listed in Annex 2."
+                    ),
+                ],
+                "highlights_label": "How the terms are set",
+                "highlights": [
+                    (
+                        "Annex 2 lists applicant criteria and verification methods "
+                        "separately for each subsidy type."
+                    ),
+                    "Annex 1 sets subsidy rates and calculation units by type.",
+                    (
+                        "Payments are made within the funds provided in the local "
+                        "budget for the relevant financial year."
+                    ),
+                    (
+                        "Application windows differ by type; the rules do not set "
+                        "one year-round window for the whole programme."
+                    ),
+                ],
+                "application_step_titles": [
+                    "Choose a subsidy type",
+                    "Sign in to Gosagro",
+                    "Complete and sign the application",
+                ],
+                "application_steps": [
+                    (
+                        "Check the criteria and application period for the relevant "
+                        "type in Annex 2 to Rule No. 108."
+                    ),
+                    (
+                        "The official state-service page directs applicants to "
+                        "Gosagro.kz, where sign-in uses an electronic digital "
+                        "signature (EDS)."
+                    ),
+                    (
+                        "Complete the online application and sign it with an EDS. "
+                        "The stated result is a notice that the application was "
+                        "registered or a reasoned refusal."
+                    ),
+                ],
+            },
+        },
     ),
     DomesticProgram(
         url="https://www.gov.kz/services/3794",
@@ -1712,15 +1991,27 @@ def _taxonomy_payload(program: DomesticProgram) -> dict[str, Any]:
 
 def _i18n_payload(program: DomesticProgram) -> dict[str, Any]:
     editorial = DOMESTIC_EDITORIAL_RU.get(program.url, {})
-    if not program.title_ru and not program.summary_ru and not editorial:
+    translations = {
+        language: dict(values)
+        for language, values in (program.editorial_i18n or {}).items()
+        if isinstance(values, dict)
+    }
+    if (
+        not program.title_ru
+        and not program.summary_ru
+        and not editorial
+        and not translations
+    ):
         return {}
-    ru: dict[str, Any] = {}
+    ru = translations.get("ru", {})
     if program.title_ru:
         ru["title"] = program.title_ru
     if program.summary_ru:
         ru["summary"] = program.summary_ru
     ru.update(editorial)
-    return {"i18n": {"ru": ru}}
+    if ru:
+        translations["ru"] = ru
+    return {"i18n": translations}
 
 
 def domestic_program_payload(program: DomesticProgram) -> dict[str, Any]:
@@ -1765,8 +2056,10 @@ def domestic_program_payload(program: DomesticProgram) -> dict[str, Any]:
         payload["eligibility_raw"] = list(program.eligibility)
     if program.amount_raw:
         payload["currency"] = program.currency
+    localized_editorials = [editorial, *(program.editorial_i18n or {}).values()]
     if any(
         editorial.get(key)
+        for editorial in localized_editorials
         for key in ("highlights", "eligibility", "prepare_items", "application_steps")
     ):
         payload["detail_content_mode"] = "curated"
@@ -1945,7 +2238,7 @@ class KazakhstanDomesticSupportSource(BaseSource):
                     yield self._opportunity(
                         program,
                         raw={
-                            "external_id": program.url,
+                            "external_id": program.identity_url or program.url,
                             "page_title": program.title,
                             "status_code": None,
                             **domestic_program_payload(program),
@@ -1973,7 +2266,7 @@ class KazakhstanDomesticSupportSource(BaseSource):
 
             page_title = _html_title(response.text)
             raw = {
-                "external_id": program.url,
+                "external_id": program.identity_url or program.url,
                 "page_title": page_title,
                 "status_code": response.status_code,
                 **domestic_program_payload(program),

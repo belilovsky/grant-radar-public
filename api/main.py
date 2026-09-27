@@ -2418,6 +2418,20 @@ async def opportunity_prepare_page(
             localized_item,
             lang=content_lang,
         )
+    elif str(opportunity_id) == "73636485-4e9c-54c7-9881-1f294cc2dd29":
+        raw = dict(localized_item.raw) if isinstance(localized_item.raw, dict) else {}
+        translations = raw.get("i18n")
+        editorial = (
+            translations.get(content_lang, {}) if isinstance(translations, dict) else {}
+        )
+        if isinstance(editorial, dict):
+            amount = str(editorial.get("amount") or "").strip()
+            deadline_display = str(editorial.get("deadline_display") or "").strip()
+            if amount:
+                raw["application_amount_display"] = amount
+            if deadline_display:
+                raw["application_deadline_display"] = deadline_display
+            localized_item = localized_item.model_copy(update={"raw": raw})
     detail = await build_opportunity_detail(
         localized_item,
         lang=content_lang,
