@@ -103,11 +103,14 @@ run_remote_capacity_preflight
 # ignored local files or residue from an older remote release entering the
 # production Docker context while preserving operational state explicitly.
 SOURCE_STAGE="$(mktemp -d "${TMPDIR:-/tmp}/qaz-fund-source.${REVISION:0:12}.XXXXXX")"
+SOURCE_ARCHIVE="$(mktemp "${TMPDIR:-/tmp}/qaz-fund-source.${REVISION:0:12}.XXXXXX.tar")"
 cleanup_source_stage() {
   rm -rf -- "$SOURCE_STAGE"
+  rm -f -- "$SOURCE_ARCHIVE"
 }
 trap cleanup_source_stage EXIT
-git archive "$REVISION" | tar -x -C "$SOURCE_STAGE"
+git archive "$REVISION" >"$SOURCE_ARCHIVE"
+tar -x -f "$SOURCE_ARCHIVE" -C "$SOURCE_STAGE"
 
 SOURCE_BACKUP_DIR="$SOURCE_BACKUP_ROOT/$RELEASE_STAMP-${REVISION:0:12}"
 printf -v source_backup_command 'install -d -m 700 %q' "$SOURCE_BACKUP_DIR"
