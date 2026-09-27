@@ -3192,6 +3192,9 @@ DASHBOARD_CSS = r"""    :root {
         border-radius: 0;
         background: transparent;
       }
+      .filter-disclosure:not([open]) {
+        display: none;
+      }
       .filter-disclosure > summary {
         display: flex;
         align-items: center;
