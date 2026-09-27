@@ -66,6 +66,11 @@ _DETAIL_SECTION_ELIGIBILITY_HEADINGS = frozenset(
         "кім өтінім бере алады",
     }
 )
+_SOURCE_ONLY_DETAIL_ROUTE_ID = "1684ec38-c20f-5844-9e69-140b4a595c28"
+_GENERIC_RUSSIAN_SUMMARY = (
+    "Программа для заявителей из Казахстана и Центральной Азии. "
+    "Условия, сроки и порядок подачи опубликованы у организатора."
+)
 
 
 OPPORTUNITY_DETAIL_CSS = r"""
@@ -430,6 +435,24 @@ OPPORTUNITY_DETAIL_CSS = r"""
     }
     .site-footer--compact {
       margin-top: 2px;
+    }
+    @media (min-width: 961px) {
+      .opportunity-article .opportunity-layout--source-only {
+        grid-template-columns: minmax(0, 1fr);
+      }
+      .opportunity-layout--source-only .source-panel {
+        position: static;
+        grid-template-columns: minmax(0, 1.25fr) minmax(260px, .75fr);
+        align-items: center;
+      }
+      .opportunity-layout--source-only .source-actions {
+        width: 100%;
+        max-width: 360px;
+        justify-self: end;
+      }
+      .opportunity-layout--source-only .reference-list {
+        grid-column: 1 / -1;
+      }
     }
     @media (min-width: 1440px) {
       .opportunity-layout {
@@ -2435,6 +2458,7 @@ def _related_markup(
     lang: str,
     root_path: str,
     copy: dict[str, object],
+    source_only_route_content_cleanup: bool = False,
 ) -> str:
     if not related_items:
         return ""
@@ -2456,7 +2480,19 @@ def _related_markup(
             title=title,
         ) or str(copy["no_summary"])
         if _needs_russian_title_fallback(title, summary, lang):
-            title = _summary_title_fallback(summary)
+            if (
+                source_only_route_content_cleanup
+                and summary == _GENERIC_RUSSIAN_SUMMARY
+            ):
+                source_title = _localized_item_value(item, "title", "en", item.title)
+                if source_title:
+                    title = source_title
+                else:
+                    title = _summary_title_fallback(summary)
+            else:
+                title = _summary_title_fallback(summary)
+        if source_only_route_content_cleanup and summary == _GENERIC_RUSSIAN_SUMMARY:
+            summary = ""
         href = escape(_page_path(root_path, str(item.id), lang), quote=True)
         reason = escape(str(copy.get(reason_key, copy["related_reason_theme"])))
         source_label = escape(item.funder or _label_value(item.source, copy))
@@ -2476,7 +2512,7 @@ def _related_markup(
                 {deadline}
               </div>
               <h3><a href="{href}">{title}</a></h3>
-              <p class="related-summary">{summary}</p>
+              {summary_markup}
               <div class="related-meta">
                 <span>{source}</span>
                 <a class="related-link" href="{href}">{action}</a>
@@ -2487,7 +2523,11 @@ def _related_markup(
                 deadline=deadline_markup,
                 href=href,
                 title=escape(title),
-                summary=escape(summary),
+                summary_markup=(
+                    f'<p class="related-summary">{escape(summary)}</p>'
+                    if summary
+                    else ""
+                ),
                 source=source_label,
                 action=escape(str(copy["related_open"])),
             )
@@ -2521,9 +2561,19 @@ def render_opportunity_page(
     copy = dashboard_copy(lang)
     active_lang = str(copy["lang"])
     title = detail.title or str(copy["detail_title_fallback"])
-    summary = _clean_summary_text(detail.summary, title=title) or str(
-        copy["detail_empty"]
+    source_only_route = str(detail.id) == _SOURCE_ONLY_DETAIL_ROUTE_ID
+    summary = _clean_summary_text(detail.summary, title=title)
+    content_detail = detail
+    suppress_generic_source_only_summary = (
+        source_only_route and summary == _GENERIC_RUSSIAN_SUMMARY
     )
+    if suppress_generic_source_only_summary:
+        content_detail = detail.model_copy(
+            update={"summary": "", "detail_text": "", "detail_sections": []}
+        )
+        summary = ""
+    elif not summary:
+        summary = str(copy["detail_empty"])
     seo_summary = _seo_excerpt(summary) or summary
     page_title = f"{title} – QAZ.FUND"
     canonical_path = _page_path(root_path, str(detail.id), active_lang)
@@ -2585,6 +2635,7 @@ def render_opportunity_page(
         lang=active_lang,
         root_path=root_path,
         copy=copy,
+        source_only_route_content_cleanup=source_only_route,
     )
     source_text = detail.funder or _label_value(detail.source, copy)
     format_text = _detail_format_label(detail, copy)
@@ -2632,7 +2683,7 @@ def render_opportunity_page(
         else ""
     )
     content_markup = _content_sections_markup(
-        detail,
+        content_detail,
         title=title,
         summary=summary,
         copy=copy,
@@ -2642,6 +2693,15 @@ def render_opportunity_page(
             or guidance_markup
             or application_steps_markup
         ),
+    )
+    source_only_layout = str(detail.id) == _SOURCE_ONLY_DETAIL_ROUTE_ID and not any(
+        (
+            highlights_markup,
+            eligibility_markup,
+            guidance_markup,
+            application_steps_markup,
+            content_markup,
+        )
     )
     og_locale = escape(active_lang.replace("-", "_") + "_KZ", quote=True)
     canonical_url = _absolute_href(site_origin, canonical_path)
@@ -3785,7 +3845,7 @@ def render_opportunity_page(
         <div class="opportunity-head">
           <span class="opportunity-kicker">{escape(format_text)}</span>
           <h1>{escape(title)}</h1>
-          <p class="opportunity-summary">{escape(summary)}</p>
+          {f'<p class="opportunity-summary">{escape(summary)}</p>' if summary else ''}
         </div>
         {lifecycle_notice_markup}
         {opportunity_facts}
@@ -3798,7 +3858,7 @@ def render_opportunity_page(
         </div>
       </header>
 
-      <div class="opportunity-layout">
+      <div class="opportunity-layout{' opportunity-layout--source-only' if source_only_layout else ''}">
         <div class="opportunity-content">
           {highlights_markup}
           {eligibility_markup}

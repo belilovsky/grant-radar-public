@@ -2256,17 +2256,20 @@ async def opportunity_page(
         lang=content_lang,
         allow_remote_fetch=False,
     )
-    response = HTMLResponse(
-        render_opportunity_page(
-            detail=detail,
-            lang=content_lang,
-            root_path=root_path,
-            site_origin=site_origin,
-            related_items=related_items,
-            lifecycle=public_lifecycle(item),
-        )
+    page_html = render_opportunity_page(
+        detail=detail,
+        lang=content_lang,
+        root_path=root_path,
+        site_origin=site_origin,
+        related_items=related_items,
+        lifecycle=public_lifecycle(item),
     )
-    response.headers["Cache-Control"] = "public, max-age=60, stale-while-revalidate=300"
+    response = HTMLResponse(page_html)
+    response.headers["Cache-Control"] = (
+        "public, no-cache"
+        if 'class="opportunity-layout opportunity-layout--source-only"' in page_html
+        else "public, max-age=60, stale-while-revalidate=300"
+    )
     return response
 
 
