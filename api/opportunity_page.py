@@ -2749,7 +2749,7 @@ def _related_markup(
     lang: str,
     root_path: str,
     copy: dict[str, object],
-    source_only_route_content_cleanup: bool = False,
+    suppress_generic_source_content: bool = False,
 ) -> str:
     if not related_items:
         return ""
@@ -2770,20 +2770,16 @@ def _related_markup(
             ),
             title=title,
         ) or str(copy["no_summary"])
-        if _needs_russian_title_fallback(title, summary, lang):
-            if (
-                source_only_route_content_cleanup
-                and summary == _GENERIC_RUSSIAN_SUMMARY
-            ):
-                source_title = _localized_item_value(item, "title", "en", item.title)
-                if source_title:
-                    title = source_title
-                else:
-                    title = _summary_title_fallback(summary)
-            else:
-                title = _summary_title_fallback(summary)
-        if source_only_route_content_cleanup and summary == _GENERIC_RUSSIAN_SUMMARY:
+        if (
+            suppress_generic_source_content
+            and summary.strip().casefold() == _GENERIC_RUSSIAN_SUMMARY.casefold()
+        ):
+            source_title = _localized_item_value(item, "title", "en", item.title)
+            if source_title:
+                title = source_title
             summary = ""
+        if _needs_russian_title_fallback(title, summary, lang):
+            title = _summary_title_fallback(summary)
         href = escape(_page_path(root_path, str(item.id), lang), quote=True)
         reason = escape(str(copy.get(reason_key, copy["related_reason_theme"])))
         source_label = escape(item.funder or _label_value(item.source, copy))
@@ -2795,12 +2791,15 @@ def _related_markup(
             if deadline_label
             else ""
         )
+        summary_markup = (
+            f'<p class="related-summary">{escape(summary)}</p>' if summary else ""
+        )
         cards.append(
             """
             <article class="related-card" data-avds-component="document-card">
               <div class="related-top">
                 <span class="related-reason">{reason}</span>
-                {deadline}
+              {deadline}
               </div>
               <h3><a href="{href}">{title}</a></h3>
               {summary_markup}
@@ -2814,11 +2813,7 @@ def _related_markup(
                 deadline=deadline_markup,
                 href=href,
                 title=escape(title),
-                summary_markup=(
-                    f'<p class="related-summary">{escape(summary)}</p>'
-                    if summary
-                    else ""
-                ),
+                summary_markup=summary_markup,
                 source=source_label,
                 action=escape(str(copy["related_open"])),
             )
@@ -2947,7 +2942,9 @@ def render_opportunity_page(
         lang=active_lang,
         root_path=root_path,
         copy=copy,
-        source_only_route_content_cleanup=source_only_route,
+        suppress_generic_source_content=(
+            str(detail.id) == _QAZINDUSTRY_REIMBURSEMENT_ID
+        ),
     )
     source_text = detail.funder or _label_value(detail.source, copy)
     format_text = _detail_format_label(detail, copy)
