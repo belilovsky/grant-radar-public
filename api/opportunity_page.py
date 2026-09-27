@@ -5,10 +5,13 @@ from __future__ import annotations
 import json
 import re
 from datetime import date
+from decimal import Decimal
 from enum import Enum
 from html import escape
 from typing import cast
 from urllib.parse import urlparse
+
+from pydantic import HttpUrl
 
 from api.avds import AVDS_CSS, AVDS_FONT_HEAD
 from api.avds_visual import OPPORTUNITY_AVDS4_CSS
@@ -71,6 +74,254 @@ _GENERIC_RUSSIAN_SUMMARY = (
     "Программа для заявителей из Казахстана и Центральной Азии. "
     "Условия, сроки и порядок подачи опубликованы у организатора."
 )
+
+
+_QAZINDUSTRY_REIMBURSEMENT_ID = "1684ec38-c20f-5844-9e69-140b4a595c28"
+_QAZINDUSTRY_REIMBURSEMENT_COPY: dict[str, dict[str, object]] = {
+    "ru": {
+        "title": "Возмещение затрат на внедрение цифровых технологий",
+        "summary": (
+            "QazIndustry возмещает часть расходов на приобретение цифрового "
+            "оборудования, ранее не бывшего в эксплуатации, для внедрения "
+            "цифровых технологий."
+        ),
+        "amount_label": "Ставка и годовой лимит",
+        "amount": "40% затрат, принимаемых к возмещению, не более 60 млн ₸ за календарный год",
+        "primary_source_button_label": "Открыть условия программы",
+        "application_button_label": "Открыть портал QazIndustry",
+        "prepare_application_label": "Подготовить заявку",
+        "format_label": "Возмещение затрат",
+        "deadline_label": "Период приёма",
+        "deadline_display": (
+            "В течение календарного года, пока не исчерпан бюджет "
+            "соответствующего года"
+        ),
+        "eligibility_section_title": "Основные критерии",
+        "eligibility": [
+            "К возмещению принимаются расходы на цифровое оборудование, ранее не бывшее в эксплуатации: например, 3D-сканер, 3D-принтер или широкоформатный принтер со сканером и копиром.",
+            "Заявитель производит товар из перечня приоритетных товаров; со дня регистрации должно пройти не менее одного календарного года.",
+            "Заявитель не относится к субъектам промышленно-инновационной деятельности, указанным в пункте 3 Правил.",
+            "На дату подачи заявки нет задолженности по налогам, обязательным пенсионным и профессиональным пенсионным взносам и социальным отчислениям; предусмотрено исключение для платежей с законной отсрочкой.",
+            "Действующие Правила требуют ежегодного увеличения налоговых отчислений за три предыдущих года. Исключение предусмотрено для освобождённых от налогов и/или зарегистрированных менее семи лет.",
+            "Заявитель должен быть включён в Реестр казахстанских товаропроизводителей; это требование применяется с 1 января 2026 года.",
+            "Если оборудование оплачено несколькими платежами, последний платёж должен быть произведён не ранее чем за 24 месяца до подачи заявки. По каждой мере поддержки или виду затрат заключается не более одного соглашения за календарный год.",
+        ],
+        "highlights_label": "Расхождение в условиях",
+        "highlights": [
+            "Страница условий QazIndustry указывает исключение для компаний, зарегистрированных менее 3 лет; действующие Правила № 308 и инструкция указывают менее 7 лет. Инструкция также требует включения в Реестр казахстанских товаропроизводителей с 1 января 2026 года, но на странице условий этого требования нет. До подачи заявки уточните у QazIndustry, какие условия применяются."
+        ],
+        "source_url": "https://qazindustry.gov.kz/ru/business_reimbursement",
+        "source_lang": "ru",
+        "application_url": "https://sez.qazindustry.gov.kz/ru/service/5/evaluate",
+        "application_lang": "ru",
+        "official_source_links": [
+            {
+                "label": "Действующие Правила № 308 (RU, PDF)",
+                "url": "https://qazindustry.gov.kz/docs/v2200028320.22-12-2025.rus%20%281%29.pdf",
+                "lang": "ru",
+            },
+            {
+                "label": "Инструкция QazIndustry (RU, PDF)",
+                "url": "https://qazindustry.gov.kz/docs/instrukcia070726.pdf",
+                "lang": "ru",
+            },
+            {
+                "label": "Реестр казахстанских товаропроизводителей (RU)",
+                "url": "https://qazindustry.gov.kz/ru/ktp",
+                "lang": "ru",
+            },
+        ],
+    },
+    "kk": {
+        "title": "Цифрлық технологияларды енгізуге жұмсалған шығындарды өтеу",
+        "summary": (
+            "QazIndustry цифрлық технологияларды енгізу үшін бұрын "
+            "пайдаланылмаған цифрлық жабдық сатып алуға жұмсалған шығындардың "
+            "бір бөлігін өтейді."
+        ),
+        "amount_label": "Өтеу мөлшері мен жылдық шегі",
+        "amount": "Рұқсат етілген шығындардың 40%-ы, бір күнтізбелік жылда 60 млн теңгеден аспайды",
+        "primary_source_button_label": "Бағдарлама шарттарын ашу",
+        "application_button_label": "QazIndustry өтінім порталын ашу",
+        "prepare_application_label": "Өтінімді дайындау",
+        "format_label": "Шығындарды өтеу",
+        "deadline_label": "Өтінім қабылдау кезеңі",
+        "deadline_display": (
+            "Тиісті қаржы жылына бөлінген бюджет толық игерілгенге дейін "
+            "күнтізбелік жыл ішінде"
+        ),
+        "eligibility_section_title": "Негізгі өлшемдер",
+        "eligibility": [
+            "Бұрын пайдаланылмаған цифрлық жабдық сатып алу шығындары өтеледі. Мысалы: 3D-сканер, 3D-принтер немесе сканерлеу және көшіру функциялары бар кең форматты принтер.",
+            "Өтінім беруші басым тауарлар тізбесіне кіретін өнімді өндіреді; тіркелген күннен өтінім түскенге дейін кемінде бір күнтізбелік жыл өтуі тиіс.",
+            "Өтінім беруші Қағидалардың 3-тармағында көрсетілген өнеркәсіптік-инновациялық қызмет субъектілеріне жатпайды.",
+            "Өтінім берілген күні салық, міндетті зейнетақы жарналары, міндетті кәсіптік зейнетақы жарналары мен әлеуметтік аударымдар бойынша берешек болмауы керек; заңды түрде кейінге қалдырылған төлемдерге ерекшелік көзделген.",
+            "Қолданыстағы Қағидалар бойынша алдыңғы үш жылда салық аударымдары жыл сайын өсуі керек. Салық төлеуден босатылған және/немесе тіркелгеніне жеті жылдан аз болған өтінім берушілерге ерекшелік көзделген.",
+            "Өтінім беруші Қазақстандық тауар өндірушілер тізілімінде болуы керек; бұл талап 2026 жылғы 1 қаңтардан бастап қолданылады.",
+            "Жабдық бірнеше төлеммен сатып алынса, соңғы төлем өтінім берілгенге дейінгі 24 ай ішінде жасалуы тиіс. Әр қолдау шарасы немесе шығын түрі бойынша күнтізбелік жылда бір өтем келісімінен артық жасалмайды.",
+        ],
+        "highlights_label": "Шарттардағы сәйкессіздік",
+        "highlights": [
+            "QazIndustry шарттар бетінде салық талабынан босату тіркелгеніне үш жылдан аз уақыт өткен өтініш берушілерге қатысты деп көрсетілген. № 308 Қағида мен өтінім нұсқаулығы бойынша осы ерекшелік өтінім беруші тіркелгеніне жеті жылдан аз уақыт өткенде қолданылады. Нұсқаулықта 2026 жылғы 1 қаңтардан бастап Қазақстандық тауар өндірушілер тізілімінде болу талабы да бар, алайда шарттар бетінде бұл талап аталмайды. Өтінер алдында қолданыстағы талаптарды QazIndustry-ден нақтылаңыз."
+        ],
+        "source_url": "https://qazindustry.gov.kz/kk/business_reimbursement",
+        "source_lang": "kk",
+        "application_url": "https://sez.qazindustry.gov.kz/kk/service/5/evaluate",
+        "application_lang": "kk",
+        "official_source_links": [
+            {
+                "label": "Қолданыстағы № 308 Қағидалар (RU, PDF)",
+                "url": "https://qazindustry.gov.kz/docs/v2200028320.22-12-2025.rus%20%281%29.pdf",
+                "lang": "ru",
+            },
+            {
+                "label": "QazIndustry нұсқаулығы (RU, PDF)",
+                "url": "https://qazindustry.gov.kz/docs/instrukcia070726.pdf",
+                "lang": "ru",
+            },
+            {
+                "label": "Қазақстандық тауар өндірушілер тізілімі (RU)",
+                "url": "https://qazindustry.gov.kz/ru/ktp",
+                "lang": "ru",
+            },
+        ],
+    },
+    "en": {
+        "title": "Reimbursement for adopting digital technologies",
+        "summary": (
+            "QazIndustry reimburses part of the cost of purchasing unused "
+            "digital equipment to adopt digital technologies."
+        ),
+        "amount_label": "Rate and annual cap",
+        "amount": "40% of eligible costs, capped at KZT 60 million per calendar year",
+        "primary_source_button_label": "Open programme terms (RU)",
+        "application_button_label": "Open QazIndustry portal (RU)",
+        "prepare_application_label": "Prepare application",
+        "format_label": "Cost reimbursement",
+        "deadline_label": "Application period",
+        "deadline_display": (
+            "During the calendar year until the budget allocated for that "
+            "financial year is exhausted"
+        ),
+        "eligibility_section_title": "Key eligibility criteria",
+        "eligibility": [
+            "Costs are reimbursed for digital equipment that has not previously been used, such as a 3D scanner, 3D printer, or wide-format printer with scanning and copying functions.",
+            "The applicant must produce a good on the Priority Goods List and have been registered for at least one calendar year before applying.",
+            "The applicant must not be an industrial and innovation activity entity listed in point 3 of the Rules.",
+            "At submission, the applicant must have no tax arrears or arrears on mandatory pension contributions, professional pension contributions, or social contributions; legally deferred payments are excepted.",
+            "The current Rules require annual growth in tax remittances over the preceding three years, with an exception for tax-exempt applicants and/or those registered for less than seven years.",
+            "The applicant must be included in the Register of Kazakhstani Commodity Producers; the QazIndustry application guide says this requirement applies from 1 January 2026.",
+            "If the equipment is paid for in several installments, the final payment must be within 24 months before applying. The Rules allow no more than one reimbursement agreement per support measure or cost type in a calendar year.",
+        ],
+        "highlights_label": "Conflicting eligibility wording",
+        "highlights": [
+            "QazIndustry’s terms page gives a less-than-three-year exception to the tax-growth rule; current Rules No. 308 and the application guide say less than seven years. The guide also requires inclusion in the Register of Kazakhstani Commodity Producers from 1 January 2026, a condition absent from the terms page. Confirm the applicable criteria with QazIndustry before applying."
+        ],
+        "source_url": "https://qazindustry.gov.kz/ru/business_reimbursement",
+        "source_lang": "ru",
+        "application_url": "https://sez.qazindustry.gov.kz/ru/service/5/evaluate",
+        "application_lang": "ru",
+        "official_source_links": [
+            {
+                "label": "Current Rules No. 308 (RU, PDF)",
+                "url": "https://qazindustry.gov.kz/docs/v2200028320.22-12-2025.rus%20%281%29.pdf",
+                "lang": "ru",
+            },
+            {
+                "label": "QazIndustry instructions (RU, PDF)",
+                "url": "https://qazindustry.gov.kz/docs/instrukcia070726.pdf",
+                "lang": "ru",
+            },
+            {
+                "label": "Register of Kazakhstani Commodity Producers (RU)",
+                "url": "https://qazindustry.gov.kz/ru/ktp",
+                "lang": "ru",
+            },
+        ],
+    },
+}
+
+
+def project_qazindustry_reimbursement(item: Opportunity, *, lang: str) -> Opportunity:
+    """Bind this programme's public detail projection to current QazIndustry sources."""
+
+    if str(item.id) != _QAZINDUSTRY_REIMBURSEMENT_ID:
+        return item
+    active_lang = lang if lang in _QAZINDUSTRY_REIMBURSEMENT_COPY else "ru"
+    copy = _QAZINDUSTRY_REIMBURSEMENT_COPY[active_lang]
+    eligibility = cast(list[str], copy["eligibility"])
+    official_source_links = cast(list[dict[str, str]], copy["official_source_links"])
+    raw = dict(item.raw) if isinstance(item.raw, dict) else {}
+    translations = {
+        locale: {
+            field: value
+            for field, value in locale_copy.items()
+            if field
+            in {
+                "title",
+                "summary",
+                "amount",
+                "amount_label",
+                "primary_source_button_label",
+                "application_button_label",
+                "prepare_application_label",
+                "format_label",
+                "deadline_display",
+                "deadline_label",
+                "highlights",
+                "highlights_label",
+            }
+        }
+        for locale, locale_copy in _QAZINDUSTRY_REIMBURSEMENT_COPY.items()
+    }
+    raw.update(
+        {
+            "i18n": translations,
+            "source_name": "QazIndustry",
+            "application_url": copy["application_url"],
+            "application_lang": copy["application_lang"],
+            "source_lang": copy["source_lang"],
+            "eligibility_section_title": copy["eligibility_section_title"],
+            "amount_raw": copy["amount"],
+            "eligibility_raw": list(eligibility),
+            "eligibility_summary": "; ".join(eligibility[:3]),
+            "official_source_links": list(official_source_links),
+        }
+    )
+    for stale_key in (
+        "deadline_policy",
+        "deadline_raw",
+        "detail_sections",
+        "detail_text",
+    ):
+        raw.pop(stale_key, None)
+    tags = [
+        tag
+        for tag in item.tags
+        if str(tag).strip().casefold() not in {"rolling", "open"}
+    ]
+    if not any(str(tag).strip().casefold() == "reimbursement" for tag in tags):
+        tags.append("reimbursement")
+    return item.model_copy(
+        update={
+            "source": "qazindustry",
+            "source_url": HttpUrl(str(copy["source_url"])),
+            "title": copy["title"],
+            "summary": copy["summary"],
+            "funder": "QazIndustry",
+            "amount_min": None,
+            "amount_max": Decimal("60000000"),
+            "currency": "KZT",
+            "deadline": None,
+            "eligibility": list(eligibility),
+            "tags": tags,
+            "raw": raw,
+        }
+    )
+
+
+def is_qazindustry_reimbursement(item_id: object) -> bool:
+    return str(item_id) == _QAZINDUSTRY_REIMBURSEMENT_ID
 
 
 OPPORTUNITY_DETAIL_CSS = r"""
@@ -1967,6 +2218,11 @@ def _display_detail_metadata_value(
 def _detail_format_label(detail: OpportunityDetail, copy: dict[str, object]) -> str:
     """Use the orthogonal taxonomy when it is more precise than the source type."""
 
+    localized_label = _localized_item_value(
+        detail, "format_label", str(copy.get("lang") or "en"), ""
+    )
+    if localized_label:
+        return localized_label
     instrument = str(classify_opportunity(detail).get("instrument") or "").strip()
     display_token = {
         "loan": "preferential_financing",
@@ -2120,6 +2376,10 @@ def _opportunity_facts_markup(
 
 
 def _eligibility_markup(detail: OpportunityDetail, *, copy: dict[str, object]) -> str:
+    raw = detail.raw if isinstance(detail.raw, dict) else {}
+    section_title = str(
+        raw.get("eligibility_section_title") or copy["detail_eligibility_title"]
+    )
     values = [
         _label_value(value, copy)
         for value in detail.eligibility
@@ -2142,7 +2402,7 @@ def _eligibility_markup(detail: OpportunityDetail, *, copy: dict[str, object]) -
       <ul class="eligibility-list">{rows}</ul>
     </section>
     """.format(
-        title=escape(str(copy["detail_eligibility_title"])),
+        title=escape(section_title),
         rows=rows,
     )
 
@@ -2353,6 +2613,7 @@ def _source_panel_markup(
     applications_closed: bool,
 ) -> str:
     values = _detail_metadata_values(detail)
+    raw = detail.raw if isinstance(detail.raw, dict) else {}
     raw_labels = copy.get("detail_meta_labels")
     labels = raw_labels if isinstance(raw_labels, dict) else {}
     reference_rows: list[str] = []
@@ -2384,15 +2645,42 @@ def _source_panel_markup(
     )
     application_action = (
         """
-        <a class="button primary" href="{href}" target="_blank" rel="noopener">{label}</a>
+        <a class="button primary" href="{href}" target="_blank" rel="noopener" lang="{link_lang}">{label}</a>
         """.format(
             href=application_href,
+            link_lang=escape(str(raw.get("application_lang") or lang), quote=True),
             label=escape(str(copy["detail_open_application"])),
         )
         if application_href and not applications_closed
         else ""
     )
     source_button_class = "button slim" if application_action else "button primary"
+    source_link_rows: list[str] = []
+    source_links = raw.get("official_source_links")
+    if isinstance(source_links, list):
+        for link in source_links:
+            if not isinstance(link, dict):
+                continue
+            href = str(link.get("url") or "").strip()
+            label = str(link.get("label") or "").strip()
+            link_lang = str(link.get("lang") or "ru").strip()
+            parsed = urlparse(href)
+            if (
+                not label
+                or parsed.scheme != "https"
+                or parsed.hostname != "qazindustry.gov.kz"
+                or link_lang not in {"ru", "kk", "en"}
+            ):
+                continue
+            source_link_rows.append(
+                '<a class="button slim" href="{href}" target="_blank" '
+                'rel="noopener" lang="{link_lang}">{label}</a>'.format(
+                    href=escape(href, quote=True),
+                    link_lang=escape(link_lang, quote=True),
+                    label=escape(label),
+                )
+            )
+    additional_source_actions = "".join(source_link_rows)
     return """
     <aside class="source-panel" aria-labelledby="source-title">
       <div class="source-panel-head">
@@ -2402,7 +2690,8 @@ def _source_panel_markup(
       </div>
       <div class="source-actions">
         {application_action}
-        <a class="{source_button_class}" href="{source_href}" target="_blank" rel="noopener">{source_button_label}</a>
+        <a class="{source_button_class}" href="{source_href}" target="_blank" rel="noopener" lang="{source_lang}">{source_button_label}</a>
+        {additional_source_actions}
       </div>
       {reference_markup}
     </aside>
@@ -2413,7 +2702,9 @@ def _source_panel_markup(
         application_action=application_action,
         source_button_class=source_button_class,
         source_href=source_href,
+        source_lang=escape(str(raw.get("source_lang") or lang), quote=True),
         source_button_label=escape(str(copy["detail_open_source"])),
+        additional_source_actions=additional_source_actions,
         reference_markup=reference_markup,
     )
 
@@ -2560,6 +2851,27 @@ def render_opportunity_page(
 ) -> str:
     copy = dashboard_copy(lang)
     active_lang = str(copy["lang"])
+    localized_source_label = _localized_item_value(
+        detail, "primary_source_button_label", active_lang, ""
+    )
+    localized_application_label = _localized_item_value(
+        detail, "application_button_label", active_lang, ""
+    )
+    localized_prepare_label = _localized_item_value(
+        detail, "prepare_application_label", active_lang, ""
+    )
+    localized_source_lang = _localized_item_value(
+        detail, "source_lang", active_lang, active_lang
+    )
+    localized_application_lang = _localized_item_value(
+        detail, "application_lang", active_lang, active_lang
+    )
+    if localized_source_label:
+        copy["detail_open_source"] = localized_source_label
+    if localized_application_label:
+        copy["detail_open_application"] = localized_application_label
+    if localized_prepare_label:
+        copy["detail_prepare_application"] = localized_prepare_label
     title = detail.title or str(copy["detail_title_fallback"])
     source_only_route = str(detail.id) == _SOURCE_ONLY_DETAIL_ROUTE_ID
     summary = _clean_summary_text(detail.summary, title=title)
@@ -2644,11 +2956,12 @@ def render_opportunity_page(
     actionability = str(program_truth(detail, lifecycle=lifecycle)["actionability"])
     application_button = (
         """
-        <a class="button primary" href="{href}" target="_blank" rel="noopener">
+        <a class="button primary" href="{href}" target="_blank" rel="noopener" lang="{link_lang}">
           {label}
         </a>
         """.format(
             href=application_href,
+            link_lang=escape(localized_application_lang, quote=True),
             label=escape(str(copy["detail_open_application"])),
         )
         if application_href and not applications_closed
@@ -3851,7 +4164,7 @@ def render_opportunity_page(
         {opportunity_facts}
         <div class="opportunity-actions">
           {application_button}
-          <a class="{source_button_class}" href="{source_href}" target="_blank" rel="noopener">
+          <a class="{source_button_class}" href="{source_href}" target="_blank" rel="noopener" lang="{escape(localized_source_lang, quote=True)}">
             {escape(str(copy["detail_open_source"]))}
           </a>
           {prepare_button}
@@ -3885,5 +4198,5 @@ def render_opportunity_page(
       <p>{escape(str(copy["footer_disclaimer"]))}</p>
     </footer>
   </main>
-</body>
+  </body>
 </html>"""

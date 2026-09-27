@@ -121,7 +121,11 @@ from api.opportunity_og import (
     render_opportunity_og_png,
     render_opportunity_portrait_png,
 )
-from api.opportunity_page import render_opportunity_page
+from api.opportunity_page import (
+    is_qazindustry_reimbursement,
+    project_qazindustry_reimbursement,
+    render_opportunity_page,
+)
 from api.presentation import release_evidence_from_env
 from api.public_info_page import render_public_info_page
 from api.public_meta import OG_IMAGE_SVG, social_image_png
@@ -2251,8 +2255,11 @@ async def opportunity_page(
     root_path = _root_path(request)
     site_origin = _site_origin(request, root_path)
     related_items = _related_opportunities(item, lang=content_lang)
+    localized_item = project_qazindustry_reimbursement(
+        localize_opportunity(item, content_lang), lang=content_lang
+    )
     detail = await build_opportunity_detail(
-        localize_opportunity(item, content_lang),
+        localized_item,
         lang=content_lang,
         allow_remote_fetch=False,
     )
@@ -2292,12 +2299,26 @@ async def opportunity_open_graph_image(
     """
 
     _ = v
-    item = _find_opportunity_v1(request, opportunity_id, lang=lang)
+    content_lang = _public_lang(lang)
+    if is_qazindustry_reimbursement(opportunity_id):
+        source_item = _find_opportunity(opportunity_id, content_lang=content_lang)
+        if source_item is None:
+            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND)
+        projected_item = project_qazindustry_reimbursement(
+            localize_opportunity(source_item, content_lang), lang=content_lang
+        )
+        item = _opportunity_v1_from_item(
+            projected_item,
+            request=request,
+            root_path=_root_path(request),
+        )
+    else:
+        item = _find_opportunity_v1(request, opportunity_id, lang=content_lang)
     headers = {"Cache-Control": _PUBLIC_LONG_CACHE}
     if request.method == "HEAD":
         return Response(content=b"", media_type="image/png", headers=headers)
     return Response(
-        render_opportunity_og_png(item, lang=_public_lang(lang)),
+        render_opportunity_og_png(item, lang=content_lang),
         media_type="image/png",
         headers=headers,
     )
