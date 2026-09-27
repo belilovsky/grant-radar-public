@@ -14,6 +14,424 @@ from api.integration_versions import AVDS_VERSION
 from core.decision_support import program_truth
 from core.models import OpportunityDetail
 
+_DIGITAL_EQUIPMENT_REIMBURSEMENT_ID = "1684ec38-c20f-5844-9e69-140b4a595c28"
+_DIGITAL_EQUIPMENT_REIMBURSEMENT: dict[str, dict[str, Any]] = {
+    "ru": {
+        "program_title": "Возмещение затрат на внедрение цифровых технологий",
+        "organizer": "QazIndustry",
+        "intake": "В течение календарного года, пока не исчерпан бюджет этого года",
+        "amount": "40% затрат, принимаемых к возмещению, не более 60 млн ₸ за календарный год",
+        "eligibility": (
+            "Заявитель производит товар из Перечня приоритетных товаров, зарегистрирован "
+            "не менее календарного года и не относится к исключённым категориям Правил. "
+            "На дату подачи не должно быть задолженности по налогам, обязательным "
+            "пенсионным и профессиональным пенсионным взносам, социальным отчислениям "
+            "(кроме платежей с законной отсрочкой). Требуется ежегодный рост налоговых "
+            "отчислений за предыдущие три года; это условие не применяется к освобождённым "
+            "от налогов и зарегистрированным менее семи лет. С 2026 года заявитель также "
+            "должен находиться в Реестре казахстанских товаропроизводителей."
+        ),
+        "official_source": "https://qazindustry.gov.kz/ru/business_reimbursement",
+        "rules_source": "https://qazindustry.gov.kz/docs/v2200028320.22-12-2025.rus%20%281%29.pdf",
+        "rules_source_label": "Правила №308 с изменениями №442 (RU, PDF)",
+        "documents_source": "https://qazindustry.gov.kz/docs/instrukcia070726.pdf",
+        "documents_source_label": "Инструкция QazIndustry (RU, PDF)",
+        "application_portal": "https://sez.qazindustry.gov.kz/ru/service/5/evaluate",
+        "application_portal_label": "Портал подачи QazIndustry (RU)",
+        "copy": {
+            "page_title": "Подготовка заявки на возмещение затрат",
+            "eyebrow": "Рабочий черновик",
+            "title": "Подготовьте черновик для возмещения затрат на цифровое оборудование",
+            "lead": (
+                "Внесите сведения о производителе и приобретённом цифровом "
+                "оборудовании. QAZ.FUND соберёт локальный черновик для сверки "
+                "с официальными условиями и формой QazIndustry."
+            ),
+            "known": "Условия программы",
+            "program": "Программа",
+            "organizer": "Оператор услуги",
+            "deadline": "Период подачи",
+            "amount": "Размер возмещения",
+            "eligibility": "Критерии заявителя",
+            "criteria_heading": "Критерии по правилам QazIndustry",
+            "readiness": "Заполнение черновика",
+            "required_done": "Заполнено обязательных полей черновика: {done} из {total}",
+            "applicant_note": "Сведения о производителе и предварительная проверка критериев.",
+            "org_name": "Наименование организации-производителя",
+            "legal_form": "Организационно-правовая форма",
+            "country": "Место регистрации организации",
+            "contact": "Ответственный за черновик",
+            "fit": "Самопроверка критериев заявителя",
+            "fit_placeholder": (
+                "Отметьте, как заявитель соответствует критериям, и укажите применимые исключения."
+            ),
+            "project": "Цифровое оборудование",
+            "project_note": "Укажите приобретённое оборудование и его назначение для цифровизации.",
+            "project_name": "Наименование, модель и производитель оборудования",
+            "problem": "Задача предприятия, для которой приобретено оборудование",
+            "solution": "Как оборудование используется в деятельности предприятия",
+            "beneficiaries": "Приоритетный товар или вид продукции предприятия",
+            "geography": "Место эксплуатации оборудования",
+            "impact": "Покупка и подтверждение затрат",
+            "impact_note": (
+                "Для цифрового оборудования 24-месячный срок считают от последнего платежа, "
+                "если покупка оплачена несколькими платежами."
+            ),
+            "outcomes": "Дата последнего платежа за цифровое оборудование",
+            "indicators": "Сумма счетов-фактур на приобретённое оборудование",
+            "evidence": "Платёжные документы и документы об оплате",
+            "delivery": "Технические сведения",
+            "delivery_note": "Заполните реквизиты и характеристики по документам на оборудование.",
+            "team": "Изготовитель, дата выпуска и идентификационный номер оборудования",
+            "timeline": "Основные технические характеристики",
+            "partners": "Руководство, техпаспорт и спецификация комплектации (если имеются)",
+            "risks": "Дополнительные сведения и документы на оборудование",
+            "finance": "Расчёт возмещения",
+            "finance_note": "Условия программы указывают ставку 40% и годовой предел 60 млн ₸.",
+            "request_amount": "Запрашиваемое возмещение, ₸",
+            "cofinance": "Общая сумма подтверждённых затрат, ₸",
+            "budget": "Расчёт суммы и реквизиты оплаты",
+            "documents": "Документы для цифрового оборудования",
+            "documents_note": (
+                "Список относится к приобретению цифрового оборудования; пакет и форму заявки "
+                "смотрите в Правилах и инструкции QazIndustry."
+            ),
+            "criteria_note": (
+                "Расхождение источников: страница условий QazIndustry указывает исключение "
+                "«менее 3 лет», а действующие Правила №308 с изменениями №442 и инструкция "
+                "указывают «менее 7 лет». Инструкция также требует включения в Реестр "
+                "казахстанских товаропроизводителей с 2026 года; страница условий этого "
+                "требования не показывает. Здесь приведена формулировка из Правил и инструкции."
+            ),
+            "draft_note": "Текст обновляется по мере заполнения и хранится только в этом браузере.",
+            "empty_value": "",
+            "source": "Открыть условия QazIndustry (RU)",
+            "source_label": "Условия программы",
+            "rules_source_link": "Открыть Правила №308 с изменениями №442 (RU, PDF)",
+            "documents_source_link": "Открыть инструкцию QazIndustry (RU, PDF)",
+            "application_portal_link": "Перейти к порталу подачи QazIndustry (RU)",
+            "sections": {
+                "programme": "Программа",
+                "applicant": "Заявитель",
+                "project": "Оборудование",
+                "impact": "Покупка и оплата",
+                "delivery": "Технические сведения",
+                "finance": "Расчёт возмещения",
+                "documents": "Документы",
+            },
+        },
+        "checklist": [
+            "Заявка",
+            (
+                "Отчёт о приобретённом цифровом оборудовании, деятельности предприятия и "
+                "необходимости приобретения"
+            ),
+            "Копии счетов-фактур на общую сумму приобретённого цифрового оборудования",
+            (
+                "Копии платёжных документов на стоимость оборудования либо документы об оплате "
+                "аккредитивом, зачёте требований или удержании штрафа"
+            ),
+            "Выписка из реестра казахстанских товаропроизводителей",
+            "Копии документов об освобождении от налогов (если применимо)",
+            "Копия договора на приобретение цифрового оборудования",
+            (
+                "Копии первичных учётных документов о приёмке и передаче: акт, накладная на "
+                "отпуск запасов на сторону и другие документы"
+            ),
+            (
+                "Копия технической документации: руководство, дата изготовления, "
+                "идентификационный номер изготовителя, основные параметры; спецификация "
+                "комплектации и техпаспорт при наличии"
+            ),
+            "Фотографии приобретённого цифрового оборудования",
+        ],
+    },
+    "kk": {
+        "program_title": "Цифрлық технологияларды енгізуге жұмсалған шығындарды өтеу",
+        "organizer": "QazIndustry",
+        "intake": "Күнтізбелік жыл ішінде, сол жылдың бюджеті толық игерілгенге дейін",
+        "amount": "Өтеуге жататын шығындардың 40%-ы, күнтізбелік жылға ең көбі 60 млн ₸",
+        "eligibility": (
+            "Өтініш беруші Басым тауарлар тізбесіндегі өнімді өндіруі, кемінде бір "
+            "күнтізбелік жыл бұрын тіркелуі және Қағидалардың 3-тармағында шығарылған "
+            "субъектілер қатарына жатпауы керек. Өтінім күніне салықтар, міндетті және "
+            "міндетті кәсіптік зейнетақы жарналары мен әлеуметтік аударымдар бойынша "
+            "берешек болмауы тиіс (заңды кейінге шегеру жағдайынан басқа). Алдыңғы үш "
+            "жылда салық аударымдары жыл сайын өсуі керек; бұл талап салықтан босатылған "
+            "немесе тіркелгеніне жеті жыл толмаған субъектілерге қолданылмайды. 2026 "
+            "жылдан бастап өтініш беруші Қазақстандық тауар өндірушілер тізілімінде де "
+            "болуы керек."
+        ),
+        "official_source": "https://qazindustry.gov.kz/kk/business_reimbursement",
+        "rules_source": "https://qazindustry.gov.kz/docs/v2200028320.22-12-2025.rus%20%281%29.pdf",
+        "rules_source_label": "№308 қағидалар, №442 өзгерістерімен (RU, PDF)",
+        "documents_source": "https://qazindustry.gov.kz/docs/instrukcia070726.pdf",
+        "documents_source_label": "QazIndustry нұсқаулығы (RU, PDF)",
+        "application_portal": "https://sez.qazindustry.gov.kz/kk/service/5/evaluate",
+        "application_portal_label": "QazIndustry өтінім порталы (KK)",
+        "copy": {
+            "page_title": "Шығындарды өтеуге өтінімді дайындау",
+            "eyebrow": "Жұмыс жобасы",
+            "title": "Цифрлық технология шығындарын өтеуге арналған жобаны дайындаңыз",
+            "lead": (
+                "Өтініш беруші, енгізілетін цифрлық технология және шығындар туралы "
+                "мәліметтерді енгізіңіз. QAZ.FUND ресми шарттармен салыстыруға арналған "
+                "жергілікті жоба мәтінін құрастырады."
+            ),
+            "known": "Бағдарлама шарттары",
+            "program": "Бағдарлама",
+            "organizer": "Қызмет операторы",
+            "deadline": "Өтінім қабылдау кезеңі",
+            "amount": "Өтеу мөлшері",
+            "eligibility": "Өтініш беруші критерийлері",
+            "criteria_heading": "QazIndustry жариялаған өтініш беруші критерийлері",
+            "readiness": "Жобаның толтырылуы",
+            "required_done": "Жобаның міндетті өрістері толтырылды: {done}/{total}",
+            "applicant_note": "Өндіруші туралы мәліметтер және критерийлерді алдын ала тексеру.",
+            "org_name": "Өндіруші ұйымның атауы",
+            "legal_form": "Ұйымдық-құқықтық нысаны",
+            "country": "Ұйымның тіркелген жері",
+            "contact": "Жобаға жауапты тұлға",
+            "fit": "Өтініш беруші критерийлерін өзіндік тексеру",
+            "fit_placeholder": (
+                "Өтініш берушінің критерийлерге сәйкестігін және қолданылатын "
+                "ерекшеліктерді көрсетіңіз."
+            ),
+            "project": "Цифрлық технология немесе жабдық",
+            "project_note": (
+                "Енгізілген технологияны, бағдарламалық өнімді немесе жабдықты және оның "
+                "өндірісте қолданылуын сипаттаңыз."
+            ),
+            "project_name": "Технологияның, өнімнің немесе жабдықтың атауы",
+            "problem": "Цифрлық технология енгізілетін кәсіпорын міндеті",
+            "solution": (
+                "Технология, бағдарлама немесе жабдық кәсіпорын жұмысында қалай қолданылады"
+            ),
+            "beneficiaries": "Кәсіпорын өндіретін басым тауар немесе өнім түрі",
+            "geography": "Енгізу немесе жабдықты пайдалану орны",
+            "impact": "Шығындар мен төлемді растау",
+            "impact_note": (
+                "Цифрлық жабдық үшін 24 айлық мерзім сатып алу бірнеше төлеммен жасалса, "
+                "соңғы төлем күнінен есептеледі."
+            ),
+            "outcomes": "Цифрлық жабдық үшін соңғы төлем жасалған күн",
+            "indicators": "Шарттар мен шот-фактуралардағы шығындардың жалпы сомасы",
+            "evidence": "Төлем құжаттары",
+            "delivery": "Техникалық мәліметтер",
+            "delivery_note": "Технологияның сипаттамалары мен оны растайтын құжаттарды енгізіңіз.",
+            "team": (
+                "Жеткізуші/әзірлеуші, өнім нұсқасы немесе жабдықтың өндірушісі және ID нөмірі"
+            ),
+            "timeline": (
+                "Технологияның немесе жабдықтың негізгі техникалық сипаттамалары"
+            ),
+            "partners": (
+                "Нұсқаулық, лицензия, техникалық паспорт немесе спецификация (бар болса)"
+            ),
+            "risks": "Технологияны енгізу туралы қосымша мәліметтер мен құжаттар",
+            "finance": "Өтеу есебі",
+            "finance_note": (
+                "Бағдарлама шарттары 40% мөлшерлеме мен жылына 60 млн ₸ шегін көрсетеді."
+            ),
+            "request_amount": "Сұралатын өтемақы, ₸",
+            "cofinance": "Расталған шығындардың жалпы сомасы, ₸",
+            "budget": "Сома есебі және төлем деректері",
+            "documents": "Цифрлық жабдық құжаттары",
+            "documents_note": (
+                "Бұл тізім цифрлық жабдық сатып алуға арналған; лицензиялық БЖ мен өзге "
+                "шығындарға арналған қосымша құжаттарды QazIndustry нұсқаулығынан қараңыз."
+            ),
+            "criteria_note": (
+                "Дереккөздердегі айырмашылық: QazIndustry шарттар бетінде «3 жылдан аз» "
+                "делінген, ал №442 өзгерістері енгізілген №308 қағидалар мен нұсқаулықта "
+                "«7 жылдан аз» деп көрсетілген. Нұсқаулық 2026 жылдан бастап Қазақстандық "
+                "тауар өндірушілер тізілімінде болуды да талап етеді, ал шарттар бетінде "
+                "бұл талап көрсетілмеген. Мұнда қағидалар мен нұсқаулықтағы тұжырым қолданылды."
+            ),
+            "draft_note": "Мәтін толтырылғанда жаңартылады және тек осы браузерде сақталады.",
+            "empty_value": "",
+            "source": "QazIndustry шарттарын ашу (KK)",
+            "source_label": "Бағдарлама шарттары",
+            "rules_source_link": "№308 қағидаларды ашу (№442 өзгерістерімен, RU, PDF)",
+            "documents_source_link": "QazIndustry нұсқаулығын ашу (RU, PDF)",
+            "application_portal_link": "QazIndustry өтінім порталына өту (KK)",
+            "sections": {
+                "programme": "Бағдарлама",
+                "applicant": "Өтініш беруші",
+                "project": "Технология",
+                "impact": "Сатып алу және төлем",
+                "delivery": "Техникалық мәліметтер",
+                "finance": "Өтеу есебі",
+                "documents": "Жабдық құжаттары",
+            },
+        },
+        "checklist": [
+            "Өтінім",
+            (
+                "Сатып алынған цифрлық жабдық, қызмет түрі және оны сатып алу қажеттігі туралы "
+                "өтініш берушінің есебі"
+            ),
+            (
+                "Сатып алынған цифрлық жабдықтың жалпы сомасына берілген шот-фактуралардың "
+                "көшірмелері"
+            ),
+            (
+                "Жабдық құнына төлем құжаттарының көшірмелері немесе аккредитивпен төлеу, "
+                "талаптарды есепке жатқызу не айыппұл ұстау туралы құжаттар"
+            ),
+            "Қазақстандық тауар өндірушілер тізілімінен үзінді",
+            "Салықтан босатуды растайтын құжаттардың көшірмелері (қолданылса)",
+            "Цифрлық жабдықты сатып алу шартының көшірмесі",
+            (
+                "Қабылдау-беруді растайтын бастапқы есеп құжаттарының көшірмелері: қабылдау-беру "
+                "актісі, қорларды сыртқа босату жүкқұжаты және басқа құжаттар"
+            ),
+            (
+                "Техникалық құжаттаманың көшірмесі: нұсқаулық, жасалған күні, жабдық "
+                "өндірушісінің сәйкестендіру нөмірі, негізгі параметрлер; жиынтық ерекшелігі "
+                "және техникалық паспорт (бар болса)"
+            ),
+            "Сатып алынған цифрлық жабдықтың фотосуреттері",
+        ],
+    },
+    "en": {
+        "program_title": "Reimbursement of costs for adoption of digital technologies",
+        "organizer": "QazIndustry",
+        "intake": "During the calendar year until that year's allocated budget is exhausted",
+        "amount": "40% of eligible documented costs, capped at KZT 60 million per calendar year",
+        "eligibility": (
+            "The applicant must produce a priority-list good, have been registered "
+            "for at least one calendar year, and not belong to the categories excluded "
+            "under paragraph 3 of the Rules. On the application date there must be no "
+            "arrears in taxes, mandatory pension or professional pension contributions, "
+            "or social contributions, except legally deferred payments. Tax payments "
+            "must have increased annually over the prior three years; this rule does "
+            "not apply to tax-exempt applicants or entities registered for under seven "
+            "years. From 2026, applicants must also be listed in the Register of "
+            "Kazakhstani Commodity Producers."
+        ),
+        "official_source": "https://qazindustry.gov.kz/ru/business_reimbursement",
+        "rules_source": "https://qazindustry.gov.kz/docs/v2200028320.22-12-2025.rus%20%281%29.pdf",
+        "rules_source_label": "Rules No. 308 with amendments No. 442 (RU, PDF)",
+        "documents_source": "https://qazindustry.gov.kz/docs/instrukcia070726.pdf",
+        "documents_source_label": "QazIndustry instructions (RU, PDF)",
+        "application_portal": "https://sez.qazindustry.gov.kz/ru/service/5/evaluate",
+        "application_portal_label": "QazIndustry application portal (RU)",
+        "copy": {
+            "page_title": "Prepare a reimbursement application",
+            "eyebrow": "Working draft",
+            "title": "Prepare a draft for digital equipment cost reimbursement",
+            "lead": (
+                "Enter details about the producer and purchased digital equipment. "
+                "QAZ.FUND will assemble a local working draft to check against "
+                "QazIndustry's official terms and form."
+            ),
+            "known": "Programme terms",
+            "program": "Programme",
+            "organizer": "Service provider",
+            "deadline": "Application period",
+            "amount": "Reimbursement rate and cap",
+            "eligibility": "Applicant criteria",
+            "criteria_heading": "Applicant criteria published by QazIndustry",
+            "readiness": "Draft completion",
+            "required_done": "Draft fields completed: {done} of {total}",
+            "applicant_note": "Producer details and a preliminary criteria check.",
+            "org_name": "Producer organisation name",
+            "legal_form": "Legal form",
+            "country": "Organisation registration location",
+            "contact": "Application contact",
+            "fit": "Applicant criteria self-check",
+            "fit_placeholder": (
+                "Record how the applicant meets the criteria and note any applicable exceptions."
+            ),
+            "project": "Digital equipment",
+            "project_note": (
+                "Identify the purchased equipment and its role in digital technology adoption."
+            ),
+            "project_name": "Equipment name, model and manufacturer",
+            "problem": "Business need addressed by the equipment",
+            "solution": "How the equipment is used in the organisation",
+            "beneficiaries": "Priority good or product made by the organisation",
+            "geography": "Equipment use location",
+            "impact": "Purchase and cost evidence",
+            "impact_note": (
+                "For digital equipment, the 24-month period is counted from the last payment "
+                "when the purchase was paid in instalments."
+            ),
+            "outcomes": "Date of the last payment for the digital equipment",
+            "indicators": "Total invoice amount for the purchased equipment",
+            "evidence": "Payment records and proof of payment",
+            "delivery": "Technical details",
+            "delivery_note": "Record identifiers and specifications from the equipment documents.",
+            "team": "Equipment manufacturer's identification number and manufacture date",
+            "timeline": "Main technical specifications",
+            "partners": (
+                "Manual, technical passport and equipment composition specification, if available"
+            ),
+            "risks": "Other equipment details and supporting documents",
+            "finance": "Reimbursement calculation",
+            "finance_note": (
+                "The programme terms state a 40% rate and an annual KZT 60 million cap."
+            ),
+            "request_amount": "Requested reimbursement, KZT",
+            "cofinance": "Total documented eligible costs, KZT",
+            "budget": "Calculation and payment reference",
+            "documents": "Digital equipment documents",
+            "documents_note": (
+                "This list applies to digital equipment purchases. See the QazIndustry Rules and "
+                "instructions for the application form and other eligible cost types."
+            ),
+            "criteria_note": (
+                "Source discrepancy: the QazIndustry terms page says “under 3 years,” while "
+                "Rules No. 308, amended by No. 442, and the instructions say “under 7 years.” "
+                "The instructions also require Register listing from 2026, which the terms page "
+                "does not mention. This page follows the Rules and instructions."
+            ),
+            "draft_note": "The text updates as you type and is stored only in this browser.",
+            "empty_value": "",
+            "source": "Open QazIndustry terms (RU)",
+            "source_label": "Programme terms",
+            "rules_source_link": "Open Rules No. 308 as amended by No. 442 (RU, PDF)",
+            "documents_source_link": "Open QazIndustry instructions (RU, PDF)",
+            "application_portal_link": "Open QazIndustry application portal (RU)",
+            "sections": {
+                "programme": "Programme",
+                "applicant": "Applicant",
+                "project": "Equipment",
+                "impact": "Purchase and payment",
+                "delivery": "Technical details",
+                "finance": "Reimbursement calculation",
+                "documents": "Equipment documents",
+            },
+        },
+        "checklist": [
+            "Application",
+            (
+                "Applicant report on acquired digital equipment, activities and the need for "
+                "its purchase"
+            ),
+            "Copies of invoices for the total amount of the acquired digital equipment",
+            (
+                "Copies of payment records for the equipment cost, or documents for payment by "
+                "letter of credit, offset or penalty withholding"
+            ),
+            "Extract from the Register of Kazakhstani Commodity Producers",
+            "Copies of tax-exemption documents, if applicable",
+            "Copy of the digital equipment purchase agreement",
+            (
+                "Copies of primary accounting records confirming acceptance and transfer: "
+                "acceptance certificate, invoice for supplies released to a third party, etc."
+            ),
+            (
+                "Copy of the technical documentation: equipment manual, manufacture date, "
+                "manufacturer's identification number, key technical parameters and equipment "
+                "composition specification (technical passport, if available)"
+            ),
+            "Photographs of the acquired digital equipment",
+        ],
+    },
+}
+
 
 def _type_value(value: object) -> str:
     raw = value.value if isinstance(value, Enum) else value
@@ -63,6 +481,10 @@ def _amount(detail: OpportunityDetail, lang: str) -> str:
 
 
 def _checklist(detail: OpportunityDetail, lang: str) -> list[str]:
+    if str(detail.id) == _DIGITAL_EQUIPMENT_REIMBURSEMENT_ID:
+        reimbursement = _DIGITAL_EQUIPMENT_REIMBURSEMENT.get(lang)
+        if reimbursement:
+            return list(reimbursement["checklist"])
     type_value = _type_value(detail.type)
     tags = {str(value).lower() for value in detail.tags}
     if type_value == "tender" or {"procurement", "tender"}.intersection(tags):
@@ -533,6 +955,13 @@ def render_application_prep_page(
             },
         },
     }[active_lang]
+    reimbursement = (
+        _DIGITAL_EQUIPMENT_REIMBURSEMENT.get(active_lang)
+        if str(detail.id) == _DIGITAL_EQUIPMENT_REIMBURSEMENT_ID
+        else None
+    )
+    if reimbursement:
+        copy.update(reimbursement["copy"])
     reminder_copy = {
         "ru": {
             "title": "Напоминания о сроке",
@@ -573,8 +1002,17 @@ def render_application_prep_page(
     }[active_lang]
     base = root_path.rstrip("/")
     detail_path = f"{base}/opportunity/{detail.id}?lang={active_lang}"
-    source_href = str(detail.source_url)
-    organizer = _public_label(detail.funder or detail.source, active_lang)
+    source_href = (
+        reimbursement["official_source"] if reimbursement else str(detail.source_url)
+    )
+    rules_source = reimbursement["rules_source"] if reimbursement else ""
+    documents_source = reimbursement["documents_source"] if reimbursement else ""
+    application_portal = reimbursement["application_portal"] if reimbursement else ""
+    organizer = (
+        reimbursement["organizer"]
+        if reimbursement
+        else _public_label(detail.funder or detail.source, active_lang)
+    )
     eligibility = (
         "; ".join(
             _public_label(value, active_lang)
@@ -583,8 +1021,15 @@ def render_application_prep_page(
         )
         or copy["unknown"]
     )
-    deadline = _deadline(detail.deadline, active_lang)
-    amount = _amount(detail, active_lang)
+    deadline = (
+        reimbursement["intake"]
+        if reimbursement
+        else _deadline(detail.deadline, active_lang)
+    )
+    amount = reimbursement["amount"] if reimbursement else _amount(detail, active_lang)
+    program_title = reimbursement["program_title"] if reimbursement else detail.title
+    if reimbursement:
+        eligibility = reimbursement["eligibility"]
     checklist = _checklist(detail, active_lang)
     truth = program_truth(detail, lifecycle=lifecycle)
     checklist_markup = "".join(f"""
@@ -595,14 +1040,26 @@ def render_application_prep_page(
         """ for index, label in enumerate(checklist, 1))
     facts = {
         "opportunity_id": str(detail.id),
-        "program": detail.title,
+        "programme_specific": bool(reimbursement),
+        "program": program_title,
         "organizer": organizer,
         "deadline": deadline,
         "deadline_iso": detail.deadline.isoformat() if detail.deadline else "",
         "amount": amount,
         "eligibility": eligibility,
-        "official_source": str(detail.source_url),
-        "application_url": str(detail.application_url or ""),
+        "official_source": source_href,
+        "rules_source": rules_source,
+        "rules_source_label": (
+            reimbursement["rules_source_label"] if reimbursement else ""
+        ),
+        "documents_source": documents_source,
+        "documents_source_label": (
+            reimbursement["documents_source_label"] if reimbursement else ""
+        ),
+        "application_url": application_portal or str(detail.application_url or ""),
+        "application_portal_label": (
+            reimbursement["application_portal_label"] if reimbursement else ""
+        ),
         "checklist": checklist,
         "actionability": truth["actionability"],
     }
@@ -611,7 +1068,11 @@ def render_application_prep_page(
     reminder_copy_json = json.dumps(reminder_copy, ensure_ascii=False).replace(
         "<", "\\u003c"
     )
-    storage_key = f"qazfund-application-draft-v1:{detail.id}:{active_lang}"
+    storage_key = (
+        f"qazfund-application-draft-reimbursement-v1:{detail.id}:{active_lang}"
+        if reimbursement
+        else f"qazfund-application-draft-v1:{detail.id}:{active_lang}"
+    )
     canonical = (
         f"{site_origin.rstrip('/')}{base}/opportunity/{detail.id}/prepare"
         f"?lang={active_lang}"
@@ -653,6 +1114,41 @@ def render_application_prep_page(
     reminder_button_attr = "" if detail.deadline else "disabled"
     reminder_note = escape(
         reminder_copy["note"] if detail.deadline else reminder_copy["unavailable"]
+    )
+    reminder_markup = (
+        ""
+        if reimbursement
+        else f"""
+        <section class="panel reminder-panel" data-avds-component="Card">
+          <div class="panel-head">
+            <div>
+              <h2>{escape(reminder_copy["title"])}</h2>
+              <p>{reminder_note}</p>
+            </div>
+          </div>
+          <button
+            class="button secondary"
+            id="download-deadline-reminder"
+            type="button"
+            {reminder_button_attr}
+          >{escape(reminder_copy["download"])}</button>
+        </section>
+    """
+    )
+    source_links_markup = (
+        f'<a href="{escape(source_href, quote=True)}" target="_blank" rel="noopener">'
+        f'{escape(copy["source"])}</a>'
+        if not reimbursement
+        else (
+            f'<a href="{escape(source_href, quote=True)}" target="_blank" rel="noopener">'
+            f'{escape(copy["source"])}</a> · '
+            f'<a href="{escape(rules_source, quote=True)}" target="_blank" rel="noopener">'
+            f'{escape(copy["rules_source_link"])}</a> · '
+            f'<a href="{escape(documents_source, quote=True)}" target="_blank" rel="noopener">'
+            f'{escape(copy["documents_source_link"])}</a> · '
+            f'<a href="{escape(application_portal, quote=True)}" target="_blank" rel="noopener">'
+            f'{escape(copy["application_portal_link"])}</a>'
+        )
     )
 
     def field(
@@ -718,11 +1214,20 @@ def render_application_prep_page(
         </details>
         """
 
+    eligibility_markup = (
+        '<aside class="state-notice light" data-avds-component="Alert" role="note">'
+        f'<strong>{escape(copy["criteria_heading"])}</strong>'
+        f"<p>{escape(eligibility)}</p>"
+        f"<p>{escape(copy['criteria_note'])}</p></aside>"
+        if reimbursement
+        else ""
+    )
     applicant_step = step(
         1,
         copy["applicant"],
         copy["applicant_note"],
         f"""
+          {eligibility_markup}
           <div class="field-grid">
             {field("org_name", copy["org_name"], required=True)}
             {field("legal_form", copy["legal_form"])}
@@ -796,7 +1301,7 @@ def render_application_prep_page(
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>{escape(copy["page_title"])} – {escape(detail.title)} – QAZ.FUND</title>
+  <title>{escape(copy["page_title"])} – {escape(program_title)} – QAZ.FUND</title>
   <meta name="description" content="{escape(copy["lead"], quote=True)}">
   <link rel="canonical" href="{escape(canonical, quote=True)}">
 {AVDS_FONT_HEAD}
@@ -907,6 +1412,14 @@ def render_application_prep_page(
       font-size: 12px;
       line-height: 1.5;
     }}
+    .state-notice.light {{
+      margin: 0 0 18px;
+      border-color: #c9d8e8;
+      background: #f2f7fc;
+      color: #193451;
+      font-size: 13px;
+    }}
+    .state-notice.light p {{ margin: 5px 0 0; color: #405a74; }}
     .facts {{
       display: grid;
       grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -1208,7 +1721,7 @@ def render_application_prep_page(
       >
         <div class="fact">
           <span>{escape(copy["program"])}</span>
-          <strong>{escape(detail.title)}</strong>
+          <strong>{escape(program_title)}</strong>
         </div>
         <div class="fact">
           <span>{escape(copy["organizer"])}</span>
@@ -1256,20 +1769,7 @@ def render_application_prep_page(
           ><span id="readiness-bar"></span></div>
           <small id="readiness-label"></small>
         </section>
-        <section class="panel reminder-panel" data-avds-component="Card">
-          <div class="panel-head">
-            <div>
-              <h2>{escape(reminder_copy["title"])}</h2>
-              <p>{reminder_note}</p>
-            </div>
-          </div>
-          <button
-            class="button secondary"
-            id="download-deadline-reminder"
-            type="button"
-            {reminder_button_attr}
-          >{escape(reminder_copy["download"])}</button>
-        </section>
+        {reminder_markup}
         <section
           class="panel draft-panel"
           data-avds-component="Card"
@@ -1315,11 +1815,7 @@ def render_application_prep_page(
       <a class="footer-contact" href="mailto:contact@qaz.fund">contact@qaz.fund</a>
       <p>
         {escape(copy["generated_note"])}
-        <a
-          href="{escape(source_href, quote=True)}"
-          target="_blank"
-          rel="noopener"
-        >{escape(copy["source"])}</a>.
+        {source_links_markup}.
       </p>
       <nav>
         <a href="{escape(terms_href, quote=True)}">{escape(copy["terms"])}</a>
@@ -1369,6 +1865,71 @@ def render_application_prep_page(
           const control = form.elements.namedItem(`document_${{index + 1}}`);
           return `- [${{control?.checked ? "x" : " "}}] ${{label}}`;
         }}).join("\\n");
+        if (facts.programme_specific) {{
+          const draftValue = (name) => String(
+            form.elements.namedItem(name)?.value || ""
+          ).trim();
+          const draftLine = (label, name) => draftValue(name)
+            ? `**${{label}}:** ${{draftValue(name)}}`
+            : "";
+          const draftSection = (key, rows) => {{
+            const completedRows = rows.filter(Boolean);
+            return completedRows.length
+              ? [`## ${{copy.sections[key]}}`, ...completedRows, ""]
+              : [];
+          }};
+          return [
+            `# ${{copy.draft_heading}}: ${{facts.program}}`,
+            "",
+            `> ${{copy.generated_note}}`,
+            "",
+            ...draftSection("programme", [
+              `**${{copy.program}}:** ${{facts.program}}`,
+              `**${{copy.organizer}}:** ${{facts.organizer}}`,
+              `**${{copy.deadline}}:** ${{facts.deadline}}`,
+              `**${{copy.amount}}:** ${{facts.amount}}`,
+              `**${{copy.eligibility}}:** ${{facts.eligibility}}`,
+              copy.criteria_note || "",
+            ]),
+            ...draftSection("applicant", [
+              draftLine(copy.org_name, "org_name"),
+              draftLine(copy.legal_form, "legal_form"),
+              draftLine(copy.country, "country"),
+              draftLine(copy.contact, "contact"),
+              draftLine(copy.fit, "fit"),
+            ]),
+            ...draftSection("project", [
+              draftLine(copy.project_name, "project_name"),
+              draftLine(copy.problem, "problem"),
+              draftLine(copy.solution, "solution"),
+              draftLine(copy.beneficiaries, "beneficiaries"),
+              draftLine(copy.geography, "geography"),
+            ]),
+            ...draftSection("impact", [
+              draftLine(copy.outcomes, "outcomes"),
+              draftLine(copy.indicators, "indicators"),
+              draftLine(copy.evidence, "evidence"),
+            ]),
+            ...draftSection("delivery", [
+              draftLine(copy.team, "team"),
+              draftLine(copy.timeline, "timeline"),
+              draftLine(copy.partners, "partners"),
+              draftLine(copy.risks, "risks"),
+            ]),
+            ...draftSection("finance", [
+              draftLine(copy.request_amount, "request_amount"),
+              draftLine(copy.cofinance, "cofinance"),
+              draftLine(copy.budget, "budget"),
+            ]),
+            `## ${{copy.sections.documents}}`,
+            checked,
+            "",
+            `${{copy.source_label}}: ${{facts.official_source}}`,
+            `${{facts.rules_source_label}}: ${{facts.rules_source}}`,
+            `${{facts.documents_source_label}}: ${{facts.documents_source}}`,
+            `${{facts.application_portal_label}}: ${{facts.application_url}}`,
+          ].filter(Boolean).join("\\n");
+        }}
         return [
           `# ${{copy.draft_heading}}: ${{value("project_name")}}`,
           "",
@@ -1380,6 +1941,7 @@ def render_application_prep_page(
           `**${{copy.deadline}}:** ${{facts.deadline}}`,
           `**${{copy.amount}}:** ${{facts.amount}}`,
           `**${{copy.eligibility}}:** ${{facts.eligibility}}`,
+          copy.criteria_note || "",
           `**URL:** ${{facts.application_url || facts.official_source}}`,
           "",
           `## ${{copy.sections.applicant}}`,
@@ -1416,7 +1978,13 @@ def render_application_prep_page(
           checked,
           "",
           `${{copy.source_label}}: ${{facts.official_source}}`,
-        ].join("\\n");
+          facts.rules_source
+            ? `${{facts.rules_source_label}}: ${{facts.rules_source}}`
+            : "",
+          facts.documents_source
+            ? `${{facts.documents_source_label}}: ${{facts.documents_source}}`
+            : "",
+        ].filter(Boolean).join("\\n");
       }};
       const serialize = () => Object.fromEntries(inputs.map((control) => [
         control.name,
@@ -1435,7 +2003,7 @@ def render_application_prep_page(
           status.textContent = copy.storage_error;
         }}
       }};
-      const update = () => {{
+      const update = (persist = true) => {{
         const done = required.filter((control) => String(control.value || "").trim()).length;
         const percent = required.length ? Math.round(done / required.length * 100) : 100;
         readinessBar.style.width = `${{percent}}%`;
@@ -1446,10 +2014,12 @@ def render_application_prep_page(
         progress.setAttribute("aria-valuenow", String(percent));
         output.value = buildDraft();
         updateSteps();
-        try {{
-          localStorage.setItem(storageKey, JSON.stringify(serialize()));
-        }} catch {{
-          status.textContent = copy.storage_error;
+        if (persist) {{
+          try {{
+            localStorage.setItem(storageKey, JSON.stringify(serialize()));
+          }} catch {{
+            status.textContent = copy.storage_error;
+          }}
         }}
       }};
       let timer;
@@ -1546,7 +2116,7 @@ def render_application_prep_page(
         form.reset();
         steps.forEach((step, index) => {{ step.open = index === 0; }});
         if (status.textContent !== copy.storage_error) status.textContent = "";
-        update();
+        update(!facts.programme_specific);
       }});
       restore();
       update();
