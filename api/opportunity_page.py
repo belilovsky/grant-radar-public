@@ -344,6 +344,373 @@ def is_qazindustry_reimbursement(item_id: object) -> bool:
     return str(item_id) == _QAZINDUSTRY_REIMBURSEMENT_ID
 
 
+_QAZINDUSTRY_PROCESS_IMPROVEMENT_ID = "ed3308cc-e250-5235-89f3-b825146e5c1f"
+_QAZINDUSTRY_PROCESS_IMPROVEMENT_COPY: dict[str, dict[str, object]] = {
+    "ru": {
+        "title": "Возмещение затрат на совершенствование технологических процессов",
+        "summary": (
+            "QazIndustry возмещает часть документально подтверждённых затрат. "
+            "Пункт 12 Правил № 308 перечисляет энергоаудит, технологическое "
+            "оборудование, ранее не бывшее в эксплуатации, и его монтаж или "
+            "шеф-монтаж с инструктажем по работе."
+        ),
+        "amount_label": "Ставка и годовой предел",
+        "amount": "40%; до 60 млн ₸/год; монтаж и шеф-монтаж – до 12 млн ₸/год",
+        "image_amount": "40%; до 60 млн ₸/год; монтаж – до 12 млн ₸/год",
+        "primary_source_button_label": "Открыть условия QazIndustry",
+        "application_button_label": "Перейти к заявке в QazIndustry",
+        "prepare_application_label": "Подготовить заявку",
+        "format_label": "Возмещение затрат",
+        "deadline_label": "Период приёма",
+        "deadline_display": (
+            "В течение календарного года, пока не исчерпан бюджет "
+            "соответствующего финансового года"
+        ),
+        "eligibility": [
+            "Пункт 12 Правил № 308 относит к мере энергоаудит, приобретение технологического оборудования, ранее не бывшего в эксплуатации, а также монтаж или шеф-монтаж оборудования с инструктажем (обучением) работе с ним.",
+            "Заявитель производит товар из перечня приоритетных товаров; с даты регистрации до подачи заявки должен пройти не менее одного календарного года.",
+            "Заявитель не относится к субъектам промышленно-инновационной деятельности, указанным в пункте 3 Правил № 308.",
+            "На дату подачи заявки нет задолженности по налогам, обязательным пенсионным и профессиональным пенсионным взносам и социальным отчислениям; исключение предусмотрено для платежей с законной отсрочкой.",
+            "Пункт 13 Правил № 308 требует ежегодного роста налоговых отчислений за предыдущие три года; исключение действует для освобождённых от налогов и/или зарегистрированных менее семи календарных лет.",
+            "Заявитель должен находиться в Реестре казахстанских товаропроизводителей.",
+            "Для услуг и работ Правила устанавливают 24-месячный срок до подачи заявки; для технологического оборудования действует отдельное условие: если оно оплачено несколькими платежами, последний должен быть внесён в пределах 24 месяцев до подачи.",
+            "По каждой мере поддержки или виду затрат заключается не более одного соглашения за календарный год.",
+        ],
+        "highlights_label": "Что уточнить у QazIndustry",
+        "highlights": [
+            "Списки затрат различаются по языковым версиям страницы и Правилам. Русская версия страницы QazIndustry и пункт 12 Правил № 308 называют энергоаудит, ранее не использовавшееся технологическое оборудование и его монтаж/шеф-монтаж с инструктажем. В казахской и английской версиях страницы также перечислены технологический аудит, промышленный дизайн, инженерные разработки, опытные образцы, обслуживание оборудования и испытания. Предел возмещения за монтаж и шеф-монтаж – 12 млн ₸ в календарном году – указан в русской и казахской версиях и пункте 14 Правил, но отсутствует в английской версии страницы. Перед подачей уточните у QazIndustry, какие расходы принимаются по действующим Правилам.",
+            "Различаются и сроки регистрации для налогового исключения: русская и казахская версии страницы QazIndustry указывают менее трёх лет, пункт 13 Правил № 308 – менее семи. Форма, обновлённая приказом № 422, отдельно не запрашивает суммы налоговых отчислений за три года у освобождённых от налогов и/или зарегистрированных менее двух лет. Это правило заполнения формы, а не изменение пункта 13; уточните, какие сведения нужны в вашем случае.",
+        ],
+        "source_url": "https://qazindustry.gov.kz/ru/business_reimbursement",
+        "application_url": "https://sez.qazindustry.gov.kz/ru/service/5/evaluate",
+        "official_source_links": [
+            {
+                "label": "Шарттар QazIndustry (KK)",
+                "url": "https://qazindustry.gov.kz/kk/business_reimbursement",
+                "lang": "kk",
+            },
+            {
+                "label": "QazIndustry terms (EN)",
+                "url": "https://qazindustry.gov.kz/en/business_reimbursement",
+                "lang": "en",
+            },
+            {
+                "label": "Правила № 308, сводный текст (Әділет, RU)",
+                "url": "https://old.adilet.zan.kz/rus/docs/V2200028320",
+                "lang": "ru",
+            },
+            {
+                "label": "Приказ № 422 от 28.08.2026 (Әділет, RU)",
+                "url": "https://old.adilet.zan.kz/rus/docs/V2600039734",
+                "lang": "ru",
+            },
+            {
+                "label": "Инструкция QazIndustry, июль 2026 (RU, PDF)",
+                "url": "https://qazindustry.gov.kz/docs/instrukcia070726.pdf",
+                "lang": "ru",
+            },
+            {
+                "label": "Реестр казахстанских товаропроизводителей (RU)",
+                "url": "https://qazindustry.gov.kz/ru/ktp",
+                "lang": "ru",
+            },
+        ],
+    },
+    "kk": {
+        "title": "Технологиялық процестерді жетілдіруге жұмсалған шығындарды өтеу",
+        "summary": (
+            "QazIndustry құжатпен расталған шығындардың бір бөлігін өтейді. "
+            "№ 308 Қағиданың 12-тармағында энергия аудиті, пайдаланылмаған "
+            "технологиялық жабдықты сатып алу және оны монтаждау не шеф-монтаждау "
+            "кезіндегі нұсқама қарастырылған."
+        ),
+        "amount_label": "Өтеу мөлшері мен жылдық шегі",
+        "amount": "40%; жылына 60 млн ₸-ге дейін; монтаж және шеф-монтаж – жылына 12 млн ₸-ге дейін",
+        "image_amount": "40%; жылдық шек 60 млн ₸; монтаж шегі 12 млн ₸/жыл",
+        "primary_source_button_label": "QazIndustry шарттарын ашу",
+        "application_button_label": "QazIndustry өтінім порталына өту",
+        "prepare_application_label": "Өтінімді дайындау",
+        "format_label": "Шығындарды өтеу",
+        "deadline_label": "Өтінім қабылдау кезеңі",
+        "deadline_display": (
+            "Тиісті қаржы жылына арналған бюджет толық игерілгенге дейін "
+            "күнтізбелік жыл ішінде"
+        ),
+        "eligibility": [
+            "№ 308 Қағиданың 12-тармағында энергия аудиті, бұрын пайдаланылмаған технологиялық жабдықты сатып алу, сондай-ақ жабдықты монтаждау немесе шеф-монтаждау кезінде оны пайдалану жөніндегі нұсқама (оқыту) көзделген.",
+            "Өтінім беруші басым тауарлар тізбесіне кіретін өнімді өндіреді; тіркелген күнінен өтінім берілгенге дейін кемінде бір күнтізбелік жыл өтуі керек.",
+            "Өтінім беруші № 308 Қағиданың 3-тармағында көрсетілген өнеркәсіптік-инновациялық қызмет субъектілеріне жатпайды.",
+            "Өтінім берілген күні салық, міндетті зейнетақы жарналары, міндетті кәсіптік зейнетақы жарналары мен әлеуметтік аударымдар бойынша берешек болмауы керек; заңды түрде кейінге қалдырылған төлемдерге ерекшелік бар.",
+            "№ 308 Қағиданың 13-тармағы алдыңғы үш жылдағы салық аударымдарының жыл сайын өсуін талап етеді; салықтан босатылған және/немесе тіркелгеніне жеті күнтізбелік жылдан аз болған өтінім берушілерге ерекшелік қолданылады.",
+            "Өтінім беруші Қазақстандық тауар өндірушілер тізілімінде болуы керек.",
+            "Қызметтер мен жұмыстардың шығындары өтінім түскенге дейінгі 24 ай кезеңіне жатуы керек. Технологиялық жабдық бірнеше төлеммен сатып алынса, соңғы төлем өтінім берілгенге дейінгі 24 ай ішінде жасалуы тиіс.",
+            "Әр мемлекеттік ынталандыру шарасы немесе шығын түрі бойынша күнтізбелік жылда бір өтем келісімінен артық жасалмайды.",
+        ],
+        "highlights_label": "QazIndustry-ден нақтылаңыз",
+        "highlights": [
+            "Шығын түрлері мен монтажға арналған шек тілдік нұсқаларда әртүрлі берілген. QazIndustry бетінің RU-нұсқасында және № 308 Қағиданың 12-тармағында энергия аудиті, бұрын пайдаланылмаған технологиялық жабдық және оны нұсқамамен бірге монтаждау/шеф-монтаждау көрсетілген. KK және EN-нұсқаларда технологиялық аудит, өнеркәсіптік дизайн, инженерлік әзірлемелер, тәжірибелік үлгілер, жабдыққа қызмет көрсету және сынақтар сияқты қосымша жұмыстар да аталады. Монтаж және шеф-монтаж шығындарын өтеудің жылдық 12 млн теңгелік шегі RU және KK беттерінде, сондай-ақ Қағиданың 14-тармағында бар, бірақ ағылшын тіліндегі бетте жылдық шек аталмаған. Қолданыстағы Қағидалар бойынша қандай шығындар өтелетінін QazIndustry-ден нақтылаңыз.",
+            "Салықтан босату үшін тіркелу мерзімі жөніндегі мәлімет те әртүрлі: QazIndustry бетінің орыс және қазақ нұсқаларында үш жылдан аз, № 308 Қағиданың 13-тармағында жеті жылдан аз деп көрсетілген. № 422 бұйрық жаңартқан форма салықтан босатылған және/немесе тіркелгеніне екі жылдан аз өтінім берушілерден үш жылдық салық сомаларын бөлек сұрамайды. Бұл формаға қатысты талап, 13-тармақтың өзгерісі емес; өз жағдайыңыздағы талаптарды нақтылаңыз.",
+        ],
+        "source_url": "https://qazindustry.gov.kz/kk/business_reimbursement",
+        "application_url": "https://sez.qazindustry.gov.kz/kk/service/5/evaluate",
+        "official_source_links": [
+            {
+                "label": "Условия QazIndustry (RU)",
+                "url": "https://qazindustry.gov.kz/ru/business_reimbursement",
+                "lang": "ru",
+            },
+            {
+                "label": "QazIndustry terms (EN)",
+                "url": "https://qazindustry.gov.kz/en/business_reimbursement",
+                "lang": "en",
+            },
+            {
+                "label": "№ 308 Қағидалар, жиынтық мәтін (Әділет, RU)",
+                "url": "https://old.adilet.zan.kz/rus/docs/V2200028320",
+                "lang": "ru",
+            },
+            {
+                "label": "№ 422 бұйрық, 28.08.2026 (Әділет, RU)",
+                "url": "https://old.adilet.zan.kz/rus/docs/V2600039734",
+                "lang": "ru",
+            },
+            {
+                "label": "QazIndustry нұсқаулығы, 2026 жылғы шілде (RU, PDF)",
+                "url": "https://qazindustry.gov.kz/docs/instrukcia070726.pdf",
+                "lang": "ru",
+            },
+            {
+                "label": "Қазақстандық тауар өндірушілер тізілімі (KK)",
+                "url": "https://qazindustry.gov.kz/kk/ktp",
+                "lang": "kk",
+            },
+        ],
+    },
+    "en": {
+        "title": "Reimbursement for technological process improvements",
+        "summary": (
+            "QazIndustry reimburses part of documented costs. Rule No. 308, "
+            "point 12, lists energy audits, unused technological equipment, "
+            "and its installation or supervised installation with operating instruction."
+        ),
+        "amount_label": "Rate and annual cap",
+        "amount": "40%; up to KZT 60m/year; installation and supervised installation up to KZT 12m/year",
+        "image_amount": "40%; KZT 60m/year cap; installation KZT 12m/year cap",
+        "primary_source_button_label": "Open QazIndustry terms",
+        "application_button_label": "Apply via QazIndustry",
+        "prepare_application_label": "Prepare application",
+        "format_label": "Cost reimbursement",
+        "deadline_label": "Application period",
+        "deadline_display": (
+            "During the calendar year, until the budget for that financial year "
+            "is exhausted"
+        ),
+        "eligibility": [
+            "Rule No. 308, point 12, lists energy audits, the purchase of unused technological equipment, and equipment installation or supervised installation with instruction or training in its use.",
+            "The applicant produces goods on the Priority Goods List and has been registered for at least one calendar year before applying.",
+            "The applicant is not an industrial-innovation activity entity listed in point 3 of Rule No. 308.",
+            "At application, the applicant has no tax, mandatory pension, mandatory professional pension, or social contribution arrears, except payments lawfully deferred.",
+            "Point 13 requires annual growth in tax remittances over the preceding three years; it exempts tax-exempt applicants and/or those registered for less than seven calendar years.",
+            "The applicant is listed in the Register of Kazakhstani Commodity Producers.",
+            "For services and works, the documented costs must fall within the 24 months before application. For technological equipment paid in instalments, the last payment must fall within the 24 months before applying.",
+            "No more than one reimbursement agreement per support measure or cost type may be concluded in a calendar year.",
+        ],
+        "highlights_label": "Confirm with QazIndustry",
+        "highlights": [
+            "The published cost lists and installation cap differ across QazIndustry's language versions. The RU page and point 12 of Rule No. 308 name energy audits, unused technological equipment, and installation/supervised installation with instruction. The KK and EN pages also list work such as technology audits, industrial design, engineering, prototypes, equipment maintenance, and industrial tests. The KZT 12 million annual cap for installation/supervised installation appears on the RU and KK pages and in point 14 of the Rules, but not on the EN page. Confirm which costs are covered under the current Rules with QazIndustry.",
+            "The tax-registration exception also differs: QazIndustry’s RU and KK pages say less than three years, while point 13 of Rule No. 308 says less than seven. Order No. 422 separately updated the application form so tax-exempt applicants and/or those registered for less than two years do not report three-year remittance totals. This is a form-reporting rule, not a change to point 13; confirm the evidence required for your case.",
+        ],
+        "source_url": "https://qazindustry.gov.kz/en/business_reimbursement",
+        "application_url": "https://sez.qazindustry.gov.kz/en/service/5/evaluate",
+        "official_source_links": [
+            {
+                "label": "QazIndustry terms (RU)",
+                "url": "https://qazindustry.gov.kz/ru/business_reimbursement",
+                "lang": "ru",
+            },
+            {
+                "label": "QazIndustry шарттары (KK)",
+                "url": "https://qazindustry.gov.kz/kk/business_reimbursement",
+                "lang": "kk",
+            },
+            {
+                "label": "Rules No. 308, consolidated text (Adilet, RU)",
+                "url": "https://old.adilet.zan.kz/rus/docs/V2200028320",
+                "lang": "ru",
+            },
+            {
+                "label": "Order No. 422 dated 28 August 2026 (Adilet, RU)",
+                "url": "https://old.adilet.zan.kz/rus/docs/V2600039734",
+                "lang": "ru",
+            },
+            {
+                "label": "QazIndustry instructions, July 2026 (RU, PDF)",
+                "url": "https://qazindustry.gov.kz/docs/instrukcia070726.pdf",
+                "lang": "ru",
+            },
+            {
+                "label": "Register of Kazakhstani Commodity Producers (EN)",
+                "url": "https://qazindustry.gov.kz/en/ktp",
+                "lang": "en",
+            },
+        ],
+    },
+}
+
+_QAZINDUSTRY_PROCESS_RELATED_COPY: dict[str, dict[str, dict[str, str]]] = {
+    "1684ec38-c20f-5844-9e69-140b4a595c28": {
+        "ru": {
+            "title": "Возмещение затрат на внедрение цифровых технологий",
+            "summary": "QazIndustry возмещает часть расходов на новое, ранее не использовавшееся цифровое оборудование.",
+        },
+        "kk": {
+            "title": "Цифрлық технологияларды енгізуге жұмсалған шығындарды өтеу",
+            "summary": "QazIndustry бұрын пайдаланылмаған цифрлық жабдық сатып алу шығындарының бір бөлігін өтейді.",
+        },
+        "en": {
+            "title": "Reimbursement for adoption of digital technologies",
+            "summary": "QazIndustry reimburses part of the cost of previously unused digital equipment.",
+        },
+    },
+    "fb959da5-3371-522f-8613-4979d39a4fb2": {
+        "ru": {
+            "title": "Меры государственного стимулирования предприятий",
+            "summary": "В обзоре QazIndustry сгруппированы возмещения затрат на рост производительности, включая совершенствование технологических процессов.",
+        },
+        "kk": {
+            "title": "Кәсіпорындарды мемлекеттік ынталандыру шаралары",
+            "summary": "QazIndustry шолуында еңбек өнімділігін арттыруға арналған шығын өтемдері, соның ішінде технологиялық процестерді жетілдіру қарастырылған.",
+        },
+        "en": {
+            "title": "State incentive measures for enterprises",
+            "summary": "QazIndustry groups reimbursements for higher labour productivity here, including technological-process improvement.",
+        },
+    },
+}
+
+
+def project_qazindustry_process_improvement(
+    item: Opportunity, *, lang: str, compact_image_amount: bool = False
+) -> Opportunity:
+    """Bind this programme's detail projection to current QazIndustry and Rules sources."""
+
+    if str(item.id) != _QAZINDUSTRY_PROCESS_IMPROVEMENT_ID:
+        return item
+    active_lang = lang if lang in _QAZINDUSTRY_PROCESS_IMPROVEMENT_COPY else "ru"
+    copy = _QAZINDUSTRY_PROCESS_IMPROVEMENT_COPY[active_lang]
+    eligibility = cast(list[str], copy["eligibility"])
+    source_links = cast(list[dict[str, str]], copy["official_source_links"])
+    translations = {
+        locale: {
+            field: locale_copy[field]
+            for field in (
+                "title",
+                "summary",
+                "amount",
+                "amount_label",
+                "primary_source_button_label",
+                "application_button_label",
+                "prepare_application_label",
+                "format_label",
+                "deadline_display",
+                "deadline_label",
+                "highlights",
+                "highlights_label",
+            )
+        }
+        for locale, locale_copy in _QAZINDUSTRY_PROCESS_IMPROVEMENT_COPY.items()
+    }
+    raw = dict(item.raw) if isinstance(item.raw, dict) else {}
+    raw.update(
+        {
+            "i18n": translations,
+            "source_name": "QazIndustry",
+            "source_lang": active_lang,
+            "application_url": copy["application_url"],
+            "application_lang": active_lang,
+            "application_amount_display": copy["amount"],
+            "eligibility_section_title": {
+                "ru": "Основные условия",
+                "kk": "Негізгі шарттар",
+                "en": "Main conditions",
+            }[active_lang],
+            "amount_raw": (
+                copy["image_amount"] if compact_image_amount else copy["amount"]
+            ),
+            "eligibility_raw": list(eligibility),
+            "eligibility_summary": "; ".join(eligibility[:3]),
+            "official_source_links": list(source_links),
+        }
+    )
+    for stale_key in (
+        "deadline_policy",
+        "deadline_raw",
+        "detail_sections",
+        "detail_text",
+    ):
+        raw.pop(stale_key, None)
+    tags = [
+        tag
+        for tag in item.tags
+        if str(tag).strip().casefold() not in {"rolling", "open"}
+    ]
+    if not any(str(tag).strip().casefold() == "reimbursement" for tag in tags):
+        tags.append("reimbursement")
+    return item.model_copy(
+        update={
+            "source": "qazindustry",
+            "source_url": HttpUrl(str(copy["source_url"])),
+            "title": copy["title"],
+            "summary": copy["summary"],
+            "funder": "QazIndustry",
+            "amount_min": None,
+            "amount_max": Decimal("60000000"),
+            "currency": "KZT",
+            "deadline": None,
+            "eligibility": list(eligibility),
+            "tags": tags,
+            "raw": raw,
+        }
+    )
+
+
+def project_qazindustry_process_related_items(
+    related_items: list[tuple[Opportunity, str]],
+    *,
+    lang: str,
+) -> list[tuple[Opportunity, str]]:
+    """Keep only source-relevant sibling cards with localized, verified summaries."""
+
+    active_lang = lang if lang in {"ru", "kk", "en"} else "ru"
+    projected: list[tuple[Opportunity, str]] = []
+    for item, reason_key in related_items:
+        related_copy = _QAZINDUSTRY_PROCESS_RELATED_COPY.get(str(item.id))
+        if related_copy is None:
+            continue
+        copy = related_copy[active_lang]
+        raw = dict(item.raw) if isinstance(item.raw, dict) else {}
+        translations = dict(raw.get("i18n") or {})
+        translations[active_lang] = {
+            **(translations.get(active_lang) or {}),
+            **copy,
+        }
+        raw["i18n"] = translations
+        projected.append(
+            (
+                item.model_copy(
+                    update={
+                        "title": copy["title"],
+                        "summary": copy["summary"],
+                        "funder": "QazIndustry",
+                        "raw": raw,
+                    }
+                ),
+                reason_key,
+            )
+        )
+    return projected
+
+
 OPPORTUNITY_DETAIL_CSS = r"""
     .opportunity-article {
       display: grid;
@@ -2676,6 +3043,9 @@ def _source_panel_markup(
     )
     source_button_class = "button slim" if application_action else "button primary"
     source_link_rows: list[str] = []
+    allowed_source_hosts = {"qazindustry.gov.kz"}
+    if str(detail.id) == _QAZINDUSTRY_PROCESS_IMPROVEMENT_ID:
+        allowed_source_hosts.add("old.adilet.zan.kz")
     source_links = raw.get("official_source_links")
     if isinstance(source_links, list):
         for link in source_links:
@@ -2688,7 +3058,7 @@ def _source_panel_markup(
             if (
                 not label
                 or parsed.scheme != "https"
-                or parsed.hostname != "qazindustry.gov.kz"
+                or parsed.hostname not in allowed_source_hosts
                 or link_lang not in {"ru", "kk", "en"}
             ):
                 continue
@@ -2845,19 +3215,21 @@ def _related_markup(
                 action=escape(str(copy["related_open"])),
             )
         )
+    description = str(copy.get("related_section_description") or "").strip()
+    description_markup = f"<p>{escape(description)}</p>" if description else ""
     return """
     <section class="related-section">
       <div class="related-head">
         <span class="eyebrow">{eyebrow}</span>
         <h2>{title}</h2>
-        <p>{description}</p>
+        {description}
       </div>
       <div class="related-grid">{cards}</div>
     </section>
     """.format(
         eyebrow=escape(str(copy["related_section_eyebrow"])),
         title=escape(str(copy["related_section_title"])),
-        description=escape(str(copy["related_section_description"])),
+        description=description_markup,
         cards="".join(cards),
     )
 
@@ -2873,6 +3245,11 @@ def render_opportunity_page(
 ) -> str:
     copy = dashboard_copy(lang)
     active_lang = str(copy["lang"])
+    if str(detail.id) == _QAZINDUSTRY_PROCESS_IMPROVEMENT_ID:
+        # This route now has a fully localized detail and related-card projection;
+        # the generic site fallback notice and related-section filler do not apply.
+        copy["language_fallback_note"] = ""
+        copy["related_section_description"] = ""
     localized_source_label = _localized_item_value(
         detail, "primary_source_button_label", active_lang, ""
     )
@@ -3052,7 +3429,7 @@ def render_opportunity_page(
         ),
     )
     raw_detail = detail.raw if isinstance(detail.raw, dict) else {}
-    social_image_version = opportunity_og_version(
+    social_image_fields: dict[str, object] = dict(
         id=str(detail.id),
         lang=active_lang,
         title=title,
@@ -3068,6 +3445,9 @@ def render_opportunity_page(
         lifecycle=lifecycle,
         formats=detail.tags,
     )
+    if str(detail.id) == _QAZINDUSTRY_PROCESS_IMPROVEMENT_ID:
+        social_image_fields["amount_presentation"] = "localized-caps-v2"
+    social_image_version = opportunity_og_version(**social_image_fields)
     social_image = escape(
         opportunity_og_image_url(
             site_origin,

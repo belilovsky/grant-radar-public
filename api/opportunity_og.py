@@ -259,6 +259,15 @@ def _amount_text(item: OpportunityV1, lang: str) -> str | None:
             "kk": "40%, жылына 60 млн теңгеге дейін",
             "en": "40%, up to KZT 60 million/year",
         }.get(lang, "40%, максимум 60 млн тенге в год")
+    if str(item.id) == "ed3308cc-e250-5235-89f3-b825146e5c1f":
+        return {
+            "ru": "40%; до 60 млн тенге/год; монтаж – до 12 млн тенге/год",
+            "kk": "40%; жылдық шек 60 млн теңге; монтаж шегі 12 млн теңге/жыл",
+            "en": "40%; KZT 60m/year cap; installation KZT 12m/year cap",
+        }.get(
+            lang,
+            "40%; до 60 млн тенге/год; монтаж – до 12 млн тенге/год",
+        )
     display = _clean_text(item.funding_amount.display)
     if display and _display_is_safe_for_language(display, lang):
         return _clean_text(
@@ -351,7 +360,12 @@ def _facts(item: OpportunityV1, lang: str) -> list[tuple[str, str]]:
     return facts[:3]
 
 
-def render_opportunity_og_png(item: OpportunityV1, *, lang: str = "ru") -> bytes:
+def render_opportunity_og_png(
+    item: OpportunityV1,
+    *,
+    lang: str = "ru",
+    compact_amount_card: bool = False,
+) -> bytes:
     """Render one crawler-safe 1200×630 PNG using only approved QAZ.FUND art."""
 
     image = _brand_background().copy().convert("RGBA")
@@ -427,7 +441,8 @@ def render_opportunity_og_png(item: OpportunityV1, *, lang: str = "ru") -> bytes
             width=2,
         )
         draw.text((fact_x + 28, y + 23), label.upper(), fill="#4A7975", font=label_font)
-        value_font = _font(26, "bold")
+        value_size = 18 if compact_amount_card and index == 0 else 26
+        value_font = _font(value_size, "bold")
         lines = _wrap_text(
             draw,
             value,
@@ -531,7 +546,6 @@ def render_opportunity_portrait_png(item: OpportunityV1, *, lang: str = "ru") ->
     fact_gap = 18
     fact_width = (content_width - fact_gap) // 2
     fact_height = 148
-    value_font = _font(24, "bold")
     for index, (label, value) in enumerate(facts[:4]):
         column = index % 2
         row = index // 2
@@ -545,6 +559,12 @@ def render_opportunity_portrait_png(item: OpportunityV1, *, lang: str = "ru") ->
             width=2,
         )
         draw.text((x + 24, y + 24), label.upper(), fill="#4A7975", font=label_font)
+        value_size = (
+            20
+            if str(item.id) == "ed3308cc-e250-5235-89f3-b825146e5c1f" and index == 0
+            else 24
+        )
+        value_font = _font(value_size, "bold")
         value_lines = _wrap_text(
             draw,
             value,

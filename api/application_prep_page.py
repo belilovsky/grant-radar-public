@@ -46,6 +46,9 @@ def _deadline(value: date | None, lang: str) -> str:
 
 def _amount(detail: OpportunityDetail, lang: str) -> str:
     raw = detail.raw if isinstance(detail.raw, dict) else {}
+    application_amount = str(raw.get("application_amount_display") or "").strip()
+    if application_amount:
+        return application_amount
     values = [detail.amount_min, detail.amount_max]
     if any(value is not None for value in values):
         formatted = [
