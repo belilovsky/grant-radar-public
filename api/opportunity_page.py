@@ -102,13 +102,13 @@ _QAZINDUSTRY_REIMBURSEMENT_COPY: dict[str, dict[str, object]] = {
             "Заявитель производит товар из перечня приоритетных товаров; со дня регистрации должно пройти не менее одного календарного года.",
             "Заявитель не относится к субъектам промышленно-инновационной деятельности, указанным в пункте 3 Правил.",
             "На дату подачи заявки нет задолженности по налогам, обязательным пенсионным и профессиональным пенсионным взносам и социальным отчислениям; предусмотрено исключение для платежей с законной отсрочкой.",
-            "Действующие Правила требуют ежегодного увеличения налоговых отчислений за три предыдущих года. Исключение предусмотрено для освобождённых от налогов и/или зарегистрированных менее семи лет.",
-            "Заявитель должен быть включён в Реестр казахстанских товаропроизводителей; это требование применяется с 1 января 2026 года.",
+            "Пункт 13 Правил № 308 требует ежегодного роста налоговых отчислений за предыдущие три года; исключение предусмотрено для освобождённых от налогов и/или зарегистрированных менее семи календарных лет.",
+            "Обновлённое приложение 5-1 к Правилам № 308 требует приложить выписку из Реестра казахстанских товаропроизводителей.",
             "Если оборудование оплачено несколькими платежами, последний платёж должен быть произведён не ранее чем за 24 месяца до подачи заявки. По каждой мере поддержки или виду затрат заключается не более одного соглашения за календарный год.",
         ],
         "highlights_label": "Расхождение в условиях",
         "highlights": [
-            "Страница условий QazIndustry указывает исключение для компаний, зарегистрированных менее 3 лет; действующие Правила № 308 и инструкция указывают менее 7 лет. Инструкция также требует включения в Реестр казахстанских товаропроизводителей с 1 января 2026 года, но на странице условий этого требования нет. До подачи заявки уточните у QazIndustry, какие условия применяются."
+            "Налоговые формулировки расходятся. Страница QazIndustry и пункт 13 Правил № 308 требуют ежегодного роста отчислений за три года, но указывают разные сроки регистрации для исключения: менее трёх календарных лет на странице QazIndustry и менее семи календарных лет в Правилах. Форма, обновлённая приказом № 422, отдельно запрашивает суммы за три года и не требует эти сведения от освобождённых от налогов и/или зарегистрированных менее двух календарных лет. Перед подачей уточните у QazIndustry, как применять каждое положение."
         ],
         "source_url": "https://qazindustry.gov.kz/ru/business_reimbursement",
         "source_lang": "ru",
@@ -116,12 +116,17 @@ _QAZINDUSTRY_REIMBURSEMENT_COPY: dict[str, dict[str, object]] = {
         "application_lang": "ru",
         "official_source_links": [
             {
-                "label": "Действующие Правила № 308 (RU, PDF)",
-                "url": "https://qazindustry.gov.kz/docs/v2200028320.22-12-2025.rus%20%281%29.pdf",
+                "label": "Правила № 308, сводный текст (Әділет, RU)",
+                "url": "https://old.adilet.zan.kz/rus/docs/V2200028320",
                 "lang": "ru",
             },
             {
-                "label": "Инструкция QazIndustry (RU, PDF)",
+                "label": "Приказ № 422 от 28.08.2026 (Әділет, RU)",
+                "url": "https://adilet.zan.kz/rus/docs/V2600039734",
+                "lang": "ru",
+            },
+            {
+                "label": "Инструкция QazIndustry, июль 2026 (RU, PDF)",
                 "url": "https://qazindustry.gov.kz/docs/instrukcia070726.pdf",
                 "lang": "ru",
             },
@@ -156,13 +161,13 @@ _QAZINDUSTRY_REIMBURSEMENT_COPY: dict[str, dict[str, object]] = {
             "Өтінім беруші басым тауарлар тізбесіне кіретін өнімді өндіреді; тіркелген күннен өтінім түскенге дейін кемінде бір күнтізбелік жыл өтуі тиіс.",
             "Өтінім беруші Қағидалардың 3-тармағында көрсетілген өнеркәсіптік-инновациялық қызмет субъектілеріне жатпайды.",
             "Өтінім берілген күні салық, міндетті зейнетақы жарналары, міндетті кәсіптік зейнетақы жарналары мен әлеуметтік аударымдар бойынша берешек болмауы керек; заңды түрде кейінге қалдырылған төлемдерге ерекшелік көзделген.",
-            "Қолданыстағы Қағидалар бойынша алдыңғы үш жылда салық аударымдары жыл сайын өсуі керек. Салық төлеуден босатылған және/немесе тіркелгеніне жеті жылдан аз болған өтінім берушілерге ерекшелік көзделген.",
-            "Өтінім беруші Қазақстандық тауар өндірушілер тізілімінде болуы керек; бұл талап 2026 жылғы 1 қаңтардан бастап қолданылады.",
+            "№ 308 Қағиданың 13-тармағы алдыңғы үш жылдағы салық аударымдарының жыл сайын өсуін талап етеді; салықтан босатылған және/немесе тіркелгеніне жеті күнтізбелік жылдан аз болған өтінім берушілерге ерекшелік көзделген.",
+            "№ 308 Қағиданың жаңартылған 5-1-қосымшасы Қазақстандық тауар өндірушілер тізілімінен үзінді көшірме қосуды талап етеді.",
             "Жабдық бірнеше төлеммен сатып алынса, соңғы төлем өтінім берілгенге дейінгі 24 ай ішінде жасалуы тиіс. Әр қолдау шарасы немесе шығын түрі бойынша күнтізбелік жылда бір өтем келісімінен артық жасалмайды.",
         ],
         "highlights_label": "Шарттардағы сәйкессіздік",
         "highlights": [
-            "QazIndustry шарттар бетінде салық талабынан босату тіркелгеніне үш жылдан аз уақыт өткен өтініш берушілерге қатысты деп көрсетілген. № 308 Қағида мен өтінім нұсқаулығы бойынша осы ерекшелік өтінім беруші тіркелгеніне жеті жылдан аз уақыт өткенде қолданылады. Нұсқаулықта 2026 жылғы 1 қаңтардан бастап Қазақстандық тауар өндірушілер тізілімінде болу талабы да бар, алайда шарттар бетінде бұл талап аталмайды. Өтінер алдында қолданыстағы талаптарды QazIndustry-ден нақтылаңыз."
+            "Салық талаптарының тұжырымдары әртүрлі. QazIndustry шарттар беті мен № 308 Қағиданың 13-тармағы алдыңғы үш жылда аударымдардың жыл сайын өсуін талап етеді, бірақ тіркелу мерзіміне байланысты ерекшелікті әрқалай көрсетеді: шарттар бетінде үш күнтізбелік жылдан аз, Қағидада жеті күнтізбелік жылдан аз. № 422 бұйрықпен жаңартылған өтінім нысаны үш жылдағы аударым сомаларын бөлек сұрайды және салықтан босатылған және/немесе тіркелгеніне екі күнтізбелік жылдан аз болған өтінім берушілерден бұл мәліметтерді талап етпейді. Өтінер алдында әр ереженің өтініміңізге қалай қолданылатынын QazIndustry-ден нақтылаңыз."
         ],
         "source_url": "https://qazindustry.gov.kz/kk/business_reimbursement",
         "source_lang": "kk",
@@ -170,12 +175,17 @@ _QAZINDUSTRY_REIMBURSEMENT_COPY: dict[str, dict[str, object]] = {
         "application_lang": "kk",
         "official_source_links": [
             {
-                "label": "Қолданыстағы № 308 Қағидалар (RU, PDF)",
-                "url": "https://qazindustry.gov.kz/docs/v2200028320.22-12-2025.rus%20%281%29.pdf",
+                "label": "№ 308 Қағида, жинақталған мәтіні (Әділет, RU)",
+                "url": "https://old.adilet.zan.kz/rus/docs/V2200028320",
                 "lang": "ru",
             },
             {
-                "label": "QazIndustry нұсқаулығы (RU, PDF)",
+                "label": "2026 жылғы 28 тамыздағы № 422 бұйрық (Әділет, RU)",
+                "url": "https://adilet.zan.kz/rus/docs/V2600039734",
+                "lang": "ru",
+            },
+            {
+                "label": "QazIndustry нұсқаулығы, 2026 жылғы шілде (RU, PDF)",
                 "url": "https://qazindustry.gov.kz/docs/instrukcia070726.pdf",
                 "lang": "ru",
             },
@@ -209,13 +219,13 @@ _QAZINDUSTRY_REIMBURSEMENT_COPY: dict[str, dict[str, object]] = {
             "The applicant must produce a good on the Priority Goods List and have been registered for at least one calendar year before applying.",
             "The applicant must not be an industrial and innovation activity entity listed in point 3 of the Rules.",
             "At submission, the applicant must have no tax arrears or arrears on mandatory pension contributions, professional pension contributions, or social contributions; legally deferred payments are excepted.",
-            "The current Rules require annual growth in tax remittances over the preceding three years, with an exception for tax-exempt applicants and/or those registered for less than seven years.",
-            "The applicant must be included in the Register of Kazakhstani Commodity Producers; the QazIndustry application guide says this requirement applies from 1 January 2026.",
+            "Point 13 of Rules No. 308 requires annual growth in tax remittances over the preceding three years, with an exception for tax-exempt applicants and/or those registered for less than seven calendar years.",
+            "Updated Appendix 5-1 to Rules No. 308 requires an extract from the Register of Kazakhstani Commodity Producers.",
             "If the equipment is paid for in several installments, the final payment must be within 24 months before applying. The Rules allow no more than one reimbursement agreement per support measure or cost type in a calendar year.",
         ],
         "highlights_label": "Conflicting eligibility wording",
         "highlights": [
-            "QazIndustry’s terms page gives a less-than-three-year exception to the tax-growth rule; current Rules No. 308 and the application guide say less than seven years. The guide also requires inclusion in the Register of Kazakhstani Commodity Producers from 1 January 2026, a condition absent from the terms page. Confirm the applicable criteria with QazIndustry before applying."
+            "Tax wording differs across the sources. QazIndustry’s terms page and point 13 of Rules No. 308 require annual growth in remittances over three years, but set different registration-age exceptions: less than three calendar years on the terms page and less than seven calendar years in the Rules. The application form updated by Order No. 422 separately requests three-year remittance totals and does not require this information from tax-exempt applicants and/or those registered for less than two calendar years. Ask QazIndustry how each provision applies before filing."
         ],
         "source_url": "https://qazindustry.gov.kz/ru/business_reimbursement",
         "source_lang": "ru",
@@ -223,12 +233,17 @@ _QAZINDUSTRY_REIMBURSEMENT_COPY: dict[str, dict[str, object]] = {
         "application_lang": "ru",
         "official_source_links": [
             {
-                "label": "Current Rules No. 308 (RU, PDF)",
-                "url": "https://qazindustry.gov.kz/docs/v2200028320.22-12-2025.rus%20%281%29.pdf",
+                "label": "Rules No. 308, consolidated text (Adilet, RU)",
+                "url": "https://old.adilet.zan.kz/rus/docs/V2200028320",
                 "lang": "ru",
             },
             {
-                "label": "QazIndustry instructions (RU, PDF)",
+                "label": "Order No. 422 dated 28 August 2026 (Adilet, RU)",
+                "url": "https://adilet.zan.kz/rus/docs/V2600039734",
+                "lang": "ru",
+            },
+            {
+                "label": "QazIndustry instructions, July 2026 (RU, PDF)",
                 "url": "https://qazindustry.gov.kz/docs/instrukcia070726.pdf",
                 "lang": "ru",
             },
