@@ -77,6 +77,11 @@ _GENERIC_RUSSIAN_SUMMARY = (
 
 
 _QAZINDUSTRY_REIMBURSEMENT_ID = "1684ec38-c20f-5844-9e69-140b4a595c28"
+_QAZINDUSTRY_PROCESS_IMPROVEMENT_ID = "ed3308cc-e250-5235-89f3-b825146e5c1f"
+_QAZINDUSTRY_PROCESS_IMPROVEMENT_TITLES = {
+    "ru": "Возмещение затрат на совершенствование технологических процессов",
+    "kk": "Технологиялық процестерді жетілдіруге жұмсалған шығындарды өтеу",
+}
 _QAZINDUSTRY_REIMBURSEMENT_COPY: dict[str, dict[str, object]] = {
     "ru": {
         "title": "Возмещение затрат на внедрение цифровых технологий",
@@ -2790,7 +2795,14 @@ def _related_markup(
             and summary.strip().casefold() == _GENERIC_RUSSIAN_SUMMARY.casefold()
         ):
             source_title = _localized_item_value(item, "title", "en", item.title)
-            if source_title:
+            localized_related_title = (
+                _QAZINDUSTRY_PROCESS_IMPROVEMENT_TITLES.get(lang)
+                if str(item.id) == _QAZINDUSTRY_PROCESS_IMPROVEMENT_ID
+                else None
+            )
+            if localized_related_title:
+                title = localized_related_title
+            elif source_title:
                 title = source_title
             summary = ""
         if _needs_russian_title_fallback(title, summary, lang):
