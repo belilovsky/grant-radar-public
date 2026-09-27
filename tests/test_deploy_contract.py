@@ -10,7 +10,8 @@ ROOT = Path(__file__).resolve().parents[1]
 def test_deploy_script_syncs_an_exact_git_archive_and_preserves_runtime_state() -> None:
     script = (ROOT / "scripts" / "deploy_qaz_fund.sh").read_text()
 
-    assert 'git archive "$REVISION" | tar -x -C "$SOURCE_STAGE"' in script
+    assert 'git archive "$REVISION" >"$SOURCE_ARCHIVE"' in script
+    assert 'tar -x -f "$SOURCE_ARCHIVE" -C "$SOURCE_STAGE"' in script
     assert "--delete-delay" in script
     assert "--backup" in script
     assert '"--backup-dir=$SOURCE_BACKUP_DIR"' in script
