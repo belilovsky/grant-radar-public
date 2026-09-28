@@ -998,6 +998,7 @@ DOMESTIC_PROGRAMS = (
                     "Зависит от вида субсидии; периоды указаны в приложении 2."
                 ),
                 "primary_source_button_label": "Открыть Правила № 108 в Әділет",
+                "official_source_label": "Правила № 108 в Әділет",
                 "application_button_label": "Перейти на портал Gosagro.kz",
                 "prepare_application_label": "Сверить требования к заявке",
                 "eligibility_section_title": "Кто может претендовать",
@@ -1086,6 +1087,7 @@ DOMESTIC_PROGRAMS = (
                     "Субсидия түріне байланысты; кезеңдер 2-қосымшада көрсетілген."
                 ),
                 "primary_source_button_label": "Әділеттегі № 108 қағиданы ашу",
+                "official_source_label": "Әділеттегі № 108 қағида",
                 "application_button_label": "Gosagro.kz порталына өту",
                 "prepare_application_label": "Өтінім талаптарын тексеру",
                 "eligibility_section_title": "Кім өтінім бере алады",
@@ -1168,6 +1170,7 @@ DOMESTIC_PROGRAMS = (
                     "Varies by subsidy type; periods are listed in Annex 2."
                 ),
                 "primary_source_button_label": "Open Rule No. 108 in Russian on Adilet",
+                "official_source_label": "Rule No. 108 on Adilet",
                 "application_button_label": "Open the Gosagro.kz application portal",
                 "prepare_application_label": "Check application requirements",
                 "eligibility_section_title": "Who may apply",

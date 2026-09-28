@@ -3776,6 +3776,13 @@ def render_opportunity_page(
         )
     )
     source_text = detail.funder or _label_value(detail.source, copy)
+    if str(detail.id) == _LIVESTOCK_SUBSIDY_CRITERIA_ID:
+        source_text = _localized_item_value(
+            detail,
+            "official_source_label",
+            active_lang,
+            source_text,
+        )
     format_text = _detail_format_label(detail, copy)
     source_host = _host_label(str(detail.source_url))
     applications_closed = lifecycle in {"closed", "awarded"}
