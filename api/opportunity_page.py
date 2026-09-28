@@ -3352,6 +3352,7 @@ def _related_markup(
     root_path: str,
     copy: dict[str, object],
     suppress_generic_source_content: bool = False,
+    suppress_unlocalized_related_meta: bool = False,
 ) -> str:
     if not related_items:
         return ""
@@ -3393,6 +3394,8 @@ def _related_markup(
         reason = escape(str(copy.get(reason_key, copy["related_reason_theme"])))
         source_label = escape(item.funder or _label_value(item.source, copy))
         deadline_label = _related_deadline_label(item, copy=copy, lang=lang)
+        if suppress_unlocalized_related_meta and lang != "ru":
+            deadline_label = ""
         deadline_markup = (
             '<span class="related-deadline">{deadline}</span>'.format(
                 deadline=escape(deadline_label)
@@ -3598,6 +3601,9 @@ def render_opportunity_page(
             suppress_generic_source_content=(
                 str(detail.id)
                 in {_QAZINDUSTRY_REIMBURSEMENT_ID, _QIC_ALEM_VENTURES_ID}
+            ),
+            suppress_unlocalized_related_meta=(
+                str(detail.id) == _QIC_ALEM_VENTURES_ID
             ),
         )
     )
