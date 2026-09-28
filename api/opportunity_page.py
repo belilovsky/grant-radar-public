@@ -3735,10 +3735,16 @@ def render_opportunity_page(
     elif lifecycle == "forecast":
         lifecycle_notice = str(copy["detail_forecast_notice"])
     lifecycle_notice_markup = (
-        '<p class="lifecycle-notice" data-avds-component="Alert">'
+        '<p class="lifecycle-notice{modifier}" data-avds-component="Alert">'
         f"{escape(lifecycle_notice)}</p>"
         if lifecycle_notice
         else ""
+    ).format(
+        modifier=(
+            " lifecycle-notice--informational"
+            if str(detail.id) == _QIC_ALEM_VENTURES_ID
+            else ""
+        )
     )
     source_panel_markup = _source_panel_markup(
         detail,
@@ -4292,6 +4298,11 @@ def render_opportunity_page(
       color: #dbe7f5;
       font-size: 13px;
       line-height: 1.5;
+    }}
+    .lifecycle-notice--informational {{
+      border-color: color-mix(in oklab, var(--brand), var(--line) 72%);
+      background: color-mix(in oklab, var(--brand), white 95%);
+      color: color-mix(in oklab, var(--text), var(--brand) 14%);
     }}
     .verification-section {{
       display: grid;
