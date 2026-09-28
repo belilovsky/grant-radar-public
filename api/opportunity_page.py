@@ -3596,7 +3596,8 @@ def render_opportunity_page(
             root_path=root_path,
             copy=copy,
             suppress_generic_source_content=(
-                str(detail.id) == _QAZINDUSTRY_REIMBURSEMENT_ID
+                str(detail.id)
+                in {_QAZINDUSTRY_REIMBURSEMENT_ID, _QIC_ALEM_VENTURES_ID}
             ),
         )
     )
