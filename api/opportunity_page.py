@@ -116,6 +116,18 @@ _QAZINDUSTRY_REIMBURSEMENT_COPY: dict[str, dict[str, object]] = {
         "highlights": [
             "Налоговые формулировки расходятся. Страница QazIndustry и пункт 13 Правил № 308 требуют ежегодного роста отчислений за три года, но указывают разные сроки регистрации для исключения: менее трёх календарных лет на странице QazIndustry и менее семи календарных лет в Правилах. Форма, обновлённая приказом № 422, отдельно запрашивает суммы за три года и не требует эти сведения от освобождённых от налогов и/или зарегистрированных менее двух календарных лет. Перед подачей уточните у QazIndustry, как применять каждое положение."
         ],
+        "application_step_titles": [
+            "Сверьте критерии",
+            "Подготовьте электронный пакет",
+            "Войдите на портал",
+            "Подпишите и отправьте заявку",
+        ],
+        "application_steps": [
+            "Проверьте продукцию, срок регистрации, отсутствие задолженности и другие требования по приложению 5-1 к Правилам № 308.",
+            "Соберите заявку и документы, подтверждающие расходы на ранее не использовавшееся цифровое оборудование, включая выписку из Реестра казахстанских товаропроизводителей.",
+            "Откройте сервис QazIndustry. Если учётной записи нет, зарегистрируйтесь; для продолжения сервис требует авторизацию.",
+            "Удостоверьте электронную заявку и пакет документов ЭЦП уполномоченного лица и отправьте их через портал.",
+        ],
         "source_url": "https://qazindustry.gov.kz/ru/business_reimbursement",
         "source_lang": "ru",
         "application_url": "https://sez.qazindustry.gov.kz/ru/service/5/evaluate",
@@ -175,6 +187,18 @@ _QAZINDUSTRY_REIMBURSEMENT_COPY: dict[str, dict[str, object]] = {
         "highlights": [
             "Салық талаптарының тұжырымдары әртүрлі. QazIndustry шарттар беті мен № 308 Қағиданың 13-тармағы алдыңғы үш жылда аударымдардың жыл сайын өсуін талап етеді, бірақ тіркелу мерзіміне байланысты ерекшелікті әрқалай көрсетеді: шарттар бетінде үш күнтізбелік жылдан аз, Қағидада жеті күнтізбелік жылдан аз. № 422 бұйрықпен жаңартылған өтінім нысаны үш жылдағы аударым сомаларын бөлек сұрайды және салықтан босатылған және/немесе тіркелгеніне екі күнтізбелік жылдан аз болған өтінім берушілерден бұл мәліметтерді талап етпейді. Өтінер алдында әр ереженің өтініміңізге қалай қолданылатынын QazIndustry-ден нақтылаңыз."
         ],
+        "application_step_titles": [
+            "Өлшемдерге сәйкестікті тексеріңіз",
+            "Электрондық құжаттар пакетін дайындаңыз",
+            "Порталға кіріңіз",
+            "Өтінімге қол қойып, жіберіңіз",
+        ],
+        "application_steps": [
+            "Өнімді, тіркелу мерзімін, берешектің жоқтығын және өзге талаптарды № 308 Қағиданың 5-1-қосымшасы бойынша тексеріңіз.",
+            "Өтінімді, бұрын пайдаланылмаған цифрлық жабдыққа жұмсалған шығындарды растайтын құжаттарды және Қазақстандық тауар өндірушілер тізілімінен үзінді көшірмені жинаңыз.",
+            "QazIndustry сервисін ашыңыз. Есептік жазбаңыз болмаса, тіркеліңіз; жұмысты жалғастыру үшін сервиске кіру қажет.",
+            "Электрондық өтінім мен құжаттар пакетіне уәкілетті тұлғаның ЭЦҚ-сымен қол қойып, портал арқылы жіберіңіз.",
+        ],
         "source_url": "https://qazindustry.gov.kz/kk/business_reimbursement",
         "source_lang": "kk",
         "application_url": "https://sez.qazindustry.gov.kz/kk/service/5/evaluate",
@@ -232,6 +256,18 @@ _QAZINDUSTRY_REIMBURSEMENT_COPY: dict[str, dict[str, object]] = {
         "highlights_label": "Conflicting eligibility wording",
         "highlights": [
             "Tax wording differs across the sources. QazIndustry’s terms page and point 13 of Rules No. 308 require annual growth in remittances over three years, but set different registration-age exceptions: less than three calendar years on the terms page and less than seven calendar years in the Rules. The application form updated by Order No. 422 separately requests three-year remittance totals and does not require this information from tax-exempt applicants and/or those registered for less than two calendar years. Ask QazIndustry how each provision applies before filing."
+        ],
+        "application_step_titles": [
+            "Check the eligibility criteria",
+            "Prepare the electronic document pack",
+            "Sign in to the portal",
+            "Sign and submit the application",
+        ],
+        "application_steps": [
+            "Check the product, registration period, absence of arrears and other requirements against Appendix 5-1 to Rules No. 308.",
+            "Prepare the application and documents proving the cost of previously unused digital equipment, including an extract from the Register of Kazakhstani Commodity Producers.",
+            "Open the QazIndustry service. Register if you do not have an account; the service requires sign-in to continue.",
+            "Use the authorised person's electronic digital signature to certify the online application and document pack, then submit them through the portal.",
         ],
         "source_url": "https://qazindustry.gov.kz/ru/business_reimbursement",
         "source_lang": "ru",
@@ -291,6 +327,8 @@ def project_qazindustry_reimbursement(item: Opportunity, *, lang: str) -> Opport
                 "deadline_label",
                 "highlights",
                 "highlights_label",
+                "application_step_titles",
+                "application_steps",
             }
         }
         for locale, locale_copy in _QAZINDUSTRY_REIMBURSEMENT_COPY.items()
@@ -301,6 +339,8 @@ def project_qazindustry_reimbursement(item: Opportunity, *, lang: str) -> Opport
             "source_name": "QazIndustry",
             "application_url": copy["application_url"],
             "application_lang": copy["application_lang"],
+            "application_amount_display": copy["amount"],
+            "application_deadline_display": copy["deadline_display"],
             "source_lang": copy["source_lang"],
             "eligibility_section_title": copy["eligibility_section_title"],
             "amount_raw": copy["amount"],
@@ -559,6 +599,20 @@ _QAZINDUSTRY_PROCESS_IMPROVEMENT_COPY: dict[str, dict[str, object]] = {
 }
 
 _QAZINDUSTRY_PROCESS_RELATED_COPY: dict[str, dict[str, dict[str, str]]] = {
+    "ed3308cc-e250-5235-89f3-b825146e5c1f": {
+        "ru": {
+            "title": "Возмещение затрат на совершенствование технологических процессов",
+            "summary": "QazIndustry возмещает часть подтверждённых затрат на энергоаудит, новое технологическое оборудование и его монтаж или шеф-монтаж.",
+        },
+        "kk": {
+            "title": "Технологиялық процестерді жетілдіруге жұмсалған шығындарды өтеу",
+            "summary": "QazIndustry энергия аудитіне, жаңа технологиялық жабдыққа және оны монтаждауға немесе шеф-монтаждауға жұмсалған расталған шығындардың бір бөлігін өтейді.",
+        },
+        "en": {
+            "title": "Reimbursement for improving technological processes",
+            "summary": "QazIndustry reimburses part of documented costs for energy audits, new technological equipment, and its installation or supervised installation.",
+        },
+    },
     "1684ec38-c20f-5844-9e69-140b4a595c28": {
         "ru": {
             "title": "Возмещение затрат на внедрение цифровых технологий",
@@ -2821,7 +2875,9 @@ def _highlights_markup(
       </div>
       <ol class="key-conditions-list">{rows}</ol>
     </section>
-    """.format(title=escape(title), rows=rows)
+    """.format(
+        title=escape(title), rows=rows
+    )
 
 
 def _content_sections_markup(
@@ -2942,12 +2998,17 @@ def _source_guidance_markup(
     cards = _localized_card_items(detail, "prepare_items", lang)
     if not cards:
         return ""
-    rows = "".join("""
+    rows = "".join(
+        """
         <li class="source-guidance-item">
           <strong>{title}</strong>
           <p>{text}</p>
         </li>
-        """.format(title=escape(title), text=escape(text)) for title, text in cards)
+        """.format(
+            title=escape(title), text=escape(text)
+        )
+        for title, text in cards
+    )
     return """
     <section class="detail-section" aria-labelledby="guidance-title">
       <div class="detail-section-head">
@@ -2955,7 +3016,9 @@ def _source_guidance_markup(
       </div>
       <ul class="source-guidance-list">{rows}</ul>
     </section>
-    """.format(title=escape(str(copy["detail_guidance_title"])), rows=rows)
+    """.format(
+        title=escape(str(copy["detail_guidance_title"])), rows=rows
+    )
 
 
 def _application_steps_markup(
@@ -2976,7 +3039,9 @@ def _application_steps_markup(
             <p>{text}</p>
           </div>
         </li>
-        """.format(title=escape(title), text=escape(text))
+        """.format(
+            title=escape(title), text=escape(text)
+        )
         for title, text in zip(titles, steps, strict=True)
     )
     return """
@@ -2986,7 +3051,9 @@ def _application_steps_markup(
       </div>
       <ol class="application-steps">{rows}</ol>
     </section>
-    """.format(title=escape(str(copy["detail_application_steps_title"])), rows=rows)
+    """.format(
+        title=escape(str(copy["detail_application_steps_title"])), rows=rows
+    )
 
 
 def _source_panel_markup(
@@ -3284,6 +3351,10 @@ def render_opportunity_page(
     if str(detail.id) == _QAZINDUSTRY_PROCESS_IMPROVEMENT_ID:
         # This route now has a fully localized detail and related-card projection;
         # the generic site fallback notice and related-section filler do not apply.
+        copy["language_fallback_note"] = ""
+        copy["related_section_description"] = ""
+    if str(detail.id) == _QAZINDUSTRY_REIMBURSEMENT_ID:
+        # The route has complete localized copy and a source-bound sibling set.
         copy["language_fallback_note"] = ""
         copy["related_section_description"] = ""
     localized_source_label = _localized_item_value(

@@ -2260,6 +2260,11 @@ async def opportunity_page(
     localized_item = project_qazindustry_reimbursement(
         localize_opportunity(item, content_lang), lang=content_lang
     )
+    if is_qazindustry_reimbursement(opportunity_id):
+        related_items = project_qazindustry_process_related_items(
+            related_items,
+            lang=content_lang,
+        )
     if str(opportunity_id) == "ed3308cc-e250-5235-89f3-b825146e5c1f":
         localized_item = project_qazindustry_process_improvement(
             localized_item,
@@ -2413,7 +2418,12 @@ async def opportunity_prepare_page(
     if request.method == "HEAD":
         return HTMLResponse("", headers={"Cache-Control": _PUBLIC_FAST_CACHE})
     localized_item = localize_opportunity(item, content_lang)
-    if str(opportunity_id) == "ed3308cc-e250-5235-89f3-b825146e5c1f":
+    if is_qazindustry_reimbursement(opportunity_id):
+        localized_item = project_qazindustry_reimbursement(
+            localized_item,
+            lang=content_lang,
+        )
+    elif str(opportunity_id) == "ed3308cc-e250-5235-89f3-b825146e5c1f":
         localized_item = project_qazindustry_process_improvement(
             localized_item,
             lang=content_lang,
