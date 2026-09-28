@@ -3393,6 +3393,8 @@ def _related_markup(
         href = escape(_page_path(root_path, str(item.id), lang), quote=True)
         reason = escape(str(copy.get(reason_key, copy["related_reason_theme"])))
         source_label = escape(item.funder or _label_value(item.source, copy))
+        if suppress_unlocalized_related_meta and lang != "ru":
+            source_label = ""
         deadline_label = _related_deadline_label(item, copy=copy, lang=lang)
         if suppress_unlocalized_related_meta and lang != "ru":
             deadline_label = ""
