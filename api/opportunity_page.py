@@ -93,8 +93,13 @@ _QIC_ALEM_VENTURES_COPY: dict[str, dict[str, object]] = {
         "format_label": "Инвестиционное сообщение",
         "deadline_label": "Приём заявок",
         "deadline_display": "Не объявлен",
-        "primary_source_button_label": "Открыть сообщение QIC (EN)",
+        "primary_source_button_label": "Открыть сообщение QIC",
         "official_source_label": "Сообщение QIC об участии в Alem Ventures",
+        "source_url": (
+            "https://qic.kz/ru/novosti-i-insayty/"
+            "qazaqstan-investment-corporation-signed-an-agreement-to-join-the-"
+            "alem-ventures-fund-venture-fund/"
+        ),
         "lifecycle_notice": (
             "Это информационное сообщение об инвестиции QIC. Открытый приём "
             "заявок для стартапов не объявлен."
@@ -118,8 +123,13 @@ _QIC_ALEM_VENTURES_COPY: dict[str, dict[str, object]] = {
         "format_label": "Инвестиция туралы хабарлама",
         "deadline_label": "Өтінім қабылдау",
         "deadline_display": "Жарияланбаған",
-        "primary_source_button_label": "QIC хабарламасын ашу (EN)",
+        "primary_source_button_label": "QIC хабарламасын ашу",
         "official_source_label": "QIC-тің Alem Ventures-ке қатысуы туралы хабарлама",
+        "source_url": (
+            "https://qic.kz/novosti-i-insayty/"
+            "qazaqstan-investment-corporation-signed-an-agreement-to-join-the-"
+            "alem-ventures-fund-venture-fund/"
+        ),
         "lifecycle_notice": (
             "Бұл QIC инвестициясы туралы ақпараттық хабарлама. Стартаптарға "
             "арналған ашық өтінім қабылдау жарияланбаған."
@@ -145,6 +155,11 @@ _QIC_ALEM_VENTURES_COPY: dict[str, dict[str, object]] = {
         "deadline_display": "Not announced",
         "primary_source_button_label": "Open the QIC announcement",
         "official_source_label": "QIC announcement on joining Alem Ventures",
+        "source_url": (
+            "https://qic.kz/en/novosti-i-insayty/"
+            "qazaqstan-investment-corporation-signed-an-agreement-to-join-the-"
+            "alem-ventures-fund-venture-fund/"
+        ),
         "lifecycle_notice": (
             "This is an announcement about QIC's investment. No open startup "
             "application round was announced."
@@ -1032,6 +1047,7 @@ def project_qic_alem_ventures(item: Opportunity, *, lang: str) -> Opportunity:
                 "deadline_display",
                 "primary_source_button_label",
                 "official_source_label",
+                "source_url",
                 "lifecycle_notice",
                 "highlights_label",
                 "highlights",
@@ -1044,7 +1060,7 @@ def project_qic_alem_ventures(item: Opportunity, *, lang: str) -> Opportunity:
         {
             "i18n": translations,
             "source_name": "Qazaqstan Investment Corporation",
-            "source_lang": "en",
+            "source_lang": active_lang,
         }
     )
     for stale_key in (
@@ -1067,6 +1083,7 @@ def project_qic_alem_ventures(item: Opportunity, *, lang: str) -> Opportunity:
         update={
             "title": copy["title"],
             "summary": copy["summary"],
+            "source_url": HttpUrl(str(copy["source_url"])),
             "funder": "Qazaqstan Investment Corporation",
             "amount_min": None,
             "amount_max": None,
