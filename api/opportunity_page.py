@@ -94,6 +94,7 @@ _QIC_ALEM_VENTURES_COPY: dict[str, dict[str, object]] = {
         "deadline_label": "Приём заявок",
         "deadline_display": "Не объявлен",
         "primary_source_button_label": "Открыть сообщение QIC (EN)",
+        "official_source_label": "Сообщение QIC об участии в Alem Ventures",
         "lifecycle_notice": (
             "Это информационное сообщение об инвестиции QIC. Открытый приём "
             "заявок для стартапов не объявлен."
@@ -118,6 +119,7 @@ _QIC_ALEM_VENTURES_COPY: dict[str, dict[str, object]] = {
         "deadline_label": "Өтінім қабылдау",
         "deadline_display": "Жарияланбаған",
         "primary_source_button_label": "QIC хабарламасын ашу (EN)",
+        "official_source_label": "QIC-тің Alem Ventures-ке қатысуы туралы хабарлама",
         "lifecycle_notice": (
             "Бұл QIC инвестициясы туралы ақпараттық хабарлама. Стартаптарға "
             "арналған ашық өтінім қабылдау жарияланбаған."
@@ -142,6 +144,7 @@ _QIC_ALEM_VENTURES_COPY: dict[str, dict[str, object]] = {
         "deadline_label": "Applications",
         "deadline_display": "Not announced",
         "primary_source_button_label": "Open the QIC announcement",
+        "official_source_label": "QIC announcement on joining Alem Ventures",
         "lifecycle_notice": (
             "This is an announcement about QIC's investment. No open startup "
             "application round was announced."
@@ -1028,6 +1031,7 @@ def project_qic_alem_ventures(item: Opportunity, *, lang: str) -> Opportunity:
                 "deadline_label",
                 "deadline_display",
                 "primary_source_button_label",
+                "official_source_label",
                 "lifecycle_notice",
                 "highlights_label",
                 "highlights",
@@ -3776,7 +3780,10 @@ def render_opportunity_page(
         )
     )
     source_text = detail.funder or _label_value(detail.source, copy)
-    if str(detail.id) == _LIVESTOCK_SUBSIDY_CRITERIA_ID:
+    if str(detail.id) in {
+        _LIVESTOCK_SUBSIDY_CRITERIA_ID,
+        _QIC_ALEM_VENTURES_ID,
+    }:
         source_text = _localized_item_value(
             detail,
             "official_source_label",
