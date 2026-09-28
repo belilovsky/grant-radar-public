@@ -79,6 +79,81 @@ _GENERIC_RUSSIAN_SUMMARY = (
 _QAZINDUSTRY_REIMBURSEMENT_ID = "1684ec38-c20f-5844-9e69-140b4a595c28"
 _QAZINDUSTRY_PROCESS_IMPROVEMENT_ID = "ed3308cc-e250-5235-89f3-b825146e5c1f"
 _LIVESTOCK_SUBSIDY_CRITERIA_ID = "73636485-4e9c-54c7-9881-1f294cc2dd29"
+_QIC_ALEM_VENTURES_ID = "3872d7d1-b705-574c-a98b-a3d8ce0e0c5e"
+_QIC_ALEM_VENTURES_COPY: dict[str, dict[str, object]] = {
+    "ru": {
+        "title": "Участие QIC в фонде фондов Alem Ventures",
+        "summary": (
+            "QIC и Qazaqstan Venture Group объявили о сотрудничестве в рамках "
+            "фонда фондов Alem Ventures. Целевой размер фонда – $1 млрд; "
+            "ожидаемый вклад QIC – $30 млн. Открытый приём заявок в сообщении "
+            "не объявлен."
+        ),
+        "format_label": "Инвестиционное сообщение",
+        "deadline_label": "Приём заявок",
+        "deadline_display": "Не объявлен",
+        "primary_source_button_label": "Открыть сообщение QIC (EN)",
+        "lifecycle_notice": (
+            "Это информационное сообщение об инвестиции QIC. Открытый приём "
+            "заявок для стартапов не объявлен."
+        ),
+        "highlights_label": "Что подтверждает сообщение",
+        "highlights": [
+            "Alem Ventures создан как фонд фондов с целевым размером $1 млрд.",
+            "Ожидаемый вклад QIC в фонд составляет $30 млн.",
+            "Средства фонда предназначены для поддержки IT-проектов в Казахстане, Центральной Азии, на Кавказе и других рынках.",
+            "Сообщение описывает партнёрство и инвестицию QIC; оно не содержит формы заявки, критериев отбора или срока подачи для стартапов.",
+        ],
+    },
+    "kk": {
+        "title": "QIC-тің Alem Ventures қорлар қорына қатысуы",
+        "summary": (
+            "QIC және Qazaqstan Venture Group Alem Ventures қорлар қоры аясындағы "
+            "ынтымақтастық туралы хабарлады. Қордың нысаналы көлемі – $1 млрд, "
+            "QIC-тің күтілетін салымы – $30 млн. Хабарламада ашық өтінім қабылдау "
+            "жарияланбаған."
+        ),
+        "format_label": "Инвестиция туралы хабарлама",
+        "deadline_label": "Өтінім қабылдау",
+        "deadline_display": "Жарияланбаған",
+        "primary_source_button_label": "QIC хабарламасын ашу (EN)",
+        "lifecycle_notice": (
+            "Бұл QIC инвестициясы туралы ақпараттық хабарлама. Стартаптарға "
+            "арналған ашық өтінім қабылдау жарияланбаған."
+        ),
+        "highlights_label": "Хабарлама нені растайды",
+        "highlights": [
+            "Alem Ventures нысаналы көлемі $1 млрд болатын қорлар қоры ретінде құрылған.",
+            "QIC-тің қорға салатын күтілетін салымы $30 млн құрайды.",
+            "Қор қаражаты Қазақстандағы, Орталық Азиядағы, Кавказдағы және басқа нарықтардағы IT-жобаларды қолдауға бағытталған.",
+            "Хабарлама QIC серіктестігі мен инвестициясын сипаттайды; онда стартаптарға арналған өтінім нысаны, іріктеу өлшемдері немесе өтінім мерзімі берілмеген.",
+        ],
+    },
+    "en": {
+        "title": "QIC participation in the Alem Ventures fund of funds",
+        "summary": (
+            "QIC and Qazaqstan Venture Group announced cooperation through the "
+            "Alem Ventures fund of funds. The fund targets $1 billion and QIC is "
+            "expected to invest $30 million. The announcement does not open an "
+            "application round."
+        ),
+        "format_label": "Investment announcement",
+        "deadline_label": "Applications",
+        "deadline_display": "Not announced",
+        "primary_source_button_label": "Open the QIC announcement",
+        "lifecycle_notice": (
+            "This is an announcement about QIC's investment. No open startup "
+            "application round was announced."
+        ),
+        "highlights_label": "What the announcement confirms",
+        "highlights": [
+            "Alem Ventures was established as a fund of funds with a target size of $1 billion.",
+            "QIC is expected to invest $30 million in the fund.",
+            "The fund is intended to support IT projects in Kazakhstan, Central Asia, the Caucasus, and other markets.",
+            "The announcement covers QIC's partnership and investment; it provides no startup application form, selection criteria, or submission deadline.",
+        ],
+    },
+}
 _QAZINDUSTRY_PROCESS_IMPROVEMENT_TITLES = {
     "ru": "Возмещение затрат на совершенствование технологических процессов",
     "kk": "Технологиялық процестерді жетілдіруге жұмсалған шығындарды өтеу",
@@ -764,6 +839,74 @@ def project_qazindustry_process_related_items(
             )
         )
     return projected
+
+
+def is_qic_alem_ventures(opportunity_id: object) -> bool:
+    return str(opportunity_id) == _QIC_ALEM_VENTURES_ID
+
+
+def project_qic_alem_ventures(item: Opportunity, *, lang: str) -> Opportunity:
+    """Present the QIC release as an investment announcement, not an open call."""
+
+    if not is_qic_alem_ventures(item.id):
+        return item
+    active_lang = lang if lang in _QIC_ALEM_VENTURES_COPY else "ru"
+    copy = _QIC_ALEM_VENTURES_COPY[active_lang]
+    translations = {
+        locale: {
+            field: locale_copy[field]
+            for field in (
+                "title",
+                "summary",
+                "format_label",
+                "deadline_label",
+                "deadline_display",
+                "primary_source_button_label",
+                "lifecycle_notice",
+                "highlights_label",
+                "highlights",
+            )
+        }
+        for locale, locale_copy in _QIC_ALEM_VENTURES_COPY.items()
+    }
+    raw = dict(item.raw) if isinstance(item.raw, dict) else {}
+    raw.update(
+        {
+            "i18n": translations,
+            "source_name": "Qazaqstan Investment Corporation",
+            "source_lang": "en",
+        }
+    )
+    for stale_key in (
+        "application_url",
+        "application_amount_display",
+        "application_deadline_display",
+        "amount",
+        "amount_raw",
+        "deadline_policy",
+        "deadline_raw",
+        "detail_sections",
+        "detail_text",
+        "eligibility_raw",
+        "eligibility_summary",
+        "status",
+        "lifecycle",
+    ):
+        raw.pop(stale_key, None)
+    return item.model_copy(
+        update={
+            "title": copy["title"],
+            "summary": copy["summary"],
+            "funder": "Qazaqstan Investment Corporation",
+            "amount_min": None,
+            "amount_max": None,
+            "deadline": None,
+            "eligibility": [],
+            "opportunity_status": "closed",
+            "lifecycle": "closed",
+            "raw": raw,
+        }
+    )
 
 
 OPPORTUNITY_DETAIL_CSS = r"""
@@ -2875,9 +3018,7 @@ def _highlights_markup(
       </div>
       <ol class="key-conditions-list">{rows}</ol>
     </section>
-    """.format(
-        title=escape(title), rows=rows
-    )
+    """.format(title=escape(title), rows=rows)
 
 
 def _content_sections_markup(
@@ -2998,17 +3139,12 @@ def _source_guidance_markup(
     cards = _localized_card_items(detail, "prepare_items", lang)
     if not cards:
         return ""
-    rows = "".join(
-        """
+    rows = "".join("""
         <li class="source-guidance-item">
           <strong>{title}</strong>
           <p>{text}</p>
         </li>
-        """.format(
-            title=escape(title), text=escape(text)
-        )
-        for title, text in cards
-    )
+        """.format(title=escape(title), text=escape(text)) for title, text in cards)
     return """
     <section class="detail-section" aria-labelledby="guidance-title">
       <div class="detail-section-head">
@@ -3016,9 +3152,7 @@ def _source_guidance_markup(
       </div>
       <ul class="source-guidance-list">{rows}</ul>
     </section>
-    """.format(
-        title=escape(str(copy["detail_guidance_title"])), rows=rows
-    )
+    """.format(title=escape(str(copy["detail_guidance_title"])), rows=rows)
 
 
 def _application_steps_markup(
@@ -3039,9 +3173,7 @@ def _application_steps_markup(
             <p>{text}</p>
           </div>
         </li>
-        """.format(
-            title=escape(title), text=escape(text)
-        )
+        """.format(title=escape(title), text=escape(text))
         for title, text in zip(titles, steps, strict=True)
     )
     return """
@@ -3051,9 +3183,7 @@ def _application_steps_markup(
       </div>
       <ol class="application-steps">{rows}</ol>
     </section>
-    """.format(
-        title=escape(str(copy["detail_application_steps_title"])), rows=rows
-    )
+    """.format(title=escape(str(copy["detail_application_steps_title"])), rows=rows)
 
 
 def _source_panel_markup(
@@ -3357,6 +3487,9 @@ def render_opportunity_page(
         # The route has complete localized copy and a source-bound sibling set.
         copy["language_fallback_note"] = ""
         copy["related_section_description"] = ""
+    if str(detail.id) == _QIC_ALEM_VENTURES_ID:
+        copy["language_fallback_note"] = ""
+        copy["related_section_description"] = ""
     localized_source_label = _localized_item_value(
         detail, "primary_source_button_label", active_lang, ""
     )
@@ -3593,7 +3726,12 @@ def render_opportunity_page(
     )
     lifecycle_notice = ""
     if applications_closed:
-        lifecycle_notice = str(copy["detail_closed_notice"])
+        lifecycle_notice = _localized_item_value(
+            detail,
+            "lifecycle_notice",
+            active_lang,
+            str(copy["detail_closed_notice"]),
+        )
     elif lifecycle == "forecast":
         lifecycle_notice = str(copy["detail_forecast_notice"])
     lifecycle_notice_markup = (

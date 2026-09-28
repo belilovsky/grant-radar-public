@@ -123,9 +123,11 @@ from api.opportunity_og import (
 )
 from api.opportunity_page import (
     is_qazindustry_reimbursement,
+    is_qic_alem_ventures,
     project_qazindustry_process_improvement,
     project_qazindustry_process_related_items,
     project_qazindustry_reimbursement,
+    project_qic_alem_ventures,
     render_opportunity_page,
 )
 from api.presentation import release_evidence_from_env
@@ -2260,6 +2262,7 @@ async def opportunity_page(
     localized_item = project_qazindustry_reimbursement(
         localize_opportunity(item, content_lang), lang=content_lang
     )
+    localized_item = project_qic_alem_ventures(localized_item, lang=content_lang)
     if is_qazindustry_reimbursement(opportunity_id):
         related_items = project_qazindustry_process_related_items(
             related_items,
@@ -2285,7 +2288,7 @@ async def opportunity_page(
         root_path=root_path,
         site_origin=site_origin,
         related_items=related_items,
-        lifecycle=public_lifecycle(item),
+        lifecycle=public_lifecycle(localized_item),
     )
     response = HTMLResponse(page_html)
     response.headers["Cache-Control"] = (
@@ -2316,7 +2319,19 @@ async def opportunity_open_graph_image(
 
     _ = v
     content_lang = _public_lang(lang)
-    if is_qazindustry_reimbursement(opportunity_id):
+    if is_qic_alem_ventures(opportunity_id):
+        source_item = _find_opportunity(opportunity_id, content_lang=content_lang)
+        if source_item is None:
+            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND)
+        projected_item = project_qic_alem_ventures(
+            localize_opportunity(source_item, content_lang), lang=content_lang
+        )
+        item = _opportunity_v1_from_item(
+            projected_item,
+            request=request,
+            root_path=_root_path(request),
+        )
+    elif is_qazindustry_reimbursement(opportunity_id):
         source_item = _find_opportunity(opportunity_id, content_lang=content_lang)
         if source_item is None:
             raise HTTPException(status_code=status.HTTP_404_NOT_FOUND)
@@ -2413,6 +2428,8 @@ async def opportunity_prepare_page(
     content_lang = _public_lang(lang)
     item = _find_opportunity(opportunity_id, content_lang=content_lang)
     if item is None:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND)
+    if is_qic_alem_ventures(opportunity_id):
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND)
     root_path = _root_path(request)
     if request.method == "HEAD":
@@ -3636,6 +3653,17 @@ def _find_opportunity_v1(
             request=request,
             root_path=root_path,
         )
+    if is_qic_alem_ventures(opportunity_id):
+        localized = _with_decision_readiness(
+            localize_opportunity(item, content_lang),
+            ranking_subject=item,
+        )
+        localized = project_qic_alem_ventures(localized, lang=content_lang)
+        return _opportunity_v1_from_item(
+            localized,
+            request=request,
+            root_path=root_path,
+        )
     cached = _cached_public_v1_index(
         content_lang=content_lang,
         include_irrelevant=False,
@@ -3647,6 +3675,7 @@ def _find_opportunity_v1(
         localize_opportunity(item, content_lang),
         ranking_subject=item,
     )
+    localized = project_qic_alem_ventures(localized, lang=content_lang)
     return _opportunity_v1_from_item(localized, request=request, root_path=root_path)
 
 
@@ -4467,6 +4496,7 @@ async def get_opportunity_detail(
     if item is None:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND)
     localized = localize_opportunity(item, content_lang)
+    localized = project_qic_alem_ventures(localized, lang=content_lang)
     if str(opportunity_id) == "ed3308cc-e250-5235-89f3-b825146e5c1f":
         localized = project_qazindustry_process_improvement(
             localized,
@@ -4501,6 +4531,7 @@ async def get_opportunity_fit(
     if item is None:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND)
     localized = localize_opportunity(item, content_lang)
+    localized = project_qic_alem_ventures(localized, lang=content_lang)
     payload = assess_profile(
         localized,
         {
@@ -4511,7 +4542,7 @@ async def get_opportunity_fit(
             "support_need": support_need,
             "has_eds": has_eds,
         },
-        lifecycle=public_lifecycle(item),
+        lifecycle=public_lifecycle(localized),
     )
     payload["legal_boundary"] = _FIT_LEGAL_BOUNDARY[content_lang]
     response = JSONResponse(payload)
