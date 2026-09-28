@@ -78,6 +78,7 @@ _GENERIC_RUSSIAN_SUMMARY = (
 
 _QAZINDUSTRY_REIMBURSEMENT_ID = "1684ec38-c20f-5844-9e69-140b4a595c28"
 _QAZINDUSTRY_PROCESS_IMPROVEMENT_ID = "ed3308cc-e250-5235-89f3-b825146e5c1f"
+_QAZINDUSTRY_PRODUCTIVITY_REIMBURSEMENT_ID = "904c33a3-a3b1-54b0-bbee-2b8a473c7971"
 _LIVESTOCK_SUBSIDY_CRITERIA_ID = "73636485-4e9c-54c7-9881-1f294cc2dd29"
 _QIC_ALEM_VENTURES_ID = "3872d7d1-b705-574c-a98b-a3d8ce0e0c5e"
 _QIC_ALEM_VENTURES_COPY: dict[str, dict[str, object]] = {
@@ -839,6 +840,171 @@ def project_qazindustry_process_related_items(
             )
         )
     return projected
+
+
+_QAZINDUSTRY_PRODUCTIVITY_REIMBURSEMENT_COPY: dict[str, dict[str, object]] = {
+    "ru": {
+        "title": "Возмещение затрат QazIndustry для повышения производительности",
+        "summary": "QazIndustry возмещает 40% подтверждённых затрат по четырём мерам повышения производительности. Годовые пределы зависят от меры и составляют от 20 до 60 млн ₸.",
+        "amount": "40% затрат; годовой предел – от 20 до 60 млн ₸ в зависимости от меры",
+        "amount_label": "Ставка и годовой предел",
+        "primary_source_button_label": "Открыть условия QazIndustry",
+        "application_button_label": "Перейти к заявке в QazIndustry",
+        "prepare_application_label": "Подготовить заявку",
+        "format_label": "Возмещение затрат",
+        "deadline_label": "Период приёма",
+        "deadline_display": "В течение календарного года, пока не исчерпан бюджет соответствующего года",
+        "eligibility_section_title": "Основные условия",
+        "eligibility": [
+            "Повышение компетенций работников: 40% затрат, не более 30 млн ₸ за календарный год; обучение, переподготовка или повышение квалификации длится не более трёх месяцев.",
+            "Внедрение цифровых технологий: 40% затрат, не более 60 млн ₸ за календарный год.",
+            "Совершенствование технологических процессов: 40% затрат, не более 60 млн ₸ за календарный год; монтаж и шеф-монтаж – не более 12 млн ₸.",
+            "Повышение эффективности организации производства: 40% затрат, не более 20 млн ₸ за календарный год.",
+            "Заявитель производит товар из перечня приоритетных товаров, зарегистрирован не менее одного календарного года, не относится к исключениям пункта 3 Правил № 308 и не имеет просроченной задолженности по обязательным платежам.",
+        ],
+        "highlights_label": "Перед подачей",
+        "highlights": [
+            "Выберите одну из четырёх мер и сопоставьте расходы с её условиями и годовым пределом.",
+            "Проверьте товар по перечню приоритетных товаров, срок регистрации и отсутствие задолженности.",
+            "Сверьте актуальную редакцию Правил № 308 и перечень документов на официальной странице QazIndustry.",
+        ],
+        "source_url": "https://qazindustry.gov.kz/ru/business_reimbursement",
+        "application_url": "https://sez.qazindustry.gov.kz/ru/service/5/evaluate",
+    },
+    "kk": {
+        "title": "Өнімділікті арттыруға жұмсалған шығындарды QazIndustry арқылы өтеу",
+        "summary": "QazIndustry еңбек өнімділігін арттырудың төрт шарасы бойынша құжатпен расталған шығындардың 40%-ын өтейді. Жылдық шек шараға қарай 20 млн ₸-ден 60 млн ₸-ге дейін.",
+        "amount": "Шығындардың 40%-ы; шараға қарай жылдық шек 20–60 млн ₸",
+        "amount_label": "Өтеу мөлшері мен жылдық шегі",
+        "primary_source_button_label": "QazIndustry шарттарын ашу",
+        "application_button_label": "QazIndustry өтінім порталына өту",
+        "prepare_application_label": "Өтінімді дайындау",
+        "format_label": "Шығындарды өтеу",
+        "deadline_label": "Өтінім қабылдау кезеңі",
+        "deadline_display": "Тиісті жылға арналған бюджет толық игерілгенге дейін күнтізбелік жыл ішінде",
+        "eligibility_section_title": "Негізгі шарттар",
+        "eligibility": [
+            "Қызметкерлердің құзыретін арттыру: шығындардың 40%-ы, күнтізбелік жылда 30 млн ₸-ден аспайды; оқыту, қайта даярлау немесе біліктілікті арттыру мерзімі үш айдан аспайды.",
+            "Цифрлық технологияларды енгізу: шығындардың 40%-ы, күнтізбелік жылда 60 млн ₸-ден аспайды.",
+            "Технологиялық процестерді жетілдіру: шығындардың 40%-ы, күнтізбелік жылда 60 млн ₸-ден аспайды; монтаж және шеф-монтаж шығындары 12 млн ₸-ден аспайды.",
+            "Өндірісті ұйымдастыру тиімділігін арттыру: шығындардың 40%-ы, күнтізбелік жылда 20 млн ₸-ден аспайды.",
+            "Өтінім беруші басым тауарлар тізбесіне кіретін өнімді өндіреді, кемінде бір күнтізбелік жыл бұрын тіркелген, № 308 Қағиданың 3-тармағындағы ерекшеліктерге жатпайды және міндетті төлемдер бойынша мерзімі өткен берешегі жоқ.",
+        ],
+        "highlights_label": "Өтінім берер алдында",
+        "highlights": [
+            "Төрт шараның бірін таңдап, шығындарды оның шарттары мен жылдық шегіне сәйкестендіріңіз.",
+            "Өнімді басым тауарлар тізбесінен, тіркелу мерзімін және берешектің жоқтығын тексеріңіз.",
+            "№ 308 Қағиданың қолданыстағы редакциясын және құжаттар тізімін QazIndustry ресми бетінен тексеріңіз.",
+        ],
+        "source_url": "https://qazindustry.gov.kz/kk/business_reimbursement",
+        "application_url": "https://sez.qazindustry.gov.kz/kk/service/5/evaluate",
+    },
+    "en": {
+        "title": "QazIndustry reimbursement measures for productivity improvement",
+        "summary": "QazIndustry reimburses 40% of documented costs under four productivity measures. Annual caps range from KZT 20 million to KZT 60 million, depending on the measure.",
+        "amount": "40% of costs; annual cap of KZT 20–60 million depending on the measure",
+        "amount_label": "Rate and annual cap",
+        "primary_source_button_label": "Open QazIndustry terms",
+        "application_button_label": "Apply via QazIndustry",
+        "prepare_application_label": "Prepare application",
+        "format_label": "Cost reimbursement",
+        "deadline_label": "Application period",
+        "deadline_display": "During the calendar year, until the budget for that year is exhausted",
+        "eligibility_section_title": "Main conditions",
+        "eligibility": [
+            "Employee competencies: 40% of costs, capped at KZT 30 million per calendar year; training, retraining or professional development may last up to three months.",
+            "Digital technologies: 40% of costs, capped at KZT 60 million per calendar year.",
+            "Technological process improvement: 40% of costs, capped at KZT 60 million per calendar year; installation and supervised installation are capped at KZT 12 million.",
+            "Production organization efficiency: 40% of costs, capped at KZT 20 million per calendar year.",
+            "The applicant produces goods on the Priority Goods List, has been registered for at least one calendar year, is not excluded under point 3 of Rule No. 308, and has no overdue mandatory payment liabilities.",
+        ],
+        "highlights_label": "Before applying",
+        "highlights": [
+            "Choose one of the four measures and match the costs to its conditions and annual cap.",
+            "Check the product against the Priority Goods List, the registration period, and the absence of overdue liabilities.",
+            "Confirm the current version of Rule No. 308 and the required documents on the official QazIndustry page.",
+        ],
+        "source_url": "https://qazindustry.gov.kz/en/business_reimbursement",
+        "application_url": "https://sez.qazindustry.gov.kz/en/service/5/evaluate",
+    },
+}
+
+
+def is_qazindustry_productivity_reimbursement(item_id: object) -> bool:
+    return str(item_id) == _QAZINDUSTRY_PRODUCTIVITY_REIMBURSEMENT_ID
+
+
+def project_qazindustry_productivity_reimbursement(
+    item: Opportunity, *, lang: str
+) -> Opportunity:
+    """Localize the four-measure QazIndustry productivity programme."""
+
+    if not is_qazindustry_productivity_reimbursement(item.id):
+        return item
+    active_lang = lang if lang in _QAZINDUSTRY_PRODUCTIVITY_REIMBURSEMENT_COPY else "ru"
+    copy = _QAZINDUSTRY_PRODUCTIVITY_REIMBURSEMENT_COPY[active_lang]
+    eligibility = cast(list[str], copy["eligibility"])
+    translations = {
+        locale: {
+            key: value
+            for key, value in locale_copy.items()
+            if key
+            not in {
+                "eligibility",
+                "source_url",
+                "application_url",
+                "eligibility_section_title",
+            }
+        }
+        for locale, locale_copy in _QAZINDUSTRY_PRODUCTIVITY_REIMBURSEMENT_COPY.items()
+    }
+    raw = dict(item.raw) if isinstance(item.raw, dict) else {}
+    raw.update(
+        {
+            "i18n": translations,
+            "source_name": "QazIndustry",
+            "source_lang": active_lang,
+            "application_url": copy["application_url"],
+            "application_lang": active_lang,
+            "application_amount_display": copy["amount"],
+            "eligibility_section_title": copy["eligibility_section_title"],
+            "amount_raw": copy["amount"],
+            "eligibility_raw": list(eligibility),
+            "eligibility_summary": "; ".join(eligibility[:2]),
+            "highlights": list(cast(list[str], copy["highlights"])),
+            "highlights_label": copy["highlights_label"],
+        }
+    )
+    for stale_key in (
+        "deadline_policy",
+        "deadline_raw",
+        "detail_sections",
+        "detail_text",
+    ):
+        raw.pop(stale_key, None)
+    tags = [
+        tag
+        for tag in item.tags
+        if str(tag).strip().casefold() not in {"rolling", "open"}
+    ]
+    if not any(str(tag).strip().casefold() == "reimbursement" for tag in tags):
+        tags.append("reimbursement")
+    return item.model_copy(
+        update={
+            "source": "qazindustry",
+            "source_url": HttpUrl(str(copy["source_url"])),
+            "title": copy["title"],
+            "summary": copy["summary"],
+            "funder": "QazIndustry",
+            "amount_min": None,
+            "amount_max": Decimal("60000000"),
+            "currency": "KZT",
+            "deadline": None,
+            "eligibility": list(eligibility),
+            "tags": tags,
+            "raw": raw,
+        }
+    )
 
 
 def is_qic_alem_ventures(opportunity_id: object) -> bool:
@@ -3460,7 +3626,7 @@ def render_opportunity_page(
     related_items: list[tuple[Opportunity, str]] | None = None,
     lifecycle: str = "open",
 ) -> str:
-    copy = dashboard_copy(lang)
+    copy = dict(dashboard_copy(lang))
     active_lang = str(copy["lang"])
     if str(detail.id) == _LIVESTOCK_SUBSIDY_CRITERIA_ID:
         localized_source_url = _localized_item_value(
@@ -3490,6 +3656,9 @@ def render_opportunity_page(
         copy["related_section_description"] = ""
     if str(detail.id) == _QAZINDUSTRY_REIMBURSEMENT_ID:
         # The route has complete localized copy and a source-bound sibling set.
+        copy["language_fallback_note"] = ""
+        copy["related_section_description"] = ""
+    if str(detail.id) == _QAZINDUSTRY_PRODUCTIVITY_REIMBURSEMENT_ID:
         copy["language_fallback_note"] = ""
         copy["related_section_description"] = ""
     if str(detail.id) == _QIC_ALEM_VENTURES_ID:
@@ -3601,12 +3770,9 @@ def render_opportunity_page(
             root_path=root_path,
             copy=copy,
             suppress_generic_source_content=(
-                str(detail.id)
-                in {_QAZINDUSTRY_REIMBURSEMENT_ID, _QIC_ALEM_VENTURES_ID}
+                str(detail.id) in {_QAZINDUSTRY_REIMBURSEMENT_ID, _QIC_ALEM_VENTURES_ID}
             ),
-            suppress_unlocalized_related_meta=(
-                str(detail.id) == _QIC_ALEM_VENTURES_ID
-            ),
+            suppress_unlocalized_related_meta=(str(detail.id) == _QIC_ALEM_VENTURES_ID),
         )
     )
     source_text = detail.funder or _label_value(detail.source, copy)

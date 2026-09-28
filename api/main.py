@@ -122,10 +122,12 @@ from api.opportunity_og import (
     render_opportunity_portrait_png,
 )
 from api.opportunity_page import (
+    is_qazindustry_productivity_reimbursement,
     is_qazindustry_reimbursement,
     is_qic_alem_ventures,
     project_qazindustry_process_improvement,
     project_qazindustry_process_related_items,
+    project_qazindustry_productivity_reimbursement,
     project_qazindustry_reimbursement,
     project_qic_alem_ventures,
     render_opportunity_page,
@@ -2263,6 +2265,9 @@ async def opportunity_page(
         localize_opportunity(item, content_lang), lang=content_lang
     )
     localized_item = project_qic_alem_ventures(localized_item, lang=content_lang)
+    localized_item = project_qazindustry_productivity_reimbursement(
+        localized_item, lang=content_lang
+    )
     if is_qazindustry_reimbursement(opportunity_id):
         related_items = project_qazindustry_process_related_items(
             related_items,
@@ -2273,6 +2278,11 @@ async def opportunity_page(
             localized_item,
             lang=content_lang,
         )
+        related_items = project_qazindustry_process_related_items(
+            related_items,
+            lang=content_lang,
+        )
+    if is_qazindustry_productivity_reimbursement(opportunity_id):
         related_items = project_qazindustry_process_related_items(
             related_items,
             lang=content_lang,
@@ -2324,6 +2334,18 @@ async def opportunity_open_graph_image(
         if source_item is None:
             raise HTTPException(status_code=status.HTTP_404_NOT_FOUND)
         projected_item = project_qic_alem_ventures(
+            localize_opportunity(source_item, content_lang), lang=content_lang
+        )
+        item = _opportunity_v1_from_item(
+            projected_item,
+            request=request,
+            root_path=_root_path(request),
+        )
+    elif is_qazindustry_productivity_reimbursement(opportunity_id):
+        source_item = _find_opportunity(opportunity_id, content_lang=content_lang)
+        if source_item is None:
+            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND)
+        projected_item = project_qazindustry_productivity_reimbursement(
             localize_opportunity(source_item, content_lang), lang=content_lang
         )
         item = _opportunity_v1_from_item(
@@ -2388,7 +2410,19 @@ async def opportunity_portrait_image(
     """Serve the source-grounded 4:5 feed card used by Instagram publishing."""
 
     content_lang = _public_lang(lang)
-    if str(opportunity_id) == "ed3308cc-e250-5235-89f3-b825146e5c1f":
+    if is_qazindustry_productivity_reimbursement(opportunity_id):
+        source_item = _find_opportunity(opportunity_id, content_lang=content_lang)
+        if source_item is None:
+            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND)
+        projected_item = project_qazindustry_productivity_reimbursement(
+            localize_opportunity(source_item, content_lang), lang=content_lang
+        )
+        item = _opportunity_v1_from_item(
+            projected_item,
+            request=request,
+            root_path=_root_path(request),
+        )
+    elif str(opportunity_id) == "ed3308cc-e250-5235-89f3-b825146e5c1f":
         source_item = _find_opportunity(opportunity_id, content_lang=content_lang)
         if source_item is None:
             raise HTTPException(status_code=status.HTTP_404_NOT_FOUND)
@@ -2435,7 +2469,12 @@ async def opportunity_prepare_page(
     if request.method == "HEAD":
         return HTMLResponse("", headers={"Cache-Control": _PUBLIC_FAST_CACHE})
     localized_item = localize_opportunity(item, content_lang)
-    if is_qazindustry_reimbursement(opportunity_id):
+    if is_qazindustry_productivity_reimbursement(opportunity_id):
+        localized_item = project_qazindustry_productivity_reimbursement(
+            localized_item,
+            lang=content_lang,
+        )
+    elif is_qazindustry_reimbursement(opportunity_id):
         localized_item = project_qazindustry_reimbursement(
             localized_item,
             lang=content_lang,
@@ -3639,6 +3678,20 @@ def _find_opportunity_v1(
     if item is None:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND)
     root_path = _root_path(request)
+    if is_qazindustry_productivity_reimbursement(opportunity_id):
+        localized = _with_decision_readiness(
+            localize_opportunity(item, content_lang),
+            ranking_subject=item,
+        )
+        localized = project_qazindustry_productivity_reimbursement(
+            localized,
+            lang=content_lang,
+        )
+        return _opportunity_v1_from_item(
+            localized,
+            request=request,
+            root_path=root_path,
+        )
     if str(opportunity_id) == "ed3308cc-e250-5235-89f3-b825146e5c1f":
         localized = _with_decision_readiness(
             localize_opportunity(item, content_lang),
@@ -4497,6 +4550,10 @@ async def get_opportunity_detail(
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND)
     localized = localize_opportunity(item, content_lang)
     localized = project_qic_alem_ventures(localized, lang=content_lang)
+    localized = project_qazindustry_productivity_reimbursement(
+        localized,
+        lang=content_lang,
+    )
     if str(opportunity_id) == "ed3308cc-e250-5235-89f3-b825146e5c1f":
         localized = project_qazindustry_process_improvement(
             localized,
