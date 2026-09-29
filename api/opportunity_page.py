@@ -83,6 +83,103 @@ _LIVESTOCK_SUBSIDY_CRITERIA_ID = "73636485-4e9c-54c7-9881-1f294cc2dd29"
 _QIC_ALEM_VENTURES_ID = "3872d7d1-b705-574c-a98b-a3d8ce0e0c5e"
 _AAIFF_2026_ID = "8cb2a9b1-7323-5578-a5f8-a1e39d5c2d19"
 _AGROCREDIT_FEEDLOT_ID = "3d59a2c3-748a-5c09-9554-1ee627bd82e2"
+_GOOGLE_CLOUD_STARTUP_ID = "77357191-8279-5f24-a5ee-d7e71479f230"
+_GOOGLE_CLOUD_STARTUP_APPLICATION_URL = "https://cloud.google.com/startup/apply"
+_GOOGLE_CLOUD_STARTUP_COPY: dict[str, dict[str, object]] = {
+    "ru": {
+        "title": "Google for Startups Cloud Program",
+        "summary": (
+            "Программа предоставляет стартапам кредиты Google Cloud и Firebase, "
+            "техническую поддержку, наставников и ресурсы для роста. Базовый трек "
+            "Start предусматривает до 2 000 USD, Scale - до 200 000 USD за два года, "
+            "а AI-стартапы могут получить до 350 000 USD покрытия облачных расходов."
+        ),
+        "format_label": "Облачные кредиты и поддержка",
+        "deadline_label": "Приём заявок",
+        "deadline_display": "Без объявленного срока",
+        "amount_label": "Максимальный объём",
+        "amount": "до 200 000 USD; AI-стартапам - до 350 000 USD",
+        "primary_source_button_label": "Открыть условия Google (EN)",
+        "application_button_label": "Подать заявку в Google (EN)",
+        "prepare_application_label": "Подготовить заявку",
+        "official_source_label": "Google for Startups Cloud Program",
+        "eligibility_section_title": "Основные требования",
+        "eligibility": [
+            "Для подачи нужны аккаунт Google Cloud и платёжный профиль Billing ID.",
+            "У компании должен быть публичный сайт и корпоративная почта на домене этого сайта.",
+            "Стартап должен быть основан не более пяти лет назад; для трека Scale допускается возраст до десяти лет.",
+            "Размер поддержки зависит от стадии и профиля стартапа; окончательное решение принимает Google.",
+        ],
+        "highlights_label": "Треки поддержки",
+        "highlights": [
+            "Start: до 2 000 USD кредитов на один год для стартапов без привлечённого акционерного финансирования.",
+            "Scale: до 100 000 USD в первый год и покрытие 20% расходов во второй год, ещё до 100 000 USD.",
+            "AI-стартапы: до 350 000 USD покрытия облачных расходов, обучение и вебинары по искусственному интеллекту.",
+        ],
+    },
+    "kk": {
+        "title": "Google for Startups Cloud Program",
+        "summary": (
+            "Бағдарлама стартаптарға Google Cloud және Firebase кредиттерін, "
+            "техникалық қолдауды, тәлімгерлерді және өсу ресурстарын ұсынады. "
+            "Start бағыты 2 000 USD-ға дейін, Scale екі жылда 200 000 USD-ға дейін, "
+            "ал AI-стартаптар бұлт шығындарына 350 000 USD-ға дейін қолдау ала алады."
+        ),
+        "format_label": "Бұлт кредиттері және қолдау",
+        "deadline_label": "Өтінім қабылдау",
+        "deadline_display": "Жарияланған мерзім жоқ",
+        "amount_label": "Ең жоғары көлем",
+        "amount": "200 000 USD-ға дейін; AI-стартаптарға 350 000 USD-ға дейін",
+        "primary_source_button_label": "Google шарттарын ашу (EN)",
+        "application_button_label": "Google-ға өтінім беру (EN)",
+        "prepare_application_label": "Өтінімді дайындау",
+        "official_source_label": "Google for Startups Cloud Program",
+        "eligibility_section_title": "Негізгі талаптар",
+        "eligibility": [
+            "Өтінім беру үшін Google Cloud аккаунты және Billing ID төлем профилі қажет.",
+            "Компанияның ашық сайты және сол сайттың доменіндегі корпоративтік электрондық поштасы болуы керек.",
+            "Стартап өтінім бергенге дейін бес жылдан ерте құрылмауы керек; Scale бағыты үшін он жылға дейін рұқсат етіледі.",
+            "Қолдау көлемі стартаптың кезеңі мен бейініне байланысты; соңғы шешімді Google қабылдайды.",
+        ],
+        "highlights_label": "Қолдау бағыттары",
+        "highlights": [
+            "Start: үлестік қаржыландыру тартпаған стартаптарға бір жылға 2 000 USD-ға дейін кредит.",
+            "Scale: бірінші жылы 100 000 USD-ға дейін және екінші жылы шығындардың 20%-ын жабуға тағы 100 000 USD-ға дейін.",
+            "AI-стартаптар: бұлт шығындарына 350 000 USD-ға дейін қолдау, AI бойынша оқыту және вебинарлар.",
+        ],
+    },
+    "en": {
+        "title": "Google for Startups Cloud Program",
+        "summary": (
+            "The program gives startups Google Cloud and Firebase credits, technical "
+            "support, mentors, and growth resources. Start offers up to USD 2,000, "
+            "Scale offers up to USD 200,000 over two years, and AI startups may receive "
+            "up to USD 350,000 in cloud cost coverage."
+        ),
+        "format_label": "Cloud credits and support",
+        "deadline_label": "Applications",
+        "deadline_display": "No deadline announced",
+        "amount_label": "Maximum support",
+        "amount": "up to USD 200,000; up to USD 350,000 for AI startups",
+        "primary_source_button_label": "Open Google program terms",
+        "application_button_label": "Apply with Google",
+        "prepare_application_label": "Prepare an application",
+        "official_source_label": "Google for Startups Cloud Program",
+        "eligibility_section_title": "Basic requirements",
+        "eligibility": [
+            "Applicants need a Google Cloud account and Billing ID.",
+            "The company must have a public website and a company email domain that matches it.",
+            "The startup must have been founded within five years of applying, or within ten years for Scale.",
+            "Support depends on the startup's stage and profile; Google makes the final decision.",
+        ],
+        "highlights_label": "Support tracks",
+        "highlights": [
+            "Start: up to USD 2,000 in credits for one year for startups without equity funding.",
+            "Scale: up to USD 100,000 in year one and 20% of costs in year two, capped at another USD 100,000.",
+            "AI startups: up to USD 350,000 in cloud cost coverage, plus AI training and webinars.",
+        ],
+    },
+}
 _AGROCREDIT_FEEDLOT_COPY: dict[str, dict[str, object]] = {
     "ru": {
         "title": "Льготное кредитование откормочных площадок и птицефабрик",
@@ -1212,6 +1309,70 @@ def is_aaiff_2026(opportunity_id: object) -> bool:
 
 def is_agrocredit_feedlot_financing(opportunity_id: object) -> bool:
     return str(opportunity_id) == _AGROCREDIT_FEEDLOT_ID
+
+
+def is_google_cloud_startup_program(opportunity_id: object) -> bool:
+    return str(opportunity_id) == _GOOGLE_CLOUD_STARTUP_ID
+
+
+def project_google_cloud_startup_program(
+    item: Opportunity, *, lang: str
+) -> Opportunity:
+    """Localize the current Google for Startups Cloud Program terms."""
+
+    if not is_google_cloud_startup_program(item.id):
+        return item
+    active_lang = lang if lang in _GOOGLE_CLOUD_STARTUP_COPY else "en"
+    copy = _GOOGLE_CLOUD_STARTUP_COPY[active_lang]
+    eligibility = cast(list[str], copy["eligibility"])
+    translations = {
+        locale: {
+            key: value
+            for key, value in locale_copy.items()
+            if key not in {"eligibility"}
+        }
+        for locale, locale_copy in _GOOGLE_CLOUD_STARTUP_COPY.items()
+    }
+    raw = dict(item.raw) if isinstance(item.raw, dict) else {}
+    raw.update(
+        {
+            "i18n": translations,
+            "source_name": "Google for Startups",
+            "source_lang": "en",
+            "application_lang": "en",
+            "application_url": _GOOGLE_CLOUD_STARTUP_APPLICATION_URL,
+            "application_amount_display": copy["amount"],
+            "eligibility_section_title": copy["eligibility_section_title"],
+            "amount_raw": copy["amount"],
+            "eligibility_raw": list(eligibility),
+            "eligibility_summary": "; ".join(eligibility[:2]),
+            "highlights": list(cast(list[str], copy["highlights"])),
+            "highlights_label": copy["highlights_label"],
+        }
+    )
+    for stale_key in (
+        "deadline_policy",
+        "deadline_raw",
+        "detail_sections",
+        "detail_text",
+    ):
+        raw.pop(stale_key, None)
+    return item.model_copy(
+        update={
+            "source_url": HttpUrl("https://startup.google.com/cloud/"),
+            "title": copy["title"],
+            "summary": copy["summary"],
+            "funder": "Google for Startups",
+            "amount_min": None,
+            "amount_max": Decimal("350000"),
+            "currency": "USD",
+            "deadline": None,
+            "eligibility": list(eligibility),
+            "opportunity_status": "open",
+            "lifecycle": "rolling",
+            "raw": raw,
+        }
+    )
 
 
 def project_agrocredit_feedlot_financing(
@@ -3999,6 +4160,9 @@ def render_opportunity_page(
         copy["language_fallback_note"] = ""
         copy["related_section_description"] = ""
     if str(detail.id) == _AGROCREDIT_FEEDLOT_ID:
+        copy["language_fallback_note"] = ""
+        copy["related_section_description"] = ""
+    if str(detail.id) == _GOOGLE_CLOUD_STARTUP_ID:
         copy["language_fallback_note"] = ""
         copy["related_section_description"] = ""
     localized_source_label = _localized_item_value(
