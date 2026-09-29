@@ -123,10 +123,12 @@ from api.opportunity_og import (
 )
 from api.opportunity_page import (
     is_aaiff_2026,
+    is_agrocredit_feedlot_financing,
     is_qazindustry_productivity_reimbursement,
     is_qazindustry_reimbursement,
     is_qic_alem_ventures,
     project_aaiff_2026,
+    project_agrocredit_feedlot_financing,
     project_qazindustry_process_improvement,
     project_qazindustry_process_related_items,
     project_qazindustry_productivity_reimbursement,
@@ -2268,6 +2270,9 @@ async def opportunity_page(
     )
     localized_item = project_qic_alem_ventures(localized_item, lang=content_lang)
     localized_item = project_aaiff_2026(localized_item, lang=content_lang)
+    localized_item = project_agrocredit_feedlot_financing(
+        localized_item, lang=content_lang
+    )
     localized_item = project_qazindustry_productivity_reimbursement(
         localized_item, lang=content_lang
     )
@@ -2496,7 +2501,12 @@ async def opportunity_prepare_page(
     if request.method == "HEAD":
         return HTMLResponse("", headers={"Cache-Control": _PUBLIC_FAST_CACHE})
     localized_item = localize_opportunity(item, content_lang)
-    if is_qazindustry_productivity_reimbursement(opportunity_id):
+    if is_agrocredit_feedlot_financing(opportunity_id):
+        localized_item = project_agrocredit_feedlot_financing(
+            localized_item,
+            lang=content_lang,
+        )
+    elif is_qazindustry_productivity_reimbursement(opportunity_id):
         localized_item = project_qazindustry_productivity_reimbursement(
             localized_item,
             lang=content_lang,
@@ -3755,6 +3765,17 @@ def _find_opportunity_v1(
             request=request,
             root_path=root_path,
         )
+    if is_agrocredit_feedlot_financing(opportunity_id):
+        localized = _with_decision_readiness(
+            localize_opportunity(item, content_lang),
+            ranking_subject=item,
+        )
+        localized = project_agrocredit_feedlot_financing(localized, lang=content_lang)
+        return _opportunity_v1_from_item(
+            localized,
+            request=request,
+            root_path=root_path,
+        )
     cached = _cached_public_v1_index(
         content_lang=content_lang,
         include_irrelevant=False,
@@ -3768,6 +3789,7 @@ def _find_opportunity_v1(
     )
     localized = project_qic_alem_ventures(localized, lang=content_lang)
     localized = project_aaiff_2026(localized, lang=content_lang)
+    localized = project_agrocredit_feedlot_financing(localized, lang=content_lang)
     return _opportunity_v1_from_item(localized, request=request, root_path=root_path)
 
 
@@ -4590,6 +4612,7 @@ async def get_opportunity_detail(
     localized = localize_opportunity(item, content_lang)
     localized = project_qic_alem_ventures(localized, lang=content_lang)
     localized = project_aaiff_2026(localized, lang=content_lang)
+    localized = project_agrocredit_feedlot_financing(localized, lang=content_lang)
     localized = project_qazindustry_productivity_reimbursement(
         localized,
         lang=content_lang,
@@ -4630,6 +4653,7 @@ async def get_opportunity_fit(
     localized = localize_opportunity(item, content_lang)
     localized = project_qic_alem_ventures(localized, lang=content_lang)
     localized = project_aaiff_2026(localized, lang=content_lang)
+    localized = project_agrocredit_feedlot_financing(localized, lang=content_lang)
     payload = assess_profile(
         localized,
         {

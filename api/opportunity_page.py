@@ -82,6 +82,105 @@ _QAZINDUSTRY_PRODUCTIVITY_REIMBURSEMENT_ID = "904c33a3-a3b1-54b0-bbee-2b8a473c79
 _LIVESTOCK_SUBSIDY_CRITERIA_ID = "73636485-4e9c-54c7-9881-1f294cc2dd29"
 _QIC_ALEM_VENTURES_ID = "3872d7d1-b705-574c-a98b-a3d8ce0e0c5e"
 _AAIFF_2026_ID = "8cb2a9b1-7323-5578-a5f8-a1e39d5c2d19"
+_AGROCREDIT_FEEDLOT_ID = "3d59a2c3-748a-5c09-9554-1ee627bd82e2"
+_AGROCREDIT_FEEDLOT_COPY: dict[str, dict[str, object]] = {
+    "ru": {
+        "title": "Льготное кредитование откормочных площадок и птицефабрик",
+        "summary": (
+            "Аграрная кредитная корпорация финансирует пополнение оборотных средств "
+            "откормочных площадок и птицефабрик. Для прямых заёмщиков ставка составляет "
+            "5% годовых, сумма займа - от 1 млн до 15 млрд тенге."
+        ),
+        "format_label": "Льготный заём на оборотные средства",
+        "deadline_label": "Срок подачи",
+        "deadline_display": "На официальной странице не указан",
+        "amount_label": "Для прямых заёмщиков",
+        "amount": "5% годовых; от 1 млн до 15 млрд ₸",
+        "primary_source_button_label": "Открыть условия АКК",
+        "prepare_application_label": "Подготовиться к обращению",
+        "official_source_label": "Условия финансирования АКК",
+        "eligibility_section_title": "Каналы и условия финансирования",
+        "eligibility": [
+            "Финансирование доступно прямым заёмщикам, кредитным товариществам, банкам второго уровня, микрофинансовым организациям и региональным инвестиционным центрам.",
+            "Для прямых заёмщиков цель займа - пополнение оборотных средств откормочных площадок и птицефабрик.",
+            "Для кредитных товариществ, банков, МФО и региональных инвестиционных центров ставка составляет 1,5% годовых; маржа при кредитовании конечного заёмщика не должна превышать 3,5% годовых.",
+            "Кредитная линия предоставляется на срок до 36 месяцев, отдельный транш - до 12 месяцев.",
+            "Залоговое обеспечение определяется залоговой политикой Аграрной кредитной корпорации.",
+        ],
+        "highlights_label": "Лимиты по каналам",
+        "highlights": [
+            "Прямые заёмщики: от 1 млн до 15 млрд тенге.",
+            "Кредитные товарищества: до 10 млрд тенге.",
+            "Банки второго уровня и региональные инвестиционные центры: до 25% собственного капитала корпорации.",
+        ],
+        "source_url": "https://agrocredit.kz/ru/main/our-activities/programs/3569/",
+        "source_name": "Аграрная кредитная корпорация",
+    },
+    "kk": {
+        "title": "Бордақылау алаңдары мен құс фабрикаларын жеңілдікпен несиелеу",
+        "summary": (
+            "Аграрлық несие корпорациясы бордақылау алаңдары мен құс фабрикаларының "
+            "айналым қаражатын толықтыруды қаржыландырады. Тікелей қарыз алушылар үшін "
+            "мөлшерлеме жылдық 5%, қарыз сомасы 1 млн теңгеден 15 млрд теңгеге дейін."
+        ),
+        "format_label": "Айналым қаражатына жеңілдетілген несие",
+        "deadline_label": "Өтінім беру мерзімі",
+        "deadline_display": "Ресми бетте көрсетілмеген",
+        "amount_label": "Тікелей қарыз алушыларға",
+        "amount": "Жылдық 5%; 1 млн-нан 15 млрд ₸-ге дейін",
+        "primary_source_button_label": "АНК шарттарын ашу",
+        "prepare_application_label": "Өтінішке дайындалу",
+        "official_source_label": "АНК қаржыландыру шарттары",
+        "eligibility_section_title": "Қаржыландыру арналары мен шарттары",
+        "eligibility": [
+            "Қаржыландыру тікелей қарыз алушыларға, кредиттік серіктестіктерге, екінші деңгейлі банктерге, микроқаржы ұйымдарына және өңірлік инвестициялық орталықтарға қолжетімді.",
+            "Тікелей қарыз алушылар үшін қарыздың мақсаты - бордақылау алаңдары мен құс фабрикаларының айналым қаражатын толықтыру.",
+            "Кредиттік серіктестіктер, банктер, МҚҰ және өңірлік инвестициялық орталықтар үшін мөлшерлеме жылдық 1,5%; түпкілікті қарыз алушыны несиелеу кезіндегі маржа жылдық 3,5%-дан аспайды.",
+            "Кредит желісінің мерзімі 36 айға дейін, жеке транш мерзімі 12 айға дейін.",
+            "Кепілмен қамтамасыз ету Аграрлық несие корпорациясының кепіл саясатына сәйкес айқындалады.",
+        ],
+        "highlights_label": "Арналар бойынша лимиттер",
+        "highlights": [
+            "Тікелей қарыз алушылар: 1 млн теңгеден 15 млрд теңгеге дейін.",
+            "Кредиттік серіктестіктер: 10 млрд теңгеге дейін.",
+            "Екінші деңгейлі банктер мен өңірлік инвестициялық орталықтар: корпорацияның меншікті капиталының 25%-ына дейін.",
+        ],
+        "source_url": "https://agrocredit.kz/kz/main/our-activities/programs/3569/",
+        "source_name": "Аграрлық несие корпорациясы",
+    },
+    "en": {
+        "title": "Feedlot and poultry farm working capital financing",
+        "summary": (
+            "Agrarian Credit Corporation finances working capital for feedlots and "
+            "poultry farms. Direct borrowers receive a 5% annual rate on loans from "
+            "KZT 1 million to KZT 15 billion."
+        ),
+        "format_label": "Preferential working capital loan",
+        "deadline_label": "Application deadline",
+        "deadline_display": "Not stated on the official page",
+        "amount_label": "Direct borrowers",
+        "amount": "5% per year; KZT 1m to KZT 15bn",
+        "primary_source_button_label": "Open ACC terms",
+        "prepare_application_label": "Prepare an enquiry",
+        "official_source_label": "ACC financing terms",
+        "eligibility_section_title": "Financing channels and terms",
+        "eligibility": [
+            "Financing is available to direct borrowers, credit partnerships, second-tier banks, microfinance organizations and regional investment centers.",
+            "For direct borrowers, the loan purpose is working capital replenishment for feedlots and poultry farms.",
+            "Credit partnerships, banks, MFOs and regional investment centers receive a 1.5% annual rate; the margin charged to the end borrower may not exceed 3.5% per year.",
+            "The credit line term is up to 36 months and each tranche may run for up to 12 months.",
+            "Collateral is determined under Agrarian Credit Corporation's collateral policy.",
+        ],
+        "highlights_label": "Channel limits",
+        "highlights": [
+            "Direct borrowers: KZT 1 million to KZT 15 billion.",
+            "Credit partnerships: up to KZT 10 billion.",
+            "Second-tier banks and regional investment centers: up to 25% of the corporation's equity.",
+        ],
+        "source_url": "https://agrocredit.kz/en/main/our-activities/programs/3569/",
+        "source_name": "Agrarian Credit Corporation",
+    },
+}
 _AAIFF_2026_COPY: dict[str, dict[str, object]] = {
     "ru": {
         "title": "Международный фестиваль AI-кино AAIFF 2026",
@@ -1109,6 +1208,68 @@ def is_qic_alem_ventures(opportunity_id: object) -> bool:
 
 def is_aaiff_2026(opportunity_id: object) -> bool:
     return str(opportunity_id) == _AAIFF_2026_ID
+
+
+def is_agrocredit_feedlot_financing(opportunity_id: object) -> bool:
+    return str(opportunity_id) == _AGROCREDIT_FEEDLOT_ID
+
+
+def project_agrocredit_feedlot_financing(
+    item: Opportunity, *, lang: str
+) -> Opportunity:
+    """Localize the current ACC feedlot and poultry working-capital programme."""
+
+    if not is_agrocredit_feedlot_financing(item.id):
+        return item
+    active_lang = lang if lang in _AGROCREDIT_FEEDLOT_COPY else "ru"
+    copy = _AGROCREDIT_FEEDLOT_COPY[active_lang]
+    eligibility = cast(list[str], copy["eligibility"])
+    translations = {
+        locale: {
+            key: value
+            for key, value in locale_copy.items()
+            if key not in {"eligibility", "source_url", "source_name"}
+        }
+        for locale, locale_copy in _AGROCREDIT_FEEDLOT_COPY.items()
+    }
+    raw = dict(item.raw) if isinstance(item.raw, dict) else {}
+    raw.update(
+        {
+            "i18n": translations,
+            "source_name": copy["source_name"],
+            "source_lang": active_lang,
+            "application_amount_display": copy["amount"],
+            "eligibility_section_title": copy["eligibility_section_title"],
+            "amount_raw": copy["amount"],
+            "eligibility_raw": list(eligibility),
+            "eligibility_summary": "; ".join(eligibility[:2]),
+            "highlights": list(cast(list[str], copy["highlights"])),
+            "highlights_label": copy["highlights_label"],
+        }
+    )
+    for stale_key in (
+        "deadline_policy",
+        "deadline_raw",
+        "detail_sections",
+        "detail_text",
+    ):
+        raw.pop(stale_key, None)
+    return item.model_copy(
+        update={
+            "source_url": HttpUrl(str(copy["source_url"])),
+            "title": copy["title"],
+            "summary": copy["summary"],
+            "funder": copy["source_name"],
+            "amount_min": Decimal("1000000"),
+            "amount_max": Decimal("15000000000"),
+            "currency": "KZT",
+            "deadline": None,
+            "eligibility": list(eligibility),
+            "opportunity_status": "open",
+            "lifecycle": "open",
+            "raw": raw,
+        }
+    )
 
 
 def project_aaiff_2026(item: Opportunity, *, lang: str) -> Opportunity:
@@ -3835,6 +3996,9 @@ def render_opportunity_page(
         copy["language_fallback_note"] = ""
         copy["related_section_description"] = ""
     if str(detail.id) == _AAIFF_2026_ID:
+        copy["language_fallback_note"] = ""
+        copy["related_section_description"] = ""
+    if str(detail.id) == _AGROCREDIT_FEEDLOT_ID:
         copy["language_fallback_note"] = ""
         copy["related_section_description"] = ""
     localized_source_label = _localized_item_value(
