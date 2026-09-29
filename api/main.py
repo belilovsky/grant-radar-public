@@ -3787,12 +3787,12 @@ def _find_opportunity_v1(
             root_path=root_path,
         )
     if is_google_cloud_startup_program(opportunity_id):
-        localized = _with_decision_readiness(
-            localize_opportunity(item, content_lang),
-            ranking_subject=item,
-        )
         localized = project_google_cloud_startup_program(
-            localized, lang=content_lang
+            localize_opportunity(item, content_lang), lang=content_lang
+        )
+        localized = _with_decision_readiness(
+            localized,
+            ranking_subject=item,
         )
         return _opportunity_v1_from_item(
             localized,
