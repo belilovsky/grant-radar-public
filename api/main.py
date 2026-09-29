@@ -122,21 +122,13 @@ from api.opportunity_og import (
     render_opportunity_portrait_png,
 )
 from api.opportunity_page import (
-    is_aaiff_2026,
-    is_agrocredit_feedlot_financing,
-    is_google_cloud_startup_program,
     is_qazindustry_productivity_reimbursement,
     is_qazindustry_reimbursement,
-    is_qic_alem_ventures,
-    project_aaiff_2026,
-    project_agrocredit_feedlot_financing,
-    project_google_cloud_startup_program,
-    project_qazindustry_process_improvement,
+    project_application_workspace,
+    project_curated_opportunity,
     project_qazindustry_process_related_items,
-    project_qazindustry_productivity_reimbursement,
-    project_qazindustry_reimbursement,
-    project_qic_alem_ventures,
     render_opportunity_page,
+    supports_application_workspace,
 )
 from api.presentation import release_evidence_from_env
 from api.public_info_page import render_public_info_page
@@ -2267,19 +2259,9 @@ async def opportunity_page(
     root_path = _root_path(request)
     site_origin = _site_origin(request, root_path)
     related_items = _related_opportunities(item, lang=content_lang)
-    localized_item = project_qazindustry_reimbursement(
-        localize_opportunity(item, content_lang), lang=content_lang
-    )
-    localized_item = project_qic_alem_ventures(localized_item, lang=content_lang)
-    localized_item = project_aaiff_2026(localized_item, lang=content_lang)
-    localized_item = project_agrocredit_feedlot_financing(
-        localized_item, lang=content_lang
-    )
-    localized_item = project_google_cloud_startup_program(
-        localized_item, lang=content_lang
-    )
-    localized_item = project_qazindustry_productivity_reimbursement(
-        localized_item, lang=content_lang
+    localized_item = project_curated_opportunity(
+        localize_opportunity(item, content_lang),
+        lang=content_lang,
     )
     if is_qazindustry_reimbursement(opportunity_id):
         related_items = project_qazindustry_process_related_items(
@@ -2287,10 +2269,6 @@ async def opportunity_page(
             lang=content_lang,
         )
     if str(opportunity_id) == "ed3308cc-e250-5235-89f3-b825146e5c1f":
-        localized_item = project_qazindustry_process_improvement(
-            localized_item,
-            lang=content_lang,
-        )
         related_items = project_qazindustry_process_related_items(
             related_items,
             lang=content_lang,
@@ -2342,70 +2320,20 @@ async def opportunity_open_graph_image(
 
     _ = v
     content_lang = _public_lang(lang)
-    if is_aaiff_2026(opportunity_id):
-        source_item = _find_opportunity(opportunity_id, content_lang=content_lang)
-        if source_item is None:
-            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND)
-        projected_item = project_aaiff_2026(
-            localize_opportunity(source_item, content_lang), lang=content_lang
-        )
-        item = _opportunity_v1_from_item(
-            projected_item,
-            request=request,
-            root_path=_root_path(request),
-        )
-    elif is_qic_alem_ventures(opportunity_id):
-        source_item = _find_opportunity(opportunity_id, content_lang=content_lang)
-        if source_item is None:
-            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND)
-        projected_item = project_qic_alem_ventures(
-            localize_opportunity(source_item, content_lang), lang=content_lang
-        )
-        item = _opportunity_v1_from_item(
-            projected_item,
-            request=request,
-            root_path=_root_path(request),
-        )
-    elif is_qazindustry_productivity_reimbursement(opportunity_id):
-        source_item = _find_opportunity(opportunity_id, content_lang=content_lang)
-        if source_item is None:
-            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND)
-        projected_item = project_qazindustry_productivity_reimbursement(
-            localize_opportunity(source_item, content_lang), lang=content_lang
-        )
-        item = _opportunity_v1_from_item(
-            projected_item,
-            request=request,
-            root_path=_root_path(request),
-        )
-    elif is_qazindustry_reimbursement(opportunity_id):
-        source_item = _find_opportunity(opportunity_id, content_lang=content_lang)
-        if source_item is None:
-            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND)
-        projected_item = project_qazindustry_reimbursement(
-            localize_opportunity(source_item, content_lang), lang=content_lang
-        )
-        item = _opportunity_v1_from_item(
-            projected_item,
-            request=request,
-            root_path=_root_path(request),
-        )
-    elif str(opportunity_id) == "ed3308cc-e250-5235-89f3-b825146e5c1f":
-        source_item = _find_opportunity(opportunity_id, content_lang=content_lang)
-        if source_item is None:
-            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND)
-        projected_item = project_qazindustry_process_improvement(
-            localize_opportunity(source_item, content_lang),
-            lang=content_lang,
-            compact_image_amount=True,
-        )
-        item = _opportunity_v1_from_item(
-            projected_item,
-            request=request,
-            root_path=_root_path(request),
-        )
-    else:
-        item = _find_opportunity_v1(request, opportunity_id, lang=content_lang)
+    source_item = _find_opportunity(opportunity_id, content_lang=content_lang)
+    if source_item is None:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND)
+    compact_amount = str(opportunity_id) == "ed3308cc-e250-5235-89f3-b825146e5c1f"
+    projected_item = project_curated_opportunity(
+        localize_opportunity(source_item, content_lang),
+        lang=content_lang,
+        compact_image_amount=compact_amount,
+    )
+    item = _opportunity_v1_from_item(
+        projected_item,
+        request=request,
+        root_path=_root_path(request),
+    )
     headers = {"Cache-Control": _PUBLIC_LONG_CACHE}
     if request.method == "HEAD":
         return Response(content=b"", media_type="image/png", headers=headers)
@@ -2413,9 +2341,7 @@ async def opportunity_open_graph_image(
         render_opportunity_og_png(
             item,
             lang=content_lang,
-            compact_amount_card=(
-                str(opportunity_id) == "ed3308cc-e250-5235-89f3-b825146e5c1f"
-            ),
+            compact_amount_card=compact_amount,
         ),
         media_type="image/png",
         headers=headers,
@@ -2435,46 +2361,21 @@ async def opportunity_portrait_image(
     """Serve the source-grounded 4:5 feed card used by Instagram publishing."""
 
     content_lang = _public_lang(lang)
-    if is_aaiff_2026(opportunity_id):
-        source_item = _find_opportunity(opportunity_id, content_lang=content_lang)
-        if source_item is None:
-            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND)
-        projected_item = project_aaiff_2026(
-            localize_opportunity(source_item, content_lang), lang=content_lang
-        )
-        item = _opportunity_v1_from_item(
-            projected_item,
-            request=request,
-            root_path=_root_path(request),
-        )
-    elif is_qazindustry_productivity_reimbursement(opportunity_id):
-        source_item = _find_opportunity(opportunity_id, content_lang=content_lang)
-        if source_item is None:
-            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND)
-        projected_item = project_qazindustry_productivity_reimbursement(
-            localize_opportunity(source_item, content_lang), lang=content_lang
-        )
-        item = _opportunity_v1_from_item(
-            projected_item,
-            request=request,
-            root_path=_root_path(request),
-        )
-    elif str(opportunity_id) == "ed3308cc-e250-5235-89f3-b825146e5c1f":
-        source_item = _find_opportunity(opportunity_id, content_lang=content_lang)
-        if source_item is None:
-            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND)
-        projected_item = project_qazindustry_process_improvement(
-            localize_opportunity(source_item, content_lang),
-            lang=content_lang,
-            compact_image_amount=True,
-        )
-        item = _opportunity_v1_from_item(
-            projected_item,
-            request=request,
-            root_path=_root_path(request),
-        )
-    else:
-        item = _find_opportunity_v1(request, opportunity_id, lang=content_lang)
+    source_item = _find_opportunity(opportunity_id, content_lang=content_lang)
+    if source_item is None:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND)
+    projected_item = project_curated_opportunity(
+        localize_opportunity(source_item, content_lang),
+        lang=content_lang,
+        compact_image_amount=(
+            str(opportunity_id) == "ed3308cc-e250-5235-89f3-b825146e5c1f"
+        ),
+    )
+    item = _opportunity_v1_from_item(
+        projected_item,
+        request=request,
+        root_path=_root_path(request),
+    )
     headers = {"Cache-Control": _PUBLIC_LONG_CACHE}
     if request.method == "HEAD":
         return Response(content=b"", media_type="image/png", headers=headers)
@@ -2500,51 +2401,15 @@ async def opportunity_prepare_page(
     item = _find_opportunity(opportunity_id, content_lang=content_lang)
     if item is None:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND)
-    if is_qic_alem_ventures(opportunity_id) or is_aaiff_2026(opportunity_id):
+    if not supports_application_workspace(opportunity_id):
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND)
     root_path = _root_path(request)
     if request.method == "HEAD":
         return HTMLResponse("", headers={"Cache-Control": _PUBLIC_FAST_CACHE})
-    localized_item = localize_opportunity(item, content_lang)
-    if is_agrocredit_feedlot_financing(opportunity_id):
-        localized_item = project_agrocredit_feedlot_financing(
-            localized_item,
-            lang=content_lang,
-        )
-    elif is_google_cloud_startup_program(opportunity_id):
-        localized_item = project_google_cloud_startup_program(
-            localized_item,
-            lang=content_lang,
-        )
-    elif is_qazindustry_productivity_reimbursement(opportunity_id):
-        localized_item = project_qazindustry_productivity_reimbursement(
-            localized_item,
-            lang=content_lang,
-        )
-    elif is_qazindustry_reimbursement(opportunity_id):
-        localized_item = project_qazindustry_reimbursement(
-            localized_item,
-            lang=content_lang,
-        )
-    elif str(opportunity_id) == "ed3308cc-e250-5235-89f3-b825146e5c1f":
-        localized_item = project_qazindustry_process_improvement(
-            localized_item,
-            lang=content_lang,
-        )
-    elif str(opportunity_id) == "73636485-4e9c-54c7-9881-1f294cc2dd29":
-        raw = dict(localized_item.raw) if isinstance(localized_item.raw, dict) else {}
-        translations = raw.get("i18n")
-        editorial = (
-            translations.get(content_lang, {}) if isinstance(translations, dict) else {}
-        )
-        if isinstance(editorial, dict):
-            amount = str(editorial.get("amount") or "").strip()
-            deadline_display = str(editorial.get("deadline_display") or "").strip()
-            if amount:
-                raw["application_amount_display"] = amount
-            if deadline_display:
-                raw["application_deadline_display"] = deadline_display
-            localized_item = localized_item.model_copy(update={"raw": raw})
+    localized_item = project_application_workspace(
+        localize_opportunity(item, content_lang),
+        lang=content_lang,
+    )
     detail = await build_opportunity_detail(
         localized_item,
         lang=content_lang,
@@ -3725,96 +3590,16 @@ def _find_opportunity_v1(
     if item is None:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND)
     root_path = _root_path(request)
-    if is_qazindustry_productivity_reimbursement(opportunity_id):
-        localized = _with_decision_readiness(
-            localize_opportunity(item, content_lang),
-            ranking_subject=item,
-        )
-        localized = project_qazindustry_productivity_reimbursement(
-            localized,
-            lang=content_lang,
-        )
-        return _opportunity_v1_from_item(
-            localized,
-            request=request,
-            root_path=root_path,
-        )
-    if str(opportunity_id) == "ed3308cc-e250-5235-89f3-b825146e5c1f":
-        localized = _with_decision_readiness(
-            localize_opportunity(item, content_lang),
-            ranking_subject=item,
-        )
-        localized = project_qazindustry_process_improvement(
-            localized,
-            lang=content_lang,
-        )
-        return _opportunity_v1_from_item(
-            localized,
-            request=request,
-            root_path=root_path,
-        )
-    if is_qic_alem_ventures(opportunity_id):
-        localized = _with_decision_readiness(
-            localize_opportunity(item, content_lang),
-            ranking_subject=item,
-        )
-        localized = project_qic_alem_ventures(localized, lang=content_lang)
-        return _opportunity_v1_from_item(
-            localized,
-            request=request,
-            root_path=root_path,
-        )
-    if is_aaiff_2026(opportunity_id):
-        localized = _with_decision_readiness(
-            localize_opportunity(item, content_lang),
-            ranking_subject=item,
-        )
-        localized = project_aaiff_2026(localized, lang=content_lang)
-        return _opportunity_v1_from_item(
-            localized,
-            request=request,
-            root_path=root_path,
-        )
-    if is_agrocredit_feedlot_financing(opportunity_id):
-        localized = _with_decision_readiness(
-            localize_opportunity(item, content_lang),
-            ranking_subject=item,
-        )
-        localized = project_agrocredit_feedlot_financing(localized, lang=content_lang)
-        return _opportunity_v1_from_item(
-            localized,
-            request=request,
-            root_path=root_path,
-        )
-    if is_google_cloud_startup_program(opportunity_id):
-        localized = project_google_cloud_startup_program(
-            localize_opportunity(item, content_lang), lang=content_lang
-        )
-        localized = _with_decision_readiness(
-            localized,
-            ranking_subject=item,
-        )
-        return _opportunity_v1_from_item(
-            localized,
-            request=request,
-            root_path=root_path,
-        )
-    cached = _cached_public_v1_index(
-        content_lang=content_lang,
-        include_irrelevant=False,
-        public_base_url=_public_root_base(request, root_path),
-    ).get(item.id)
-    if cached is not None:
-        return cached
-    localized = _with_decision_readiness(
+    localized = project_curated_opportunity(
         localize_opportunity(item, content_lang),
-        ranking_subject=item,
+        lang=content_lang,
     )
-    localized = project_qic_alem_ventures(localized, lang=content_lang)
-    localized = project_aaiff_2026(localized, lang=content_lang)
-    localized = project_agrocredit_feedlot_financing(localized, lang=content_lang)
-    localized = project_google_cloud_startup_program(localized, lang=content_lang)
-    return _opportunity_v1_from_item(localized, request=request, root_path=root_path)
+    localized = _with_decision_readiness(localized, ranking_subject=item)
+    return _opportunity_v1_from_item(
+        localized,
+        request=request,
+        root_path=root_path,
+    )
 
 
 def _localized_chart_rows(
@@ -4633,20 +4418,10 @@ async def get_opportunity_detail(
     item = _find_opportunity(opportunity_id, content_lang=content_lang)
     if item is None:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND)
-    localized = localize_opportunity(item, content_lang)
-    localized = project_qic_alem_ventures(localized, lang=content_lang)
-    localized = project_aaiff_2026(localized, lang=content_lang)
-    localized = project_agrocredit_feedlot_financing(localized, lang=content_lang)
-    localized = project_google_cloud_startup_program(localized, lang=content_lang)
-    localized = project_qazindustry_productivity_reimbursement(
-        localized,
+    localized = project_curated_opportunity(
+        localize_opportunity(item, content_lang),
         lang=content_lang,
     )
-    if str(opportunity_id) == "ed3308cc-e250-5235-89f3-b825146e5c1f":
-        localized = project_qazindustry_process_improvement(
-            localized,
-            lang=content_lang,
-        )
     return await build_opportunity_detail(
         localized,
         lang=content_lang,
@@ -4675,11 +4450,10 @@ async def get_opportunity_fit(
     item = _find_opportunity(opportunity_id, content_lang=content_lang)
     if item is None:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND)
-    localized = localize_opportunity(item, content_lang)
-    localized = project_qic_alem_ventures(localized, lang=content_lang)
-    localized = project_aaiff_2026(localized, lang=content_lang)
-    localized = project_agrocredit_feedlot_financing(localized, lang=content_lang)
-    localized = project_google_cloud_startup_program(localized, lang=content_lang)
+    localized = project_curated_opportunity(
+        localize_opportunity(item, content_lang),
+        lang=content_lang,
+    )
     payload = assess_profile(
         localized,
         {

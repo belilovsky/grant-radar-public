@@ -1567,6 +1567,65 @@ def project_qic_alem_ventures(item: Opportunity, *, lang: str) -> Opportunity:
     )
 
 
+def project_curated_opportunity(
+    item: Opportunity,
+    *,
+    lang: str,
+    compact_image_amount: bool = False,
+) -> Opportunity:
+    """Apply every source-bound editorial projection through one shared path.
+
+    Each projector is intentionally a no-op for records it does not own.  Keeping
+    the sequence here makes HTML, API, social cards, fit checks, and application
+    preparation use the same localized record instead of maintaining route-ID
+    branches in every transport.
+    """
+
+    item = project_qazindustry_reimbursement(item, lang=lang)
+    item = project_qazindustry_process_improvement(
+        item,
+        lang=lang,
+        compact_image_amount=compact_image_amount,
+    )
+    item = project_qazindustry_productivity_reimbursement(item, lang=lang)
+    item = project_qic_alem_ventures(item, lang=lang)
+    item = project_aaiff_2026(item, lang=lang)
+    item = project_agrocredit_feedlot_financing(item, lang=lang)
+    return project_google_cloud_startup_program(item, lang=lang)
+
+
+def project_application_workspace(item: Opportunity, *, lang: str) -> Opportunity:
+    """Project the shared detail record and localized application facts."""
+
+    projected = project_curated_opportunity(item, lang=lang)
+    raw = dict(projected.raw) if isinstance(projected.raw, dict) else {}
+    translations = raw.get("i18n")
+    editorial = translations.get(lang, {}) if isinstance(translations, dict) else {}
+    if isinstance(editorial, dict):
+        amount = str(editorial.get("amount") or "").strip()
+        deadline_display = str(editorial.get("deadline_display") or "").strip()
+        if amount:
+            raw["application_amount_display"] = amount
+        if deadline_display:
+            raw["application_deadline_display"] = deadline_display
+    return projected.model_copy(update={"raw": raw})
+
+
+def supports_application_workspace(item_id: object) -> bool:
+    """Return whether a record represents an application users can prepare."""
+
+    return not (is_qic_alem_ventures(item_id) or is_aaiff_2026(item_id))
+
+
+def _has_complete_localized_projection(detail: OpportunityDetail, lang: str) -> bool:
+    raw = detail.raw if isinstance(detail.raw, dict) else {}
+    translations = raw.get("i18n")
+    editorial = translations.get(lang) if isinstance(translations, dict) else None
+    return isinstance(editorial, dict) and all(
+        str(editorial.get(field) or "").strip() for field in ("title", "summary")
+    )
+
+
 OPPORTUNITY_DETAIL_CSS = r"""
     .opportunity-article {
       display: grid;
@@ -4120,6 +4179,9 @@ def render_opportunity_page(
 ) -> str:
     copy = dict(dashboard_copy(lang))
     active_lang = str(copy["lang"])
+    if _has_complete_localized_projection(detail, active_lang):
+        copy["language_fallback_note"] = ""
+        copy["related_section_description"] = ""
     if str(detail.id) == _LIVESTOCK_SUBSIDY_CRITERIA_ID:
         localized_source_url = _localized_item_value(
             detail, "source_url", active_lang, ""
@@ -4139,30 +4201,6 @@ def render_opportunity_page(
             detail = detail.model_copy(
                 update={"source_url": localized_source_url, "raw": localized_raw}
             )
-        copy["language_fallback_note"] = ""
-        copy["related_section_description"] = ""
-    if str(detail.id) == _QAZINDUSTRY_PROCESS_IMPROVEMENT_ID:
-        # This route now has a fully localized detail and related-card projection;
-        # the generic site fallback notice and related-section filler do not apply.
-        copy["language_fallback_note"] = ""
-        copy["related_section_description"] = ""
-    if str(detail.id) == _QAZINDUSTRY_REIMBURSEMENT_ID:
-        # The route has complete localized copy and a source-bound sibling set.
-        copy["language_fallback_note"] = ""
-        copy["related_section_description"] = ""
-    if str(detail.id) == _QAZINDUSTRY_PRODUCTIVITY_REIMBURSEMENT_ID:
-        copy["language_fallback_note"] = ""
-        copy["related_section_description"] = ""
-    if str(detail.id) == _QIC_ALEM_VENTURES_ID:
-        copy["language_fallback_note"] = ""
-        copy["related_section_description"] = ""
-    if str(detail.id) == _AAIFF_2026_ID:
-        copy["language_fallback_note"] = ""
-        copy["related_section_description"] = ""
-    if str(detail.id) == _AGROCREDIT_FEEDLOT_ID:
-        copy["language_fallback_note"] = ""
-        copy["related_section_description"] = ""
-    if str(detail.id) == _GOOGLE_CLOUD_STARTUP_ID:
         copy["language_fallback_note"] = ""
         copy["related_section_description"] = ""
     localized_source_label = _localized_item_value(
@@ -4276,18 +4314,12 @@ def render_opportunity_page(
             suppress_unlocalized_related_meta=(str(detail.id) == _QIC_ALEM_VENTURES_ID),
         )
     )
-    source_text = detail.funder or _label_value(detail.source, copy)
-    if str(detail.id) in {
-        _LIVESTOCK_SUBSIDY_CRITERIA_ID,
-        _QIC_ALEM_VENTURES_ID,
-        _AAIFF_2026_ID,
-    }:
-        source_text = _localized_item_value(
-            detail,
-            "official_source_label",
-            active_lang,
-            source_text,
-        )
+    source_text = _localized_item_value(
+        detail,
+        "official_source_label",
+        active_lang,
+        detail.funder or _label_value(detail.source, copy),
+    )
     format_text = _detail_format_label(detail, copy)
     source_host = _host_label(str(detail.source_url))
     applications_closed = lifecycle in {"closed", "awarded"}
