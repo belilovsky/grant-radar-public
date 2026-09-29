@@ -1816,7 +1816,7 @@ OPPORTUNITY_DETAIL_CSS = r"""
       background: color-mix(in oklab, var(--brand-soft), var(--surface) 40%);
       color: var(--brand);
       counter-increment: key-condition;
-      content: counter(key-condition, decimal-leading-zero);
+      content: counter(key-condition);
       font-size: var(--av-text-xs);
       font-weight: 750;
       line-height: 1;
