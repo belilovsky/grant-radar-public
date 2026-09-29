@@ -81,6 +81,84 @@ _QAZINDUSTRY_PROCESS_IMPROVEMENT_ID = "ed3308cc-e250-5235-89f3-b825146e5c1f"
 _QAZINDUSTRY_PRODUCTIVITY_REIMBURSEMENT_ID = "904c33a3-a3b1-54b0-bbee-2b8a473c7971"
 _LIVESTOCK_SUBSIDY_CRITERIA_ID = "73636485-4e9c-54c7-9881-1f294cc2dd29"
 _QIC_ALEM_VENTURES_ID = "3872d7d1-b705-574c-a98b-a3d8ce0e0c5e"
+_AAIFF_2026_ID = "8cb2a9b1-7323-5578-a5f8-a1e39d5c2d19"
+_AAIFF_2026_COPY: dict[str, dict[str, object]] = {
+    "ru": {
+        "title": "Международный фестиваль AI-кино AAIFF 2026",
+        "summary": (
+            "Astana AI Film Festival получил 8 067 фильмов из 125 стран и "
+            "регионов. Приём завершён 7 сентября 2026 года; фестиваль пройдёт "
+            "в Астане 1-3 октября."
+        ),
+        "format_label": "Международный фестиваль AI-кино",
+        "deadline_label": "Приём фильмов",
+        "deadline_display": "Завершён 7 сентября 2026",
+        "amount_label": "Общий фонд",
+        "amount": "2 000 000 USD: 1 млн призов и 1 млн производственного фонда",
+        "primary_source_button_label": "Открыть сайт AAIFF (EN)",
+        "official_source_label": "AAIFF 2026: итоги и дорожная карта",
+        "lifecycle_notice": (
+            "Приём фильмов завершён. Фестиваль состоится в Астане 1-3 октября 2026 года."
+        ),
+        "highlights_label": "Что подтверждает фестиваль",
+        "highlights": [
+            "На конкурс поступило 8 067 фильмов из 125 стран и регионов.",
+            "Конкурсный призовой фонд составляет 1 млн долларов США.",
+            "Ещё 1 млн долларов направлен в фонд новых AI-производств.",
+            "Следующие этапы: отбор, фестивальные показы и церемония награждения 1-3 октября.",
+        ],
+    },
+    "kk": {
+        "title": "AAIFF 2026 халықаралық AI-кино фестивалі",
+        "summary": (
+            "Astana AI Film Festival 125 ел мен өңірден 8 067 фильм қабылдады. "
+            "Өтінім қабылдау 2026 жылғы 7 қыркүйекте аяқталды; фестиваль "
+            "Астанада 1-3 қазанда өтеді."
+        ),
+        "format_label": "Халықаралық AI-кино фестивалі",
+        "deadline_label": "Фильм қабылдау",
+        "deadline_display": "2026 жылғы 7 қыркүйекте аяқталды",
+        "amount_label": "Жалпы қор",
+        "amount": "2 000 000 USD: 1 млн жүлде және 1 млн өндірістік қор",
+        "primary_source_button_label": "AAIFF сайтын ашу (EN)",
+        "official_source_label": "AAIFF 2026: қорытынды және жол картасы",
+        "lifecycle_notice": (
+            "Фильм қабылдау аяқталды. Фестиваль Астанада 2026 жылғы 1-3 қазанда өтеді."
+        ),
+        "highlights_label": "Фестиваль нені растайды",
+        "highlights": [
+            "Байқауға 125 ел мен өңірден 8 067 фильм жіберілді.",
+            "Байқаудың жүлде қоры 1 млн АҚШ долларын құрайды.",
+            "Тағы 1 млн АҚШ доллары жаңа AI-жобаларды өндіру қорына бағытталған.",
+            "Келесі кезеңдер: іріктеу, фестиваль көрсетілімдері және 1-3 қазандағы марапаттау рәсімі.",
+        ],
+    },
+    "en": {
+        "title": "AAIFF 2026 international AI film festival",
+        "summary": (
+            "Astana AI Film Festival received 8,067 films from 125 countries and "
+            "regions. Submissions closed on 7 September 2026; the festival takes "
+            "place in Astana on 1-3 October."
+        ),
+        "format_label": "International AI film festival",
+        "deadline_label": "Film submissions",
+        "deadline_display": "Closed 7 September 2026",
+        "amount_label": "Total fund",
+        "amount": "USD 2,000,000: USD 1m prizes and USD 1m production fund",
+        "primary_source_button_label": "Open the AAIFF website",
+        "official_source_label": "AAIFF 2026 results and roadmap",
+        "lifecycle_notice": (
+            "Film submissions are closed. The festival takes place in Astana on 1-3 October 2026."
+        ),
+        "highlights_label": "What the festival confirms",
+        "highlights": [
+            "The competition received 8,067 films from 125 countries and regions.",
+            "The competition prize pool totals USD 1 million.",
+            "A further USD 1 million is allocated to a new AI production fund.",
+            "The next stages are selection, festival screenings and the awards ceremony on 1-3 October.",
+        ],
+    },
+}
 _QIC_ALEM_VENTURES_COPY: dict[str, dict[str, object]] = {
     "ru": {
         "title": "Участие QIC в фонде фондов Alem Ventures",
@@ -1027,6 +1105,77 @@ def project_qazindustry_productivity_reimbursement(
 
 def is_qic_alem_ventures(opportunity_id: object) -> bool:
     return str(opportunity_id) == _QIC_ALEM_VENTURES_ID
+
+
+def is_aaiff_2026(opportunity_id: object) -> bool:
+    return str(opportunity_id) == _AAIFF_2026_ID
+
+
+def project_aaiff_2026(item: Opportunity, *, lang: str) -> Opportunity:
+    """Present the completed AAIFF open call from the current festival page."""
+
+    if not is_aaiff_2026(item.id):
+        return item
+    active_lang = lang if lang in _AAIFF_2026_COPY else "ru"
+    copy = _AAIFF_2026_COPY[active_lang]
+    translations = {
+        locale: {
+            field: locale_copy[field]
+            for field in (
+                "title",
+                "summary",
+                "format_label",
+                "deadline_label",
+                "deadline_display",
+                "amount_label",
+                "amount",
+                "primary_source_button_label",
+                "official_source_label",
+                "lifecycle_notice",
+                "highlights_label",
+                "highlights",
+            )
+        }
+        for locale, locale_copy in _AAIFF_2026_COPY.items()
+    }
+    raw = dict(item.raw) if isinstance(item.raw, dict) else {}
+    raw.update(
+        {
+            "i18n": translations,
+            "source_name": "Astana AI Film Festival",
+            "source_lang": "en",
+            "amount_raw": copy["amount"],
+            "highlights": list(cast(list[str], copy["highlights"])),
+            "highlights_label": copy["highlights_label"],
+        }
+    )
+    for stale_key in (
+        "application_url",
+        "application_deadline_display",
+        "detail_sections",
+        "detail_text",
+        "eligibility_raw",
+        "eligibility_summary",
+        "status",
+        "lifecycle",
+    ):
+        raw.pop(stale_key, None)
+    return item.model_copy(
+        update={
+            "source_url": HttpUrl("https://aaiff.ai/"),
+            "title": copy["title"],
+            "summary": copy["summary"],
+            "funder": "Astana AI Film Festival",
+            "amount_min": None,
+            "amount_max": Decimal("2000000"),
+            "currency": "USD",
+            "deadline": date(2026, 9, 7),
+            "eligibility": [],
+            "opportunity_status": "closed",
+            "lifecycle": "closed",
+            "raw": raw,
+        }
+    )
 
 
 def project_qic_alem_ventures(item: Opportunity, *, lang: str) -> Opportunity:
@@ -3685,6 +3834,9 @@ def render_opportunity_page(
     if str(detail.id) == _QIC_ALEM_VENTURES_ID:
         copy["language_fallback_note"] = ""
         copy["related_section_description"] = ""
+    if str(detail.id) == _AAIFF_2026_ID:
+        copy["language_fallback_note"] = ""
+        copy["related_section_description"] = ""
     localized_source_label = _localized_item_value(
         detail, "primary_source_button_label", active_lang, ""
     )
@@ -3800,6 +3952,7 @@ def render_opportunity_page(
     if str(detail.id) in {
         _LIVESTOCK_SUBSIDY_CRITERIA_ID,
         _QIC_ALEM_VENTURES_ID,
+        _AAIFF_2026_ID,
     }:
         source_text = _localized_item_value(
             detail,
@@ -3948,7 +4101,7 @@ def render_opportunity_page(
     ).format(
         modifier=(
             " lifecycle-notice--informational"
-            if str(detail.id) == _QIC_ALEM_VENTURES_ID
+            if str(detail.id) in {_QIC_ALEM_VENTURES_ID, _AAIFF_2026_ID}
             else ""
         )
     )

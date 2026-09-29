@@ -1164,15 +1164,19 @@ async def test_kazakhstan_domestic_support_yields_official_programs():
         == OpportunityType.CONTEST
     )
     assert by_title["Astana AI Film Festival international contest"].deadline == date(
-        2026, 8, 31
+        2026, 9, 7
     )
     assert (
         by_title["Astana AI Film Festival international contest"].raw["amount_raw"]
-        == "total prize fund of USD 1,000,000"
+        == "USD 1,000,000 in competition prizes plus a USD 1,000,000 production fund"
     )
     assert (
         by_title["Astana AI Film Festival international contest"].raw["amount_max"]
-        == "1000000"
+        == "2000000"
+    )
+    assert (
+        by_title["Astana AI Film Festival international contest"].opportunity_status
+        == "closed"
     )
     assert (
         by_title["Astana AI Film Festival international contest"].raw["application_url"]

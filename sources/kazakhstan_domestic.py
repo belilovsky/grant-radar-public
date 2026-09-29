@@ -415,18 +415,17 @@ DOMESTIC_PROGRAMS = (
         url="https://aaiff.ai/",
         title="Astana AI Film Festival international contest",
         summary=(
-            "Official Astana AI Film Festival open call for AI-created short "
-            "films. Applications are free and open to individual authors, teams "
-            "and studios worldwide until 31 August 2026; the total prize fund is "
-            "USD 1 million."
+            "Astana AI Film Festival received 8,067 films from 125 countries and "
+            "regions. Submissions closed on 7 September 2026; the festival takes "
+            "place in Astana on 1-3 October, with USD 1 million in competition "
+            "prizes and a USD 1 million production fund."
         ),
         title_ru="Международный конкурс Astana AI Film Festival",
         summary_ru=(
-            "Официальный open call Astana AI Film Festival для короткометражных "
-            "фильмов, созданных с использованием генеративного AI. Бесплатные "
-            "заявки принимаются от индивидуальных авторов, команд и студий со "
-            "всего мира до 31 августа 2026 года; общий призовой фонд составляет "
-            "1 млн долларов США."
+            "Astana AI Film Festival получил 8 067 фильмов из 125 стран и "
+            "регионов. Приём завершён 7 сентября 2026 года; фестиваль пройдёт в "
+            "Астане 1-3 октября. Фонд включает 1 млн долларов США конкурсных "
+            "призов и 1 млн долларов производственного финансирования."
         ),
         tags=(
             "contest",
@@ -439,15 +438,15 @@ DOMESTIC_PROGRAMS = (
         ),
         type=OpportunityType.CONTEST,
         rolling=False,
-        deadline=date(2026, 8, 31),
-        opportunity_status="open",
-        lifecycle="open",
+        deadline=date(2026, 9, 7),
+        opportunity_status="closed",
+        lifecycle="closed",
         eligibility=(
             "Individual authors and teams from any country submitting an "
             "AI-created short film under the official festival rules",
         ),
-        amount_raw="total prize fund of USD 1,000,000",
-        amount_max=Decimal("1000000"),
+        amount_raw="USD 1,000,000 in competition prizes plus a USD 1,000,000 production fund",
+        amount_max=Decimal("2000000"),
         currency="USD",
         application_url="https://aaiff.ai/",
     ),

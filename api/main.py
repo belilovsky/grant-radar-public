@@ -122,9 +122,11 @@ from api.opportunity_og import (
     render_opportunity_portrait_png,
 )
 from api.opportunity_page import (
+    is_aaiff_2026,
     is_qazindustry_productivity_reimbursement,
     is_qazindustry_reimbursement,
     is_qic_alem_ventures,
+    project_aaiff_2026,
     project_qazindustry_process_improvement,
     project_qazindustry_process_related_items,
     project_qazindustry_productivity_reimbursement,
@@ -2265,6 +2267,7 @@ async def opportunity_page(
         localize_opportunity(item, content_lang), lang=content_lang
     )
     localized_item = project_qic_alem_ventures(localized_item, lang=content_lang)
+    localized_item = project_aaiff_2026(localized_item, lang=content_lang)
     localized_item = project_qazindustry_productivity_reimbursement(
         localized_item, lang=content_lang
     )
@@ -2329,7 +2332,19 @@ async def opportunity_open_graph_image(
 
     _ = v
     content_lang = _public_lang(lang)
-    if is_qic_alem_ventures(opportunity_id):
+    if is_aaiff_2026(opportunity_id):
+        source_item = _find_opportunity(opportunity_id, content_lang=content_lang)
+        if source_item is None:
+            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND)
+        projected_item = project_aaiff_2026(
+            localize_opportunity(source_item, content_lang), lang=content_lang
+        )
+        item = _opportunity_v1_from_item(
+            projected_item,
+            request=request,
+            root_path=_root_path(request),
+        )
+    elif is_qic_alem_ventures(opportunity_id):
         source_item = _find_opportunity(opportunity_id, content_lang=content_lang)
         if source_item is None:
             raise HTTPException(status_code=status.HTTP_404_NOT_FOUND)
@@ -2410,7 +2425,19 @@ async def opportunity_portrait_image(
     """Serve the source-grounded 4:5 feed card used by Instagram publishing."""
 
     content_lang = _public_lang(lang)
-    if is_qazindustry_productivity_reimbursement(opportunity_id):
+    if is_aaiff_2026(opportunity_id):
+        source_item = _find_opportunity(opportunity_id, content_lang=content_lang)
+        if source_item is None:
+            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND)
+        projected_item = project_aaiff_2026(
+            localize_opportunity(source_item, content_lang), lang=content_lang
+        )
+        item = _opportunity_v1_from_item(
+            projected_item,
+            request=request,
+            root_path=_root_path(request),
+        )
+    elif is_qazindustry_productivity_reimbursement(opportunity_id):
         source_item = _find_opportunity(opportunity_id, content_lang=content_lang)
         if source_item is None:
             raise HTTPException(status_code=status.HTTP_404_NOT_FOUND)
@@ -2463,7 +2490,7 @@ async def opportunity_prepare_page(
     item = _find_opportunity(opportunity_id, content_lang=content_lang)
     if item is None:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND)
-    if is_qic_alem_ventures(opportunity_id):
+    if is_qic_alem_ventures(opportunity_id) or is_aaiff_2026(opportunity_id):
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND)
     root_path = _root_path(request)
     if request.method == "HEAD":
@@ -3717,6 +3744,17 @@ def _find_opportunity_v1(
             request=request,
             root_path=root_path,
         )
+    if is_aaiff_2026(opportunity_id):
+        localized = _with_decision_readiness(
+            localize_opportunity(item, content_lang),
+            ranking_subject=item,
+        )
+        localized = project_aaiff_2026(localized, lang=content_lang)
+        return _opportunity_v1_from_item(
+            localized,
+            request=request,
+            root_path=root_path,
+        )
     cached = _cached_public_v1_index(
         content_lang=content_lang,
         include_irrelevant=False,
@@ -3729,6 +3767,7 @@ def _find_opportunity_v1(
         ranking_subject=item,
     )
     localized = project_qic_alem_ventures(localized, lang=content_lang)
+    localized = project_aaiff_2026(localized, lang=content_lang)
     return _opportunity_v1_from_item(localized, request=request, root_path=root_path)
 
 
@@ -4550,6 +4589,7 @@ async def get_opportunity_detail(
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND)
     localized = localize_opportunity(item, content_lang)
     localized = project_qic_alem_ventures(localized, lang=content_lang)
+    localized = project_aaiff_2026(localized, lang=content_lang)
     localized = project_qazindustry_productivity_reimbursement(
         localized,
         lang=content_lang,
@@ -4589,6 +4629,7 @@ async def get_opportunity_fit(
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND)
     localized = localize_opportunity(item, content_lang)
     localized = project_qic_alem_ventures(localized, lang=content_lang)
+    localized = project_aaiff_2026(localized, lang=content_lang)
     payload = assess_profile(
         localized,
         {
